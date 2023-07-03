@@ -4,14 +4,17 @@ import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
+import org.spongepowered.asm.mixin.Shadow;
+import tgw.evolution.patches.IKeyMappingPatch;
 
 import java.util.List;
 import java.util.Map;
 
 @Mixin(KeyMapping.class)
-public abstract class KeyMappingMixin {
+public abstract class KeyMappingMixin implements IKeyMappingPatch {
 
     private static Map<InputConstants.Key, List<KeyMapping>>[] maps;
+    @Shadow private int clickCount;
 
     private static void initMaps() {
         //noinspection ConstantConditions
@@ -43,4 +46,14 @@ public abstract class KeyMappingMixin {
             }
         }
     }
+
+    @Override
+    public boolean consumeAllClicks() {
+        boolean consumeClick = this.consumeClick();
+        this.clickCount = 0;
+        return consumeClick;
+    }
+
+    @Shadow
+    public abstract boolean consumeClick();
 }

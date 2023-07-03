@@ -3,6 +3,7 @@ package tgw.evolution.mixin;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Position;
+import net.minecraft.core.Vec3i;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -44,6 +45,29 @@ public abstract class BlockPos_MutableBlockPosMixin extends BlockPos {
             case EAST -> this.setX(this.getX() + n);
             case WEST -> this.setX(this.getX() - n);
         };
+    }
+
+    @Shadow
+    public abstract MutableBlockPos set(int pX, int pY, int pZ);
+
+    /**
+     * @author TheGreatWolf
+     * @reason Simplify and inline.
+     */
+    @Overwrite
+    public BlockPos.MutableBlockPos setWithOffset(Vec3i pos, Direction dir) {
+        int x = pos.getX();
+        int y = pos.getY();
+        int z = pos.getZ();
+        switch (dir) {
+            case WEST -> --x;
+            case EAST -> ++x;
+            case DOWN -> --y;
+            case UP -> ++y;
+            case NORTH -> --z;
+            case SOUTH -> ++z;
+        }
+        return this.set(x, y, z);
     }
 
     @Override

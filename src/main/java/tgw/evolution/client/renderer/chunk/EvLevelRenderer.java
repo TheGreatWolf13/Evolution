@@ -35,7 +35,6 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.BlockDestructionProgress;
 import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
@@ -99,6 +98,7 @@ import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 import tgw.evolution.util.math.DirectionUtil;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.math.VectorUtil;
+import tgw.evolution.world.EvBlockDestructionProgress;
 
 import java.io.IOException;
 import java.util.*;
@@ -120,9 +120,9 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
     private final BufferHolder bufferHolder;
     private final RenderChunkInfoComparator comparator = new RenderChunkInfoComparator();
     private final Frustum cullingFrustum = new Frustum(new Matrix4f(), new Matrix4f());
-    private final Int2ObjectMap<BlockDestructionProgress> destroyingBlocks = new Int2ObjectOpenHashMap<>();
+    private final Int2ObjectMap<EvBlockDestructionProgress> destroyingBlocks = new Int2ObjectOpenHashMap<>();
     private final BlockPos.MutableBlockPos destructionPos = new BlockPos.MutableBlockPos();
-    private final Long2ObjectMap<SortedSet<BlockDestructionProgress>> destructionProgress = new Long2ObjectOpenHashMap<>();
+    private final Long2ObjectMap<SortedSet<EvBlockDestructionProgress>> destructionProgress = new Long2ObjectOpenHashMap<>();
     private final EntityRenderDispatcher entityRenderDispatcher;
     /**
      * Global block entities; these are always rendered, even if off-screen.
@@ -824,30 +824,27 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
         }
     }
 
-    public void destroyBlockProgress(int breakerId, BlockPos pos, int progress) {
+    public void destroyBlockProgress(int breakerId, long pos, int progress) {
         if (progress >= 0 && progress < 10) {
-            BlockDestructionProgress blockDestructionProgress = this.destroyingBlocks.get(breakerId);
+            EvBlockDestructionProgress blockDestructionProgress = this.destroyingBlocks.get(breakerId);
             if (blockDestructionProgress != null) {
                 this.removeProgress(blockDestructionProgress);
             }
-            if (blockDestructionProgress == null ||
-                blockDestructionProgress.getPos().getX() != pos.getX() ||
-                blockDestructionProgress.getPos().getY() != pos.getY() ||
-                blockDestructionProgress.getPos().getZ() != pos.getZ()) {
-                blockDestructionProgress = new BlockDestructionProgress(breakerId, pos);
+            if (blockDestructionProgress == null || blockDestructionProgress.getPos() != pos) {
+                blockDestructionProgress = new EvBlockDestructionProgress(breakerId, pos);
                 this.destroyingBlocks.put(breakerId, blockDestructionProgress);
             }
             blockDestructionProgress.setProgress(progress);
             blockDestructionProgress.updateTick(this.ticks);
-            SortedSet<BlockDestructionProgress> blockDestructionProgresses = this.destructionProgress.get(blockDestructionProgress.getPos().asLong());
+            SortedSet<EvBlockDestructionProgress> blockDestructionProgresses = this.destructionProgress.get(blockDestructionProgress.getPos());
             if (blockDestructionProgresses == null) {
                 blockDestructionProgresses = new TreeSet<>();
-                this.destructionProgress.put(blockDestructionProgress.getPos().asLong(), blockDestructionProgresses);
+                this.destructionProgress.put(blockDestructionProgress.getPos(), blockDestructionProgresses);
             }
             blockDestructionProgresses.add(blockDestructionProgress);
         }
         else {
-            BlockDestructionProgress destructionProgress = this.destroyingBlocks.remove(breakerId);
+            EvBlockDestructionProgress destructionProgress = this.destroyingBlocks.remove(breakerId);
             if (destructionProgress != null) {
                 this.removeProgress(destructionProgress);
             }
@@ -1215,9 +1212,9 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
         this.cullingFrustum.prepare(camPos.x, camPos.y, camPos.z);
     }
 
-    private void removeProgress(BlockDestructionProgress progress) {
-        long i = progress.getPos().asLong();
-        Set<BlockDestructionProgress> set = this.destructionProgress.get(i);
+    private void removeProgress(EvBlockDestructionProgress progress) {
+        long i = progress.getPos();
+        Set<EvBlockDestructionProgress> set = this.destructionProgress.get(i);
         set.remove(progress);
         if (set.isEmpty()) {
             this.destructionProgress.remove(i);
@@ -1579,7 +1576,7 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
                     MultiBufferSource multiBufferSource = buffer;
                     matrices.pushPose();
                     matrices.translate(bePos.getX() - camX, bePos.getY() - camY, bePos.getZ() - camZ);
-                    SortedSet<BlockDestructionProgress> destructionProgresses = this.destructionProgress.get(bePos.asLong());
+                    SortedSet<EvBlockDestructionProgress> destructionProgresses = this.destructionProgress.get(bePos.asLong());
                     if (destructionProgresses != null && !destructionProgresses.isEmpty()) {
                         int progress = destructionProgresses.last().getProgress();
                         if (progress >= 0) {
@@ -1626,14 +1623,14 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
             this.mc.getMainRenderTarget().bindWrite(false);
         }
         profiler.popPush("destroyProgress");
-        for (Long2ObjectMap.Entry<SortedSet<BlockDestructionProgress>> destructionEntry : this.destructionProgress.long2ObjectEntrySet()) {
+        for (Long2ObjectMap.Entry<SortedSet<EvBlockDestructionProgress>> destructionEntry : this.destructionProgress.long2ObjectEntrySet()) {
             //Replaced with a fixed MutableBlockPos client
             this.destructionPos.set(destructionEntry.getLongKey());
             double deltaX = this.destructionPos.getX() - camX;
             double deltaY = this.destructionPos.getY() - camY;
             double deltaZ = this.destructionPos.getZ() - camZ;
-            if (!(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ > 1_024.0D)) {
-                SortedSet<BlockDestructionProgress> destructionProgresses = destructionEntry.getValue();
+            if (!(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ > 1_024.0)) {
+                SortedSet<EvBlockDestructionProgress> destructionProgresses = destructionEntry.getValue();
                 if (destructionProgresses != null && !destructionProgresses.isEmpty()) {
                     int progress = destructionProgresses.last().getProgress();
                     matrices.pushPose();
@@ -2247,9 +2244,9 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
     public void tick() {
         ++this.ticks;
         if (this.ticks % 20 == 0) {
-            Iterator<BlockDestructionProgress> iterator = this.destroyingBlocks.values().iterator();
+            Iterator<EvBlockDestructionProgress> iterator = this.destroyingBlocks.values().iterator();
             while (iterator.hasNext()) {
-                BlockDestructionProgress blockdestructionprogress = iterator.next();
+                EvBlockDestructionProgress blockdestructionprogress = iterator.next();
                 int i = blockdestructionprogress.getUpdatedRenderTick();
                 if (this.ticks - i > 400) {
                     iterator.remove();

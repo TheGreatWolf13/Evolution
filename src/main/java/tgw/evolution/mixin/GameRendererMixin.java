@@ -499,7 +499,7 @@ public abstract class GameRendererMixin implements IGameRendererPatch {
         }
         this.mainCamera.tick();
         ++this.tick;
-        this.itemInHandRenderer.tick();
+//        this.itemInHandRenderer.tick();
         ((IMinecraftPatch) this.minecraft).lvlRenderer().tickRain(this.mainCamera);
         this.darkenWorldAmountO = this.darkenWorldAmount;
         if (this.minecraft.gui.getBossOverlay().shouldDarkenScreen()) {

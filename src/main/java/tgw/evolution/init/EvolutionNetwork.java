@@ -111,6 +111,8 @@ public final class EvolutionNetwork {
                  PacketCSSpecialAttackStop::handle);
         register(PacketSCSpecialAttackStop.class, PacketSCSpecialAttackStop::encode, PacketSCSpecialAttackStop::decode,
                  PacketSCSpecialAttackStop::handle);
+        register(PacketSCBlockDestruction.class, PacketSCBlockDestruction::encode, PacketSCBlockDestruction::decode,
+                 PacketSCBlockDestruction::handle);
     }
 
     public static void resetCache() {

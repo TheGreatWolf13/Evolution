@@ -20,7 +20,9 @@ public abstract class InventoryMixinClient {
      */
     @Overwrite
     public void swapPaint(double dir) {
-        if (((IMinecraftPatch) Minecraft.getInstance()).isMultiplayerPaused() || ClientEvents.getInstance().shouldRenderSpecialAttack()) {
+        IMinecraftPatch instance = (IMinecraftPatch) Minecraft.getInstance();
+        instance.resetUseHeld();
+        if (instance.isMultiplayerPaused() || ClientEvents.getInstance().shouldRenderSpecialAttack()) {
             return;
         }
         if (dir > 0) {

@@ -8,5 +8,7 @@ public interface IMinecraftPatch {
 
     EvLevelRenderer lvlRenderer();
 
+    void resetUseHeld();
+
     void setMultiplayerPaused(boolean paused);
 }

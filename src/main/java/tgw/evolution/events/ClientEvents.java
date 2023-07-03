@@ -18,9 +18,11 @@ import net.minecraft.client.gui.screens.advancements.AdvancementsScreen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.client.player.Input;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.network.chat.TextComponent;
@@ -94,6 +96,7 @@ import tgw.evolution.util.HitInformation;
 import tgw.evolution.util.PlayerHelper;
 import tgw.evolution.util.collection.*;
 import tgw.evolution.util.constants.OptiFineHelper;
+import tgw.evolution.util.math.DirectionUtil;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.toast.ToastHolderRecipe;
 import tgw.evolution.util.toast.Toasts;
@@ -187,8 +190,7 @@ public class ClientEvents {
         return modConfigMap;
     }
 
-    @Nullable
-    private static IGuiScreenHandler findHandler(Screen currentScreen) {
+    private static @Nullable IGuiScreenHandler findHandler(Screen currentScreen) {
         if (currentScreen instanceof CreativeModeInventoryScreen creativeScreen) {
             return new GuiContainerCreativeHandler(creativeScreen);
         }
@@ -213,6 +215,39 @@ public class ClientEvents {
             }
             return new TranslatableComponent(translationKey);
         };
+    }
+
+    public static @Nullable Direction getDirectionFromInput(Direction facing, Input input) {
+        Direction movement = null;
+        if (input.leftImpulse != 0) {
+            if (input.leftImpulse > 0) {
+                movement = Direction.WEST;
+            }
+            else {
+                movement = Direction.EAST;
+            }
+        }
+        else if (input.forwardImpulse != 0) {
+            if (input.forwardImpulse > 0) {
+                movement = Direction.NORTH;
+            }
+            else {
+                movement = Direction.SOUTH;
+            }
+        }
+        else if (input.jumping) {
+            movement = Direction.UP;
+        }
+        else if (input.shiftKeyDown) {
+            movement = Direction.DOWN;
+        }
+        if (movement == null) {
+            return null;
+        }
+        if (movement.getAxis() == Direction.Axis.Y) {
+            return movement;
+        }
+        return DirectionUtil.fromLocalToAbs(movement, facing);
     }
 
     private static int getIndexAndRemove(MobEffect effect) {
@@ -355,8 +390,7 @@ public class ClientEvents {
         }
     }
 
-    @Nullable
-    private Slot findPullSlot(List<Slot> slots, Slot selectedSlot) {
+    private @Nullable Slot findPullSlot(List<Slot> slots, Slot selectedSlot) {
         int startIndex = 0;
         int endIndex = slots.size();
         int direction = 1;
@@ -385,8 +419,7 @@ public class ClientEvents {
         return null;
     }
 
-    @Nullable
-    private RList<Slot> findPushSlots(List<Slot> slots, Slot selectedSlot, int itemCount, boolean mustDistributeAll) {
+    private @Nullable RList<Slot> findPushSlots(List<Slot> slots, Slot selectedSlot, int itemCount, boolean mustDistributeAll) {
         ItemStack selectedSlotStack = selectedSlot.getItem();
         assert this.mc.player != null;
         boolean findInPlayerInventory = selectedSlot.container != this.mc.player.getInventory();
@@ -469,8 +502,7 @@ public class ClientEvents {
         return this.renderer;
     }
 
-    @Nullable
-    public ResourceLocation getShader(int shaderId) {
+    public @Nullable ResourceLocation getShader(int shaderId) {
         return switch (shaderId) {
             case 1 -> EvolutionResources.SHADER_MOTION_BLUR;
             case 25 -> EvolutionResources.SHADER_DESATURATE_25;
@@ -480,8 +512,7 @@ public class ClientEvents {
         };
     }
 
-    @Nullable
-    public SkyRenderer getSkyRenderer() {
+    public @Nullable SkyRenderer getSkyRenderer() {
         return this.skyRenderer;
     }
 

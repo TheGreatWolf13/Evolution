@@ -1,6 +1,7 @@
 package tgw.evolution.items;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -9,6 +10,10 @@ import tgw.evolution.items.modular.ItemModular;
 public final class ItemUtils {
 
     private ItemUtils() {
+    }
+
+    public static boolean canRepeatUse(ItemStack stack) {
+        return stack.getItem() instanceof BlockItem;
     }
 
     public static boolean isAxe(ItemStack stack) {

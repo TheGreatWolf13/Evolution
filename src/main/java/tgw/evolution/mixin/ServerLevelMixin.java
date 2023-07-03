@@ -3,7 +3,9 @@ package tgw.evolution.mixin;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.entity.EntityType;
@@ -22,12 +24,16 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.storage.WritableLevelData;
 import net.minecraft.world.phys.Vec3;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
 import tgw.evolution.capabilities.chunkstorage.IChunkStorage;
 import tgw.evolution.init.EvolutionCapabilities;
+import tgw.evolution.init.EvolutionNetwork;
+import tgw.evolution.network.IPacket;
+import tgw.evolution.network.PacketSCBlockDestruction;
 import tgw.evolution.patches.ILevelPatch;
 
 import java.util.function.Supplier;
@@ -36,12 +42,31 @@ import java.util.function.Supplier;
 public abstract class ServerLevelMixin extends Level implements ILevelPatch {
 
     private final BlockPos.MutableBlockPos randomPosInChunkCachedPos = new BlockPos.MutableBlockPos();
+    @Shadow @Final private MinecraftServer server;
 
     public ServerLevelMixin(WritableLevelData pLevelData,
                             ResourceKey<Level> pDimension,
                             Holder<DimensionType> pDimensionTypeRegistration,
                             Supplier<ProfilerFiller> pProfiler, boolean pIsClientSide, boolean pIsDebug, long pBiomeZoomSeed) {
         super(pLevelData, pDimension, pDimensionTypeRegistration, pProfiler, pIsClientSide, pIsDebug, pBiomeZoomSeed);
+    }
+
+    @Override
+    public void destroyBlockProgress(int breakerId, long pos, int progress) {
+        IPacket packet = null;
+        for (ServerPlayer player : this.server.getPlayerList().getPlayers()) {
+            if (player != null && player.level == this && player.getId() != breakerId) {
+                double dx = BlockPos.getX(pos) - player.getX();
+                double dy = BlockPos.getY(pos) - player.getY();
+                double dz = BlockPos.getZ(pos) - player.getZ();
+                if (dx * dx + dy * dy + dz * dz < 1_024.0) {
+                    if (packet == null) {
+                        packet = new PacketSCBlockDestruction(breakerId, pos, progress);
+                    }
+                    EvolutionNetwork.send(player, packet);
+                }
+            }
+        }
     }
 
     @Shadow

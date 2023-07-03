@@ -27,7 +27,9 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import tgw.evolution.Evolution;
 import tgw.evolution.events.ClientEvents;
+import tgw.evolution.patches.ILevelPatch;
 import tgw.evolution.patches.ILevelReaderPatch;
 import tgw.evolution.patches.IMinecraftPatch;
 
@@ -37,7 +39,7 @@ import java.util.Random;
 import java.util.function.Supplier;
 
 @Mixin(ClientLevel.class)
-public abstract class ClientLevelMixin extends Level implements ILevelReaderPatch {
+public abstract class ClientLevelMixin extends Level implements ILevelReaderPatch, ILevelPatch {
 
     @Shadow @Final private Minecraft minecraft;
 
@@ -152,6 +154,11 @@ public abstract class ClientLevelMixin extends Level implements ILevelReaderPatc
     @Override
     @Overwrite
     public void destroyBlockProgress(int breakerId, BlockPos pos, int progress) {
+        Evolution.warn("destroyBlockProgress(I, BlockPos, I) shouldn't be called");
+    }
+
+    @Override
+    public void destroyBlockProgress(int breakerId, long pos, int progress) {
         ((IMinecraftPatch) this.minecraft).lvlRenderer().destroyBlockProgress(breakerId, pos, progress);
     }
 

@@ -75,6 +75,7 @@ import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import tgw.evolution.Evolution;
 import tgw.evolution.client.gui.ScreenCrash;
 import tgw.evolution.client.gui.ScreenOutOfMemory;
 import tgw.evolution.client.renderer.ICrashReset;
@@ -85,9 +86,13 @@ import tgw.evolution.events.ClientEvents;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.items.ICancelableUse;
 import tgw.evolution.items.IMelee;
+import tgw.evolution.items.ItemUtils;
 import tgw.evolution.network.PacketCSStopUsingItem;
+import tgw.evolution.patches.IKeyMappingPatch;
 import tgw.evolution.patches.ILivingEntityPatch;
 import tgw.evolution.patches.IMinecraftPatch;
+import tgw.evolution.util.OptionalMutableBlockPos;
+import tgw.evolution.util.math.DirectionUtil;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.math.Metric;
 
@@ -106,159 +111,83 @@ import java.util.function.Supplier;
 @Mixin(Minecraft.class)
 public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnable> implements IMinecraftPatch {
 
-    @Shadow
-    @Final
-    public static boolean ON_OSX;
-    @Shadow
-    @Final
-    private static Component SOCIAL_INTERACTIONS_NOT_AVAILABLE;
-    @Shadow
-    private static int fps;
-    @Shadow
-    @Final
-    private static Logger LOGGER;
+    @Shadow @Final public static boolean ON_OSX;
+    @Shadow @Final private static Component SOCIAL_INTERACTIONS_NOT_AVAILABLE;
+    @Shadow private static int fps;
+    @Shadow @Final private static Logger LOGGER;
     @Shadow @Final private static CompletableFuture<Unit> RESOURCE_RELOAD_INITIAL_TASK;
+    @Unique private final OptionalMutableBlockPos lastHoldingPos = new OptionalMutableBlockPos();
     @Shadow public @Nullable Entity crosshairPickEntity;
-    @Shadow
-    @Final
-    public Font font;
-    @Shadow
-    public String fpsString;
-    @Shadow
-    @Final
-    public FrameTimer frameTimer;
-    @Shadow
-    @Nullable
-    public MultiPlayerGameMode gameMode;
-    @Shadow
-    @Final
-    public GameRenderer gameRenderer;
-    @Shadow
-    @Final
-    public Gui gui;
-    @Shadow
-    @Nullable
-    public HitResult hitResult;
-    @Shadow
-    @Final
-    public KeyboardHandler keyboardHandler;
-    @Shadow
-    @Nullable
-    public ClientLevel level;
-    @Shadow
-    public int missTime;
-    @Shadow
-    @Final
-    public MouseHandler mouseHandler;
-    @Shadow
-    public boolean noRender;
-    @Shadow
-    @Final
-    public Options options;
-    @Shadow
-    @Final
-    public ParticleEngine particleEngine;
-    @Shadow
-    public float pausePartialTick;
-    @Shadow
-    @Nullable
-    public LocalPlayer player;
-    @Shadow
-    @Nullable
-    public Screen screen;
-    @Shadow
-    @Final
-    public TextureManager textureManager;
-    @Shadow
-    @Final
-    public Timer timer;
-    private boolean attackKeyPressed;
-    private int attackKeyTicks;
+    @Shadow @Final public Font font;
+    @Shadow public String fpsString;
+    @Shadow @Final public FrameTimer frameTimer;
+    @Shadow public @Nullable MultiPlayerGameMode gameMode;
+    @Shadow @Final public GameRenderer gameRenderer;
+    @Shadow @Final public Gui gui;
+    @Shadow public @Nullable HitResult hitResult;
+    @Shadow @Final public KeyboardHandler keyboardHandler;
+    @Shadow public @Nullable ClientLevel level;
+    @Shadow public int missTime;
+    @Shadow @Final public MouseHandler mouseHandler;
+    @Shadow public boolean noRender;
+    @Shadow @Final public Options options;
+    @Shadow @Final public ParticleEngine particleEngine;
+    @Shadow public float pausePartialTick;
+    @Shadow public @Nullable LocalPlayer player;
+    @Shadow public @Nullable Screen screen;
+    @Shadow @Final public TextureManager textureManager;
+    @Shadow @Final public Timer timer;
+    @Unique private boolean attackKeyPressed;
+    @Unique private int attackKeyTicks;
     @Shadow @Final private BlockEntityRenderDispatcher blockEntityRenderDispatcher;
-    private int cancelUseCooldown;
-    @Shadow
-    private String debugPath;
-    @Shadow
-    @Nullable
-    private Supplier<CrashReport> delayedCrash;
+    @Unique private int cancelUseCooldown;
+    @Shadow private String debugPath;
+    @Shadow private @Nullable Supplier<CrashReport> delayedCrash;
     @Shadow @Final private FontManager fontManager;
-    @Shadow
-    @Nullable
-    private ProfileResults fpsPieResults;
-    @Shadow
-    private int frames;
-    @Shadow
-    private Thread gameThread;
-    @Shadow
-    private boolean isLocalServer;
+    @Shadow private @Nullable ProfileResults fpsPieResults;
+    @Shadow private int frames;
+    @Shadow private Thread gameThread;
+    @Shadow private boolean isLocalServer;
     @Shadow @Final private LanguageManager languageManager;
     @Unique private int lastFrameRateLimit = 60;
-    @Shadow
-    private long lastNanoTime;
-    @Shadow
-    private long lastTime;
+    @Shadow private long lastNanoTime;
+    @Shadow private long lastTime;
     @Shadow @Final private String launchedVersion;
-    @Unique
-    private EvLevelRenderer lvlRenderer;
-    @Shadow
-    @Final
-    private RenderTarget mainRenderTarget;
-    @Shadow
-    private MetricsRecorder metricsRecorder;
+    @Unique private EvLevelRenderer lvlRenderer;
+    @Shadow @Final private RenderTarget mainRenderTarget;
+    @Shadow private MetricsRecorder metricsRecorder;
     @Shadow @Final private MobEffectTextureManager mobEffectTextures;
     @Shadow @Final private ModelManager modelManager;
-    private boolean multiplayerPause;
-    @Shadow
-    @Final
-    private MusicManager musicManager;
-    @Shadow
-    @Nullable
-    private Overlay overlay;
+    @Unique private boolean multiplayerPause;
+    @Shadow @Final private MusicManager musicManager;
+    @Shadow private @Nullable Overlay overlay;
     @Shadow @Final private PaintingTextureManager paintingTextures;
-    @Shadow
-    private boolean pause;
-    @Shadow
-    @Nullable
-    private Connection pendingConnection;
-    @Shadow
-    @Nullable
-    private CompletableFuture<Void> pendingReload;
-    @Shadow
-    private ProfilerFiller profiler;
-    @Shadow
-    @Final
-    private Queue<Runnable> progressTasks;
+    @Shadow private boolean pause;
+    @Shadow private @Nullable Connection pendingConnection;
+    @Shadow private @Nullable CompletableFuture<Void> pendingReload;
+    @Shadow private ProfilerFiller profiler;
+    @Shadow @Final private Queue<Runnable> progressTasks;
     @Shadow @Final private PeriodicNotificationManager regionalCompliancies;
     @Shadow @Final private ResourceLoadStateTracker reloadStateTracker;
     @Shadow @Final private RenderBuffers renderBuffers;
     @Shadow @Final private ReloadableResourceManager resourceManager;
     @Shadow @Final private PackRepository resourcePackRepository;
-    @Shadow
-    private int rightClickDelay;
-    @Shadow
-    private volatile boolean running;
-    @Shadow
-    @Final
-    private SearchRegistry searchRegistry;
-    @Shadow
-    @Nullable
-    private IntegratedServer singleplayerServer;
-    @Shadow
-    @Nullable
-    private TutorialToast socialInteractionsToast;
-    @Shadow
-    @Final
-    private SoundManager soundManager;
-    @Shadow
-    @Final
-    private ToastComponent toast;
-    @Shadow
-    @Final
-    private Tutorial tutorial;
+    @Shadow private int rightClickDelay;
+    @Shadow private volatile boolean running;
+    @Shadow @Final private SearchRegistry searchRegistry;
+    @Shadow private @Nullable IntegratedServer singleplayerServer;
+    @Shadow private @Nullable TutorialToast socialInteractionsToast;
+    @Shadow @Final private SoundManager soundManager;
+    @Shadow @Final private ToastComponent toast;
+    @Shadow @Final private Tutorial tutorial;
+    /**
+     * Bit 0: isHoldingUse; <br>
+     * Bit 1: canStartClicking; <br>
+     * Bit 2~4: directionOfMovement; <br>
+     */
+    @Unique private byte useFlags;
     @Shadow @Final private VirtualScreen virtualScreen;
-    @Shadow
-    @Final
-    private Window window;
+    @Shadow @Final private Window window;
 
     public MinecraftMixin(String name) {
         super(name);
@@ -495,12 +424,10 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     protected abstract void finishProfilers(boolean p_91339_, @Nullable SingleTickProfiler p_91340_);
 
     @Shadow
-    @Nullable
-    public abstract Entity getCameraEntity();
+    public abstract @Nullable Entity getCameraEntity();
 
     @Shadow
-    @Nullable
-    public abstract ClientPacketListener getConnection();
+    public abstract @Nullable ClientPacketListener getConnection();
 
     @Shadow
     protected abstract int getFramerateLimit();
@@ -596,28 +523,29 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
      * @author TheGreatWolf
      * @reason Replace to handle Evolution's input.
      */
-    @SuppressWarnings("StatementWithEmptyBody")
     @Overwrite
     private void handleKeybinds() {
         assert this.player != null;
         assert this.gameMode != null;
         assert this.getConnection() != null;
-        for (; this.options.keyTogglePerspective.consumeClick(); this.lvlRenderer.needsUpdate()) {
+        boolean notPausedNorAttacking = !this.multiplayerPause && !ClientEvents.getInstance().shouldRenderSpecialAttack();
+        if (((IKeyMappingPatch) this.options.keyTogglePerspective).consumeAllClicks()) {
             CameraType view = this.options.getCameraType();
             this.options.setCameraType(view.cycle());
             if (view.isFirstPerson() != this.options.getCameraType().isFirstPerson()) {
                 this.gameRenderer.checkEntityPostEffect(this.options.getCameraType().isFirstPerson() ? this.getCameraEntity() : null);
             }
+            this.lvlRenderer.needsUpdate();
         }
-        while (this.options.keySmoothCamera.consumeClick()) {
+        if (((IKeyMappingPatch) this.options.keySmoothCamera).consumeAllClicks()) {
             this.options.smoothCamera = !this.options.smoothCamera;
         }
-        boolean isMainhandSpecialAttacking = ClientEvents.getInstance().shouldRenderSpecialAttack();
-        for (int slot = 0; slot < 9; slot++) {
-            boolean isSaveToolbarDown = this.options.keySaveHotbarActivator.isDown();
-            boolean isLoadToolbarDown = this.options.keyLoadHotbarActivator.isDown();
+        boolean isSaveToolbarDown = this.options.keySaveHotbarActivator.isDown();
+        boolean isLoadToolbarDown = this.options.keyLoadHotbarActivator.isDown();
+        for (int slot = 0; slot < 9; ++slot) {
             if (this.options.keyHotbarSlots[slot].consumeClick()) {
-                if (!this.multiplayerPause && !isMainhandSpecialAttacking) {
+                this.useFlags = 0;
+                if (notPausedNorAttacking) {
                     if (this.player.isSpectator()) {
                         this.gui.getSpectatorGui().onHotbarSelected(slot);
                     }
@@ -630,7 +558,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                 }
             }
         }
-        while (this.options.keySocialInteractions.consumeClick()) {
+        if (((IKeyMappingPatch) this.options.keySocialInteractions).consumeAllClicks()) {
             if (!this.isMultiplayerServer()) {
                 this.player.displayClientMessage(SOCIAL_INTERACTIONS_NOT_AVAILABLE, true);
                 NarratorChatListener.INSTANCE.sayNow(SOCIAL_INTERACTIONS_NOT_AVAILABLE.getString());
@@ -640,28 +568,26 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                     this.tutorial.removeTimedToast(this.socialInteractionsToast);
                     this.socialInteractionsToast = null;
                 }
-                //noinspection ObjectAllocationInLoop
                 this.setScreen(new SocialInteractionsScreen());
             }
         }
-        while (this.options.keyInventory.consumeClick()) {
-            if (!this.multiplayerPause && !isMainhandSpecialAttacking) {
+        if (((IKeyMappingPatch) this.options.keyInventory).consumeAllClicks()) {
+            if (notPausedNorAttacking) {
                 if (this.gameMode.isServerControlledInventory()) {
                     this.player.sendOpenInventory();
                 }
                 else {
                     this.tutorial.onOpenInventory();
-                    //noinspection ObjectAllocationInLoop
                     this.setScreen(new InventoryScreen(this.player));
                 }
             }
         }
-        while (this.options.keyAdvancements.consumeClick()) {
-            //noinspection ObjectAllocationInLoop
+        if (((IKeyMappingPatch) this.options.keyAdvancements).consumeAllClicks()) {
             this.setScreen(new AdvancementsScreen(this.player.connection.getAdvancements()));
         }
         while (this.options.keySwapOffhand.consumeClick()) {
-            if (!this.multiplayerPause && !isMainhandSpecialAttacking) {
+            if (notPausedNorAttacking) {
+                this.useFlags = 0;
                 if (!this.player.isSpectator()) {
                     //noinspection ObjectAllocationInLoop
                     this.getConnection()
@@ -671,17 +597,17 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
             }
         }
         while (this.options.keyDrop.consumeClick()) {
-            if (!this.multiplayerPause && !isMainhandSpecialAttacking) {
+            if (notPausedNorAttacking) {
                 assert this.player != null;
                 if (!this.player.isSpectator() && this.player.drop(Screen.hasControlDown())) {
                     this.player.swing(InteractionHand.MAIN_HAND);
                 }
             }
         }
-        while (this.options.keyChat.consumeClick()) {
+        if (((IKeyMappingPatch) this.options.keyChat).consumeAllClicks()) {
             this.openChatScreen("");
         }
-        if (this.screen == null && this.overlay == null && this.options.keyCommand.consumeClick()) {
+        if (this.screen == null && this.overlay == null && ((IKeyMappingPatch) this.options.keyCommand).consumeAllClicks()) {
             this.openChatScreen("/");
         }
         boolean shouldContinueAttacking = true;
@@ -693,7 +619,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                     this.gameMode.releaseUsingItem(this.player);
                 }
             }
-            while (this.options.keyAttack.consumeClick()) {
+            if (((IKeyMappingPatch) this.options.keyAttack).consumeAllClicks()) {
                 if (!this.multiplayerPause) {
                     ItemStack usedStack = this.player.getUseItem();
                     if (usedStack.getItem() instanceof ICancelableUse cancelable) {
@@ -701,17 +627,14 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                             ClientEvents.getInstance().resetCooldown(this.player.getUsedItemHand());
                             this.player.stopUsingItem();
                             this.cancelUseCooldown = 20;
-                            //noinspection ObjectAllocationInLoop
                             EvolutionNetwork.sendToServer(new PacketCSStopUsingItem());
                         }
                     }
                     //TODO shield bash
                 }
             }
-            while (this.options.keyUse.consumeClick()) {
-            }
-            while (this.options.keyPickItem.consumeClick()) {
-            }
+            ((IKeyMappingPatch) this.options.keyUse).consumeAllClicks();
+            ((IKeyMappingPatch) this.options.keyPickItem).consumeAllClicks();
             isAttackKeyDown = this.options.keyAttack.isDown();
         }
         //Not using item
@@ -777,7 +700,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                     }
                 }
                 else {
-                    while (this.options.keyAttack.consumeClick()) {
+                    if (((IKeyMappingPatch) this.options.keyAttack).consumeAllClicks()) {
                         if (!this.multiplayerPause) {
                             shouldContinueAttacking = this.startAttack();
                         }
@@ -786,23 +709,31 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
             }
             isAttackKeyDown = this.options.keyAttack.isDown();
             if (ClientEvents.getInstance().getMainhandIndicatorPercentage(0.0f) < 1) {
-                while (this.options.keyAttack.consumeClick()) {
-                }
+                ((IKeyMappingPatch) this.options.keyAttack).consumeAllClicks();
             }
-            while (this.options.keyUse.consumeClick()) {
-                if (!this.multiplayerPause && !ClientEvents.getInstance().shouldRenderSpecialAttack()) {
+            if (((IKeyMappingPatch) this.options.keyUse).consumeAllClicks()) {
+                if (notPausedNorAttacking) {
+                    this.useFlags = 2;
+                    this.lastHoldingPos.remove();
                     this.startUseItem();
+                    this.useFlags &= ~2;
                 }
             }
-            while (this.options.keyPickItem.consumeClick()) {
+            if (((IKeyMappingPatch) this.options.keyPickItem).consumeAllClicks()) {
                 if (!this.multiplayerPause) {
                     this.pickBlock();
                 }
             }
         }
-        if (this.options.keyUse.isDown() && this.rightClickDelay == 0 && !this.player.isUsingItem()) {
-            if (!this.multiplayerPause && !ClientEvents.getInstance().shouldRenderSpecialAttack()) {
-                this.startUseItem();
+        if (this.options.keyUse.isDown() && !this.player.isUsingItem()) {
+            if (notPausedNorAttacking) {
+                boolean special = false;
+                if ((this.useFlags & 1) != 0) {
+                    special = this.startUseItemSpecial();
+                }
+                if (!special && this.rightClickDelay == 0) {
+                    this.startUseItem();
+                }
             }
         }
         this.continueAttack(
@@ -991,6 +922,11 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
             this.font.drawInBatch(s2, x + 160 - this.font.width(s2), y1, color, true, matrix, buffer, false, 0, 15_728_880, false);
         }
         buffer.endBatch();
+    }
+
+    @Override
+    public void resetUseHeld() {
+        this.useFlags = 0;
     }
 
     @Shadow
@@ -1311,13 +1247,17 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                 }
                 case BLOCK -> {
                     BlockHitResult blockRayTrace = (BlockHitResult) this.hitResult;
-                    int count = stack.getCount();
                     InteractionResult actResult = this.gameMode.useItemOn(this.player, this.level, hand, blockRayTrace);
                     if (actResult.consumesAction()) {
                         if (actResult.shouldSwing()) {
                             this.player.swing(hand);
-                            if (!stack.isEmpty() && (stack.getCount() != count || this.gameMode.hasInfiniteItems())) {
-                                this.gameRenderer.itemInHandRenderer.itemUsed(hand);
+                            if ((this.useFlags & 2) != 0 && ItemUtils.canRepeatUse(stack)) {
+                                this.useFlags |= 1;
+                                Direction direction = ClientEvents.getDirectionFromInput(this.player.getDirection(), this.player.input);
+                                if (direction != null) {
+                                    this.useFlags |= direction.ordinal() + 1 << 2;
+                                }
+                                this.lastHoldingPos.setWithOffset(blockRayTrace.getBlockPos(), blockRayTrace.getDirection());
                             }
                         }
                         return;
@@ -1351,6 +1291,67 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                 }
             }
         }
+    }
+
+    @Unique
+    private boolean startUseItemSpecial() {
+        assert this.gameMode != null;
+        assert this.player != null;
+        assert this.level != null;
+        if (this.player.isHandsBusy()) {
+            return true;
+        }
+        if (this.hitResult == null) {
+            LOGGER.warn("Null returned as 'hitResult', this shouldn't happen!");
+            return true;
+        }
+        if (this.cancelUseCooldown > 0) {
+            return true;
+        }
+        if (!this.lastHoldingPos.isPresent()) {
+            return false;
+        }
+        Direction direction;
+        if ((this.useFlags >> 2 & 0b111) == 0) {
+            direction = ClientEvents.getDirectionFromInput(this.player.getDirection(), this.player.input);
+            if (direction != null) {
+                this.useFlags |= direction.ordinal() + 1 << 2;
+            }
+        }
+        else {
+            direction = DirectionUtil.ALL[(this.useFlags >> 2 & 0b111) - 1];
+        }
+        if (this.hitResult.getType() == HitResult.Type.BLOCK) {
+            BlockHitResult blockRayTrace = (BlockHitResult) this.hitResult;
+            if (!this.lastHoldingPos.isSame(blockRayTrace.getBlockPos(), blockRayTrace.getDirection(), direction, true)) {
+                return true;
+            }
+            for (InteractionHand hand : MathHelper.HANDS_OFF_PRIORITY) {
+                ItemStack stack = this.player.getItemInHand(hand);
+                if (hand == InteractionHand.OFF_HAND && stack.isEmpty()) {
+                    continue;
+                }
+                if (!ItemUtils.canRepeatUse(stack)) {
+                    continue;
+                }
+                InteractionResult actResult = this.gameMode.useItemOn(this.player, this.level, hand, blockRayTrace);
+                Evolution.info("{}", actResult);
+                if (actResult.consumesAction()) {
+                    if (actResult.shouldSwing()) {
+                        this.player.swing(hand);
+                        Evolution.info("Updated pos");
+                        this.lastHoldingPos.setWithOffset(blockRayTrace.getBlockPos(), blockRayTrace.getDirection());
+                    }
+                    this.rightClickDelay = 4;
+                    return true;
+                }
+                if (actResult == InteractionResult.FAIL) {
+                    return true;
+                }
+            }
+            return true;
+        }
+        return false;
     }
 
     @Shadow
