@@ -6,5 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 public interface PatchRecipeManager {
 
-    @Nullable Recipe<?> byKey_(ResourceLocation key);
+    default @Nullable Recipe<?> byKey_(ResourceLocation key) {
+        throw new AbstractMethodError();
+    }
 }

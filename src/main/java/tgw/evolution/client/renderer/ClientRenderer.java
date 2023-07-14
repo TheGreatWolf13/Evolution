@@ -363,7 +363,7 @@ public class ClientRenderer {
 
     public void renderBlockOutlines(PoseStack matrices, MultiBufferSource buffer, Camera camera, BlockPos hitPos) {
         assert this.mc.level != null;
-        BlockState state = this.mc.level.getBlockState(hitPos);
+        BlockState state = this.mc.level.getBlockState_(hitPos);
         if (!state.isAir() && this.mc.level.getWorldBorder().isWithinBounds(hitPos)) {
             RenderSystem.enableBlend();
             Blending.DEFAULT.apply();

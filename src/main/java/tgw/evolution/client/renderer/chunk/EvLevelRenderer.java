@@ -256,15 +256,16 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
     }
 
     public static int getLightColor(BlockAndTintGetter level, BlockPos pos) {
-        return getLightColor(level, level.getBlockState(pos), pos);
+        return getLightColor(level, level.getBlockState_(pos), pos);
     }
 
     public static int getLightColor(BlockAndTintGetter level, BlockState state, BlockPos pos) {
         if (state.emissiveRendering(level, pos)) {
             return 15_728_880;
         }
-        int skyLight = level.getBrightness(LightLayer.SKY, pos);
-        int blockLight = level.getBrightness(LightLayer.BLOCK, pos);
+        long l = pos.asLong();
+        int skyLight = level.getBrightness_(LightLayer.SKY, l);
+        int blockLight = level.getBrightness_(LightLayer.BLOCK, l);
         int emission = state.getLightEmission();
         if (blockLight < emission) {
             blockLight = emission;
@@ -1679,14 +1680,14 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
                 profiler.popPush("outline");
                 BlockPos hitPos = ((BlockHitResult) hitResult).getBlockPos();
                 if (this.level.getWorldBorder().isWithinBounds(hitPos)) {
-                    Block block = this.level.getBlockState(hitPos).getBlock();
+                    Block block = this.level.getBlockState_(hitPos).getBlock();
                     if (block instanceof BlockKnapping) {
-                        TEKnapping tile = (TEKnapping) this.level.getBlockEntity(hitPos);
+                        TEKnapping tile = (TEKnapping) this.level.getBlockEntity_(hitPos);
                         assert tile != null;
                         client.getRenderer().renderOutlines(matrices, buffer, tile.type.getShape(), camera, hitPos);
                     }
                     else if (block instanceof BlockMolding) {
-                        TEMolding tile = (TEMolding) this.level.getBlockEntity(hitPos);
+                        TEMolding tile = (TEMolding) this.level.getBlockEntity_(hitPos);
                         assert tile != null;
                         client.getRenderer().renderOutlines(matrices, buffer, tile.molding.getShape(), camera, hitPos);
                     }

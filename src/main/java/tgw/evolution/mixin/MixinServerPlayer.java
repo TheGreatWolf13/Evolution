@@ -35,6 +35,7 @@ import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
@@ -56,6 +57,7 @@ import tgw.evolution.patches.PatchEither;
 import tgw.evolution.patches.PatchServerPlayer;
 import tgw.evolution.util.NBTHelper;
 import tgw.evolution.util.PlayerHelper;
+import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.damage.DamageSourceEv;
 
 import java.util.Collection;
@@ -167,6 +169,19 @@ public abstract class MixinServerPlayer extends Player implements PatchServerPla
             this.handleTeamKill(string2, string, ObjectiveCriteria.KILLED_BY_TEAM);
             CriteriaTriggers.PLAYER_KILLED_ENTITY.trigger((ServerPlayer) (Object) this, entity, damageSource);
         }
+    }
+
+    @Override
+    @Overwrite
+    public void awardRecipesByKey(ResourceLocation[] recipes) {
+        List<Recipe<?>> list = new OArrayList<>();
+        for (ResourceLocation key : recipes) {
+            Recipe<?> recipe = this.server.getRecipeManager().byKey_(key);
+            if (recipe != null) {
+                list.add(recipe);
+            }
+        }
+        this.awardRecipes(list);
     }
 
     @Shadow

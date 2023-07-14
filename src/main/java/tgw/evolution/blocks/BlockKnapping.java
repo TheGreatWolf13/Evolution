@@ -84,7 +84,7 @@ public class BlockKnapping extends BlockPhysics implements IReplaceable, IRockVa
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
-        TEKnapping tile = (TEKnapping) world.getBlockEntity(pos);
+        TEKnapping tile = (TEKnapping) world.getBlockEntity_(pos);
         if (tile != null) {
             if (tile.hitbox != null) {
                 return tile.hitbox;

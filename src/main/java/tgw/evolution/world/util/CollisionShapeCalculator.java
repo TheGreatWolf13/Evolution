@@ -66,8 +66,8 @@ public final class CollisionShapeCalculator extends AbstractCollisionCalculator<
             if (chunk == null) {
                 continue;
             }
+            BlockState state = chunk.getBlockState_(x, y, z);
             this.pos.set(x, y, z);
-            BlockState state = chunk.getBlockState(this.pos);
             if (this.onlySuffocatingBlocks && !state.isSuffocating(chunk, this.pos) ||
                 type == Cursor3DMutable.FACE && !state.hasLargeCollisionShape() ||
                 type == Cursor3DMutable.EDGE && !state.is(Blocks.MOVING_PISTON)) {

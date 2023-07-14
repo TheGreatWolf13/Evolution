@@ -117,7 +117,7 @@ public final class EarthHelper {
                 sunAngle = intensity;
             }
         }
-        int color = level.getBiome(pos).value().getSkyColor();
+        int color = level.getBiome_(pos.getX(), pos.getY(), pos.getZ()).value().getSkyColor();
         float r = (color >> 16 & 255) / 255.0F;
         r *= sunAngle;
         float g = (color >> 8 & 255) / 255.0F;

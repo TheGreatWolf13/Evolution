@@ -9,6 +9,7 @@ import net.minecraft.core.*;
 import net.minecraft.nbt.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.village.poi.PoiManager;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LightLayer;
@@ -34,10 +35,10 @@ import net.minecraft.world.ticks.ProtoChunkTicks;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.*;
+import tgw.evolution.blocks.tileentities.TEUtils;
 import tgw.evolution.capabilities.chunk.AtmStorage;
 import tgw.evolution.hooks.ChunkHooks;
 import tgw.evolution.patches.PatchLevelChunk;
-import tgw.evolution.patches.PatchLevelChunkSection;
 import tgw.evolution.util.collection.ArrayUtils;
 import tgw.evolution.util.collection.maps.L2OMap;
 import tgw.evolution.util.collection.sets.RSet;
@@ -58,6 +59,11 @@ public abstract class MixinChunkSerializer {
     }
 
     @Shadow
+    private static @Nullable ListTag getListOfCompoundsOrNull(CompoundTag compoundTag, String string) {
+        throw new AbstractMethodError();
+    }
+
+    @Shadow
     private static void logErrors(ChunkPos pChunkPos, int pChunkSectionY, String pErrorMessage) {
         throw new AbstractMethodError();
     }
@@ -65,6 +71,31 @@ public abstract class MixinChunkSerializer {
     @Shadow
     private static Codec<PalettedContainer<Holder<Biome>>> makeBiomeCodec(Registry<Biome> pBiomeRegistry) {
         throw new AbstractMethodError();
+    }
+
+    @Overwrite
+    private static void method_39797(@Nullable ListTag entities, ServerLevel level, @Nullable ListTag blockEntities, LevelChunk chunk) {
+        if (entities != null) {
+            level.addLegacyChunkEntities(EntityType.loadEntitiesRecursive(entities, level));
+        }
+        if (blockEntities != null) {
+            for (int i = 0, len = blockEntities.size(); i < len; ++i) {
+                CompoundTag nbt = blockEntities.getCompound(i);
+                boolean keepPacked = nbt.getBoolean("keepPacked");
+                if (keepPacked) {
+                    chunk.setBlockEntityNbt(nbt);
+                }
+                else {
+                    int x = nbt.getInt("x");
+                    int y = nbt.getInt("y");
+                    int z = nbt.getInt("z");
+                    BlockEntity blockEntity = TEUtils.loadStatic(x, y, z, chunk.getBlockState_(x, y, z), nbt);
+                    if (blockEntity != null) {
+                        chunk.setBlockEntity(blockEntity);
+                    }
+                }
+            }
+        }
     }
 
     @Shadow
@@ -80,10 +111,15 @@ public abstract class MixinChunkSerializer {
         throw new AbstractMethodError();
     }
 
-    @Shadow
-    @javax.annotation.Nullable
-    private static LevelChunk.PostLoadProcessor postLoadChunk(ServerLevel pLevel, CompoundTag pTag) {
-        throw new AbstractMethodError();
+    @SuppressWarnings("ConstantConditions")
+    @Overwrite
+    private static @Nullable LevelChunk.PostLoadProcessor postLoadChunk(ServerLevel level, CompoundTag compoundTag) {
+        ListTag entities = getListOfCompoundsOrNull(compoundTag, "entities");
+        ListTag blockEntities = getListOfCompoundsOrNull(compoundTag, "block_entities");
+        if (entities == null && blockEntities == null) {
+            return null;
+        }
+        return chunk -> method_39797(entities, level, blockEntities, chunk);
     }
 
     /**
@@ -152,7 +188,7 @@ public abstract class MixinChunkSerializer {
                 }
                 //noinspection ObjectAllocationInLoop
                 LevelChunkSection section = new LevelChunkSection(y, stateContainer, biomeContainer);
-                ((PatchLevelChunkSection) section).setAtmStorage(atm);
+                section.setAtmStorage(atm);
                 levelChunkSections[index] = section;
                 poiManager.checkConsistencyWithBlocks(pos, section);
             }
@@ -344,7 +380,7 @@ public abstract class MixinChunkSerializer {
                     //noinspection ObjectAllocationInLoop
                     sectionTag.put("biomes", codec.encodeStart(NbtOps.INSTANCE, section.getBiomes()).getOrThrow(false, LOGGER::error));
                     //noinspection ObjectAllocationInLoop
-                    sectionTag.put("atm", ((PatchLevelChunkSection) section).getAtmStorage().serialize());
+                    sectionTag.put("atm", section.getAtmStorage().serialize());
                 }
                 if (blockLight != null && !blockLight.isEmpty()) {
                     sectionTag.putByteArray("BlockLight", blockLight.getData());

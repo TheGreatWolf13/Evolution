@@ -1,8 +1,8 @@
 package tgw.evolution.patches.obj;
 
 import com.mojang.math.Vector3f;
-import net.minecraft.core.BlockPos;
 import net.minecraft.tags.FluidTags;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -17,7 +17,6 @@ public class NearPlane {
     private final Vec3d bottomRight = new Vec3d();
     private final Vec3d forward = new Vec3d();
     private final Vec3d left = new Vec3d();
-    private final BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
     private final Vec3d topLeft = new Vec3d();
     private final Vec3d topRight = new Vec3d();
     private final Vec3d up = new Vec3d();
@@ -25,18 +24,18 @@ public class NearPlane {
     public FogType getFogType(Vec3 cameraPos, BlockGetter level) {
         for (int i = 0; i < 5; i++) {
             Vec3d vec = this.getVector(i);
-            double x = cameraPos.x + vec.x();
-            double y = cameraPos.y + vec.y();
-            double z = cameraPos.z + vec.z();
-            this.pos.set(x, y, z);
-            FluidState fluidState = level.getFluidState(this.pos);
+            int x = Mth.floor(cameraPos.x + vec.x());
+            double height = cameraPos.y + vec.y();
+            int y = Mth.floor(height);
+            int z = Mth.floor(cameraPos.z + vec.z());
+            FluidState fluidState = level.getFluidState_(x, y, z);
             if (fluidState.is(FluidTags.LAVA)) {
-                if (y <= fluidState.getHeight(level, this.pos) + this.pos.getY()) {
+                if (height <= fluidState.getHeight_(level, x, y, z) + y) {
                     return FogType.LAVA;
                 }
             }
             else {
-                BlockState state = level.getBlockState(this.pos);
+                BlockState state = level.getBlockState_(x, y, z);
                 if (state.is(Blocks.POWDER_SNOW)) {
                     return FogType.POWDER_SNOW;
                 }

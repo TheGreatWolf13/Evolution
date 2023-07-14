@@ -93,6 +93,9 @@
       "net/minecraft/world/item/Item": [
         "tgw/evolution/patches/PatchItem"
       ],
+      "net/minecraft/world/level/lighting/LayerLightEventListener": [
+        "tgw/evolution/patches/PatchLayerLightEventListener"
+      ],
       "net/minecraft/world/level/chunk/LevelChunk": [
         "tgw/evolution/patches/PatchLevelChunk"
       ],
@@ -132,6 +135,9 @@
       ],
       "com/mojang/math/Quaternion": [
         "tgw/evolution/patches/PatchQuaternion"
+      ],
+      "net/minecraft/world/item/crafting/RecipeManager": [
+        "tgw/evolution/patches/PatchRecipeManager"
       ],
       "com/mojang/blaze3d/pipeline/RenderTarget": [
         "tgw/evolution/patches/PatchRenderTarget"

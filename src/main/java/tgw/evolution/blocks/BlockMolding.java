@@ -86,7 +86,7 @@ public class BlockMolding extends BlockGeneric implements IReplaceable, EntityBl
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        TEMolding tile = (TEMolding) level.getBlockEntity(pos);
+        TEMolding tile = (TEMolding) level.getBlockEntity_(pos);
         if (tile != null) {
             return tile.getHitbox(state);
         }

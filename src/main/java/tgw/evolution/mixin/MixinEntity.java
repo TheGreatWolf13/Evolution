@@ -389,6 +389,12 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
         return this.level.getBlockState_(onPos.getX(), onPos.getY(), onPos.getZ());
     }
 
+    @Shadow
+    public abstract int getBlockX();
+
+    @Shadow
+    public abstract int getBlockZ();
+
     @Override
     @Shadow
     public abstract AABB getBoundingBox();
@@ -402,6 +408,13 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
         EntityDimensions dim = this.getDimensions(pose);
         float f = dim.width / 2.0F;
         return this.bbForPose.setUnchecked(this.getX() - f, this.getY(), this.getZ() - f, this.getX() + f, this.getY() + dim.height, this.getZ() + f);
+    }
+
+    @Overwrite
+    public float getBrightness() {
+        int x = this.getBlockX();
+        int z = this.getBlockZ();
+        return this.level.hasChunkAt(x, z) ? this.level.getBrightness_(x, Mth.floor(this.getEyeY()), z) : 0.0F;
     }
 
     @Unique

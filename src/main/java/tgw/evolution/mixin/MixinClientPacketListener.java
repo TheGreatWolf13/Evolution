@@ -63,7 +63,6 @@ import tgw.evolution.util.math.Vec3d;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 @Mixin(ClientPacketListener.class)
@@ -101,35 +100,34 @@ public abstract class MixinClientPacketListener implements ClientGamePacketListe
         switch (state) {
             case REMOVE -> {
                 for (int i = 0, l = recipes.size(); i < l; i++) {
-                    Optional<? extends Recipe<?>> recipe = this.recipeManager.byKey(recipes.get(i));
-                    if (recipe.isPresent()) {
-                        recipeBook.remove(recipe.get());
+                    Recipe<?> recipe = this.recipeManager.byKey_(recipes.get(i));
+                    if (recipe != null) {
+                        recipeBook.remove(recipe);
                     }
                 }
             }
             case INIT -> {
                 for (int i = 0, l = recipes.size(); i < l; i++) {
-                    Optional<? extends Recipe<?>> recipe = this.recipeManager.byKey(recipes.get(i));
-                    if (recipe.isPresent()) {
-                        recipeBook.add(recipe.get());
+                    Recipe<?> recipe = this.recipeManager.byKey_(recipes.get(i));
+                    if (recipe != null) {
+                        recipeBook.add(recipe);
                     }
                 }
                 List<ResourceLocation> highlights = packet.getHighlights();
                 for (int i = 0, l = highlights.size(); i < l; i++) {
-                    Optional<? extends Recipe<?>> recipe = this.recipeManager.byKey(highlights.get(i));
-                    if (recipe.isPresent()) {
-                        recipeBook.addHighlight(recipe.get());
+                    Recipe<?> recipe = this.recipeManager.byKey_(highlights.get(i));
+                    if (recipe != null) {
+                        recipeBook.addHighlight(recipe);
                     }
                 }
             }
             case ADD -> {
                 for (int i = 0, l = recipes.size(); i < l; i++) {
-                    Optional<? extends Recipe<?>> recipe = this.recipeManager.byKey(recipes.get(i));
-                    if (recipe.isPresent()) {
-                        Recipe<?> r = recipe.get();
-                        recipeBook.add(r);
-                        recipeBook.addHighlight(r);
-                        RecipeToast.addOrUpdate(this.minecraft.getToasts(), r);
+                    Recipe<?> recipe = this.recipeManager.byKey_(recipes.get(i));
+                    if (recipe != null) {
+                        recipeBook.add(recipe);
+                        recipeBook.addHighlight(recipe);
+                        RecipeToast.addOrUpdate(this.minecraft.getToasts(), recipe);
                     }
                 }
             }

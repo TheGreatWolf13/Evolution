@@ -417,7 +417,7 @@ public final class VanillaOverlays {
         if (!entity.noPhysics) {
             Vec3 eyePos = entity.getEyePosition(partialTicks);
             POS.set(eyePos.x, eyePos.y, eyePos.z);
-            BlockState state = entity.level.getBlockState(POS);
+            BlockState state = entity.level.getBlockState_(POS);
             if (state.getRenderShape() != RenderShape.INVISIBLE && state.isViewBlocking(entity.level, POS)) {
                 GUIUtils.renderTex(width, height, mc.getBlockRenderer().getBlockModelShaper().getParticleIcon(state), matrices);
             }

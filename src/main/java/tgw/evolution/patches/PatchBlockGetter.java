@@ -17,6 +17,10 @@ public interface PatchBlockGetter {
         return te != null && te.getType() == type ? (T) te : null;
     }
 
+    default @Nullable BlockEntity getBlockEntity_(BlockPos pos) {
+        return this.getBlockEntity_(pos.getX(), pos.getY(), pos.getZ());
+    }
+
     default @Nullable BlockEntity getBlockEntity_(int x, int y, int z) {
         throw new AbstractMethodError();
     }

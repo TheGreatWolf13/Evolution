@@ -24,7 +24,7 @@ public abstract class MixinBlockEntity implements PatchBlockEntity {
      */
     @Overwrite
     public static @Nullable BlockEntity loadStatic(BlockPos pos, BlockState state, CompoundTag tag) {
-        Evolution.warn("loadStatic(BlockPos, BlockState, CompoundTag) should not be called!");
+        Evolution.deprecatedMethod();
         return TEUtils.loadStatic(pos.getX(), pos.getY(), pos.getZ(), state, tag);
     }
 

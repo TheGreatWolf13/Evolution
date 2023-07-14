@@ -47,7 +47,7 @@ public abstract class MixinCamera {
         if (!this.initialized) {
             return FogType.NONE;
         }
-        FluidState fluidState = this.level.getFluidState(this.blockPosition);
+        FluidState fluidState = this.level.getFluidState_(this.blockPosition);
         if (fluidState.is(FluidTags.WATER) && this.position.y < this.blockPosition.getY() + fluidState.getHeight(this.level, this.blockPosition)) {
             return FogType.WATER;
         }

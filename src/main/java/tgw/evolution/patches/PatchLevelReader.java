@@ -9,6 +9,10 @@ public interface PatchLevelReader {
         throw new AbstractMethodError();
     }
 
+    default float getBrightness_(int x, int y, int z) {
+        throw new AbstractMethodError();
+    }
+
     default int getMaxLocalRawBrightness_(int x, int y, int z) {
         throw new AbstractMethodError();
     }

@@ -190,16 +190,16 @@ public abstract class MixinClientLevel extends Level implements PatchLevel {
         int j = posY + this.random.nextInt(range) - this.random.nextInt(range);
         int k = posZ + this.random.nextInt(range) - this.random.nextInt(range);
         pos.set(i, j, k);
-        BlockState blockState = this.getBlockState(pos);
+        BlockState blockState = this.getBlockState_(pos);
         blockState.getBlock().animateTick(blockState, this, pos, random);
-        FluidState fluidState = this.getFluidState(pos);
+        FluidState fluidState = this.getFluidState_(pos);
         if (!fluidState.isEmpty()) {
             fluidState.animateTick(this, pos, random);
             ParticleOptions dripParticle = fluidState.getDripParticle();
             if (dripParticle != null && this.random.nextInt(10) == 0) {
                 boolean faceSturdy = blockState.isFaceSturdy(this, pos, Direction.DOWN);
                 pos.move(Direction.DOWN);
-                this.trySpawnDripParticles(pos, this.getBlockState(pos), dripParticle, faceSturdy);
+                this.trySpawnDripParticles(pos, blockState, dripParticle, faceSturdy);
                 pos.move(Direction.UP);
             }
         }
@@ -207,7 +207,7 @@ public abstract class MixinClientLevel extends Level implements PatchLevel {
             this.addParticle(new BlockParticleOption(ParticleTypes.BLOCK_MARKER, blockState), i + 0.5, j + 0.5, k + 0.5, 0, 0, 0);
         }
         if (!blockState.isCollisionShapeFullBlock(this, pos)) {
-            Optional<AmbientParticleSettings> ambientParticle = this.getBiome(pos).value().getAmbientParticle();
+            Optional<AmbientParticleSettings> ambientParticle = this.getBiome_(pos.getX(), pos.getY(), pos.getZ()).value().getAmbientParticle();
             if (ambientParticle.isPresent()) {
                 AmbientParticleSettings settings = ambientParticle.get();
                 if (settings.canSpawn(this.random)) {

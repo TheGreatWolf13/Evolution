@@ -62,11 +62,12 @@ public abstract class MixinEntityRenderDispatcher {
                                           double z,
                                           float size,
                                           float weight) {
-        BlockPos posBelow = pos.below();
-        BlockState stateBelow = level.getBlockState(posBelow);
-        if (stateBelow.getRenderShape() == RenderShape.INVISIBLE || level.getMaxLocalRawBrightness(pos) <= 3) {
+        BlockState stateBelow = level.getBlockState_(pos.getX(), pos.getY() - 1, pos.getZ());
+        int brightness = level.getMaxLocalRawBrightness_(pos.getX(), pos.getY(), pos.getZ());
+        if (stateBelow.getRenderShape() == RenderShape.INVISIBLE || brightness <= 3) {
             return;
         }
+        BlockPos posBelow = pos.below();
         if (!stateBelow.isCollisionShapeFullBlock(level, posBelow)) {
             return;
         }
@@ -74,7 +75,7 @@ public abstract class MixinEntityRenderDispatcher {
         if (shape.isEmpty()) {
             return;
         }
-        float f = LightTextureEv.getLightBrightness(level, level.getMaxLocalRawBrightness(pos));
+        float f = LightTextureEv.getLightBrightness(level, brightness);
         float alpha = weight * 0.5f * f;
         if (alpha >= 0.0F) {
             if (alpha > 1.0F) {
