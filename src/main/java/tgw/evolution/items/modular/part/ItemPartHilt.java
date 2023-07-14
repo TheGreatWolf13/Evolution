@@ -13,7 +13,7 @@ public class ItemPartHilt extends ItemPart<PartTypes.Hilt, ItemPartHilt, PartHil
     }
 
     @Override
-    protected PartHilt createNew() {
+    public PartHilt createNew() {
         return new PartHilt();
     }
 
@@ -33,8 +33,8 @@ public class ItemPartHilt extends ItemPart<PartTypes.Hilt, ItemPartHilt, PartHil
     }
 
     @Override
-    protected PartHilt getPartCap(ItemStack stack) {
-        return PartHilt.get(stack);
+    protected PartHilt getPartCap() {
+        return new PartHilt();
     }
 
     @Override

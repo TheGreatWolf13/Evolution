@@ -105,9 +105,8 @@ public class BlockKnapping extends BlockPhysics implements IReplaceable, IRockVa
         return true;
     }
 
-    @Nullable
     @Override
-    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+    public @Nullable BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new TEKnapping(pos, state);
     }
 

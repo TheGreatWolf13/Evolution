@@ -41,9 +41,8 @@ public class ItemFirewood extends ItemGenericPlaceable {
         return block instanceof BlockFirewoodPile;
     }
 
-    @Nullable
     @Override
-    public BlockState getCustomState(BlockPlaceContext context) {
+    public @Nullable BlockState getCustomState(BlockPlaceContext context) {
         Level level = context.getLevel();
         BlockPos pos = context.getClickedPos();
         BlockState state = level.getBlockState(pos);
@@ -54,10 +53,9 @@ public class ItemFirewood extends ItemGenericPlaceable {
         return null;
     }
 
-    @Nullable
     @Override
-    public BlockState getSneakingState(BlockPlaceContext context) {
-        return EvolutionBlocks.FIREWOOD_PILE.get().defaultBlockState().setValue(DIRECTION_HORIZONTAL, context.getHorizontalDirection());
+    public @Nullable BlockState getSneakingState(BlockPlaceContext context) {
+        return EvolutionBlocks.FIREWOOD_PILE.defaultBlockState().setValue(DIRECTION_HORIZONTAL, context.getHorizontalDirection());
     }
 
     public WoodVariant getVariant() {

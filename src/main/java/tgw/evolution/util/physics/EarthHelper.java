@@ -4,11 +4,11 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
+import tgw.evolution.client.renderer.DimensionOverworld;
 import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.math.Vec3f;
 import tgw.evolution.util.time.Time;
-import tgw.evolution.world.dimension.DimensionOverworld;
 
 public final class EarthHelper {
 

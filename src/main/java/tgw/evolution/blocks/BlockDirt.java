@@ -8,7 +8,6 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Material;
-import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionSounds;
 import tgw.evolution.util.constants.RockVariant;
@@ -24,12 +23,12 @@ public class BlockDirt extends BlockPhysics implements IRockVariant, ISloppable 
 
     @Override
     public boolean canSlope(BlockGetter level, BlockPos pos) {
-        Block blockUp = BlockUtils.getBlockState(level, pos.getX(), pos.getY() + 1, pos.getZ()).getBlock();
+        Block blockUp = level.getBlockState_(pos.getX(), pos.getY() + 1, pos.getZ()).getBlock();
         if (blockUp == this.variant.get(EvolutionBlocks.GRASSES)) {
             return false;
         }
         return blockUp != this ||
-               BlockUtils.getBlockState(level, pos.getX(), pos.getY() + 2, pos.getZ()).getBlock() != this.variant.get(EvolutionBlocks.GRASSES);
+               level.getBlockState_(pos.getX(), pos.getY() + 2, pos.getZ()).getBlock() != this.variant.get(EvolutionBlocks.GRASSES);
     }
 
     @Override
@@ -39,7 +38,7 @@ public class BlockDirt extends BlockPhysics implements IRockVariant, ISloppable 
 
     @Override
     public SoundEvent fallingSound() {
-        return EvolutionSounds.SOIL_COLLAPSE.get();
+        return EvolutionSounds.SOIL_COLLAPSE;
     }
 
     @Override

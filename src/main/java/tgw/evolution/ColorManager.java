@@ -10,7 +10,6 @@ import net.minecraft.world.level.FoliageColor;
 import net.minecraft.world.level.GrassColor;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.block.Block;
-import net.minecraftforge.registries.RegistryObject;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.items.IItemTemperature;
@@ -25,16 +24,8 @@ public final class ColorManager {
     private ColorManager() {
     }
 
-    private static void register(BlockColors colors, BlockColor color, RegistryObject<Block> block) {
-        colors.register(color, block.get());
-    }
-
     private static void register(BlockColors colors, BlockColor color, Block block) {
         colors.register(color, block);
-    }
-
-    private static void register(ItemColors colors, ItemColor color, RegistryObject<Block> block) {
-        colors.register(color, block.get());
     }
 
     private static void register(ItemColors colors, ItemColor color, ItemLike item) {
@@ -122,6 +113,6 @@ public final class ColorManager {
             }
             register(colors, leaves, wood.get(EvolutionItems.LEAVES));
         }
-        register(colors, temperature, EvolutionItems.INGOT_COPPER.get());
+        register(colors, temperature, EvolutionItems.INGOT_COPPER);
     }
 }

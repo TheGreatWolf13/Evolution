@@ -71,7 +71,7 @@ public class BlockMolding extends BlockGeneric implements IReplaceable, EntityBl
 
     @Override
     public ItemStack getCloneItemStack(BlockState state, HitResult hitResult, BlockGetter level, BlockPos pos, Player player) {
-        return new ItemStack(EvolutionItems.CLAYBALL.get());
+        return new ItemStack(EvolutionItems.CLAYBALL);
     }
 
     @Override
@@ -108,27 +108,15 @@ public class BlockMolding extends BlockGeneric implements IReplaceable, EntityBl
         }
     }
 
-    @Nullable
     @Override
-    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+    public @Nullable BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new TEMolding(pos, state);
-    }
-
-    @Override
-    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
-        if (!state.equals(newState)) {
-            TEMolding tile = (TEMolding) level.getBlockEntity(pos);
-            if (tile != null) {
-                tile.sendRenderUpdate();
-            }
-        }
-        super.onRemove(state, level, pos, newState, isMoving);
     }
 
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
         int layers = state.getValue(LAYERS_1_5);
-        if (player.getItemInHand(hand).getItem() == EvolutionItems.CLAYBALL.get()) {
+        if (player.getItemInHand(hand).getItem() == EvolutionItems.CLAYBALL) {
             if (layers < 5) {
                 level.setBlockAndUpdate(pos, state.setValue(LAYERS_1_5, layers + 1));
                 TEMolding tile = (TEMolding) level.getBlockEntity(pos);
@@ -180,11 +168,10 @@ public class BlockMolding extends BlockGeneric implements IReplaceable, EntityBl
                     level.setBlockAndUpdate(pos, state.setValue(LAYERS_1_5, layers - count));
                 }
                 if (!level.isClientSide) {
-                    dropItemStack(level, pos, new ItemStack(EvolutionItems.CLAYBALL.get(), count));
+                    dropItemStack(level, pos, new ItemStack(EvolutionItems.CLAYBALL, count));
                 }
             }
         }
-        tile.sendRenderUpdate();
         tile.checkPatterns();
         return InteractionResult.SUCCESS;
     }

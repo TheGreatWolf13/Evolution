@@ -6,8 +6,8 @@ import net.minecraft.world.level.block.Block;
 import tgw.evolution.Evolution;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.util.UnregisteredFeatureException;
-import tgw.evolution.util.collection.B2RMap;
-import tgw.evolution.util.collection.B2ROpenHashMap;
+import tgw.evolution.util.collection.maps.B2RHashMap;
+import tgw.evolution.util.collection.maps.B2RMap;
 import tgw.evolution.util.math.MathHelper;
 
 public enum MetalVariant {
@@ -17,7 +17,7 @@ public enum MetalVariant {
     public static final Byte2ReferenceMap<MetalVariant> REGISTRY;
 
     static {
-        B2RMap<MetalVariant> map = new B2ROpenHashMap<>();
+        B2RMap<MetalVariant> map = new B2RHashMap<>();
         for (MetalVariant variant : VALUES) {
             if (map.put(variant.id, variant) != null) {
                 throw new IllegalStateException("MetalVariant " + variant + " has duplicate id: " + variant.id);
@@ -30,8 +30,7 @@ public enum MetalVariant {
     private final int density;
     private final float frictionCoef;
     private final float hardness;
-    @HarvestLevel
-    private final int harvestLevel;
+    private final @HarvestLevel int harvestLevel;
     private final byte id;
     private final boolean oxidizes;
     private final float resistance;
@@ -54,10 +53,10 @@ public enum MetalVariant {
         switch (this) {
             case COPPER -> {
                 return switch (oxidation) {
-                    case NONE -> EvolutionBlocks.BLOCK_METAL_COPPER.get();
-                    case EXPOSED -> EvolutionBlocks.BLOCK_METAL_COPPER_E.get();
-                    case WEATHERED -> EvolutionBlocks.BLOCK_METAL_COPPER_W.get();
-                    case OXIDIZED -> EvolutionBlocks.BLOCK_METAL_COPPER_O.get();
+                    case NONE -> EvolutionBlocks.BLOCK_METAL_COPPER;
+                    case EXPOSED -> EvolutionBlocks.BLOCK_METAL_COPPER_E;
+                    case WEATHERED -> EvolutionBlocks.BLOCK_METAL_COPPER_W;
+                    case OXIDIZED -> EvolutionBlocks.BLOCK_METAL_COPPER_O;
                 };
             }
             default -> throw new UnregisteredFeatureException("Unregistered variant: " + this);
@@ -82,8 +81,7 @@ public enum MetalVariant {
         return this.hardness;
     }
 
-    @HarvestLevel
-    public int getHarvestLevel() {
+    public @HarvestLevel int getHarvestLevel() {
         return this.harvestLevel;
     }
 

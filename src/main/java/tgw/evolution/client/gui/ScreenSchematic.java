@@ -13,6 +13,7 @@ import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
 import org.lwjgl.glfw.GLFW;
+import tgw.evolution.EvolutionClient;
 import tgw.evolution.blocks.tileentities.SchematicMode;
 import tgw.evolution.blocks.tileentities.TESchematic;
 import tgw.evolution.client.gui.widgets.AdvEditBox;
@@ -20,7 +21,6 @@ import tgw.evolution.client.util.Key;
 import tgw.evolution.client.util.Modifiers;
 import tgw.evolution.client.util.MouseButton;
 import tgw.evolution.init.EvolutionBlocks;
-import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.network.PacketCSUpdateSchematicBlock;
 
@@ -73,7 +73,7 @@ public class ScreenSchematic extends Screen {
     private AdvEditBox sizeZEdit;
 
     public ScreenSchematic(TESchematic tile) {
-        super(new TranslatableComponent(EvolutionBlocks.SCHEMATIC_BLOCK.get().getDescriptionId()));
+        super(new TranslatableComponent(EvolutionBlocks.SCHEMATIC_BLOCK.getDescriptionId()));
         this.tile = tile;
         this.decimalFormat.setDecimalFormatSymbols(DecimalFormatSymbols.getInstance(Locale.ROOT));
     }
@@ -377,19 +377,19 @@ public class ScreenSchematic extends Screen {
                                      parseCoordinate(this.sizeZEdit.getValue()));
         float integrity = parseIntegrity(this.integrityEdit.getValue());
         long seed = parseSeed(this.seedEdit.getValue());
-        EvolutionNetwork.sendToServer(new PacketCSUpdateSchematicBlock(this.tile.getBlockPos(),
-                                                                       command,
-                                                                       this.tile.getMode(),
-                                                                       this.nameEdit.getValue(),
-                                                                       pos,
-                                                                       size,
-                                                                       this.tile.getMirror(),
-                                                                       this.tile.getRotation(),
-                                                                       this.tile.ignoresEntities(),
-                                                                       this.tile.showsAir(),
-                                                                       this.tile.showsBoundingBox(),
-                                                                       integrity,
-                                                                       seed));
+        EvolutionClient.sendToServer(new PacketCSUpdateSchematicBlock(this.tile.getBlockPos(),
+                                                                      command,
+                                                                      this.tile.getMode(),
+                                                                      this.nameEdit.getValue(),
+                                                                      pos,
+                                                                      size,
+                                                                      this.tile.getMirror(),
+                                                                      this.tile.getRotation(),
+                                                                      this.tile.ignoresEntities(),
+                                                                      this.tile.showsAir(),
+                                                                      this.tile.showsBoundingBox(),
+                                                                      integrity,
+                                                                      seed));
         return true;
     }
 

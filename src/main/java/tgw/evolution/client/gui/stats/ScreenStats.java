@@ -3,8 +3,6 @@ package tgw.evolution.client.gui.stats;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
-import it.unimi.dsi.fastutil.objects.Reference2ReferenceMap;
-import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
@@ -41,14 +39,19 @@ import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.stats.EvolutionStatsCounter;
 import tgw.evolution.stats.IEvoStatFormatter;
-import tgw.evolution.util.collection.*;
+import tgw.evolution.util.collection.lists.OArrayList;
+import tgw.evolution.util.collection.lists.OList;
+import tgw.evolution.util.collection.maps.R2OHashMap;
+import tgw.evolution.util.collection.maps.R2OMap;
+import tgw.evolution.util.collection.sets.RHashSet;
+import tgw.evolution.util.collection.sets.RSet;
 
 import java.util.Comparator;
 import java.util.Map;
 
 public class ScreenStats extends Screen implements StatsUpdateListener {
 
-    private final R2OMap<Item, ItemStack> cachedModularItems = new R2OOpenHashMap<>();
+    private final R2OMap<Item, ItemStack> cachedModularItems = new R2OHashMap<>();
     private final ResourceLocation resDamageIcons = Evolution.getResource("textures/gui/damage_icons.png");
     private final ResourceLocation resIcons = Evolution.getResource("textures/gui/stats_icons.png");
     private final EvolutionStatsCounter stats;
@@ -65,8 +68,7 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
     private ListDamageStats damageStats;
     private ListDeathStats deathStats;
     private int displayId;
-    @Nullable
-    private ObjectSelectionList<?> displaySlot;
+    private @Nullable ObjectSelectionList<?> displaySlot;
     private ListDistanceStats distanceStats;
     private boolean doesGuiPauseGame = true;
     private ListCustomStats generalStats;
@@ -78,15 +80,15 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
     public ScreenStats(StatsCounter statsCounter) {
         super(new TranslatableComponent("gui.stats"));
         this.stats = (EvolutionStatsCounter) statsCounter;
-        this.cachedModularItems.put(EvolutionItems.MODULAR_TOOL.get(), EvolutionItems.MODULAR_TOOL.get().getDefaultInstance());
-        this.cachedModularItems.put(EvolutionItems.PART_BLADE.get(), EvolutionItems.PART_BLADE.get().getDefaultInstance());
-        this.cachedModularItems.put(EvolutionItems.PART_GUARD.get(), EvolutionItems.PART_GUARD.get().getDefaultInstance());
-        this.cachedModularItems.put(EvolutionItems.PART_HALFHEAD.get(), EvolutionItems.PART_HALFHEAD.get().getDefaultInstance());
-        this.cachedModularItems.put(EvolutionItems.PART_HANDLE.get(), EvolutionItems.PART_HANDLE.get().getDefaultInstance());
-        this.cachedModularItems.put(EvolutionItems.PART_HEAD.get(), EvolutionItems.PART_HEAD.get().getDefaultInstance());
-        this.cachedModularItems.put(EvolutionItems.PART_GRIP.get(), EvolutionItems.PART_GRIP.get().getDefaultInstance());
-        this.cachedModularItems.put(EvolutionItems.PART_POLE.get(), EvolutionItems.PART_POLE.get().getDefaultInstance());
-        this.cachedModularItems.put(EvolutionItems.PART_POMMEL.get(), EvolutionItems.PART_POMMEL.get().getDefaultInstance());
+        this.cachedModularItems.put(EvolutionItems.MODULAR_TOOL, EvolutionItems.MODULAR_TOOL.getDefaultInstance());
+        this.cachedModularItems.put(EvolutionItems.PART_BLADE, EvolutionItems.PART_BLADE.getDefaultInstance());
+        this.cachedModularItems.put(EvolutionItems.PART_GUARD, EvolutionItems.PART_GUARD.getDefaultInstance());
+        this.cachedModularItems.put(EvolutionItems.PART_HALFHEAD, EvolutionItems.PART_HALFHEAD.getDefaultInstance());
+        this.cachedModularItems.put(EvolutionItems.PART_HANDLE, EvolutionItems.PART_HANDLE.getDefaultInstance());
+        this.cachedModularItems.put(EvolutionItems.PART_HEAD, EvolutionItems.PART_HEAD.getDefaultInstance());
+        this.cachedModularItems.put(EvolutionItems.PART_GRIP, EvolutionItems.PART_GRIP.getDefaultInstance());
+        this.cachedModularItems.put(EvolutionItems.PART_POLE, EvolutionItems.PART_POLE.getDefaultInstance());
+        this.cachedModularItems.put(EvolutionItems.PART_POMMEL, EvolutionItems.PART_POMMEL.getDefaultInstance());
         this.cachedModularItems.trimCollection();
         this.refreshCacheCooldown = 30;
     }
@@ -138,8 +140,7 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
         RenderSystem.disableBlend();
     }
 
-    @Nullable
-    public ObjectSelectionList<?> getDisplaySlot() {
+    public @Nullable ObjectSelectionList<?> getDisplaySlot() {
         return this.displaySlot;
     }
 
@@ -332,13 +333,12 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
 
     class ListDamageStats extends ObjectSelectionList<ScreenStats.ListDamageStats.Entry> {
         protected final Comparator<EvolutionDamage.Type> comparator = new ListComparator();
-        protected final RList<EvolutionDamage.Type> damageList;
+        protected final OList<EvolutionDamage.Type> damageList;
         protected final OList<Map<EvolutionDamage.Type, ResourceLocation>> damageStatList;
         private final int[] headerTexture = {1, 2, 3};
         protected int currentHeader = -1;
         protected int sortOrder;
-        @Nullable
-        protected Map<EvolutionDamage.Type, ResourceLocation> sorting;
+        protected @Nullable Map<EvolutionDamage.Type, ResourceLocation> sorting;
 
         public ListDamageStats(Minecraft mc) {
             super(mc, ScreenStats.this.width, ScreenStats.this.height, 32, ScreenStats.this.height - 64, 20);
@@ -347,7 +347,7 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             this.damageStatList.add(EvolutionStats.DAMAGE_RESISTED_BY_TYPE);
             this.damageStatList.add(EvolutionStats.DAMAGE_TAKEN_BY_TYPE);
             this.setRenderHeader(true, 20);
-            this.damageList = new RArrayList<>(EvolutionDamage.ALL);
+            this.damageList = new OArrayList<>(EvolutionDamage.ALL);
             for (int i = 0; i < this.damageList.size(); i++) {
                 //noinspection ObjectAllocationInLoop
                 this.addEntry(new ScreenStats.ListDamageStats.Entry());
@@ -916,22 +916,24 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
 
     class ListMobStats extends ObjectSelectionList<ScreenStats.ListMobStats.Entry> {
 
-        protected final RList<StatType<EntityType<?>>> statTypes;
+        protected final OList<StatType<EntityType<?>>> statTypes;
         private final Comparator<EntityType<?>> comparator = new ListMobStats.ListComparator();
-        private final Reference2ReferenceMap<EntityType<?>, LivingEntity> entities = new Reference2ReferenceOpenHashMap<>();
-        private final RList<EntityType<?>> entityList;
+        private final R2OMap<EntityType<?>, LivingEntity> entities = new R2OHashMap<>();
+        private final OList<EntityType<?>> entityList;
         private final int[] headerTexture = {1, 2, 3, 4};
         protected int currentHeader = -1;
         private int sortOrder;
-        @Nullable
-        private StatType<?> sorting;
+        private @Nullable StatType<?> sorting;
 
         public ListMobStats(Minecraft mc) {
             super(mc, ScreenStats.this.width, ScreenStats.this.height, 32, ScreenStats.this.height - 64, 9 * 6);
-            this.statTypes = new RArrayList<>(Stats.ENTITY_KILLED, Stats.ENTITY_KILLED_BY, EvolutionStats.DAMAGE_DEALT.get(),
-                                              EvolutionStats.DAMAGE_TAKEN.get());
+            this.statTypes = new OArrayList<>();
+            this.statTypes.add(Stats.ENTITY_KILLED);
+            this.statTypes.add(Stats.ENTITY_KILLED_BY);
+            this.statTypes.add(EvolutionStats.DAMAGE_DEALT);
+            this.statTypes.add(EvolutionStats.DAMAGE_TAKEN);
             this.setRenderHeader(true, 20);
-            this.entityList = new RArrayList<>();
+            this.entityList = new OArrayList<>();
             for (EntityType<?> entityType : Registry.ENTITY_TYPE) {
                 if (this.shouldAddEntry(entityType)) {
                     this.entityList.add(entityType);
@@ -1031,10 +1033,10 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             if (ScreenStats.this.stats.getValueLong(Stats.ENTITY_KILLED_BY.get(type)) > 0) {
                 return true;
             }
-            if (ScreenStats.this.stats.getValueLong(EvolutionStats.DAMAGE_DEALT.get().get(type)) > 0) {
+            if (ScreenStats.this.stats.getValueLong(EvolutionStats.DAMAGE_DEALT.get(type)) > 0) {
                 return true;
             }
-            return ScreenStats.this.stats.getValueLong(EvolutionStats.DAMAGE_TAKEN.get().get(type)) > 0;
+            return ScreenStats.this.stats.getValueLong(EvolutionStats.DAMAGE_TAKEN.get(type)) > 0;
         }
 
         protected void sortBy(StatType<?> statType) {
@@ -1058,12 +1060,12 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             }
 
             private static String getDmgDealtValue(String plural, long dmgDealt) {
-                String s = EvolutionStats.DAMAGE_DEALT.get().getTranslationKey();
+                String s = EvolutionStats.DAMAGE_DEALT.getTranslationKey();
                 return dmgDealt == 0 ? I18n.get(s + ".none", plural) : I18n.get(s, EvolutionStats.DAMAGE.format(dmgDealt), plural);
             }
 
             private static String getDmgTakenValue(String plural, long dmgTaken) {
-                String s = EvolutionStats.DAMAGE_TAKEN.get().getTranslationKey();
+                String s = EvolutionStats.DAMAGE_TAKEN.getTranslationKey();
                 return dmgTaken == 0 ? I18n.get(s + ".none", plural) : I18n.get(s, EvolutionStats.DAMAGE.format(dmgTaken), plural);
             }
 
@@ -1107,8 +1109,8 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
                 if (entity != null) {
                     GUIUtils.drawEntityOnScreen(x - 30, y + 45, GUIUtils.getEntityScale(entity, 1.0f, 40, 35), mouseX, mouseY, entity);
                 }
-                long dmgDealt = ScreenStats.this.stats.getValueLong(EvolutionStats.DAMAGE_DEALT.get(), type);
-                long dmgTaken = ScreenStats.this.stats.getValueLong(EvolutionStats.DAMAGE_TAKEN.get(), type);
+                long dmgDealt = ScreenStats.this.stats.getValueLong(EvolutionStats.DAMAGE_DEALT, type);
+                long dmgTaken = ScreenStats.this.stats.getValueLong(EvolutionStats.DAMAGE_TAKEN, type);
                 long killed = ScreenStats.this.stats.getValueLong(Stats.ENTITY_KILLED, type);
                 long killedBy = ScreenStats.this.stats.getValueLong(Stats.ENTITY_KILLED_BY, type);
                 String entityName = I18n.get(Util.makeDescriptionId("entity", EntityType.getKey(type)));
@@ -1154,23 +1156,27 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
     }
 
     class ListStats extends ObjectSelectionList<ScreenStats.ListStats.Entry> {
-        protected final RList<StatType<Block>> blockStatList;
+        protected final OList<StatType<Block>> blockStatList;
         protected final Comparator<Item> comparator = new ListComparator();
-        protected final RList<Item> itemList;
-        protected final RList<StatType<Item>> itemStatList;
+        protected final OList<Item> itemList;
+        protected final OList<StatType<Item>> itemStatList;
         private final int[] headerTexture = {3, 4, 1, 2, 5, 6};
         protected int currentHeader = -1;
         protected int sortOrder;
-        @Nullable
-        protected StatType<?> sorting;
+        protected @Nullable StatType<?> sorting;
 
         public ListStats(Minecraft mc) {
             super(mc, ScreenStats.this.width, ScreenStats.this.height, 32, ScreenStats.this.height - 64, 20);
-            this.blockStatList = new RArrayList<>();
+            this.blockStatList = new OArrayList<>();
             this.blockStatList.add(Stats.BLOCK_MINED);
-            this.itemStatList = new RArrayList<>(Stats.ITEM_BROKEN, Stats.ITEM_CRAFTED, Stats.ITEM_USED, Stats.ITEM_PICKED_UP, Stats.ITEM_DROPPED);
+            this.itemStatList = new OArrayList<>();
+            this.itemStatList.add(Stats.ITEM_BROKEN);
+            this.itemStatList.add(Stats.ITEM_CRAFTED);
+            this.itemStatList.add(Stats.ITEM_USED);
+            this.itemStatList.add(Stats.ITEM_PICKED_UP);
+            this.itemStatList.add(Stats.ITEM_DROPPED);
             this.setRenderHeader(true, 20);
-            RSet<Item> set = new ROpenHashSet<>();
+            RSet<Item> set = new RHashSet<>();
             allItemInRegistry:
             for (Item item : Registry.ITEM) {
                 for (int i = 0, l = this.itemStatList.size(); i < l; i++) {
@@ -1192,7 +1198,7 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
                 }
             }
             set.remove(Items.AIR);
-            this.itemList = new RArrayList<>(set);
+            this.itemList = new OArrayList<>(set);
             for (int i = 0; i < this.itemList.size(); i++) {
                 //noinspection ObjectAllocationInLoop
                 this.addEntry(new ScreenStats.ListStats.Entry());

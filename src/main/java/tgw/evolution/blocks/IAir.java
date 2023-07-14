@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Range;
 public interface IAir {
 
     /**
+     * Represents a position within a {@link net.minecraft.world.level.chunk.LevelChunk}.<br>
      * Bit 0 ~ 3: x <br>
      * Bit 4 ~ 7: z <br>
      * Bit 8: forceUpdate <br>

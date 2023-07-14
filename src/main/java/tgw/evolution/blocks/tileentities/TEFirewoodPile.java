@@ -2,7 +2,6 @@ package tgw.evolution.blocks.tileentities;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -14,8 +13,8 @@ import org.jetbrains.annotations.Nullable;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionTEs;
 import tgw.evolution.items.ItemFirewood;
-import tgw.evolution.util.constants.BlockFlags;
 import tgw.evolution.util.constants.WoodVariant;
+import tgw.evolution.util.math.MathHelper;
 
 import java.util.Arrays;
 
@@ -25,13 +24,13 @@ public class TEFirewoodPile extends BlockEntity {
     private byte[] firewood = new byte[16];
 
     public TEFirewoodPile(BlockPos pos, BlockState state) {
-        super(EvolutionTEs.FIREWOOD_PILE.get(), pos, state);
+        super(EvolutionTEs.FIREWOOD_PILE, pos, state);
         Arrays.fill(this.firewood, (byte) -1);
     }
 
     public void addFirewood(ItemFirewood itemInHand) {
         this.firewood[this.currentIndex++] = itemInHand.getVariant().getId();
-        this.sendRenderUpdate();
+        TEUtils.sendRenderUpdate(this);
     }
 
     public double calculateMass() {
@@ -60,8 +59,7 @@ public class TEFirewoodPile extends BlockEntity {
         return this.firewood;
     }
 
-    @Nullable
-    public Item getFirewoodAt(int index) {
+    public @Nullable Item getFirewoodAt(int index) {
         byte id = this.firewood[index];
         if (id == -1) {
             return null;
@@ -69,9 +67,8 @@ public class TEFirewoodPile extends BlockEntity {
         return WoodVariant.byId(id).get(EvolutionItems.FIREWOODS);
     }
 
-    @Nullable
     @Override
-    public ClientboundBlockEntityDataPacket getUpdatePacket() {
+    public @Nullable ClientboundBlockEntityDataPacket getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
     }
 
@@ -86,27 +83,10 @@ public class TEFirewoodPile extends BlockEntity {
     public void load(CompoundTag compound) {
         super.load(compound);
         this.firewood = compound.getByteArray("Firewood");
-        int i;
-        for (i = 0; i < 16; i++) {
-            if (this.firewood[i] == -1) {
-                break;
-            }
-        }
-        this.currentIndex = i;
+        this.currentIndex = MathHelper.indexOfOrLength(this.firewood, (byte) -1);
     }
 
-    @Override
-    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
-        this.handleUpdateTag(packet.getTag());
-        assert this.level != null;
-        this.level.sendBlockUpdated(this.worldPosition,
-                                    this.level.getBlockState(this.worldPosition),
-                                    this.level.getBlockState(this.worldPosition),
-                                    BlockFlags.RERENDER);
-    }
-
-    @Nullable
-    public Item removeLastFirewood() {
+    public @Nullable Item removeLastFirewood() {
         if (this.currentIndex == 0) {
             return null;
         }
@@ -120,16 +100,6 @@ public class TEFirewoodPile extends BlockEntity {
 
     @Override
     protected void saveAdditional(CompoundTag compound) {
-        super.saveAdditional(compound);
         compound.putByteArray("Firewood", this.firewood);
-    }
-
-    public void sendRenderUpdate() {
-        this.setChanged();
-        assert this.level != null;
-        this.level.sendBlockUpdated(this.worldPosition,
-                                    this.level.getBlockState(this.worldPosition),
-                                    this.level.getBlockState(this.worldPosition),
-                                    BlockFlags.RERENDER);
     }
 }

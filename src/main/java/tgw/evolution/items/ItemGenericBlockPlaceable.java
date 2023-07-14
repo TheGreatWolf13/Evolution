@@ -31,8 +31,7 @@ public abstract class ItemGenericBlockPlaceable extends ItemBlock {
 
     public abstract boolean customCondition(Block blockAtPlacing, Block blockClicking);
 
-    @Nullable
-    public abstract BlockState getCustomState(BlockPlaceContext context);
+    public abstract @Nullable BlockState getCustomState(BlockPlaceContext context);
 
     public abstract BlockState getSneakingState(BlockPlaceContext context);
 
@@ -76,10 +75,10 @@ public abstract class ItemGenericBlockPlaceable extends ItemBlock {
             if (player.isCrouching()) {
                 this.sneakingAction(context);
             }
-            SoundType soundtype = stateAtPos.getSoundType(level, pos, player);
+            SoundType soundtype = stateAtPos.getSoundType();
             level.playSound(null,
                             pos,
-                            this.getPlaceSound(stateAtPos, level, pos, player),
+                            this.getPlaceSound(stateAtPos),
                             SoundSource.BLOCKS,
                             (soundtype.getVolume() + 1.0F) / 2.0F,
                             soundtype.getPitch() * 0.8F);

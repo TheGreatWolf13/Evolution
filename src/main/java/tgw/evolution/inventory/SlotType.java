@@ -1,5 +1,6 @@
 package tgw.evolution.inventory;
 
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EquipmentSlot;
 
 public enum SlotType {
@@ -40,6 +41,13 @@ public enum SlotType {
             case LEGS -> ARMOR_LEGS;
             case CHEST -> ARMOR_CHEST;
             case HEAD -> ARMOR_HEAD;
+        };
+    }
+
+    public static EquipmentSlot equipFromHand(InteractionHand hand) {
+        return switch (hand) {
+            case MAIN_HAND -> EquipmentSlot.MAINHAND;
+            case OFF_HAND -> EquipmentSlot.OFFHAND;
         };
     }
 

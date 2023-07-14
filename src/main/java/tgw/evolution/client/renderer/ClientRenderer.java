@@ -35,11 +35,9 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL14;
-import tgw.evolution.capabilities.food.HungerStats;
-import tgw.evolution.capabilities.food.IHunger;
-import tgw.evolution.capabilities.temperature.TemperatureClient;
-import tgw.evolution.capabilities.thirst.IThirst;
-import tgw.evolution.capabilities.thirst.ThirstStats;
+import tgw.evolution.capabilities.player.CapabilityHunger;
+import tgw.evolution.capabilities.player.CapabilityThirst;
+import tgw.evolution.capabilities.player.TemperatureClient;
 import tgw.evolution.client.audio.SoundEntityEmitted;
 import tgw.evolution.client.gui.EvolutionGui;
 import tgw.evolution.client.gui.GUIUtils;
@@ -48,16 +46,17 @@ import tgw.evolution.client.util.Blending;
 import tgw.evolution.client.util.ClientEffectInstance;
 import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.events.ClientEvents;
-import tgw.evolution.init.*;
+import tgw.evolution.init.EvolutionEffects;
+import tgw.evolution.init.EvolutionItems;
+import tgw.evolution.init.EvolutionResources;
+import tgw.evolution.init.EvolutionSounds;
 import tgw.evolution.items.IDrink;
 import tgw.evolution.items.IFood;
 import tgw.evolution.items.IMelee;
 import tgw.evolution.network.PacketCSPlaySoundEntityEmitted;
-import tgw.evolution.patches.IEntityPatch;
-import tgw.evolution.patches.ILivingEntityPatch;
-import tgw.evolution.patches.IPoseStackPatch;
-import tgw.evolution.util.collection.OArrayList;
-import tgw.evolution.util.collection.OList;
+import tgw.evolution.patches.PatchLivingEntity;
+import tgw.evolution.util.collection.lists.OArrayList;
+import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.hitbox.Hitbox;
 import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 import tgw.evolution.util.math.MathHelper;
@@ -137,13 +136,13 @@ public class ClientRenderer {
                                                      float alpha,
                                                      T entity,
                                                      float partialTicks) {
-        HitboxEntity hitboxes = ((IEntityPatch) entity).getHitboxes();
+        HitboxEntity<T> hitboxes = (HitboxEntity<T>) entity.getHitboxes();
         if (hitboxes == null) {
             return;
         }
         assert Minecraft.getInstance().player != null;
-        boolean renderAll = Minecraft.getInstance().player.getMainHandItem().getItem() == EvolutionItems.DEBUG_ITEM.get() ||
-                            Minecraft.getInstance().player.getOffhandItem().getItem() == EvolutionItems.DEBUG_ITEM.get();
+        boolean renderAll = Minecraft.getInstance().player.getMainHandItem().getItem() == EvolutionItems.DEBUG_ITEM ||
+                            Minecraft.getInstance().player.getOffhandItem().getItem() == EvolutionItems.DEBUG_ITEM;
         if (!renderAll) {
             hitboxes.drawBox(hitbox, entity, partialTicks, buffer, matrices, x, y, z, red, green, blue, alpha);
         }
@@ -246,7 +245,7 @@ public class ClientRenderer {
         return Mth.ceil(currentHealth / 2.5f);
     }
 
-    public static boolean shouldCauseReequipAnimation(ItemStack from, ItemStack to, int slot) {
+    public static boolean shouldReequip(ItemStack from, ItemStack to, int slot) {
         boolean fromInvalid = from.isEmpty();
         boolean toInvalid = to.isEmpty();
         if (fromInvalid && toInvalid) {
@@ -392,9 +391,8 @@ public class ClientRenderer {
                     internalMat.pushPose();
                     internalMat.translate(width / 2.0, height / 2.0, this.mc.gui.getBlitOffset());
                     Camera camera = this.mc.gameRenderer.getMainCamera();
-                    IPoseStackPatch internalMatExt = MathHelper.getExtendedMatrix(internalMat);
-                    internalMatExt.mulPoseX(-camera.getXRot());
-                    internalMatExt.mulPoseY(camera.getYRot());
+                    internalMat.mulPoseX(-camera.getXRot());
+                    internalMat.mulPoseY(camera.getYRot());
                     internalMat.scale(-1.0f, -1.0f, -1.0f);
                     RenderSystem.applyModelViewMatrix();
                     RenderSystem.renderCrosshair(10);
@@ -463,7 +461,7 @@ public class ClientRenderer {
                     GUIUtils.endBlitBatch();
                     //FollowUp Indicator
                     if (EvolutionConfig.CLIENT.followUps.get() && this.client.shouldRenderSpecialAttack()) {
-                        ILivingEntityPatch player = (ILivingEntityPatch) this.mc.player;
+                        PatchLivingEntity player = (PatchLivingEntity) this.mc.player;
                         IMelee.IAttackType type = player.getSpecialAttackType();
                         if (type != null) {
                             if (type.getFollowUps() > 0) {
@@ -695,14 +693,14 @@ public class ClientRenderer {
             holdingValue = food.getHunger();
         }
         //Values
-        IHunger hunger = HungerStats.CLIENT_INSTANCE;
+        CapabilityHunger hunger = CapabilityHunger.CLIENT_INSTANCE;
         int value = hunger.getHungerLevel();
         int extraValue = hunger.getSaturationLevel();
-        int level = HungerStats.hungerLevel(value);
-        int futureLevel = HungerStats.hungerLevel(Math.min(value + extraValue, HungerStats.HUNGER_CAPACITY));
-        int holdingLevel = HungerStats.hungerLevel(Math.min(value + extraValue + holdingValue, HungerStats.HUNGER_CAPACITY));
-        int extraLevel = HungerStats.saturationLevel(extraValue);
-        int extraHoldingLevel = HungerStats.saturationLevel(Math.min(extraValue + holdingValue, HungerStats.SATURATION_CAPACITY));
+        int level = CapabilityHunger.hungerLevel(value);
+        int futureLevel = CapabilityHunger.hungerLevel(Math.min(value + extraValue, CapabilityHunger.HUNGER_CAPACITY));
+        int holdingLevel = CapabilityHunger.hungerLevel(Math.min(value + extraValue + holdingValue, CapabilityHunger.HUNGER_CAPACITY));
+        int extraLevel = CapabilityHunger.saturationLevel(extraValue);
+        int extraHoldingLevel = CapabilityHunger.saturationLevel(Math.min(extraValue + holdingValue, CapabilityHunger.SATURATION_CAPACITY));
         boolean shake = this.client.getTickCount() % Math.max(level * level, 1) == 0;
         //Flash
         if (level > this.lastDisplayedHunger) {
@@ -827,14 +825,14 @@ public class ClientRenderer {
             holdingValue = drink.getThirst();
         }
         //Values
-        IThirst thirst = ThirstStats.CLIENT_INSTANCE;
+        CapabilityThirst thirst = CapabilityThirst.CLIENT_INSTANCE;
         value = thirst.getThirstLevel();
         extraValue = thirst.getHydrationLevel();
-        level = ThirstStats.thirstLevel(value);
-        futureLevel = ThirstStats.thirstLevel(Math.min(value + extraValue, ThirstStats.THIRST_CAPACITY));
-        holdingLevel = ThirstStats.thirstLevel(Math.min(value + extraValue + holdingValue, ThirstStats.THIRST_CAPACITY));
-        extraLevel = ThirstStats.hydrationLevel(extraValue);
-        extraHoldingLevel = ThirstStats.hydrationLevel(Math.min(extraValue + holdingValue, ThirstStats.HYDRATION_CAPACITY));
+        level = CapabilityThirst.thirstLevel(value);
+        futureLevel = CapabilityThirst.thirstLevel(Math.min(value + extraValue, CapabilityThirst.THIRST_CAPACITY));
+        holdingLevel = CapabilityThirst.thirstLevel(Math.min(value + extraValue + holdingValue, CapabilityThirst.THIRST_CAPACITY));
+        extraLevel = CapabilityThirst.hydrationLevel(extraValue);
+        extraHoldingLevel = CapabilityThirst.hydrationLevel(Math.min(extraValue + holdingValue, CapabilityThirst.HYDRATION_CAPACITY));
         shake = this.client.getTickCount() % Math.max(level * level, 1) == 0;
         //Flash
         if (level > this.lastDisplayedThirst) {
@@ -864,7 +862,7 @@ public class ClientRenderer {
             extraHoldingIcon += 9 * 4;
         }
         background = 0;
-        if (this.mc.player.hasEffect(EvolutionEffects.THIRST.get())) {
+        if (this.mc.player.hasEffect(EvolutionEffects.THIRST)) {
             icon += 9 * 4;
             background = 9 * 2;
         }
@@ -988,7 +986,7 @@ public class ClientRenderer {
         if (player.hasEffect(MobEffects.POISON)) {
             icon = 9 * 10;
         }
-        else if (player.hasEffect(EvolutionEffects.ANAEMIA.get())) {
+        else if (player.hasEffect(EvolutionEffects.ANAEMIA)) {
             icon = 9 * 18;
         }
         int absorbRemaining = roundToHearts(absorb);
@@ -1099,7 +1097,7 @@ public class ClientRenderer {
     }
 
     public void renderTemperature(PoseStack matrices, int width, int height) {
-        TemperatureClient temperature = TemperatureClient.CLIENT_INSTANCE;
+        TemperatureClient temperature = TemperatureClient.INSTANCE;
         int currentTemp = temperature.getCurrentTemperature();
         int minComf = temperature.getCurrentMinComfort() + 70;
         int maxComf = temperature.getCurrentMaxComfort() + 70;
@@ -1177,17 +1175,15 @@ public class ClientRenderer {
         ItemStack mainhandStack = player.getMainHandItem();
         ItemStack offhandStack = player.getOffhandItem();
         if (!player.isHandsBusy()) {
-            boolean requipM = shouldCauseReequipAnimation(this.mainHandStack, mainhandStack, player.getInventory().selected);
-            boolean requipO = shouldCauseReequipAnimation(this.offhandStack, offhandStack, -1);
+            boolean requipM = shouldReequip(this.mainHandStack, mainhandStack, player.getInventory().selected);
+            boolean requipO = shouldReequip(this.offhandStack, offhandStack, -1);
             if (requipM) {
                 this.client.resetCooldown(InteractionHand.MAIN_HAND);
                 if (!ItemStack.matches(this.mainHandStack, mainhandStack)) {
                     if (mainhandStack.getItem() instanceof IMelee melee && melee.shouldPlaySheatheSound(mainhandStack)) {
                         this.mc.getSoundManager()
-                               .play(new SoundEntityEmitted(this.mc.player, EvolutionSounds.SWORD_UNSHEATHE.get(), SoundSource.PLAYERS, 0.8f, 1.0f));
-                        EvolutionNetwork.sendToServer(
-                                new PacketCSPlaySoundEntityEmitted(this.mc.player, EvolutionSounds.SWORD_UNSHEATHE.get(), SoundSource.PLAYERS, 0.8f,
-                                                                   1.0f));
+                               .play(new SoundEntityEmitted(this.mc.player, EvolutionSounds.SWORD_UNSHEATHE, SoundSource.PLAYERS, 0.8f, 1.0f));
+                        player.connection.send(new PacketCSPlaySoundEntityEmitted(EvolutionSounds.SWORD_UNSHEATHE, SoundSource.PLAYERS, 0.8f, 1.0f));
                     }
                 }
             }
@@ -1199,10 +1195,8 @@ public class ClientRenderer {
                 if (!ItemStack.matches(this.offhandStack, offhandStack)) {
                     if (offhandStack.getItem() instanceof IMelee melee && melee.shouldPlaySheatheSound(offhandStack)) {
                         this.mc.getSoundManager()
-                               .play(new SoundEntityEmitted(this.mc.player, EvolutionSounds.SWORD_UNSHEATHE.get(), SoundSource.PLAYERS, 0.8f, 1.0f));
-                        EvolutionNetwork.sendToServer(
-                                new PacketCSPlaySoundEntityEmitted(this.mc.player, EvolutionSounds.SWORD_UNSHEATHE.get(), SoundSource.PLAYERS, 0.8f,
-                                                                   1.0f));
+                               .play(new SoundEntityEmitted(this.mc.player, EvolutionSounds.SWORD_UNSHEATHE, SoundSource.PLAYERS, 0.8f, 1.0f));
+                        player.connection.send(new PacketCSPlaySoundEntityEmitted(EvolutionSounds.SWORD_UNSHEATHE, SoundSource.PLAYERS, 0.8f, 1.0f));
                     }
                 }
             }

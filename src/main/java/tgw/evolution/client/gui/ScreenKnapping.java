@@ -13,10 +13,10 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
 import tgw.evolution.Evolution;
+import tgw.evolution.EvolutionClient;
 import tgw.evolution.blocks.tileentities.KnappingRecipe;
 import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.client.util.MouseButton;
-import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.network.PacketCSSetKnappingType;
 import tgw.evolution.util.constants.RockVariant;
@@ -193,7 +193,7 @@ public class ScreenKnapping extends Screen {
     }
 
     private void setTile(KnappingRecipe type) {
-        EvolutionNetwork.sendToServer(new PacketCSSetKnappingType(this.pos, type));
+        EvolutionClient.sendToServer(new PacketCSSetKnappingType(this.pos, type));
         assert this.minecraft != null;
         this.minecraft.setScreen(null);
     }

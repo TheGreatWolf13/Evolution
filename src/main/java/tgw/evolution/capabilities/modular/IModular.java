@@ -1,137 +1,62 @@
 package tgw.evolution.capabilities.modular;
 
-import it.unimi.dsi.fastutil.objects.ReferenceSet;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.FormattedText;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
-import net.minecraft.world.level.material.Material;
-import net.minecraftforge.common.util.INBTSerializable;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.UseAnim;
+import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.items.modular.ItemModular;
-import tgw.evolution.util.collection.EitherList;
+import tgw.evolution.util.collection.lists.EitherList;
 import tgw.evolution.util.constants.HarvestLevel;
 
-public interface IModular extends INBTSerializable<CompoundTag> {
+public interface IModular {
 
-    IModular NULL = new Impl();
+    void appendPartTooltip(CompoundTag tag, EitherList<FormattedText, TooltipComponent> tooltip);
 
-    void appendPartTooltip(EitherList<FormattedText, TooltipComponent> tooltip);
+    int getBarColor(CompoundTag tag);
 
-    void damage(ItemModular.DamageCause cause, @HarvestLevel int harvestLevel);
+    int getBarWidth(CompoundTag tag);
 
-    String getDescriptionId();
+    String getDescriptionId(CompoundTag tag);
 
-    ReferenceSet<Material> getEffectiveMaterials();
+    @HarvestLevel int getHarvestLevel(CompoundTag tag);
 
-    @HarvestLevel
-    int getHarvestLevel();
+    double getMass(CompoundTag tag);
 
-    double getMass();
+    int getTotalDurabilityDmg(CompoundTag tag);
 
-    int getTotalDurabilityDmg();
+    int getTotalMaxDurability(CompoundTag tag);
 
-    int getTotalMaxDurability();
+    UseAnim getUseAnimation(CompoundTag tag);
 
-    boolean isAxe();
+    <E extends LivingEntity> void hurtAndBreak(ItemStack stack,
+                                               ItemModular.DamageCause cause,
+                                               E entity,
+                                               @Nullable EquipmentSlot slot,
+                                               @HarvestLevel int harvestLevel);
 
-    boolean isBroken();
+    boolean isAxe(CompoundTag tag);
 
-    boolean isHammer();
+    boolean isBarVisible(CompoundTag tag);
 
-    boolean isShovel();
+    boolean isBroken(CompoundTag tag);
 
-    boolean isSimilar(IModular modular);
+    boolean isHammer(CompoundTag tag);
 
-    boolean isSword();
+    boolean isShovel(CompoundTag tag);
 
-    boolean isTwoHanded();
+    boolean isSword(CompoundTag tag);
 
-    final class Impl implements IModular {
+    boolean isTwoHanded(CompoundTag tag);
 
-        private final CompoundTag tag = new CompoundTag();
+    void releaseUsing(ItemStack stack, Level level, LivingEntity entity, int timeLeft);
 
-        private Impl() {
-        }
-
-        @Override
-        public void appendPartTooltip(EitherList<FormattedText, TooltipComponent> tooltip) {
-        }
-
-        @Override
-        public void damage(ItemModular.DamageCause cause, @HarvestLevel int harvestLevel) {
-        }
-
-        @Override
-        public void deserializeNBT(CompoundTag nbt) {
-        }
-
-        @Override
-        public String getDescriptionId() {
-            return "null";
-        }
-
-        @Override
-        public ReferenceSet<Material> getEffectiveMaterials() {
-            return ReferenceSet.of();
-        }
-
-        @Override
-        public int getHarvestLevel() {
-            return HarvestLevel.HAND;
-        }
-
-        @Override
-        public double getMass() {
-            return 0;
-        }
-
-        @Override
-        public int getTotalDurabilityDmg() {
-            return 0;
-        }
-
-        @Override
-        public int getTotalMaxDurability() {
-            return 0;
-        }
-
-        @Override
-        public boolean isAxe() {
-            return false;
-        }
-
-        @Override
-        public boolean isBroken() {
-            return false;
-        }
-
-        @Override
-        public boolean isHammer() {
-            return false;
-        }
-
-        @Override
-        public boolean isShovel() {
-            return false;
-        }
-
-        @Override
-        public boolean isSimilar(IModular modular) {
-            return false;
-        }
-
-        @Override
-        public boolean isSword() {
-            return false;
-        }
-
-        @Override
-        public boolean isTwoHanded() {
-            return false;
-        }
-
-        @Override
-        public CompoundTag serializeNBT() {
-            return this.tag;
-        }
-    }
+    InteractionResultHolder<ItemStack> use(ItemStack stack, Level level, Player player, InteractionHand hand);
 }

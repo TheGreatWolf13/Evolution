@@ -28,15 +28,13 @@ import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.client.ForgeHooksClient;
-import net.minecraftforge.client.model.data.EmptyModelData;
-import net.minecraftforge.client.model.data.IModelData;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
-import tgw.evolution.patches.IPoseStackPatch;
-import tgw.evolution.util.collection.RArrayList;
-import tgw.evolution.util.collection.ROpenHashSet;
-import tgw.evolution.util.collection.RSet;
+import tgw.evolution.client.models.data.IModelData;
+import tgw.evolution.util.collection.lists.OArrayList;
+import tgw.evolution.util.collection.lists.OList;
+import tgw.evolution.util.collection.sets.RHashSet;
+import tgw.evolution.util.collection.sets.RSet;
 import tgw.evolution.util.constants.RenderLayer;
 
 import java.util.*;
@@ -87,7 +85,7 @@ public class EvChunkRenderDispatcher {
         int cappedProcessors = is64Bit ? processors : Math.min(processors, 4);
         int numBuf = countRenderBuilders < 0 ? Math.max(1, Math.min(cappedProcessors, mem)) : countRenderBuilders;
         this.fixedBuffers = builderPack;
-        List<ChunkBuilderPack> list = new RArrayList<>(numBuf);
+        OList<ChunkBuilderPack> list = new OArrayList<>(numBuf);
         try {
             for (int i = 0; i < numBuf; ++i) {
                 //noinspection ObjectAllocationInLoop
@@ -280,7 +278,7 @@ public class EvChunkRenderDispatcher {
                 return true;
             }
         };
-        final List<BlockEntity> renderableTEs = new RArrayList<>();
+        final OList<BlockEntity> renderableTEs = new OArrayList<>();
         public @Nullable BufferBuilder.SortState transparencyState;
         /**
          * Bits arranged as per {@link RenderLayer}.
@@ -308,7 +306,7 @@ public class EvChunkRenderDispatcher {
     public class RenderChunk {
         public final int index;
         private final VertexBuffer[] buffers = new VertexBuffer[5];
-        private final RSet<BlockEntity> globalBlockEntities = new ROpenHashSet<>();
+        private final RSet<BlockEntity> globalBlockEntities = new RHashSet<>();
         /**
          * Only access from the Main Thread.
          */
@@ -405,7 +403,7 @@ public class EvChunkRenderDispatcher {
             EvVisGraph visgraph = EvChunkRenderDispatcher.this.graph;
             visgraph.reset();
             PoseStack matrices = EvChunkRenderDispatcher.this.matrices;
-            ((IPoseStackPatch) matrices).reset();
+            matrices.reset();
             ModelBlockRenderer.enableCaching();
             Random random = EvChunkRenderDispatcher.this.random;
             BlockRenderDispatcher dispatcher = Minecraft.getInstance().getBlockRenderer();
@@ -429,7 +427,7 @@ public class EvChunkRenderDispatcher {
                                 if (renderer != null) {
                                     if (renderer.shouldRenderOffScreen(tile)) {
                                         if (blockEntities == null) {
-                                            blockEntities = new ROpenHashSet<>();
+                                            blockEntities = new RHashSet<>();
                                         }
                                         blockEntities.add(tile);
                                     }
@@ -440,11 +438,10 @@ public class EvChunkRenderDispatcher {
                             }
                         }
                         FluidState fluidState = blockState.getFluidState();
-                        IModelData modelData = modelDataCache.getOrDefault(mutable.asLong(), EmptyModelData.INSTANCE);
+                        IModelData modelData = modelDataCache.getOrDefault(mutable.asLong(), IModelData.EMPTY);
                         for (int i = RenderLayer.SOLID, len = ChunkBuilderPack.RENDER_TYPES.length; i < len; i++) {
                             RenderType renderType = ChunkBuilderPack.RENDER_TYPES[i];
-                            ForgeHooksClient.setRenderType(renderType);
-                            if (!fluidState.isEmpty() && ItemBlockRenderTypes.canRenderInLayer(fluidState, renderType)) {
+                            if (!fluidState.isEmpty() && ItemBlockRenderTypes.getRenderLayer(fluidState) == renderType) {
                                 BufferBuilder builder = fixedBuffers.builder(i);
                                 if ((compiledChunk.hasLayer & 1 << i) == 0) {
                                     compiledChunk.hasLayer |= 1 << i;
@@ -455,7 +452,7 @@ public class EvChunkRenderDispatcher {
                                 }
                             }
                             if (blockState.getRenderShape() != RenderShape.INVISIBLE &&
-                                ItemBlockRenderTypes.canRenderInLayer(blockState, renderType)) {
+                                ItemBlockRenderTypes.getChunkRenderType(blockState) == renderType) {
                                 BufferBuilder builder = fixedBuffers.builder(i);
                                 if ((compiledChunk.hasLayer & 1 << i) == 0) {
                                     compiledChunk.hasLayer |= 1 << i;
@@ -474,7 +471,6 @@ public class EvChunkRenderDispatcher {
                 }
             }
             compiledChunk.visibilitySet = visgraph.resolve();
-            ForgeHooksClient.setRenderType(null);
             if ((compiledChunk.hasBlocks & 1 << RenderLayer.TRANSLUCENT) != 0) {
                 BufferBuilder builder = fixedBuffers.builder(RenderLayer.TRANSLUCENT);
                 builder.setQuadSortOrigin(EvChunkRenderDispatcher.this.camX - posX,
@@ -516,6 +512,13 @@ public class EvChunkRenderDispatcher {
             double y = this.y + 8 - position.y;
             double z = this.z + 8 - position.z;
             return x * x + y * y + z * z;
+        }
+
+        public byte getRenderLayers() {
+            if (this.needsUpdate) {
+                this.updateCache();
+            }
+            return (byte) (this.cachedFlags & 0b1_1111);
         }
 
         public int getX() {
@@ -699,10 +702,10 @@ public class EvChunkRenderDispatcher {
 
         void updateGlobalBlockEntities(ReferenceSet<BlockEntity> blockEntities) {
             if (!blockEntities.isEmpty()) {
-                Set<BlockEntity> toAdd = new ROpenHashSet<>(blockEntities);
+                Set<BlockEntity> toAdd = new RHashSet<>(blockEntities);
                 Set<BlockEntity> toRemove;
                 synchronized (this.globalBlockEntities) {
-                    toRemove = new ROpenHashSet<>(this.globalBlockEntities);
+                    toRemove = new RHashSet<>(this.globalBlockEntities);
                     toAdd.removeAll(this.globalBlockEntities);
                     toRemove.removeAll(blockEntities);
                     this.globalBlockEntities.clear();
@@ -777,7 +780,7 @@ public class EvChunkRenderDispatcher {
                     EvVisGraph visgraph = GRAPH_CACHE.get();
                     visgraph.reset();
                     PoseStack matrices = MATRICES_CACHE.get();
-                    ((IPoseStackPatch) matrices).reset();
+                    matrices.reset();
                     ModelBlockRenderer.enableCaching();
                     Random random = RANDOM_CACHE.get();
                     BlockRenderDispatcher dispatcher = Minecraft.getInstance().getBlockRenderer();
@@ -787,12 +790,12 @@ public class EvChunkRenderDispatcher {
                         for (int dy = 0; dy < 16; ++dy) {
                             mutable.setY(posY + dy);
                             for (int dz = 0; dz < 16; ++dz) {
-                                BlockState blockState = region.getBlockState(mutable.setZ(posZ + dz));
-                                if (blockState.isSolidRender(region, mutable)) {
+                                BlockState blockState = region.getBlockState_(posX + dx, posY + dy, posZ + dz);
+                                if (blockState.isSolidRender(region, mutable.setZ(posZ + dz))) {
                                     visgraph.setOpaque(dx, dy, dz);
                                 }
                                 if (blockState.hasBlockEntity()) {
-                                    BlockEntity tile = region.getBlockEntity(mutable);
+                                    BlockEntity tile = region.getBlockEntity_(posX + dx, posY + dy, posZ + dz);
                                     if (tile != null) {
                                         BlockEntityRenderer<BlockEntity> renderer = Minecraft.getInstance()
                                                                                              .getBlockEntityRenderDispatcher()
@@ -800,7 +803,7 @@ public class EvChunkRenderDispatcher {
                                         if (renderer != null) {
                                             if (renderer.shouldRenderOffScreen(tile)) {
                                                 if (blockEntities == null) {
-                                                    blockEntities = new ROpenHashSet<>();
+                                                    blockEntities = new RHashSet<>();
                                                 }
                                                 blockEntities.add(tile);
                                             }
@@ -814,8 +817,7 @@ public class EvChunkRenderDispatcher {
                                 IModelData modelData = this.getModelData(mutable.asLong());
                                 for (int i = RenderLayer.SOLID, len = ChunkBuilderPack.RENDER_TYPES.length; i < len; i++) {
                                     RenderType renderType = ChunkBuilderPack.RENDER_TYPES[i];
-                                    ForgeHooksClient.setRenderType(renderType);
-                                    if (!fluidState.isEmpty() && ItemBlockRenderTypes.canRenderInLayer(fluidState, renderType)) {
+                                    if (!fluidState.isEmpty() && ItemBlockRenderTypes.getRenderLayer(fluidState) == renderType) {
                                         BufferBuilder builder = builderPack.builder(i);
                                         if ((compiledChunk.hasLayer & 1 << i) == 0) {
                                             compiledChunk.hasLayer |= 1 << i;
@@ -826,7 +828,7 @@ public class EvChunkRenderDispatcher {
                                         }
                                     }
                                     if (blockState.getRenderShape() != RenderShape.INVISIBLE &&
-                                        ItemBlockRenderTypes.canRenderInLayer(blockState, renderType)) {
+                                        ItemBlockRenderTypes.getChunkRenderType(blockState) == renderType) {
                                         BufferBuilder builder = builderPack.builder(i);
                                         if ((compiledChunk.hasLayer & 1 << i) == 0) {
                                             compiledChunk.hasLayer |= 1 << i;
@@ -834,7 +836,8 @@ public class EvChunkRenderDispatcher {
                                         }
                                         matrices.pushPose();
                                         matrices.translate(dx, dy, dz);
-                                        if (dispatcher.renderBatched(blockState, mutable, region, matrices, builder, true, random, modelData)) {
+                                        if (dispatcher.renderBatched(blockState, mutable, region, matrices, builder,
+                                                                     true, random, modelData)) {
                                             compiledChunk.hasBlocks |= 1 << i;
                                         }
                                         matrices.popPose();
@@ -844,7 +847,6 @@ public class EvChunkRenderDispatcher {
                         }
                     }
                     compiledChunk.visibilitySet = visgraph.resolve();
-                    ForgeHooksClient.setRenderType(null);
                     if ((compiledChunk.hasBlocks & 1 << RenderLayer.TRANSLUCENT) != 0) {
                         BufferBuilder builder = builderPack.builder(RenderLayer.TRANSLUCENT);
                         builder.setQuadSortOrigin(camX - posX, camY - posY, camZ - posZ);
@@ -885,7 +887,7 @@ public class EvChunkRenderDispatcher {
                 if (this.isCancelled.get()) {
                     return CompletableFuture.completedFuture(ChunkTaskResult.CANCELLED);
                 }
-                List<CompletableFuture<Void>> list = new RArrayList<>();
+                OList<CompletableFuture<Void>> list = new OArrayList<>();
                 for (int i = RenderLayer.SOLID, len = ChunkBuilderPack.RENDER_TYPES.length; i < len; i++) {
                     if ((compiledChunk.hasLayer & 1 << i) != 0) {
                         list.add(EvChunkRenderDispatcher.this.uploadChunkLayer(builderPack.builder(i), RenderChunk.this.getBuffer(i)));
@@ -907,7 +909,7 @@ public class EvChunkRenderDispatcher {
             }
 
             public IModelData getModelData(long blockPos) {
-                return this.modelData.getOrDefault(blockPos, EmptyModelData.INSTANCE);
+                return this.modelData.getOrDefault(blockPos, IModelData.EMPTY);
             }
 
             @Override

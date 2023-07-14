@@ -71,9 +71,8 @@ public class BlockMetal extends BlockPhysics implements EntityBlock {
         return this.metal.doesOxidize() && this.oxidation != Oxidation.OXIDIZED;
     }
 
-    @Nullable
     @Override
-    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+    public @Nullable BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         if (this.metal.doesOxidize()) {
             return new TEMetal(pos, state);
         }

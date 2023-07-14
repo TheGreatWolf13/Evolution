@@ -2,8 +2,6 @@ package tgw.evolution.client.gui;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
@@ -13,11 +11,13 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
+import tgw.evolution.EvolutionClient;
 import tgw.evolution.blocks.tileentities.EnumMolding;
 import tgw.evolution.client.renderer.RenderHelper;
-import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.network.PacketCSSetMoldingType;
+import tgw.evolution.util.collection.maps.O2OHashMap;
+import tgw.evolution.util.collection.maps.O2OMap;
 
 import java.util.Map;
 
@@ -25,7 +25,7 @@ public class ScreenMolding extends Screen {
 
     private static final int WIDTH = 190;
     private static final int HEIGHT = 78;
-    private final Object2ObjectMap<Button, ItemStack> buttons = new Object2ObjectOpenHashMap<>();
+    private final O2OMap<Button, ItemStack> buttons = new O2OHashMap<>();
     private final BlockPos pos;
     private final ResourceLocation resBackground = Evolution.getResource("textures/gui/molding.png");
     private final ItemStack[] stacks;
@@ -100,7 +100,7 @@ public class ScreenMolding extends Screen {
     }
 
     private void setTile(EnumMolding type) {
-        EvolutionNetwork.sendToServer(new PacketCSSetMoldingType(this.pos, type));
+        EvolutionClient.sendToServer(new PacketCSSetMoldingType(this.pos, type));
         assert this.minecraft != null;
         this.minecraft.setScreen(null);
     }

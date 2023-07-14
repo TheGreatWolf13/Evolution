@@ -123,10 +123,7 @@ public abstract class ItemGenericBucket extends ItemEv implements IItemFluidCont
     }
 
     public void playEmptySound(@Nullable Player player, LevelAccessor level, BlockPos pos) {
-        SoundEvent sound = this.getFluid().getAttributes().getEmptySound();
-        if (sound == null) {
-            sound = this.getFluid().is(FluidTags.LAVA) ? SoundEvents.BUCKET_EMPTY_LAVA : SoundEvents.BUCKET_EMPTY;
-        }
+        SoundEvent sound = this.getFluid().is(FluidTags.LAVA) ? SoundEvents.BUCKET_EMPTY_LAVA : SoundEvents.BUCKET_EMPTY;
         level.playSound(player, pos, sound, SoundSource.BLOCKS, 1.0F, 1.0F);
     }
 
@@ -203,10 +200,7 @@ public abstract class ItemGenericBucket extends ItemEv implements IItemFluidCont
                         int amount = ((IBlockFluidContainer) stateAtPos.getBlock()).getAmountRemoved(level, pos, this.getMaxAmount());
                         if (amount > 0) {
                             player.awardStat(Stats.ITEM_USED.get(this));
-                            SoundEvent sound = this.getFluid().getAttributes().getEmptySound();
-                            if (sound == null) {
-                                sound = fluid.is(FluidTags.LAVA) ? SoundEvents.BUCKET_FILL_LAVA : SoundEvents.BUCKET_FILL;
-                            }
+                            SoundEvent sound = fluid.is(FluidTags.LAVA) ? SoundEvents.BUCKET_FILL_LAVA : SoundEvents.BUCKET_FILL;
                             player.playSound(sound, 1.0F, 1.0F);
                             ItemStack fillStack = fillBucket(stackInHand, player, this.getFullBucket(fluid), amount);
                             if (!level.isClientSide) {
@@ -225,10 +219,7 @@ public abstract class ItemGenericBucket extends ItemEv implements IItemFluidCont
                 int amount = ((IBlockFluidContainer) stateAtPos.getBlock()).getAmountRemoved(level, pos, this.getMissingAmount(stackInHand));
                 if (amount > 0) {
                     player.awardStat(Stats.ITEM_USED.get(this));
-                    SoundEvent sound = this.getFluid().getAttributes().getEmptySound();
-                    if (sound == null) {
-                        sound = this.getFluid().is(FluidTags.LAVA) ? SoundEvents.BUCKET_FILL_LAVA : SoundEvents.BUCKET_FILL;
-                    }
+                    SoundEvent sound = this.getFluid().is(FluidTags.LAVA) ? SoundEvents.BUCKET_FILL_LAVA : SoundEvents.BUCKET_FILL;
                     player.playSound(sound, 1.0F, 1.0F);
                     ItemStack fillStack = fillBucket(stackInHand, player, this.getFullBucket(this.getFluid()), this.getAmount(stackInHand) + amount);
                     if (!level.isClientSide) {

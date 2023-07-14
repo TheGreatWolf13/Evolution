@@ -13,7 +13,7 @@ public class ItemPartPole extends ItemPart<PartTypes.Pole, ItemPartPole, PartPol
     }
 
     @Override
-    protected PartPole createNew() {
+    public PartPole createNew() {
         return new PartPole();
     }
 
@@ -33,8 +33,8 @@ public class ItemPartPole extends ItemPart<PartTypes.Pole, ItemPartPole, PartPol
     }
 
     @Override
-    protected PartPole getPartCap(ItemStack stack) {
-        return PartPole.get(stack);
+    protected PartPole getPartCap() {
+        return new PartPole();
     }
 
     @Override

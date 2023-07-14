@@ -1,14 +1,11 @@
 package tgw.evolution.init;
 
 import com.google.common.collect.Maps;
+import net.minecraft.core.Registry;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.GlassBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.material.Material;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.RegistryObject;
 import org.jetbrains.annotations.Contract;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.*;
@@ -23,159 +20,160 @@ import tgw.evolution.util.constants.WoodVariant;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 @SuppressWarnings({"unused", "ObjectAllocationInLoop"})
 public final class EvolutionBlocks {
 
     //Temporary
-    public static final RegistryObject<Block> GLASS;
-    public static final RegistryObject<Block> PLACEHOLDER_BLOCK;
+    public static final Block GLASS;
+    public static final Block PLACEHOLDER_BLOCK;
     //Dev
-    public static final RegistryObject<Block> ATM;
-    public static final RegistryObject<Block> DESTROY_3;
-    public static final RegistryObject<Block> DESTROY_6;
-    public static final RegistryObject<Block> DESTROY_9;
-    public static final RegistryObject<Block> PUZZLE;
-    public static final RegistryObject<Block> SCHEMATIC_BLOCK;
+    public static final Block ATM;
+    public static final Block DESTROY_3;
+    public static final Block DESTROY_6;
+    public static final Block DESTROY_9;
+    public static final Block PUZZLE;
+    public static final Block SCHEMATIC_BLOCK;
     //Independent
-    public static final RegistryObject<Block> BLOCK_METAL_COPPER;
-    public static final RegistryObject<Block> BLOCK_METAL_COPPER_E;
-    public static final RegistryObject<Block> BLOCK_METAL_COPPER_W;
-    public static final RegistryObject<Block> BLOCK_METAL_COPPER_O;
-    public static final RegistryObject<Block> BRICK_CLAY;
-    public static final RegistryObject<Block> CLAY;
-    public static final RegistryObject<Block> CLIMBING_HOOK;
-    public static final RegistryObject<Block> CLIMBING_STAKE;
-    public static final RegistryObject<Block> CRUCIBLE_CLAY;
-    public static final RegistryObject<BlockFire> FIRE;
-    public static final RegistryObject<Block> FIREWOOD_PILE;
-    public static final RegistryObject<Block> MOLD_CLAY_AXE;
-    public static final RegistryObject<Block> MOLD_CLAY_GUARD;
-    public static final RegistryObject<Block> MOLD_CLAY_HAMMER;
-    public static final RegistryObject<Block> MOLD_CLAY_HOE;
-    public static final RegistryObject<Block> MOLD_CLAY_INGOT;
-    public static final RegistryObject<Block> MOLD_CLAY_KNIFE;
-    public static final RegistryObject<Block> MOLD_CLAY_PICKAXE;
-    public static final RegistryObject<Block> MOLD_CLAY_SAW;
-    public static final RegistryObject<Block> MOLD_CLAY_SHOVEL;
-    public static final RegistryObject<Block> MOLD_CLAY_SPEAR;
-    public static final RegistryObject<Block> MOLD_CLAY_SWORD;
-    public static final RegistryObject<Block> MOLDING_BLOCK;
-    public static final RegistryObject<Block> PEAT;
-    public static final RegistryObject<Block> PIT_KILN;
-    public static final RegistryObject<Block> ROPE;
-    public static final RegistryObject<Block> ROPE_GROUND;
-    public static final RegistryObject<Block> STICK;
-    public static final RegistryObject<Block> TALLGRASS;
-    public static final RegistryObject<Block> TALLGRASS_HIGH;
-    public static final RegistryObject<Block> TORCH;
-    public static final RegistryObject<Block> TORCH_WALL;
+    public static final Block BLOCK_METAL_COPPER;
+    public static final Block BLOCK_METAL_COPPER_E;
+    public static final Block BLOCK_METAL_COPPER_W;
+    public static final Block BLOCK_METAL_COPPER_O;
+    public static final Block BRICK_CLAY;
+    public static final Block CLAY;
+    public static final Block CLIMBING_HOOK;
+    public static final Block CLIMBING_STAKE;
+    public static final Block CRUCIBLE_CLAY;
+    public static final BlockFire FIRE;
+    public static final Block FIREWOOD_PILE;
+    public static final Block MOLD_CLAY_AXE;
+    public static final Block MOLD_CLAY_GUARD;
+    public static final Block MOLD_CLAY_HAMMER;
+    public static final Block MOLD_CLAY_HOE;
+    public static final Block MOLD_CLAY_INGOT;
+    public static final Block MOLD_CLAY_KNIFE;
+    public static final Block MOLD_CLAY_PICKAXE;
+    public static final Block MOLD_CLAY_SAW;
+    public static final Block MOLD_CLAY_SHOVEL;
+    public static final Block MOLD_CLAY_SPEAR;
+    public static final Block MOLD_CLAY_SWORD;
+    public static final Block MOLDING_BLOCK;
+    public static final Block PEAT;
+    public static final Block PIT_KILN;
+    public static final Block ROPE;
+    public static final Block ROPE_GROUND;
+    public static final Block STICK;
+    public static final Block TALLGRASS;
+    public static final Block TALLGRASS_HIGH;
+    public static final Block TORCH;
+    public static final Block TORCH_WALL;
     //Collections
-    public static final Map<WoodVariant, RegistryObject<Block>> CHOPPING_BLOCKS;
-    public static final Map<RockVariant, RegistryObject<Block>> COBBLESTONES;
-    public static final Map<RockVariant, RegistryObject<Block>> DIRTS;
-    public static final Map<RockVariant, RegistryObject<Block>> DRY_GRASSES;
-    public static final Map<RockVariant, RegistryObject<Block>> GRASSES;
-    public static final Map<RockVariant, RegistryObject<Block>> GRAVELS;
-    public static final Map<RockVariant, RegistryObject<Block>> KNAPPING_BLOCKS;
-    public static final Map<WoodVariant, RegistryObject<Block>> LEAVES;
-    public static final Map<WoodVariant, RegistryObject<BlockLog>> LOGS;
-    public static final Map<WoodVariant, RegistryObject<Block>> PLANKS;
-    public static final Map<RockVariant, RegistryObject<Block>> POLISHED_STONES;
-    public static final Map<RockVariant, RegistryObject<Block>> ROCKS;
-    public static final Map<RockVariant, RegistryObject<Block>> SANDS;
-    public static final Map<WoodVariant, RegistryObject<Block>> SAPLINGS;
-    public static final Map<RockVariant, RegistryObject<Block>> STONEBRICKS;
-    public static final Map<RockVariant, RegistryObject<Block>> STONES;
+    public static final Map<WoodVariant, Block> CHOPPING_BLOCKS;
+    public static final Map<RockVariant, Block> COBBLESTONES;
+    public static final Map<RockVariant, Block> DIRTS;
+    public static final Map<RockVariant, Block> DRY_GRASSES;
+    public static final Map<RockVariant, Block> GRASSES;
+    public static final Map<RockVariant, Block> GRAVELS;
+    public static final Map<RockVariant, Block> KNAPPING_BLOCKS;
+    public static final Map<WoodVariant, Block> LEAVES;
+    public static final Map<WoodVariant, BlockLog> LOGS;
+    public static final Map<WoodVariant, Block> PLANKS;
+    public static final Map<RockVariant, Block> POLISHED_STONES;
+    public static final Map<RockVariant, Block> ROCKS;
+    public static final Map<RockVariant, Block> SANDS;
+    public static final Map<WoodVariant, Block> SAPLINGS;
+    public static final Map<RockVariant, Block> STONEBRICKS;
+    public static final Map<RockVariant, Block> STONES;
     //Fluids
-    public static final RegistryObject<BlockGenericFluid> FRESH_WATER;
-    public static final RegistryObject<BlockGenericFluid> SALT_WATER;
-    //
-    public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, Evolution.MODID);
+    public static final BlockGenericFluid FRESH_WATER;
+    public static final BlockGenericFluid SALT_WATER;
 
     static {
         //Temporary Blocks used for testing
-        PLACEHOLDER_BLOCK = BLOCKS.register("placeholder_block", BlockPlaceholder::new);
-        GLASS = BLOCKS.register("glass", BlockGlass::new);
+        PLACEHOLDER_BLOCK = register("placeholder_block", new BlockPlaceholder());
+        GLASS = register("glass", new BlockGlass());
         //Dev Blocks
-        ATM = BLOCKS.register("atm", BlockAtm::new);
-        DESTROY_3 = BLOCKS.register("destroy_3", () -> new GlassBlock(Block.Properties.of(Material.AIR).noDrops()));
-        DESTROY_6 = BLOCKS.register("destroy_6", () -> new GlassBlock(Block.Properties.of(Material.AIR).noDrops()));
-        DESTROY_9 = BLOCKS.register("destroy_9", () -> new GlassBlock(Block.Properties.of(Material.AIR).noDrops()));
-        PUZZLE = BLOCKS.register("puzzle", BlockPuzzle::new);
-        SCHEMATIC_BLOCK = BLOCKS.register("schematic_block", BlockSchematic::new);
+        ATM = register("atm", new BlockAtm());
+        DESTROY_3 = register("destroy_3", new GlassBlock(Block.Properties.of(Material.AIR).noDrops()));
+        DESTROY_6 = register("destroy_6", new GlassBlock(Block.Properties.of(Material.AIR).noDrops()));
+        DESTROY_9 = register("destroy_9", new GlassBlock(Block.Properties.of(Material.AIR).noDrops()));
+        PUZZLE = register("puzzle", new BlockPuzzle());
+        SCHEMATIC_BLOCK = register("schematic_block", new BlockSchematic());
         //Independent
-        BLOCK_METAL_COPPER = BLOCKS.register("block_metal_copper", () -> new BlockMetal(MetalVariant.COPPER, Oxidation.NONE));
-        BLOCK_METAL_COPPER_E = BLOCKS.register("block_metal_copper_exposed", () -> new BlockMetal(MetalVariant.COPPER, Oxidation.EXPOSED));
-        BLOCK_METAL_COPPER_W = BLOCKS.register("block_metal_copper_weathered", () -> new BlockMetal(MetalVariant.COPPER, Oxidation.WEATHERED));
-        BLOCK_METAL_COPPER_O = BLOCKS.register("block_metal_copper_oxidized", () -> new BlockMetal(MetalVariant.COPPER, Oxidation.OXIDIZED));
-        BRICK_CLAY = BLOCKS.register("brick_clay", () -> new BlockMoldClay(Block.box(2, 0, 5, 14, 6, 11)));
-        CLAY = BLOCKS.register("clay", BlockClay::new);
-        CLIMBING_HOOK = BLOCKS.register("climbing_hook", BlockClimbingHook::new);
-        CLIMBING_STAKE = BLOCKS.register("climbing_stake", BlockClimbingStake::new);
-        CRUCIBLE_CLAY = BLOCKS.register("crucible_clay", () -> new BlockMoldClay(5));
-        FIRE = BLOCKS.register("fire", BlockFire::new);
-        FIREWOOD_PILE = BLOCKS.register("firewood_pile", BlockFirewoodPile::new);
-        MOLD_CLAY_AXE = BLOCKS.register("mold_clay_axe", () -> new BlockMoldClay(1));
-        MOLD_CLAY_GUARD = BLOCKS.register("mold_clay_guard", () -> new BlockMoldClay(1));
-        MOLD_CLAY_HAMMER = BLOCKS.register("mold_clay_hammer", () -> new BlockMoldClay(1));
-        MOLD_CLAY_HOE = BLOCKS.register("mold_clay_hoe", () -> new BlockMoldClay(1));
-        MOLD_CLAY_INGOT = BLOCKS.register("mold_clay_ingot", () -> new BlockMoldClay(1));
-        MOLD_CLAY_KNIFE = BLOCKS.register("mold_clay_knife", () -> new BlockMoldClay(1));
-        MOLD_CLAY_PICKAXE = BLOCKS.register("mold_clay_pickaxe", () -> new BlockMoldClay(1));
-        MOLD_CLAY_SAW = BLOCKS.register("mold_clay_saw", () -> new BlockMoldClay(1));
-        MOLD_CLAY_SHOVEL = BLOCKS.register("mold_clay_shovel", () -> new BlockMoldClay(1));
-        MOLD_CLAY_SPEAR = BLOCKS.register("mold_clay_spear", () -> new BlockMoldClay(1));
-        MOLD_CLAY_SWORD = BLOCKS.register("mold_clay_sword", () -> new BlockMoldClay(1));
-        MOLDING_BLOCK = BLOCKS.register("molding_block", BlockMolding::new);
-        PEAT = BLOCKS.register("peat", BlockPeat::new);
-        PIT_KILN = BLOCKS.register("pit_kiln", BlockPitKiln::new);
-        ROPE = BLOCKS.register("rope", BlockRope::new);
-        ROPE_GROUND = BLOCKS.register("rope_ground", BlockRopeGround::new);
-        STICK = BLOCKS.register("stick", () -> new BlockPlaceableItem(Block.Properties.of(Material.DECORATION).sound(SoundType.WOOD)));
-        TALLGRASS = BLOCKS.register("tallgrass", BlockTallGrass::new);
-        TALLGRASS_HIGH = BLOCKS.register("tallgrass_high", () -> BlockDoublePlant.make(false));
-        TORCH = BLOCKS.register("torch", BlockTorch::new);
-        TORCH_WALL = BLOCKS.register("torch_wall", BlockTorchWall::new);
+        BLOCK_METAL_COPPER = register("block_metal_copper", new BlockMetal(MetalVariant.COPPER, Oxidation.NONE));
+        BLOCK_METAL_COPPER_E = register("block_metal_copper_exposed", new BlockMetal(MetalVariant.COPPER, Oxidation.EXPOSED));
+        BLOCK_METAL_COPPER_W = register("block_metal_copper_weathered", new BlockMetal(MetalVariant.COPPER, Oxidation.WEATHERED));
+        BLOCK_METAL_COPPER_O = register("block_metal_copper_oxidized", new BlockMetal(MetalVariant.COPPER, Oxidation.OXIDIZED));
+        BRICK_CLAY = register("brick_clay", new BlockMoldClay(Block.box(2, 0, 5, 14, 6, 11)));
+        CLAY = register("clay", new BlockClay());
+        CLIMBING_HOOK = register("climbing_hook", new BlockClimbingHook());
+        CLIMBING_STAKE = register("climbing_stake", new BlockClimbingStake());
+        CRUCIBLE_CLAY = register("crucible_clay", new BlockMoldClay(5));
+        FIRE = register("fire", new BlockFire());
+        FIREWOOD_PILE = register("firewood_pile", new BlockFirewoodPile());
+        MOLD_CLAY_AXE = register("mold_clay_axe", new BlockMoldClay(1));
+        MOLD_CLAY_GUARD = register("mold_clay_guard", new BlockMoldClay(1));
+        MOLD_CLAY_HAMMER = register("mold_clay_hammer", new BlockMoldClay(1));
+        MOLD_CLAY_HOE = register("mold_clay_hoe", new BlockMoldClay(1));
+        MOLD_CLAY_INGOT = register("mold_clay_ingot", new BlockMoldClay(1));
+        MOLD_CLAY_KNIFE = register("mold_clay_knife", new BlockMoldClay(1));
+        MOLD_CLAY_PICKAXE = register("mold_clay_pickaxe", new BlockMoldClay(1));
+        MOLD_CLAY_SAW = register("mold_clay_saw", new BlockMoldClay(1));
+        MOLD_CLAY_SHOVEL = register("mold_clay_shovel", new BlockMoldClay(1));
+        MOLD_CLAY_SPEAR = register("mold_clay_spear", new BlockMoldClay(1));
+        MOLD_CLAY_SWORD = register("mold_clay_sword", new BlockMoldClay(1));
+        MOLDING_BLOCK = register("molding_block", new BlockMolding());
+        PEAT = register("peat", new BlockPeat());
+        PIT_KILN = register("pit_kiln", new BlockPitKiln());
+        ROPE = register("rope", new BlockRope());
+        ROPE_GROUND = register("rope_ground", new BlockRopeGround());
+        STICK = register("stick", new BlockPlaceableItem(Block.Properties.of(Material.DECORATION).sound(SoundType.WOOD)));
+        TALLGRASS = register("tallgrass", new BlockTallGrass());
+        TALLGRASS_HIGH = register("tallgrass_high", BlockDoublePlant.make(false));
+        TORCH = register("torch", new BlockTorch());
+        TORCH_WALL = register("torch_wall", new BlockTorchWall());
         //Collection
-        CHOPPING_BLOCKS = make(WoodVariant.class, WoodVariant.VALUES, "chopping_block_", e -> () -> new BlockChopping(e));
-        COBBLESTONES = make(RockVariant.class, RockVariant.VALUES_STONE, "cobblestone_", e -> () -> new BlockCobblestone(e));
-        DIRTS = make(RockVariant.class, RockVariant.VALUES_STONE, "dirt_", e -> () -> new BlockDirt(e));
-        DRY_GRASSES = make(RockVariant.class, RockVariant.VALUES_STONE, "dry_grass_", e -> () -> new BlockDryGrass(e));
-        GRASSES = make(RockVariant.class, RockVariant.VALUES, "grass_", e -> () -> new BlockGrass(e));
-        GRAVELS = make(RockVariant.class, RockVariant.VALUES_STONE, "gravel_", e -> () -> new BlockGravel(e));
-        KNAPPING_BLOCKS = make(RockVariant.class, RockVariant.VALUES_STONE, "knapping_block_", e -> () -> new BlockKnapping(e));
-        LEAVES = make(WoodVariant.class, WoodVariant.VALUES, "leaves_", e -> BlockLeaves::new);
-        LOGS = make(WoodVariant.class, WoodVariant.VALUES, "log_", e -> () -> new BlockLog(e));
-        PLANKS = make(WoodVariant.class, WoodVariant.VALUES, "planks_", e -> () -> new BlockPlanks(e));
-        POLISHED_STONES = make(RockVariant.class, RockVariant.VALUES_STONE, "polished_stone_", e -> () -> new BlockPolishedStone(e));
-        ROCKS = make(RockVariant.class, RockVariant.VALUES_STONE, "rock_", e -> BlockPlaceableRock::new);
-        SANDS = make(RockVariant.class, RockVariant.VALUES_STONE, "sand_", e -> () -> new BlockSand(e));
-        SAPLINGS = make(WoodVariant.class, WoodVariant.VALUES, "sapling_", e -> () -> new BlockSapling(null));
-        STONEBRICKS = make(RockVariant.class, RockVariant.VALUES_STONE, "stonebricks_", e -> () -> new BlockStoneBricks(e));
-        STONES = make(RockVariant.class, RockVariant.VALUES_STONE, "stone_", e -> () -> new BlockStone(e));
+        CHOPPING_BLOCKS = make(WoodVariant.class, WoodVariant.VALUES, "chopping_block_", BlockChopping::new);
+        COBBLESTONES = make(RockVariant.class, RockVariant.VALUES_STONE, "cobblestone_", BlockCobblestone::new);
+        DIRTS = make(RockVariant.class, RockVariant.VALUES_STONE, "dirt_", BlockDirt::new);
+        DRY_GRASSES = make(RockVariant.class, RockVariant.VALUES_STONE, "dry_grass_", BlockDryGrass::new);
+        GRASSES = make(RockVariant.class, RockVariant.VALUES, "grass_", BlockGrass::new);
+        GRAVELS = make(RockVariant.class, RockVariant.VALUES_STONE, "gravel_", BlockGravel::new);
+        KNAPPING_BLOCKS = make(RockVariant.class, RockVariant.VALUES_STONE, "knapping_block_", BlockKnapping::new);
+        LEAVES = make(WoodVariant.class, WoodVariant.VALUES, "leaves_", e -> new BlockLeaves());
+        LOGS = make(WoodVariant.class, WoodVariant.VALUES, "log_", BlockLog::new);
+        PLANKS = make(WoodVariant.class, WoodVariant.VALUES, "planks_", BlockPlanks::new);
+        POLISHED_STONES = make(RockVariant.class, RockVariant.VALUES_STONE, "polished_stone_", BlockPolishedStone::new);
+        ROCKS = make(RockVariant.class, RockVariant.VALUES_STONE, "rock_", e -> new BlockPlaceableRock());
+        SANDS = make(RockVariant.class, RockVariant.VALUES_STONE, "sand_", BlockSand::new);
+        SAPLINGS = make(WoodVariant.class, WoodVariant.VALUES, "sapling_", e -> new BlockSapling(null));
+        STONEBRICKS = make(RockVariant.class, RockVariant.VALUES_STONE, "stonebricks_", BlockStoneBricks::new);
+        STONES = make(RockVariant.class, RockVariant.VALUES_STONE, "stone_", BlockStone::new);
         //Fluids
-        FRESH_WATER = BLOCKS.register("fresh_water", BlockFreshWater::new);
-        SALT_WATER = BLOCKS.register("salt_water", BlockSaltWater::new);
+        FRESH_WATER = register("fresh_water", new BlockFreshWater());
+        SALT_WATER = register("salt_water", new BlockSaltWater());
     }
 
     private EvolutionBlocks() {
     }
 
     @Contract("_, _, _, _ -> new")
-    private static <E extends Enum<E> & IVariant, B extends Block> Map<E, RegistryObject<B>> make(Class<E> clazz,
-                                                                                                  E[] values,
-                                                                                                  String name,
-                                                                                                  Function<E, Supplier<B>> block) {
-        Map<E, RegistryObject<B>> map = new EnumMap<>(clazz);
+    private static <E extends Enum<E> & IVariant, B extends Block> Map<E, B> make(Class<E> clazz,
+                                                                                  E[] values,
+                                                                                  String name,
+                                                                                  Function<E, B> blockMaker) {
+        Map<E, B> map = new EnumMap<>(clazz);
         for (E e : values) {
-            map.put(e, BLOCKS.register(name + e.getName(), block.apply(e)));
+            map.put(e, register(name + e.getName(), blockMaker.apply(e)));
         }
         return Maps.immutableEnumMap(map);
     }
 
+    private static <B extends Block> B register(String name, B block) {
+        return Registry.register(Registry.BLOCK, Evolution.getResource(name), block);
+    }
+
     public static void register() {
-        BLOCKS.register(FMLJavaModLoadingContext.get().getModEventBus());
+        //Blocks are registered via class-loading.
     }
 }	

@@ -9,4 +9,6 @@ public interface IGrabType<T extends IPartType<T, I, P>, I extends ItemPart<T, I
     double getGrabPoint();
 
     int getLength();
+
+    boolean isTwoHanded();
 }

@@ -7,7 +7,6 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
@@ -54,7 +53,7 @@ public class BlockPitKiln extends BlockGeneric implements IReplaceable, EntityBl
                 return false;
             }
         }
-        return level.getBlockState(pos.above()).getBlock() == EvolutionBlocks.FIRE.get();
+        return level.getBlockState(pos.above()).getBlock() == EvolutionBlocks.FIRE;
     }
 
     private static boolean checkDirection(BlockGetter level, BlockPos pos, Direction direction) {
@@ -96,7 +95,7 @@ public class BlockPitKiln extends BlockGeneric implements IReplaceable, EntityBl
         }
         if (layers <= 8) {
             level.setBlockAndUpdate(pos, state.setValue(LAYERS_0_16, layers - 1));
-            ItemStack stack = new ItemStack(EvolutionItems.STRAW.get());
+            ItemStack stack = new ItemStack(EvolutionItems.STRAW);
             if (!player.getInventory().add(stack)) {
                 BlockUtils.dropItemStack(level, pos, stack);
             }
@@ -135,7 +134,7 @@ public class BlockPitKiln extends BlockGeneric implements IReplaceable, EntityBl
 
     @Override
     public ItemStack getCloneItemStack(BlockState state, HitResult hit, BlockGetter level, BlockPos pos, Player player) {
-        return new ItemStack(EvolutionItems.STRAW.get());
+        return new ItemStack(EvolutionItems.STRAW);
     }
 
     @Override
@@ -150,7 +149,7 @@ public class BlockPitKiln extends BlockGeneric implements IReplaceable, EntityBl
     }
 
     @Override
-    public SoundType getSoundType(BlockState state, LevelReader level, BlockPos pos, @Nullable Entity entity) {
+    public SoundType getSoundType(BlockState state) {
         if (state.getValue(LAYERS_0_16) == 0) {
             return SoundType.STONE;
         }
@@ -175,9 +174,8 @@ public class BlockPitKiln extends BlockGeneric implements IReplaceable, EntityBl
         return state.getValue(LAYERS_0_16) < 13;
     }
 
-    @Nullable
     @Override
-    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+    public @Nullable BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new TEPitKiln(pos, state);
     }
 
@@ -215,7 +213,7 @@ public class BlockPitKiln extends BlockGeneric implements IReplaceable, EntityBl
         }
         ItemStack stack = player.getItemInHand(hand);
         if (layers == 0) {
-            if (stack.getItem() == EvolutionItems.STRAW.get() && !tile.hasFinished()) {
+            if (stack.getItem() == EvolutionItems.STRAW && !tile.hasFinished()) {
                 level.setBlockAndUpdate(pos, state.setValue(LAYERS_0_16, 1));
                 if (!player.isCreative()) {
                     stack.shrink(1);
@@ -231,7 +229,7 @@ public class BlockPitKiln extends BlockGeneric implements IReplaceable, EntityBl
             return manageStack(tile, stack, player, MathHelper.DIAGONALS[z][x]);
         }
         if (layers < 8) {
-            if (stack.getItem() == EvolutionItems.STRAW.get()) {
+            if (stack.getItem() == EvolutionItems.STRAW) {
                 level.setBlockAndUpdate(pos, state.setValue(LAYERS_0_16, layers + 1));
                 if (!player.isCreative()) {
                     stack.shrink(1);

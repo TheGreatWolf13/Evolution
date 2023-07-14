@@ -9,10 +9,9 @@ import net.minecraft.client.renderer.block.model.BlockElementFace;
 import net.minecraft.client.renderer.block.model.BlockFaceUV;
 import net.minecraft.client.renderer.block.model.FaceBakery;
 import net.minecraft.resources.ResourceLocation;
-import tgw.evolution.util.collection.*;
+import tgw.evolution.util.collection.lists.*;
 import tgw.evolution.util.constants.RenderLayer;
 
-import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -52,7 +51,7 @@ public final class RenderHelper {
             () -> new BlockElementFace(null, -1, "", MODEL_FACE_UV.get()));
     public static final ThreadLocal<float[]> MODEL_UV = ThreadLocal.withInitial(() -> new float[4]);
     public static final FaceBakery MODEL_FACE_BAKERY = new FaceBakery();
-    public static final ThreadLocal<List<BakedQuad>> MODEL_QUAD_HOLDER = ThreadLocal.withInitial(RArrayList::new);
+    public static final ThreadLocal<OList<BakedQuad>> MODEL_QUAD_HOLDER = ThreadLocal.withInitial(OArrayList::new);
 
     private RenderHelper() {
     }

@@ -82,9 +82,8 @@ public class BlockMoldClay extends BlockGeneric implements IReplaceable {
         };
     }
 
-    @Nullable
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext context) {
+    public @Nullable BlockState getStateForPlacement(BlockPlaceContext context) {
         if (context.isSecondaryUseActive()) {
             return null;
         }

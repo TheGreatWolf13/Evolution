@@ -21,11 +21,12 @@ import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
-import net.minecraftforge.common.ForgeMod;
+import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionCreativeTabs;
+import tgw.evolution.patches.PatchItem;
 
-public class ItemFireStarter extends ItemEv implements IDurability {
+public class ItemFireStarter extends ItemEv implements IDurability, PatchItem {
 
     public ItemFireStarter() {
         super(new Item.Properties().tab(EvolutionCreativeTabs.MISC).durability(10));
@@ -33,7 +34,7 @@ public class ItemFireStarter extends ItemEv implements IDurability {
 
     public static boolean canSetFire(LevelReader level, BlockPos pos) {
         BlockState state = level.getBlockState(pos);
-        BlockState fireState = EvolutionBlocks.FIRE.get().getStateForPlacement(level, pos);
+        BlockState fireState = EvolutionBlocks.FIRE.getStateWithAge(level, pos);
         return state.isAir() && fireState.canSurvive(level, pos);
     }
 
@@ -44,7 +45,7 @@ public class ItemFireStarter extends ItemEv implements IDurability {
         }
         float distance = 3.0F;
         if (living instanceof Player) {
-            distance = (float) living.getAttributeValue(ForgeMod.REACH_DISTANCE.get());
+            distance = (float) living.getAttributeValue(EvolutionAttributes.REACH_DISTANCE);
         }
         BlockHitResult rayTrace = (BlockHitResult) living.pick(distance, 1.0f, false);
         BlockPos pos = rayTrace.getBlockPos();
@@ -52,7 +53,7 @@ public class ItemFireStarter extends ItemEv implements IDurability {
         if (rayTrace.getType() == HitResult.Type.BLOCK && canSetFire(level, facingPos)) {
             if (level.random.nextInt(3) == 0) {
                 level.playSound(null, facingPos, SoundEvents.FLINTANDSTEEL_USE, SoundSource.BLOCKS, 1.0F, level.random.nextFloat() * 0.4F + 0.8F);
-                BlockState state = EvolutionBlocks.FIRE.get().getStateForPlacement(level, facingPos);
+                BlockState state = EvolutionBlocks.FIRE.getStateWithAge(level, facingPos);
                 level.setBlockAndUpdate(facingPos, state);
             }
             if (living instanceof ServerPlayer serverPlayer) {
@@ -75,11 +76,11 @@ public class ItemFireStarter extends ItemEv implements IDurability {
     }
 
     @Override
-    public void onUsingTick(ItemStack stack, LivingEntity player, int count) {
+    public void onUsingTick(ItemStack stack, LivingEntity player, int useRemaining) {
         if (player.level.isClientSide) {
             return;
         }
-        float distance = (float) player.getAttributeValue(ForgeMod.REACH_DISTANCE.get());
+        float distance = (float) player.getAttributeValue(EvolutionAttributes.REACH_DISTANCE);
         BlockHitResult hitResult = (BlockHitResult) player.pick(distance, 1.0f, false);
         ((ServerLevel) player.level).sendParticles(ParticleTypes.SMOKE,
                                                    hitResult.getBlockPos().getX() + 0.5,
@@ -90,7 +91,7 @@ public class ItemFireStarter extends ItemEv implements IDurability {
                                                    0.1,
                                                    0,
                                                    0.01);
-        if (count <= 8) {
+        if (useRemaining <= 8) {
             ((ServerLevel) player.level).sendParticles(ParticleTypes.LARGE_SMOKE,
                                                        hitResult.getBlockPos().getX() + 0.5,
                                                        hitResult.getBlockPos().getY() + 1,
@@ -101,7 +102,7 @@ public class ItemFireStarter extends ItemEv implements IDurability {
                                                        0,
                                                        0.01);
         }
-        if (count <= 4) {
+        if (useRemaining <= 4) {
             ((ServerLevel) player.level).sendParticles(ParticleTypes.FLAME,
                                                        hitResult.getBlockPos().getX() + 0.5,
                                                        hitResult.getBlockPos().getY() + 1,
@@ -116,7 +117,7 @@ public class ItemFireStarter extends ItemEv implements IDurability {
 
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
-        float distance = (float) player.getAttributeValue(ForgeMod.REACH_DISTANCE.get());
+        float distance = (float) player.getAttributeValue(EvolutionAttributes.REACH_DISTANCE);
         BlockHitResult hitResult = (BlockHitResult) player.pick(distance, 1.0f, false);
         if (hitResult.getType() == HitResult.Type.BLOCK && canSetFire(level, hitResult.getBlockPos().relative(hitResult.getDirection()))) {
             player.startUsingItem(hand);

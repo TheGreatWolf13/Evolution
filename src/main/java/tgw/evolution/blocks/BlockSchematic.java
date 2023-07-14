@@ -13,10 +13,9 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.material.MaterialColor;
 import net.minecraft.world.phys.BlockHitResult;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.tileentities.SchematicMode;
 import tgw.evolution.blocks.tileentities.TESchematic;
-
-import org.jetbrains.annotations.Nullable;
 
 import static tgw.evolution.init.EvolutionBStates.SCHEMATIC_MODE;
 
@@ -41,9 +40,8 @@ public class BlockSchematic extends Block implements GameMasterBlock, EntityBloc
         return this.defaultBlockState().setValue(SCHEMATIC_MODE, SchematicMode.SAVE);
     }
 
-    @Nullable
     @Override
-    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+    public @Nullable BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new TESchematic(pos, state);
     }
 

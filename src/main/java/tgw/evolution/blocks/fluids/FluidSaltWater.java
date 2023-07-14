@@ -8,11 +8,9 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
-import net.minecraftforge.fluids.FluidAttributes;
 import tgw.evolution.Evolution;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionFluids;
-import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.init.EvolutionTexts;
 
 public abstract class FluidSaltWater extends FluidGeneric {
@@ -22,9 +20,7 @@ public abstract class FluidSaltWater extends FluidGeneric {
     }
 
     private static Properties makeProperties() {
-        return new Properties(EvolutionFluids.SALT_WATER,
-                              FluidAttributes.builder(EvolutionResources.FLUID_FRESH_WATER, EvolutionResources.FLUID_FRESH_WATER)
-                                             .color(0x4009_00b3)).block(EvolutionBlocks.SALT_WATER);
+        return new Properties(EvolutionFluids.SALT_WATER).block(EvolutionBlocks.SALT_WATER);
     }
 
     @Override
@@ -69,13 +65,13 @@ public abstract class FluidSaltWater extends FluidGeneric {
                 return true;
             }
         }
-        Evolution.warn("Level of " + this.getRegistryName() + " with " + otherFluid.getRegistryName() + " is not yet implemented!");
+        Evolution.warn("Level of " + this + " with " + otherFluid + " is not yet implemented!");
         return false;
     }
 
     @Override
     public boolean tryFall(Level level, BlockPos pos, Fluid otherFluid) {
-        Evolution.warn("Try fall of " + this.getRegistryName() + " with " + otherFluid.getRegistryName() + " is not yet implemented!");
+        Evolution.warn("Try fall of " + this + " with " + otherFluid + " is not yet implemented!");
         return false;
     }
 

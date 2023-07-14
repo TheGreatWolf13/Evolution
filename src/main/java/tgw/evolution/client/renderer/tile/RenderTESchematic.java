@@ -22,11 +22,12 @@ public class RenderTESchematic implements BlockEntityRenderer<TESchematic> {
     }
 
     private static void renderInvisibleBlocks(TESchematic tile, VertexConsumer buffer, BlockPos schematicPos, boolean bool, PoseStack matrices) {
-        LevelReader world = tile.getLevel();
+        LevelReader level = tile.getLevel();
+        assert level != null;
         BlockPos tilePos = tile.getBlockPos();
         BlockPos schematicAbsPos = tilePos.offset(schematicPos);
         for (BlockPos mutable : BlockPos.betweenClosed(schematicAbsPos, schematicAbsPos.offset(tile.getStructureSize()).offset(-1, -1, -1))) {
-            BlockState state = world.getBlockState(mutable);
+            BlockState state = level.getBlockState(mutable);
             boolean isAir = state.isAir();
             boolean isVoid = state.getBlock() == Blocks.STRUCTURE_VOID;
             if (isAir || isVoid) {
@@ -52,6 +53,7 @@ public class RenderTESchematic implements BlockEntityRenderer<TESchematic> {
 
     @Override
     public void render(TESchematic tile, float partialTicks, PoseStack matrices, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        assert Minecraft.getInstance().player != null;
         if (Minecraft.getInstance().player.canUseGameMasterBlocks() || Minecraft.getInstance().player.isSpectator()) {
             BlockPos schematicPos = tile.getSchematicPos();
             Vec3i size = tile.getStructureSize();

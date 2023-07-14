@@ -14,7 +14,7 @@ public class ItemPartHead extends ItemPart<PartTypes.Head, ItemPartHead, PartHea
     }
 
     @Override
-    protected PartHead createNew() {
+    public PartHead createNew() {
         return new PartHead();
     }
 
@@ -34,8 +34,8 @@ public class ItemPartHead extends ItemPart<PartTypes.Head, ItemPartHead, PartHea
     }
 
     @Override
-    protected PartHead getPartCap(ItemStack stack) {
-        return PartHead.get(stack);
+    protected PartHead getPartCap() {
+        return new PartHead();
     }
 
     @Override

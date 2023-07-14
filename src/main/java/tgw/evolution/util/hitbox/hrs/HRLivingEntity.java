@@ -36,7 +36,7 @@ public interface HRLivingEntity<T extends LivingEntity, M extends HMEntity<T>> e
 
     default void renderOrInit(T entity, HR hr, float partialTicks) {
         this.model().setAttackTime(this.attackAnim(entity, partialTicks));
-        boolean shouldSit = entity.isPassenger() && entity.getVehicle() != null && entity.getVehicle().shouldRiderSit();
+        boolean shouldSit = entity.isPassenger() && entity.getVehicle() != null;
         this.model().setRiding(shouldSit);
         this.model().setYoung(entity.isBaby());
         float bodyYaw = Mth.rotLerp(partialTicks, entity.yBodyRotO, entity.yBodyRot);
@@ -148,6 +148,6 @@ public interface HRLivingEntity<T extends LivingEntity, M extends HMEntity<T>> e
     }
 
     default boolean shaking(T entity) {
-        return entity.isFullyFrozen() || entity.hasEffect(EvolutionEffects.SHIVERING.get());
+        return entity.isFullyFrozen() || entity.hasEffect(EvolutionEffects.SHIVERING);
     }
 }

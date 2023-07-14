@@ -14,10 +14,10 @@ public interface IColdResistant {
     double getColdResistance();
 
     default void putColdAttributes(ImmutableMultimap.Builder<Attribute, AttributeModifier> builder, ItemStack stack, SlotType slot) {
-        builder.put(EvolutionAttributes.COLD_RESISTANCE.get(), EvolutionAttributes.heatResistanceModifier(this.getColdResistance(), slot));
+        builder.put(EvolutionAttributes.COLD_RESISTANCE, EvolutionAttributes.heatResistanceModifier(this.getColdResistance(), slot));
     }
 
     default void putColdAttributes(Map<Attribute, AttributeModifier> map, ItemStack stack, SlotType slot) {
-        map.put(EvolutionAttributes.COLD_RESISTANCE.get(), EvolutionAttributes.heatResistanceModifier(this.getColdResistance(), slot));
+        map.put(EvolutionAttributes.COLD_RESISTANCE, EvolutionAttributes.heatResistanceModifier(this.getColdResistance(), slot));
     }
 }

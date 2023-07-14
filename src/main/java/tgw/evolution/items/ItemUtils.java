@@ -5,7 +5,9 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.items.modular.ItemModular;
+import tgw.evolution.items.modular.ItemModularTool;
 
 public final class ItemUtils {
 
@@ -14,6 +16,14 @@ public final class ItemUtils {
 
     public static boolean canRepeatUse(ItemStack stack) {
         return stack.getItem() instanceof BlockItem;
+    }
+
+    public static double getDmgMultiplier(ItemStack stack, EvolutionDamage.Type type) {
+        return stack.getItem() instanceof ItemModularTool mod ? mod.getDmgMultiplier(stack, type) : 1;
+    }
+
+    public static double getMass(ItemStack stack) {
+        return stack.getItem() instanceof ItemModular mod ? mod.getMass(stack) : 0;
     }
 
     public static boolean isAxe(ItemStack stack) {
@@ -45,7 +55,7 @@ public final class ItemUtils {
         if (stack.getTag() == null && other.getTag() != null) {
             return false;
         }
-        return (stack.getTag() == null || stack.getTag().equals(other.getTag())) && stack.areCapsCompatible(other);
+        return stack.getTag() == null || stack.getTag().equals(other.getTag());
     }
 
     public static boolean usesModularRendering(ItemStack stack) {

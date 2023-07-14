@@ -5,12 +5,12 @@ import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeMap;
 import net.minecraft.world.entity.player.Player;
-import tgw.evolution.util.collection.I2IMap;
-import tgw.evolution.util.collection.I2IOpenHashMap;
+import tgw.evolution.util.collection.maps.I2IHashMap;
+import tgw.evolution.util.collection.maps.I2IMap;
 
 public class EffectDizziness extends EffectGeneric {
 
-    private static final I2IMap AFFECTED = new I2IOpenHashMap();
+    private static final I2IMap AFFECTED = new I2IHashMap();
 
     public EffectDizziness() {
         super(MobEffectCategory.HARMFUL, 0x3a_5785);

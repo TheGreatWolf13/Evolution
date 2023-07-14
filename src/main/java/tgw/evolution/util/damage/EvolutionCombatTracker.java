@@ -17,13 +17,18 @@ import tgw.evolution.blocks.IFallSufixBlock;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.items.IMelee;
-import tgw.evolution.util.collection.*;
+import tgw.evolution.util.collection.lists.OArrayList;
+import tgw.evolution.util.collection.lists.OList;
+import tgw.evolution.util.collection.maps.R2BHashMap;
+import tgw.evolution.util.collection.maps.R2BMap;
+import tgw.evolution.util.collection.maps.R2FHashMap;
+import tgw.evolution.util.collection.maps.R2FMap;
 
 public class EvolutionCombatTracker extends CombatTracker {
-    private final R2BMap<EvolutionDamage.Type> damageImmunity = new R2BOpenHashMap<>();
+    private final R2BMap<EvolutionDamage.Type> damageImmunity = new R2BHashMap<>();
     private final OList<EvolutionCombatEntry> entries = new OArrayList<>();
     private final LivingEntity fighter;
-    private final R2FMap<EvolutionDamage.Type> lastDamages = new R2FOpenHashMap<>();
+    private final R2FMap<EvolutionDamage.Type> lastDamages = new R2FHashMap<>();
     private int combatEndTime;
     private int combatStartTime;
     private boolean inCombat;
@@ -67,8 +72,7 @@ public class EvolutionCombatTracker extends CombatTracker {
      * @return Checks the previous CombatEntries to determine if the fighter fell before they were killed or if they were pushed to their death /
      * into the void.
      */
-    @Nullable
-    private EvolutionCombatEntry getBestCombatEntry() {
+    private @Nullable EvolutionCombatEntry getBestCombatEntry() {
         EvolutionCombatEntry promFallOrVoidOrDoomEntry = null;
         EvolutionCombatEntry promSuffixEntry = null;
         float suffixDamage = 0.0F;
@@ -193,8 +197,7 @@ public class EvolutionCombatTracker extends CombatTracker {
     }
 
     @Override
-    @Nullable
-    public LivingEntity getKiller() {
+    public @Nullable LivingEntity getKiller() {
         LivingEntity livingEntity = null;
         Player player = null;
         float livingDamage = 0.0F;

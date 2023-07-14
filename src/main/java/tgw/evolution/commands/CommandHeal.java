@@ -7,14 +7,10 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerPlayer;
-import tgw.evolution.capabilities.food.CapabilityHunger;
-import tgw.evolution.capabilities.food.HungerStats;
-import tgw.evolution.capabilities.food.IHunger;
-import tgw.evolution.capabilities.thirst.CapabilityThirst;
-import tgw.evolution.capabilities.thirst.IThirst;
-import tgw.evolution.capabilities.thirst.ThirstStats;
-import tgw.evolution.init.EvolutionCapabilities;
+import tgw.evolution.capabilities.player.CapabilityHunger;
+import tgw.evolution.capabilities.player.CapabilityThirst;
 import tgw.evolution.init.EvolutionEffects;
+import tgw.evolution.patches.PatchServerPlayer;
 
 public final class CommandHeal implements Command<CommandSourceStack> {
 
@@ -30,17 +26,15 @@ public final class CommandHeal implements Command<CommandSourceStack> {
     @Override
     public int run(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
-        EvolutionCapabilities.revive(player);
-        IThirst thirst = EvolutionCapabilities.getCapabilityOrThrow(player, CapabilityThirst.INSTANCE);
-        IHunger hunger = EvolutionCapabilities.getCapabilityOrThrow(player, CapabilityHunger.INSTANCE);
+        CapabilityThirst thirst = ((PatchServerPlayer) player).getThirstStats();
+        CapabilityHunger hunger = ((PatchServerPlayer) player).getHungerStats();
         player.setHealth(player.getMaxHealth());
-        thirst.setThirstLevel(ThirstStats.THIRST_CAPACITY);
+        thirst.setThirstLevel(CapabilityThirst.THIRST_CAPACITY);
         thirst.setHydrationLevel(0);
-        hunger.setHungerLevel(HungerStats.HUNGER_CAPACITY);
+        hunger.setHungerLevel(CapabilityHunger.HUNGER_CAPACITY);
         hunger.setSaturationLevel(0);
-        player.addEffect(EvolutionEffects.infiniteOf(EvolutionEffects.HYDRATION.get(), 99, false, false, true));
-        player.addEffect(EvolutionEffects.infiniteOf(EvolutionEffects.SATURATION.get(), 99, false, false, true));
-        EvolutionCapabilities.invalidate(player);
+        player.addEffect(EvolutionEffects.infiniteOf(EvolutionEffects.HYDRATION, 99, false, false, true));
+        player.addEffect(EvolutionEffects.infiniteOf(EvolutionEffects.SATURATION, 99, false, false, true));
         return SINGLE_SUCCESS;
     }
 }

@@ -8,8 +8,8 @@ import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.CollisionContext;
-
 import org.jetbrains.annotations.Nullable;
+
 import java.util.Map;
 
 public class ItemWallOrFloor extends ItemBlock {
@@ -22,8 +22,7 @@ public class ItemWallOrFloor extends ItemBlock {
     }
 
     @Override
-    @Nullable
-    protected BlockState getPlacementState(BlockPlaceContext context) {
+    protected @Nullable BlockState getPlacementState(BlockPlaceContext context) {
         BlockState wallState = this.wallBlock.getStateForPlacement(context);
         BlockState stateForPlacement = null;
         LevelReader level = context.getLevel();
@@ -44,11 +43,5 @@ public class ItemWallOrFloor extends ItemBlock {
     public void registerBlocks(Map<Block, Item> blockToItemMap, Item item) {
         super.registerBlocks(blockToItemMap, item);
         blockToItemMap.put(this.wallBlock, item);
-    }
-
-    @Override
-    public void removeFromBlockToItemMap(Map<Block, Item> blockToItemMap, Item item) {
-        super.removeFromBlockToItemMap(blockToItemMap, item);
-        blockToItemMap.remove(this.wallBlock);
     }
 }

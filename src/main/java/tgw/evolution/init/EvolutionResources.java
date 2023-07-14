@@ -5,9 +5,9 @@ import net.minecraft.resources.ResourceLocation;
 import tgw.evolution.Evolution;
 import tgw.evolution.capabilities.modular.part.IPartType;
 import tgw.evolution.inventory.AdditionalSlotType;
-import tgw.evolution.util.collection.BiEnumMap;
-import tgw.evolution.util.collection.RArrayList;
-import tgw.evolution.util.collection.RList;
+import tgw.evolution.util.collection.lists.OArrayList;
+import tgw.evolution.util.collection.lists.OList;
+import tgw.evolution.util.collection.maps.BiEnumMap;
 import tgw.evolution.util.constants.RockVariant;
 import tgw.evolution.util.constants.WoodVariant;
 
@@ -57,7 +57,7 @@ public final class EvolutionResources {
     public static final ResourceLocation SLOT_OFFHAND = Evolution.getResource("item/slot_offhand");
     //Models
     //      Modular
-    public static final RList<ModelResourceLocation> MODULAR_MODELS = new RArrayList<>();
+    public static final OList<ModelResourceLocation> MODULAR_MODELS = new OArrayList<>();
     //          Blade
     public static final BiEnumMap<Blade, EvolutionMaterials, ModelResourceLocation> MODULAR_BLADES = new BiEnumMap<>(Blade.class,
                                                                                                                      EvolutionMaterials.class);

@@ -17,12 +17,10 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
-import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
-import tgw.evolution.capabilities.chunkstorage.IChunkStorage;
 import tgw.evolution.init.EvolutionBStates;
 import tgw.evolution.init.EvolutionBlocks;
-import tgw.evolution.init.EvolutionCapabilities;
-import tgw.evolution.patches.ILevelChunkSectionPatch;
+import tgw.evolution.patches.PatchLevelChunk;
+import tgw.evolution.patches.PatchLevelChunkSection;
 import tgw.evolution.util.constants.BlockFlags;
 
 import java.util.function.IntFunction;
@@ -30,12 +28,12 @@ import java.util.function.Predicate;
 
 public final class CommandAtm implements Command<CommandSourceStack> {
 
-    public static final Predicate<BlockState> AIR = s -> s.isAir() || s.getBlock() == EvolutionBlocks.ATM.get();
-    public static final Predicate<BlockState> ATM = s -> s.getBlock() == EvolutionBlocks.ATM.get();
+    public static final Predicate<BlockState> AIR = s -> s.isAir() || s.getBlock() == EvolutionBlocks.ATM;
+    public static final Predicate<BlockState> ATM = s -> s.getBlock() == EvolutionBlocks.ATM;
     public static final IntFunction<BlockState> AIR_MAKER = i -> Blocks.AIR.defaultBlockState();
     public static final IntFunction<BlockState> ATM_MAKER = i -> i == 0 ?
                                                                  Blocks.AIR.defaultBlockState() :
-                                                                 EvolutionBlocks.ATM.get().defaultBlockState().setValue(EvolutionBStates.ATM, i);
+                                                                 EvolutionBlocks.ATM.defaultBlockState().setValue(EvolutionBStates.ATM, i);
     private static final Command<CommandSourceStack> CMD = new CommandAtm();
 
     public static int fill(LevelChunk chunk, Predicate<BlockState> filter, boolean shouldCheckAtm, IntFunction<BlockState> blockMaker) {
@@ -56,7 +54,7 @@ public final class CommandAtm implements Command<CommandSourceStack> {
                     for (int z = 0; z < 16; z++) {
                         BlockState state = section.getBlockState(x, y, z);
                         if (filter.test(state)) {
-                            int atm = shouldCheckAtm ? ((ILevelChunkSectionPatch) section).getAtmStorage().get(x, y, z) : 0;
+                            int atm = shouldCheckAtm ? ((PatchLevelChunkSection) section).getAtmStorage().get(x, y, z) : 0;
                             level.setBlock(pos.set(globalX + x, globalY + y, globalZ + z), blockMaker.apply(atm), BlockFlags.BLOCK_UPDATE);
                             ++count;
                         }
@@ -98,16 +96,15 @@ public final class CommandAtm implements Command<CommandSourceStack> {
             source.sendFailure(new TranslatableComponent("command.evolution.atm.chunkEmpty"));
             return 0;
         }
-        IChunkStorage chunkStorage = EvolutionCapabilities.getCapabilityOrThrow(chunk, CapabilityChunkStorage.INSTANCE);
         if (context.getInput().contains("debug")) {
-            if (chunkStorage.setContinuousAtmDebug(chunk, true)) {
+            if (((PatchLevelChunk) chunk).getChunkStorage().setContinuousAtmDebug(chunk, true)) {
                 source.sendSuccess(new TranslatableComponent("command.evolution.atm.debugSuccess"), true);
                 return SINGLE_SUCCESS;
             }
             source.sendFailure(new TranslatableComponent("command.evolution.atm.debugFail"));
             return 0;
         }
-        if (chunkStorage.setContinuousAtmDebug(chunk, false)) {
+        if (((PatchLevelChunk) chunk).getChunkStorage().setContinuousAtmDebug(chunk, false)) {
             source.sendSuccess(new TranslatableComponent("command.evolution.atm.resetSuccess"), true);
             return SINGLE_SUCCESS;
         }

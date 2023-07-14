@@ -14,7 +14,6 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
-import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -52,7 +51,7 @@ public class BlockPeat extends BlockPhysics implements IReplaceable, IAir {
         BlockPos posDown = pos.below();
         BlockState stateDown = level.getBlockState(posDown);
         int layers = 0;
-        if (stateDown.getBlock() == EvolutionBlocks.PEAT.get()) {
+        if (stateDown.getBlock() == EvolutionBlocks.PEAT) {
             layers = stateDown.getValue(LAYERS_1_4);
         }
         if (layers == 4) {
@@ -69,7 +68,7 @@ public class BlockPeat extends BlockPhysics implements IReplaceable, IAir {
         level.removeBlock(pos, true);
         EntityFallingPeat entity = new EntityFallingPeat(level, pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, state.getValue(LAYERS_1_4));
         level.addFreshEntity(entity);
-        entity.playSound(EvolutionSounds.SOIL_COLLAPSE.get(), 0.25F, 1.0F);
+        entity.playSound(EvolutionSounds.SOIL_COLLAPSE, 0.25F, 1.0F);
         for (Direction dir : DirectionUtil.ALL_EXCEPT_DOWN) {
             BlockUtils.scheduleBlockTick(level, pos.getX() + dir.getStepX(), pos.getY() + dir.getStepY(), pos.getZ() + dir.getStepZ());
         }
@@ -77,13 +76,13 @@ public class BlockPeat extends BlockPhysics implements IReplaceable, IAir {
 
     public static void placeLayersOn(Level level, BlockPos pos, int layers) {
         BlockState state = level.getBlockState(pos);
-        if (state.getBlock() == EvolutionBlocks.PEAT.get()) {
+        if (state.getBlock() == EvolutionBlocks.PEAT) {
             for (int i = 1; i <= 4; i++) {
                 if (state.getValue(LAYERS_1_4) == i) {
                     if (i + layers > 4) {
                         int remain = i + layers - 4;
                         level.setBlock(pos, state.setValue(LAYERS_1_4, 4), BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE);
-                        level.setBlock(pos.above(), EvolutionBlocks.PEAT.get().defaultBlockState().setValue(LAYERS_1_4, remain),
+                        level.setBlock(pos.above(), EvolutionBlocks.PEAT.defaultBlockState().setValue(LAYERS_1_4, remain),
                                        BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE);
                         return;
                     }
@@ -93,12 +92,12 @@ public class BlockPeat extends BlockPhysics implements IReplaceable, IAir {
             }
         }
         if (state.getBlock() instanceof IReplaceable) {
-            level.setBlock(pos, EvolutionBlocks.PEAT.get().defaultBlockState().setValue(LAYERS_1_4, layers),
+            level.setBlock(pos, EvolutionBlocks.PEAT.defaultBlockState().setValue(LAYERS_1_4, layers),
                            BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE);
             return;
         }
         if (state.getMaterial().isReplaceable()) {
-            level.setBlock(pos, EvolutionBlocks.PEAT.get().defaultBlockState().setValue(LAYERS_1_4, layers),
+            level.setBlock(pos, EvolutionBlocks.PEAT.defaultBlockState().setValue(LAYERS_1_4, layers),
                            BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE);
         }
     }
@@ -139,7 +138,7 @@ public class BlockPeat extends BlockPhysics implements IReplaceable, IAir {
 
     @Override
     public @Nullable SoundEvent fallingSound() {
-        return EvolutionSounds.SOIL_COLLAPSE.get();
+        return EvolutionSounds.SOIL_COLLAPSE;
     }
 
     @Override
@@ -178,23 +177,17 @@ public class BlockPeat extends BlockPhysics implements IReplaceable, IAir {
     }
 
     @Override
-    public boolean onDestroyedByPlayer(BlockState state, Level level, BlockPos pos, Player player, boolean willHarvest, FluidState fluid) {
-        BlockUtils.scheduleBlockTick(level, pos.getX(), pos.getY() + 1, pos.getZ());
-        if (player.isCreative() || state.getValue(LAYERS_1_4) == 1) {
-            return super.onDestroyedByPlayer(state, level, pos, player, willHarvest, fluid);
-        }
-        this.playerWillDestroy(level, pos, state, player);
-        level.setBlock(pos, state.setValue(LAYERS_1_4, state.getValue(LAYERS_1_4) - 1),
-                       level.isClientSide ?
-                       BlockFlags.RERENDER | BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE :
-                       BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE);
-        return true;
-    }
-
-    @Override
     public void playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
         BlockUtils.scheduleBlockTick(level, pos.getX(), pos.getY() + 1, pos.getZ());
-        super.playerWillDestroy(level, pos, state, player);
+        if (player.isCreative() || state.getValue(LAYERS_1_4) == 1) {
+            super.playerWillDestroy(level, pos, state, player);
+        }
+        else {
+            level.setBlock(pos, state.setValue(LAYERS_1_4, state.getValue(LAYERS_1_4) - 1),
+                           level.isClientSide ?
+                           BlockFlags.RERENDER | BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE :
+                           BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE);
+        }
     }
 
     @Override

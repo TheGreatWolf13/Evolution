@@ -1,11 +1,9 @@
 package tgw.evolution.potion;
 
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.LivingEntity;
-import tgw.evolution.capabilities.food.CapabilityHunger;
-import tgw.evolution.capabilities.food.IHunger;
-import tgw.evolution.init.EvolutionCapabilities;
+import tgw.evolution.capabilities.player.CapabilityHunger;
+import tgw.evolution.patches.PatchServerPlayer;
 
 public class EffectSaturation extends EffectGeneric {
 
@@ -15,8 +13,8 @@ public class EffectSaturation extends EffectGeneric {
 
     @Override
     public void applyEffectTick(LivingEntity entity, int amplifier) {
-        if (entity instanceof ServerPlayer player) {
-            IHunger hunger = EvolutionCapabilities.getRevivedCapability(player, CapabilityHunger.INSTANCE);
+        if (entity instanceof PatchServerPlayer player) {
+            CapabilityHunger hunger = player.getHungerStats();
             hunger.increaseHungerLevel(1 + amplifier);
         }
     }

@@ -10,10 +10,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
-import tgw.evolution.Evolution;
+import tgw.evolution.EvolutionClient;
 import tgw.evolution.items.IMelee;
-import tgw.evolution.patches.IEntityPatch;
-import tgw.evolution.patches.ILivingEntityPatch;
+import tgw.evolution.patches.PatchLivingEntity;
 import tgw.evolution.util.ArmPose;
 import tgw.evolution.util.math.MathHelper;
 
@@ -98,7 +97,7 @@ public interface HMHumanoid<T extends LivingEntity> extends HMAgeableList<T> {
                         UseAnim action = useItem.getUseAnimation(stack);
                         if (action == UseAnim.EAT || action == UseAnim.DRINK) {
                             armL.setRotationX((90 - entity.getXRot()) * Mth.DEG_TO_RAD - 10 * Mth.DEG_TO_RAD + Mth.sin(
-                                    (entity.tickCount + Evolution.PROXY.getPartialTicks()) * 1.5f) * 3 * Mth.DEG_TO_RAD);
+                                    (entity.tickCount + EvolutionClient.getPartialTicks()) * 1.5f) * 3 * Mth.DEG_TO_RAD);
                             armL.setRotationY(-0.3f);
                             armL.setRotationZ(-0.3f);
                             this.setShouldCancelLeft(true);
@@ -154,7 +153,7 @@ public interface HMHumanoid<T extends LivingEntity> extends HMAgeableList<T> {
                         UseAnim action = useItem.getUseAnimation(stack);
                         if (action == UseAnim.EAT || action == UseAnim.DRINK) {
                             armR.setRotationX((90 - entity.getXRot()) * Mth.DEG_TO_RAD - 10 * Mth.DEG_TO_RAD + Mth.sin(
-                                    (entity.tickCount + Evolution.PROXY.getPartialTicks()) * 1.5f) * 3 * Mth.DEG_TO_RAD);
+                                    (entity.tickCount + EvolutionClient.getPartialTicks()) * 1.5f) * 3 * Mth.DEG_TO_RAD);
                             armR.setRotationY(0.3f);
                             armR.setRotationZ(0.3f);
                             this.setShouldCancelRight(true);
@@ -286,7 +285,7 @@ public interface HMHumanoid<T extends LivingEntity> extends HMAgeableList<T> {
                 float bodyRot0;
                 float legRot0;
                 float foreLegRot0;
-                if (((IEntityPatch) entity).getLastPose() == Pose.CROUCHING || entity.getPose() == Pose.CROUCHING) {
+                if (entity.getLastPose() == Pose.CROUCHING || entity.getPose() == Pose.CROUCHING) {
                     headOffset = -7;
                     bodyOffset = -6;
                     legOffset = 1;
@@ -414,7 +413,7 @@ public interface HMHumanoid<T extends LivingEntity> extends HMAgeableList<T> {
                 body.translateY(-19);
                 body.setRotationX(headPitch - Mth.HALF_PI);
                 //      Fully submerged
-                if (((IEntityPatch) entity).isFullySubmerged(FluidTags.WATER)) {
+                if (entity.isFullySubmerged(FluidTags.WATER)) {
                     armR.setRotationY(180 * Mth.DEG_TO_RAD);
                     armL.setRotationY(180 * Mth.DEG_TO_RAD);
                     if (anim < 0.55) {
@@ -591,7 +590,7 @@ public interface HMHumanoid<T extends LivingEntity> extends HMAgeableList<T> {
     }
 
     default void setupAttackAnim(T entity, float ageInTicks) {
-        ILivingEntityPatch patch = (ILivingEntityPatch) entity;
+        PatchLivingEntity patch = (PatchLivingEntity) entity;
         HM body = this.body();
         HM armR = this.armR();
         HM armL = this.armL();
@@ -621,7 +620,7 @@ public interface HMHumanoid<T extends LivingEntity> extends HMAgeableList<T> {
                 attackingArm.addRotationZ(Mth.sin(this.attackTime() * Mth.PI) * -0.4F);
             }
         }
-        float partialTicks = Evolution.PROXY.getPartialTicks();
+        float partialTicks = EvolutionClient.getPartialTicks();
         if (patch.shouldRenderSpecialAttack()) {
             IMelee.IAttackType type = patch.getSpecialAttackType();
             if (type == IMelee.BARE_HAND_ATTACK) {

@@ -2,47 +2,45 @@ package tgw.evolution.items.modular;
 
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.FormattedText;
-import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.UseAnim;
+import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.capabilities.modular.IModular;
 import tgw.evolution.inventory.SlotType;
 import tgw.evolution.items.IDurability;
 import tgw.evolution.items.IMass;
 import tgw.evolution.items.ItemEv;
-import tgw.evolution.util.collection.EitherList;
+import tgw.evolution.patches.PatchItem;
+import tgw.evolution.util.collection.lists.EitherList;
 import tgw.evolution.util.constants.HarvestLevel;
 
-import java.util.function.Consumer;
-
-public abstract class ItemModular extends ItemEv implements IDurability, IMass {
+public abstract class ItemModular<M extends IModular> extends ItemEv implements IDurability, IMass, PatchItem {
 
     public ItemModular(Properties builder) {
         super(builder);
     }
 
+    protected static boolean verifyStack(ItemStack stack) {
+        if (stack.isEmpty()) {
+            return false;
+        }
+        return stack.hasTag();
+    }
+
     @Override
     public boolean canBeDepleted() {
         return true;
-    }
-
-    protected void damage(ItemStack stack, DamageCause cause, @HarvestLevel int harvestLevel) {
-        if (this.canBeDepleted()) {
-            this.getModularCap(stack).damage(cause, harvestLevel);
-        }
-    }
-
-    @Override
-    @Deprecated
-    public final <T extends LivingEntity> int damageItem(ItemStack stack, int amount, T entity, Consumer<T> onBroken) {
-        throw new AssertionError("Should not be called. Call hurtAndBreak(ItemStack, DamageCause, LivingEntity, Consumer)");
     }
 
     @Override
@@ -54,14 +52,20 @@ public abstract class ItemModular extends ItemEv implements IDurability, IMass {
 
     @Override
     public int getBarColor(ItemStack stack) {
-        int maxDamage = stack.getMaxDamage();
-        float f = Math.max(0.0F, (maxDamage - stack.getDamageValue()) / (float) maxDamage);
-        return Mth.hsvToRgb(f / 3.0F, 1.0F, 1.0F);
+        if (!verifyStack(stack)) {
+            return 0;
+        }
+        //noinspection ConstantConditions
+        return this.getModular().getBarColor(stack.getTag());
     }
 
     @Override
     public int getBarWidth(ItemStack stack) {
-        return Math.round(13.0F - stack.getDamageValue() * 13.0F / stack.getMaxDamage());
+        if (!verifyStack(stack)) {
+            return 0;
+        }
+        //noinspection ConstantConditions
+        return this.getModular().getBarWidth(stack.getTag());
     }
 
     @Override
@@ -69,94 +73,118 @@ public abstract class ItemModular extends ItemEv implements IDurability, IMass {
         if (!this.canBeDepleted()) {
             return 0;
         }
-        IModular modular = this.getModularCap(stack);
-        return modular.getTotalDurabilityDmg();
+        if (!verifyStack(stack)) {
+            return 0;
+        }
+        //noinspection ConstantConditions
+        return this.getModular().getTotalDurabilityDmg(stack.getTag());
     }
 
     @Override
     public String getDescriptionId(ItemStack stack) {
-        return this.getModularCap(stack).getDescriptionId();
-    }
-
-    @Override
-    public int getItemStackLimit(ItemStack stack) {
-        return 1;
+        if (!verifyStack(stack)) {
+            return "null";
+        }
+        //noinspection ConstantConditions
+        return this.getModular().getDescriptionId(stack.getTag());
     }
 
     @Override
     public double getMass(ItemStack stack) {
-        return this.getModularCap(stack).getMass();
+        if (!verifyStack(stack)) {
+            return 0;
+        }
+        //noinspection ConstantConditions
+        return this.getModular().getMass(stack.getTag());
     }
 
     @Override
     public int getMaxDamage(ItemStack stack) {
-        if (!this.canBeDepleted()) {
+        if (!verifyStack(stack)) {
             return 0;
         }
-        IModular modular = this.getModularCap(stack);
-        int durability = modular.getTotalMaxDurability();
-        return modular.isBroken() ? durability + 1 : durability;
+        //noinspection ConstantConditions
+        return this.getModular().getTotalMaxDurability(stack.getTag());
     }
 
-    protected abstract IModular getModularCap(ItemStack stack);
+    protected abstract M getModular();
 
-    @Nullable
     @Override
-    public CompoundTag getShareTag(ItemStack stack) {
-        CompoundTag baseTag = stack.getTag();
-        if (baseTag != null) {
-            baseTag = baseTag.copy();
+    public UseAnim getUseAnimation(ItemStack stack) {
+        if (!verifyStack(stack)) {
+            return UseAnim.NONE;
         }
-        else {
-            baseTag = new CompoundTag();
-        }
-        CompoundTag capabilityTag = this.getModularCap(stack).serializeNBT();
-        if (capabilityTag != null) {
-            baseTag.put("cap", capabilityTag);
-        }
-        return baseTag;
+        //noinspection ConstantConditions
+        return this.getModular().getUseAnimation(stack.getTag());
     }
 
-    public final <E extends LivingEntity> void hurtAndBreak(ItemStack stack, DamageCause cause, E entity, Consumer<E> onBroken) {
-        this.hurtAndBreak(stack, cause, entity, onBroken, this.getModularCap(stack).getHarvestLevel());
+    public final <E extends LivingEntity> void hurtAndBreak(ItemStack stack,
+                                                            DamageCause cause,
+                                                            E entity,
+                                                            @Nullable EquipmentSlot slot,
+                                                            @HarvestLevel int harvestLevel) {
+        if (!verifyStack(stack)) {
+            return;
+        }
+        this.getModular().hurtAndBreak(stack, cause, entity, slot, harvestLevel);
     }
-
-    public abstract <E extends LivingEntity> void hurtAndBreak(ItemStack stack,
-                                                               DamageCause cause,
-                                                               E entity,
-                                                               Consumer<E> onBroken,
-                                                               @HarvestLevel int harvestLevel);
 
     public boolean isAxe(ItemStack stack) {
-        return this.getModularCap(stack).isAxe();
+        if (!verifyStack(stack)) {
+            return false;
+        }
+        //noinspection ConstantConditions
+        return this.getModular().isAxe(stack.getTag());
     }
 
-    public abstract boolean isBroken(ItemStack stack);
+    @Override
+    public boolean isBarVisible(ItemStack stack) {
+        if (!verifyStack(stack)) {
+            return false;
+        }
+        //noinspection ConstantConditions
+        return this.getModular().isBarVisible(stack.getTag());
+    }
 
     public boolean isHammer(ItemStack stack) {
-        return this.getModularCap(stack).isHammer();
+        if (!verifyStack(stack)) {
+            return false;
+        }
+        //noinspection ConstantConditions
+        return this.getModular().isHammer(stack.getTag());
+    }
+
+    public boolean isShovel(ItemStack stack) {
+        if (!verifyStack(stack)) {
+            return false;
+        }
+        //noinspection ConstantConditions
+        return this.getModular().isShovel(stack.getTag());
     }
 
     public void makeTooltip(EitherList<FormattedText, TooltipComponent> tooltip, ItemStack stack) {
-        IModular modularCap = this.getModularCap(stack);
-        modularCap.appendPartTooltip(tooltip);
-    }
-
-    @Override
-    public void readShareTag(ItemStack stack, @Nullable CompoundTag nbt) {
-        if (nbt == null) {
-            stack.setTag(null);
+        if (!verifyStack(stack)) {
             return;
         }
-        CompoundTag capabilityTag = nbt.getCompound("cap");
-        nbt.remove("cap");
-        stack.setTag(nbt);
-        this.getModularCap(stack).deserializeNBT(capabilityTag);
+        //noinspection ConstantConditions
+        this.getModular().appendPartTooltip(stack.getTag(), tooltip);
     }
 
     @Override
-    public void setDamage(ItemStack stack, int damage) {
-        //Disable vanilla logic
+    public void releaseUsing(ItemStack stack, Level level, LivingEntity entity, int timeLeft) {
+        if (!verifyStack(stack)) {
+            return;
+        }
+        this.getModular().releaseUsing(stack, level, entity, timeLeft);
+    }
+
+    @Override
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+        if (!verifyStack(stack)) {
+            return new InteractionResultHolder<>(InteractionResult.PASS, stack);
+        }
+        return this.getModular().use(stack, level, player, hand);
     }
 
     @Override

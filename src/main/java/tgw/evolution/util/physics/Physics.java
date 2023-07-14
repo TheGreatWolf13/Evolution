@@ -12,12 +12,10 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.common.ForgeMod;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.entities.projectiles.IAerodynamicEntity;
+import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.items.IEvolutionItem;
-import tgw.evolution.patches.IBlockPatch;
-import tgw.evolution.patches.IEntityPatch;
 import tgw.evolution.util.ILocked;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.math.Vec3d;
@@ -124,7 +122,7 @@ public final class Physics implements ILocked {
         boolean swimming = entity.isSwimming();
         if (swimming) {
             float xRot = -entity.getXRot();
-            if (xRot <= 0 || ((IEntityPatch) entity).isFullySubmerged(FluidTags.WATER)) {
+            if (xRot <= 0 || entity.isFullySubmerged(FluidTags.WATER)) {
                 //up only allowed if fully submerged
                 //down always allowed
                 direction.addMutable(0, MathHelper.sinDeg(xRot), 0);
@@ -243,8 +241,7 @@ public final class Physics implements ILocked {
             return living.flyingSpeed;
         }
         if (entity.isOnGround() || this.fluid != null || entity instanceof LivingEntity living && living.onClimbable()) {
-            //noinspection CastConflictsWithInstanceof
-            double acceleration = ((IEntityPatch) entity).getAcceleration() * slowdown;
+            double acceleration = entity.getAcceleration() * slowdown;
             if (acceleration == 0) {
                 return 0;
             }
@@ -254,8 +251,8 @@ public final class Physics implements ILocked {
             }
             return Math.min(acceleration, this.calcAccNormal() * f);
         }
-        if (((IEntityPatch) entity).getNoJumpDelay() > 3) {
-            double acceleration = ((IEntityPatch) entity).getAcceleration() * slowdown;
+        if (entity.getNoJumpDelay() > 3) {
+            double acceleration = entity.getAcceleration() * slowdown;
             if (acceleration == 0) {
                 return 0;
             }
@@ -284,8 +281,8 @@ public final class Physics implements ILocked {
             assert this.fluid.tag() != null;
             submergedHeight = entity.getFluidHeight(this.fluid.tag());
         }
-        double volumeDisplaced = this.sizeX * this.sizeZ * submergedHeight * ((IEntityPatch) entity).getVolumeCorrectionFactor();
-        double lungCapacity = ((IEntityPatch<?>) entity).getLungCapacity();
+        double volumeDisplaced = this.sizeX * this.sizeZ * submergedHeight * entity.getVolumeCorrectionFactor();
+        double lungCapacity = entity.getLungCapacity();
         if (lungCapacity > 0) {
             int airSupply = Math.max(0, entity.getAirSupply());
             if (airSupply > 0) {
@@ -330,16 +327,16 @@ public final class Physics implements ILocked {
         if (!entity.isOnGround()) {
             if (this.fluid != null && this.fluid != Fluid.VACUUM && entity instanceof LivingEntity living) {
                 float mult = living.isSwimming() ? 50_000 : 10_000;
-                return mult * (float) (this.fluid.viscosity() * living.getAttributeValue(ForgeMod.SWIM_SPEED.get()));
+                return mult * (float) (this.fluid.viscosity() * living.getAttributeValue(EvolutionAttributes.SWIM_SPEED));
             }
             return 0;
         }
         assert this.level != null;
-        BlockState state = this.level.getBlockState(((IEntityPatch) entity).getFrictionPos());
+        BlockState state = this.level.getBlockState_(entity.getFrictionPos());
         if (state.isAir() || state.getCollisionShape(this.level, this.helperPos).isEmpty()) {
             return 0;
         }
-        float frictionCoef = ((IBlockPatch) state.getBlock()).getFrictionCoefficient(state) * ((IEntityPatch) entity).getFrictionModifier();
+        float frictionCoef = state.getBlock().getFrictionCoefficient(state) * entity.getFrictionModifier();
         if (entity.getFluidHeight(FluidTags.WATER) > 0) {
             frictionCoef -= 0.1f;
             if (frictionCoef < 0.01F) {

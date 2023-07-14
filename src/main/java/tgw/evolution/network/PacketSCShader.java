@@ -1,41 +1,32 @@
 package tgw.evolution.network;
 
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.network.NetworkEvent;
-import tgw.evolution.events.ClientEvents;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import tgw.evolution.patches.PatchClientPacketListener;
 
-import java.util.function.Supplier;
-
-public class PacketSCShader implements IPacket {
+public class PacketSCShader implements Packet<ClientGamePacketListener> {
 
     public static final int TOGGLE = -1;
     public static final int QUERY = -2;
     public static final int CYCLE = -3;
-    private final int shaderId;
+    public final int shaderId;
 
     public PacketSCShader(int shaderId) {
         this.shaderId = shaderId;
     }
 
-    public static PacketSCShader decode(FriendlyByteBuf buffer) {
-        return new PacketSCShader(buffer.readVarInt());
-    }
-
-    public static void encode(PacketSCShader packet, FriendlyByteBuf buffer) {
-        buffer.writeVarInt(packet.shaderId);
-    }
-
-    public static void handle(PacketSCShader packet, Supplier<NetworkEvent.Context> context) {
-        NetworkEvent.Context c = context.get();
-        if (IPacket.checkSide(packet, c)) {
-            c.enqueueWork(() -> ClientEvents.getInstance().handleShaderPacket(packet.shaderId));
-            c.setPacketHandled(true);
-        }
+    public PacketSCShader(FriendlyByteBuf buf) {
+        this.shaderId = buf.readVarInt();
     }
 
     @Override
-    public LogicalSide getDestinationSide() {
-        return LogicalSide.CLIENT;
+    public void handle(ClientGamePacketListener listener) {
+        ((PatchClientPacketListener) listener).handleShader(this);
+    }
+
+    @Override
+    public void write(FriendlyByteBuf buf) {
+        buf.writeVarInt(this.shaderId);
     }
 }

@@ -10,11 +10,9 @@ public abstract class AbstractReusableIterator<T> extends UnmodifiableIterator<T
     private @Nullable T next;
     private State state = State.NOT_READY;
 
-    @Nullable
-    protected abstract T computeNext();
+    protected abstract @Nullable T computeNext();
 
-    @Nullable
-    protected final T endOfData() {
+    protected final @Nullable T endOfData() {
         this.state = State.DONE;
         return null;
     }
@@ -30,8 +28,7 @@ public abstract class AbstractReusableIterator<T> extends UnmodifiableIterator<T
     }
 
     @Override
-    @Nullable
-    public final T next() {
+    public final @Nullable T next() {
         if (!this.hasNext()) {
             throw new NoSuchElementException();
         }
@@ -41,8 +38,7 @@ public abstract class AbstractReusableIterator<T> extends UnmodifiableIterator<T
         return result;
     }
 
-    @Nullable
-    public final T peek() {
+    public final @Nullable T peek() {
         if (!this.hasNext()) {
             throw new NoSuchElementException();
         }

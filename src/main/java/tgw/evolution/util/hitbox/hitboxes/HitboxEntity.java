@@ -11,9 +11,9 @@ import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.items.IMelee;
-import tgw.evolution.patches.ILivingEntityPatch;
-import tgw.evolution.util.collection.RArrayList;
-import tgw.evolution.util.collection.RList;
+import tgw.evolution.patches.PatchLivingEntity;
+import tgw.evolution.util.collection.lists.OArrayList;
+import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.hitbox.*;
 import tgw.evolution.util.hitbox.hms.HMEntity;
 import tgw.evolution.util.hitbox.hrs.HR;
@@ -27,7 +27,7 @@ public abstract class HitboxEntity<T extends Entity> implements HMEntity<T>, HRE
     protected final Matrix4d helperColliderTransform = new Matrix4d();
     protected final Vec3d helperOffset = new Vec3d();
     protected final Matrix4d helperTransform = new Matrix4d();
-    private final RList<Hitbox> boxes;
+    private final OList<Hitbox> boxes;
     private final Vec3d cachedRenderOffset = new Vec3d();
     private final Matrix4d colliderTransform = new Matrix4d();
     private final Matrix4d transform = new Matrix4d();
@@ -44,7 +44,7 @@ public abstract class HitboxEntity<T extends Entity> implements HMEntity<T>, HRE
     private @Nullable Hitbox activeEquip;
 
     public HitboxEntity() {
-        this.boxes = new RArrayList<>();
+        this.boxes = new OArrayList<>();
     }
 
     public static AABB box(double minX, double minY, double minZ, double dimX, double dimY, double dimZ) {
@@ -103,7 +103,7 @@ public abstract class HitboxEntity<T extends Entity> implements HMEntity<T>, HRE
             hitbox.drawEdges(hitbox.adjustedTransform(), buffer, pose, normal, x, y, z, 1.0f, 1.0f, 0.0f, 1.0f);
         }
         if (this.activeEquip != null) {
-            if (entity instanceof ILivingEntityPatch patch && patch.shouldRenderSpecialAttack()) {
+            if (entity instanceof PatchLivingEntity patch && patch.shouldRenderSpecialAttack()) {
                 if (this.activeEquip instanceof ColliderHitbox colliderHitbox) {
                     colliderHitbox.setParent(this);
                 }

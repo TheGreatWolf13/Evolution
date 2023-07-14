@@ -11,12 +11,11 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
+import tgw.evolution.EvolutionClient;
 import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.init.EvolutionDamage;
-import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.network.PacketCSPlayerFall;
-import tgw.evolution.patches.IEntityPatch;
-import tgw.evolution.patches.ILivingEntityPatch;
+import tgw.evolution.patches.PatchLivingEntity;
 import tgw.evolution.util.math.AABBMutable;
 import tgw.evolution.util.physics.Fluid;
 
@@ -38,7 +37,7 @@ public final class LivingHooks {
         }
         double velocity = entity.getDeltaMovement().y;
         if (player) {
-            EvolutionNetwork.sendToServer(new PacketCSPlayerFall(velocity, slowDown, false));
+            EvolutionClient.sendToServer(new PacketCSPlayerFall(velocity, slowDown, false));
         }
         else {
             calculateFallDamage(entity, velocity, slowDown, false);
@@ -49,8 +48,8 @@ public final class LivingHooks {
         if (velocity == 0) {
             return 0;
         }
-        distanceOfSlowDown += ((ILivingEntityPatch) entity).intrinsicSlowdown();
-        AttributeInstance massAttribute = entity.getAttribute(EvolutionAttributes.MASS.get());
+        distanceOfSlowDown += ((PatchLivingEntity) entity).intrinsicSlowdown();
+        AttributeInstance massAttribute = entity.getAttribute(EvolutionAttributes.MASS);
         assert massAttribute != null;
         double baseMass = massAttribute.getBaseValue();
         double totalMass = massAttribute.getValue();
@@ -86,7 +85,7 @@ public final class LivingHooks {
         double distanceOfSlowDown = entity.level.getFluidState(entity.blockPosition()).getHeight(entity.level, entity.blockPosition());
         double fallDmgVel = entity.getDeltaMovement().y;
         if (player) {
-            EvolutionNetwork.sendToServer(new PacketCSPlayerFall(fallDmgVel, distanceOfSlowDown, fluid == Fluid.WATER));
+            EvolutionClient.sendToServer(new PacketCSPlayerFall(fallDmgVel, distanceOfSlowDown, fluid == Fluid.WATER));
         }
         else {
             calculateFallDamage(entity, fallDmgVel, distanceOfSlowDown, fluid == Fluid.WATER);
@@ -156,11 +155,11 @@ public final class LivingHooks {
         if (entity.getOffhandItem().getItem() == Items.CROSSBOW) {
             return CrossbowItem.isCharged(entity.getOffhandItem());
         }
-        return ((ILivingEntityPatch) entity).shouldRenderSpecialAttack();
+        return ((PatchLivingEntity) entity).shouldRenderSpecialAttack();
     }
 
     public static float xDelta(Entity entity, float partialTicks) {
-        if (entity.isPassenger() && entity.getVehicle() != null && entity.getVehicle().shouldRiderSit()) {
+        if (entity.isPassenger() && entity.getVehicle() != null) {
             return 0;
         }
         float swimAmount = 0;
@@ -172,7 +171,7 @@ public final class LivingHooks {
             if (swimAmount == 1) {
                 return -90;
             }
-            float rot0 = entity.getPose() == Pose.CROUCHING || ((IEntityPatch) entity).getLastPose() == Pose.CROUCHING ? -30 : 0;
+            float rot0 = entity.getPose() == Pose.CROUCHING || entity.getLastPose() == Pose.CROUCHING ? -30 : 0;
             if (0.5 <= swimAmount) {
                 return (swimAmount - 0.5f) * (-180 - rot0) + rot0;
             }

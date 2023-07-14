@@ -15,7 +15,6 @@ import net.minecraft.world.level.block.SnowLayerBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
-import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.material.MaterialColor;
 import tgw.evolution.blocks.util.BlockUtils;
@@ -70,7 +69,7 @@ public class BlockGrass extends BlockGenericSnowable implements IRockVariant {
 
     @Override
     public SoundEvent fallingSound() {
-        return EvolutionSounds.SOIL_COLLAPSE.get();
+        return EvolutionSounds.SOIL_COLLAPSE;
     }
 
     @Override
@@ -103,8 +102,8 @@ public class BlockGrass extends BlockGenericSnowable implements IRockVariant {
                 if (BlockUtils.hasSolidSide(level, fromPos, Direction.DOWN) &&
                     !(level.getBlockState(fromPos).getBlock() instanceof BlockMolding) &&
                     !(level.getBlockState(fromPos).getBlock() instanceof BlockPitKiln && level.getBlockState(fromPos).getValue(LAYERS_0_16) < 9)) {
-                    level.setBlockAndUpdate(pos, this == EvolutionBlocks.GRASSES.get(RockVariant.PEAT).get() ?
-                                                 EvolutionBlocks.PEAT.get().defaultBlockState().setValue(LAYERS_1_4, 4) :
+                    level.setBlockAndUpdate(pos, this == EvolutionBlocks.GRASSES.get(RockVariant.PEAT) ?
+                                                 EvolutionBlocks.PEAT.defaultBlockState().setValue(LAYERS_1_4, 4) :
                                                  this.variant.get(EvolutionBlocks.DIRTS).defaultBlockState());
                     for (Direction direction : DirectionUtil.HORIZ_NESW) {
                         BlockPos offset = pos.relative(direction);
@@ -119,24 +118,22 @@ public class BlockGrass extends BlockGenericSnowable implements IRockVariant {
     }
 
     @Override
-    public boolean onDestroyedByPlayer(BlockState state, Level level, BlockPos pos, Player player, boolean willHarvest, FluidState fluid) {
-        if (this != EvolutionBlocks.GRASSES.get(RockVariant.PEAT).get() || player.isCreative()) {
-            return super.onDestroyedByPlayer(state, level, pos, player, willHarvest, fluid);
+    public void playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
+        if (this == EvolutionBlocks.GRASSES.get(RockVariant.PEAT) && !player.isCreative()) {
+            level.setBlockAndUpdate(pos, EvolutionBlocks.PEAT.defaultBlockState().setValue(LAYERS_1_4, 3));
         }
-        level.setBlockAndUpdate(pos, EvolutionBlocks.PEAT.get().defaultBlockState().setValue(LAYERS_1_4, 3));
-        return true;
+        else {
+            super.playerWillDestroy(level, pos, state, player);
+        }
     }
 
     @Override
     public void randomTick(BlockState state, ServerLevel level, BlockPos pos, Random random) {
         if (!level.isClientSide) {
-            if (!level.isAreaLoaded(pos, 3)) {
-                return;
-            }
             if (random.nextInt(4) == 0) {
                 if (!canSustainGrass(state, level, pos)) {
-                    level.setBlockAndUpdate(pos, this == EvolutionBlocks.GRASSES.get(RockVariant.PEAT).get() ?
-                                                 EvolutionBlocks.PEAT.get().defaultBlockState().setValue(LAYERS_1_4, 4) :
+                    level.setBlockAndUpdate(pos, this == EvolutionBlocks.GRASSES.get(RockVariant.PEAT) ?
+                                                 EvolutionBlocks.PEAT.defaultBlockState().setValue(LAYERS_1_4, 4) :
                                                  this.variant.get(EvolutionBlocks.DIRTS).defaultBlockState());
                 }
                 else {
@@ -154,7 +151,6 @@ public class BlockGrass extends BlockGenericSnowable implements IRockVariant {
                                     }
                                     //TODO proper snow
                                     level.setBlockAndUpdate(randomPos, EvolutionBlocks.GRASSES.get(RockVariant.PEAT)
-                                                                                              .get()
                                                                                               .defaultBlockState()
                                                                                               .setValue(SNOWY,
                                                                                                         level.getBlockState(randomPos.above())
@@ -178,12 +174,12 @@ public class BlockGrass extends BlockGenericSnowable implements IRockVariant {
             if (random.nextInt(200) == 0) {
                 BlockPos posUp = pos.above();
                 if (level.getBlockState(posUp).isAir()) {
-                    level.setBlock(posUp, EvolutionBlocks.TALLGRASS.get().defaultBlockState(), BlockFlags.BLOCK_UPDATE);
+                    level.setBlock(posUp, EvolutionBlocks.TALLGRASS.defaultBlockState(), BlockFlags.BLOCK_UPDATE);
                 }
                 else if (level.getBlockState(posUp).getBlock() instanceof BlockTallGrass) {
-                    level.setBlock(posUp, EvolutionBlocks.TALLGRASS_HIGH.get().defaultBlockState().setValue(HALF, DoubleBlockHalf.LOWER),
+                    level.setBlock(posUp, EvolutionBlocks.TALLGRASS_HIGH.defaultBlockState().setValue(HALF, DoubleBlockHalf.LOWER),
                                    BlockFlags.BLOCK_UPDATE);
-                    level.setBlock(pos.above(2), EvolutionBlocks.TALLGRASS_HIGH.get().defaultBlockState().setValue(HALF, DoubleBlockHalf.UPPER),
+                    level.setBlock(pos.above(2), EvolutionBlocks.TALLGRASS_HIGH.defaultBlockState().setValue(HALF, DoubleBlockHalf.UPPER),
                                    BlockFlags.BLOCK_UPDATE);
                 }
             }

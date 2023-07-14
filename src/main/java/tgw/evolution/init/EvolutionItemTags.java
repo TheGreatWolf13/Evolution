@@ -2,12 +2,12 @@ package tgw.evolution.init;
 
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
-import net.minecraft.tags.ItemTags;
+import net.minecraft.core.Registry;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import tgw.evolution.Evolution;
-import tgw.evolution.util.collection.OArrayList;
-import tgw.evolution.util.collection.OList;
+import tgw.evolution.util.collection.lists.OArrayList;
+import tgw.evolution.util.collection.lists.OList;
 
 public final class EvolutionItemTags {
 
@@ -25,7 +25,7 @@ public final class EvolutionItemTags {
     private EvolutionItemTags() {}
 
     private static TagKey<Item> register(OList<TagKey<Item>> registry, String name) {
-        TagKey<Item> tag = ItemTags.create(Evolution.getResource(name));
+        TagKey<Item> tag = TagKey.create(Registry.ITEM_REGISTRY, Evolution.getResource(name));
         registry.add(tag);
         return tag;
     }

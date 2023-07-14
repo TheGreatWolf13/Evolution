@@ -33,7 +33,7 @@ public class BlockCobblestone extends BlockPhysics implements IRockVariant, ISlo
 
     @Override
     public SoundEvent fallingSound() {
-        return EvolutionSounds.STONE_COLLAPSE.get();
+        return EvolutionSounds.STONE_COLLAPSE;
     }
 
     @Override

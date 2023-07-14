@@ -1,8 +1,7 @@
 package tgw.evolution.world.puzzle;
 
-import tgw.evolution.util.math.MathHelper;
-
 import org.jetbrains.annotations.Nullable;
+import tgw.evolution.util.math.MathHelper;
 
 public enum EnumPuzzleType {
     EMPTY(0),
@@ -18,8 +17,7 @@ public enum EnumPuzzleType {
         this.id = MathHelper.toByteExact(id);
     }
 
-    @Nullable
-    public static EnumPuzzleType byId(int id) {
+    public static @Nullable EnumPuzzleType byId(int id) {
         return switch (id) {
             case 0 -> EMPTY;
             case 1 -> SINGLE;

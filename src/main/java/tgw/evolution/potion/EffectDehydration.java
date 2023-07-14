@@ -1,18 +1,16 @@
 package tgw.evolution.potion;
 
-import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionEffects;
 import tgw.evolution.util.collection.ChanceEffectHolder;
 import tgw.evolution.util.collection.EffectHolder;
-import tgw.evolution.util.collection.OArrayList;
-import tgw.evolution.util.collection.OList;
+import tgw.evolution.util.collection.lists.OArrayList;
+import tgw.evolution.util.collection.lists.OList;
 
 public class EffectDehydration extends EffectGeneric {
 
@@ -24,8 +22,7 @@ public class EffectDehydration extends EffectGeneric {
     }
 
     @Override
-    @NotNull
-    public ObjectList<EffectHolder> causesEffect() {
+    public OList<EffectHolder> causesEffect() {
         if (this.causes == null) {
             this.causes = new OArrayList<>();
             this.causes.add(new EffectHolder(1, MobEffects.MOVEMENT_SLOWDOWN,
@@ -56,12 +53,11 @@ public class EffectDehydration extends EffectGeneric {
     }
 
     @Override
-    @NotNull
-    public ObjectList<ChanceEffectHolder> mayCauseEffect() {
+    public OList<ChanceEffectHolder> mayCauseEffect() {
         if (this.mayCause == null) {
             this.mayCause = new OArrayList<>();
-            this.mayCause.add(new ChanceEffectHolder(0, EvolutionEffects.DIZZINESS.get(), a -> 0.05f * (a + 1),
-                                                     a -> new MobEffectInstance(EvolutionEffects.DIZZINESS.get(), 400 * (a + 1), a, true, false,
+            this.mayCause.add(new ChanceEffectHolder(0, EvolutionEffects.DIZZINESS, a -> 0.05f * (a + 1),
+                                                     a -> new MobEffectInstance(EvolutionEffects.DIZZINESS, 400 * (a + 1), a, true, false,
                                                                                 false)));
             this.mayCause.trimCollection();
         }

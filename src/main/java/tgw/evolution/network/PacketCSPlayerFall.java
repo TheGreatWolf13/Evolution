@@ -1,18 +1,15 @@
 package tgw.evolution.network;
 
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.network.NetworkEvent;
-import tgw.evolution.hooks.LivingHooks;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ServerGamePacketListener;
+import tgw.evolution.patches.PatchServerPacketListener;
 
-import java.util.function.Supplier;
+public class PacketCSPlayerFall implements Packet<ServerGamePacketListener> {
 
-public class PacketCSPlayerFall implements IPacket {
-
-    private final double distanceOfSlowDown;
-    private final double velocity;
-    private final boolean water;
+    public final double distanceOfSlowDown;
+    public final double velocity;
+    public final boolean water;
 
     public PacketCSPlayerFall(double velocity, double distanceOfSlowDown, boolean water) {
         this.velocity = velocity;
@@ -20,30 +17,21 @@ public class PacketCSPlayerFall implements IPacket {
         this.water = water;
     }
 
-    public static PacketCSPlayerFall decode(FriendlyByteBuf buffer) {
-        return new PacketCSPlayerFall(buffer.readDouble(), buffer.readDouble(), buffer.readBoolean());
-    }
-
-    public static void encode(PacketCSPlayerFall packet, FriendlyByteBuf buffer) {
-        buffer.writeDouble(packet.velocity);
-        buffer.writeDouble(packet.distanceOfSlowDown);
-        buffer.writeBoolean(packet.water);
-    }
-
-    public static void handle(PacketCSPlayerFall packet, Supplier<NetworkEvent.Context> context) {
-        NetworkEvent.Context c = context.get();
-        if (IPacket.checkSide(packet, c)) {
-            c.enqueueWork(() -> {
-                ServerPlayer player = c.getSender();
-                assert player != null;
-                LivingHooks.calculateFallDamage(player, packet.velocity, packet.distanceOfSlowDown, packet.water);
-            });
-            c.setPacketHandled(true);
-        }
+    public PacketCSPlayerFall(FriendlyByteBuf buf) {
+        this.velocity = buf.readDouble();
+        this.distanceOfSlowDown = buf.readDouble();
+        this.water = buf.readBoolean();
     }
 
     @Override
-    public LogicalSide getDestinationSide() {
-        return LogicalSide.SERVER;
+    public void handle(ServerGamePacketListener listener) {
+        ((PatchServerPacketListener) listener).handlePlayerFall(this);
+    }
+
+    @Override
+    public void write(FriendlyByteBuf buf) {
+        buf.writeDouble(this.velocity);
+        buf.writeDouble(this.distanceOfSlowDown);
+        buf.writeBoolean(this.water);
     }
 }

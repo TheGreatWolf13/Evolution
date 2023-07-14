@@ -6,8 +6,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.sounds.SoundEvent;
 import tgw.evolution.capabilities.modular.part.PartTypes;
-import tgw.evolution.util.collection.B2RMap;
-import tgw.evolution.util.collection.B2ROpenHashMap;
+import tgw.evolution.util.collection.maps.B2RHashMap;
+import tgw.evolution.util.collection.maps.B2RMap;
 import tgw.evolution.util.constants.HarvestLevel;
 import tgw.evolution.util.math.MathHelper;
 
@@ -49,7 +49,7 @@ public enum EvolutionMaterials {
     private static final Byte2ReferenceMap<EvolutionMaterials> REGISTRY;
 
     static {
-        B2RMap<EvolutionMaterials> map = new B2ROpenHashMap<>();
+        B2RMap<EvolutionMaterials> map = new B2RHashMap<>();
         for (EvolutionMaterials material : VALUES) {
             if (map.put(material.id, material) != null) {
                 throw new IllegalStateException("EvolutionMaterials " + material + " has duplicate id: " + material.id);
@@ -62,8 +62,7 @@ public enum EvolutionMaterials {
     private final boolean brittle;
     private final int density;
     private final int hardness;
-    @HarvestLevel
-    private final short harvestLevel;
+    private final @HarvestLevel short harvestLevel;
     private final byte id;
     private final int modElasticity;
     private final String name;
@@ -106,10 +105,10 @@ public enum EvolutionMaterials {
 
     public SoundEvent getBlockHitSound() {
         if (this.isMetal()) {
-            return EvolutionSounds.METAL_WEAPON_HIT_BLOCK.get();
+            return EvolutionSounds.METAL_WEAPON_HIT_BLOCK;
         }
         if (this.isStone()) {
-            return EvolutionSounds.STONE_WEAPON_HIT_BLOCK.get();
+            return EvolutionSounds.STONE_WEAPON_HIT_BLOCK;
         }
         throw new IllegalStateException("Make sound for other types!");
     }
@@ -126,8 +125,7 @@ public enum EvolutionMaterials {
         return this.hardness;
     }
 
-    @HarvestLevel
-    public int getHarvestLevel() {
+    public @HarvestLevel int getHarvestLevel() {
         return this.harvestLevel;
     }
 

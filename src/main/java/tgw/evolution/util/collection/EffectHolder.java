@@ -26,8 +26,7 @@ public class EffectHolder {
         }
     }
 
-    @Nullable
-    public MobEffectInstance getInstance(int amplifier) {
+    public @Nullable MobEffectInstance getInstance(int amplifier) {
         if (amplifier < this.minAmplifier) {
             return null;
         }

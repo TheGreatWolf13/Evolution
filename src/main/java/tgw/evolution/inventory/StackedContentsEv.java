@@ -5,7 +5,9 @@ import net.minecraft.world.entity.player.StackedContents;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import org.jetbrains.annotations.Nullable;
-import tgw.evolution.util.collection.*;
+import tgw.evolution.util.collection.lists.*;
+import tgw.evolution.util.collection.maps.I2IHashMap;
+import tgw.evolution.util.collection.maps.I2IMap;
 
 import java.util.BitSet;
 import java.util.List;
@@ -148,7 +150,7 @@ public class StackedContentsEv extends StackedContents {
 
         private BiIIArrayList getUniqueAvailableIngredientItems() {
             BiIIArrayList bilist = new BiIIArrayList();
-            I2IMap firstIndexOfPresent = new I2IOpenHashMap();
+            I2IMap firstIndexOfPresent = new I2IHashMap();
             firstIndexOfPresent.defaultReturnValue(-1);
             for (int i = 0, len = this.ingredients.size(); i < len; i++) {
                 Ingredient ingredient = this.ingredients.get(i);

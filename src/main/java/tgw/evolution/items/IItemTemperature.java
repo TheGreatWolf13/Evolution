@@ -10,6 +10,7 @@ public interface IItemTemperature {
      */
     default double getTemperature(ItemStack stack) {
         if (stack.hasTag()) {
+            assert stack.getTag() != null;
             return stack.getTag().getDouble("Temperature");
         }
         return 0;
@@ -20,6 +21,7 @@ public interface IItemTemperature {
      */
     default int getTemperatureColor(ItemStack stack) {
         if (stack.hasTag()) {
+            assert stack.getTag() != null;
             return stack.getTag().getInt("TempColor");
         }
         return 0;
@@ -30,6 +32,7 @@ public interface IItemTemperature {
      */
     default void setTemperature(ItemStack stack, double temperature) {
         stack.getOrCreateTag().putDouble("Temperature", temperature);
+        assert stack.getTag() != null;
         stack.getTag().putInt("TempColor", Temperature.getBlackBodySpectrumColor(temperature));
     }
 }

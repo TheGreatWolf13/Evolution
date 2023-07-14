@@ -12,7 +12,6 @@ import tgw.evolution.entities.EntityPlayerDummy;
 import tgw.evolution.entities.EntitySkeletonDummy;
 import tgw.evolution.entities.misc.EntityPlayerCorpse;
 import tgw.evolution.util.constants.CommonRotations;
-import tgw.evolution.util.math.MathHelper;
 
 public class RenderPlayerCorpse extends EntityRenderer<EntityPlayerCorpse> {
 
@@ -36,15 +35,18 @@ public class RenderPlayerCorpse extends EntityRenderer<EntityPlayerCorpse> {
     public void render(EntityPlayerCorpse entity, float yaw, float partialTicks, PoseStack matrices, MultiBufferSource buffer, int packedLight) {
         super.render(entity, yaw, partialTicks, matrices, buffer, packedLight);
         matrices.pushPose();
-        MathHelper.getExtendedMatrix(matrices).mulPoseY(-entity.getYRot());
+        matrices.mulPoseY(-entity.getYRot());
         matrices.mulPose(CommonRotations.XN90);
         matrices.translate(0, -1, 3 / 16.0);
         if (entity.isSkeleton()) {
             EntitySkeletonDummy skeleton = entity.getSkeleton();
+            assert skeleton != null;
             this.skeletonRenderer.render(skeleton, yaw, 1.0F, matrices, buffer, packedLight);
         }
         else {
             EntityPlayerDummy player = entity.getPlayer();
+            assert player != null;
+            assert entity.getPlayerUUID() != null;
             if ("default".equals(DefaultPlayerSkin.getSkinModelName(entity.getPlayerUUID()))) {
                 this.playerRendererSteve.render(player, 0.0F, 1.0F, matrices, buffer, packedLight);
             }

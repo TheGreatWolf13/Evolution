@@ -11,11 +11,10 @@ import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import tgw.evolution.capabilities.temperature.CapabilityTemperature;
-import tgw.evolution.capabilities.temperature.ITemperature;
-import tgw.evolution.init.EvolutionCapabilities;
+import tgw.evolution.capabilities.player.CapabilityTemperature;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.items.IItemTemperature;
+import tgw.evolution.patches.PatchServerPlayer;
 
 public final class CommandTemperature implements Command<CommandSourceStack> {
 
@@ -55,7 +54,7 @@ public final class CommandTemperature implements Command<CommandSourceStack> {
             return 0;
         }
         double temp = DoubleArgumentType.getDouble(context, "celsius");
-        ITemperature temperature = EvolutionCapabilities.getRevivedCapability(player, CapabilityTemperature.INSTANCE);
+        CapabilityTemperature temperature = ((PatchServerPlayer) player).getTemperatureStats();
         if (input.contains("current")) {
             temperature.setCurrentTemperature(temp);
             return SINGLE_SUCCESS;

@@ -1,31 +1,25 @@
 package tgw.evolution.blocks.util;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.BlockPos.MutableBlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
 import net.minecraft.core.SectionPos;
-import net.minecraft.tags.FluidTags;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LevelEvent;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.common.IPlantable;
 import org.jetbrains.annotations.Nullable;
-import tgw.evolution.blocks.*;
-import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
-import tgw.evolution.capabilities.chunkstorage.IChunkStorage;
-import tgw.evolution.init.EvolutionCapabilities;
+import tgw.evolution.blocks.IClimbable;
+import tgw.evolution.blocks.IPhysics;
+import tgw.evolution.blocks.IReplaceable;
 import tgw.evolution.util.math.DirectionList;
 import tgw.evolution.util.math.DirectionToIntMap;
 import tgw.evolution.util.math.DirectionUtil;
@@ -34,7 +28,6 @@ import java.util.Random;
 
 public final class BlockUtils {
 
-    private static final ThreadLocal<MutableBlockPos> MUTABLE_POS = ThreadLocal.withInitial(MutableBlockPos::new);
     private static final DirectionList DIRECTION_LIST = new DirectionList();
 
     private BlockUtils() {
@@ -49,19 +42,8 @@ public final class BlockUtils {
         return isReplaceable(state);
     }
 
-    public static boolean canSustainSapling(BlockState state, IPlantable plantable) {
-        return plantable instanceof BlockBush && BlockBush.isValidGround(state);
-    }
-
-    public static boolean compareVanillaBlockStates(BlockState vanilla, BlockState evolution) {
-        if (vanilla.getBlock() == Blocks.GRASS_BLOCK) {
-            return evolution.getBlock() instanceof BlockGrass;
-        }
-        return false;
-    }
-
     public static void destroyBlock(Level level, BlockPos pos) {
-        BlockState state = level.getBlockState(pos);
+        BlockState state = level.getBlockState_(pos.getX(), pos.getY(), pos.getZ());
         Block.dropResources(state, level, pos);
         level.removeBlock(pos, false);
         level.levelEvent(LevelEvent.PARTICLES_DESTROY_BLOCK, pos, Block.getId(state));
@@ -81,18 +63,6 @@ public final class BlockUtils {
         dropItemStack(world, pos, stack, 0);
     }
 
-    public static BlockState getBlockState(BlockGetter level, double x, double y, double z) {
-        return getBlockState(level, Mth.floor(x), Mth.floor(y), Mth.floor(z));
-    }
-
-    public static BlockState getBlockState(BlockGetter level, int x, int y, int z) {
-        return level.getBlockState(MUTABLE_POS.get().set(x, y, z));
-    }
-
-    public static BlockState getBlockStateAtSide(BlockGetter level, int x, int y, int z, Direction side) {
-        return getBlockState(level, x + side.getStepX(), y + side.getStepY(), z + side.getStepZ());
-    }
-
     /**
      * @param state The BlockState of the ladder
      * @return The ladder up movement speed, in m/t.
@@ -105,8 +75,7 @@ public final class BlockUtils {
         return 0.1;
     }
 
-    @Nullable
-    public static Axis getSmallestBeam(DirectionToIntMap beams) {
+    public static @Nullable Axis getSmallestBeam(DirectionToIntMap beams) {
         int x = beams.getBeamSize(Axis.X);
         int z = beams.getBeamSize(Axis.Z);
         if (x == 0) {
@@ -121,12 +90,8 @@ public final class BlockUtils {
         return x < z ? Axis.X : Axis.Z;
     }
 
-    public static boolean hasMass(BlockState state) {
-        return state.getBlock() instanceof BlockPhysics;
-    }
-
     public static boolean hasSolidSide(BlockGetter world, BlockPos pos, Direction side) {
-        BlockState state = world.getBlockState(pos);
+        BlockState state = world.getBlockState_(pos.getX(), pos.getY(), pos.getZ());
         return state.isFaceSturdy(world, pos, side);
     }
 
@@ -137,18 +102,6 @@ public final class BlockUtils {
         return state.getMaterial().isReplaceable() || state.getBlock() instanceof IReplaceable replaceable && replaceable.isReplaceable(state);
     }
 
-    public static boolean isTouchingWater(BlockGetter level, BlockPos pos) {
-        MutableBlockPos mutablePos = new MutableBlockPos();
-        for (Direction direction : DirectionUtil.ALL) {
-            mutablePos.set(pos).move(direction);
-            BlockState stateAtPos = level.getBlockState(mutablePos);
-            if (stateAtPos.getFluidState().is(FluidTags.WATER)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     public static void scheduleBlockTick(LevelAccessor level, int x, int y, int z) {
         if (level.isClientSide()) {
             return;
@@ -157,8 +110,7 @@ public final class BlockUtils {
         if (chunk == null) {
             return;
         }
-        IChunkStorage chunkStorage = EvolutionCapabilities.getCapabilityOrThrow(chunk, CapabilityChunkStorage.INSTANCE);
-        chunkStorage.scheduleBlockTick(chunk, BlockPos.asLong(x, y, z));
+        chunk.getChunkStorage().scheduleBlockTick(chunk, x, y, z);
     }
 
     public static void scheduleFluidTick(LevelAccessor level, BlockPos pos) {
@@ -170,15 +122,12 @@ public final class BlockUtils {
         level.scheduleTick(pos, fluid, fluid.getTickDelay(level));
     }
 
-    public static void updateSlopingBlocks(LevelAccessor level, BlockPos pos) {
-        if (!isReplaceable(level.getBlockState(pos))) {
-            int x = pos.getX();
-            int y = pos.getY();
-            int z = pos.getZ();
-            if (isReplaceable(getBlockState(level, x, y + 1, z))) {
+    public static void updateSlopingBlocks(LevelAccessor level, int x, int y, int z) {
+        if (!isReplaceable(level.getBlockState_(x, y, z))) {
+            if (isReplaceable(level.getBlockState_(x, y + 1, z))) {
                 DIRECTION_LIST.clear();
                 for (Direction direction : DirectionUtil.HORIZ_NESW) {
-                    BlockState state = getBlockStateAtSide(level, x, y + 1, z, direction);
+                    BlockState state = level.getBlockStateAtSide(x, y + 1, z, direction);
                     if (state.getBlock() instanceof IPhysics physics && physics.slopes()) {
                         DIRECTION_LIST.add(direction);
                     }

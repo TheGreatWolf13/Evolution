@@ -1,21 +1,16 @@
 package tgw.evolution.init;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import net.minecraft.Util;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.stats.StatFormatter;
 import net.minecraft.stats.StatType;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.entity.EntityType;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.RegistryObject;
 import tgw.evolution.Evolution;
 import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.stats.IEvoStatFormatter;
+import tgw.evolution.util.collection.maps.O2OHashMap;
+import tgw.evolution.util.collection.maps.O2OMap;
 import tgw.evolution.util.math.Metric;
 
 import java.util.EnumMap;
@@ -101,20 +96,12 @@ public final class EvolutionStats {
         }
     };
 
-    public static final DeferredRegister<StatType<?>> STATS = DeferredRegister.create(ForgeRegistries.STAT_TYPES, Evolution.MODID);
-
     //Damage
     public static final Map<EvolutionDamage.Type, ResourceLocation> DAMAGE_DEALT_BY_TYPE = genDamage("dealt", EvolutionDamage.PLAYER);
     public static final Map<EvolutionDamage.Type, ResourceLocation> DAMAGE_RESISTED_BY_TYPE = genDamage("resisted", EvolutionDamage.PLAYER);
     public static final Map<EvolutionDamage.Type, ResourceLocation> DAMAGE_TAKEN_BY_TYPE = genDamage("taken", EvolutionDamage.ALL);
     //Deaths
-    public static final Object2ObjectMap<String, ResourceLocation> DEATH_SOURCE = Util.make(new Object2ObjectOpenHashMap<>(), m -> {
-        for (String src : EvolutionDamage.ALL_SOURCES) {
-            //noinspection ObjectAllocationInLoop
-            m.put(src, registerCustom("death_" + src, DEFAULT));
-        }
-        m.trim();
-    });
+    public static final O2OMap<String, ResourceLocation> DEATH_SOURCE = new O2OHashMap<>();
     public static final ResourceLocation DEATHS = registerCustom("death_total", DEFAULT);
     //Distance
     public static final ResourceLocation DISTANCE_CLIMBED = registerCustom("distance_climbed", DISTANCE);
@@ -149,10 +136,18 @@ public final class EvolutionStats {
     public static final ResourceLocation TIMES_KNAPPING = registerCustom("times_knapping", DEFAULT);
     public static final ResourceLocation TIMES_SLEPT = registerCustom("times_slept", DEFAULT);
     //Entity
-    public static final RegistryObject<StatType<EntityType<?>>> DAMAGE_DEALT = STATS.register("damage_dealt",
-                                                                                              () -> new StatType<>(Registry.ENTITY_TYPE));
-    public static final RegistryObject<StatType<EntityType<?>>> DAMAGE_TAKEN = STATS.register("damage_taken",
-                                                                                              () -> new StatType<>(Registry.ENTITY_TYPE));
+    public static final StatType<EntityType<?>> DAMAGE_DEALT;
+    public static final StatType<EntityType<?>> DAMAGE_TAKEN;
+
+    static {
+        for (String e = EvolutionDamage.ALL_SOURCES.fastEntries(); e != null; e = EvolutionDamage.ALL_SOURCES.fastEntries()) {
+            //noinspection ObjectAllocationInLoop
+            DEATH_SOURCE.put(e, registerCustom("death_" + e, DEFAULT));
+        }
+        DEATH_SOURCE.trimCollection();
+        DAMAGE_DEALT = Registry.register(Registry.STAT_TYPE, Evolution.getResource("damage_dealt"), new StatType<>(Registry.ENTITY_TYPE));
+        DAMAGE_TAKEN = Registry.register(Registry.STAT_TYPE, Evolution.getResource("damage_taken"), new StatType<>(Registry.ENTITY_TYPE));
+    }
 
     private EvolutionStats() {
     }
@@ -168,7 +163,7 @@ public final class EvolutionStats {
     }
 
     public static void register() {
-        STATS.register(FMLJavaModLoadingContext.get().getModEventBus());
+        //This is called on the <clinit> of Stats.
     }
 
     private static ResourceLocation registerCustom(String key, StatFormatter formatter) {

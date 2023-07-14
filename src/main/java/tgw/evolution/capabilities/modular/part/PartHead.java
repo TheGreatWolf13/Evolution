@@ -3,142 +3,113 @@ package tgw.evolution.capabilities.modular.part;
 import it.unimi.dsi.fastutil.objects.ReferenceSet;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.FormattedText;
-import net.minecraft.util.Mth;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.ItemStack;
-import org.jetbrains.annotations.Nullable;
-import tgw.evolution.capabilities.modular.CapabilityModular;
+import net.minecraft.world.level.material.Material;
 import tgw.evolution.capabilities.modular.MaterialInstance;
-import tgw.evolution.client.tooltip.TooltipDurability;
-import tgw.evolution.client.tooltip.TooltipMass;
-import tgw.evolution.init.EvolutionCapabilities;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionMaterials;
-import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.items.modular.part.ItemPartHead;
-import tgw.evolution.util.collection.EitherList;
+import tgw.evolution.util.collection.lists.EitherList;
+import tgw.evolution.util.constants.HarvestLevel;
 
 public class PartHead implements IPartHit<PartTypes.Head, ItemPartHead, PartHead> {
 
-    public static final PartHead DUMMY = new PartHead();
-    private MaterialInstance material = MaterialInstance.DUMMY;
-    private int sharpAmount;
-    private int spentDurability;
-    private @Nullable CompoundTag tag;
-    private PartTypes.Head type = PartTypes.Head.NULL;
-
-    public static PartHead get(ItemStack stack) {
-        return (PartHead) EvolutionCapabilities.getCapability(stack, CapabilityModular.PART, DUMMY);
-    }
-
     @Override
     public void appendText(EitherList<FormattedText, TooltipComponent> tooltip, int num) {
-        tooltip.addLeft(this.type.getComponent());
-        this.material.appendText(tooltip);
-        if (this.canBeSharpened()) {
-            tooltip.addLeft(EvolutionTexts.sharp(this.sharpAmount, this.material.getHardness()));
-        }
-        tooltip.addRight(TooltipMass.part(num, this.getMass()));
-        tooltip.addRight(TooltipDurability.part(num, this.displayDurability(ItemStack.EMPTY)));
+        //TODO implementation
+
     }
 
     @Override
     public boolean canBeSharpened() {
-        return this.type.canBeSharpened();
+        //TODO implementation
+        return false;
     }
 
     @Override
     public void damage(int amount) {
-        this.spentDurability += amount;
+        //TODO implementation
+
     }
 
     @Override
-    public void deserializeNBT(CompoundTag nbt) {
-        this.type = PartTypes.Head.byId(nbt.getByte("Type"));
-        this.material = MaterialInstance.read(nbt.getCompound("MaterialInstance"));
-        this.spentDurability = nbt.getInt("Durability");
-        if (this.canBeSharpened()) {
-            this.sharpAmount = nbt.getInt("SharpAmount");
-        }
+    public SoundEvent getBlockHitSound() {
+        //TODO implementation
+        return null;
     }
 
     @Override
     public EvolutionDamage.Type getDamageType() {
-        return switch (this.type) {
-            case AXE -> this.sharpAmount > 0 ? EvolutionDamage.Type.SLASHING : EvolutionDamage.Type.CRUSHING;
-            case HOE -> EvolutionDamage.Type.SLASHING;
-            case SPEAR, PICKAXE -> EvolutionDamage.Type.PIERCING;
-            case MACE, HAMMER, SHOVEL -> EvolutionDamage.Type.CRUSHING;
-            case NULL -> EvolutionDamage.Type.GENERIC;
-        };
+        //TODO implementation
+        return null;
     }
 
     @Override
-    public String getDescriptionId() {
-        return "item.evolution.part.head." + this.type.getName() + "." + this.material.getMaterial().getName();
+    public String getDescriptionId(CompoundTag tag) {
+        //TODO implementation
+        return "null";
     }
 
     @Override
     public double getDmgMultiplierInternal() {
-        if (this.canBeSharpened()) {
-            if (this.sharpAmount > this.material.getHardness()) {
-                //Very Sharp
-                return 1.15;
-            }
-        }
-        if (this.type == PartTypes.Head.HOE) {
-            return 0.7;
-        }
-        return 1.0;
+        //TODO implementation
+        return 0;
     }
 
     @Override
-    public int getDurabilityDmg() {
-        return this.spentDurability;
+    public int getDurabilityDmg(CompoundTag tag) {
+        //TODO implementation
+        return 0;
     }
 
     @Override
-    public ReferenceSet<net.minecraft.world.level.material.Material> getEffectiveMaterials() {
-        return this.type.getEffectiveMaterials();
+    public ReferenceSet<Material> getEffectiveMaterials() {
+        //TODO implementation
+        return null;
     }
 
     @Override
-    public int getHarvestLevel() {
-        return this.material.getHarvestLevel();
+    public @HarvestLevel int getHarvestLevel() {
+        //TODO implementation
+        return 0;
     }
 
     @Override
-    public MaterialInstance getMaterialInstance() {
-        return this.material;
+    public MaterialInstance getMaterialInstance(CompoundTag tag) {
+        //TODO implementation
+        return new MaterialInstance();
+    }
+
+    @Override
+    public int getMaxDamage(CompoundTag tag) {
+        //TODO implementation
+        return 0;
     }
 
     @Override
     public int getMaxDurability() {
-        return Mth.ceil(this.material.getHardness() * this.material.getResistance() / 50.0);
+        //TODO implementation
+        return 0;
     }
 
     @Override
     public float getMiningSpeed() {
-        return this.material.getElasticModulus() * this.material.getHardness() / 500.0f;
+        //TODO implementation
+        return 0;
     }
 
     @Override
     public int getSharpAmount() {
-        return this.canBeSharpened() ? this.sharpAmount : 0;
+        //TODO implementation
+        return 0;
     }
 
     @Override
     public PartTypes.Head getType() {
-        return this.type;
-    }
-
-    @Override
-    public void init(PartTypes.Head type, EvolutionMaterials material) {
-        if (!material.isAllowedBy(type)) {
-            throw new IllegalStateException("EvolutionMaterials " + material + " does not allow HeadType " + type);
-        }
-        this.set(type, new MaterialInstance(material));
-        this.sharp();
+        //TODO implementation
+        return PartTypes.Head.NULL;
     }
 
     @Override
@@ -149,49 +120,31 @@ public class PartHead implements IPartHit<PartTypes.Head, ItemPartHead, PartHead
 
     @Override
     public boolean isSimilar(PartHead part) {
-        if (this.type != part.type) {
-            return false;
-        }
-        return this.material.isSimilar(part.material);
+        //TODO implementation
+        return false;
     }
 
     @Override
     public void loseSharp(int amount) {
-        if (this.canBeSharpened()) {
-            this.sharpAmount -= amount;
-            if (this.sharpAmount < 0) {
-                this.sharpAmount = 0;
-            }
-        }
+        //TODO implementation
+
     }
 
     @Override
-    public CompoundTag serializeNBT() {
-        if (this.tag == null) {
-            this.tag = new CompoundTag();
-        }
-        this.tag.putByte("Type", this.type.getId());
-        this.tag.putInt("Durability", this.spentDurability);
-        this.tag.put("MaterialInstance", this.material.write());
-        if (this.canBeSharpened()) {
-            this.tag.putInt("SharpAmount", this.sharpAmount);
-        }
-        else {
-            this.tag.remove("SharpAmount");
-        }
-        return this.tag;
+    public void set(ItemStack stack, PartTypes.Head type, EvolutionMaterials material) {
+        //TODO implementation
+
     }
 
     @Override
     public void set(PartTypes.Head type, MaterialInstance material) {
-        this.type = type;
-        this.material = material;
+        //TODO implementation
+
     }
 
     @Override
     public void sharp() {
-        if (this.canBeSharpened()) {
-            this.sharpAmount = Mth.ceil(1.5 * this.material.getHardness());
-        }
+        //TODO implementation
+
     }
 }

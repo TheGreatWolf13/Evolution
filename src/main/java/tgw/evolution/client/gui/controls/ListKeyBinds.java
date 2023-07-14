@@ -17,8 +17,8 @@ import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.chat.TranslatableComponent;
 import org.apache.commons.lang3.ArrayUtils;
 import tgw.evolution.client.util.MouseButton;
-import tgw.evolution.util.collection.OArrayList;
-import tgw.evolution.util.collection.OList;
+import tgw.evolution.util.collection.lists.OArrayList;
+import tgw.evolution.util.collection.lists.OList;
 
 import java.util.Arrays;
 import java.util.List;
@@ -148,7 +148,7 @@ public class ListKeyBinds extends KeyBindsList {
                 }
             };
             this.resetButton = new Button(0, 0, 50, 20, ListKeyBinds.this.textReset, button -> {
-                this.key.setToDefault();
+                this.key.setKey(this.key.getDefaultKey());
                 ListKeyBinds.this.minecraft.options.setKey(key, key.getDefaultKey());
                 KeyMapping.resetMapping();
             }) {
@@ -221,7 +221,7 @@ public class ListKeyBinds extends KeyBindsList {
                 for (KeyMapping keybinding : ListKeyBinds.this.minecraft.options.keyMappings) {
                     if (keybinding != this.key && this.key.same(keybinding)) {
                         conflicts = true;
-                        keyCodeModifierConflict &= keybinding.hasKeyModifierConflict(this.key);
+                        keyCodeModifierConflict = false;
                     }
                 }
             }

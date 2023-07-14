@@ -2,11 +2,10 @@ package tgw.evolution.util.constants;
 
 import it.unimi.dsi.fastutil.bytes.Byte2ReferenceMap;
 import it.unimi.dsi.fastutil.bytes.Byte2ReferenceMaps;
-import net.minecraftforge.registries.RegistryObject;
 import tgw.evolution.init.IVariant;
 import tgw.evolution.util.UnregisteredFeatureException;
-import tgw.evolution.util.collection.B2RMap;
-import tgw.evolution.util.collection.B2ROpenHashMap;
+import tgw.evolution.util.collection.maps.B2RHashMap;
+import tgw.evolution.util.collection.maps.B2RMap;
 
 import java.util.Map;
 
@@ -34,7 +33,7 @@ public enum WoodVariant implements IVariant {
     private static final Byte2ReferenceMap<WoodVariant> REGISTRY;
 
     static {
-        B2RMap<WoodVariant> map = new B2ROpenHashMap<>();
+        B2RMap<WoodVariant> map = new B2RHashMap<>();
         for (WoodVariant variant : VALUES) {
             if (map.put(variant.id, variant) != null) {
                 throw new IllegalStateException("WoodVariant " + variant + " has duplicate id: " + variant.id);
@@ -64,10 +63,10 @@ public enum WoodVariant implements IVariant {
         return variant;
     }
 
-    public <T> T get(Map<WoodVariant, RegistryObject<T>> registry) {
-        RegistryObject<T> object = registry.get(this);
+    public <T> T get(Map<WoodVariant, T> registry) {
+        T object = registry.get(this);
         this.checkNull(object);
-        return object.get();
+        return object;
     }
 
     public byte getId() {

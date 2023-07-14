@@ -5,14 +5,11 @@ import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeMap;
-import net.minecraft.world.item.ItemStack;
-import tgw.evolution.patches.IMobEffectPatch;
+import tgw.evolution.patches.PatchMobEffect;
 import tgw.evolution.util.collection.ChanceEffectHolder;
 import tgw.evolution.util.collection.EffectHolder;
 
-import java.util.List;
-
-public class EffectGeneric extends MobEffect implements IMobEffectPatch {
+public class EffectGeneric extends MobEffect implements PatchMobEffect {
 
     public EffectGeneric(MobEffectCategory category, int liquidColor) {
         super(category, liquidColor);
@@ -75,11 +72,6 @@ public class EffectGeneric extends MobEffect implements IMobEffectPatch {
     @Override
     public boolean disablesSprint() {
         return false;
-    }
-
-    @Override
-    public List<ItemStack> getCurativeItems() {
-        return List.of();
     }
 
     @Override

@@ -6,8 +6,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.profiling.ProfilerFiller;
 import tgw.evolution.Evolution;
 import tgw.evolution.client.gui.EvolutionGui;
-import tgw.evolution.util.collection.RArrayList;
-import tgw.evolution.util.collection.RList;
+import tgw.evolution.util.collection.lists.OArrayList;
+import tgw.evolution.util.collection.lists.OList;
 
 import javax.annotation.Nullable;
 
@@ -21,8 +21,8 @@ import javax.annotation.Nullable;
  **/
 public final class Overlays {
 
-    private static final RList<Entry> HUD_OVERLAYS = new RArrayList<>();
-    private static final RList<Entry> GAME_OVERLAYS = new RArrayList<>();
+    private static final OList<Entry> HUD_OVERLAYS = new OArrayList<>();
+    private static final OList<Entry> GAME_OVERLAYS = new OArrayList<>();
 
     private Overlays() {}
 
@@ -34,7 +34,7 @@ public final class Overlays {
         enableOverlay(name, enable, HUD_OVERLAYS);
     }
 
-    private static void enableOverlay(ResourceLocation name, boolean enable, RList<Entry> list) {
+    private static void enableOverlay(ResourceLocation name, boolean enable, OList<Entry> list) {
         Entry entry = find(name, list);
         if (entry != null) {
             entry.enabled = enable;
@@ -45,7 +45,7 @@ public final class Overlays {
     }
 
     @Nullable
-    private static Entry find(ResourceLocation name, RList<Entry> list) {
+    private static Entry find(ResourceLocation name, OList<Entry> list) {
         for (int i = 0, len = list.size(); i < len; i++) {
             if (list.get(i).name.equals(name)) {
                 return list.get(i);
@@ -110,7 +110,7 @@ public final class Overlays {
         registerOverlay(1, null, name, overlay, HUD_OVERLAYS);
     }
 
-    private static void registerOverlay(int sort, @Nullable ResourceLocation other, ResourceLocation name, IGuiOverlay overlay, RList<Entry> list) {
+    private static void registerOverlay(int sort, @Nullable ResourceLocation other, ResourceLocation name, IGuiOverlay overlay, OList<Entry> list) {
         Entry entry = find(name, list);
         if (entry != null) {
             throw new IllegalStateException("Tried to register duplicate overlay with registry name: " + entry.name);
@@ -144,7 +144,7 @@ public final class Overlays {
                                   float partialTicks,
                                   int screenWidth,
                                   int screenHeight,
-                                  RList<Entry> list) {
+                                  OList<Entry> list) {
         ProfilerFiller profiler = mc.getProfiler();
         for (int i = 0, l = list.size(); i < l; i++) {
             Entry entry = list.get(i);

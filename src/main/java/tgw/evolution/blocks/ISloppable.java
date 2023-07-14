@@ -56,8 +56,8 @@ public interface ISloppable extends IFallable {
             int y = pos.getY();
             int z = pos.getZ();
             for (Direction slopeDirection : DirectionUtil.HORIZ_NESW) {
-                if (BlockUtils.isReplaceable(BlockUtils.getBlockStateAtSide(level, x, y, z, slopeDirection))) {
-                    if (BlockUtils.isReplaceable(BlockUtils.getBlockStateAtSide(level, x, y - 1, z, slopeDirection))) {
+                if (BlockUtils.isReplaceable(level.getBlockStateAtSide(x, y, z, slopeDirection))) {
+                    if (BlockUtils.isReplaceable(level.getBlockStateAtSide(x, y - 1, z, slopeDirection))) {
                         slopePossibility.add(slopeDirection);
                     }
                 }

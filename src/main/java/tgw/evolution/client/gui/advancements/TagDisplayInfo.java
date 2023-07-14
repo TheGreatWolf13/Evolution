@@ -5,22 +5,24 @@ import com.google.gson.JsonObject;
 import net.minecraft.Util;
 import net.minecraft.advancements.DisplayInfo;
 import net.minecraft.advancements.FrameType;
+import net.minecraft.core.Holder;
+import net.minecraft.core.Registry;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.Nullable;
-import tgw.evolution.util.collection.OArrayList;
+import tgw.evolution.util.collection.lists.OArrayList;
+import tgw.evolution.util.collection.lists.OList;
 
 import java.util.List;
 
 public class TagDisplayInfo extends DisplayInfo {
 
     private final TagKey<Item> tag;
-    private @Nullable List<ItemStack> icons;
+    private @Nullable OList<ItemStack> icons;
     private int index;
     private long lastTime = -1;
 
@@ -36,14 +38,16 @@ public class TagDisplayInfo extends DisplayInfo {
     @Override
     public ItemStack getIcon() {
         if (this.icons == null) {
-            List<ItemStack> list = new OArrayList<>();
-            for (Item item : ForgeRegistries.ITEMS.getValues()) {
+            OList<ItemStack> list = new OArrayList<>();
+            List<Holder.Reference<Item>> references = Registry.ITEM.holdersInOrder();
+            for (int i = 0, len = references.size(); i < len; ++i) {
+                Item item = references.get(i).value();
                 if (item.builtInRegistryHolder().is(this.tag)) {
                     list.add(item.getDefaultInstance());
                 }
             }
             if (list.isEmpty()) {
-                this.icons = List.of();
+                this.icons = OList.emptyList();
             }
             else {
                 this.icons = list;

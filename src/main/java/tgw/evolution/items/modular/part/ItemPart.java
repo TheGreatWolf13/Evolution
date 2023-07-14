@@ -3,7 +3,6 @@ package tgw.evolution.items.modular.part;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import net.minecraft.core.NonNullList;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -12,12 +11,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import tgw.evolution.capabilities.SerializableCapabilityProvider;
-import tgw.evolution.capabilities.modular.CapabilityModular;
 import tgw.evolution.capabilities.modular.part.IPart;
 import tgw.evolution.capabilities.modular.part.IPartType;
 import tgw.evolution.init.EvolutionMaterials;
@@ -25,13 +19,21 @@ import tgw.evolution.inventory.SlotType;
 import tgw.evolution.items.IDurability;
 import tgw.evolution.items.IMass;
 import tgw.evolution.items.ItemEv;
-import tgw.evolution.util.collection.EitherList;
+import tgw.evolution.patches.PatchItem;
+import tgw.evolution.util.collection.lists.EitherList;
 
 public abstract class ItemPart<T extends IPartType<T, I, P>, I extends ItemPart<T, I, P>, P extends IPart<T, I, P>> extends ItemEv
-        implements IDurability, IMass {
+        implements IDurability, IMass, PatchItem {
 
     public ItemPart(Properties properties) {
         super(properties);
+    }
+
+    protected static boolean verifyStack(ItemStack stack) {
+        if (stack.isEmpty()) {
+            return false;
+        }
+        return stack.hasTag();
     }
 
     @Override
@@ -39,7 +41,7 @@ public abstract class ItemPart<T extends IPartType<T, I, P>, I extends ItemPart<
         return true;
     }
 
-    protected abstract P createNew();
+    public abstract P createNew();
 
     @Override
     public final void fillItemCategory(CreativeModeTab tab, NonNullList<ItemStack> items) {
@@ -81,23 +83,29 @@ public abstract class ItemPart<T extends IPartType<T, I, P>, I extends ItemPart<
         if (!this.canBeDepleted()) {
             return 0;
         }
-        IPart<T, I, P> part = this.getPartCap(stack);
-        return part.getDurabilityDmg();
+        if (!verifyStack(stack)) {
+            return 0;
+        }
+        //noinspection ConstantConditions
+        return this.getPartCap().getDurabilityDmg(stack.getTag());
     }
 
     @Override
     public final String getDescriptionId(ItemStack stack) {
-        return this.getPartCap(stack).getDescriptionId();
-    }
-
-    @Override
-    public final int getItemStackLimit(ItemStack stack) {
-        return 1;
+        if (!verifyStack(stack)) {
+            return "null";
+        }
+        //noinspection ConstantConditions
+        return this.getPartCap().getDescriptionId(stack.getTag());
     }
 
     @Override
     public final double getMass(ItemStack stack) {
-        return this.getPartCap(stack).getMass();
+        if (!verifyStack(stack)) {
+            return 0;
+        }
+        //noinspection ConstantConditions
+        return this.getPartCap().getMass(stack.getTag());
     }
 
     @Override
@@ -105,29 +113,26 @@ public abstract class ItemPart<T extends IPartType<T, I, P>, I extends ItemPart<
         if (!this.canBeDepleted()) {
             return 0;
         }
-        P part = this.getPartCap(stack);
-        int durability = part.getMaxDurability();
-        return part.isBroken() ? durability + 1 : durability;
+        if (!verifyStack(stack)) {
+            return 0;
+        }
+        //noinspection ConstantConditions
+        return this.getPartCap().getMaxDamage(stack.getTag());
     }
 
-    protected abstract P getPartCap(ItemStack stack);
-
-    @Override
-    public final @NotNull ICapabilityProvider initCapabilities(ItemStack stack, @Nullable CompoundTag nbt) {
-        return new SerializableCapabilityProvider<>(CapabilityModular.PART, this.createNew());
-    }
+    protected abstract P getPartCap();
 
     protected abstract T[] iterable();
 
     public final void makeTooltip(EitherList<FormattedText, TooltipComponent> tooltip, ItemStack stack, int num) {
-        P partCap = this.getPartCap(stack);
+        P partCap = this.getPartCap();
         partCap.appendText(tooltip, num);
     }
 
     @Contract(pure = true, value = "_, _ -> new")
     public final ItemStack newStack(T type, EvolutionMaterials material) {
         ItemStack stack = new ItemStack(this);
-        this.getPartCap(stack).init(type, material);
+        this.getPartCap().set(stack, type, material);
         return stack;
     }
 }

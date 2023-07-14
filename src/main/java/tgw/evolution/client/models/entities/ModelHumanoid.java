@@ -15,8 +15,8 @@ import net.minecraft.world.entity.LivingEntity;
 import tgw.evolution.client.models.CubeListBuilderEv;
 import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.util.ArmPose;
-import tgw.evolution.util.collection.RArrayList;
-import tgw.evolution.util.collection.RList;
+import tgw.evolution.util.collection.lists.OArrayList;
+import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.hitbox.hms.HM;
 import tgw.evolution.util.hitbox.hms.HMHumanoid;
 
@@ -37,8 +37,8 @@ public class ModelHumanoid<T extends LivingEntity> extends ModelAgeableList<T> i
     public final ModelPart itemR;
     public final ModelPart legL;
     public final ModelPart legR;
-    protected final RList<ModelPart> bodyParts = new RArrayList<>();
-    protected final RList<ModelPart> headParts = new RArrayList<>();
+    protected final OList<ModelPart> bodyParts = new OArrayList<>();
+    protected final OList<ModelPart> headParts = new OArrayList<>();
     public boolean crouching;
     public ArmPose leftArmPose = ArmPose.EMPTY;
     public ArmPose rightArmPose = ArmPose.EMPTY;
@@ -147,7 +147,7 @@ public class ModelHumanoid<T extends LivingEntity> extends ModelAgeableList<T> i
     }
 
     @Override
-    protected RList<ModelPart> bodyParts() {
+    protected OList<ModelPart> bodyParts() {
         return this.bodyParts;
     }
 
@@ -220,7 +220,7 @@ public class ModelHumanoid<T extends LivingEntity> extends ModelAgeableList<T> i
     }
 
     @Override
-    protected RList<ModelPart> headParts() {
+    protected OList<ModelPart> headParts() {
         return this.headParts;
     }
 

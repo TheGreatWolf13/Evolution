@@ -2,7 +2,6 @@ package tgw.evolution.blocks.tileentities;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -30,7 +29,7 @@ public class TEPitKiln extends BlockEntity {
     private long timeStart = -1;
 
     public TEPitKiln(BlockPos pos, BlockState state) {
-        super(EvolutionTEs.PIT_KILN.get(), pos, state);
+        super(EvolutionTEs.PIT_KILN, pos, state);
     }
 
     public void checkEmpty() {
@@ -79,9 +78,8 @@ public class TEPitKiln extends BlockEntity {
         return this.timeStart;
     }
 
-    @Nullable
     @Override
-    public ClientboundBlockEntityDataPacket getUpdatePacket() {
+    public @Nullable ClientboundBlockEntityDataPacket getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
     }
 
@@ -120,11 +118,6 @@ public class TEPitKiln extends BlockEntity {
         }
     }
 
-    @Override
-    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt) {
-        this.handleUpdateTag(pkt.getTag());
-    }
-
     public void onRemoved() {
         assert this.level != null;
         if (!this.level.isClientSide) {
@@ -156,11 +149,11 @@ public class TEPitKiln extends BlockEntity {
         super.saveAdditional(tag);
         tag.putByteArray("Logs", this.logs);
         tag.putByte("Flags", this.flags);
-        tag.put("NW", this.nwStack.serializeNBT());
+        tag.put("NW", this.nwStack.save(new CompoundTag()));
         if (!this.isSingle()) {
-            tag.put("NE", this.neStack.serializeNBT());
-            tag.put("SW", this.swStack.serializeNBT());
-            tag.put("SE", this.seStack.serializeNBT());
+            tag.put("NE", this.neStack.save(new CompoundTag()));
+            tag.put("SW", this.swStack.save(new CompoundTag()));
+            tag.put("SE", this.seStack.save(new CompoundTag()));
         }
         if (this.isBurning()) {
             tag.putLong("TimeStart", this.timeStart);

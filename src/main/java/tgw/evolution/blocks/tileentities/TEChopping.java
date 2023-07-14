@@ -2,7 +2,6 @@ package tgw.evolution.blocks.tileentities;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -24,7 +23,6 @@ import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionTEs;
 import tgw.evolution.items.ItemLog;
 import tgw.evolution.items.modular.ItemModular;
-import tgw.evolution.patches.IBlockPatch;
 import tgw.evolution.util.constants.WoodVariant;
 
 public class TEChopping extends BlockEntity {
@@ -33,7 +31,7 @@ public class TEChopping extends BlockEntity {
     private byte id = -1;
 
     public TEChopping(BlockPos pos, BlockState state) {
-        super(EvolutionTEs.CHOPPING.get(), pos, state);
+        super(EvolutionTEs.CHOPPING, pos, state);
     }
 
     public void breakLog(Player player) {
@@ -43,7 +41,7 @@ public class TEChopping extends BlockEntity {
             BlockUtils.dropItemStack(this.level, this.worldPosition, stack, 0.5);
             Block block = WoodVariant.byId(this.id).get(EvolutionBlocks.LOGS);
             ItemEvents.damageItem(player.getMainHandItem(), player, ItemModular.DamageCause.BREAK_BLOCK, EquipmentSlot.MAINHAND,
-                                  ((IBlockPatch) block).getHarvestLevel(block.defaultBlockState(), this.level, null));
+                                  block.getHarvestLevel(block.defaultBlockState(), this.level, null));
             player.awardStat(Stats.ITEM_CRAFTED.get(firewood), 16);
         }
         this.id = -1;
@@ -68,11 +66,18 @@ public class TEChopping extends BlockEntity {
         return new ItemStack(WoodVariant.byId(this.id).get(EvolutionItems.LOGS));
     }
 
+    /**
+     * Return {@link ClientboundBlockEntityDataPacket#create(BlockEntity)} to send data to the client, or {@code null} if no data needs to be sent to
+     * the client.
+     */
     @Override
     public Packet<ClientGamePacketListener> getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
     }
 
+    /**
+     * This data is sent to the client.
+     */
     @Override
     public CompoundTag getUpdateTag() {
         CompoundTag tag = new CompoundTag();
@@ -90,17 +95,14 @@ public class TEChopping extends BlockEntity {
         return this.breakProgress;
     }
 
+    /**
+     * Load the data on the server and on the client. Always call {@code super}.
+     */
     @Override
     public void load(CompoundTag compound) {
         super.load(compound);
         this.id = compound.getByte("Wood");
         this.breakProgress = compound.getByte("Break");
-    }
-
-    @Override
-    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
-        this.handleUpdateTag(packet.getTag());
-        TEUtils.sendRenderUpdate(this);
     }
 
     public void removeStack(Player player) {
@@ -115,9 +117,11 @@ public class TEChopping extends BlockEntity {
         player.level.playSound(player, player, SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, 0.2f, 1.0f);
     }
 
+    /**
+     * Saves the data on the server. No need to call {@code super} the the parent class is {@link BlockEntity}.
+     */
     @Override
     protected void saveAdditional(CompoundTag compound) {
-        super.saveAdditional(compound);
         compound.putByte("Wood", this.id);
         compound.putByte("Break", this.breakProgress);
     }

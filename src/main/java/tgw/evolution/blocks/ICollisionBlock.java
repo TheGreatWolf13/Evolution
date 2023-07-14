@@ -1,6 +1,5 @@
 package tgw.evolution.blocks;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
@@ -12,7 +11,7 @@ public interface ICollisionBlock {
     /**
      * @return Whether the speed of the Entity was changed
      */
-    boolean collision(Level level, BlockPos pos, Entity entity, double speed, double mass, @Nullable Direction.Axis axis);
+    boolean collision(Level level, int x, int y, int z, Entity entity, double speed, double mass, @Nullable Direction.Axis axis);
 
     float getSlowdownSide(BlockState state);
 

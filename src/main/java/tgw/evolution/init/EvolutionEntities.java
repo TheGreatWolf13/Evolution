@@ -1,21 +1,10 @@
 package tgw.evolution.init;
 
+import net.minecraft.core.Registry;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.PathfinderMob;
-import net.minecraft.world.entity.ai.attributes.Attribute;
-import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.level.biome.Biome;
-import net.minecraftforge.common.ForgeMod;
-import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
-import net.minecraftforge.event.entity.EntityAttributeModificationEvent;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.RegistryObject;
 import tgw.evolution.Evolution;
-import tgw.evolution.entities.EntityCow;
 import tgw.evolution.entities.misc.EntityFallingPeat;
 import tgw.evolution.entities.misc.EntityFallingWeight;
 import tgw.evolution.entities.misc.EntityPlayerCorpse;
@@ -23,119 +12,48 @@ import tgw.evolution.entities.misc.EntitySittable;
 import tgw.evolution.entities.projectiles.EntityHook;
 import tgw.evolution.entities.projectiles.EntitySpear;
 import tgw.evolution.entities.projectiles.EntityTorch;
-import tgw.evolution.items.ItemSpawnEgg;
-import tgw.evolution.util.PlayerHelper;
 
-import java.util.function.Supplier;
-
-import static net.minecraft.world.entity.MobCategory.CREATURE;
 import static net.minecraft.world.entity.MobCategory.MISC;
 
 public final class EvolutionEntities {
 
     //Entities
-    public static final RegistryObject<EntityType<EntityCow>> COW;
-    public static final RegistryObject<EntityType<EntityFallingPeat>> FALLING_PEAT;
-    public static final RegistryObject<EntityType<EntityFallingWeight>> FALLING_WEIGHT;
-    public static final RegistryObject<EntityType<EntityHook>> HOOK;
-    public static final RegistryObject<EntityType<EntityPlayerCorpse>> PLAYER_CORPSE;
-    public static final RegistryObject<EntityType<EntitySpear>> SPEAR;
-    public static final RegistryObject<EntityType<EntitySittable>> SIT;
-    public static final RegistryObject<EntityType<EntityTorch>> TORCH;
-    //Spawn Eggs
-    public static final RegistryObject<Item> SPAWN_EGG_COW;
-    //
-    private static final DeferredRegister<EntityType<?>> ENTITIES = DeferredRegister.create(ForgeRegistries.ENTITIES, Evolution.MODID);
-    private static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, Evolution.MODID);
+//    public static final EntityType<EntityCow> COW;
+    public static final EntityType<EntityFallingPeat> FALLING_PEAT;
+    public static final EntityType<EntityFallingWeight> FALLING_WEIGHT;
+    public static final EntityType<EntityHook> HOOK;
+    public static final EntityType<EntityPlayerCorpse> PLAYER_CORPSE;
+    public static final EntityType<EntitySpear> SPEAR;
+    public static final EntityType<EntitySittable> SIT;
+    public static final EntityType<EntityTorch> TORCH;
 
     static {
-        //Entities
-        COW = register("cow", () -> EntityType.Builder.of(EntityCow::new, CREATURE).sized(0.9f, 1.4f));
-        FALLING_PEAT = register("falling_peat", () -> EntityType.Builder.<EntityFallingPeat>of(EntityFallingPeat::new, MISC)
-                                                                        .sized(1.0F, 1.0F)
-                                                                        .setTrackingRange(10)
-                                                                        .setUpdateInterval(20)
-                                                                        .setCustomClientFactory(EntityFallingPeat::new)
-                                                                        .setShouldReceiveVelocityUpdates(true));
-        FALLING_WEIGHT = register("falling_weight", () -> EntityType.Builder.<EntityFallingWeight>of(EntityFallingWeight::new, MISC)
-                                                                            .sized(1.0F, 1.0F)
-                                                                            .setTrackingRange(10)
-                                                                            .setUpdateInterval(20)
-                                                                            .setCustomClientFactory(EntityFallingWeight::new)
-                                                                            .setShouldReceiveVelocityUpdates(true));
-        HOOK = register("hook", () -> EntityType.Builder.<EntityHook>of(EntityHook::new, MISC)
-                                                        .sized(0.5f, 0.5f)
-                                                        .setTrackingRange(5)
-                                                        .setUpdateInterval(20)
-                                                        .setCustomClientFactory(EntityHook::new)
-                                                        .setShouldReceiveVelocityUpdates(true));
-        PLAYER_CORPSE = register("player_corpse", () -> EntityType.Builder.<EntityPlayerCorpse>of(EntityPlayerCorpse::new, MISC)
-                                                                          .sized(0.9F, 0.4F)
-                                                                          .setTrackingRange(5)
-                                                                          .setUpdateInterval(20)
-                                                                          .setCustomClientFactory(EntityPlayerCorpse::new)
-                                                                          .setShouldReceiveVelocityUpdates(true));
-        SPEAR = register("spear", () -> EntityType.Builder.<EntitySpear>of(EntitySpear::new, MISC)
-                                                          .sized(0.1f, 0.1f)
-                                                          .setTrackingRange(5)
-                                                          .setUpdateInterval(20)
-                                                          .setCustomClientFactory(EntitySpear::new)
-                                                          .setShouldReceiveVelocityUpdates(true));
-        SIT = register("sit", () -> EntityType.Builder.<EntitySittable>of(EntitySittable::new, MISC)
-                                                      .sized(0.0f, 0.0f)
-                                                      .setCustomClientFactory(EntitySittable::new));
-        TORCH = register("torch", () -> EntityType.Builder.<EntityTorch>of(EntityTorch::new, MISC)
-                                                          .sized(0.2f, 0.2f)
-                                                          .setTrackingRange(5)
-                                                          .setUpdateInterval(20)
-                                                          .setCustomClientFactory(EntityTorch::new)
-                                                          .setShouldReceiveVelocityUpdates(true));
-        //Spawn Eggs
-        SPAWN_EGG_COW = ITEMS.register("spawn_egg_cow", () -> genEgg(COW));
+//        COW = register("cow", EntityType.Builder.of(EntityCow::new, CREATURE).sized(0.9f, 1.4f));
+        FALLING_PEAT = register("falling_peat", EntityType.Builder.<EntityFallingPeat>of(EntityFallingPeat::new, MISC).sized(1.0F, 1.0F));
+        FALLING_WEIGHT = register("falling_weight", EntityType.Builder.<EntityFallingWeight>of(EntityFallingWeight::new, MISC).sized(1.0F, 1.0F));
+        HOOK = register("hook", EntityType.Builder.<EntityHook>of(EntityHook::new, MISC).sized(0.5f, 0.5f));
+        PLAYER_CORPSE = register("player_corpse", EntityType.Builder.<EntityPlayerCorpse>of(EntityPlayerCorpse::new, MISC).sized(0.9F, 0.4F));
+        SPEAR = register("spear", EntityType.Builder.<EntitySpear>of(EntitySpear::new, MISC).sized(0.1f, 0.1f));
+        SIT = register("sit", EntityType.Builder.<EntitySittable>of(EntitySittable::new, MISC).sized(0.0f, 0.0f).noSummon());
+        TORCH = register("torch", EntityType.Builder.<EntityTorch>of(EntityTorch::new, MISC).sized(0.2f, 0.2f));
     }
 
     private EvolutionEntities() {
     }
 
-    /**
-     * Returns a new Spawn Egg Item.
-     */
-    public static <E extends Entity> Item genEgg(RegistryObject<EntityType<E>> type) {
-        return new ItemSpawnEgg<>(type);
-    }
-
-    public static void modifyEntityAttribute(EntityAttributeModificationEvent event) {
-        //Player
-        event.add(EntityType.PLAYER, Attributes.ATTACK_SPEED, PlayerHelper.ATTACK_SPEED);
-        event.add(EntityType.PLAYER, ForgeMod.REACH_DISTANCE.get(), PlayerHelper.REACH_DISTANCE);
-        event.add(EntityType.PLAYER, EvolutionAttributes.COLD_RESISTANCE.get());
-        event.add(EntityType.PLAYER, EvolutionAttributes.HEAT_RESISTANCE.get());
-        //Add mass and friction to all entities
-        final Attribute mass = EvolutionAttributes.MASS.get();
-        final Attribute friction = EvolutionAttributes.FRICTION.get();
-        for (EntityType type : ForgeRegistries.ENTITIES.getValues()) {
-            event.add(type, mass);
-            event.add(type, friction);
-        }
-    }
-
     public static void register() {
-        ENTITIES.register(FMLJavaModLoadingContext.get().getModEventBus());
-        ITEMS.register(FMLJavaModLoadingContext.get().getModEventBus());
+        //Entities are registered via class-loading.
     }
 
-    private static <E extends Entity> RegistryObject<EntityType<E>> register(String name, Supplier<EntityType.Builder<E>> builder) {
-        return ENTITIES.register(name, () -> builder.get().build(name));
-    }
-
-    public static void registerEntityAttribute(EntityAttributeCreationEvent event) {
-        event.put(COW.get(), PathfinderMob.createMobAttributes().build());
+    private static <E extends Entity> EntityType<E> register(String name, EntityType.Builder<E> builder) {
+        //noinspection ConstantConditions
+        return Registry.register(Registry.ENTITY_TYPE, Evolution.getResource(name), builder.build(null));
     }
 
     /**
      * Adds the entity to the spawn list.
      */
-    public static void registerEntityWorldSpawn(RegistryObject<EntityType<?>> entity, int weight, int minCount, int maxCount, Biome... biomes) {
+    public static void registerEntityWorldSpawn(EntityType<?> entity, int weight, int minCount, int maxCount, Biome... biomes) {
 //        for (Biome biome : biomes) {
 //            if (biome != null) {
 //                //noinspection ObjectAllocationInLoop

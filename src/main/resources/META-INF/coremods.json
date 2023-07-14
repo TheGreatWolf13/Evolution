@@ -1,6 +1,0 @@
-{
-  "Evolution Minecraft Transformer": "patches/Minecraft.js",
-  "Evolution MinecraftServer Transformer": "patches/MinecraftServer.js",
-  "Evolution ResourceLocation Transformer": "patches/ResourceLocation.js",
-  "Evolution ModelResourceLocation Transformer": "patches/ModelResourceLocation.js"
-}

@@ -1,11 +1,9 @@
 package tgw.evolution.potion;
 
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.LivingEntity;
-import tgw.evolution.capabilities.thirst.CapabilityThirst;
-import tgw.evolution.capabilities.thirst.IThirst;
-import tgw.evolution.init.EvolutionCapabilities;
+import tgw.evolution.capabilities.player.CapabilityThirst;
+import tgw.evolution.patches.PatchServerPlayer;
 
 public class EffectHydration extends EffectGeneric {
 
@@ -15,8 +13,8 @@ public class EffectHydration extends EffectGeneric {
 
     @Override
     public void applyEffectTick(LivingEntity entity, int lvl) {
-        if (entity instanceof ServerPlayer player) {
-            IThirst thirst = EvolutionCapabilities.getRevivedCapability(player, CapabilityThirst.INSTANCE);
+        if (entity instanceof PatchServerPlayer player) {
+            CapabilityThirst thirst = player.getThirstStats();
             thirst.increaseThirstLevel(1 + lvl);
         }
     }

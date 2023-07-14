@@ -69,8 +69,7 @@ public enum ClimateZone {
         TEMPERATE,
         TROPICAL;
 
-        @Nullable
-        public static Region byId(int id) {
+        public static @Nullable Region byId(int id) {
             return switch (id) {
                 case 1 -> POLAR;
                 case 2 -> TEMPERATE;

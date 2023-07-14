@@ -18,8 +18,8 @@ import org.jetbrains.annotations.Nullable;
 import tgw.evolution.client.gui.widgets.AdvEditBox;
 import tgw.evolution.client.util.MouseButton;
 import tgw.evolution.init.EvolutionTexts;
-import tgw.evolution.util.collection.RArrayList;
-import tgw.evolution.util.collection.RList;
+import tgw.evolution.util.collection.lists.OArrayList;
+import tgw.evolution.util.collection.lists.OList;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -49,7 +49,7 @@ public abstract class ScreenListMenu extends Screen {
 
     @Override
     protected void init() {
-        RList<Item> entries = new RArrayList<>();
+        OList<Item> entries = new OArrayList<>();
         this.constructEntries(entries);
         this.entries = ImmutableList.copyOf(entries);
         this.list = new EntryList(this.entries);

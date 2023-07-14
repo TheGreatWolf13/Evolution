@@ -21,7 +21,7 @@ import org.lwjgl.glfw.GLFW;
 import tgw.evolution.Evolution;
 import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.client.util.MouseButton;
-import tgw.evolution.util.collection.RArrayList;
+import tgw.evolution.util.collection.lists.OArrayList;
 
 import java.util.List;
 
@@ -62,7 +62,7 @@ public class ButtonRecipe extends AbstractWidget {
 
     public List<Component> getTooltipText(Screen pScreen) {
         ItemStack result = this.getOrderedRecipes().get(this.currentIndex).getResultItem();
-        List<Component> list = new RArrayList<>(pScreen.getTooltipFromItem(result));
+        List<Component> list = new OArrayList<>(pScreen.getTooltipFromItem(result));
         if (this.collection.getRecipes(this.book.isFiltering(this.menu)).size() > 1) {
             list.add(this.textMoreRecipes);
         }

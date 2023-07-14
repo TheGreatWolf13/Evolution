@@ -20,13 +20,11 @@ public class DamageSourceEntity extends DamageSourceEv {
     }
 
     @Override
-    @Nullable
-    public Entity getEntity() {
+    public @Nullable Entity getEntity() {
         return this.damageSourceEntity;
     }
 
-    @Nullable
-    public Component getItemDisplay() {
+    public @Nullable Component getItemDisplay() {
         if (!(this.damageSourceEntity instanceof LivingEntity living)) {
             return null;
         }
@@ -44,8 +42,7 @@ public class DamageSourceEntity extends DamageSourceEv {
     }
 
     @Override
-    @Nullable
-    public Vec3 getSourcePosition() {
+    public @Nullable Vec3 getSourcePosition() {
         return this.damageSourceEntity.position();
     }
 

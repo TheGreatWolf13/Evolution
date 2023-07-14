@@ -3,7 +3,6 @@ package tgw.evolution.entities.projectiles;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.EntityType;
@@ -12,8 +11,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.network.PlayMessages;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.BlockClimbingStake;
@@ -30,21 +27,17 @@ import tgw.evolution.util.physics.SI;
 import static tgw.evolution.init.EvolutionBStates.ATTACHED;
 import static tgw.evolution.init.EvolutionBStates.DIRECTION_HORIZONTAL;
 
-public class EntityHook extends EntityGenericProjectile<EntityHook> {
+public class EntityHook extends EntityGenericProjectile {
 
     private Direction facing = Direction.NORTH;
 
     public EntityHook(Level level, LivingEntity thrower) {
-        super(EvolutionEntities.HOOK.get(), thrower, level, 1);
+        super(EvolutionEntities.HOOK, thrower, level, 1);
         this.facing = thrower.getDirection();
     }
 
     public EntityHook(EntityType<EntityHook> type, Level level) {
         super(type, level);
-    }
-
-    public EntityHook(PlayMessages.SpawnEntity spawnEntity, Level level) {
-        this(EvolutionEntities.HOOK.get(), level);
     }
 
     public static int tryPlaceRopes(Level level, BlockPos pos, Direction support, int count) {
@@ -61,7 +54,7 @@ public class EntityHook extends EntityGenericProjectile<EntityHook> {
             if (!BlockUtils.isReplaceable(stateTemp)) {
                 return ropeCount;
             }
-            if (currentMovement == Direction.DOWN && stateTemp.getBlock() == EvolutionBlocks.ROPE.get()) {
+            if (currentMovement == Direction.DOWN && stateTemp.getBlock() == EvolutionBlocks.ROPE) {
                 if (stateTemp.getValue(DIRECTION_HORIZONTAL) == support) {
                     continue;
                 }
@@ -72,7 +65,7 @@ public class EntityHook extends EntityGenericProjectile<EntityHook> {
                     return ropeCount;
                 }
             }
-            if (currentMovement != Direction.DOWN && stateTemp.getBlock() == EvolutionBlocks.ROPE_GROUND.get()) {
+            if (currentMovement != Direction.DOWN && stateTemp.getBlock() == EvolutionBlocks.ROPE_GROUND) {
                 if (stateTemp.getValue(DIRECTION_HORIZONTAL) == support) {
                     continue;
                 }
@@ -81,13 +74,13 @@ public class EntityHook extends EntityGenericProjectile<EntityHook> {
             if (currentMovement != Direction.DOWN && BlockClimbingStake.canGoDown(level, mutablePos)) {
                 currentMovement = Direction.DOWN;
                 stateTemp = level.getBlockState(mutablePos.move(Direction.DOWN));
-                if (stateTemp.getBlock() == EvolutionBlocks.ROPE.get()) {
+                if (stateTemp.getBlock() == EvolutionBlocks.ROPE) {
                     if (stateTemp.getValue(DIRECTION_HORIZONTAL) == support) {
                         continue;
                     }
                     return ropeCount;
                 }
-                if (stateTemp.getBlock() == EvolutionBlocks.ROPE_GROUND.get()) {
+                if (stateTemp.getBlock() == EvolutionBlocks.ROPE_GROUND) {
                     return ropeCount;
                 }
 //                if (stateTemp.getBlock() instanceof IReplaceable replaceable) {
@@ -95,7 +88,7 @@ public class EntityHook extends EntityGenericProjectile<EntityHook> {
 //                        BlockUtils.dropItemStack(level, mutablePos, stack);
 //                    }
 //                }
-                level.setBlockAndUpdate(mutablePos, EvolutionBlocks.ROPE.get().defaultBlockState().setValue(DIRECTION_HORIZONTAL, support));
+                level.setBlockAndUpdate(mutablePos, EvolutionBlocks.ROPE.defaultBlockState().setValue(DIRECTION_HORIZONTAL, support));
                 ropeCount++;
                 continue;
             }
@@ -105,11 +98,11 @@ public class EntityHook extends EntityGenericProjectile<EntityHook> {
 //                }
 //            }
             if (currentMovement == Direction.DOWN) {
-                level.setBlockAndUpdate(mutablePos, EvolutionBlocks.ROPE.get().defaultBlockState().setValue(DIRECTION_HORIZONTAL, support));
+                level.setBlockAndUpdate(mutablePos, EvolutionBlocks.ROPE.defaultBlockState().setValue(DIRECTION_HORIZONTAL, support));
                 ropeCount++;
                 continue;
             }
-            level.setBlockAndUpdate(mutablePos, EvolutionBlocks.ROPE_GROUND.get().defaultBlockState().setValue(DIRECTION_HORIZONTAL, support));
+            level.setBlockAndUpdate(mutablePos, EvolutionBlocks.ROPE_GROUND.defaultBlockState().setValue(DIRECTION_HORIZONTAL, support));
             ropeCount++;
         }
         return ropeCount;
@@ -133,13 +126,8 @@ public class EntityHook extends EntityGenericProjectile<EntityHook> {
     }
 
     @Override
-    public Packet<?> getAddEntityPacket() {
-        return NetworkHooks.getEntitySpawningPacket(this);
-    }
-
-    @Override
     protected ItemStack getArrowStack() {
-        return new ItemStack(EvolutionItems.CLIMBING_HOOK.get());
+        return new ItemStack(EvolutionItems.CLIMBING_HOOK);
     }
 
     @Override
@@ -213,20 +201,18 @@ public class EntityHook extends EntityGenericProjectile<EntityHook> {
         BlockPos pos = this.blockPosition();
         BlockPos down = pos.below();
         if (this.level.isEmptyBlock(pos) && BlockUtils.hasSolidSide(this.level, down, Direction.UP)) {
-            this.level.setBlockAndUpdate(this.blockPosition(), EvolutionBlocks.CLIMBING_HOOK.get()
-                                                                                            .defaultBlockState()
+            this.level.setBlockAndUpdate(this.blockPosition(), EvolutionBlocks.CLIMBING_HOOK.defaultBlockState()
                                                                                             .setValue(DIRECTION_HORIZONTAL,
                                                                                                       this.facing.getOpposite()));
             LivingEntity shooter = this.getShooter();
             if (shooter instanceof Player) {
                 ItemStack stack = shooter.getOffhandItem();
-                if (stack.getItem() == EvolutionItems.ROPE.get()) {
+                if (stack.getItem() == EvolutionItems.ROPE) {
                     int count = stack.getCount();
                     int placed = tryPlaceRopes(this.level, pos, this.facing, count);
                     if (placed > 0) {
                         stack.shrink(placed);
-                        this.level.setBlockAndUpdate(this.blockPosition(), EvolutionBlocks.CLIMBING_HOOK.get()
-                                                                                                        .defaultBlockState()
+                        this.level.setBlockAndUpdate(this.blockPosition(), EvolutionBlocks.CLIMBING_HOOK.defaultBlockState()
                                                                                                         .setValue(DIRECTION_HORIZONTAL,
                                                                                                                   this.facing.getOpposite())
                                                                                                         .setValue(ATTACHED, true));

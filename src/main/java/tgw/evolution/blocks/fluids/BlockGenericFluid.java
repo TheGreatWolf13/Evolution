@@ -22,7 +22,6 @@ import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraftforge.event.ForgeEventFactory;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.BlockPhysics;
 import tgw.evolution.blocks.IBlockFluidContainer;
@@ -30,8 +29,8 @@ import tgw.evolution.blocks.IReplaceable;
 import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.blocks.util.IntProperty;
 import tgw.evolution.init.EvolutionBStates;
-import tgw.evolution.util.collection.OArrayList;
-import tgw.evolution.util.collection.OList;
+import tgw.evolution.util.collection.lists.OArrayList;
+import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.math.DirectionList;
 import tgw.evolution.util.math.DirectionUtil;
 import tgw.evolution.util.math.MathHelper;
@@ -39,22 +38,21 @@ import tgw.evolution.util.math.MathHelper;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-import java.util.function.Supplier;
 
 import static tgw.evolution.init.EvolutionBStates.LEVEL_1_8;
 
 public abstract class BlockGenericFluid extends BlockPhysics implements IBlockFluidContainer, IReplaceable {
     public static final IntProperty LEVEL = LEVEL_1_8;
     public static final BooleanProperty FULL = EvolutionBStates.FULL;
+    private final FluidGeneric fluid;
     private final OList<FluidState> fluidStateCache;
-    private final Supplier<? extends FluidGeneric> supplier;
     private boolean fluidStateCacheInitialized;
 
-    public BlockGenericFluid(Supplier<? extends FluidGeneric> fluid, Properties properties) {
+    public BlockGenericFluid(FluidGeneric fluid, Properties properties) {
         super(properties);
         this.fluidStateCache = new OArrayList<>();
         this.registerDefaultState(this.defaultBlockState().setValue(LEVEL, 8).setValue(FULL, true));
-        this.supplier = fluid;
+        this.fluid = fluid;
     }
 
     public static int getFluidAmount(BlockGetter level, BlockPos pos, BlockState state, FluidState fluid) {
@@ -112,11 +110,11 @@ public abstract class BlockGenericFluid extends BlockPhysics implements IBlockFl
 
     @Override
     public FluidGeneric getFluid(BlockGetter level, BlockPos pos) {
-        return this.supplier.get();
+        return this.fluid;
     }
 
     public FluidGeneric getFluid() {
-        return this.supplier.get();
+        return this.fluid;
     }
 
     @Override
@@ -238,12 +236,12 @@ public abstract class BlockGenericFluid extends BlockPhysics implements IBlockFl
             if (flag) {
                 FluidState ifluidstate = level.getFluidState(pos);
                 if (ifluidstate.isSource()) {
-                    level.setBlockAndUpdate(pos, ForgeEventFactory.fireFluidPlaceBlockEvent(level, pos, pos, Blocks.OBSIDIAN.defaultBlockState()));
+                    level.setBlockAndUpdate(pos, Blocks.OBSIDIAN.defaultBlockState());
                     triggerMixEffects(level, pos);
                     return false;
                 }
                 if (ifluidstate.getHeight(level, pos) >= 0.444_444_45F) {
-                    level.setBlockAndUpdate(pos, ForgeEventFactory.fireFluidPlaceBlockEvent(level, pos, pos, Blocks.COBBLESTONE.defaultBlockState()));
+                    level.setBlockAndUpdate(pos, Blocks.COBBLESTONE.defaultBlockState());
                     triggerMixEffects(level, pos);
                     return false;
                 }

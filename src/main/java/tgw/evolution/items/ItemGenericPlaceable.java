@@ -11,12 +11,10 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.CollisionContext;
-import net.minecraftforge.common.extensions.IForgeBlockState;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.util.constants.BlockFlags;
 
@@ -33,8 +31,8 @@ public abstract class ItemGenericPlaceable extends ItemEv {
                context.getLevel().isUnobstructed(state, context.getClickedPos(), collisionContext);
     }
 
-    protected static SoundEvent getPlaceSound(IForgeBlockState state, LevelReader level, BlockPos pos, Player entity) {
-        return state.getSoundType(level, pos, entity).getPlaceSound();
+    protected static SoundEvent getPlaceSound(BlockState state) {
+        return state.getSoundType().getPlaceSound();
     }
 
     protected static boolean placeBlock(BlockPlaceContext context, BlockState state) {
@@ -43,11 +41,9 @@ public abstract class ItemGenericPlaceable extends ItemEv {
 
     public abstract boolean customCondition(Block block);
 
-    @Nullable
-    public abstract BlockState getCustomState(BlockPlaceContext context);
+    public abstract @Nullable BlockState getCustomState(BlockPlaceContext context);
 
-    @Nullable
-    public abstract BlockState getSneakingState(BlockPlaceContext context);
+    public abstract @Nullable BlockState getSneakingState(BlockPlaceContext context);
 
     public abstract void sucessPlaceLogic(BlockPlaceContext context);
 
@@ -88,11 +84,11 @@ public abstract class ItemGenericPlaceable extends ItemEv {
                 CriteriaTriggers.PLACED_BLOCK.trigger(player, pos, stack);
             }
             this.sucessPlaceLogic(context);
-            SoundType soundtype = stateInPos.getSoundType(level, pos, player);
+            SoundType soundtype = stateInPos.getSoundType();
             player.swing(context.getHand());
             level.playSound(null,
                             pos,
-                            getPlaceSound(stateInPos, level, pos, player),
+                            getPlaceSound(stateInPos),
                             SoundSource.BLOCKS,
                             (soundtype.getVolume() + 1.0F) / 2.0F,
                             soundtype.getPitch() * 0.8F);

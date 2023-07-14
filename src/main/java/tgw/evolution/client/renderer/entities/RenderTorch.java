@@ -14,8 +14,6 @@ import tgw.evolution.Evolution;
 import tgw.evolution.client.models.entities.ModelTorch;
 import tgw.evolution.entities.projectiles.EntityTorch;
 
-import org.jetbrains.annotations.Nullable;
-
 public class RenderTorch extends EntityRenderer<EntityTorch> {
 
     public static final ResourceLocation TORCH = Evolution.getResource("textures/entity/torch.png");
@@ -25,7 +23,6 @@ public class RenderTorch extends EntityRenderer<EntityTorch> {
         super(context);
     }
 
-    @Nullable
     @Override
     public ResourceLocation getTextureLocation(EntityTorch entity) {
         return TORCH;

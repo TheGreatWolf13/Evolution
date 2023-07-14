@@ -13,7 +13,7 @@ public class ItemPartHalfHead extends ItemPart<PartTypes.HalfHead, ItemPartHalfH
     }
 
     @Override
-    protected PartHalfHead createNew() {
+    public PartHalfHead createNew() {
         return new PartHalfHead();
     }
 
@@ -33,8 +33,8 @@ public class ItemPartHalfHead extends ItemPart<PartTypes.HalfHead, ItemPartHalfH
     }
 
     @Override
-    protected PartHalfHead getPartCap(ItemStack stack) {
-        return PartHalfHead.get(stack);
+    protected PartHalfHead getPartCap() {
+        return new PartHalfHead();
     }
 
     @Override

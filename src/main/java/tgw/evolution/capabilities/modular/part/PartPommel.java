@@ -3,27 +3,18 @@ package tgw.evolution.capabilities.modular.part;
 import it.unimi.dsi.fastutil.objects.ReferenceSet;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.FormattedText;
-import net.minecraft.util.Mth;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.ItemStack;
-import tgw.evolution.capabilities.modular.CapabilityModular;
+import net.minecraft.world.level.material.Material;
 import tgw.evolution.capabilities.modular.MaterialInstance;
-import tgw.evolution.init.EvolutionCapabilities;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionMaterials;
 import tgw.evolution.items.modular.part.ItemPartPommel;
-import tgw.evolution.util.collection.EitherList;
+import tgw.evolution.util.collection.lists.EitherList;
+import tgw.evolution.util.constants.HarvestLevel;
 
 public class PartPommel implements IPartHit<PartTypes.Pommel, ItemPartPommel, PartPommel> {
-
-    public static final PartPommel DUMMY = new PartPommel();
-    private MaterialInstance material = MaterialInstance.DUMMY;
-    private int spentDurability;
-    private PartTypes.Pommel type = PartTypes.Pommel.NULL;
-
-    public static PartPommel get(ItemStack stack) {
-        return (PartPommel) EvolutionCapabilities.getCapability(stack, CapabilityModular.PART, DUMMY);
-    }
 
     @Override
     public void appendText(EitherList<FormattedText, TooltipComponent> tooltip, int num) {
@@ -33,83 +24,92 @@ public class PartPommel implements IPartHit<PartTypes.Pommel, ItemPartPommel, Pa
 
     @Override
     public boolean canBeSharpened() {
-        return this.type.canBeSharpened();
+        //TODO implementation
+        return false;
     }
 
     @Override
     public void damage(int amount) {
-        this.spentDurability += amount;
+        //TODO implementation
+
     }
 
     @Override
-    public void deserializeNBT(CompoundTag nbt) {
-        this.type = PartTypes.Pommel.byId(nbt.getByte("Type"));
-        this.material = MaterialInstance.read(nbt.getCompound("MaterialInstance"));
-        this.spentDurability = nbt.getInt("Durability");
+    public SoundEvent getBlockHitSound() {
+        //TODO implementation
+        return null;
     }
 
     @Override
     public EvolutionDamage.Type getDamageType() {
-        return EvolutionDamage.Type.CRUSHING;
+        //TODO implementation
+        return null;
     }
 
     @Override
-    public String getDescriptionId() {
-        return "item.evolution.part.pommel." + this.type.getName() + "." + this.material.getMaterial().getName();
+    public String getDescriptionId(CompoundTag tag) {
+        //TODO implementation
+        return "null";
     }
 
     @Override
     public double getDmgMultiplierInternal() {
         //TODO implementation
-        return 1.0;
+        return 0;
     }
 
     @Override
-    public int getDurabilityDmg() {
-        return this.spentDurability;
+    public int getDurabilityDmg(CompoundTag tag) {
+        //TODO implementation
+        return 0;
     }
 
     @Override
-    public ReferenceSet<net.minecraft.world.level.material.Material> getEffectiveMaterials() {
-        return ReferenceSet.of();
+    public ReferenceSet<Material> getEffectiveMaterials() {
+        //TODO implementation
+        return null;
     }
 
     @Override
-    public int getHarvestLevel() {
-        return this.material.getHarvestLevel();
+    public @HarvestLevel int getHarvestLevel() {
+        //TODO implementation
+        return 0;
     }
 
     @Override
-    public MaterialInstance getMaterialInstance() {
-        return this.material;
+    public MaterialInstance getMaterialInstance(CompoundTag tag) {
+        //TODO implementation
+        return new MaterialInstance();
+    }
+
+    @Override
+    public int getMaxDamage(CompoundTag tag) {
+        //TODO implementation
+        return 0;
     }
 
     @Override
     public int getMaxDurability() {
-        return Mth.ceil(this.material.getHardness() * this.material.getResistance() / 50.0);
+        //TODO implementation
+        return 0;
     }
 
     @Override
     public float getMiningSpeed() {
-        return 1.0f;
+        //TODO implementation
+        return 0;
     }
 
     @Override
     public int getSharpAmount() {
+        //TODO implementation
         return 0;
     }
 
     @Override
     public PartTypes.Pommel getType() {
-        return this.type;
-    }
-
-    @Override
-    public void init(PartTypes.Pommel type, EvolutionMaterials material) {
-        if (!material.isAllowedBy(type)) {
-            throw new IllegalStateException("EvolutionMaterials " + material + " does not allow PommelType " + type);
-        }
-        this.set(type, new MaterialInstance(material));
+        //TODO implementation
+        return PartTypes.Pommel.NULL;
     }
 
     @Override
@@ -120,32 +120,31 @@ public class PartPommel implements IPartHit<PartTypes.Pommel, ItemPartPommel, Pa
 
     @Override
     public boolean isSimilar(PartPommel part) {
-        if (this.type != part.type) {
-            return false;
-        }
-        return this.material.isSimilar(part.material);
+        //TODO implementation
+        return false;
     }
 
     @Override
     public void loseSharp(int amount) {
+        //TODO implementation
+
     }
 
     @Override
-    public CompoundTag serializeNBT() {
-        CompoundTag tag = new CompoundTag();
-        tag.putByte("Type", this.type.getId());
-        tag.put("MaterialInstance", this.material.write());
-        tag.putInt("Durability", this.spentDurability);
-        return tag;
+    public void set(ItemStack stack, PartTypes.Pommel type, EvolutionMaterials material) {
+        //TODO implementation
+
     }
 
     @Override
     public void set(PartTypes.Pommel type, MaterialInstance material) {
-        this.type = type;
-        this.material = material;
+        //TODO implementation
+
     }
 
     @Override
     public void sharp() {
+        //TODO implementation
+
     }
 }

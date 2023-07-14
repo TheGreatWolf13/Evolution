@@ -5,7 +5,6 @@ import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -22,7 +21,6 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructureMana
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.phys.AABB;
-import net.minecraftforge.common.extensions.IForgeBlockEntity;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.client.gui.ScreenSchematic;
 import tgw.evolution.init.EvolutionBlocks;
@@ -56,11 +54,10 @@ public class TESchematic extends BlockEntity {
     private Vec3i size = Vec3i.ZERO;
 
     public TESchematic(BlockPos pos, BlockState state) {
-        super(EvolutionTEs.SCHEMATIC.get(), pos, state);
+        super(EvolutionTEs.SCHEMATIC, pos, state);
     }
 
-    @Nullable
-    private static BoundingBox calculateEnclosingBoundingBox(BlockPos startingPos, Stream<BlockPos> relatedCornerBlocks) {
+    private static @Nullable BoundingBox calculateEnclosingBoundingBox(BlockPos startingPos, Stream<BlockPos> relatedCornerBlocks) {
         Iterator<BlockPos> iterator = relatedCornerBlocks.iterator();
         if (!iterator.hasNext()) {
             return null;
@@ -146,7 +143,7 @@ public class TESchematic extends BlockEntity {
     private Stream<BlockPos> getRelatedCorners(BlockPos startPos, BlockPos endPos) {
         assert this.level != null;
         return BlockPos.betweenClosedStream(startPos, endPos)
-                       .filter(pos -> this.level.getBlockState(pos).is(EvolutionBlocks.SCHEMATIC_BLOCK.get()))
+                       .filter(pos -> this.level.getBlockState(pos).is(EvolutionBlocks.SCHEMATIC_BLOCK))
                        .map(this.level::getBlockEntity)
                        .filter(tile -> tile instanceof TESchematic)
                        .map(tile2 -> (TESchematic) tile2)
@@ -156,7 +153,7 @@ public class TESchematic extends BlockEntity {
 
     @Override
     public AABB getRenderBoundingBox() {
-        return IForgeBlockEntity.INFINITE_EXTENT_AABB;
+        return INFINITE_EXTENT_AABB;
     }
 
     public Rotation getRotation() {
@@ -176,8 +173,7 @@ public class TESchematic extends BlockEntity {
     }
 
     @Override
-    @Nullable
-    public ClientboundBlockEntityDataPacket getUpdatePacket() {
+    public @Nullable ClientboundBlockEntityDataPacket getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
     }
 
@@ -187,11 +183,6 @@ public class TESchematic extends BlockEntity {
         this.saveAdditional(tag);
         return tag;
     }
-
-//    @Override
-//    public double getViewDistance() {
-//        return 16_384;
-//    }
 
     public boolean hasName() {
         return this.name != null;
@@ -304,11 +295,6 @@ public class TESchematic extends BlockEntity {
     }
 
     @Override
-    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt) {
-        this.handleUpdateTag(pkt.getTag());
-    }
-
-    @Override
     public void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         tag.putString("Name", this.getName());
@@ -373,7 +359,7 @@ public class TESchematic extends BlockEntity {
         this.mode = mode;
         assert this.level != null;
         BlockState blockstate = this.level.getBlockState(this.getBlockPos());
-        if (blockstate.getBlock() == EvolutionBlocks.SCHEMATIC_BLOCK.get()) {
+        if (blockstate.getBlock() == EvolutionBlocks.SCHEMATIC_BLOCK) {
             this.level.setBlock(this.getBlockPos(), blockstate.setValue(SCHEMATIC_MODE, mode), BlockFlags.BLOCK_UPDATE);
         }
     }
@@ -426,7 +412,7 @@ public class TESchematic extends BlockEntity {
         if (this.level != null) {
             BlockPos pos = this.getBlockPos();
             BlockState state = this.level.getBlockState(pos);
-            if (state.getBlock() == EvolutionBlocks.SCHEMATIC_BLOCK.get()) {
+            if (state.getBlock() == EvolutionBlocks.SCHEMATIC_BLOCK) {
                 this.level.setBlock(pos, state.setValue(SCHEMATIC_MODE, this.mode), BlockFlags.BLOCK_UPDATE);
             }
         }

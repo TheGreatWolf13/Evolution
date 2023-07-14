@@ -1,44 +1,30 @@
 package tgw.evolution.network;
 
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ServerGamePacketListener;
 import tgw.evolution.items.IMelee;
-import tgw.evolution.patches.ILivingEntityPatch;
+import tgw.evolution.patches.PatchServerPacketListener;
 
-import java.util.function.Supplier;
+public class PacketCSSpecialAttackStop implements Packet<ServerGamePacketListener> {
 
-public class PacketCSSpecialAttackStop implements IPacket {
-
-    private final IMelee.StopReason reason;
+    public final IMelee.StopReason reason;
 
     public PacketCSSpecialAttackStop(IMelee.StopReason reason) {
         this.reason = reason;
     }
 
-    public static PacketCSSpecialAttackStop decode(FriendlyByteBuf buf) {
-        return new PacketCSSpecialAttackStop(buf.readEnum(IMelee.StopReason.class));
-    }
-
-    public static void encode(PacketCSSpecialAttackStop packet, FriendlyByteBuf buf) {
-        buf.writeEnum(packet.reason);
-    }
-
-    public static void handle(PacketCSSpecialAttackStop packet, Supplier<NetworkEvent.Context> context) {
-        NetworkEvent.Context c = context.get();
-        if (IPacket.checkSide(packet, c)) {
-            c.enqueueWork(() -> {
-                ServerPlayer player = c.getSender();
-                assert player != null;
-                ((ILivingEntityPatch) player).stopSpecialAttack(packet.reason);
-            });
-            c.setPacketHandled(true);
-        }
+    public PacketCSSpecialAttackStop(FriendlyByteBuf buf) {
+        this.reason = buf.readEnum(IMelee.StopReason.class);
     }
 
     @Override
-    public LogicalSide getDestinationSide() {
-        return LogicalSide.SERVER;
+    public void handle(ServerGamePacketListener listener) {
+        ((PatchServerPacketListener) listener).handleSpecialAttackStop(this);
+    }
+
+    @Override
+    public void write(FriendlyByteBuf buf) {
+        buf.writeEnum(this.reason);
     }
 }

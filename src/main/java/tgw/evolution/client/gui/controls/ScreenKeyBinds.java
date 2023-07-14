@@ -13,7 +13,6 @@ import net.minecraft.client.gui.screens.controls.KeyBindsScreen;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TranslatableComponent;
-import net.minecraftforge.client.settings.KeyModifier;
 import org.lwjgl.glfw.GLFW;
 import tgw.evolution.client.gui.widgets.AdvCheckBox;
 import tgw.evolution.client.gui.widgets.AdvEditBox;
@@ -114,7 +113,7 @@ public class ScreenKeyBinds extends KeyBindsScreen {
             this.confirmingReset = false;
             button.setMessage(this.textResetAll);
             for (KeyMapping keybinding : ScreenKeyBinds.this.minecraft.options.keyMappings) {
-                keybinding.setToDefault();
+                keybinding.setKey(keybinding.getDefaultKey());
             }
             KeyMapping.resetMapping();
         }));
@@ -224,16 +223,12 @@ public class ScreenKeyBinds extends KeyBindsScreen {
         }
         if (this.selectedKey != null) {
             if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
-                this.selectedKey.setKeyModifierAndCode(KeyModifier.getActiveModifier(), InputConstants.UNKNOWN);
                 this.options.setKey(this.selectedKey, InputConstants.UNKNOWN);
             }
             else {
-                this.selectedKey.setKeyModifierAndCode(KeyModifier.getActiveModifier(), InputConstants.getKey(keyCode, scanCode));
                 this.options.setKey(this.selectedKey, InputConstants.getKey(keyCode, scanCode));
             }
-            if (!KeyModifier.isKeyCodeModifier(this.selectedKey.getKey())) {
-                this.selectedKey = null;
-            }
+            this.selectedKey = null;
             this.lastKeySelection = Util.getMillis();
             KeyMapping.resetMapping();
             return true;

@@ -3,7 +3,6 @@ package tgw.evolution.entities.projectiles;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.EntityType;
@@ -14,55 +13,47 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.network.PlayMessages;
 import org.jetbrains.annotations.Nullable;
-import tgw.evolution.capabilities.modular.IModularTool;
 import tgw.evolution.events.ItemEvents;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionEntities;
 import tgw.evolution.init.EvolutionSounds;
 import tgw.evolution.items.IProjectile;
+import tgw.evolution.items.ItemUtils;
 import tgw.evolution.items.modular.ItemModular;
-import tgw.evolution.patches.IBlockPatch;
-import tgw.evolution.patches.IEntityPatch;
+import tgw.evolution.util.constants.HarvestLevel;
 import tgw.evolution.util.damage.DamageSourceEv;
 import tgw.evolution.util.hitbox.IHitboxArmed;
 import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 import tgw.evolution.util.math.Vec3d;
 import tgw.evolution.util.physics.SI;
 
-public class EntitySpear extends EntityGenericProjectile<EntitySpear> implements IAerodynamicEntity {
+public class EntitySpear extends EntityGenericProjectile implements IAerodynamicEntity {
 
-    @Nullable
-    private IProjectile cachedProjectile;
+    private @Nullable IProjectile cachedProjectile;
     private boolean isStone;
     private ItemStack stack = ItemStack.EMPTY;
 
     public EntitySpear(Level level, LivingEntity thrower, ItemStack thrownStack) {
-        super(EvolutionEntities.SPEAR.get(), thrower, level, IModularTool.get(thrownStack).getMass());
+        super(EvolutionEntities.SPEAR, thrower, level, ItemUtils.getMass(thrownStack));
         this.setStack(thrownStack.copy());
         this.setDamage((float) (thrower.getAttributeValue(Attributes.ATTACK_DAMAGE) *
-                                IModularTool.get(thrownStack).getDmgMultiplier(this.cachedProjectile.projectileDamageType())));
+                                ItemUtils.getDmgMultiplier(thrownStack, this.cachedProjectile.projectileDamageType())));
     }
 
     public EntitySpear(EntityType<EntitySpear> type, Level level) {
         super(type, level);
     }
 
-    public EntitySpear(@SuppressWarnings("unused") PlayMessages.SpawnEntity spawnEntity, Level level) {
-        this(EvolutionEntities.SPEAR.get(), level);
-    }
-
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
-        tag.put("Spear", this.stack.serializeNBT());
+        tag.put("Spear", this.stack.save(new CompoundTag()));
     }
 
     @Override
     protected void adjustPos(LivingEntity shooter, HumanoidArm arm) {
-        HitboxEntity<LivingEntity> hitboxes = (HitboxEntity<LivingEntity>) ((IEntityPatch) shooter).getHitboxes();
+        HitboxEntity<LivingEntity> hitboxes = (HitboxEntity<LivingEntity>) shooter.getHitboxes();
         if (hitboxes instanceof IHitboxArmed armed) {
             Vec3d offset = armed.getOffsetForArm(shooter, 1.0f, arm);
             this.setPos(shooter.getX() + offset.x(), shooter.getY() + offset.y(), shooter.getZ() + offset.z());
@@ -83,11 +74,6 @@ public class EntitySpear extends EntityGenericProjectile<EntitySpear> implements
     }
 
     @Override
-    public Packet<?> getAddEntityPacket() {
-        return NetworkHooks.getEntitySpawningPacket(this);
-    }
-
-    @Override
     protected ItemStack getArrowStack() {
         return this.stack.copy();
     }
@@ -99,12 +85,7 @@ public class EntitySpear extends EntityGenericProjectile<EntitySpear> implements
 
     @Override
     protected SoundEvent getHitBlockSound() {
-        return this.isStone ? EvolutionSounds.STONE_WEAPON_HIT_BLOCK.get() : EvolutionSounds.METAL_WEAPON_HIT_BLOCK.get();
-    }
-
-    @Override
-    public @Nullable HitboxEntity<EntitySpear> getHitboxes() {
-        return null;
+        return this.isStone ? EvolutionSounds.STONE_WEAPON_HIT_BLOCK : EvolutionSounds.METAL_WEAPON_HIT_BLOCK;
     }
 
     @Override
@@ -143,20 +124,21 @@ public class EntitySpear extends EntityGenericProjectile<EntitySpear> implements
         LivingEntity shooter = this.getShooter();
         if (shooter != null) {
             ItemEvents.damageItem(this.stack, shooter, ItemModular.DamageCause.HIT_BLOCK, null,
-                                  ((IBlockPatch) state.getBlock()).getHarvestLevel(state, this.level, null));
+                                  state.getBlock().getHarvestLevel(state, this.level, null));
         }
     }
 
     @Override
     protected void playHitEntitySound() {
-        this.playSound(this.isStone ? EvolutionSounds.STONE_SPEAR_HIT_ENTITY.get() : EvolutionSounds.METAL_SPEAR_HIT_ENTITY.get(), 1.0F, 1.0F);
+        this.playSound(this.isStone ? EvolutionSounds.STONE_SPEAR_HIT_ENTITY : EvolutionSounds.METAL_SPEAR_HIT_ENTITY, 1.0F, 1.0F);
     }
 
     @Override
     protected void postHitLogic(boolean attackSuccessful) {
         LivingEntity shooter = this.getShooter();
         if (attackSuccessful && shooter != null) {
-            ItemEvents.damageItem(this.stack, shooter, ItemModular.DamageCause.HIT_ENTITY, null);
+            //TODO harvest level based on what got hit
+            ItemEvents.damageItem(this.stack, shooter, ItemModular.DamageCause.HIT_ENTITY, null, HarvestLevel.HAND);
         }
         if (this.stack.isEmpty()) {
             this.playSound(SoundEvents.ITEM_BREAK, 0.8F, 0.8F + this.level.random.nextFloat() * 0.4F);
@@ -173,18 +155,16 @@ public class EntitySpear extends EntityGenericProjectile<EntitySpear> implements
     }
 
     @Override
-    public void readSpawnData(FriendlyByteBuf buffer) {
-        super.readSpawnData(buffer);
-        CompoundTag tag = buffer.readNbt();
-        if (tag != null) {
-            this.setStack(ItemStack.of(tag));
-        }
+    public void readAdditionalSyncData(FriendlyByteBuf buf) {
+        super.readAdditionalSyncData(buf);
+        this.setStack(buf.readItem());
     }
 
     private void setStack(ItemStack stack) {
         this.stack = stack.copy();
         this.cachedProjectile = (IProjectile) stack.getItem();
-        this.isStone = IModularTool.get(this.stack).getHead().getMaterialInstance().getMaterial().isStone();
+        //TODO
+        this.isStone = /*IModularTool.get(this.stack).getHead().getMaterialInstance().getMaterial().isStone()*/true;
     }
 
     @Override
@@ -211,8 +191,8 @@ public class EntitySpear extends EntityGenericProjectile<EntitySpear> implements
     }
 
     @Override
-    public void writeSpawnData(FriendlyByteBuf buffer) {
-        super.writeSpawnData(buffer);
-        buffer.writeNbt(this.stack.serializeNBT());
+    public void writeAdditionalSyncData(FriendlyByteBuf buf) {
+        super.writeAdditionalSyncData(buf);
+        buf.writeItem(this.stack);
     }
 }

@@ -9,13 +9,13 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
 import org.lwjgl.glfw.GLFW;
+import tgw.evolution.EvolutionClient;
 import tgw.evolution.blocks.tileentities.TEPuzzle;
 import tgw.evolution.client.gui.widgets.AdvCheckBox;
 import tgw.evolution.client.gui.widgets.AdvEditBox;
 import tgw.evolution.client.util.Key;
 import tgw.evolution.client.util.Modifiers;
 import tgw.evolution.client.util.MouseButton;
-import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.network.PacketCSUpdatePuzzle;
 
@@ -140,11 +140,11 @@ public class ScreenPuzzle extends Screen {
         this.tile.setAttachmentType(attachmentType);
         this.tile.setFinalState(finalState);
         this.tile.setCheckBB(this.checkBB);
-        EvolutionNetwork.sendToServer(new PacketCSUpdatePuzzle(this.tile.getBlockPos(),
-                                                               attachmentType,
-                                                               targetPool,
-                                                               finalState,
-                                                               this.checkBB));
+        EvolutionClient.sendToServer(new PacketCSUpdatePuzzle(this.tile.getBlockPos(),
+                                                              attachmentType,
+                                                              targetPool,
+                                                              finalState,
+                                                              this.checkBB));
         this.onClose();
     }
 

@@ -1,5 +1,6 @@
 package tgw.evolution.entities;
 
+import com.mojang.authlib.GameProfile;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
@@ -10,6 +11,7 @@ import java.util.UUID;
 public final class EntityUtils {
 
     public static final UUID UUID_ZERO = UUID.fromString("00000000-0000-0000-0000-000000000000");
+    public static final GameProfile EMPTY_PROFILE = new GameProfile(UUID_ZERO, "");
 
     private EntityUtils() {
     }

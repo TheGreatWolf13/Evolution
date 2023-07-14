@@ -8,7 +8,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.server.level.ServerLevel;
-import tgw.evolution.commands.argument.EnumEvArgument;
+import tgw.evolution.commands.argument.EnumArgument;
 import tgw.evolution.util.time.Date;
 import tgw.evolution.util.time.FullDate;
 import tgw.evolution.util.time.Time;
@@ -17,7 +17,7 @@ public final class CommandDate implements Command<CommandSourceStack> {
 
     private static final Command<CommandSourceStack> CMD = new CommandDate();
     private static final IntegerArgumentType DAY = IntegerArgumentType.integer(1, Time.DAYS_PER_MONTH);
-    private static final EnumEvArgument<Date.Month> MONTH = EnumEvArgument.enumArgument(Date.Month.class);
+    private static final EnumArgument<Date.Month> MONTH = EnumArgument.enumArgument(Date.Month.class);
     private static final IntegerArgumentType YEAR = IntegerArgumentType.integer(Time.STARTING_YEAR);
     private static final IntegerArgumentType HOUR = IntegerArgumentType.integer(0, 23);
     private static final IntegerArgumentType MINUTE = IntegerArgumentType.integer(0, 59);

@@ -10,8 +10,8 @@ import tgw.evolution.entities.projectiles.EntitySpear;
 import tgw.evolution.init.EvolutionDamage;
 
 public class DamageSourceEntityIndirect extends DamageSourceEntity {
-    @Nullable
-    private final Entity trueSource;
+
+    private final @Nullable Entity trueSource;
 
     public DamageSourceEntityIndirect(String damage, Entity source, @Nullable Entity trueSource, EvolutionDamage.Type type) {
         super(damage, source, type);
@@ -19,20 +19,17 @@ public class DamageSourceEntityIndirect extends DamageSourceEntity {
     }
 
     @Override
-    @Nullable
-    public Entity getDirectEntity() {
+    public @Nullable Entity getDirectEntity() {
         return this.damageSourceEntity;
     }
 
     @Override
-    @Nullable
-    public Entity getEntity() {
+    public @Nullable Entity getEntity() {
         return this.trueSource;
     }
 
     @Override
-    @Nullable
-    public Component getItemDisplay() {
+    public @Nullable Component getItemDisplay() {
         ItemStack heldStack = this.trueSource instanceof LivingEntity living ? living.getMainHandItem() : ItemStack.EMPTY;
         if ("spear".equals(this.msgId)) {
             heldStack = ((EntitySpear) this.damageSourceEntity).getStack();

@@ -12,8 +12,8 @@ import tgw.evolution.capabilities.modular.IToolType;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionMaterials;
 import tgw.evolution.items.modular.part.*;
-import tgw.evolution.util.collection.B2RMap;
-import tgw.evolution.util.collection.B2ROpenHashMap;
+import tgw.evolution.util.collection.maps.B2RHashMap;
+import tgw.evolution.util.collection.maps.B2RMap;
 import tgw.evolution.util.math.MathHelper;
 
 import java.util.random.RandomGenerator;
@@ -37,7 +37,7 @@ public final class PartTypes {
         private static final Byte2ReferenceMap<Blade> REGISTRY;
 
         static {
-            B2RMap<Blade> map = new B2ROpenHashMap<>();
+            B2RMap<Blade> map = new B2RHashMap<>();
             for (Blade blade : VALUES) {
                 if (map.put(blade.id, blade) != null) {
                     throw new IllegalStateException("Blade " + blade + " has duplicate id: " + blade.id);
@@ -111,15 +111,8 @@ public final class PartTypes {
         }
 
         @Override
-        public boolean isTwoHanded() {
-            return switch (this) {
-                case NULL, ARMING_SWORD, KNIFE -> false;
-            };
-        }
-
-        @Override
         public ItemPartBlade partItem() {
-            return EvolutionItems.PART_BLADE.get();
+            return EvolutionItems.PART_BLADE;
         }
     }
 
@@ -136,7 +129,7 @@ public final class PartTypes {
         private static final Byte2ReferenceMap<Guard> REGISTRY;
 
         static {
-            B2RMap<Guard> map = new B2ROpenHashMap<>();
+            B2RMap<Guard> map = new B2RHashMap<>();
             for (Guard guard : VALUES) {
                 if (map.put(guard.id, guard) != null) {
                     throw new IllegalStateException("Guard " + guard + " has duplicate id: " + guard.id);
@@ -208,13 +201,8 @@ public final class PartTypes {
         }
 
         @Override
-        public boolean isTwoHanded() {
-            return false;
-        }
-
-        @Override
         public ItemPartGuard partItem() {
-            return EvolutionItems.PART_GUARD.get();
+            return EvolutionItems.PART_GUARD;
         }
     }
 
@@ -234,7 +222,7 @@ public final class PartTypes {
         private static final Byte2ReferenceMap<HalfHead> REGISTRY;
 
         static {
-            B2RMap<HalfHead> map = new B2ROpenHashMap<>();
+            B2RMap<HalfHead> map = new B2RHashMap<>();
             for (HalfHead halfHead : VALUES) {
                 if (map.put(halfHead.id, halfHead) != null) {
                     throw new IllegalStateException("HalfHead " + halfHead + " has duplicate id: " + halfHead.id);
@@ -313,13 +301,8 @@ public final class PartTypes {
         }
 
         @Override
-        public boolean isTwoHanded() {
-            return false;
-        }
-
-        @Override
         public ItemPartHalfHead partItem() {
-            return EvolutionItems.PART_HALFHEAD.get();
+            return EvolutionItems.PART_HALFHEAD;
         }
     }
 
@@ -336,7 +319,7 @@ public final class PartTypes {
         private static final Byte2ReferenceMap<Handle> REGISTRY;
 
         static {
-            B2RMap<Handle> map = new B2ROpenHashMap<>();
+            B2RMap<Handle> map = new B2RHashMap<>();
             for (Handle handle : VALUES) {
                 if (map.put(handle.id, handle) != null) {
                     throw new IllegalStateException("Handle " + handle + " has duplicate id: " + handle.id);
@@ -430,7 +413,7 @@ public final class PartTypes {
 
         @Override
         public ItemPartHandle partItem() {
-            return EvolutionItems.PART_HANDLE.get();
+            return EvolutionItems.PART_HANDLE;
         }
     }
 
@@ -452,7 +435,7 @@ public final class PartTypes {
         private static final Byte2ReferenceMap<Head> REGISTRY;
 
         static {
-            B2RMap<Head> map = new B2ROpenHashMap<>();
+            B2RMap<Head> map = new B2RHashMap<>();
             for (Head head : VALUES) {
                 if (map.put(head.id, head) != null) {
                     throw new IllegalStateException("Head " + head + " has duplicate id: " + head.id);
@@ -543,11 +526,6 @@ public final class PartTypes {
         }
 
         @Override
-        public boolean isTwoHanded() {
-            return false;
-        }
-
-        @Override
         public String modelSuffix(EvolutionMaterials material) {
             if (this == AXE || this == SHOVEL || this == SPEAR) {
                 return material.isStone() ? "__stone" : "";
@@ -557,7 +535,7 @@ public final class PartTypes {
 
         @Override
         public ItemPartHead partItem() {
-            return EvolutionItems.PART_HEAD.get();
+            return EvolutionItems.PART_HEAD;
         }
     }
 
@@ -574,7 +552,7 @@ public final class PartTypes {
         private static final Byte2ReferenceMap<Hilt> REGISTRY;
 
         static {
-            B2RMap<Hilt> map = new B2ROpenHashMap<>();
+            B2RMap<Hilt> map = new B2RHashMap<>();
             for (Hilt hilt : VALUES) {
                 if (map.put(hilt.id, hilt) != null) {
                     throw new IllegalStateException("Hilt " + hilt + " has duplicate id: " + hilt.id);
@@ -660,7 +638,7 @@ public final class PartTypes {
 
         @Override
         public ItemPartHilt partItem() {
-            return EvolutionItems.PART_GRIP.get();
+            return EvolutionItems.PART_GRIP;
         }
     }
 
@@ -678,7 +656,7 @@ public final class PartTypes {
         private static final Byte2ReferenceMap<Pole> REGISTRY;
 
         static {
-            B2RMap<Pole> map = new B2ROpenHashMap<>();
+            B2RMap<Pole> map = new B2RHashMap<>();
             for (Pole pole : VALUES) {
                 if (map.put(pole.id, pole) != null) {
                     throw new IllegalStateException("Pole " + pole + " has duplicate id: " + pole.id);
@@ -762,7 +740,7 @@ public final class PartTypes {
 
         @Override
         public ItemPartPole partItem() {
-            return EvolutionItems.PART_POLE.get();
+            return EvolutionItems.PART_POLE;
         }
     }
 
@@ -779,7 +757,7 @@ public final class PartTypes {
         private static final Byte2ReferenceMap<Pommel> REGISTRY;
 
         static {
-            B2RMap<Pommel> map = new B2ROpenHashMap<>();
+            B2RMap<Pommel> map = new B2RHashMap<>();
             for (Pommel pommel : VALUES) {
                 if (map.put(pommel.id, pommel) != null) {
                     throw new IllegalStateException("Pommel " + pommel + " has duplicate id: " + pommel.id);
@@ -853,13 +831,8 @@ public final class PartTypes {
         }
 
         @Override
-        public boolean isTwoHanded() {
-            return false;
-        }
-
-        @Override
         public ItemPartPommel partItem() {
-            return EvolutionItems.PART_POMMEL.get();
+            return EvolutionItems.PART_POMMEL;
         }
     }
 }

@@ -9,14 +9,14 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.util.FormattedCharSequence;
 import org.jetbrains.annotations.Nullable;
-import tgw.evolution.patches.IComponentPatch;
-import tgw.evolution.util.collection.RArrayList;
+import tgw.evolution.util.collection.lists.OArrayList;
+import tgw.evolution.util.collection.lists.OList;
 
 import java.util.List;
 
-public class CappedComponent implements MutableComponent, IComponentPatch {
+public class CappedComponent implements MutableComponent {
 
-    protected final List<Component> siblings = new RArrayList<>();
+    protected final OList<Component> siblings = new OArrayList<>();
     private final Component base;
     private final @Nullable Component widthLimiter;
     private String cached = "";
@@ -133,7 +133,7 @@ public class CappedComponent implements MutableComponent, IComponentPatch {
         this.cachedWith = null;
         this.decomposedWith = null;
         for (int i = 0, l = this.siblings.size(); i < l; i++) {
-            ((IComponentPatch) this.siblings.get(i)).resetCache();
+            this.siblings.get(i).resetCache();
         }
     }
 
@@ -146,7 +146,7 @@ public class CappedComponent implements MutableComponent, IComponentPatch {
     public void setWidth(int width, Component parent) {
         if (this.width != width) {
             this.width = width;
-            ((IComponentPatch) parent).resetCache();
+            parent.resetCache();
         }
     }
 }

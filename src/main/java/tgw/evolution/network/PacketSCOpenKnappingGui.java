@@ -2,42 +2,34 @@ package tgw.evolution.network;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.network.NetworkEvent;
-import tgw.evolution.client.gui.ScreenKnapping;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import tgw.evolution.patches.PatchClientPacketListener;
 import tgw.evolution.util.constants.RockVariant;
 
-import java.util.function.Supplier;
+public class PacketSCOpenKnappingGui implements Packet<ClientGamePacketListener> {
 
-public class PacketSCOpenKnappingGui implements IPacket {
-
-    private final BlockPos pos;
-    private final RockVariant variant;
+    public final BlockPos pos;
+    public final RockVariant variant;
 
     public PacketSCOpenKnappingGui(BlockPos pos, RockVariant variant) {
         this.pos = pos;
         this.variant = variant;
     }
 
-    public static PacketSCOpenKnappingGui decode(FriendlyByteBuf buffer) {
-        return new PacketSCOpenKnappingGui(buffer.readBlockPos(), RockVariant.fromId(buffer.readByte()));
-    }
-
-    public static void encode(PacketSCOpenKnappingGui packet, FriendlyByteBuf buffer) {
-        buffer.writeBlockPos(packet.pos);
-        buffer.writeByte(packet.variant.getId());
-    }
-
-    public static void handle(PacketSCOpenKnappingGui packet, Supplier<NetworkEvent.Context> context) {
-        NetworkEvent.Context c = context.get();
-        if (IPacket.checkSide(packet, c)) {
-            c.enqueueWork(() -> ScreenKnapping.open(packet.pos, packet.variant));
-            c.setPacketHandled(true);
-        }
+    public PacketSCOpenKnappingGui(FriendlyByteBuf buf) {
+        this.pos = buf.readBlockPos();
+        this.variant = RockVariant.fromId(buf.readByte());
     }
 
     @Override
-    public LogicalSide getDestinationSide() {
-        return LogicalSide.CLIENT;
+    public void handle(ClientGamePacketListener listener) {
+        ((PatchClientPacketListener) listener).handleOpenKnappingGui(this);
+    }
+
+    @Override
+    public void write(FriendlyByteBuf buf) {
+        buf.writeBlockPos(this.pos);
+        buf.writeByte(this.variant.getId());
     }
 }

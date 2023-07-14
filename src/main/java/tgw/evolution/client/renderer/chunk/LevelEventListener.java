@@ -31,11 +31,11 @@ import net.minecraft.world.level.block.PointedDripstoneBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
-import tgw.evolution.util.collection.O2RMap;
-import tgw.evolution.util.collection.O2ROpenHashMap;
+import org.jetbrains.annotations.Nullable;
+import tgw.evolution.util.collection.maps.L2OHashMap;
+import tgw.evolution.util.collection.maps.L2OMap;
 import tgw.evolution.util.constants.LvlEvent;
 
-import javax.annotation.Nullable;
 import java.util.Random;
 
 import static net.minecraft.world.level.block.LevelEvent.*;
@@ -43,7 +43,7 @@ import static net.minecraft.world.level.block.LevelEvent.*;
 public class LevelEventListener {
 
     private final Minecraft mc;
-    private final O2RMap<BlockPos, SoundInstance> playingRecords = new O2ROpenHashMap<>();
+    private final L2OMap<SoundInstance> playingRecords = new L2OHashMap<>();
     private @Nullable ClientLevel level;
 
     public LevelEventListener(Minecraft mc) {
@@ -95,16 +95,15 @@ public class LevelEventListener {
      * @param decr  if {@code true}, and the {@linkplain net.minecraft.client.Options#particles particles option} is set to minimal, attempts to
      *              spawn the particle at a decreased level
      */
-    @Nullable
-    private Particle addParticleInternal(ParticleOptions particle,
-                                         boolean force,
-                                         boolean decr,
-                                         double x,
-                                         double y,
-                                         double z,
-                                         double velX,
-                                         double velY,
-                                         double velZ) {
+    private @Nullable Particle addParticleInternal(ParticleOptions particle,
+                                                   boolean force,
+                                                   boolean decr,
+                                                   double x,
+                                                   double y,
+                                                   double z,
+                                                   double velX,
+                                                   double velY,
+                                                   double velZ) {
         Camera camera = this.mc.gameRenderer.getMainCamera();
         if (camera.isInitialized()) {
             if (force) {
@@ -301,7 +300,7 @@ public class LevelEventListener {
             case PARTICLES_DESTROY_BLOCK -> {
                 BlockState state = Block.stateById(data);
                 if (!state.isAir()) {
-                    SoundType sound = state.getSoundType(level, pos, null);
+                    SoundType sound = state.getSoundType();
                     level.playLocalSound(pos, sound.getBreakSound(), SoundSource.BLOCKS, (sound.getVolume() + 1.0F) / 2.0F,
                                          sound.getPitch() * 0.8F,
                                          false);
@@ -410,18 +409,19 @@ public class LevelEventListener {
     }
 
     public void playStreamingMusic(@Nullable SoundEvent soundEvent, BlockPos pos, @Nullable RecordItem disc) {
+        long packed = pos.asLong();
         assert this.level != null;
-        SoundInstance soundInstance = this.playingRecords.get(pos);
+        SoundInstance soundInstance = this.playingRecords.get(packed);
         if (soundInstance != null) {
             this.mc.getSoundManager().stop(soundInstance);
-            this.playingRecords.remove(pos);
+            this.playingRecords.remove(packed);
         }
         if (soundEvent != null) {
             if (disc != null) {
                 this.mc.gui.setNowPlaying(disc.getDisplayName());
             }
             SoundInstance newSound = SimpleSoundInstance.forRecord(soundEvent, pos.getX(), pos.getY(), pos.getZ());
-            this.playingRecords.put(pos, newSound);
+            this.playingRecords.put(packed, newSound);
             this.mc.getSoundManager().play(newSound);
         }
         notifyNearbyEntities(this.level, pos, soundEvent != null);

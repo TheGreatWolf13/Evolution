@@ -23,7 +23,9 @@ import tgw.evolution.Evolution;
 import tgw.evolution.client.gui.widgets.Label;
 import tgw.evolution.client.util.MouseButton;
 import tgw.evolution.init.EvolutionResources;
+import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.inventory.corpse.ContainerCorpse;
+import tgw.evolution.patches.PatchLanguageInfo;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.math.Metric;
 import tgw.evolution.util.time.FullDate;
@@ -51,12 +53,13 @@ public class ScreenCorpse extends AbstractContainerScreen<ContainerCorpse> {
     public ScreenCorpse(ContainerCorpse container, Inventory inv, Component title) {
         super(container, inv, title);
         this.imageHeight = 236;
-        FullDate gameDate = new FullDate(container.getCorpse().getGameDeathTime());
-        Date systemDate = new Date(container.getCorpse().getSystemDeathTime());
+        FullDate gameDate = new FullDate(0/*container.getCorpse().getGameDeathTime()*/);
+        Date systemDate = new Date(0/*container.getCorpse().getSystemDeathTime()*/);
         Minecraft mc = Minecraft.getInstance();
-        this.deathMessage = mc.font.split(container.getCorpse().getDeathMessage(), this.imageWidth - 12);
-        Component addendum = new TextComponent(
-                "\n\n" + Metric.getDateFormatter(mc.getLanguageManager().getSelected().getJavaLocale()).format(systemDate));
+        this.deathMessage = mc.font.split(/*container.getCorpse().getDeathMessage()*/EvolutionTexts.EMPTY, this.imageWidth - 12);
+        Component addendum = new TextComponent("\n\n" +
+                                               Metric.getDateFormatter(((PatchLanguageInfo) mc.getLanguageManager().getSelected()).getLocale())
+                                                     .format(systemDate));
         this.lblDeathDate = new Label(new TranslatableComponent("evolution.gui.corpse.death").append(" "),
                                       gameDate.getShortDisplayName(), addendum, false,
                                       l -> this.activeTooltip = l.getTooltip(), ChatFormatting.DARK_GRAY, ChatFormatting.DARK_GRAY,
@@ -72,8 +75,7 @@ public class ScreenCorpse extends AbstractContainerScreen<ContainerCorpse> {
         this.minecraft.getItemRenderer().renderAndDecorateItem(this.tab1Stack, this.tabX + 6 + (this.selectedTab == 1 ? 2 : 0), this.tabY + 32 + 5);
     }
 
-    @Nullable
-    private Style getClickedComponentStyleAt(int mouseX, int mouseY) {
+    private @Nullable Style getClickedComponentStyleAt(int mouseX, int mouseY) {
         int deltaY = mouseY - this.messageStart;
         int times = 0;
         while (deltaY >= 10) {
@@ -149,14 +151,15 @@ public class ScreenCorpse extends AbstractContainerScreen<ContainerCorpse> {
         y += 5;
         this.messageEnd = y;
         this.lblDeathDate.render(this.font, matrices, x, y, this.imageWidth - 12, mouseX, mouseY);
-        GUIUtils.drawCenteredStringNoShadow(matrices, this.font, this.menu.getCorpse().getName(), this.leftPos + this.imageWidth / 2.0f,
+        GUIUtils.drawCenteredStringNoShadow(matrices, this.font, /*this.menu.getCorpse().getName()*/EvolutionTexts.EMPTY,
+                                            this.leftPos + this.imageWidth / 2.0f,
                                             this.topPos + 5, 0x40_4040);
     }
 
     @Override
     protected void renderLabels(PoseStack matrices, int mouseX, int mouseY) {
         float middle = this.imageWidth / 2.0f;
-        GUIUtils.drawCenteredStringNoShadow(matrices, this.font, this.menu.getCorpse().getName(), middle, 5, 0x40_4040);
+        GUIUtils.drawCenteredStringNoShadow(matrices, this.font, /*this.menu.getCorpse().getName()*/EvolutionTexts.EMPTY, middle, 5, 0x40_4040);
         GUIUtils.drawCenteredStringNoShadow(matrices, this.font, this.playerInventoryTitle, middle, 144, 0x40_4040);
     }
 

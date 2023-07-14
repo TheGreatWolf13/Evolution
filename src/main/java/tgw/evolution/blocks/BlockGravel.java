@@ -31,7 +31,7 @@ public class BlockGravel extends BlockPhysics implements IRockVariant, ISloppabl
 
     @Override
     public SoundEvent fallingSound() {
-        return EvolutionSounds.SOIL_COLLAPSE.get();
+        return EvolutionSounds.SOIL_COLLAPSE;
     }
 
     @Override

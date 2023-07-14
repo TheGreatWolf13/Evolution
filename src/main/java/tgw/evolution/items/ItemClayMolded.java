@@ -42,10 +42,10 @@ public class ItemClayMolded extends ItemBlock {
                 return InteractionResult.FAIL;
             }
             CollisionContext selectionContext = context.getPlayer() == null ? CollisionContext.empty() : CollisionContext.of(context.getPlayer());
-            if (!level.isUnobstructed(EvolutionBlocks.PIT_KILN.get().defaultBlockState(), pos, selectionContext)) {
+            if (!level.isUnobstructed(EvolutionBlocks.PIT_KILN.defaultBlockState(), pos, selectionContext)) {
                 return InteractionResult.FAIL;
             }
-            if (!level.setBlock(pos, EvolutionBlocks.PIT_KILN.get().defaultBlockState(),
+            if (!level.setBlock(pos, EvolutionBlocks.PIT_KILN.defaultBlockState(),
                                 BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE | BlockFlags.RERENDER)) {
                 return InteractionResult.FAIL;
             }

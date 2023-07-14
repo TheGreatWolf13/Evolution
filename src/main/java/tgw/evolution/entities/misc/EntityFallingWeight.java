@@ -26,18 +26,16 @@ import net.minecraft.world.level.material.Material;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.entity.IEntityAdditionalSpawnData;
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.network.PlayMessages;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.BlockKnapping;
 import tgw.evolution.blocks.IPhysics;
 import tgw.evolution.blocks.util.BlockUtils;
+import tgw.evolution.entities.IEntityPacket;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionEntities;
-import tgw.evolution.patches.IEntityPatch;
+import tgw.evolution.network.PacketSCCustomEntity;
 import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 import tgw.evolution.util.math.ClipContextMutable;
 import tgw.evolution.util.physics.Fluid;
@@ -46,20 +44,20 @@ import tgw.evolution.util.physics.SI;
 
 import java.util.List;
 
-public class EntityFallingWeight extends Entity implements IEntityAdditionalSpawnData, IEntityPatch<EntityFallingWeight> {
+public class EntityFallingWeight extends Entity implements IEntityPacket<EntityFallingWeight> {
 
     private final ClipContextMutable clipContext = new ClipContextMutable();
     private final MutableBlockPos mutablePos = new MutableBlockPos();
     public int fallTime;
     private double mass = 500;
-    private BlockState state = EvolutionBlocks.DESTROY_9.get().defaultBlockState();
+    private BlockState state = EvolutionBlocks.DESTROY_9.defaultBlockState();
 
-    public EntityFallingWeight(EntityType<EntityFallingWeight> type, Level level) {
+    public EntityFallingWeight(EntityType<? extends EntityFallingWeight> type, Level level) {
         super(type, level);
     }
 
     public EntityFallingWeight(Level level, double x, double y, double z, BlockState state, BlockPos pos) {
-        this(EvolutionEntities.FALLING_WEIGHT.get(), level);
+        this(EvolutionEntities.FALLING_WEIGHT, level);
         this.state = state;
         this.mass = this.state.getBlock() instanceof IPhysics physics ? physics.getMass(this.level, pos, this.state) : 500;
         this.blocksBuilding = true;
@@ -68,11 +66,6 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
         this.xo = x;
         this.yo = y;
         this.zo = z;
-    }
-
-    @SuppressWarnings("unused")
-    public EntityFallingWeight(PlayMessages.SpawnEntity spawnEntity, Level level) {
-        this(EvolutionEntities.FALLING_WEIGHT.get(), level);
     }
 
     @Override
@@ -145,7 +138,7 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
 
     @Override
     public Packet<?> getAddEntityPacket() {
-        return NetworkHooks.getEntitySpawningPacket(this);
+        return new PacketSCCustomEntity<>(this);
     }
 
     @Override
@@ -166,7 +159,7 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
     }
 
     @Override
-    public @Nullable HitboxEntity<EntityFallingWeight> getHitboxes() {
+    public @Nullable HitboxEntity<? extends EntityFallingWeight> getHitboxes() {
         return null;
     }
 
@@ -201,12 +194,9 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
     }
 
     @Override
-    public void readSpawnData(FriendlyByteBuf buffer) {
-        CompoundTag tag = buffer.readNbt();
-        if (tag != null) {
-            this.state = NbtUtils.readBlockState(tag);
-        }
-        this.mass = buffer.readDouble();
+    public void readAdditionalSyncData(FriendlyByteBuf buf) {
+        this.state = Block.stateById(buf.readInt());
+        this.mass = buf.readFloat();
     }
 
     @Override
@@ -292,7 +282,7 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
                 isInWater = true;
             }
         }
-        if (BlockUtils.isReplaceable(BlockUtils.getBlockState(this.level, this.getX(), this.getY() - 0.01, this.getZ()))) {
+        if (BlockUtils.isReplaceable(this.level.getBlockState_(Mth.floor(this.getX()), Mth.floor(this.getY() - 0.01), Mth.floor(this.getZ())))) {
             if (!isInWater) {
                 this.onGround = false;
                 return;
@@ -315,8 +305,8 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
     }
 
     @Override
-    public void writeSpawnData(FriendlyByteBuf buffer) {
-        buffer.writeNbt(NbtUtils.writeBlockState(this.state));
-        buffer.writeDouble(this.mass);
+    public void writeAdditionalSyncData(FriendlyByteBuf buf) {
+        buf.writeInt(Block.getId(this.state));
+        buf.writeFloat((float) this.mass);
     }
 }

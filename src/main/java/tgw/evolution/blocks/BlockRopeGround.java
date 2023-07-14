@@ -43,7 +43,7 @@ public class BlockRopeGround extends BlockGeneric implements IReplaceable {
                 }
                 return ((IRopeSupport) currentState.getBlock()).getRopeLength() >= ropeCount;
             }
-            if (currentState.getBlock() == EvolutionBlocks.ROPE_GROUND.get()) {
+            if (currentState.getBlock() == EvolutionBlocks.ROPE_GROUND) {
                 if (currentState.getValue(DIRECTION_HORIZONTAL) == facing) {
                     continue;
                 }
@@ -79,7 +79,7 @@ public class BlockRopeGround extends BlockGeneric implements IReplaceable {
 
     @Override
     public ItemStack getCloneItemStack(BlockState state, HitResult target, BlockGetter level, BlockPos pos, Player player) {
-        return new ItemStack(EvolutionItems.ROPE.get());
+        return new ItemStack(EvolutionItems.ROPE);
     }
 
     @Override

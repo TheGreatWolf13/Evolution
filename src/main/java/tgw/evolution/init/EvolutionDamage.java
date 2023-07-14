@@ -1,7 +1,5 @@
 package tgw.evolution.init;
 
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-import it.unimi.dsi.fastutil.objects.ObjectSet;
 import net.minecraft.Util;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TranslatableComponent;
@@ -12,6 +10,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 import tgw.evolution.entities.projectiles.EntityGenericProjectile;
 import tgw.evolution.entities.projectiles.EntitySpear;
+import tgw.evolution.util.collection.sets.OHashSet;
+import tgw.evolution.util.collection.sets.OSet;
 import tgw.evolution.util.damage.DamageSourceEntity;
 import tgw.evolution.util.damage.DamageSourceEntityIndirect;
 import tgw.evolution.util.damage.DamageSourceEv;
@@ -30,7 +30,7 @@ public final class EvolutionDamage {
                                                                   type != Type.SLASHING)
                                                   .toArray(Type[]::new);
     public static final Type[] ALL = Arrays.stream(Type.VALUES).filter(type -> type != Type.GENERIC).toArray(Type[]::new);
-    public static final ObjectSet<String> ALL_SOURCES = Util.make(new ObjectOpenHashSet<>(), m -> {
+    public static final OSet<String> ALL_SOURCES = Util.make(new OHashSet<>(), m -> {
         m.add("arrow");
         m.add("doomed_to_fall");
         m.add("fall");
@@ -66,7 +66,7 @@ public final class EvolutionDamage {
     private EvolutionDamage() {
     }
 
-    public static DamageSourceEv causeArrowDamage(EntityGenericProjectile<?> arrow, @Nullable Entity trueSource) {
+    public static DamageSourceEv causeArrowDamage(EntityGenericProjectile arrow, @Nullable Entity trueSource) {
         return new DamageSourceEntityIndirect("arrow", arrow, trueSource, Type.PIERCING).projectile();
     }
 

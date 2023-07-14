@@ -2,54 +2,34 @@ package tgw.evolution.network;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.network.NetworkEvent;
-import tgw.evolution.Evolution;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ServerGamePacketListener;
 import tgw.evolution.blocks.tileentities.KnappingRecipe;
-import tgw.evolution.blocks.tileentities.TEKnapping;
+import tgw.evolution.patches.PatchServerPacketListener;
 
-import java.util.function.Supplier;
+public class PacketCSSetKnappingType implements Packet<ServerGamePacketListener> {
 
-public class PacketCSSetKnappingType implements IPacket {
-
-    private final BlockPos pos;
-    private final KnappingRecipe type;
+    public final BlockPos pos;
+    public final KnappingRecipe type;
 
     public PacketCSSetKnappingType(BlockPos pos, KnappingRecipe type) {
         this.pos = pos;
         this.type = type;
     }
 
-    public static PacketCSSetKnappingType decode(FriendlyByteBuf buffer) {
-        return new PacketCSSetKnappingType(buffer.readBlockPos(), KnappingRecipe.byId(buffer.readByte()));
-    }
-
-    public static void encode(PacketCSSetKnappingType packet, FriendlyByteBuf buffer) {
-        buffer.writeBlockPos(packet.pos);
-        buffer.writeByte(packet.type.getId());
-    }
-
-    public static void handle(PacketCSSetKnappingType packet, Supplier<NetworkEvent.Context> context) {
-        NetworkEvent.Context c = context.get();
-        if (IPacket.checkSide(packet, c)) {
-            c.enqueueWork(() -> {
-                ServerPlayer player = c.getSender();
-                assert player != null;
-                BlockEntity tile = player.level.getBlockEntity(packet.pos);
-                if (tile instanceof TEKnapping knapping) {
-                    knapping.setType(packet.type);
-                    return;
-                }
-                Evolution.warn("Could not find TEKnapping at {}", packet.pos);
-            });
-            c.setPacketHandled(true);
-        }
+    public PacketCSSetKnappingType(FriendlyByteBuf buf) {
+        this.pos = buf.readBlockPos();
+        this.type = KnappingRecipe.byId(buf.readByte());
     }
 
     @Override
-    public LogicalSide getDestinationSide() {
-        return LogicalSide.SERVER;
+    public void handle(ServerGamePacketListener listener) {
+        ((PatchServerPacketListener) listener).handleSetKnappingType(this);
+    }
+
+    @Override
+    public void write(FriendlyByteBuf buf) {
+        buf.writeBlockPos(this.pos);
+        buf.writeByte(this.type.getId());
     }
 }

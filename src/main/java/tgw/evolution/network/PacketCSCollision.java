@@ -1,64 +1,38 @@
 package tgw.evolution.network;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.network.NetworkEvent;
-import tgw.evolution.blocks.ICollisionBlock;
-import tgw.evolution.init.EvolutionAttributes;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ServerGamePacketListener;
+import tgw.evolution.patches.PatchServerPacketListener;
 
-import java.util.function.Supplier;
+public class PacketCSCollision implements Packet<ServerGamePacketListener> {
 
-public class PacketCSCollision implements IPacket {
+    public final Direction.Axis axis;
+    public final long pos;
+    public final double speed;
 
-    private final Direction.Axis axis;
-    private final long packedPos;
-    private final double speed;
-
-    public PacketCSCollision(BlockPos pos, double speed, Direction.Axis axis) {
-        this(pos.asLong(), speed, axis);
-    }
-
-    private PacketCSCollision(long packedPos, double speed, Direction.Axis axis) {
-        this.packedPos = packedPos;
+    public PacketCSCollision(long pos, double speed, Direction.Axis axis) {
+        this.pos = pos;
         this.speed = speed;
         this.axis = axis;
     }
 
-    public static PacketCSCollision decode(FriendlyByteBuf buffer) {
-        return new PacketCSCollision(buffer.readVarLong(), buffer.readDouble(), buffer.readEnum(Direction.Axis.class));
-    }
-
-    public static void encode(PacketCSCollision packet, FriendlyByteBuf buffer) {
-        buffer.writeVarLong(packet.packedPos);
-        buffer.writeDouble(packet.speed);
-        buffer.writeEnum(packet.axis);
-    }
-
-    public static void handle(PacketCSCollision packet, Supplier<NetworkEvent.Context> context) {
-        NetworkEvent.Context c = context.get();
-        if (IPacket.checkSide(packet, c)) {
-            c.enqueueWork(() -> {
-                ServerPlayer player = c.getSender();
-                assert player != null;
-                Level level = player.level;
-                BlockPos pos = BlockPos.of(packet.packedPos);
-                BlockState state = level.getBlockState(pos);
-                if (state.getBlock() instanceof ICollisionBlock collisionBlock) {
-                    double mass = player.getAttributeValue(EvolutionAttributes.MASS.get());
-                    collisionBlock.collision(level, pos, player, packet.speed, mass, packet.axis);
-                }
-            });
-            c.setPacketHandled(true);
-        }
+    public PacketCSCollision(FriendlyByteBuf buf) {
+        this.pos = buf.readLong();
+        this.speed = buf.readDouble();
+        this.axis = buf.readEnum(Direction.Axis.class);
     }
 
     @Override
-    public LogicalSide getDestinationSide() {
-        return LogicalSide.SERVER;
+    public void handle(ServerGamePacketListener listener) {
+        ((PatchServerPacketListener) listener).handleCollision(this);
+    }
+
+    @Override
+    public void write(FriendlyByteBuf buf) {
+        buf.writeLong(this.pos);
+        buf.writeDouble(this.speed);
+        buf.writeEnum(this.axis);
     }
 }

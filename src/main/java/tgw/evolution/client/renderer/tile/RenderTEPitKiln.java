@@ -95,6 +95,7 @@ public class RenderTEPitKiln implements BlockEntityRenderer<TEPitKiln> {
                                            0);
             matrices.popPose();
         }
+        assert tile.getLevel() != null;
         int layers = tile.getLevel().getBlockState(tile.getBlockPos()).getValue(LAYERS_0_16);
         this.model.setup(layers);
         VertexConsumer modelBuffer = buffer.getBuffer(this.model.renderType(EvolutionResources.BLOCK_PIT_KILN));

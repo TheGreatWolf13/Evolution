@@ -14,11 +14,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
-import tgw.evolution.capabilities.food.CapabilityHunger;
-import tgw.evolution.capabilities.food.IHunger;
-import tgw.evolution.capabilities.thirst.CapabilityThirst;
-import tgw.evolution.capabilities.thirst.IThirst;
-import tgw.evolution.init.EvolutionCapabilities;
+import tgw.evolution.patches.PatchServerPlayer;
 import tgw.evolution.util.collection.O2FPair;
 
 public abstract class ItemGenericConsumable extends ItemEv implements IConsumable {
@@ -57,19 +53,15 @@ public abstract class ItemGenericConsumable extends ItemEv implements IConsumabl
         applyEffects(entity, stack, level);
         Player player = entity instanceof Player pl ? pl : null;
         if (stack.getItem() instanceof IFood food) {
-            if (player instanceof ServerPlayer) {
-                IHunger hunger = EvolutionCapabilities.getCapabilityOrThrow(player, CapabilityHunger.INSTANCE);
-                int amount = food.getHunger();
-                hunger.increaseSaturationLevel(amount);
+            if (player instanceof PatchServerPlayer p) {
+                p.getHungerStats().increaseHungerLevel(food.getHunger());
             }
             level.playSound(null, entity.getX(), entity.getY(), entity.getZ(), entity.getEatingSound(stack), SoundSource.NEUTRAL, 1.0F,
                             1.0F + (level.random.nextFloat() - level.random.nextFloat()) * 0.4F);
         }
         if (stack.getItem() instanceof IDrink drink) {
-            if (player instanceof ServerPlayer) {
-                IThirst thirst = EvolutionCapabilities.getCapabilityOrThrow(player, CapabilityThirst.INSTANCE);
-                int amount = drink.getThirst();
-                thirst.increaseHydrationLevel(amount);
+            if (player instanceof PatchServerPlayer p) {
+                p.getThirstStats().increaseHydrationLevel(drink.getThirst());
             }
         }
         if (stack.getItem() instanceof INutrient) {

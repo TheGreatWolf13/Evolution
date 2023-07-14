@@ -4,8 +4,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -16,24 +16,18 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.entity.IEntityAdditionalSpawnData;
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.network.PlayMessages;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 import tgw.evolution.blocks.ISittableBlock;
 import tgw.evolution.init.EvolutionBStates;
 import tgw.evolution.init.EvolutionEntities;
-import tgw.evolution.patches.IEntityPatch;
 import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 import tgw.evolution.world.util.LevelUtils;
 
-public class EntitySittable extends Entity implements IEntityPatch<EntitySittable>, ISittableEntity, IEntityAdditionalSpawnData {
+public class EntitySittable extends Entity implements ISittableEntity {
 
-    @Range(from = 0, to = 100)
-    private byte comfort;
-    @Nullable
-    private BlockPos source;
+    private @Range(from = 0, to = 100) byte comfort;
+    private @Nullable BlockPos source;
     private float zOffset;
 
     public EntitySittable(EntityType<?> entityType, Level level) {
@@ -43,7 +37,7 @@ public class EntitySittable extends Entity implements IEntityPatch<EntitySittabl
     }
 
     public EntitySittable(Level world, BlockPos pos, double yOffset, float zOffset, @Range(from = 0, to = 100) int comfort) {
-        this(EvolutionEntities.SIT.get(), world);
+        this(EvolutionEntities.SIT, world);
         this.setPos(pos.getX() + 0.5, pos.getY() + yOffset, pos.getZ() + 0.5);
         this.source = pos;
         this.xo = pos.getX() + 0.5;
@@ -51,10 +45,6 @@ public class EntitySittable extends Entity implements IEntityPatch<EntitySittabl
         this.zo = pos.getZ() + 0.5;
         this.comfort = (byte) comfort;
         this.zOffset = zOffset;
-    }
-
-    public EntitySittable(@SuppressWarnings("unused") PlayMessages.SpawnEntity spawnEntity, Level level) {
-        this(EvolutionEntities.SIT.get(), level);
     }
 
     public static boolean create(Level level, BlockPos pos, Player player) {
@@ -91,7 +81,7 @@ public class EntitySittable extends Entity implements IEntityPatch<EntitySittabl
 
     @Override
     public Packet<?> getAddEntityPacket() {
-        return NetworkHooks.getEntitySpawningPacket(this);
+        return new ClientboundAddEntityPacket(this, Float.floatToIntBits(this.zOffset));
     }
 
     @Override
@@ -137,7 +127,7 @@ public class EntitySittable extends Entity implements IEntityPatch<EntitySittabl
     }
 
     @Override
-    public @Nullable HitboxEntity<EntitySittable> getHitboxes() {
+    public @Nullable HitboxEntity<? extends EntitySittable> getHitboxes() {
         return null;
     }
 
@@ -174,8 +164,9 @@ public class EntitySittable extends Entity implements IEntityPatch<EntitySittabl
     }
 
     @Override
-    public void readSpawnData(FriendlyByteBuf buffer) {
-        this.zOffset = buffer.readFloat();
+    public void recreateFromPacket(ClientboundAddEntityPacket packet) {
+        super.recreateFromPacket(packet);
+        this.zOffset = Float.intBitsToFloat(packet.getData());
     }
 
     @Override
@@ -193,10 +184,5 @@ public class EntitySittable extends Entity implements IEntityPatch<EntitySittabl
                 this.discard();
             }
         }
-    }
-
-    @Override
-    public void writeSpawnData(FriendlyByteBuf buffer) {
-        buffer.writeFloat(this.zOffset);
     }
 }

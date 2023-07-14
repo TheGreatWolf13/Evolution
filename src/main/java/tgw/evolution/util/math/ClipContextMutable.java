@@ -4,7 +4,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
-import tgw.evolution.mixin.ClipContextAccessor;
+import tgw.evolution.mixin.AccessorClipContext;
 import tgw.evolution.world.util.MutableCollisionContext;
 
 public class ClipContextMutable extends ClipContext {
@@ -14,7 +14,7 @@ public class ClipContextMutable extends ClipContext {
     }
 
     public void reset() {
-        ((MutableCollisionContext) ((ClipContextAccessor) this).getCollisionContext()).reset();
+        ((MutableCollisionContext) ((AccessorClipContext) this).getCollisionContext()).reset();
     }
 
     public ClipContextMutable set(double fromX,
@@ -28,9 +28,9 @@ public class ClipContextMutable extends ClipContext {
                                   @Nullable Entity entity) {
         ((Vec3d) this.getFrom()).set(fromX, fromY, fromZ);
         ((Vec3d) this.getTo()).set(toX, toY, toZ);
-        ((ClipContextAccessor) this).setBlock(block);
-        ((ClipContextAccessor) this).setFluid(fluid);
-        ((MutableCollisionContext) ((ClipContextAccessor) this).getCollisionContext()).set(entity);
+        ((AccessorClipContext) this).setBlock(block);
+        ((AccessorClipContext) this).setFluid(fluid);
+        ((MutableCollisionContext) ((AccessorClipContext) this).getCollisionContext()).set(entity);
         return this;
     }
 

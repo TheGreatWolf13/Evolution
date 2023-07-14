@@ -15,7 +15,7 @@ import net.minecraft.world.item.crafting.Recipe;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 import tgw.evolution.client.util.MouseButton;
-import tgw.evolution.util.collection.RArrayList;
+import tgw.evolution.util.collection.lists.OArrayList;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -25,7 +25,7 @@ public class PageRecipeBook {
     private final List<ButtonRecipe> buttons;
     private final int itemsPerPage;
     private final OverlayRecipeComponent overlay = new OverlayRecipeComponent();
-    private final List<RecipeShownListener> showListeners = new RArrayList<>();
+    private final List<RecipeShownListener> showListeners = new OArrayList<>();
     private StateSwitchingButton backButton;
     private int currentPage;
     private StateSwitchingButton forwardButton;
@@ -39,7 +39,7 @@ public class PageRecipeBook {
 
     public PageRecipeBook(int itemsPerPage) {
         this.itemsPerPage = itemsPerPage;
-        this.buttons = new RArrayList<>(itemsPerPage);
+        this.buttons = new OArrayList<>(itemsPerPage);
         for (int i = 0; i < itemsPerPage; ++i) {
             //noinspection ObjectAllocationInLoop
             this.buttons.add(new ButtonRecipe());
@@ -51,13 +51,11 @@ public class PageRecipeBook {
         this.showListeners.add(listener);
     }
 
-    @Nullable
-    public Recipe<?> getLastClickedRecipe() {
+    public @Nullable Recipe<?> getLastClickedRecipe() {
         return this.lastClickedRecipe;
     }
 
-    @Nullable
-    public RecipeCollection getLastClickedRecipeCollection() {
+    public @Nullable RecipeCollection getLastClickedRecipeCollection() {
         return this.lastClickedRecipeCollection;
     }
 
@@ -156,8 +154,8 @@ public class PageRecipeBook {
 
     public void renderTooltip(PoseStack matrices, int x, int y) {
         if (this.minecraft.screen != null && this.hoveredButton != null && !this.overlay.isVisible()) {
-            this.minecraft.screen.renderComponentTooltip(matrices, this.hoveredButton.getTooltipText(this.minecraft.screen), x, y,
-                                                         this.hoveredButton.getRecipe().getResultItem());
+            this.minecraft.screen.renderComponentTooltip(matrices, this.hoveredButton.getTooltipText(this.minecraft.screen), x, y/*,
+                                                         this.hoveredButton.getRecipe().getResultItem()*/);
         }
     }
 

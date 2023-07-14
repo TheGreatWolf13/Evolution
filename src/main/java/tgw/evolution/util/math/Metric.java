@@ -1,7 +1,7 @@
 package tgw.evolution.util.math;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import tgw.evolution.util.collection.maps.O2OHashMap;
+import tgw.evolution.util.collection.maps.O2OMap;
 
 import java.text.DateFormat;
 import java.text.DecimalFormat;
@@ -34,7 +34,7 @@ public enum Metric {
     public static final int MINUTES_IN_AN_HOUR = 60;
     public static final int HOURS_IN_A_DAY = 24;
     public static final double DAYS_IN_A_YEAR = 365.25;
-    private static final Object2ObjectMap<Locale, DateFormat> DATE_FORMATS = new Object2ObjectOpenHashMap<>();
+    private static final O2OMap<Locale, DateFormat> DATE_FORMATS = new O2OHashMap<>();
     private static final DecimalFormatSymbols SYMBOLS = getSymbols();
     public static final DecimalFormat DEFAULT = initFormat(",##0");
     public static final DecimalFormat BONUS = initFormat(",##0", "+");

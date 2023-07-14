@@ -1,6 +1,7 @@
 package tgw.evolution.items;
 
 import net.minecraft.world.item.ItemStack;
+import tgw.evolution.patches.PatchItem;
 
 public interface IDurability {
 
@@ -10,10 +11,10 @@ public interface IDurability {
     }
 
     default int getDmg(ItemStack stack) {
-        return stack.getItem().getDamage(stack);
+        return ((PatchItem) stack.getItem()).getDamage(stack);
     }
 
     default int getMaxDmg(ItemStack stack) {
-        return stack.getItem().getMaxDamage(stack);
+        return ((PatchItem) stack.getItem()).getMaxDamage(stack);
     }
 }

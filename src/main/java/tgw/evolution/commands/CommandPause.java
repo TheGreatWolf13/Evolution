@@ -6,7 +6,7 @@ import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import tgw.evolution.init.EvolutionTexts;
-import tgw.evolution.patches.IMinecraftServerPatch;
+import tgw.evolution.patches.PatchMinecraftServer;
 
 public final class CommandPause implements Command<CommandSourceStack> {
 
@@ -23,7 +23,7 @@ public final class CommandPause implements Command<CommandSourceStack> {
     @Override
     public int run(CommandContext<CommandSourceStack> context) {
         String input = context.getInput();
-        IMinecraftServerPatch server = (IMinecraftServerPatch) context.getSource().getServer();
+        PatchMinecraftServer server = (PatchMinecraftServer) context.getSource().getServer();
         switch (input) {
             case "/pause" -> {
                 if (!server.isMultiplayerPaused()) {

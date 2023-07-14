@@ -15,7 +15,7 @@ import tgw.evolution.items.IAdditionalEquipment;
 import tgw.evolution.items.IItemFluidContainer;
 import tgw.evolution.items.IMelee;
 import tgw.evolution.items.ItemBlock;
-import tgw.evolution.util.collection.OArrayList;
+import tgw.evolution.util.collection.lists.OArrayList;
 
 import java.util.Collections;
 import java.util.EnumMap;

@@ -67,8 +67,7 @@ public class BlockTorchWall extends BlockTorch {
     }
 
     @Override
-    @Nullable
-    public BlockState getStateForPlacement(BlockPlaceContext context) {
+    public @Nullable BlockState getStateForPlacement(BlockPlaceContext context) {
         Level level = context.getLevel();
         BlockPos pos = context.getClickedPos();
         boolean lit = level.getFluidState(pos).isEmpty();

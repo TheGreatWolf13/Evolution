@@ -6,7 +6,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.level.chunk.LevelChunk;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
-import tgw.evolution.patches.ILevelChunkSectionPatch;
+import tgw.evolution.patches.PatchLevelChunkSection;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.physics.ClimateZone;
 import tgw.evolution.util.physics.EarthHelper;
@@ -333,7 +333,7 @@ public final class Temperature implements ILocked {
         }
         int y = Mth.floor(this.y);
         int index = chunk.getSectionIndex(y);
-        ILevelChunkSectionPatch section = (ILevelChunkSectionPatch) chunk.getSection(index);
+        PatchLevelChunkSection section = (PatchLevelChunkSection) chunk.getSection(index);
         int atm = section.getAtmStorage().get(x & 15, y & 15, z & 15);
         if (atm == 31) {
             //Inside

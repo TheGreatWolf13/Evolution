@@ -12,8 +12,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.level.LevelReader;
 import org.lwjgl.opengl.GL11C;
+import tgw.evolution.client.renderer.DimensionOverworld;
 import tgw.evolution.events.ClientEvents;
-import tgw.evolution.world.dimension.DimensionOverworld;
 
 public class LightTextureEv extends LightTexture {
 
@@ -39,9 +39,11 @@ public class LightTextureEv extends LightTexture {
         this.mc = mc;
         this.lightTexture = new DynamicTexture(16, 16, false);
         this.lightTextureLocation = this.mc.getTextureManager().register("light_map", this.lightTexture);
+        //noinspection ConstantConditions
         this.lightPixels = this.lightTexture.getPixels();
         for (int i = 0; i < 16; ++i) {
             for (int j = 0; j < 16; ++j) {
+                //noinspection ConstantConditions
                 this.lightPixels.setPixelRGBA(j, i, -1);
             }
         }
@@ -116,6 +118,7 @@ public class LightTextureEv extends LightTexture {
                 else {
                     skyFlash = skyBrightness;
                 }
+                assert this.mc.player != null;
                 float waterBrightness = this.mc.player.getWaterVision();
                 float nightVisionModifier;
                 if (this.mc.player.hasEffect(MobEffects.NIGHT_VISION)) {

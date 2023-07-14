@@ -18,26 +18,21 @@ import net.minecraft.world.level.material.FlowingFluid;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.fluids.FluidAttributes;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.init.EvolutionFluids;
 import tgw.evolution.util.math.*;
 
-import java.util.Objects;
-import java.util.function.Supplier;
-
 public abstract class FluidGeneric extends FlowingFluid {
     public static final byte FRESH_WATER = 1;
     public static final byte SALT_WATER = 2;
     private final DirectionList auxList = new DirectionList();
     private final BlockPos.MutableBlockPos auxPos = new BlockPos.MutableBlockPos();
-    private final Supplier<? extends BlockGenericFluid> block;
-    private final FluidAttributes.Builder builder;
+    private final BlockGenericFluid block;
     private final DirectionDiagonalList diagList = new DirectionDiagonalList();
     private final float explosionResistance;
-    private final Supplier<? extends Fluid> fluid;
+    private final Fluid fluid;
     private final int levelDecreasePerBlock;
     private final int mass;
     private final int slopeFindDistance;
@@ -45,7 +40,6 @@ public abstract class FluidGeneric extends FlowingFluid {
 
     protected FluidGeneric(Properties properties, int mass) {
         this.fluid = properties.still;
-        this.builder = properties.attributes;
         this.block = properties.block;
         this.slopeFindDistance = Properties.SLOPE_FIND_DISTANCE;
         this.levelDecreasePerBlock = Properties.LEVEL_DECREASE_PER_BLOCK;
@@ -54,11 +48,10 @@ public abstract class FluidGeneric extends FlowingFluid {
         this.mass = mass;
     }
 
-    @Nullable
-    public static FluidGeneric byId(int id) {
+    public static @Nullable FluidGeneric byId(int id) {
         return switch (id) {
-            case FRESH_WATER -> EvolutionFluids.FRESH_WATER.get();
-            case SALT_WATER -> EvolutionFluids.SALT_WATER.get();
+            case FRESH_WATER -> EvolutionFluids.FRESH_WATER;
+            case SALT_WATER -> EvolutionFluids.SALT_WATER;
             default -> null;
         };
     }
@@ -134,11 +127,6 @@ public abstract class FluidGeneric extends FlowingFluid {
     }
 
     @Override
-    protected FluidAttributes createAttributes() {
-        return this.builder.build(this);
-    }
-
-    @Override
     protected void createFluidStateDefinition(StateDefinition.Builder<Fluid, FluidState> builder) {
         super.createFluidStateDefinition(builder);
         builder.add(LEVEL);
@@ -146,8 +134,7 @@ public abstract class FluidGeneric extends FlowingFluid {
 
     @Override
     protected BlockState createLegacyBlock(FluidState state) {
-        return this.block.get()
-                         .defaultBlockState()
+        return this.block.defaultBlockState()
                          .setValue(BlockGenericFluid.LEVEL, state.getValue(LEVEL))
                          .setValue(BlockGenericFluid.FULL, state.getValue(FALLING));
     }
@@ -181,7 +168,7 @@ public abstract class FluidGeneric extends FlowingFluid {
 
     @Override
     public Fluid getFlowing() {
-        return this.fluid.get();
+        return this.fluid;
     }
 
     public FluidState getFluidState(int level, boolean full) {
@@ -201,7 +188,7 @@ public abstract class FluidGeneric extends FlowingFluid {
 
     @Override
     public Fluid getSource() {
-        return this.fluid.get();
+        return this.fluid;
     }
 
     public abstract Component getTextComp();
@@ -221,7 +208,7 @@ public abstract class FluidGeneric extends FlowingFluid {
 
     @Override
     public boolean isSame(Fluid fluid) {
-        return fluid == this.fluid.get();
+        return fluid == this.fluid;
     }
 
     /**
@@ -299,14 +286,9 @@ public abstract class FluidGeneric extends FlowingFluid {
                 }
             }
             else {
-                Evolution.warn("Invalid fluid to calculate physics: {}", fluid.getRegistryName());
+                Evolution.warn("Invalid fluid to calculate physics: {}", fluid);
             }
         }
-    }
-
-    @Override
-    public String toString() {
-        return Objects.requireNonNull(this.getRegistryName()).toString();
     }
 
     public boolean tryFall(Level level, BlockPos pos, FluidState fluidState) {
@@ -432,16 +414,14 @@ public abstract class FluidGeneric extends FlowingFluid {
         private static final int LEVEL_DECREASE_PER_BLOCK = 1;
         private static final int SLOPE_FIND_DISTANCE = 4;
         private static final int TICK_RATE = 5;
-        private final FluidAttributes.Builder attributes;
-        private final Supplier<? extends Fluid> still;
-        private Supplier<? extends BlockGenericFluid> block;
+        private final Fluid still;
+        private BlockGenericFluid block;
 
-        public Properties(Supplier<? extends Fluid> still, FluidAttributes.Builder attributes) {
+        public Properties(Fluid still) {
             this.still = still;
-            this.attributes = attributes;
         }
 
-        public Properties block(Supplier<? extends BlockGenericFluid> block) {
+        public Properties block(BlockGenericFluid block) {
             this.block = block;
             return this;
         }

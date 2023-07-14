@@ -8,36 +8,27 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.common.IForgeShearable;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.entities.misc.EntityFallingWeight;
 import tgw.evolution.init.EvolutionBlocks;
-import tgw.evolution.util.constants.BlockFlags;
 import tgw.evolution.util.math.DirectionUtil;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.Random;
 
 import static tgw.evolution.init.EvolutionBStates.DISTANCE_0_7;
 import static tgw.evolution.init.EvolutionBStates.TREE;
 
-public class BlockLeaves extends BlockGeneric implements IReplaceable, IForgeShearable {
+public class BlockLeaves extends BlockGeneric implements IReplaceable {
 
     private static final Vec3 MOTION_MULTIPLIER = new Vec3(0.5, 1, 0.5);
     private static final ThreadLocal<BlockPos.MutableBlockPos> MUTABLE_POS = ThreadLocal.withInitial(BlockPos.MutableBlockPos::new);
@@ -53,7 +44,18 @@ public class BlockLeaves extends BlockGeneric implements IReplaceable, IForgeShe
     public static boolean canFallThrough(BlockState state) {
         Block block = state.getBlock();
         Material material = state.getMaterial();
-        return state.isAir() || block == EvolutionBlocks.FIRE.get() || material.isLiquid() || material.isReplaceable();
+        return state.isAir() || block == EvolutionBlocks.FIRE || material.isLiquid() || material.isReplaceable();
+    }
+
+    /**
+     * Checks whether this block should fall.
+     */
+    private static void checkFallable(Level level, BlockPos pos) {
+        if (canFallThrough(level.getBlockState(pos.below())) && pos.getY() >= 0) {
+            if (!level.isClientSide) {
+                fall(level, pos);
+            }
+        }
     }
 
     /**
@@ -110,34 +112,6 @@ public class BlockLeaves extends BlockGeneric implements IReplaceable, IForgeShe
         return false;
     }
 
-    /**
-     * Checks whether this block should fall.
-     */
-    private void checkFallable(Level level, BlockPos pos) {
-        if (canFallThrough(level.getBlockState(pos.below())) && pos.getY() >= 0) {
-            if (level.isAreaLoaded(pos, 32)) {
-                if (!level.isClientSide) {
-                    fall(level, pos);
-                }
-            }
-            else {
-                BlockState state = this.defaultBlockState();
-                if (level.getBlockState(pos).getBlock() == this) {
-                    state = level.getBlockState(pos);
-                    level.removeBlock(pos, false);
-                }
-                BlockPos.MutableBlockPos posDown = new BlockPos.MutableBlockPos();
-                posDown.setWithOffset(pos, Direction.DOWN);
-                while (canFallThrough(level.getBlockState(posDown)) && posDown.getY() > 0) {
-                    posDown.move(Direction.DOWN);
-                }
-                if (posDown.getY() > 0) {
-                    level.setBlockAndUpdate(posDown.move(Direction.UP), state);
-                }
-            }
-        }
-    }
-
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(DISTANCE_0_7, TREE);
@@ -148,16 +122,6 @@ public class BlockLeaves extends BlockGeneric implements IReplaceable, IForgeShe
         if (entity instanceof LivingEntity) {
             entity.makeStuckInBlock(state, MOTION_MULTIPLIER);
         }
-    }
-
-    @Override
-    public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction face) {
-        return EvolutionBlocks.FIRE.get().getActualEncouragement(state);
-    }
-
-    @Override
-    public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction face) {
-        return EvolutionBlocks.FIRE.get().getActualFlammability(state);
     }
 
     @Override
@@ -193,12 +157,6 @@ public class BlockLeaves extends BlockGeneric implements IReplaceable, IForgeShe
     }
 
     @Override
-    public @NotNull List<ItemStack> onSheared(@Nullable Player player, ItemStack item, Level level, BlockPos pos, int fortune) {
-        level.setBlock(pos, Blocks.AIR.defaultBlockState(), BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE | BlockFlags.RERENDER);
-        return Collections.singletonList(new ItemStack(this));
-    }
-
-    @Override
     public void randomTick(BlockState state, ServerLevel level, BlockPos pos, Random random) {
         if (state.getValue(TREE) && state.getValue(DISTANCE_0_7) == 7) {
             dropResources(state, level, pos);
@@ -230,7 +188,7 @@ public class BlockLeaves extends BlockGeneric implements IReplaceable, IForgeShe
     public void tick(BlockState state, ServerLevel level, BlockPos pos, Random random) {
         level.setBlockAndUpdate(pos, updateDistance(state, level, pos));
         if (!state.getValue(TREE) && state.getValue(DISTANCE_0_7) == 7) {
-            this.checkFallable(level, pos);
+            checkFallable(level, pos);
         }
     }
 

@@ -8,7 +8,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.network.chat.TranslatableComponent;
 import tgw.evolution.init.EvolutionTexts;
-import tgw.evolution.patches.IFontPatch;
+import tgw.evolution.patches.PatchFont;
 
 public class ScreenOutOfMemory extends Screen {
 
@@ -50,10 +50,10 @@ public class ScreenOutOfMemory extends Screen {
         this.renderBackground(matrices);
         drawCenteredString(matrices, this.font, this.title, this.width / 2, this.height / 4 - 40, 0xff_ffff);
         drawString(matrices, this.font, this.textSummary, this.width / 2 - 140, this.height / 4, 0xa0_a0a0);
-        ((IFontPatch) this.font).drawWordWrap(matrices, this.textCause, this.width / 2.0f - 140, this.height / 4.0f + 18, 280, 0xa0_a0a0, true);
+        ((PatchFont) this.font).drawWordWrap(matrices, this.textCause, this.width / 2.0f - 140, this.height / 4.0f + 18, 280, 0xa0_a0a0, true);
         drawString(matrices, this.font, this.textQuit, this.width / 2 - 140, this.height / 4 + 54, 0xa0_a0a0);
-        ((IFontPatch) this.font).drawWordWrap(matrices, this.textInfo, this.width / 2.0f - 140, this.height / 4.0f + 72, 280, 0xa0_a0a0, true);
-        ((IFontPatch) this.font).drawWordWrap(matrices, this.textRestart, this.width / 2.0f - 140, this.height / 4.0f + 108, 280, 0xa0_a0a0, true);
+        ((PatchFont) this.font).drawWordWrap(matrices, this.textInfo, this.width / 2.0f - 140, this.height / 4.0f + 72, 280, 0xa0_a0a0, true);
+        ((PatchFont) this.font).drawWordWrap(matrices, this.textRestart, this.width / 2.0f - 140, this.height / 4.0f + 108, 280, 0xa0_a0a0, true);
         super.render(matrices, mouseX, mouseY, partialTicks);
     }
 

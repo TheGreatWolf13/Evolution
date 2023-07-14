@@ -1,17 +1,15 @@
 package tgw.evolution.network;
 
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.network.NetworkEvent;
-import tgw.evolution.Evolution;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import tgw.evolution.patches.PatchClientPacketListener;
 
-import java.util.function.Supplier;
+public class PacketSCMovement implements Packet<ClientGamePacketListener> {
 
-public class PacketSCMovement implements IPacket {
-
-    private final double motionX;
-    private final double motionY;
-    private final double motionZ;
+    public final double motionX;
+    public final double motionY;
+    public final double motionZ;
 
     public PacketSCMovement(double motionX, double motionY, double motionZ) {
         this.motionX = motionX;
@@ -19,26 +17,21 @@ public class PacketSCMovement implements IPacket {
         this.motionZ = motionZ;
     }
 
-    public static PacketSCMovement decode(FriendlyByteBuf buffer) {
-        return new PacketSCMovement(buffer.readDouble(), buffer.readDouble(), buffer.readDouble());
-    }
-
-    public static void encode(PacketSCMovement packet, FriendlyByteBuf buffer) {
-        buffer.writeDouble(packet.motionX);
-        buffer.writeDouble(packet.motionY);
-        buffer.writeDouble(packet.motionZ);
-    }
-
-    public static void handle(PacketSCMovement packet, Supplier<NetworkEvent.Context> context) {
-        NetworkEvent.Context c = context.get();
-        if (IPacket.checkSide(packet, c)) {
-            c.enqueueWork(() -> Evolution.PROXY.getClientPlayer().setDeltaMovement(packet.motionX, packet.motionY, packet.motionZ));
-            c.setPacketHandled(true);
-        }
+    public PacketSCMovement(FriendlyByteBuf buf) {
+        this.motionX = buf.readDouble();
+        this.motionY = buf.readDouble();
+        this.motionZ = buf.readDouble();
     }
 
     @Override
-    public LogicalSide getDestinationSide() {
-        return LogicalSide.CLIENT;
+    public void handle(ClientGamePacketListener listener) {
+        ((PatchClientPacketListener) listener).handleMovement(this);
+    }
+
+    @Override
+    public void write(FriendlyByteBuf buf) {
+        buf.writeDouble(this.motionX);
+        buf.writeDouble(this.motionY);
+        buf.writeDouble(this.motionZ);
     }
 }

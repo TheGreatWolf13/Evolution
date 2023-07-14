@@ -1,50 +1,34 @@
 package tgw.evolution.network;
 
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.network.NetworkEvent;
-import tgw.evolution.capabilities.thirst.IThirst;
-import tgw.evolution.capabilities.thirst.ThirstStats;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import tgw.evolution.capabilities.player.CapabilityThirst;
+import tgw.evolution.patches.PatchClientPacketListener;
 
-import java.util.function.Supplier;
+public class PacketSCThirstData implements Packet<ClientGamePacketListener> {
 
-public class PacketSCThirstData implements IPacket {
+    public final int hydrationLevel;
+    public final int thirstLevel;
 
-    private final short hydrationLevel;
-    private final short thirstLevel;
-
-    public PacketSCThirstData(IThirst thirst) {
-        this(thirst.getThirstLevel(), thirst.getHydrationLevel());
+    public PacketSCThirstData(CapabilityThirst thirst) {
+        this.thirstLevel = thirst.getThirstLevel();
+        this.hydrationLevel = thirst.getHydrationLevel();
     }
 
-    private PacketSCThirstData(int thirstLevel, int hydrationLevel) {
-        this.thirstLevel = (short) thirstLevel;
-        this.hydrationLevel = (short) hydrationLevel;
-    }
-
-    public static PacketSCThirstData decode(FriendlyByteBuf buffer) {
-        return new PacketSCThirstData(buffer.readShort(), buffer.readShort());
-    }
-
-    public static void encode(PacketSCThirstData packet, FriendlyByteBuf buffer) {
-        buffer.writeShort(packet.thirstLevel);
-        buffer.writeShort(packet.hydrationLevel);
-    }
-
-    public static void handle(PacketSCThirstData packet, Supplier<NetworkEvent.Context> context) {
-        NetworkEvent.Context c = context.get();
-        if (IPacket.checkSide(packet, c)) {
-            c.enqueueWork(() -> {
-                IThirst thirst = ThirstStats.CLIENT_INSTANCE;
-                thirst.setThirstLevel(packet.thirstLevel);
-                thirst.setHydrationLevel(packet.hydrationLevel);
-            });
-            c.setPacketHandled(true);
-        }
+    public PacketSCThirstData(FriendlyByteBuf buf) {
+        this.thirstLevel = buf.readVarInt();
+        this.hydrationLevel = buf.readVarInt();
     }
 
     @Override
-    public LogicalSide getDestinationSide() {
-        return LogicalSide.CLIENT;
+    public void handle(ClientGamePacketListener listener) {
+        ((PatchClientPacketListener) listener).handleThirstData(this);
+    }
+
+    @Override
+    public void write(FriendlyByteBuf buf) {
+        buf.writeVarInt(this.thirstLevel);
+        buf.writeVarInt(this.hydrationLevel);
     }
 }

@@ -4,7 +4,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -16,7 +15,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.client.ForgeHooksClient;
 import tgw.evolution.entities.misc.EntityFallingPeat;
 import tgw.evolution.util.math.MathHelper;
 
@@ -43,25 +41,19 @@ public class RenderFallingPeat extends EntityRenderer<EntityFallingPeat> {
             matrices.translate(-0.5, 0, -0.5);
             BlockRenderDispatcher dispatcher = Minecraft.getInstance().getBlockRenderer();
             Level level = entity.level;
-            for (RenderType type : RenderType.chunkBufferLayers()) {
-                if (ItemBlockRenderTypes.canRenderInLayer(state, type)) {
-                    ForgeHooksClient.setRenderType(type);
-                    dispatcher.getModelRenderer()
-                              .tesselateBlock(level,
-                                              dispatcher.getBlockModel(state),
-                                              state,
-                                              MUTABLE_POS,
-                                              matrices,
-                                              buffer.getBuffer(type),
-                                              false,
-                                              MathHelper.RANDOM,
-                                              Mth.getSeed(MUTABLE_POS),
-                                              OverlayTexture.NO_OVERLAY);
-                }
-            }
-            ForgeHooksClient.setRenderType(null);
+            dispatcher.getModelRenderer()
+                      .tesselateBlock(level,
+                                      dispatcher.getBlockModel(state),
+                                      state,
+                                      MUTABLE_POS,
+                                      matrices,
+                                      buffer.getBuffer(ItemBlockRenderTypes.getMovingBlockRenderType(state)),
+                                      false,
+                                      MathHelper.RANDOM,
+                                      Mth.getSeed(MUTABLE_POS),
+                                      OverlayTexture.NO_OVERLAY);
             matrices.popPose();
-            super.render(entity, yaw, partialTicks, matrices, buffer, packedLight);
         }
+        super.render(entity, yaw, partialTicks, matrices, buffer, packedLight);
     }
 }

@@ -7,7 +7,6 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
@@ -26,11 +25,9 @@ import org.jetbrains.annotations.Range;
 import tgw.evolution.blocks.tileentities.TEChopping;
 import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.entities.misc.EntitySittable;
-import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionShapes;
 import tgw.evolution.items.ItemLog;
 import tgw.evolution.items.ItemUtils;
-import tgw.evolution.items.modular.ItemModular;
 import tgw.evolution.util.constants.HarvestLevel;
 import tgw.evolution.util.constants.WoodVariant;
 
@@ -53,8 +50,7 @@ public class BlockChopping extends BlockPhysics implements IReplaceable, ISittab
             return;
         }
         if (chopping.hasLog()) {
-            ItemStack stackInHand = player.getMainHandItem();
-            if (stackInHand.getItem() instanceof ItemModular tool && tool.isAxe(stackInHand)) {
+            if (ItemUtils.isAxe(player.getMainHandItem())) {
                 if (chopping.increaseBreakProgress() == 4) {
                     chopping.breakLog(player);
                     level.playSound(player, pos, SoundEvents.WOOD_BREAK, SoundSource.PLAYERS, 1.0f, 1.0f);
@@ -90,16 +86,6 @@ public class BlockChopping extends BlockPhysics implements IReplaceable, ISittab
     public @Range(from = 0, to = 100) int getComfort() {
         //TODO implementation
         return 0;
-    }
-
-    @Override
-    public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction face) {
-        return EvolutionBlocks.FIRE.get().getActualEncouragement(state);
-    }
-
-    @Override
-    public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction face) {
-        return EvolutionBlocks.FIRE.get().getActualFlammability(state);
     }
 
     @Override
@@ -145,9 +131,8 @@ public class BlockChopping extends BlockPhysics implements IReplaceable, ISittab
         return true;
     }
 
-    @Nullable
     @Override
-    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+    public @Nullable BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new TEChopping(pos, state);
     }
 

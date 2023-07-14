@@ -1,19 +1,18 @@
 package tgw.evolution.potion;
 
-import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.util.collection.ChanceEffectHolder;
-import tgw.evolution.util.collection.OArrayList;
-import tgw.evolution.util.collection.OList;
+import tgw.evolution.util.collection.lists.OArrayList;
+import tgw.evolution.util.collection.lists.OList;
 
 public class EffectWaterIntoxication extends EffectGeneric {
 
-    private OList<ChanceEffectHolder> mayCause;
+    private @Nullable OList<ChanceEffectHolder> mayCause;
 
     public EffectWaterIntoxication() {
         super(MobEffectCategory.HARMFUL, 0x12_6eff);
@@ -30,8 +29,7 @@ public class EffectWaterIntoxication extends EffectGeneric {
     }
 
     @Override
-    @NotNull
-    public ObjectList<ChanceEffectHolder> mayCauseEffect() {
+    public OList<ChanceEffectHolder> mayCauseEffect() {
         if (this.mayCause == null) {
             this.mayCause = new OArrayList<>();
             this.mayCause.add(new ChanceEffectHolder(0, MobEffects.CONFUSION, a -> a > 0 ? 0.15f * a : 0.001f,

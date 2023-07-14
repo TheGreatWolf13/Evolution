@@ -3,9 +3,7 @@ package tgw.evolution.inventory;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.item.ItemStack;
-import tgw.evolution.init.EvolutionResources;
 
 public class SlotArmor extends SlotEquip {
 
@@ -14,7 +12,7 @@ public class SlotArmor extends SlotEquip {
     public SlotArmor(Container container, int slotId, int x, int y, EquipmentSlot equip, LivingEntity entity) {
         super(container, slotId, x, y, entity);
         this.equip = equip;
-        this.setBackground(InventoryMenu.BLOCK_ATLAS, EvolutionResources.SLOT_ARMOR[equip.getIndex()]);
+//        this.setBackground(InventoryMenu.BLOCK_ATLAS, EvolutionResources.SLOT_ARMOR[equip.getIndex()]);
     }
 
     @Override
@@ -24,6 +22,7 @@ public class SlotArmor extends SlotEquip {
 
     @Override
     public boolean mayPlace(ItemStack stack) {
-        return stack.canEquip(this.equip, this.entity);
+//        return stack.canEquip(this.equip, this.entity);
+        return true;
     }
 }

@@ -108,7 +108,7 @@ public final class VanillaOverlays {
         }
         Blending.DEFAULT_1_0.apply();
         matrices.pushPose();
-        matrices.translate(0, height - 48, 0);
+        matrices.translate(0, height - 58, 0);
         gui.getChat().render(matrices, gui.getGuiTicks());
         matrices.popPose();
     }
@@ -336,7 +336,7 @@ public final class VanillaOverlays {
     }
 
     private static void record(Minecraft mc, EvolutionGui gui, PoseStack matrices, float partialTicks, int width, int height) {
-        if (!gui.minecraft.options.hideGui) {
+        if (!mc.options.hideGui) {
             int overlayMessageTime = gui.getOverlayMessageTime();
             if (overlayMessageTime > 0) {
                 float hue = overlayMessageTime - partialTicks;
@@ -419,8 +419,7 @@ public final class VanillaOverlays {
             POS.set(eyePos.x, eyePos.y, eyePos.z);
             BlockState state = entity.level.getBlockState(POS);
             if (state.getRenderShape() != RenderShape.INVISIBLE && state.isViewBlocking(entity.level, POS)) {
-                TextureAtlasSprite sprite = mc.getBlockRenderer().getBlockModelShaper().getTexture(state, entity.level, POS);
-                GUIUtils.renderTex(width, height, mc.getBlockRenderer().getBlockModelShaper().getTexture(state, entity.level, POS), matrices);
+                GUIUtils.renderTex(width, height, mc.getBlockRenderer().getBlockModelShaper().getParticleIcon(state), matrices);
             }
         }
         if (!(entity instanceof Player player && player.isSpectator())) {

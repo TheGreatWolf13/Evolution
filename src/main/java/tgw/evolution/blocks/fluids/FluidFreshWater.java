@@ -8,11 +8,9 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
-import net.minecraftforge.fluids.FluidAttributes;
 import tgw.evolution.Evolution;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionFluids;
-import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.init.EvolutionTexts;
 
 public abstract class FluidFreshWater extends FluidGeneric {
@@ -22,9 +20,7 @@ public abstract class FluidFreshWater extends FluidGeneric {
     }
 
     private static Properties makeProperties() {
-        return new Properties(EvolutionFluids.FRESH_WATER,
-                              FluidAttributes.builder(EvolutionResources.FLUID_FRESH_WATER, EvolutionResources.FLUID_FRESH_WATER)
-                                             .color(0x4003_0ffc)).block(EvolutionBlocks.FRESH_WATER);
+        return new Properties(EvolutionFluids.FRESH_WATER).block(EvolutionBlocks.FRESH_WATER);
     }
 
     @Override
@@ -65,17 +61,17 @@ public abstract class FluidFreshWater extends FluidGeneric {
                 int stay = rlThis - amountToSwap;
                 this.setBlockState(level, pos, stay);
                 int receive = amountToSwap + rlAtPos;
-                EvolutionFluids.SALT_WATER.get().setBlockState(level, auxPos, receive);
+                EvolutionFluids.SALT_WATER.setBlockState(level, auxPos, receive);
                 return true;
             }
         }
-        Evolution.warn("Level of " + this.getRegistryName() + " with " + otherFluid.getRegistryName() + " is not yet implemented!");
+        Evolution.warn("Level of " + this + " with " + otherFluid + " is not yet implemented!");
         return false;
     }
 
     @Override
     public boolean tryFall(Level level, BlockPos pos, Fluid otherFluid) {
-        Evolution.warn("Try fall of " + this.getRegistryName() + " with " + otherFluid.getRegistryName() + " is not yet implemented!");
+        Evolution.warn("Try fall of " + this + " with " + otherFluid + " is not yet implemented!");
         return false;
     }
 

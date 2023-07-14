@@ -8,9 +8,9 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionCreativeTabs;
-import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.network.PacketSCOpenMoldingGui;
 
@@ -23,7 +23,7 @@ public class ItemClay extends ItemGenericPlaceable {
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, Level level, List<Component> tooltip, TooltipFlag flag) {
+    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         tooltip.add(EvolutionTexts.TOOLTIP_CLAY_MOLD);
     }
 
@@ -39,11 +39,12 @@ public class ItemClay extends ItemGenericPlaceable {
 
     @Override
     public BlockState getSneakingState(BlockPlaceContext context) {
-        return EvolutionBlocks.MOLDING_BLOCK.get().defaultBlockState();
+        return EvolutionBlocks.MOLDING_BLOCK.defaultBlockState();
     }
 
     @Override
     public void sucessPlaceLogic(BlockPlaceContext context) {
-        EvolutionNetwork.send((ServerPlayer) context.getPlayer(), new PacketSCOpenMoldingGui(context.getClickedPos()));
+        //noinspection ConstantConditions
+        ((ServerPlayer) context.getPlayer()).connection.send(new PacketSCOpenMoldingGui(context.getClickedPos()));
     }
 }

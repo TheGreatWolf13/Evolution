@@ -10,8 +10,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.lighting.LevelLightEngine;
 import net.minecraft.world.level.material.FluidState;
-
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
+import tgw.evolution.Evolution;
 
 public class EvRenderChunkRegion implements BlockAndTintGetter {
     protected final EvRenderChunk[][] chunks;
@@ -26,19 +26,32 @@ public class EvRenderChunkRegion implements BlockAndTintGetter {
         this.chunks = chunks;
     }
 
+    @Deprecated(forRemoval = true)
     @Override
-    @Nullable
-    public BlockEntity getBlockEntity(BlockPos pos) {
-        int i = SectionPos.blockToSectionCoord(pos.getX()) - this.startX;
-        int j = SectionPos.blockToSectionCoord(pos.getZ()) - this.startZ;
-        return this.chunks[i][j].getBlockEntity(pos);
+    public @Nullable BlockEntity getBlockEntity(BlockPos pos) {
+        Evolution.deprecatedMethod();
+        return this.getBlockEntity_(pos.getX(), pos.getY(), pos.getZ());
     }
 
     @Override
+    public @Nullable BlockEntity getBlockEntity_(int x, int y, int z) {
+        int i = SectionPos.blockToSectionCoord(x) - this.startX;
+        int j = SectionPos.blockToSectionCoord(z) - this.startZ;
+        return this.chunks[i][j].getBlockEntity(x, y, z);
+    }
+
+    @Deprecated(forRemoval = true)
+    @Override
     public BlockState getBlockState(BlockPos pos) {
-        int i = SectionPos.blockToSectionCoord(pos.getX()) - this.startX;
-        int j = SectionPos.blockToSectionCoord(pos.getZ()) - this.startZ;
-        return this.chunks[i][j].getBlockState(pos);
+        Evolution.deprecatedMethod();
+        return this.getBlockState_(pos.getX(), pos.getY(), pos.getZ());
+    }
+
+    @Override
+    public BlockState getBlockState_(int x, int y, int z) {
+        int i = SectionPos.blockToSectionCoord(x) - this.startX;
+        int j = SectionPos.blockToSectionCoord(z) - this.startZ;
+        return this.chunks[i][j].getBlockState(x, y, z);
     }
 
     @Override
@@ -46,11 +59,18 @@ public class EvRenderChunkRegion implements BlockAndTintGetter {
         return this.level.getBlockTint(pos, colorResolver);
     }
 
+    @Deprecated(forRemoval = true)
     @Override
     public FluidState getFluidState(BlockPos pos) {
-        int i = SectionPos.blockToSectionCoord(pos.getX()) - this.startX;
-        int j = SectionPos.blockToSectionCoord(pos.getZ()) - this.startZ;
-        return this.chunks[i][j].getBlockState(pos).getFluidState();
+        Evolution.deprecatedMethod();
+        return this.getFluidState_(pos.getX(), pos.getY(), pos.getZ());
+    }
+
+    @Override
+    public FluidState getFluidState_(int x, int y, int z) {
+        int i = SectionPos.blockToSectionCoord(x) - this.startX;
+        int j = SectionPos.blockToSectionCoord(z) - this.startZ;
+        return this.chunks[i][j].getBlockState(x, y, z).getFluidState();
     }
 
     @Override

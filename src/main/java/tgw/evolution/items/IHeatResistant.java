@@ -14,10 +14,10 @@ public interface IHeatResistant {
     double getHeatResistance();
 
     default void putHeatAttributes(ImmutableMultimap.Builder<Attribute, AttributeModifier> builder, ItemStack stack, SlotType slot) {
-        builder.put(EvolutionAttributes.HEAT_RESISTANCE.get(), EvolutionAttributes.heatResistanceModifier(this.getHeatResistance(), slot));
+        builder.put(EvolutionAttributes.HEAT_RESISTANCE, EvolutionAttributes.heatResistanceModifier(this.getHeatResistance(), slot));
     }
 
     default void putHeatAttributes(Map<Attribute, AttributeModifier> map, ItemStack stack, SlotType slot) {
-        map.put(EvolutionAttributes.HEAT_RESISTANCE.get(), EvolutionAttributes.heatResistanceModifier(this.getHeatResistance(), slot));
+        map.put(EvolutionAttributes.HEAT_RESISTANCE, EvolutionAttributes.heatResistanceModifier(this.getHeatResistance(), slot));
     }
 }

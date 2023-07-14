@@ -1,55 +1,48 @@
 package tgw.evolution.network;
 
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundSource;
-import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.network.NetworkEvent;
-import tgw.evolution.Evolution;
+import net.minecraft.world.entity.Entity;
+import tgw.evolution.patches.PatchClientPacketListener;
 
-import java.util.function.Supplier;
+public class PacketSCPlaySoundEntityEmitted implements Packet<ClientGamePacketListener> {
 
-public class PacketSCPlaySoundEntityEmitted implements IPacket {
-    protected final SoundSource category;
-    protected final int entityId;
-    protected final float pitch;
-    protected final String sound;
-    protected final float volume;
+    public final SoundSource category;
+    public final int entityId;
+    public final float pitch;
+    public final ResourceLocation sound;
+    public final float volume;
 
-    public PacketSCPlaySoundEntityEmitted(int entityId, String sound, SoundSource category, float volume, float pitch) {
-        this.entityId = entityId;
+    public PacketSCPlaySoundEntityEmitted(Entity entity, ResourceLocation sound, SoundSource category, float volume, float pitch) {
+        this.entityId = entity.getId();
         this.sound = sound;
         this.category = category;
         this.volume = volume;
         this.pitch = pitch;
     }
 
-    public static PacketSCPlaySoundEntityEmitted decode(FriendlyByteBuf buffer) {
-        int entityId = buffer.readVarInt();
-        String sound = buffer.readUtf();
-        SoundSource category = buffer.readEnum(SoundSource.class);
-        float volume = buffer.readFloat();
-        float pitch = buffer.readFloat();
-        return new PacketSCPlaySoundEntityEmitted(entityId, sound, category, volume, pitch);
-    }
-
-    public static void encode(PacketSCPlaySoundEntityEmitted packet, FriendlyByteBuf buffer) {
-        buffer.writeVarInt(packet.entityId);
-        buffer.writeUtf(packet.sound);
-        buffer.writeEnum(packet.category);
-        buffer.writeFloat(packet.volume);
-        buffer.writeFloat(packet.pitch);
-    }
-
-    public static void handle(PacketSCPlaySoundEntityEmitted packet, Supplier<NetworkEvent.Context> context) {
-        NetworkEvent.Context c = context.get();
-        if (IPacket.checkSide(packet, c)) {
-            Evolution.PACKET_HANDLER.handlePlaySoundEntityEmitted(packet, c);
-            c.setPacketHandled(true);
-        }
+    public PacketSCPlaySoundEntityEmitted(FriendlyByteBuf buf) {
+        this.entityId = buf.readVarInt();
+        this.sound = buf.readResourceLocation();
+        this.category = buf.readEnum(SoundSource.class);
+        this.volume = buf.readFloat();
+        this.pitch = buf.readFloat();
     }
 
     @Override
-    public LogicalSide getDestinationSide() {
-        return LogicalSide.CLIENT;
+    public void handle(ClientGamePacketListener listener) {
+        ((PatchClientPacketListener) listener).handlePlaySoundEntityEmitted(this);
+    }
+
+    @Override
+    public void write(FriendlyByteBuf buf) {
+        buf.writeVarInt(this.entityId);
+        buf.writeResourceLocation(this.sound);
+        buf.writeEnum(this.category);
+        buf.writeFloat(this.volume);
+        buf.writeFloat(this.pitch);
     }
 }

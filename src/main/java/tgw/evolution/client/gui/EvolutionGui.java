@@ -20,8 +20,8 @@ import org.jetbrains.annotations.Nullable;
 import tgw.evolution.client.gui.overlays.Overlays;
 import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.client.util.Blending;
-import tgw.evolution.util.collection.IArrayList;
-import tgw.evolution.util.collection.IList;
+import tgw.evolution.util.collection.lists.IArrayList;
+import tgw.evolution.util.collection.lists.IList;
 
 import java.util.List;
 
@@ -67,8 +67,7 @@ public class EvolutionGui extends Gui {
         return ret;
     }
 
-    @Nullable
-    public Component getOverlayMessage() {
+    public @Nullable Component getOverlayMessage() {
         return this.overlayMessageString;
     }
 
@@ -86,13 +85,11 @@ public class EvolutionGui extends Gui {
         return this.scopeScale;
     }
 
-    @Nullable
-    public Component getSubtitle() {
+    public @Nullable Component getSubtitle() {
         return this.subtitle;
     }
 
-    @Nullable
-    public Component getTitle() {
+    public @Nullable Component getTitle() {
         return this.title;
     }
 

@@ -43,7 +43,7 @@ public class BlockGravity {
     }
 
     public SoundEvent breakSound() {
-        return EvolutionSounds.STONE_BREAK.get();
+        return EvolutionSounds.STONE_BREAK;
     }
 
     public boolean canSlopeFail() {
@@ -197,7 +197,7 @@ public class BlockGravity {
      * The SoundEvent to play when the block falls.
      */
     public SoundEvent fallSound() {
-        return EvolutionSounds.STONE_COLLAPSE.get();
+        return EvolutionSounds.STONE_COLLAPSE;
     }
 
     public int getShearStrength() {

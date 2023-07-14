@@ -25,11 +25,9 @@ import tgw.evolution.client.layers.LayerItemInHandPlayer;
 import tgw.evolution.client.models.entities.ModelPlayer;
 import tgw.evolution.client.renderer.ClientRenderer;
 import tgw.evolution.events.ClientEvents;
-import tgw.evolution.patches.IPoseStackPatch;
 import tgw.evolution.util.ArmPose;
 import tgw.evolution.util.hitbox.hms.HMPlayer;
 import tgw.evolution.util.hitbox.hrs.HRPlayer;
-import tgw.evolution.util.math.MathHelper;
 
 public class RendererPlayer extends LivingEntityRenderer<AbstractClientPlayer, ModelPlayer<AbstractClientPlayer>>
         implements HRPlayer<AbstractClientPlayer> {
@@ -202,13 +200,12 @@ public class RendererPlayer extends LivingEntityRenderer<AbstractClientPlayer, M
     @Override
     protected void setupRotations(AbstractClientPlayer player, PoseStack matrices, float ageInTicks, float rotationYaw, float partialTicks) {
         float swimAmount = player.getSwimAmount(partialTicks);
-        IPoseStackPatch matricesExt = MathHelper.getExtendedMatrix(matrices);
         if (player.isFallFlying()) {
             super.setupRotations(player, matrices, ageInTicks, rotationYaw, partialTicks);
             float f1 = player.getFallFlyingTicks() + partialTicks;
             float f2 = Mth.clamp(f1 * f1 / 100.0F, 0.0F, 1.0F);
             if (!player.isAutoSpinAttack()) {
-                matricesExt.mulPoseX(f2 * (-90.0F - player.getXRot()));
+                matrices.mulPoseX(f2 * (-90.0F - player.getXRot()));
             }
             Vec3 viewVec = player.getViewVector(partialTicks);
             Vec3 motion = player.getDeltaMovement();
@@ -217,7 +214,7 @@ public class RendererPlayer extends LivingEntityRenderer<AbstractClientPlayer, M
             if (horizMotionSqr > 0 && horizViewSqr > 0) {
                 double d2 = (motion.x * viewVec.x + motion.z * viewVec.z) * Mth.fastInvSqrt(horizMotionSqr * horizViewSqr);
                 double d3 = motion.x * viewVec.z - motion.z * viewVec.x;
-                matricesExt.mulPoseYRad((float) (Math.signum(d3) * Math.acos(d2)));
+                matrices.mulPoseYRad((float) (Math.signum(d3) * Math.acos(d2)));
             }
         }
         else if (swimAmount > 0.0F) {
@@ -227,18 +224,18 @@ public class RendererPlayer extends LivingEntityRenderer<AbstractClientPlayer, M
             if (player.isVisuallySwimming()) {
                 if (!player.isInWater()) {
                     //Crawling pose
-                    matricesExt.mulPoseX(interpXRot);
+                    matrices.mulPoseX(interpXRot);
                     matrices.translate(0, -1, 0.3);
                 }
                 else {
                     //Swimming pose
                     matrices.translate(0, 0.4, 0);
-                    matricesExt.mulPoseX(interpXRot);
+                    matrices.mulPoseX(interpXRot);
                     matrices.translate(0, -1.4, -0.25);
                 }
             }
             else {
-                matricesExt.mulPoseX(interpXRot);
+                matrices.mulPoseX(interpXRot);
                 matrices.translate(0, -1.3, 0);
             }
         }

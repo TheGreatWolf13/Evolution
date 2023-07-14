@@ -91,7 +91,7 @@ public class BlockTorch extends BlockPhysics implements IReplaceable, IFireSourc
     @Override
     public List<ItemStack> getDrops(BlockState state, LootContext.Builder builder) {
         if (!state.getValue(LIT)) {
-            return Collections.singletonList(new ItemStack(EvolutionItems.TORCH_UNLIT.get()));
+            return Collections.singletonList(new ItemStack(EvolutionItems.TORCH_UNLIT));
         }
         BlockEntity tile = builder.getParameter(LootContextParams.BLOCK_ENTITY);
         if (tile instanceof TETorch teTorch) {
@@ -140,9 +140,8 @@ public class BlockTorch extends BlockPhysics implements IReplaceable, IFireSourc
         return true;
     }
 
-    @Nullable
     @Override
-    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+    public @Nullable BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new TETorch(pos, state);
     }
 
@@ -201,7 +200,7 @@ public class BlockTorch extends BlockPhysics implements IReplaceable, IFireSourc
                             2.6F + (level.random.nextFloat() - level.random.nextFloat()) * 0.8F);
             return InteractionResult.SUCCESS;
         }
-        if (stack.getItem() == EvolutionItems.TORCH.get() && !state.getValue(LIT)) {
+        if (stack.getItem() == EvolutionItems.TORCH && !state.getValue(LIT)) {
             level.setBlockAndUpdate(pos, state.setValue(LIT, true));
             level.playSound(player, pos, SoundEvents.FIRE_AMBIENT, SoundSource.BLOCKS, 1.0F, level.random.nextFloat() * 0.7F + 0.3F);
             if (!level.isClientSide) {
@@ -209,7 +208,7 @@ public class BlockTorch extends BlockPhysics implements IReplaceable, IFireSourc
                     te.setPlaceTime();
                 }
             }
-            player.awardStat(Stats.ITEM_CRAFTED.get(EvolutionItems.TORCH.get()));
+            player.awardStat(Stats.ITEM_CRAFTED.get(EvolutionItems.TORCH));
             return InteractionResult.SUCCESS;
         }
         return InteractionResult.PASS;

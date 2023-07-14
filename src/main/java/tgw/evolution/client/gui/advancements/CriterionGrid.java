@@ -6,17 +6,16 @@ import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.AdvancementProgress;
 import net.minecraft.advancements.Criterion;
 import net.minecraft.client.gui.Font;
+import net.minecraft.core.Registry;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.level.biome.Biome;
-import net.minecraftforge.registries.ForgeRegistries;
 import tgw.evolution.init.EvolutionTexts;
-import tgw.evolution.util.collection.OArrayList;
-import tgw.evolution.util.collection.OList;
+import tgw.evolution.util.collection.lists.OArrayList;
+import tgw.evolution.util.collection.lists.OList;
 
 import java.util.Collections;
 import java.util.List;
@@ -109,17 +108,20 @@ public class CriterionGrid {
             return new TextComponent(criterion);
         }
         switch (type) {
-            case "item":
-                Item item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(criterion.substring(criterion.indexOf(':') + 1)));
+            case "item" -> {
+                Item item = Registry.ITEM.get(new ResourceLocation(criterion.substring(criterion.indexOf(':') + 1)));
                 return new TranslatableComponent(item.getDescriptionId());
-            case "entity":
-                EntityType<?> entity = ForgeRegistries.ENTITIES.getValue(new ResourceLocation(criterion.substring(criterion.indexOf(':') + 1)));
+            }
+            case "entity" -> {
+                EntityType<?> entity = Registry.ENTITY_TYPE.get(new ResourceLocation(criterion.substring(criterion.indexOf(':') + 1)));
                 return (MutableComponent) entity.getDescription();
-            case "biome":
-                Biome biome = ForgeRegistries.BIOMES.getValue(new ResourceLocation(criterion.substring(criterion.indexOf(':') + 1)));
-                return new TranslatableComponent(Util.makeDescriptionId("biome", biome.getRegistryName()));
-            case "minecraft":
+            }
+            case "biome" -> {
+                return new TranslatableComponent(Util.makeDescriptionId("biome", new ResourceLocation(criterion)));
+            }
+            case "minecraft" -> {
                 return new TextComponent(criterion);
+            }
         }
         throw new IllegalStateException("Unknown type: " + type);
     }

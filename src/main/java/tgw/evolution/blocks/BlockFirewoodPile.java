@@ -24,7 +24,6 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.tileentities.TEFirewoodPile;
 import tgw.evolution.blocks.util.BlockUtils;
-import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionShapes;
 import tgw.evolution.items.ItemFirewood;
 import tgw.evolution.util.constants.HarvestLevel;
@@ -99,6 +98,12 @@ public class BlockFirewoodPile extends BlockPhysics implements IReplaceable, Ent
     }
 
     @Override
+    public ItemStack getCloneItemStack(BlockGetter blockGetter, BlockPos blockPos, BlockState blockState) {
+        //TODO implementation
+        return super.getCloneItemStack(blockGetter, blockPos, blockState);
+    }
+
+    @Override
     public ItemStack getCloneItemStack(BlockState state, HitResult target, BlockGetter level, BlockPos pos, Player player) {
         TEFirewoodPile tile = (TEFirewoodPile) level.getBlockEntity(pos);
         assert tile != null;
@@ -126,16 +131,6 @@ public class BlockFirewoodPile extends BlockPhysics implements IReplaceable, Ent
             return new ItemStack(tile.getFirewoodAt(4 * y + x));
         }
         return new ItemStack(tile.getFirewoodAt(0));
-    }
-
-    @Override
-    public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction face) {
-        return EvolutionBlocks.FIRE.get().getActualEncouragement(state);
-    }
-
-    @Override
-    public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction face) {
-        return EvolutionBlocks.FIRE.get().getActualFlammability(state);
     }
 
     @Override
@@ -187,9 +182,8 @@ public class BlockFirewoodPile extends BlockPhysics implements IReplaceable, Ent
         return state.rotate(mirror.getRotation(state.getValue(DIRECTION_HORIZONTAL)));
     }
 
-    @Nullable
     @Override
-    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+    public @Nullable BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new TEFirewoodPile(pos, state);
     }
 

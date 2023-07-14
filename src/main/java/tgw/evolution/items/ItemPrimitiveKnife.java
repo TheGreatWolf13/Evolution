@@ -28,7 +28,7 @@ public class ItemPrimitiveKnife extends ItemEv implements IMelee {
 
     @Override
     public SoundEvent getBlockHitSound(ItemStack stack) {
-        return EvolutionSounds.STONE_WEAPON_HIT_BLOCK.get();
+        return EvolutionSounds.STONE_WEAPON_HIT_BLOCK;
     }
 
     @Override

@@ -2,7 +2,6 @@ package tgw.evolution.blocks.tileentities;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -15,7 +14,6 @@ import org.jetbrains.annotations.Nullable;
 import tgw.evolution.init.EvolutionBStates;
 import tgw.evolution.init.EvolutionShapes;
 import tgw.evolution.init.EvolutionTEs;
-import tgw.evolution.util.constants.BlockFlags;
 import tgw.evolution.util.math.MathHelper;
 
 import java.util.function.Supplier;
@@ -31,16 +29,16 @@ public class TEMolding extends BlockEntity {
                                   Patterns.MATRIX_FALSE,
                                   Patterns.MATRIX_FALSE};
     public EnumMolding molding = EnumMolding.NULL;
-    @Nullable
-    private VoxelShape hitbox;
+    private @Nullable VoxelShape hitbox;
 
     public TEMolding(BlockPos pos, BlockState state) {
-        super(EvolutionTEs.MOLDING.get(), pos, state);
+        super(EvolutionTEs.MOLDING, pos, state);
     }
 
     public void addLayer(int layer) {
+        this.hitbox = null; //Remove cache, since it might have changed
         this.parts[layer] = Patterns.MATRIX_TRUE;
-        this.sendRenderUpdate();
+        TEUtils.sendRenderUpdate(this);
     }
 
     public int check() {
@@ -174,6 +172,7 @@ public class TEMolding extends BlockEntity {
 
     @Override
     public void load(CompoundTag tag) {
+        this.hitbox = null; //Remove cache, since it might have changed
         super.load(tag);
         this.molding = EnumMolding.byId(tag.getByte("Type"));
 //        this.encoded[0] = tag.getInt("Part1");
@@ -185,14 +184,7 @@ public class TEMolding extends BlockEntity {
     }
 
     @Override
-    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
-        this.hitbox = null;
-        this.handleUpdateTag(packet.getTag());
-    }
-
-    @Override
     public void saveAdditional(CompoundTag tag) {
-        super.saveAdditional(tag);
 //        this.serializeToInts();
 //        tag.putInt("Part1", this.encoded[0]);
 //        tag.putInt("Part2", this.encoded[1]);
@@ -220,19 +212,9 @@ public class TEMolding extends BlockEntity {
 //        }
 //    }
 
-    public void sendRenderUpdate() {
-        this.setChanged();
-        this.hitbox = null;
-        assert this.level != null;
-        this.level.sendBlockUpdated(this.worldPosition,
-                                    this.level.getBlockState(this.worldPosition),
-                                    this.level.getBlockState(this.worldPosition),
-                                    BlockFlags.RERENDER);
-    }
-
     public void setType(EnumMolding molding) {
         this.molding = molding;
-        this.sendRenderUpdate();
+        TEUtils.sendRenderUpdate(this);
     }
 
     private void spawnDrops(Supplier<Item> item) {

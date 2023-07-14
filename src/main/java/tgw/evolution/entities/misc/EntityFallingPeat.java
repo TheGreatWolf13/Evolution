@@ -11,21 +11,19 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.entity.IEntityAdditionalSpawnData;
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.network.PlayMessages;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.BlockPeat;
+import tgw.evolution.entities.IEntityPacket;
 import tgw.evolution.init.EvolutionBStates;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionEntities;
-import tgw.evolution.patches.IEntityPatch;
+import tgw.evolution.network.PacketSCCustomEntity;
 import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 import tgw.evolution.util.physics.Fluid;
 import tgw.evolution.util.physics.Physics;
 import tgw.evolution.util.physics.SI;
 
-public class EntityFallingPeat extends Entity implements IEntityAdditionalSpawnData, IEntityPatch<EntityFallingPeat> {
+public class EntityFallingPeat extends Entity implements IEntityPacket<EntityFallingPeat> {
 
     public static final EntityDimensions[] DIMENSIONS = {EntityDimensions.scalable(1.0f, 0.25f),
                                                          EntityDimensions.scalable(1.0f, 0.5f),
@@ -35,15 +33,14 @@ public class EntityFallingPeat extends Entity implements IEntityAdditionalSpawnD
     private boolean isSizeCorrect;
     private int layers;
     private int mass = 289;
-    @Nullable
-    private BlockPos prevPos;
+    private @Nullable BlockPos prevPos;
 
-    public EntityFallingPeat(EntityType<EntityFallingPeat> type, Level level) {
+    public EntityFallingPeat(EntityType<? extends EntityFallingPeat> type, Level level) {
         super(type, level);
     }
 
     public EntityFallingPeat(Level level, double x, double y, double z, int layers) {
-        super(EvolutionEntities.FALLING_PEAT.get(), level);
+        super(EvolutionEntities.FALLING_PEAT, level);
         this.blocksBuilding = true;
         this.setPos(x, y, z);
         this.setDeltaMovement(Vec3.ZERO);
@@ -53,10 +50,6 @@ public class EntityFallingPeat extends Entity implements IEntityAdditionalSpawnD
         this.layers = layers;
         this.mass = 289 * this.layers;
         this.prevPos = this.blockPosition();
-    }
-
-    public EntityFallingPeat(PlayMessages.SpawnEntity spawnEntity, Level level) {
-        this(EvolutionEntities.FALLING_PEAT.get(), level);
     }
 
     @Override
@@ -81,7 +74,7 @@ public class EntityFallingPeat extends Entity implements IEntityAdditionalSpawnD
 
     @Override
     public Packet<?> getAddEntityPacket() {
-        return NetworkHooks.getEntitySpawningPacket(this);
+        return new PacketSCCustomEntity<>(this);
     }
 
     @Override
@@ -90,7 +83,7 @@ public class EntityFallingPeat extends Entity implements IEntityAdditionalSpawnD
     }
 
     public BlockState getBlockState() {
-        return EvolutionBlocks.PEAT.get().defaultBlockState().setValue(EvolutionBStates.LAYERS_1_4, this.layers);
+        return EvolutionBlocks.PEAT.defaultBlockState().setValue(EvolutionBStates.LAYERS_1_4, this.layers);
     }
 
     @Override
@@ -104,7 +97,7 @@ public class EntityFallingPeat extends Entity implements IEntityAdditionalSpawnD
     }
 
     @Override
-    public @Nullable HitboxEntity<EntityFallingPeat> getHitboxes() {
+    public @Nullable HitboxEntity<? extends EntityFallingPeat> getHitboxes() {
         return null;
     }
 
@@ -148,8 +141,8 @@ public class EntityFallingPeat extends Entity implements IEntityAdditionalSpawnD
     }
 
     @Override
-    public void readSpawnData(FriendlyByteBuf buffer) {
-        this.layers = buffer.readByte();
+    public void readAdditionalSyncData(FriendlyByteBuf buf) {
+        this.layers = buf.readByte();
     }
 
     @Override
@@ -250,7 +243,7 @@ public class EntityFallingPeat extends Entity implements IEntityAdditionalSpawnD
     }
 
     @Override
-    public void writeSpawnData(FriendlyByteBuf buffer) {
-        buffer.writeByte(this.layers);
+    public void writeAdditionalSyncData(FriendlyByteBuf buf) {
+        buf.writeByte(this.layers);
     }
 }

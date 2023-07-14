@@ -59,13 +59,12 @@ public class GuiAdvancementTab extends GuiComponent {
         this.addGuiAdvancement(this.root, advancement);
     }
 
-    @Nullable
-    public static GuiAdvancementTab create(Minecraft mc,
-                                           ScreenAdvancements screenAdvancements,
-                                           int index,
-                                           Advancement advancement,
-                                           int width,
-                                           int height) {
+    public static @Nullable GuiAdvancementTab create(Minecraft mc,
+                                                     ScreenAdvancements screenAdvancements,
+                                                     int index,
+                                                     Advancement advancement,
+                                                     int width,
+                                                     int height) {
         if (advancement.getDisplay() == null) {
             return null;
         }
@@ -176,8 +175,7 @@ public class GuiAdvancementTab extends GuiComponent {
         return this.advancement;
     }
 
-    @Nullable
-    public GuiAdvancementEntry getAdvancementGui(Advancement advancement) {
+    public @Nullable GuiAdvancementEntry getAdvancementGui(Advancement advancement) {
         return this.guis.get(advancement);
     }
 

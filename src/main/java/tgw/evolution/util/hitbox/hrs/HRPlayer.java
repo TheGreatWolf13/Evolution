@@ -117,7 +117,7 @@ public interface HRPlayer<T extends Player> extends HRLivingEntity<T, HMPlayer<T
             HRLivingEntity.super.rotations(entity, hr, ageInTicks, rotationYaw, partialTicks);
             if (entity.isPassenger()) {
                 Entity vehicle = entity.getVehicle();
-                if (vehicle != null && vehicle.shouldRiderSit() && vehicle instanceof ISittableEntity sittable) {
+                if (vehicle instanceof ISittableEntity sittable) {
                     hr.translateHR(0, 0, sittable.getZOffset());
                 }
             }

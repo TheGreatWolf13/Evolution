@@ -2,7 +2,6 @@ package tgw.evolution.blocks.tileentities;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -14,16 +13,15 @@ public class TETorch extends BlockEntity {
     private long timePlaced;
 
     public TETorch(BlockPos pos, BlockState state) {
-        super(EvolutionTEs.TORCH.get(), pos, state);
+        super(EvolutionTEs.TORCH, pos, state);
     }
 
     public long getTimePlaced() {
         return this.timePlaced;
     }
 
-    @Nullable
     @Override
-    public ClientboundBlockEntityDataPacket getUpdatePacket() {
+    public @Nullable ClientboundBlockEntityDataPacket getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
     }
 
@@ -38,12 +36,6 @@ public class TETorch extends BlockEntity {
     public void load(CompoundTag tag) {
         super.load(tag);
         this.timePlaced = tag.getLong("TimePlaced");
-    }
-
-    @Override
-    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt) {
-        this.handleUpdateTag(pkt.getTag());
-        TEUtils.sendRenderUpdate(this);
     }
 
     @Override

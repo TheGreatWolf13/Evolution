@@ -5,7 +5,7 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import tgw.evolution.Evolution;
+import tgw.evolution.EvolutionClient;
 import tgw.evolution.items.ItemUtils;
 
 public interface HMPlayer<T extends LivingEntity> extends HMHumanoid<T> {
@@ -103,7 +103,7 @@ public interface HMPlayer<T extends LivingEntity> extends HMHumanoid<T> {
                     this.cape().setPivotZ(3.125F + 0.7f);
                     this.cape().setPivotY(24.0F + 0.85f);
                 }
-                float partialTicks = Evolution.PROXY.getPartialTicks();
+                float partialTicks = EvolutionClient.getPartialTicks();
                 double dx = Mth.lerp(partialTicks, player.xCloakO, player.xCloak) - Mth.lerp(partialTicks, entity.xo, entity.getX());
                 double dy = Mth.lerp(partialTicks, player.yCloakO, player.yCloak) - Mth.lerp(partialTicks, entity.yo, entity.getY());
                 double dz = Mth.lerp(partialTicks, player.zCloakO, player.zCloak) - Mth.lerp(partialTicks, entity.zo, entity.getZ());

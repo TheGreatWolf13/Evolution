@@ -4,7 +4,6 @@ import it.unimi.dsi.fastutil.bytes.Byte2ReferenceMap;
 import it.unimi.dsi.fastutil.bytes.Byte2ReferenceMaps;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
-import net.minecraftforge.registries.RegistryObject;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.tileentities.KnappingRecipe;
@@ -17,8 +16,8 @@ import tgw.evolution.init.EvolutionMaterials;
 import tgw.evolution.init.IVariant;
 import tgw.evolution.items.modular.part.ItemPart;
 import tgw.evolution.util.UnregisteredFeatureException;
-import tgw.evolution.util.collection.B2RMap;
-import tgw.evolution.util.collection.B2ROpenHashMap;
+import tgw.evolution.util.collection.maps.B2RHashMap;
+import tgw.evolution.util.collection.maps.B2RMap;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -49,7 +48,7 @@ public enum RockVariant implements IVariant {
     private static final Byte2ReferenceMap<RockVariant> REGISTRY;
 
     static {
-        B2RMap<RockVariant> map = new B2ROpenHashMap<>();
+        B2RMap<RockVariant> map = new B2RHashMap<>();
         for (RockVariant variant : VALUES) {
             if (map.put(variant.id, variant) != null) {
                 throw new IllegalStateException("RockVariant " + variant + " has duplicate id: " + variant.id);
@@ -94,10 +93,10 @@ public enum RockVariant implements IVariant {
         };
     }
 
-    public <T> T get(Map<RockVariant, RegistryObject<T>> registry) {
-        RegistryObject<T> object = registry.get(this);
+    public <T> T get(Map<RockVariant, T> registry) {
+        T object = registry.get(this);
         this.checkNull(object);
-        return object.get();
+        return object;
     }
 
     public byte getId() {

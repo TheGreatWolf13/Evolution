@@ -2,9 +2,9 @@ package tgw.evolution.client.renderer;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.gui.Font;
-import tgw.evolution.util.collection.RArrayList;
+import tgw.evolution.util.collection.lists.OArrayList;
 
-public class ListRunnable extends RArrayList<RunnableEffectAmplifier> {
+public class ListRunnable extends OArrayList<RunnableEffectAmplifier> {
 
     protected int validSize;
 

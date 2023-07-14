@@ -27,7 +27,7 @@ public class BlockPolishedStone extends BlockPhysics implements IRockVariant, IF
 
     @Override
     public @Nullable SoundEvent fallingSound() {
-        return EvolutionSounds.STONE_COLLAPSE.get();
+        return EvolutionSounds.STONE_COLLAPSE;
     }
 
     @Override

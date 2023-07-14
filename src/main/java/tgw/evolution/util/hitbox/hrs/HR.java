@@ -2,13 +2,23 @@ package tgw.evolution.util.hitbox.hrs;
 
 public interface HR {
 
-    void rotateXHR(float xRot);
+    default void rotateXHR(float xRot) {
+        throw new AbstractMethodError();
+    }
 
-    void rotateYHR(float yRot);
+    default void rotateYHR(float yRot) {
+        throw new AbstractMethodError();
+    }
 
-    void rotateZHR(float zRot);
+    default void rotateZHR(float zRot) {
+        throw new AbstractMethodError();
+    }
 
-    void scaleHR(float scaleX, float scaleY, float scaleZ);
+    default void scaleHR(float scaleX, float scaleY, float scaleZ) {
+        throw new AbstractMethodError();
+    }
 
-    void translateHR(float x, float y, float z);
+    default void translateHR(float x, float y, float z) {
+        throw new AbstractMethodError();
+    }
 }

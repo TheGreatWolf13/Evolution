@@ -25,8 +25,10 @@ import net.minecraft.world.entity.player.Player;
 import org.apache.commons.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
-import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.network.PacketSCStatistics;
+import tgw.evolution.util.collection.maps.*;
+import tgw.evolution.util.collection.sets.OHashSet;
+import tgw.evolution.util.collection.sets.OSet;
 import tgw.evolution.util.math.HalfFloat;
 
 import java.io.File;
@@ -37,9 +39,10 @@ import java.util.Set;
 
 public class EvolutionServerStatsCounter extends ServerStatsCounter {
 
-    protected final Object2ShortMap<Stat<?>> partialData = Object2ShortMaps.synchronize(new Object2ShortOpenHashMap<>());
-    protected final Object2LongMap<Stat<?>> statsData = Object2LongMaps.synchronize(new Object2LongOpenHashMap<>());
-    private final ObjectSet<Stat<?>> dirty = new ObjectOpenHashSet<>();
+    //TODO maybe synchronize here instead of by map
+    protected final Object2ShortMap<Stat<?>> partialData = Object2ShortMaps.synchronize(new O2SHashMap<>());
+    protected final Object2LongMap<Stat<?>> statsData = Object2LongMaps.synchronize(new O2LHashMap<>());
+    private final OSet<Stat<?>> dirty = new OHashSet<>();
     private final MinecraftServer server;
     private final File statsFile;
     private int lastStatRequest = -300;
@@ -85,8 +88,7 @@ public class EvolutionServerStatsCounter extends ServerStatsCounter {
         return stat.getType().getRegistry().getKey(stat.getValue());
     }
 
-    @Nullable
-    private static <T> Stat<T> getStat(StatType<T> statType, String resLoc) {
+    private static @Nullable <T> Stat<T> getStat(StatType<T> statType, String resLoc) {
         ResourceLocation resourceLocation = ResourceLocation.tryParse(resLoc);
         if (resourceLocation == null) {
             return null;
@@ -99,7 +101,7 @@ public class EvolutionServerStatsCounter extends ServerStatsCounter {
     }
 
     private Set<Stat<?>> getDirty() {
-        ObjectSet<Stat<?>> set = new ObjectOpenHashSet<>(this.dirty);
+        OSet<Stat<?>> set = new OHashSet<>(this.dirty);
         this.dirty.clear();
         return set;
     }
@@ -249,14 +251,14 @@ public class EvolutionServerStatsCounter extends ServerStatsCounter {
     @Override
     public void sendStats(ServerPlayer player) {
         int i = this.server.getTickCount();
-        Object2LongMap<Stat<?>> stats = new Object2LongOpenHashMap<>();
+        O2LMap<Stat<?>> stats = new O2LHashMap<>();
         if (i - this.lastStatRequest > 100) {
             this.lastStatRequest = i;
             for (Stat<?> stat : this.getDirty()) {
                 stats.put(stat, this.getValueLong(stat));
             }
         }
-        EvolutionNetwork.send(player, new PacketSCStatistics(stats));
+        player.connection.send(new PacketSCStatistics(stats));
     }
 
     @Override
@@ -276,7 +278,7 @@ public class EvolutionServerStatsCounter extends ServerStatsCounter {
 
     @Override
     protected String toJson() {
-        Reference2ObjectMap<StatType<?>, JsonObject> dataMap = new Reference2ObjectOpenHashMap<>();
+        R2OMap<StatType<?>, JsonObject> dataMap = new R2OHashMap<>();
         for (Object2LongMap.Entry<Stat<?>> entry : this.statsData.object2LongEntrySet()) {
             Stat<?> stat = entry.getKey();
             JsonObject json = dataMap.get(stat.getType());
@@ -291,7 +293,7 @@ public class EvolutionServerStatsCounter extends ServerStatsCounter {
             //noinspection ConstantConditions
             data.add(Registry.STAT_TYPE.getKey(entry.getKey()).toString(), entry.getValue());
         }
-        Reference2ObjectMap<StatType<?>, JsonObject> partialDataMap = new Reference2ObjectOpenHashMap<>();
+        R2OMap<StatType<?>, JsonObject> partialDataMap = new R2OHashMap<>();
         for (Object2ShortMap.Entry<Stat<?>> entry : this.partialData.object2ShortEntrySet()) {
             Stat<?> stat = entry.getKey();
             JsonObject json = partialDataMap.get(stat.getType());

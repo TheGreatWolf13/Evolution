@@ -1,27 +1,24 @@
 package tgw.evolution.network;
 
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.Level;
-import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.network.NetworkEvent;
-import tgw.evolution.Evolution;
+import tgw.evolution.patches.PatchClientPacketListener;
 
-import java.util.function.Supplier;
+public class PacketSCFixRotation implements Packet<ClientGamePacketListener> {
 
-public class PacketSCFixRotation implements IPacket {
+    public final int entityId;
+    public final byte xRot;
+    public final byte yHeadRot;
+    public final byte yRot;
 
-    private final int entityId;
-    private final byte xRot;
-    private final byte yHeadRot;
-    private final byte yRot;
-
-    private PacketSCFixRotation(int entityId, byte xRot, byte yRot, byte yHeadRot) {
-        this.yRot = yRot;
-        this.xRot = xRot;
-        this.yHeadRot = yHeadRot;
-        this.entityId = entityId;
+    public PacketSCFixRotation(FriendlyByteBuf buf) {
+        this.entityId = buf.readVarInt();
+        this.xRot = buf.readByte();
+        this.yRot = buf.readByte();
+        this.yHeadRot = buf.readByte();
     }
 
     public PacketSCFixRotation(Entity entity) {
@@ -31,37 +28,16 @@ public class PacketSCFixRotation implements IPacket {
         this.yHeadRot = (byte) Mth.floor(entity.getYHeadRot() * 256.0f / 360.0f);
     }
 
-    public static PacketSCFixRotation decode(FriendlyByteBuf buffer) {
-        return new PacketSCFixRotation(buffer.readVarInt(), buffer.readByte(), buffer.readByte(), buffer.readByte());
-    }
-
-    public static void encode(PacketSCFixRotation packet, FriendlyByteBuf buffer) {
-        buffer.writeVarInt(packet.entityId);
-        buffer.writeByte(packet.xRot);
-        buffer.writeByte(packet.yRot);
-        buffer.writeByte(packet.yHeadRot);
-    }
-
-    public static void handle(PacketSCFixRotation packet, Supplier<NetworkEvent.Context> context) {
-        NetworkEvent.Context c = context.get();
-        if (IPacket.checkSide(packet, c)) {
-            c.enqueueWork(() -> {
-                Level level = Evolution.PROXY.getClientLevel();
-                Entity entity = level.getEntity(packet.entityId);
-                if (entity != null) {
-                    float yRot = (packet.yRot * 360) / 256.0F;
-                    float xRot = (packet.xRot * 360) / 256.0f;
-                    entity.lerpTo(entity.getX(), entity.getY(), entity.getZ(), yRot, xRot, 3, false);
-                    float yHeadRot = (packet.yHeadRot * 360) / 256.0f;
-                    entity.lerpHeadTo(yHeadRot, 3);
-                }
-            });
-            c.setPacketHandled(true);
-        }
+    @Override
+    public void handle(ClientGamePacketListener listener) {
+        ((PatchClientPacketListener) listener).handleFixRotation(this);
     }
 
     @Override
-    public LogicalSide getDestinationSide() {
-        return LogicalSide.CLIENT;
+    public void write(FriendlyByteBuf buf) {
+        buf.writeVarInt(this.entityId);
+        buf.writeByte(this.xRot);
+        buf.writeByte(this.yRot);
+        buf.writeByte(this.yHeadRot);
     }
 }

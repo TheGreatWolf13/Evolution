@@ -40,7 +40,7 @@ public final class CommandTickrate implements Command<CommandSourceStack> {
         if (Float.isNaN(tickrate)) {
             tickrate = FloatArgumentType.getFloat(context, "tps");
         }
-        boolean change = TickrateChanger.updateServerTickrate(tickrate);
+        boolean change = TickrateChanger.updateServerTickrate(source.getServer(), tickrate);
         if (!change) {
             return 0;
         }

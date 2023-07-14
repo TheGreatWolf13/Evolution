@@ -6,8 +6,8 @@ import net.minecraft.client.gui.components.toasts.Toast;
 import net.minecraft.client.gui.components.toasts.ToastComponent;
 import net.minecraft.network.chat.Component;
 import tgw.evolution.client.renderer.RenderHelper;
-import tgw.evolution.util.collection.OArrayList;
-import tgw.evolution.util.collection.OList;
+import tgw.evolution.util.collection.lists.OArrayList;
+import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.toast.ToastHolder;
 
 public abstract class ToastGeneric<T extends ToastHolder> implements Toast {

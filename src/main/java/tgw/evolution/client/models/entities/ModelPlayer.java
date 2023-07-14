@@ -11,8 +11,8 @@ import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
 import tgw.evolution.client.models.CubeListBuilderEv;
 import tgw.evolution.client.renderer.RenderHelper;
-import tgw.evolution.util.collection.RArrayList;
-import tgw.evolution.util.collection.RList;
+import tgw.evolution.util.collection.lists.OArrayList;
+import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.hitbox.hms.HM;
 import tgw.evolution.util.hitbox.hms.HMPlayer;
 
@@ -30,7 +30,7 @@ public class ModelPlayer<T extends LivingEntity> extends ModelHumanoid<T> implem
     public final ModelPart clothesLegL;
     public final ModelPart clothesLegR;
     private final ModelPart cape;
-    private final RList<ModelPart> parts;
+    private final OList<ModelPart> parts;
     private final boolean slim;
 
     public ModelPlayer(ModelPart root, boolean slim) {
@@ -46,7 +46,7 @@ public class ModelPlayer<T extends LivingEntity> extends ModelHumanoid<T> implem
         this.clothesForelegL = this.clothesLegL.getChild("clothes_foreleg_l");
         this.clothesForelegR = this.clothesLegR.getChild("clothes_foreleg_r");
         this.cape = root.getChild("cape");
-        this.parts = root.getAllParts().collect(RArrayList::new, RArrayList::add, RArrayList::addAll);
+        this.parts = root.getAllParts().collect(OArrayList::new, OArrayList::add, OArrayList::addAll);
         this.bodyParts.add(this.clothesBody);
         this.bodyParts.trimCollection();
     }

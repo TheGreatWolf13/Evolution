@@ -10,7 +10,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.scores.Score;
-import net.minecraftforge.common.util.FakePlayer;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.stats.EvolutionServerStatsCounter;
@@ -69,9 +68,9 @@ public final class PlayerHelper {
     }
 
     public static <T> void addStat(Player player, StatType<T> statType, T type, float amount) {
-        if (player instanceof ServerPlayer && !(player instanceof FakePlayer)) {
+        if (player instanceof ServerPlayer p) {
             Stat<T> stat = statType.get(type);
-            EvolutionServerStatsCounter stats = (EvolutionServerStatsCounter) ((ServerPlayer) player).getStats();
+            EvolutionServerStatsCounter stats = (EvolutionServerStatsCounter) p.getStats();
             stats.incrementPartial(player, stat, amount);
             player.getScoreboard().forAllObjectives(stat, player.getScoreboardName(), score -> {
                 assert score != null;
@@ -84,11 +83,11 @@ public final class PlayerHelper {
         addStat(player, EvolutionStats.DAMAGE_DEALT_BY_TYPE.get(type), amount);
         addStat(player, EvolutionStats.DAMAGE_DEALT_BY_TYPE.get(EvolutionDamage.Type.MELEE), amount);
         addStat(player, EvolutionStats.DAMAGE_DEALT_BY_TYPE.get(EvolutionDamage.Type.TOTAL), amount);
-        addStat(player, EvolutionStats.DAMAGE_DEALT.get(), entity.getType(), amount);
+        addStat(player, EvolutionStats.DAMAGE_DEALT, entity.getType(), amount);
     }
 
     public static void takeStat(Player player, Stat<?> stat) {
-        if (player instanceof ServerPlayer serverPlayer && !(player instanceof FakePlayer)) {
+        if (player instanceof ServerPlayer serverPlayer) {
             ((EvolutionServerStatsCounter) serverPlayer.getStats()).setValueLong(stat, 0);
             player.getScoreboard().forAllObjectives(stat, player.getScoreboardName(), Score::reset);
         }

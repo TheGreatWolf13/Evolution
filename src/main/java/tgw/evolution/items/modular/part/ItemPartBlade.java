@@ -13,7 +13,7 @@ public class ItemPartBlade extends ItemPart<PartTypes.Blade, ItemPartBlade, Part
     }
 
     @Override
-    protected PartBlade createNew() {
+    public PartBlade createNew() {
         return new PartBlade();
     }
 
@@ -33,8 +33,8 @@ public class ItemPartBlade extends ItemPart<PartTypes.Blade, ItemPartBlade, Part
     }
 
     @Override
-    protected PartBlade getPartCap(ItemStack stack) {
-        return PartBlade.get(stack);
+    protected PartBlade getPartCap() {
+        return new PartBlade();
     }
 
     @Override

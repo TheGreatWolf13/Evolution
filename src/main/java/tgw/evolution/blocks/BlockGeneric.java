@@ -8,10 +8,9 @@ import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
-import tgw.evolution.patches.IBlockPatch;
 import tgw.evolution.util.constants.HarvestLevel;
 
-public abstract class BlockGeneric extends Block implements IBlockPatch {
+public abstract class BlockGeneric extends Block {
 
     public BlockGeneric(Properties properties) {
         super(properties);

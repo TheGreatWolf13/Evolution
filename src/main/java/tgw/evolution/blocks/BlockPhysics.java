@@ -21,14 +21,12 @@ public abstract class BlockPhysics extends BlockGeneric implements IPhysics {
         super(properties);
     }
 
-    public static void updateWeight(LevelAccessor level, BlockPos pos) {
-        int x = pos.getX();
-        int z = pos.getZ();
-        for (int y = pos.getY() - 1; y >= 0; y--) {
-            BlockState down = BlockUtils.getBlockState(level, x, y, z);
+    public static void updateWeight(LevelAccessor level, int x, int y, int z) {
+        for (int my = y - 1; my >= 0; my--) {
+            BlockState down = level.getBlockState_(x, my, z);
             if (BlockUtils.isReplaceable(down)) {
-                BlockUtils.scheduleBlockTick(level, x, y + 1, z);
-                BlockUtils.scheduleBlockTick(level, x, y, z);
+                BlockUtils.scheduleBlockTick(level, x, my + 1, z);
+                BlockUtils.scheduleBlockTick(level, x, my, z);
                 return;
             }
             if (down.getBlock() instanceof BlockStone || down.getBlock() == Blocks.BEDROCK) {
@@ -109,7 +107,7 @@ public abstract class BlockPhysics extends BlockGeneric implements IPhysics {
     @Override
     public void playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
         if (!level.isClientSide) {
-            BlockUtils.updateSlopingBlocks(level, pos);
+            BlockUtils.updateSlopingBlocks(level, pos.getX(), pos.getY(), pos.getZ());
         }
         super.playerWillDestroy(level, pos, state, player);
     }

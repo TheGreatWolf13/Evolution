@@ -66,7 +66,6 @@ public final class EvolutionTexts {
     public static final Component GUI_MENU_MOD_OPTIONS = transl("evolution.gui.menu.modOptions");
     public static final Component GUI_MENU_QUIT = transl("evolution.gui.menu.quit");
     public static final Component GUI_MENU_REPORT_BUGS = transl("evolution.gui.menu.reportBugs");
-    public static final Component GUI_MENU_SEND_FEEDBACK = transl("evolution.gui.menu.sendFeedback");
     public static final Component GUI_MENU_TO_TITLE = transl("evolution.gui.menu.toTitle");
     //Tooltip
     public static final Component TOOLTIP_BLUNT = new TextComponent("   ").append(transl("evolution.tooltip.blunt").setStyle(LIGHT_GREY));

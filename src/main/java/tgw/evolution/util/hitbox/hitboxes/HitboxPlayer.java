@@ -4,7 +4,7 @@ import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.items.IMelee;
-import tgw.evolution.patches.ILivingEntityPatch;
+import tgw.evolution.patches.PatchLivingEntity;
 import tgw.evolution.util.ArmPose;
 import tgw.evolution.util.hitbox.*;
 import tgw.evolution.util.hitbox.hms.HM;
@@ -110,7 +110,7 @@ public final class HitboxPlayer extends HitboxEntity<Player> implements HMPlayer
             if (!entity.getOffhandItem().isEmpty()) {
                 return this.getHand(arm);
             }
-            if (((ILivingEntityPatch) entity).getFollowUp() % 2 == 0) {
+            if (((PatchLivingEntity) entity).getFollowUp() % 2 == 0) {
                 return this.getHand(arm);
             }
             return this.getHand(arm.getOpposite());

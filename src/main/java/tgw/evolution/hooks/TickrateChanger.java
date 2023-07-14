@@ -2,7 +2,6 @@ package tgw.evolution.hooks;
 
 import net.minecraft.server.MinecraftServer;
 import tgw.evolution.Evolution;
-import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.network.PacketSCChangeTickrate;
 
 public final class TickrateChanger {
@@ -19,22 +18,18 @@ public final class TickrateChanger {
         return currentTickrate;
     }
 
-    /**
-     * Hooks from {@link MinecraftServer#runServer()}, replacing every LDC instruction that has {@code 50L} in it.
-     */
-    @EvolutionHook
     public static long getMSPT() {
         return mspt;
     }
 
-    public static boolean updateServerTickrate(float tickrate) {
+    public static boolean updateServerTickrate(MinecraftServer server, float tickrate) {
         if (tickrate == currentTickrate) {
             return false;
         }
         Evolution.info("Updating server tickrate to " + tickrate);
         currentTickrate = tickrate;
         mspt = (long) (1_000L / tickrate);
-        EvolutionNetwork.sendToAll(new PacketSCChangeTickrate(tickrate));
+        server.getPlayerList().broadcastAll(new PacketSCChangeTickrate(tickrate));
         return true;
     }
 }

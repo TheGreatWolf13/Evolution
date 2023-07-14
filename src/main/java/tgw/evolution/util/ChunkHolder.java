@@ -19,9 +19,9 @@ public class ChunkHolder {
      * Bit 3: Holds West Chunk <br>
      */
     private byte flags;
+    private @Nullable Direction lastDir;
 
-    @Nullable
-    public LevelChunk getHeld(Direction dir) {
+    public @Nullable LevelChunk getHeld(Direction dir) {
         return switch (dir) {
             case NORTH -> this.chunkNorth;
             case SOUTH -> this.chunkSouth;
@@ -31,18 +31,22 @@ public class ChunkHolder {
         };
     }
 
+    public @Nullable Direction getRememberedDir() {
+        return this.lastDir;
+    }
+
     public boolean isHolding(Direction dir) {
-        if (dir.getAxis() == Direction.Axis.Y) {
-            return true;
-        }
-        int mask = switch (dir) {
-            case NORTH -> 1;
-            case SOUTH -> 2;
-            case EAST -> 4;
-            case WEST -> 8;
-            default -> throw new IllegalStateException("Shouldn't reach here");
+        return switch (dir) {
+            case NORTH -> (this.flags & 1) != 0;
+            case SOUTH -> (this.flags & 2) != 0;
+            case EAST -> (this.flags & 4) != 0;
+            case WEST -> (this.flags & 8) != 0;
+            case UP, DOWN -> true;
         };
-        return (this.flags & mask) != 0;
+    }
+
+    public void rememberLastDir(@Nullable Direction dir) {
+        this.lastDir = dir;
     }
 
     public void reset() {
@@ -51,6 +55,7 @@ public class ChunkHolder {
         this.chunkSouth = null;
         this.chunkEast = null;
         this.chunkWest = null;
+        this.lastDir = null;
     }
 
     public void setupIfNeeded(LevelAccessor level, ChunkPos pos, Direction dir) {

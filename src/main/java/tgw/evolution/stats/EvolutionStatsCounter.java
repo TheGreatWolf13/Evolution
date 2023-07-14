@@ -2,16 +2,16 @@ package tgw.evolution.stats;
 
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMaps;
-import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import net.minecraft.stats.Stat;
 import net.minecraft.stats.StatType;
 import net.minecraft.stats.StatsCounter;
 import net.minecraft.world.entity.player.Player;
 import tgw.evolution.Evolution;
+import tgw.evolution.util.collection.maps.O2LHashMap;
 
 public class EvolutionStatsCounter extends StatsCounter {
 
-    protected final Object2LongMap<Stat<?>> statsData = Object2LongMaps.synchronize(new Object2LongOpenHashMap<>());
+    protected final Object2LongMap<Stat<?>> statsData = Object2LongMaps.synchronize(new O2LHashMap<>());
 
     public EvolutionStatsCounter() {
         this.statsData.defaultReturnValue(0);

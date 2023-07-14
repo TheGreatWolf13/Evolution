@@ -15,8 +15,8 @@ import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.client.gui.GUIUtils;
-import tgw.evolution.util.collection.OArrayList;
-import tgw.evolution.util.collection.OList;
+import tgw.evolution.util.collection.lists.OArrayList;
+import tgw.evolution.util.collection.lists.OList;
 
 import java.util.Collections;
 import java.util.List;
@@ -288,8 +288,7 @@ public class GuiAdvancementEntry extends GuiComponent {
         this.refreshHover();
     }
 
-    @Nullable
-    private GuiAdvancementEntry getFirstVisibleParent(Advancement advancement) {
+    private @Nullable GuiAdvancementEntry getFirstVisibleParent(Advancement advancement) {
         while (true) {
             advancement = advancement.getParent();
             if (advancement == null || advancement.getDisplay() != null) {

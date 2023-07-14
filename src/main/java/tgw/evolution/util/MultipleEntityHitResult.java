@@ -4,15 +4,15 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
-import tgw.evolution.util.collection.RArrayList;
-import tgw.evolution.util.collection.RList;
+import tgw.evolution.util.collection.lists.OArrayList;
+import tgw.evolution.util.collection.lists.OList;
 
 import java.util.Comparator;
 
 public class MultipleEntityHitResult extends EntityHitResult {
 
     private final Vec3 end;
-    private final RList<DistanceHolder> hits = new RArrayList<>();
+    private final OList<DistanceHolder> hits = new OArrayList<>();
     private final Vec3 start;
     private int index;
 
@@ -48,8 +48,7 @@ public class MultipleEntityHitResult extends EntityHitResult {
         return this.start;
     }
 
-    @Nullable
-    public Entity popEntity() {
+    public @Nullable Entity popEntity() {
         if (this.index == this.hits.size()) {
             return null;
         }

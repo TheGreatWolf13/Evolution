@@ -1,12 +1,13 @@
 package tgw.evolution.client.renderer.chunk;
 
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.minecraft.util.profiling.ProfileCollector;
 import net.minecraft.util.profiling.metrics.MetricCategory;
 import net.minecraft.util.profiling.metrics.MetricSampler;
 import net.minecraft.util.profiling.metrics.MetricsSamplerProvider;
 import net.minecraft.util.profiling.metrics.profiling.ProfilerSamplerAdapter;
 import net.minecraft.util.profiling.metrics.profiling.ServerMetricsSamplersProvider;
+import tgw.evolution.util.collection.sets.OHashSet;
+import tgw.evolution.util.collection.sets.OSet;
 
 import java.util.Set;
 import java.util.function.LongSupplier;
@@ -15,7 +16,7 @@ import java.util.function.Supplier;
 public class EvClientMetricsSamplersProvider implements MetricsSamplerProvider {
     private final EvLevelRenderer levelRenderer;
     private final ProfilerSamplerAdapter samplerFactory = new ProfilerSamplerAdapter();
-    private final Set<MetricSampler> samplers = new ObjectOpenHashSet<>();
+    private final OSet<MetricSampler> samplers = new OHashSet<>();
 
     public EvClientMetricsSamplersProvider(LongSupplier ticker, EvLevelRenderer lvlRenderer) {
         this.levelRenderer = lvlRenderer;

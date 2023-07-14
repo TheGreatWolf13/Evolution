@@ -5,7 +5,12 @@ import net.minecraft.world.item.ItemStack;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.tileentities.KnappingRecipe;
 import tgw.evolution.init.EvolutionItems;
-import tgw.evolution.util.collection.*;
+import tgw.evolution.util.collection.lists.OArrayList;
+import tgw.evolution.util.collection.lists.OList;
+import tgw.evolution.util.collection.maps.I2OHashMap;
+import tgw.evolution.util.collection.maps.I2OMap;
+import tgw.evolution.util.collection.maps.R2IHashMap;
+import tgw.evolution.util.collection.maps.R2IMap;
 import tgw.evolution.util.constants.RockVariant;
 import tgw.evolution.util.constants.WoodVariant;
 
@@ -13,8 +18,8 @@ import java.util.List;
 
 public final class Toasts {
 
-    private static final I2OMap<ToastHolderRecipe[]> RECIPES = new I2OOpenHashMap<>();
-    private static final R2IMap<Item> RECIPE_TRIGGERS = new R2IOpenHashMap<>();
+    private static final I2OMap<ToastHolderRecipe[]> RECIPES = new I2OHashMap<>();
+    private static final R2IMap<Item> RECIPE_TRIGGERS = new R2IHashMap<>();
     private static int index;
 
     private Toasts() {
@@ -33,7 +38,7 @@ public final class Toasts {
         for (RockVariant variant : RockVariant.VALUES_STONE) {
             Item rockItem = variant.get(EvolutionItems.ROCKS);
             //noinspection ObjectAllocationInLoop
-            RList<ToastHolderRecipe> rockRecipes = new RArrayList<>(KnappingRecipe.VALUES.length - 1);
+            OList<ToastHolderRecipe> rockRecipes = new OArrayList<>(KnappingRecipe.VALUES.length - 1);
             for (KnappingRecipe recipe : KnappingRecipe.VALUES) {
                 if (recipe == KnappingRecipe.NULL) {
                     continue;
@@ -43,7 +48,7 @@ public final class Toasts {
             }
             registerRecipe(rockItem, rockRecipes);
         }
-        ItemStack chopping = new ItemStack(EvolutionItems.CHOPPING_BLOCKS.get(WoodVariant.OAK).get());
+        ItemStack chopping = new ItemStack(EvolutionItems.CHOPPING_BLOCKS.get(WoodVariant.OAK));
         for (WoodVariant wood : WoodVariant.VALUES) {
             Item woodItem = wood.get(EvolutionItems.LOGS);
             //noinspection ObjectAllocationInLoop

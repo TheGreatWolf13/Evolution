@@ -3,7 +3,7 @@ package tgw.evolution.client.models;
 import net.minecraft.client.model.geom.builders.CubeDefinition;
 import net.minecraft.client.model.geom.builders.CubeDeformation;
 import net.minecraft.client.model.geom.builders.CubeListBuilder;
-import tgw.evolution.patches.ICubeDefinitionPatch;
+import tgw.evolution.patches.PatchCubeDefinition;
 
 public class CubeListBuilderEv extends CubeListBuilder {
 
@@ -28,7 +28,7 @@ public class CubeListBuilderEv extends CubeListBuilder {
         CubeDefinition c = new CubeDefinition(comment, this.xTexOffs, this.yTexOffs, originX, originY, originZ, dimX, dimY, dimZ, def,
                                               this.mirror, 1.0F, 1.0F);
         if (this.shouldFix) {
-            ((ICubeDefinitionPatch) (Object) c).requestFix();
+            ((PatchCubeDefinition) (Object) c).requestFix();
         }
         this.cubes.add(c);
         return this;
@@ -48,7 +48,7 @@ public class CubeListBuilderEv extends CubeListBuilder {
         CubeDefinition c = new CubeDefinition(comment, this.xTexOffs, this.yTexOffs, originX, originY, originZ, dimX, dimY, dimZ,
                                               CubeDeformation.NONE, this.mirror, 1.0F, 1.0F);
         if (this.shouldFix) {
-            ((ICubeDefinitionPatch) (Object) c).requestFix();
+            ((PatchCubeDefinition) (Object) c).requestFix();
         }
         this.cubes.add(c);
         return this;
@@ -59,7 +59,7 @@ public class CubeListBuilderEv extends CubeListBuilder {
         CubeDefinition c = new CubeDefinition(null, this.xTexOffs, this.yTexOffs, originX, originY, originZ, dimX, dimY, dimZ, CubeDeformation.NONE,
                                               this.mirror, 1.0F, 1.0F);
         if (this.shouldFix) {
-            ((ICubeDefinitionPatch) (Object) c).requestFix();
+            ((PatchCubeDefinition) (Object) c).requestFix();
         }
         this.cubes.add(c);
         return this;
@@ -76,7 +76,7 @@ public class CubeListBuilderEv extends CubeListBuilder {
         CubeDefinition c = new CubeDefinition(comment, this.xTexOffs, this.yTexOffs, originX, originY, originZ, dimX, dimY, dimZ,
                                               CubeDeformation.NONE, this.mirror, 1.0F, 1.0F);
         if (this.shouldFix) {
-            ((ICubeDefinitionPatch) (Object) c).requestFix();
+            ((PatchCubeDefinition) (Object) c).requestFix();
         }
         this.cubes.add(c);
         return this;
@@ -94,7 +94,7 @@ public class CubeListBuilderEv extends CubeListBuilder {
         CubeDefinition c = new CubeDefinition(comment, this.xTexOffs, this.yTexOffs, originX, originY, originZ, dimX, dimY, dimZ, def, this.mirror,
                                               1.0F, 1.0F);
         if (this.shouldFix) {
-            ((ICubeDefinitionPatch) (Object) c).requestFix();
+            ((PatchCubeDefinition) (Object) c).requestFix();
         }
         this.cubes.add(c);
         return this;
@@ -111,7 +111,7 @@ public class CubeListBuilderEv extends CubeListBuilder {
         CubeDefinition c = new CubeDefinition(null, this.xTexOffs, this.yTexOffs, originX, originY, originZ, dimX, dimY, dimZ, CubeDeformation.NONE,
                                               mirror, 1.0F, 1.0F);
         if (this.shouldFix) {
-            ((ICubeDefinitionPatch) (Object) c).requestFix();
+            ((PatchCubeDefinition) (Object) c).requestFix();
         }
         this.cubes.add(c);
         return this;
@@ -130,7 +130,7 @@ public class CubeListBuilderEv extends CubeListBuilder {
         CubeDefinition c = new CubeDefinition(null, this.xTexOffs, this.yTexOffs, originX, originY, originZ, dimX, dimY, dimZ, def, this.mirror,
                                               texScaleU, texScaleV);
         if (this.shouldFix) {
-            ((ICubeDefinitionPatch) (Object) c).requestFix();
+            ((PatchCubeDefinition) (Object) c).requestFix();
         }
         this.cubes.add(c);
         return this;
@@ -147,7 +147,7 @@ public class CubeListBuilderEv extends CubeListBuilder {
         CubeDefinition c = new CubeDefinition(null, this.xTexOffs, this.yTexOffs, originX, originY, originZ, dimX, dimY, dimZ, def, this.mirror, 1.0F,
                                               1.0F);
         if (this.shouldFix) {
-            ((ICubeDefinitionPatch) (Object) c).requestFix();
+            ((PatchCubeDefinition) (Object) c).requestFix();
         }
         this.cubes.add(c);
         return this;
@@ -163,7 +163,7 @@ public class CubeListBuilderEv extends CubeListBuilder {
                                         boolean up) {
         CubeDefinition c = new CubeDefinition(null, this.xTexOffs, this.yTexOffs, originX, originY, originZ, dimX, dimY, dimZ, def, this.mirror, 1.0F,
                                               1.0F);
-        ((ICubeDefinitionPatch) (Object) c).markBend(up);
+        ((PatchCubeDefinition) (Object) c).markBend(up);
         this.cubes.add(c);
         return this;
     }

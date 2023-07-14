@@ -3,7 +3,6 @@ package tgw.evolution.entities.projectiles;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -15,8 +14,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.network.PlayMessages;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.tileentities.TETorch;
@@ -31,21 +28,17 @@ import tgw.evolution.util.damage.DamageSourceEv;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.physics.SI;
 
-public class EntityTorch extends EntityGenericProjectile<EntityTorch> {
+public class EntityTorch extends EntityGenericProjectile {
 
     private long timeCreated;
 
     public EntityTorch(Level level, LivingEntity shooter, long timeCreated) {
-        super(EvolutionEntities.TORCH.get(), shooter, level, 0.2);
+        super(EvolutionEntities.TORCH, shooter, level, 0.2);
         this.timeCreated = timeCreated;
     }
 
     public EntityTorch(EntityType<EntityTorch> type, Level level) {
         super(type, level);
-    }
-
-    public EntityTorch(@SuppressWarnings("unused") PlayMessages.SpawnEntity spawnEntity, Level level) {
-        this(EvolutionEntities.TORCH.get(), level);
     }
 
     @Override
@@ -62,11 +55,6 @@ public class EntityTorch extends EntityGenericProjectile<EntityTorch> {
     @Override
     protected boolean damagesEntities() {
         return false;
-    }
-
-    @Override
-    public Packet<?> getAddEntityPacket() {
-        return NetworkHooks.getEntitySpawningPacket(this);
     }
 
     @Override
@@ -131,7 +119,7 @@ public class EntityTorch extends EntityGenericProjectile<EntityTorch> {
             BlockPos pos = this.blockPosition();
             this.level.playSound(null, pos, SoundEvents.FIRE_EXTINGUISH, SoundSource.BLOCKS, 1.0F,
                                  2.6F + (this.random.nextFloat() - this.random.nextFloat()) * 0.8F);
-            BlockUtils.dropItemStack(this.level, pos, new ItemStack(EvolutionItems.TORCH_UNLIT.get()));
+            BlockUtils.dropItemStack(this.level, pos, new ItemStack(EvolutionItems.TORCH_UNLIT));
             this.discard();
             return;
         }
@@ -155,7 +143,7 @@ public class EntityTorch extends EntityGenericProjectile<EntityTorch> {
             Direction face = hitResult.getDirection();
             if (BlockUtils.hasSolidSide(this.level, pos.relative(face.getOpposite()), face)) {
                 if (face == Direction.UP) {
-                    BlockState state = EvolutionBlocks.TORCH.get().defaultBlockState();
+                    BlockState state = EvolutionBlocks.TORCH.defaultBlockState();
                     this.level.setBlockAndUpdate(pos, state);
                     BlockEntity tile = this.level.getBlockEntity(pos);
                     if (tile instanceof TETorch teTorch) {

@@ -1,7 +1,5 @@
 package tgw.evolution.items;
 
-import it.unimi.dsi.fastutil.objects.Reference2ObjectMap;
-import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.ai.attributes.Attribute;
@@ -10,6 +8,8 @@ import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.inventory.AdditionalSlotType;
 import tgw.evolution.inventory.SlotType;
+import tgw.evolution.util.collection.maps.R2OHashMap;
+import tgw.evolution.util.collection.maps.R2OMap;
 
 public class ItemSocks extends ItemEv implements IAdditionalEquipment, IHeatResistant, IColdResistant {
 
@@ -18,8 +18,8 @@ public class ItemSocks extends ItemEv implements IAdditionalEquipment, IHeatResi
     }
 
     @Override
-    public Reference2ObjectMap<Attribute, AttributeModifier> getAttributes(ItemStack stack) {
-        Reference2ObjectMap<Attribute, AttributeModifier> map = new Reference2ObjectOpenHashMap<>();
+    public R2OMap<Attribute, AttributeModifier> getAttributes(ItemStack stack) {
+        R2OMap<Attribute, AttributeModifier> map = new R2OHashMap<>();
         this.putHeatAttributes(map, stack, SlotType.CLOTHES_FEET);
         this.putColdAttributes(map, stack, SlotType.CLOTHES_FEET);
         return map;
@@ -30,9 +30,8 @@ public class ItemSocks extends ItemEv implements IAdditionalEquipment, IHeatResi
         return 2;
     }
 
-    @Nullable
     @Override
-    public SoundEvent getEquipSound() {
+    public @Nullable SoundEvent getEquipSound() {
         //TODO implementation
         return SoundEvents.ENDER_DRAGON_DEATH;
     }

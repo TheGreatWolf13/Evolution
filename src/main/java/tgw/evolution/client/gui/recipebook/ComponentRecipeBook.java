@@ -37,8 +37,8 @@ import tgw.evolution.client.util.Modifiers;
 import tgw.evolution.client.util.MouseButton;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.inventory.StackedContentsEv;
-import tgw.evolution.patches.IMinecraftPatch;
-import tgw.evolution.util.collection.RArrayList;
+import tgw.evolution.patches.PatchMinecraft;
+import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.math.MathHelper;
 
 import java.util.Iterator;
@@ -52,7 +52,7 @@ public class ComponentRecipeBook extends GuiComponent implements IRecipeBook, Gu
     protected final ResourceLocation resBackground;
     private final PageRecipeBook recipeBookPage;
     private final StackedContentsEv stackedContents = new StackedContentsEv();
-    private final List<ButtonTabRecipeBook> tabButtons = new RArrayList<>();
+    private final List<ButtonTabRecipeBook> tabButtons = new OArrayList<>();
     private final int texHeight;
     private final int texWidth;
     private final Component textSearch = new TranslatableComponent("evolution.gui.recipebook.search").withStyle(ChatFormatting.ITALIC)
@@ -207,7 +207,7 @@ public class ComponentRecipeBook extends GuiComponent implements IRecipeBook, Gu
         this.filterButton = new StateSwitchingButton(this.cornerX + 110, this.cornerY + 12, 26, 16, this.book.isFiltering(this.menu));
         this.initFilterButtonTextures();
         this.tabButtons.clear();
-        for (RecipeBookCategories categories : this.menu.getRecipeBookCategories()) {
+        for (RecipeBookCategories categories : /*this.menu.getRecipeBookCategories()*/RecipeBookCategories.values()) {
             //noinspection ObjectAllocationInLoop
             this.tabButtons.add(new ButtonTabRecipeBook(categories, this.resBackground, this.areTabsOnTheRight()));
         }
@@ -392,7 +392,7 @@ public class ComponentRecipeBook extends GuiComponent implements IRecipeBook, Gu
             }
         }
         if (stack != null && this.minecraft.screen != null) {
-            this.minecraft.screen.renderComponentTooltip(matrices, this.minecraft.screen.getTooltipFromItem(stack), mouseX, mouseY, stack);
+            this.minecraft.screen.renderComponentTooltip(matrices, this.minecraft.screen.getTooltipFromItem(stack), mouseX, mouseY/*, stack*/);
         }
     }
 
@@ -449,7 +449,7 @@ public class ComponentRecipeBook extends GuiComponent implements IRecipeBook, Gu
     }
 
     public void tick() {
-        if (((IMinecraftPatch) Minecraft.getInstance()).isMultiplayerPaused()) {
+        if (((PatchMinecraft) Minecraft.getInstance()).isMultiplayerPaused()) {
             return;
         }
         boolean shouldBeVisible = this.isVisibleAccordingToBookData();
@@ -484,7 +484,7 @@ public class ComponentRecipeBook extends GuiComponent implements IRecipeBook, Gu
         for (RecipeCollection recipeCollection : collection) {
             recipeCollection.canCraft(this.stackedContents, this.menu.getGridWidth(), this.menu.getGridHeight(), this.book);
         }
-        List<RecipeCollection> newList = new RArrayList<>(collection);
+        List<RecipeCollection> newList = new OArrayList<>(collection);
         for (int i = 0; i < newList.size(); i++) {
             RecipeCollection c = newList.get(i);
             if (!c.hasKnownRecipes()) {
@@ -518,7 +518,7 @@ public class ComponentRecipeBook extends GuiComponent implements IRecipeBook, Gu
 
     @Override
     public void updateNarration(NarrationElementOutput pNarrationElementOutput) {
-        List<NarratableEntry> list = new RArrayList<>();
+        List<NarratableEntry> list = new OArrayList<>();
         this.recipeBookPage.listButtons(b -> {
             if (b.isActive()) {
                 list.add(b);

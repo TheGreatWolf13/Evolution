@@ -9,19 +9,17 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.chunk.LevelChunk;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.model.data.IModelData;
-import net.minecraftforge.fml.common.Mod;
-import tgw.evolution.Evolution;
+import org.jetbrains.annotations.Nullable;
+import tgw.evolution.client.models.data.IModelData;
+import tgw.evolution.util.collection.maps.L2OHashMap;
+import tgw.evolution.util.collection.sets.LHashSet;
 
-import javax.annotation.Nullable;
 import java.lang.ref.WeakReference;
 
-@Mod.EventBusSubscriber(modid = Evolution.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class EvModelDataManager {
 
-    private static final Long2ObjectMap<LongSet> NEED_MODEL_DATA_REFRESH = Long2ObjectMaps.synchronize(new Long2ObjectOpenHashMap<>());
-    private static final Long2ObjectMap<Long2ObjectMap<IModelData>> MODEL_DATA_CACHE = Long2ObjectMaps.synchronize(new Long2ObjectOpenHashMap<>());
+    private static final Long2ObjectMap<LongSet> NEED_MODEL_DATA_REFRESH = Long2ObjectMaps.synchronize(new L2OHashMap<>());
+    private static final Long2ObjectMap<Long2ObjectMap<IModelData>> MODEL_DATA_CACHE = Long2ObjectMaps.synchronize(new L2OHashMap<>());
     private static WeakReference<ClientLevel> currentLevel = new WeakReference<>(null);
 
     private EvModelDataManager() {}
@@ -36,8 +34,8 @@ public final class EvModelDataManager {
     }
 
     public static @Nullable IModelData getModelData(ClientLevel level, int x, int y, int z) {
-        return getModelData(level, ChunkPos.asLong(SectionPos.blockToSectionCoord(x),
-                                                   SectionPos.blockToSectionCoord(z))).get(BlockPos.asLong(x, y, z));
+        return getModelData(level, ChunkPos.asLong(SectionPos.blockToSectionCoord(x), SectionPos.blockToSectionCoord(z)))
+                .get(BlockPos.asLong(x, y, z));
     }
 
     public static Long2ObjectMap<IModelData> getModelData(ClientLevel level, long chunkPos) {
@@ -60,7 +58,7 @@ public final class EvModelDataManager {
         if (needUpdate != null) {
             Long2ObjectMap<IModelData> data = MODEL_DATA_CACHE.get(chunkPos);
             if (data == null) {
-                data = Long2ObjectMaps.synchronize(new Long2ObjectOpenHashMap<>());
+                data = Long2ObjectMaps.synchronize(new L2OHashMap<>());
                 MODEL_DATA_CACHE.put(chunkPos, data);
             }
             BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
@@ -87,7 +85,7 @@ public final class EvModelDataManager {
         long chunkPos = ChunkPos.asLong(SectionPos.blockToSectionCoord(pos.getX()), SectionPos.blockToSectionCoord(pos.getZ()));
         LongSet cache = NEED_MODEL_DATA_REFRESH.get(chunkPos);
         if (cache == null) {
-            cache = LongSets.synchronize(new LongOpenHashSet());
+            cache = LongSets.synchronize(new LHashSet());
             NEED_MODEL_DATA_REFRESH.put(chunkPos, cache);
         }
         cache.add(pos.asLong());

@@ -14,7 +14,7 @@ public class ItemPartHandle extends ItemPart<PartTypes.Handle, ItemPartHandle, P
     }
 
     @Override
-    protected PartHandle createNew() {
+    public PartHandle createNew() {
         return new PartHandle();
     }
 
@@ -34,8 +34,8 @@ public class ItemPartHandle extends ItemPart<PartTypes.Handle, ItemPartHandle, P
     }
 
     @Override
-    protected PartHandle getPartCap(ItemStack stack) {
-        return PartHandle.get(stack);
+    protected PartHandle getPartCap() {
+        return new PartHandle();
     }
 
     @Override

@@ -7,7 +7,6 @@ import com.mojang.authlib.properties.Property;
 import joptsimple.internal.Strings;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -22,40 +21,35 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.GameProfileCache;
 import net.minecraft.util.Mth;
+import net.minecraft.world.Container;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.entity.IEntityAdditionalSpawnData;
-import net.minecraftforge.items.CapabilityItemHandler;
-import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.ItemStackHandler;
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.network.PlayMessages;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import tgw.evolution.capabilities.inventory.CapabilityInventory;
-import tgw.evolution.capabilities.inventory.IInventory;
+import tgw.evolution.capabilities.player.CapabilityInventory;
 import tgw.evolution.entities.EntityPlayerDummy;
 import tgw.evolution.entities.EntitySkeletonDummy;
 import tgw.evolution.entities.EntityUtils;
-import tgw.evolution.init.EvolutionCapabilities;
+import tgw.evolution.entities.IEntityPacket;
 import tgw.evolution.init.EvolutionEntities;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.inventory.AdditionalSlotType;
+import tgw.evolution.inventory.BasicContainer;
 import tgw.evolution.inventory.ContainerChecker;
 import tgw.evolution.inventory.IContainerCheckable;
 import tgw.evolution.inventory.corpse.ContainerCorpse;
-import tgw.evolution.inventory.corpse.ContainerCorpseProvider;
-import tgw.evolution.patches.IEntityPatch;
-import tgw.evolution.patches.ISynchedEntityDataPatch;
+import tgw.evolution.network.PacketSCCustomEntity;
+import tgw.evolution.patches.PatchServerPlayer;
+import tgw.evolution.patches.PatchSynchedEntityData;
 import tgw.evolution.util.EvolutionDataSerializers;
-import tgw.evolution.util.constants.NBTHelper;
+import tgw.evolution.util.NBTHelper;
 import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 import tgw.evolution.util.physics.Fluid;
 import tgw.evolution.util.physics.Physics;
@@ -65,7 +59,7 @@ import tgw.evolution.util.time.Time;
 import java.util.Optional;
 import java.util.UUID;
 
-public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawnData, IEntityPatch<EntityPlayerCorpse>, IContainerCheckable {
+public class EntityPlayerCorpse extends Entity implements IContainerCheckable, IEntityPacket<EntityPlayerCorpse>, MenuProvider, Container {
 
     public static final EntityDataAccessor<Boolean> SKELETON = SynchedEntityData.defineId(EntityPlayerCorpse.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<NonNullList<ItemStack>> EQUIPMENT = SynchedEntityData.defineId(EntityPlayerCorpse.class,
@@ -73,8 +67,7 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
     private static @Nullable GameProfileCache profileCache;
     private static @Nullable MinecraftSessionService sessionService;
     private final ContainerChecker<EntityPlayerCorpse> containerChecker;
-    private final LazyOptional<IItemHandler> handler;
-    private final ItemStackHandler itemHandler;
+    private final BasicContainer inventory;
     private Component deathMessage = EvolutionTexts.EMPTY;
     private int deathTimer;
     private long gameDeathTime;
@@ -83,7 +76,7 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
     private byte model;
     private @Nullable EntityPlayerDummy player;
     private String playerName = "";
-    private @Nullable GameProfile playerProfile;
+    private GameProfile playerProfile = EntityUtils.EMPTY_PROFILE;
     private UUID playerUUID = EntityUtils.UUID_ZERO;
     private byte recheckTime;
     private int selected;
@@ -98,8 +91,8 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
                 if (!(player.containerMenu instanceof ContainerCorpse container)) {
                     return false;
                 }
-                EntityPlayerCorpse corpse = container.getCorpse();
-                return EntityPlayerCorpse.this.equals(corpse);
+                Container corpse = container.getCorpse();
+                return EntityPlayerCorpse.this == corpse;
             }
 
             @Override
@@ -122,8 +115,8 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
         };
     }
 
-    public EntityPlayerCorpse(Player player) {
-        this(EvolutionEntities.PLAYER_CORPSE.get(), player.level);
+    public EntityPlayerCorpse(ServerPlayer player) {
+        this(EvolutionEntities.PLAYER_CORPSE, player.level);
         double x = player.getX();
         double y = player.getY();
         double z = player.getZ();
@@ -145,9 +138,9 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
         for (EquipmentSlot slot : AdditionalSlotType.SLOTS) {
             equip.set(i++, player.getItemBySlot(slot).copy());
         }
-        IInventory additionalEquip = EvolutionCapabilities.getCapabilityOrThrow(player, CapabilityInventory.INSTANCE);
+        CapabilityInventory additionalEquip = ((PatchServerPlayer) player).getExtraInventory();
         for (AdditionalSlotType slot : AdditionalSlotType.VALUES) {
-            equip.set(i++, additionalEquip.getStackInSlot(slot.ordinal()).copy());
+            equip.set(i++, additionalEquip.getItem(slot.ordinal()).copy());
         }
         this.setEquipment(equip);
         this.selected = player.getInventory().selected;
@@ -157,13 +150,13 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
         this.deathMessage = player.getCombatTracker().getDeathMessage();
     }
 
-    public EntityPlayerCorpse(EntityType<?> entityType, Level level) {
+    public EntityPlayerCorpse(EntityType<? extends EntityPlayerCorpse> entityType, Level level) {
         super(entityType, level);
         this.blocksBuilding = true;
         this.setInvulnerable(true);
-        this.itemHandler = new ItemStackHandler(AdditionalSlotType.VALUES.length + 36 + 4 + 1) {
+        this.inventory = new BasicContainer(AdditionalSlotType.VALUES.length + 36 + 4 + 1) {
             @Override
-            public @NotNull ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
+            public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
                 return stack;
             }
 
@@ -171,12 +164,18 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
             public boolean isItemValid(int slot, ItemStack stack) {
                 return false;
             }
-        };
-        this.handler = LazyOptional.of(() -> this.itemHandler);
-    }
 
-    public EntityPlayerCorpse(@SuppressWarnings("unused") PlayMessages.SpawnEntity spawnEntity, Level level) {
-        this(EvolutionEntities.PLAYER_CORPSE.get(), level);
+            @Override
+            public void onTake(int slot, Player player, ItemStack stackTaken, ItemStack newStack) {
+                //TODO implementation
+
+            }
+
+            @Override
+            public boolean stillValid(Player player) {
+                return true;
+            }
+        };
     }
 
     public static void setProfileCache(GameProfileCache profileCacheIn) {
@@ -187,7 +186,7 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
         sessionService = sessionServiceIn;
     }
 
-    public static @Nullable GameProfile updateGameProfile(@Nullable GameProfile input) {
+    public static GameProfile updateGameProfile(@Nullable GameProfile input) {
         if (input != null && !Strings.isNullOrEmpty(input.getName())) {
             if (input.isComplete() && input.getProperties().containsKey("textures")) {
                 return input;
@@ -205,12 +204,12 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
             }
             return input;
         }
-        return input;
+        return EntityUtils.EMPTY_PROFILE;
     }
 
     @Override
     protected void addAdditionalSaveData(CompoundTag compound) {
-        compound.put("Inventory", this.itemHandler.serializeNBT());
+        compound.put("Inventory", this.inventory.serializeNBT());
         if (this.recheckTime != 0) {
             compound.putByte("RecheckTime", this.recheckTime);
         }
@@ -232,6 +231,16 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
     }
 
     @Override
+    public void clearContent() {
+        this.inventory.clearContent();
+    }
+
+    @Override
+    public @Nullable AbstractContainerMenu createMenu(int i, Inventory inventory, Player player) {
+        return new ContainerCorpse(i, inventory, this.inventory);
+    }
+
+    @Override
     protected void defineSynchedData() {
         this.entityData.define(SKELETON, false);
         this.entityData.define(EQUIPMENT, NonNullList.withSize(AdditionalSlotType.SLOTS.length + AdditionalSlotType.VALUES.length, ItemStack.EMPTY));
@@ -239,7 +248,7 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
 
     @Override
     public Packet<?> getAddEntityPacket() {
-        return NetworkHooks.getEntitySpawningPacket(this);
+        return new PacketSCCustomEntity<>(this);
     }
 
     @Override
@@ -248,15 +257,17 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
     }
 
     @Override
-    public <T> @NotNull LazyOptional<T> getCapability(Capability<T> cap, @Nullable Direction side) {
-        if (cap == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY) {
-            return this.handler.cast();
-        }
-        return super.getCapability(cap, side);
+    public int getContainerSize() {
+        return this.inventory.getContainerSize();
     }
 
     public Component getDeathMessage() {
         return this.deathMessage;
+    }
+
+    @Override
+    public Component getDisplayName() {
+        return this.getName();
     }
 
     public NonNullList<ItemStack> getEquipment() {
@@ -273,8 +284,13 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
     }
 
     @Override
-    public @Nullable HitboxEntity<EntityPlayerCorpse> getHitboxes() {
+    public @Nullable HitboxEntity<? extends EntityPlayerCorpse> getHitboxes() {
         return null;
+    }
+
+    @Override
+    public ItemStack getItem(int slot) {
+        return this.inventory.getItem(slot);
     }
 
     @Override
@@ -295,8 +311,7 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
         return new TranslatableComponent("entity.evolution.player_corpse", this.playerName);
     }
 
-    @Nullable
-    public EntityPlayerDummy getPlayer() {
+    public @Nullable EntityPlayerDummy getPlayer() {
         if (this.level.isClientSide) {
             if (this.player == null) {
                 this.player = new EntityPlayerDummy((ClientLevel) this.level, this.playerProfile, this.getEquipment(), this.model);
@@ -318,8 +333,7 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
         return this.selected;
     }
 
-    @Nullable
-    public EntitySkeletonDummy getSkeleton() {
+    public @Nullable EntitySkeletonDummy getSkeleton() {
         if (this.level.isClientSide) {
             if (this.skeleton == null) {
                 this.player = null;
@@ -344,7 +358,7 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
     @Override
     public InteractionResult interact(Player player, InteractionHand hand) {
         if (!this.level.isClientSide) {
-            NetworkHooks.openGui((ServerPlayer) player, new ContainerCorpseProvider(this), packet -> packet.writeInt(this.getId()));
+            player.openMenu(this);
         }
         return InteractionResult.SUCCESS;
     }
@@ -352,6 +366,11 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
     @Override
     public boolean isAttackable() {
         return false;
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return this.inventory.isEmpty();
     }
 
     @Override
@@ -400,7 +419,7 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
 
     @Override
     protected void readAdditionalSaveData(CompoundTag compound) {
-        this.itemHandler.deserializeNBT(compound.getCompound("Inventory"));
+        this.inventory.deserializeNBT(compound.getCompound("Inventory"));
         this.recheckTime = compound.getByte("RecheckTime");
         this.deathTimer = compound.getInt("DeathTimer");
         this.isSkeleton = compound.getBoolean("IsSkeleton");
@@ -423,58 +442,78 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
     }
 
     @Override
-    public void readSpawnData(FriendlyByteBuf buffer) {
-        this.playerUUID = buffer.readUUID();
-        this.playerName = buffer.readUtf();
-        this.model = buffer.readByte();
-        this.selected = buffer.readByte();
-        this.systemDeathTime = buffer.readLong();
-        this.gameDeathTime = buffer.readLong();
-        this.deathMessage = buffer.readComponent();
+    public void readAdditionalSyncData(FriendlyByteBuf buf) {
+        this.playerUUID = buf.readUUID();
+        this.playerName = buf.readUtf();
+        this.model = buf.readByte();
+        this.selected = buf.readByte();
+        this.systemDeathTime = buf.readLong();
+        this.gameDeathTime = buf.readLong();
+        this.deathMessage = buf.readComponent();
         this.setPlayerProfile(new GameProfile(this.playerUUID, this.playerName));
+    }
+
+    @Override
+    public ItemStack removeItem(int slot, int amount) {
+        return this.inventory.removeItem(slot, amount);
+    }
+
+    @Override
+    public ItemStack removeItemNoUpdate(int slot) {
+        return this.inventory.removeItemNoUpdate(slot);
+    }
+
+    @Override
+    public void setChanged() {
+        //TODO implementation
     }
 
     public void setEquipment(NonNullList<ItemStack> equipment) {
         this.entityData.set(EQUIPMENT, equipment);
     }
 
-    public void setInventory(Player player) {
+    public void setInventory(ServerPlayer player) {
         NonNullList<ItemStack> inv = player.getInventory().armor;
         int slot = 0;
         //Armour
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 4; ++i) {
             ItemStack stack = inv.get(3 - i);
-            this.itemHandler.setStackInSlot(slot++, stack);
+            this.inventory.setItem(slot++, stack);
             inv.set(3 - i, ItemStack.EMPTY);
         }
-        //Extended Inventory
-        IInventory handler = EvolutionCapabilities.getCapabilityOrThrow(player, CapabilityInventory.INSTANCE);
-        for (int i = 0; i < handler.getSlots(); i++) {
-            ItemStack stack = handler.getStackInSlot(i);
-            handler.setStackInSlot(i, ItemStack.EMPTY);
-            this.itemHandler.setStackInSlot(slot++, stack);
+        //Extra Inventory
+        CapabilityInventory extraInventory = ((PatchServerPlayer) player).getExtraInventory();
+        for (int i = 0, len = extraInventory.getContainerSize(); i < len; ++i) {
+            ItemStack stack = extraInventory.getItem(i);
+            extraInventory.setItem(i, ItemStack.EMPTY);
+            this.inventory.setItem(slot++, stack);
         }
         //Offhand
         inv = player.getInventory().offhand;
         ItemStack stack = inv.get(0);
-        this.itemHandler.setStackInSlot(slot++, stack);
+        this.inventory.setItem(slot++, stack);
         inv.set(0, ItemStack.EMPTY);
         //Main Inventory
         inv = player.getInventory().items;
         for (int i = 9; i < 36; i++) {
             stack = inv.get(i);
-            this.itemHandler.setStackInSlot(slot++, stack);
+            this.inventory.setItem(slot++, stack);
             inv.set(i, ItemStack.EMPTY);
         }
         //Hotbar
         for (int i = 0; i < 9; i++) {
             stack = inv.get(i);
-            this.itemHandler.setStackInSlot(slot++, stack);
+            this.inventory.setItem(slot++, stack);
             inv.set(i, ItemStack.EMPTY);
         }
     }
 
-    public void setPlayerProfile(@Nullable GameProfile gameProfile) {
+    @Override
+    public void setItem(int slot, ItemStack stack) {
+        this.inventory.setItem(slot, stack);
+    }
+
+    public void setPlayerProfile(GameProfile gameProfile) {
         this.playerProfile = gameProfile;
         this.updatePlayerProfile();
     }
@@ -482,7 +521,15 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
     public void setSlot(EquipmentSlot slot, ItemStack stack) {
         NonNullList<ItemStack> equip = this.entityData.get(EQUIPMENT);
         equip.set(slot.ordinal(), stack);
-        ((ISynchedEntityDataPatch) this.entityData).forceDirty(EQUIPMENT);
+        ((PatchSynchedEntityData) this.entityData).forceDirty(EQUIPMENT);
+    }
+
+    @Override
+    public boolean stillValid(Player player) {
+        if (this.isRemoved()) {
+            return false;
+        }
+        return player.distanceToSqr(this) <= 8 * 8;
     }
 
     @Override
@@ -574,10 +621,8 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
         if (this.containerChecker.getOpenerCount() != 0) {
             return;
         }
-        for (int i = 0; i < this.itemHandler.getSlots(); i++) {
-            if (!this.itemHandler.getStackInSlot(i).isEmpty()) {
-                return;
-            }
+        if (!this.inventory.isEmpty()) {
+            return;
         }
         this.discard();
     }
@@ -587,13 +632,13 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
     }
 
     @Override
-    public void writeSpawnData(FriendlyByteBuf buffer) {
-        buffer.writeUUID(this.playerUUID);
-        buffer.writeUtf(this.playerName);
-        buffer.writeByte(this.model);
-        buffer.writeByte(this.selected);
-        buffer.writeLong(this.systemDeathTime);
-        buffer.writeLong(this.gameDeathTime);
-        buffer.writeComponent(this.deathMessage);
+    public void writeAdditionalSyncData(FriendlyByteBuf buf) {
+        buf.writeUUID(this.playerUUID);
+        buf.writeUtf(this.playerName);
+        buf.writeByte(this.model);
+        buf.writeByte(this.selected);
+        buf.writeLong(this.systemDeathTime);
+        buf.writeLong(this.gameDeathTime);
+        buf.writeComponent(this.deathMessage);
     }
 }

@@ -15,15 +15,13 @@ import net.minecraft.util.StringUtil;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraftforge.client.EffectRenderer;
-import net.minecraftforge.client.RenderProperties;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.client.util.ClientEffectInstance;
 import tgw.evolution.init.EvolutionEffects;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.init.EvolutionStyles;
-import tgw.evolution.util.collection.OArrayList;
-import tgw.evolution.util.collection.OList;
+import tgw.evolution.util.collection.lists.OArrayList;
+import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.math.MathHelper;
 
 import java.util.Collection;
@@ -144,11 +142,6 @@ public abstract class ScreenDisplayEffects<T extends AbstractContainerMenu> exte
             StringBuilder builder = new StringBuilder();
             for (int i = 0, l = this.effects.size(); i < l; i++) {
                 MobEffectInstance effect = this.effects.get(i);
-                EffectRenderer renderer = RenderProperties.getEffectRenderer(effect);
-                if (!renderer.shouldRenderInvText(effect)) {
-                    height += this.effectHeight;
-                    continue;
-                }
                 builder.setLength(0);
                 builder.append(I18n.get(effect.getEffect().getDescriptionId()));
                 int ampl = getFixedAmplifier(effect);
@@ -197,7 +190,7 @@ public abstract class ScreenDisplayEffects<T extends AbstractContainerMenu> exte
                 for (int i = 0, l1 = this.tooltips.size(); i < l1; i++) {
                     this.lines.addAll(this.font.split(this.tooltips.get(i), 250));
                 }
-                this.renderTooltip(matrices, this.lines, mouseX, mouseY, this.font);
+                this.renderTooltip(matrices, this.lines, mouseX, mouseY);
                 break;
             }
             height += this.effectHeight;

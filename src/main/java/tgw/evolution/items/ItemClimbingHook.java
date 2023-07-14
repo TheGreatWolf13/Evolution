@@ -140,7 +140,7 @@ public class ItemClimbingHook extends ItemEv implements IThrowable {
         if (hand == InteractionHand.OFF_HAND) {
             return new InteractionResultHolder<>(InteractionResult.FAIL, stack);
         }
-        if (player.getOffhandItem().getItem() != EvolutionItems.ROPE.get()) {
+        if (player.getOffhandItem().getItem() != EvolutionItems.ROPE) {
             player.displayClientMessage(EvolutionTexts.ACTION_HOOK, true);
             return new InteractionResultHolder<>(InteractionResult.FAIL, stack);
         }

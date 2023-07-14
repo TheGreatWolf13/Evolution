@@ -9,11 +9,11 @@ import net.minecraft.world.inventory.RecipeBookMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
-import net.minecraftforge.common.crafting.IShapedRecipe;
+import net.minecraft.world.item.crafting.ShapedRecipe;
 import org.jetbrains.annotations.Nullable;
-import tgw.evolution.util.collection.BiIIArrayList;
-import tgw.evolution.util.collection.OArrayList;
-import tgw.evolution.util.collection.OList;
+import tgw.evolution.util.collection.lists.BiIIArrayList;
+import tgw.evolution.util.collection.lists.OArrayList;
+import tgw.evolution.util.collection.lists.OList;
 
 public final class ServerPlaceRecipeEv {
 
@@ -167,9 +167,9 @@ public final class ServerPlaceRecipeEv {
                                     int maxAmount) {
         int newWidth = width;
         int newHeight = height;
-        if (recipe instanceof IShapedRecipe<?> shapedrecipe) {
-            newWidth = shapedrecipe.getRecipeWidth();
-            newHeight = shapedrecipe.getRecipeHeight();
+        if (recipe instanceof ShapedRecipe shapedRecipe) {
+            newWidth = shapedRecipe.getWidth();
+            newHeight = shapedRecipe.getHeight();
         }
         int k1 = 0;
         int ingredientCounter = 0;

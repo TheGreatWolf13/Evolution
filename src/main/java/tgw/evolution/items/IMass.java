@@ -12,6 +12,6 @@ public interface IMass {
     double getMass(ItemStack stack);
 
     default void putMassAttributes(ImmutableMultimap.Builder<Attribute, AttributeModifier> builder, ItemStack stack, SlotType slot) {
-        builder.put(EvolutionAttributes.MASS.get(), EvolutionAttributes.massModifier(this.getMass(stack), slot));
+        builder.put(EvolutionAttributes.MASS, EvolutionAttributes.massModifier(this.getMass(stack), slot));
     }
 }

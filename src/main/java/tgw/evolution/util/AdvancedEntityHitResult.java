@@ -8,16 +8,14 @@ import tgw.evolution.util.hitbox.Hitbox;
 
 public class AdvancedEntityHitResult extends EntityHitResult {
 
-    @Nullable
-    private final Hitbox hitbox;
+    private final @Nullable Hitbox hitbox;
 
     public AdvancedEntityHitResult(Entity entity, Vec3 hitVec, @Nullable Hitbox hitbox) {
         super(entity, hitVec);
         this.hitbox = hitbox;
     }
 
-    @Nullable
-    public Hitbox getHitbox() {
+    public @Nullable Hitbox getHitbox() {
         return this.hitbox;
     }
 }

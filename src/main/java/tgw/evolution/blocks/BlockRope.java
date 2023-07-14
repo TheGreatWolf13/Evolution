@@ -50,7 +50,7 @@ public class BlockRope extends BlockGeneric implements IReplaceable, IFallSufixB
                 }
                 return ropeSupport.getRopeLength() >= ropeCount;
             }
-            if (currentDirection == Direction.UP && currentState.getBlock() == EvolutionBlocks.ROPE.get()) {
+            if (currentDirection == Direction.UP && currentState.getBlock() == EvolutionBlocks.ROPE) {
                 if (currentState.getValue(DIRECTION_HORIZONTAL) == facing) {
                     continue;
                 }
@@ -61,7 +61,7 @@ public class BlockRope extends BlockGeneric implements IReplaceable, IFallSufixB
                 ropeCount--;
                 continue;
             }
-            if (currentState.getBlock() == EvolutionBlocks.ROPE_GROUND.get()) {
+            if (currentState.getBlock() == EvolutionBlocks.ROPE_GROUND) {
                 if (currentState.getValue(DIRECTION_HORIZONTAL) == facing) {
                     continue;
                 }
@@ -94,7 +94,7 @@ public class BlockRope extends BlockGeneric implements IReplaceable, IFallSufixB
 
     @Override
     public ItemStack getCloneItemStack(BlockState state, HitResult target, BlockGetter level, BlockPos pos, Player player) {
-        return new ItemStack(EvolutionItems.ROPE.get());
+        return new ItemStack(EvolutionItems.ROPE);
     }
 
     @Override
@@ -123,9 +123,8 @@ public class BlockRope extends BlockGeneric implements IReplaceable, IFallSufixB
         };
     }
 
-    @Nullable
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext context) {
+    public @Nullable BlockState getStateForPlacement(BlockPlaceContext context) {
         return this.defaultBlockState().setValue(DIRECTION_HORIZONTAL, context.getHorizontalDirection());
     }
 

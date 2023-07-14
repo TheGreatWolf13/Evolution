@@ -4,7 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
-import net.minecraftforge.client.gui.GuiUtils;
+import tgw.evolution.client.gui.GUIUtils;
 
 public class AdvCheckBox extends Button {
 
@@ -47,7 +47,7 @@ public class AdvCheckBox extends Button {
         if (this.visible) {
             Minecraft mc = Minecraft.getInstance();
             this.isHovered = mouseX >= this.x && mouseY >= this.y && mouseX < this.x + this.boxWidth && mouseY < this.y + this.height;
-            GuiUtils.drawContinuousTexturedBox(matrices,
+            GUIUtils.drawContinuousTexturedBox(matrices,
                                                WIDGETS_LOCATION,
                                                this.leftText ? this.x + this.width - this.boxWidth : this.x,
                                                this.y,
@@ -63,10 +63,7 @@ public class AdvCheckBox extends Button {
                                                2,
                                                0);
             int color = 0xe0_e0e0;
-            if (this.packedFGColor != 0) {
-                color = this.packedFGColor;
-            }
-            else if (!this.active) {
+            if (!this.active) {
                 color = 0xa0_a0a0;
             }
             if (this.isChecked) {

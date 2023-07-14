@@ -2,14 +2,15 @@ package tgw.evolution.client.util;
 
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
-import tgw.evolution.patches.IMobEffectInstancePatch;
+import org.jetbrains.annotations.Nullable;
+import tgw.evolution.patches.PatchMobEffectInstance;
 
 public class ClientEffectInstance implements Comparable<ClientEffectInstance> {
 
     private final MobEffect effect;
     private int amplifier;
     private int duration;
-    private ClientEffectInstance hiddenInstance;
+    private @Nullable ClientEffectInstance hiddenInstance;
     private boolean isAmbient;
     private boolean isInfinite;
     private boolean isShowIcon;
@@ -40,9 +41,9 @@ public class ClientEffectInstance implements Comparable<ClientEffectInstance> {
         this.amplifier = instance.getAmplifier();
         this.duration = instance.getDuration();
         this.isAmbient = instance.isAmbient();
-        this.setInfinite(((IMobEffectInstancePatch) instance).isInfinite());
+        this.setInfinite(((PatchMobEffectInstance) instance).isInfinite());
         this.isShowIcon = instance.showIcon();
-        this.setHiddenInstance(((IMobEffectInstancePatch) instance).getHiddenEffect());
+        this.setHiddenInstance(((PatchMobEffectInstance) instance).getHiddenEffect());
     }
 
     @Override
@@ -82,12 +83,8 @@ public class ClientEffectInstance implements Comparable<ClientEffectInstance> {
         return this.effect;
     }
 
-    public ClientEffectInstance getHiddenInstance() {
+    public @Nullable ClientEffectInstance getHiddenInstance() {
         return this.hiddenInstance;
-    }
-
-    public boolean hasHiddenInstance() {
-        return this.hiddenInstance != null;
     }
 
     @Override
@@ -119,13 +116,13 @@ public class ClientEffectInstance implements Comparable<ClientEffectInstance> {
         this.duration = duration;
     }
 
-    public void setHiddenInstance(ClientEffectInstance hiddenInstance) {
+    public void setHiddenInstance(@Nullable ClientEffectInstance hiddenInstance) {
         if (!this.isInfinite) {
             this.hiddenInstance = hiddenInstance;
         }
     }
 
-    public void setHiddenInstance(MobEffectInstance hiddenInstance) {
+    public void setHiddenInstance(@Nullable MobEffectInstance hiddenInstance) {
         if (!this.isInfinite && hiddenInstance != null) {
             this.hiddenInstance = new ClientEffectInstance(hiddenInstance);
         }

@@ -18,9 +18,4 @@ public class ItemBlock extends BlockItem implements IEvolutionItem {
     public boolean isCorrectToolForDrops(ItemStack stack, BlockState state, @Nullable Level level, @Nullable BlockPos pos) {
         return false;
     }
-
-    @Override
-    public boolean shouldCauseReequipAnimation(ItemStack oldStack, ItemStack newStack, boolean slotChanged) {
-        return !ItemStack.matches(oldStack, newStack);
-    }
 }

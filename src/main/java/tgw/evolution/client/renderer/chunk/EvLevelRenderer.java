@@ -10,12 +10,8 @@ import com.mojang.blaze3d.vertex.*;
 import com.mojang.math.Matrix3f;
 import com.mojang.math.Matrix4f;
 import com.mojang.math.Vector3f;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
-import it.unimi.dsi.fastutil.longs.LongSet;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.CrashReport;
 import net.minecraft.Util;
 import net.minecraft.client.*;
@@ -28,6 +24,7 @@ import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Registry;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
@@ -65,10 +62,6 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraftforge.client.ICloudRenderHandler;
-import net.minecraftforge.client.IWeatherParticleRenderHandler;
-import net.minecraftforge.client.IWeatherRenderHandler;
-import net.minecraftforge.common.ForgeConfig;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL11C;
 import tgw.evolution.Evolution;
@@ -83,19 +76,28 @@ import tgw.evolution.client.util.Blending;
 import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.init.EvolutionItems;
-import tgw.evolution.mixin.RenderSystemAccessor;
-import tgw.evolution.patches.IDebugRendererPatch;
-import tgw.evolution.patches.IEntityPatch;
-import tgw.evolution.patches.IFrustumPatch;
-import tgw.evolution.patches.ILevelReaderPatch;
+import tgw.evolution.mixin.AccessorRenderSystem;
+import tgw.evolution.patches.PatchDebugRenderer;
+import tgw.evolution.patches.PatchLevelReader;
+import tgw.evolution.resources.IKeyedReloadListener;
+import tgw.evolution.resources.ReloadListernerKeys;
 import tgw.evolution.util.AdvancedEntityHitResult;
-import tgw.evolution.util.collection.*;
+import tgw.evolution.util.collection.OArrayFIFOQueue;
+import tgw.evolution.util.collection.lists.OArrayList;
+import tgw.evolution.util.collection.lists.OList;
+import tgw.evolution.util.collection.maps.I2OHashMap;
+import tgw.evolution.util.collection.maps.I2OMap;
+import tgw.evolution.util.collection.maps.L2OHashMap;
+import tgw.evolution.util.collection.maps.L2OMap;
+import tgw.evolution.util.collection.sets.LHashSet;
+import tgw.evolution.util.collection.sets.LSet;
+import tgw.evolution.util.collection.sets.RHashSet;
+import tgw.evolution.util.collection.sets.RSet;
 import tgw.evolution.util.constants.BlockFlags;
 import tgw.evolution.util.constants.LvlEvent;
 import tgw.evolution.util.constants.RenderLayer;
 import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 import tgw.evolution.util.math.DirectionUtil;
-import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.math.VectorUtil;
 import tgw.evolution.world.EvBlockDestructionProgress;
 
@@ -106,20 +108,22 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.random.RandomGenerator;
 
-public class EvLevelRenderer implements ResourceManagerReloadListener, AutoCloseable {
+@Environment(EnvType.CLIENT)
+public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerReloadListener, AutoCloseable {
     private static final ResourceLocation CLOUDS_LOCATION = new ResourceLocation("textures/environment/clouds.png");
     private static final ResourceLocation END_SKY_LOCATION = new ResourceLocation("textures/environment/end_sky.png");
     private static final ResourceLocation FORCEFIELD_LOCATION = new ResourceLocation("textures/misc/forcefield.png");
     private static final ResourceLocation RAIN_LOCATION = new ResourceLocation("textures/environment/rain.png");
     private static final ResourceLocation SNOW_LOCATION = new ResourceLocation("textures/environment/snow.png");
+    private static final List<ResourceLocation> DEPENDENCY = List.of(ReloadListernerKeys.TEXTURES);
     private static final ThreadLocal<OArrayFIFOQueue<RenderChunkInfo>> QUEUE_CACHE = ThreadLocal.withInitial(OArrayFIFOQueue::new);
     private final BlockEntityRenderDispatcher blockEntityRenderDispatcher;
     private final BufferHolder bufferHolder;
     private final RenderChunkInfoComparator comparator = new RenderChunkInfoComparator();
     private final Frustum cullingFrustum = new Frustum(new Matrix4f(), new Matrix4f());
-    private final Int2ObjectMap<EvBlockDestructionProgress> destroyingBlocks = new Int2ObjectOpenHashMap<>();
+    private final I2OMap<EvBlockDestructionProgress> destroyingBlocks = new I2OHashMap<>();
     private final BlockPos.MutableBlockPos destructionPos = new BlockPos.MutableBlockPos();
-    private final Long2ObjectMap<SortedSet<EvBlockDestructionProgress>> destructionProgress = new Long2ObjectOpenHashMap<>();
+    private final L2OMap<SortedSet<EvBlockDestructionProgress>> destructionProgress = new L2OHashMap<>();
     private final EntityRenderDispatcher entityRenderDispatcher;
     /**
      * Global block entities; these are always rendered, even if off-screen.
@@ -127,14 +131,14 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
      * net.minecraft.client.renderer.blockentity.BlockEntityRenderer#shouldRenderOffScreen(net.minecraft.world.level.block.entity.BlockEntity)}
      * returns {@code true}.
      */
-    private final RSet<BlockEntity> globalBlockEntities = new ROpenHashSet<>();
+    private final RSet<BlockEntity> globalBlockEntities = new RHashSet<>();
     private final LevelEventListener listener;
     private final Minecraft mc;
     private final AtomicBoolean needsFrustumUpdate = new AtomicBoolean(false);
     private final AtomicLong nextFullUpdateMillis = new AtomicLong(0L);
     private final float[] rainSizeX = new float[1_024];
     private final float[] rainSizeZ = new float[1_024];
-    private final RList<EvChunkRenderDispatcher.RenderChunk> recentlyCompiledChunks = new RArrayList<>();
+    private final OList<EvChunkRenderDispatcher.RenderChunk> recentlyCompiledChunks = new OArrayList<>();
     private final EvRenderRegionCache renderCache = new EvRenderRegionCache();
     private final OList<EvChunkRenderDispatcher.RenderChunk> renderChunksInFrustum = new OArrayList<>();
     private final SkyFogSetup skyFog = new SkyFogSetup();
@@ -150,6 +154,10 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
     private int lastCameraChunkZ = Integer.MIN_VALUE;
     private @Nullable Future<?> lastFullRenderChunkUpdate;
     private int lastViewDistance = -1;
+    /**
+     * Bits as in {@link RenderLayer}
+     */
+    private byte layersInFrustum;
     private @Nullable ClientLevel level;
     private boolean needsFullRenderChunkUpdate = true;
     private @Nullable RenderTarget particlesTarget;
@@ -257,7 +265,7 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
         }
         int skyLight = level.getBrightness(LightLayer.SKY, pos);
         int blockLight = level.getBrightness(LightLayer.BLOCK, pos);
-        int emission = state.getLightEmission(level, pos);
+        int emission = state.getLightEmission();
         if (blockLight < emission) {
             blockLight = emission;
         }
@@ -275,11 +283,11 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
         for (int i = 0; i < 6; ++i) {
             matrices.pushPose();
             switch (i) {
-                case 1 -> MathHelper.getExtendedMatrix(matrices).mulPoseX(90);
-                case 2 -> MathHelper.getExtendedMatrix(matrices).mulPoseX(-90.0F);
-                case 3 -> MathHelper.getExtendedMatrix(matrices).mulPoseX(180.0F);
-                case 4 -> MathHelper.getExtendedMatrix(matrices).mulPoseZ(90.0F);
-                case 5 -> MathHelper.getExtendedMatrix(matrices).mulPoseZ(-90.0F);
+                case 1 -> matrices.mulPoseX(90);
+                case 2 -> matrices.mulPoseX(-90.0F);
+                case 3 -> matrices.mulPoseX(180.0F);
+                case 4 -> matrices.mulPoseZ(90.0F);
+                case 5 -> matrices.mulPoseZ(-90.0F);
             }
             Matrix4f matrix = matrices.last().pose();
             builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
@@ -448,7 +456,7 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
     public void allChanged() {
         this.renderOnThread = EvolutionConfig.CLIENT.syncRendering.get();
         if (this.level != null) {
-            ((IDebugRendererPatch) this.mc.debugRenderer).setRenderHeightmap(EvolutionConfig.CLIENT.renderHeightmap.get());
+            ((PatchDebugRenderer) this.mc.debugRenderer).setRenderHeightmap(EvolutionConfig.CLIENT.renderHeightmap.get());
             this.graphicsChanged();
             this.level.clearTintCaches();
             if (this.chunkRenderDispatcher == null) {
@@ -497,8 +505,8 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
         this.viewArea.resetVisibility();
         this.renderChunksInFrustum.clear();
         RenderChunkStorage storage = this.renderChunkStorage;
+        this.layersInFrustum = 0;
         if (storage != null) {
-            IFrustumPatch patch = (IFrustumPatch) frustum;
             OList<EvChunkRenderDispatcher.RenderChunk> renderChunks = storage.renderChunks;
             for (int i = 0, len = renderChunks.size(); i < len; i++) {
                 EvChunkRenderDispatcher.RenderChunk chunk = renderChunks.get(i);
@@ -509,10 +517,11 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
                 int x = chunk.getX();
                 int y = chunk.getY();
                 int z = chunk.getZ();
-                @Visibility int visibility = patch.intersectWith(x, y, z, x + 16, y + 16, z + 16);
+                @Visibility int visibility = frustum.intersectWith(x, y, z, x + 16, y + 16, z + 16);
                 chunk.visibility = visibility;
                 if (visibility != Visibility.OUTSIDE) {
                     this.renderChunksInFrustum.add(chunk);
+                    this.layersInFrustum |= chunk.getRenderLayers();
                 }
             }
         }
@@ -741,7 +750,6 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
         ProfilerFiller profiler = this.mc.getProfiler();
         profiler.push("populate_chunks_to_compile");
         BlockPos cameraPos = camera.getBlockPosition();
-        boolean forceOffThread = !this.renderOnThread && ForgeConfig.CLIENT.alwaysSetupTerrainOffThread.get();
         for (int i = 0, l = this.renderChunksInFrustum.size(); i < l; i++) {
             EvChunkRenderDispatcher.RenderChunk chunk = this.renderChunksInFrustum.get(i);
             int chunkX = SectionPos.blockToSectionCoord(chunk.getX());
@@ -759,14 +767,12 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
                 }
                 else {
                     boolean buildSync = false;
-                    if (!forceOffThread) {
-                        if (this.mc.options.prioritizeChunkUpdates == PrioritizeChunkUpdates.PLAYER_AFFECTED) {
-                            buildSync = chunk.isDirtyFromPlayer();
-                        }
-                        else if (this.mc.options.prioritizeChunkUpdates == PrioritizeChunkUpdates.NEARBY) {
-                            buildSync = chunk.isDirtyFromPlayer() ||
-                                        VectorUtil.distSqr(cameraPos, chunk.getX() + 8, chunk.getY() + 8, chunk.getZ() + 8) <= 24 * 24;
-                        }
+                    if (this.mc.options.prioritizeChunkUpdates == PrioritizeChunkUpdates.PLAYER_AFFECTED) {
+                        buildSync = chunk.isDirtyFromPlayer();
+                    }
+                    else if (this.mc.options.prioritizeChunkUpdates == PrioritizeChunkUpdates.NEARBY) {
+                        buildSync = chunk.isDirtyFromPlayer() ||
+                                    VectorUtil.distSqr(cameraPos, chunk.getX() + 8, chunk.getY() + 8, chunk.getZ() + 8) <= 24 * 24;
                     }
                     if (buildSync) {
                         profiler.push("build_near_sync");
@@ -930,6 +936,11 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
         return this.cloudsTarget;
     }
 
+    @Override
+    public Collection<ResourceLocation> getDependencies() {
+        return DEPENDENCY;
+    }
+
     /**
      * @return entity rendering statistics to display on the {@linkplain
      * net.minecraft.client.gui.components.DebugScreenOverlay debug overlay}
@@ -947,6 +958,11 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
     public RenderTarget getItemEntityTarget() {
         assert this.itemEntityTarget != null;
         return this.itemEntityTarget;
+    }
+
+    @Override
+    public ResourceLocation getKey() {
+        return ReloadListernerKeys.LEVEL_RENDERER;
     }
 
     public double getLastViewDistance() {
@@ -1242,6 +1258,9 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
                                   Matrix4f projectionMatrix) {
         assert RenderSystem.isOnRenderThread();
         assert this.chunkRenderDispatcher != null;
+        if ((this.layersInFrustum & 1 << renderLayer) == 0) {
+            return;
+        }
         renderType.setupRenderState();
         int size = this.renderChunksInFrustum.size();
         ProfilerFiller profiler = this.mc.getProfiler();
@@ -1315,11 +1334,6 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
 
     public void renderClouds(PoseStack matrices, Matrix4f pProjectionMatrix, float pPartialTick, double pCamX, double pCamY, double pCamZ) {
         assert this.level != null;
-        ICloudRenderHandler renderHandler = this.level.effects().getCloudRenderHandler();
-        if (renderHandler != null) {
-            renderHandler.render(this.ticks, pPartialTick, matrices, this.level, this.mc, pCamX, pCamY, pCamZ);
-            return;
-        }
         float f = this.level.effects().getCloudHeight();
         if (!Float.isNaN(f)) {
             RenderSystem.disableCull();
@@ -1446,10 +1460,10 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
                             Matrix4f projectionMatrix) {
         assert this.level != null;
         assert this.mc.hitResult != null;
-        assert this.mc.crosshairPickEntity != null;
         assert this.mc.player != null;
         RenderSystem.setShaderGameTime(this.level.getGameTime(), partialTicks);
         this.blockEntityRenderDispatcher.prepare(this.level, camera, this.mc.hitResult);
+        //noinspection ConstantConditions
         this.entityRenderDispatcher.prepare(this.level, camera, this.mc.crosshairPickEntity);
         ProfilerFiller profiler = this.level.getProfiler();
         profiler.popPush("light_update_queue");
@@ -1468,12 +1482,12 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
         float renderDistance = gameRenderer.getRenderDistance();
         boolean isFoggy = this.level.effects().isFoggyAt(Mth.floor(camX), Mth.floor(camY)) ||
                           this.mc.gui.getBossOverlay().shouldCreateWorldFog();
-        FogRenderer.setupFog(camera, FogRenderer.FogMode.FOG_SKY, renderDistance, isFoggy, partialTicks);
+        FogRenderer.setupFog(camera, FogRenderer.FogMode.FOG_SKY, renderDistance, isFoggy);
         profiler.popPush("sky");
-        RenderSystemAccessor.setShader(GameRenderer.getPositionShader());
-        this.renderSky(matrices, partialTicks, camera, isFoggy, this.skyFog.set(camera, renderDistance, isFoggy, partialTicks));
+        AccessorRenderSystem.setShader(GameRenderer.getPositionShader());
+        this.renderSky(matrices, partialTicks, camera, isFoggy, this.skyFog.set(camera, renderDistance, isFoggy));
         profiler.popPush("fog");
-        FogRenderer.setupFog(camera, FogRenderer.FogMode.FOG_TERRAIN, Math.max(renderDistance, 32.0F), isFoggy, partialTicks);
+        FogRenderer.setupFog(camera, FogRenderer.FogMode.FOG_TERRAIN, Math.max(renderDistance, 32.0F), isFoggy);
         profiler.popPush("terrain_setup");
         Frustum frustum = this.cullingFrustum;
         this.setupRender(camera, frustum, this.mc.player.isSpectator());
@@ -1481,9 +1495,7 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
         this.compileChunks(camera, endTickTime);
         profiler.popPush("terrain");
         this.renderChunkLayer(RenderType.solid(), RenderLayer.SOLID, matrices, camX, camY, camZ, projectionMatrix);
-        this.mc.getModelManager().getAtlas(TextureAtlas.LOCATION_BLOCKS).setBlurMipmap(false, this.mc.options.mipmapLevels > 0);
         this.renderChunkLayer(RenderType.cutoutMipped(), RenderLayer.CUTOUT_MIPPED, matrices, camX, camY, camZ, projectionMatrix);
-        this.mc.getModelManager().getAtlas(TextureAtlas.LOCATION_BLOCKS).restoreLastBlurMipmap();
         this.renderChunkLayer(RenderType.cutout(), RenderLayer.CUTOUT, matrices, camX, camY, camZ, projectionMatrix);
         if (this.level.effects().constantAmbientLight()) {
             Lighting.setupNetherLevel(matrices.last().pose());
@@ -1512,7 +1524,8 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
         for (Entity entity : this.level.entitiesForRendering()) {
             if ((entity != cameraEntity || camera.isDetached()) &&
                 (this.entityRenderDispatcher.shouldRender(entity, frustum, camX, camY, camZ) || entity.hasIndirectPassenger(this.mc.player))) {
-                profiler.push(entity.getType().getRegistryName().getPath());
+                //noinspection ObjectAllocationInLoop
+                profiler.push(() -> Registry.ENTITY_TYPE.getKey(entity.getType()).toString());
                 ++this.renderedEntities;
                 if (entity.tickCount == 0) {
                     entity.xOld = entity.getX();
@@ -1540,7 +1553,7 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
         //Render player in first person
         ClientEvents client = ClientEvents.getInstance();
         if (!camera.isDetached() && cameraEntity.isAlive()) {
-            profiler.push(cameraEntity.getType().getRegistryName().getPath());
+            profiler.push(() -> Registry.ENTITY_TYPE.getKey(cameraEntity.getType()).toString());
             this.renderedEntities++;
             MultiBufferSource multiBufferSource;
             if (this.shouldShowEntityOutlines() && this.mc.shouldEntityAppearGlowing(cameraEntity)) {
@@ -1578,7 +1591,8 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
             if (!blockEntities.isEmpty()) {
                 for (int j = 0, len = blockEntities.size(); j < len; j++) {
                     BlockEntity blockEntity = blockEntities.get(j);
-                    profiler.push(blockEntity.getType().getRegistryName().getPath());
+                    //noinspection ObjectAllocationInLoop
+                    profiler.push(() -> Registry.BLOCK_ENTITY_TYPE.getKey(blockEntity.getType()).toString());
                     if (renderChunk.visibility != Visibility.INSIDE && !frustum.isVisible(blockEntity.getRenderBoundingBox())) {
                         profiler.pop();
                         continue;
@@ -1634,14 +1648,14 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
             this.mc.getMainRenderTarget().bindWrite(false);
         }
         profiler.popPush("destroyProgress");
-        for (Long2ObjectMap.Entry<SortedSet<EvBlockDestructionProgress>> destructionEntry : this.destructionProgress.long2ObjectEntrySet()) {
-            //Replaced with a fixed MutableBlockPos client
-            this.destructionPos.set(destructionEntry.getLongKey());
+        L2OMap<SortedSet<EvBlockDestructionProgress>> destructions = this.destructionProgress;
+        for (L2OMap.Entry<SortedSet<EvBlockDestructionProgress>> e = destructions.fastEntries(); e != null; e = destructions.fastEntries()) {
+            this.destructionPos.set(e.key());
             double deltaX = this.destructionPos.getX() - camX;
             double deltaY = this.destructionPos.getY() - camY;
             double deltaZ = this.destructionPos.getZ() - camZ;
             if (!(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ > 1_024.0)) {
-                SortedSet<EvBlockDestructionProgress> destructionProgresses = destructionEntry.getValue();
+                SortedSet<EvBlockDestructionProgress> destructionProgresses = e.value();
                 if (destructionProgresses != null && !destructionProgresses.isEmpty()) {
                     int progress = destructionProgresses.last().getProgress();
                     matrices.pushPose();
@@ -1652,7 +1666,8 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
                             this.bufferHolder.crumblingBufferSource().getBuffer(ModelBakery.DESTROY_TYPES.get(progress)), entry.pose(),
                             entry.normal());
                     this.mc.getBlockRenderer()
-                           .renderBreakingTexture(this.level.getBlockState(this.destructionPos), this.destructionPos, this.level, matrices, consumer);
+                           .renderBreakingTexture(this.level.getBlockState_(this.destructionPos), this.destructionPos, this.level, matrices,
+                                                  consumer);
                     matrices.popPose();
                 }
             }
@@ -1687,9 +1702,9 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
             }
             if (this.mc.getEntityRenderDispatcher().shouldRenderHitBoxes()) {
                 assert this.mc.player != null;
-                if (this.mc.player.getMainHandItem().getItem() == EvolutionItems.DEBUG_ITEM.get() ||
-                    this.mc.player.getOffhandItem().getItem() == EvolutionItems.DEBUG_ITEM.get()) {
-                    HitboxEntity<? extends Entity> hitboxes = ((IEntityPatch) this.mc.player).getHitboxes();
+                if (this.mc.player.getMainHandItem().getItem() == EvolutionItems.DEBUG_ITEM ||
+                    this.mc.player.getOffhandItem().getItem() == EvolutionItems.DEBUG_ITEM) {
+                    HitboxEntity<? extends Entity> hitboxes = this.mc.player.getHitboxes();
                     if (hitboxes != null) {
                         client.getRenderer().renderHitbox(matrices, buffer, this.mc.player, hitboxes.getBoxes().get(0), camera, partialTicks);
                     }
@@ -1731,7 +1746,7 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
             this.particlesTarget.copyDepthFrom(this.mc.getMainRenderTarget());
             RenderStateShard.PARTICLES_TARGET.setupRenderState();
             profiler.popPush("particles");
-            this.mc.particleEngine.render(matrices, buffer, lightTexture, camera, partialTicks, frustum);
+            this.mc.particleEngine.render(matrices, buffer, lightTexture, camera, partialTicks);
             RenderStateShard.PARTICLES_TARGET.clearRenderState();
         }
         else {
@@ -1745,7 +1760,7 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
             profiler.popPush("tripwire");
             this.renderChunkLayer(RenderType.tripwire(), RenderLayer.TRIPWIRE, matrices, camX, camY, camZ, projectionMatrix);
             profiler.popPush("particles");
-            this.mc.particleEngine.render(matrices, buffer, lightTexture, camera, partialTicks, frustum);
+            this.mc.particleEngine.render(matrices, buffer, lightTexture, camera, partialTicks);
         }
         internalMat.pushPose();
         internalMat.mulPoseMatrix(matrices.last().pose());
@@ -1762,7 +1777,7 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
             }
             else {
                 profiler.popPush("clouds");
-                RenderSystemAccessor.setShader(GameRenderer.getPositionTexColorNormalShader());
+                AccessorRenderSystem.setShader(GameRenderer.getPositionTexColorNormalShader());
                 this.renderClouds(matrices, projectionMatrix, partialTicks, camX, camY, camZ);
             }
         }
@@ -1816,11 +1831,6 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
     private void renderSnowAndRain(LightTexture lightTexture, float partialTick, double camX, double camY, double camZ) {
         ClientLevel level = this.level;
         assert level != null;
-        IWeatherRenderHandler renderHandler = level.effects().getWeatherRenderHandler();
-        if (renderHandler != null) {
-            renderHandler.render(this.ticks, partialTick, level, this.mc, lightTexture, camX, camY, camZ);
-            return;
-        }
         float f = level.getRainLevel(partialTick);
         if (!(f <= 0.0F)) {
             lightTexture.turnOnLightLayer();
@@ -1850,7 +1860,7 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
                     int l1 = (z - k + 16) * 32 + x - i + 16;
                     double d0 = this.rainSizeX[l1] * 0.5;
                     double d1 = this.rainSizeZ[l1] * 0.5;
-                    Biome biome = ((ILevelReaderPatch) level).getBiome(x, cy, z).value();
+                    Biome biome = ((PatchLevelReader) level).getBiome_(x, cy, z).value();
                     if (biome.getPrecipitation() != Biome.Precipitation.NONE) {
                         int i2 = level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z);
                         int y = j - l;
@@ -2271,11 +2281,6 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
 
     public void tickRain(Camera camera) {
         assert this.level != null;
-        IWeatherParticleRenderHandler renderHandler = this.level.effects().getWeatherParticleRenderHandler();
-        if (renderHandler != null) {
-            renderHandler.render(this.ticks, this.level, this.mc, camera);
-            return;
-        }
         float f = this.level.getRainLevel(1.0F) / (Minecraft.useFancyGraphics() ? 1.0F : 2.0F);
         if (!(f <= 0.0F)) {
             RandomGenerator random = new Random(this.ticks * 312_987_231L);
@@ -2482,6 +2487,10 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
         }
     }
 
+    public boolean visibleFrustumCulling(AABB bb) {
+        return this.cullingFrustum.isVisible(bb);
+    }
+
     public boolean visibleOcclusionCulling(double x, double y, double z) {
         assert this.viewArea != null;
         EvChunkRenderDispatcher.RenderChunk chunk = this.viewArea.getRenderChunkAt(Mth.floor(x), Mth.floor(y), Mth.floor(z));
@@ -2594,7 +2603,7 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
     public static class RenderChunkStorage {
         public final RenderInfoMap renderInfoMap;
         private final OList<EvChunkRenderDispatcher.RenderChunk> renderChunks;
-        private final LongSet visited = new LongOpenHashSet();
+        private final LSet visited = new LHashSet();
 
         public RenderChunkStorage(int size) {
             this.renderInfoMap = new RenderInfoMap(size);

@@ -49,7 +49,7 @@ public class ItemStick extends ItemBlock {
                 BlockUtils.dropItemStack(level, pos, stack);
             }
             level.playSound(player, pos, SoundEvents.FIRE_AMBIENT, SoundSource.PLAYERS, 1.0F, level.random.nextFloat() * 0.7F + 0.3F);
-            player.awardStat(Stats.ITEM_CRAFTED.get(EvolutionItems.TORCH.get()));
+            player.awardStat(Stats.ITEM_CRAFTED.get(EvolutionItems.TORCH));
             return InteractionResult.SUCCESS;
         }
         return super.useOn(context);

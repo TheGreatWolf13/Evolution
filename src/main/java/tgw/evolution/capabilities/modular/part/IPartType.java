@@ -18,8 +18,6 @@ public interface IPartType<T extends IPartType<T, I, P>, I extends ItemPart<T, I
 
     boolean hasVariantIn(EvolutionMaterials material);
 
-    boolean isTwoHanded();
-
     default String modelSuffix(EvolutionMaterials material) {
         return "";
     }

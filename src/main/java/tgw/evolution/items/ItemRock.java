@@ -12,7 +12,6 @@ import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.BlockKnapping;
 import tgw.evolution.blocks.IRockVariant;
 import tgw.evolution.init.EvolutionBlocks;
-import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.network.PacketSCOpenKnappingGui;
 import tgw.evolution.util.constants.RockVariant;
@@ -45,8 +44,7 @@ public class ItemRock extends ItemGenericBlockPlaceable implements IRockVariant 
     }
 
     @Override
-    @Nullable
-    public BlockState getCustomState(BlockPlaceContext context) {
+    public @Nullable BlockState getCustomState(BlockPlaceContext context) {
         return null;
     }
 
@@ -63,7 +61,7 @@ public class ItemRock extends ItemGenericBlockPlaceable implements IRockVariant 
     @Override
     public void sneakingAction(BlockPlaceContext context) {
         if (context.getPlayer() instanceof ServerPlayer player) {
-            EvolutionNetwork.send(player, new PacketSCOpenKnappingGui(context.getClickedPos(), this.variant));
+            player.connection.send(new PacketSCOpenKnappingGui(context.getClickedPos(), this.variant));
         }
     }
 }

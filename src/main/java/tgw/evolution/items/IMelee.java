@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import tgw.evolution.client.tooltip.*;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionTexts;
-import tgw.evolution.util.collection.EitherList;
+import tgw.evolution.util.collection.lists.EitherList;
 import tgw.evolution.util.hitbox.ColliderHitbox;
 import tgw.evolution.util.hitbox.HitboxType;
 
@@ -78,7 +78,7 @@ public interface IMelee {
 
     int getAutoAttackTime(ItemStack stack);
 
-    BasicAttackType getBasicAttackType(ItemStack stack);
+    @Nullable BasicAttackType getBasicAttackType(ItemStack stack);
 
     SoundEvent getBlockHitSound(ItemStack stack);
 
@@ -93,26 +93,29 @@ public interface IMelee {
     boolean isHoldable(ItemStack stack);
 
     default void makeTooltip(Player player, EitherList<FormattedText, TooltipComponent> tooltip, ItemStack stack) {
-        tooltip.addLeft(EvolutionTexts.basicAttack());
-        IMelee.BasicAttackType basicAttack = this.getBasicAttackType(stack);
-        int followUps = basicAttack.getFollowUps();
-        if (followUps > 0) {
-            tooltip.addRight(TooltipFollowUp.followUp(followUps));
-        }
-        double mult = basicAttack.getDmgMultiplier(this, stack);
-        tooltip.addRight(TooltipDmgMultiplier.basic(mult));
+        double mult = 1;
         double dmg = player.getAttributeValue(Attributes.ATTACK_DAMAGE);
-        tooltip.addRight(TooltipDamage.basic(basicAttack.getDamageType(), mult * dmg));
-        int cooldown = this.getCooldown(stack);
-        tooltip.addRight(TooltipCooldown.cooldown(cooldown));
-        IMelee.ChargeAttackType chargeAttack = this.getChargeAttackType(stack);
-        if (chargeAttack != null) {
-            tooltip.addLeft(EvolutionTexts.EMPTY);
-            tooltip.addLeft(EvolutionTexts.chargeAttack());
-            mult = chargeAttack.getDmgMultiplier(this, stack);
-            tooltip.addRight(TooltipDmgMultiplier.charge(mult));
-            tooltip.addRight(TooltipDamage.charge(chargeAttack.getDamageType(), mult * dmg));
+        IMelee.BasicAttackType basicAttack = this.getBasicAttackType(stack);
+        if (basicAttack != null) {
+            tooltip.addLeft(EvolutionTexts.basicAttack());
+            int followUps = basicAttack.getFollowUps();
+            if (followUps > 0) {
+                tooltip.addRight(TooltipFollowUp.followUp(followUps));
+            }
+            mult = basicAttack.getDmgMultiplier(this, stack);
+            tooltip.addRight(TooltipDmgMultiplier.basic(mult));
+            tooltip.addRight(TooltipDamage.basic(basicAttack.getDamageType(), mult * dmg));
+            int cooldown = this.getCooldown(stack);
             tooltip.addRight(TooltipCooldown.cooldown(cooldown));
+            IMelee.ChargeAttackType chargeAttack = this.getChargeAttackType(stack);
+            if (chargeAttack != null) {
+                tooltip.addLeft(EvolutionTexts.EMPTY);
+                tooltip.addLeft(EvolutionTexts.chargeAttack());
+                mult = chargeAttack.getDmgMultiplier(this, stack);
+                tooltip.addRight(TooltipDmgMultiplier.charge(mult));
+                tooltip.addRight(TooltipDamage.charge(chargeAttack.getDamageType(), mult * dmg));
+                tooltip.addRight(TooltipCooldown.cooldown(cooldown));
+            }
         }
         if (stack.getItem() instanceof IThrowable throwable && throwable.isThrowable(stack, player)) {
             tooltip.addLeft(EvolutionTexts.EMPTY);

@@ -32,7 +32,7 @@ import static tgw.evolution.init.EvolutionBStates.LIT;
 public class ItemTorchUnlit extends ItemWallOrFloor {
 
     public ItemTorchUnlit(Properties properties) {
-        super(EvolutionBlocks.TORCH.get(), EvolutionBlocks.TORCH_WALL.get(), properties);
+        super(EvolutionBlocks.TORCH, EvolutionBlocks.TORCH_WALL, properties);
     }
 
     @Override
@@ -45,9 +45,8 @@ public class ItemTorchUnlit extends ItemWallOrFloor {
         return this.getOrCreateDescriptionId();
     }
 
-    @Nullable
     @Override
-    protected BlockState getPlacementState(BlockPlaceContext context) {
+    protected @Nullable BlockState getPlacementState(BlockPlaceContext context) {
         BlockState wallState = this.wallBlock.getStateForPlacement(context);
         BlockState stateForPlacement = null;
         LevelReader level = context.getLevel();
@@ -80,7 +79,7 @@ public class ItemTorchUnlit extends ItemWallOrFloor {
                 BlockUtils.dropItemStack(level, pos, stack);
             }
             level.playSound(player, pos, SoundEvents.FIRE_AMBIENT, SoundSource.PLAYERS, 1.0F, level.random.nextFloat() * 0.7F + 0.3F);
-            player.awardStat(Stats.ITEM_CRAFTED.get(EvolutionItems.TORCH.get()));
+            player.awardStat(Stats.ITEM_CRAFTED.get(EvolutionItems.TORCH));
             return InteractionResult.SUCCESS;
         }
         return super.useOn(context);

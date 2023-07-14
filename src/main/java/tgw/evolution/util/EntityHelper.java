@@ -16,7 +16,7 @@ import tgw.evolution.Evolution;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.items.IFireAspect;
 import tgw.evolution.items.IMelee;
-import tgw.evolution.patches.ILivingEntityPatch;
+import tgw.evolution.patches.PatchLivingEntity;
 import tgw.evolution.util.damage.DamageSourceEv;
 import tgw.evolution.util.hitbox.HitboxRegistry;
 import tgw.evolution.util.hitbox.HitboxType;
@@ -130,7 +130,7 @@ public final class EntityHelper {
                 HitboxType hitbox = HitboxRegistry.deserialize(entity.getType(), i);
                 float damage = amount * hitbox.getMultiplier();
                 Evolution.info("    {} damage on {}", damage, hitbox);
-                if (entity instanceof ILivingEntityPatch patch) {
+                if (entity instanceof PatchLivingEntity patch) {
                     totalDamage += patch.tryHurt(source, damage, strength, hitbox);
                 }
                 else {

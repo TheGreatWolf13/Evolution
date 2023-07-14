@@ -1,0 +1,147 @@
+{
+  "schemaVersion": 1,
+  "id": "evolution",
+  "version": "0.0.0",
+  "name": "Evolution",
+  "description": "Evolution is a mod for Minecraft that makes the game more realistic in many ways. Most features of the game have been completely remade from the ground up. As this mod is completely game changer, it is not recommended to be used with other mods. The mod is very early in its development and still is a Work in Progress. Expect bugs and unfinished features.",
+  "authors": [
+    "TheGreatWolf"
+  ],
+  "contact": {
+    "homepage": "https://github.com/MGSchultz-13/Evolution/",
+    "sources": "https://github.com/MGSchultz-13/Evolution/"
+  },
+  "license": "GNU General Public License v3/0",
+  "icon": "assets/evolution/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "tgw.evolution.Evolution"
+    ],
+    "client": [
+      "tgw.evolution.EvolutionClient"
+    ]
+  },
+  "mixins": [
+    "evolution.mixins.json"
+  ],
+  "accessWidener": "evolution.accesswidener",
+  "depends": {
+    "fabricloader": ">=0.14.21",
+    "minecraft": "1.18.2",
+    "java": ">=17"
+  },
+  "custom": {
+    "coremods": [
+      "tgw.evolution.hooks.patches.CoreModMixinExtension"
+    ],
+    "loom:injected_interfaces": {
+      "net/minecraft/world/inventory/AbstractContainerMenu": [
+        "tgw/evolution/patches/PatchAbstractContainerMenu"
+      ],
+      "net/minecraft/client/resources/model/BakedModel": [
+        "tgw/evolution/patches/PatchBakedModel"
+      ],
+      "net/minecraft/world/level/biome/BiomeManager": [
+        "tgw/evolution/patches/PatchBiomeManager"
+      ],
+      "net/minecraft/world/level/block/Block": [
+        "tgw/evolution/patches/PatchBlock"
+      ],
+      "net/minecraft/world/level/chunk/BlockColumn": [
+        "tgw/evolution/patches/PatchBlockColumn"
+      ],
+      "net/minecraft/world/level/block/entity/BlockEntity": [
+        "tgw/evolution/patches/PatchBlockEntity"
+      ],
+      "net/minecraft/world/level/BlockGetter": [
+        "tgw/evolution/patches/PatchBlockGetter"
+      ],
+      "net/minecraft/world/level/BlockAndTintGetter": [
+        "tgw/evolution/patches/PatchBlockAndTintGetter"
+      ],
+      "net/minecraft/client/renderer/block/BlockRenderDispatcher": [
+        "tgw/evolution/patches/PatchBlockRenderDispatcher"
+      ],
+      "net/minecraft/world/level/chunk/ChunkAccess": [
+        "tgw/evolution/patches/PatchChunkAccess"
+      ],
+      "net/minecraft/network/protocol/game/ClientboundLoginPacket": [
+        "tgw/evolution/patches/PatchClientboundLoginPacket"
+      ],
+      "net/minecraft/client/multiplayer/ClientChunkCache": [
+        "tgw/evolution/patches/PatchClientChunkCache"
+      ],
+      "net/minecraft/network/chat/Component": [
+        "tgw/evolution/patches/PatchComponent"
+      ],
+      "com/mojang/datafixers/util/Either": [
+        "tgw/evolution/patches/PatchEither"
+      ],
+      "net/minecraft/world/entity/Entity": [
+        "tgw/evolution/patches/PatchEntity"
+      ],
+      "net/minecraft/world/level/material/Fluid": [
+        "tgw/evolution/patches/PatchFluid"
+      ],
+      "net/minecraft/world/level/material/FluidState": [
+        "tgw/evolution/patches/PatchFluidState"
+      ],
+      "net/minecraft/client/renderer/culling/Frustum": [
+        "tgw/evolution/patches/PatchFrustum"
+      ],
+      "net/minecraft/world/item/Item": [
+        "tgw/evolution/patches/PatchItem"
+      ],
+      "net/minecraft/world/level/chunk/LevelChunk": [
+        "tgw/evolution/patches/PatchLevelChunk"
+      ],
+      "net/minecraft/world/level/chunk/LevelChunkSection": [
+        "tgw/evolution/patches/PatchLevelChunkSection"
+      ],
+      "net/minecraft/world/level/lighting/LevelLightEngine": [
+        "tgw/evolution/patches/PatchLevelLightEngine"
+      ],
+      "net/minecraft/world/level/LevelReader": [
+        "tgw/evolution/patches/PatchLevelReader"
+      ],
+      "com/mojang/math/Matrix3f": [
+        "tgw/evolution/patches/PatchMatrix3f"
+      ],
+      "com/mojang/math/Matrix4f": [
+        "tgw/evolution/patches/PatchMatrix4f"
+      ],
+      "net/minecraft/client/Minecraft": [
+        "tgw/evolution/patches/PatchMinecraft"
+      ],
+      "net/minecraft/server/MinecraftServer": [
+        "tgw/evolution/patches/PatchMinecraftServer"
+      ],
+      "net/minecraft/world/effect/MobEffectInstance": [
+        "tgw/evolution/patches/PatchMobEffectInstance"
+      ],
+      "net/minecraft/server/packs/resources/MultiPackResourceManager": [
+        "tgw/evolution/patches/PatchMultiPackResourceManager"
+      ],
+      "net/minecraft/server/packs/resources/MultiPackResourcePack": [
+        "tgw/evolution/patches/PatchMultiPackResourcePack"
+      ],
+      "com/mojang/blaze3d/vertex/PoseStack": [
+        "tgw/evolution/patches/PatchPoseStack",
+        "tgw/evolution/util/hitbox/hrs/HR"
+      ],
+      "com/mojang/math/Quaternion": [
+        "tgw/evolution/patches/PatchQuaternion"
+      ],
+      "com/mojang/blaze3d/pipeline/RenderTarget": [
+        "tgw/evolution/patches/PatchRenderTarget"
+      ],
+      "net/minecraft/server/packs/resources/SimpleResource": [
+        "tgw/evolution/patches/PatchSimpleResource"
+      ],
+      "net/minecraft/world/level/border/WorldBorder": [
+        "tgw/evolution/patches/PatchWorldBorder"
+      ]
+    }
+  }
+}

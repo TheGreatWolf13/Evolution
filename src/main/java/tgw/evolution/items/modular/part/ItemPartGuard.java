@@ -13,7 +13,7 @@ public class ItemPartGuard extends ItemPart<PartTypes.Guard, ItemPartGuard, Part
     }
 
     @Override
-    protected PartGuard createNew() {
+    public PartGuard createNew() {
         return new PartGuard();
     }
 
@@ -33,8 +33,8 @@ public class ItemPartGuard extends ItemPart<PartTypes.Guard, ItemPartGuard, Part
     }
 
     @Override
-    protected PartGuard getPartCap(ItemStack stack) {
-        return PartGuard.get(stack);
+    protected PartGuard getPartCap() {
+        return new PartGuard();
     }
 
     @Override

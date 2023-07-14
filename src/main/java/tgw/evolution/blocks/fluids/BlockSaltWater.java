@@ -37,7 +37,7 @@ public class BlockSaltWater extends BlockGenericFluid {
                 return amount;
             }
         }
-        Evolution.warn("Try displace of " + this.getRegistryName() + " with " + otherFluid.getRegistryName() + " is not yet implemented!");
+        Evolution.warn("Try displace of " + this + " with " + otherFluid + " is not yet implemented!");
         return amount;
     }
 }

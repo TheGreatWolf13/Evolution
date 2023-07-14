@@ -1,252 +1,204 @@
 package tgw.evolution.capabilities.modular;
 
-import it.unimi.dsi.fastutil.objects.ReferenceSet;
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.FormattedText;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
-import net.minecraft.world.level.material.Material;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.UseAnim;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
-import tgw.evolution.capabilities.modular.part.PartHandle;
-import tgw.evolution.capabilities.modular.part.PartHead;
 import tgw.evolution.capabilities.modular.part.PartTypes;
 import tgw.evolution.init.EvolutionDamage;
-import tgw.evolution.init.EvolutionTexts;
+import tgw.evolution.init.EvolutionMaterials;
+import tgw.evolution.items.IMelee;
 import tgw.evolution.items.modular.ItemModular;
-import tgw.evolution.util.PlayerHelper;
-import tgw.evolution.util.collection.EitherList;
+import tgw.evolution.util.collection.lists.EitherList;
 import tgw.evolution.util.constants.HarvestLevel;
-import tgw.evolution.util.math.MathHelper;
 
-public class ModularTool implements IModularTool {
+public class ModularTool implements IModular {
 
-    private final PartHandle handle = new PartHandle();
-    private final PartHead head = new PartHead();
-    private @Nullable CompoundTag tag;
+    public static final ModularTool INSTANCE = new ModularTool();
 
-    @Override
-    public void appendPartTooltip(EitherList<FormattedText, TooltipComponent> tooltip) {
-        this.head.appendText(tooltip, 0);
-        tooltip.addLeft(EvolutionTexts.EMPTY);
-        this.handle.appendText(tooltip, 1);
-    }
-
-    private void damage(ItemModular.DamageCause cause) {
-        switch (cause) {
-            case BREAK_BAD_BLOCK -> {
-                this.head.damage(1);
-                this.head.loseSharp(2);
-                if (MathHelper.RANDOM.nextFloat() < 0.15f) {
-                    this.handle.damage(1);
-                }
-            }
-            case BREAK_BLOCK -> {
-                this.head.damage(1);
-                this.head.loseSharp(1);
-                if (MathHelper.RANDOM.nextFloat() < 0.1f) {
-                    this.handle.damage(1);
-                }
-            }
-            case HIT_ENTITY -> {
-                switch (this.head.getType()) {
-                    case AXE, MACE, SPEAR -> {
-                        this.head.damage(1);
-                        this.head.loseSharp(1);
-                    }
-                    default -> {
-                        this.head.damage(2);
-                        this.head.loseSharp(1);
-                    }
-                }
-                if (MathHelper.RANDOM.nextFloat() < 0.1f) {
-                    this.handle.damage(1);
-                }
-            }
-        }
+    protected ModularTool() {
     }
 
     @Override
-    public void damage(ItemModular.DamageCause cause, @HarvestLevel int harvestLevel) {
-        int toolLevel = this.getHarvestLevel();
-        int delta = toolLevel - harvestLevel;
-        if (delta == 0) {
-            this.damage(cause);
-            return;
-        }
-        if (delta > 0) {
-            if (!(MathHelper.RANDOM.nextFloat() < delta * 0.1f)) {
-                this.damage(cause);
-            }
-            return;
-        }
-        this.damage(cause);
-        if (MathHelper.RANDOM.nextFloat() < delta * -0.1f) {
-            this.damage(cause);
-        }
-    }
-
-    @Override
-    public void deserializeNBT(CompoundTag nbt) {
-        this.handle.deserializeNBT(nbt.getCompound("Handle"));
-        this.head.deserializeNBT(nbt.getCompound("Head"));
-    }
-
-    @Override
-    public int getBackPriority() {
-        return switch (this.head.getType()) {
-            case NULL -> -1;
-            case AXE -> 2;
-            case HAMMER, PICKAXE -> 3;
-            case HOE -> 5;
-            case MACE, SPEAR -> 1;
-            case SHOVEL -> 4;
-        };
-    }
-
-    @Override
-    public int getCooldown() {
+    public void appendPartTooltip(CompoundTag tag, EitherList<FormattedText, TooltipComponent> tooltip) {
         //TODO implementation
-        return 20;
+
+    }
+
+    public int getBackPriority(CompoundTag tag) {
+        //TODO
+        return 0;
     }
 
     @Override
-    public String getDescriptionId() {
-        if (this.head.getType() == PartTypes.Head.SPEAR) {
-            if (!this.isTwoHanded()) {
-                return "item.evolution.javelin." + this.head.getMaterialInstance().getName();
-            }
-        }
-        return "item.evolution." + this.head.getType().getName() + "." + this.head.getMaterialInstance().getName();
+    public int getBarColor(CompoundTag tag) {
+        //TODO implementation
+        return 0;
     }
 
     @Override
-    public double getDmgMultiplier(EvolutionDamage.Type type) {
-        double mult = switch (type) {
-            case PIERCING -> this.head.getMaterialInstance().getElasticModulus() / 3.5;
-            case CRUSHING -> this.getMoment() * 12.5; //TODO divide by area
-            case SLASHING -> 0.87 * 0.65 / 3.5 * this.head.getMaterialInstance().getElasticModulus() + 0.87 * 0.35 * 12.5 * this.getMoment();
-            default -> 0;
-        };
-        return this.head.getDmgMultiplierInternal() * mult / PlayerHelper.ATTACK_DAMAGE;
+    public int getBarWidth(CompoundTag tag) {
+        //TODO implementation
+        return 0;
+    }
+
+    public @Nullable IMelee.BasicAttackType getBasicAttackType(CompoundTag tag) {
+        //TODO
+        return null;
+    }
+
+    public SoundEvent getBlockHitSound(CompoundTag tag) {
+        //todo
+        return SoundEvents.AMBIENT_BASALT_DELTAS_ADDITIONS;
+    }
+
+    public int getCooldown(CompoundTag tag) {
+        //TODO
+        return 0;
     }
 
     @Override
-    public ReferenceSet<Material> getEffectiveMaterials() {
-        return this.head.getEffectiveMaterials();
+    public String getDescriptionId(CompoundTag tag) {
+        //TODO implementation
+        return "null";
+    }
+
+    public float getDestroySpeed(CompoundTag tag, BlockState state) {
+        //TODO
+        return 0;
+    }
+
+    public double getDmgMultiplier(CompoundTag tag, EvolutionDamage.Type type) {
+        //TODO
+        return 1;
     }
 
     @Override
-    public PartHandle getHandle() {
-        return this.handle;
+    public @HarvestLevel int getHarvestLevel(CompoundTag tag) {
+        //TODO implementation
+        return 0;
     }
 
     @Override
-    public int getHarvestLevel() {
-        return this.head.getHarvestLevel();
+    public double getMass(CompoundTag tag) {
+        //TODO implementation
+        return 0;
     }
 
     @Override
-    public PartHead getHead() {
-        return this.head;
+    public int getTotalDurabilityDmg(CompoundTag tag) {
+        //TODO implementation
+        return 0;
     }
 
     @Override
-    public double getMass() {
-        return this.head.getMass() + this.handle.getMass();
+    public int getTotalMaxDurability(CompoundTag tag) {
+        //TODO implementation
+        return 0;
     }
 
     @Override
-    public float getMiningSpeed() {
-        return this.head.getMiningSpeed();
+    public UseAnim getUseAnimation(CompoundTag tag) {
+        //TODO implementation
+        return null;
     }
 
     @Override
-    public double getMoment() {
-        int handleLength = this.handle.getType().getLength();
-        double grabPoint = this.handle.getType().getGrabPoint();
-        double handleArm = handleLength / 2.0 - grabPoint;
-        double headArm = this.head.getType().getRelativeCenterOfMass(handleLength) - grabPoint;
-        return handleArm * this.handle.getMass() + headArm * this.head.getMass();
+    public <E extends LivingEntity> void hurtAndBreak(ItemStack stack,
+                                                      ItemModular.DamageCause cause,
+                                                      E entity,
+                                                      @Nullable EquipmentSlot slot,
+                                                      @HarvestLevel int harvestLevel) {
+        //TODO implementation
+
     }
 
     @Override
-    public int getTotalDurabilityDmg() {
-        return this.head.getDurabilityDmg() + this.handle.getDurabilityDmg();
-    }
-
-    @Override
-    public int getTotalMaxDurability() {
-        return this.head.getMaxDurability() + this.handle.getMaxDurability();
-    }
-
-    @Override
-    public boolean isAxe() {
-        return this.head.getType() == PartTypes.Head.AXE;
-    }
-
-    @Override
-    public boolean isBroken() {
+    public boolean isAxe(CompoundTag tag) {
         //TODO implementation
         return false;
     }
 
     @Override
-    public boolean isHammer() {
-        return this.head.getType() == PartTypes.Head.HAMMER;
-    }
-
-    @Override
-    public boolean isSharpened() {
-        return this.head.getSharpAmount() > 0;
-    }
-
-    @Override
-    public boolean isShovel() {
-        return this.head.getType() == PartTypes.Head.SHOVEL;
-    }
-
-    @Override
-    public boolean isSimilar(IModular modular) {
-        if (!(modular instanceof ModularTool tool)) {
-            return false;
-        }
-        if (!this.head.isSimilar(tool.head)) {
-            return false;
-        }
-        return this.handle.isSimilar(tool.handle);
-    }
-
-    @Override
-    public boolean isSword() {
+    public boolean isBarVisible(CompoundTag tag) {
+        //TODO implementation
         return false;
     }
 
     @Override
-    public boolean isTwoHanded() {
-        return this.head.getType().isTwoHanded() || this.handle.getType().isTwoHanded();
+    public boolean isBroken(CompoundTag tag) {
+        //TODO implementation
+        return false;
+    }
+
+    public boolean isCorrecToolForDrops(ItemStack stack, BlockState state, Level level, BlockPos pos) {
+        //TODO IMPLEMENTATIN
+        return false;
     }
 
     @Override
-    public CompoundTag serializeNBT() {
-        if (this.tag == null) {
-            this.tag = new CompoundTag();
-        }
-        this.tag.put("Handle", this.handle.serializeNBT());
-        this.tag.put("Head", this.head.serializeNBT());
-        return this.tag;
+    public boolean isHammer(CompoundTag tag) {
+        //TODO implementation
+        return false;
     }
 
     @Override
-    public void setHandle(PartTypes.Handle handleType, MaterialInstance material) {
-        this.handle.set(handleType, material);
+    public boolean isShovel(CompoundTag tag) {
+        //TODO implementation
+        return false;
     }
 
     @Override
-    public void setHead(PartTypes.Head headType, MaterialInstance material) {
-        this.head.set(headType, material);
+    public boolean isSword(CompoundTag tag) {
+        //TODO implementation
+        return false;
+    }
+
+    public boolean isThrowable(CompoundTag tag) {
+        //TODO
+        return false;
     }
 
     @Override
-    public void sharp() {
-        this.head.sharp();
+    public boolean isTwoHanded(CompoundTag tag) {
+        //TODO implementation
+        return false;
+    }
+
+    public void mineBlock(ItemStack stack, Level level, BlockState state, BlockPos pos, LivingEntity entity) {
+        //TODO
+    }
+
+    @Override
+    public void releaseUsing(ItemStack stack, Level level, LivingEntity entity, int timeLeft) {
+        //TODO implementation
+
+    }
+
+    public void set(CompoundTag tag,
+                    PartTypes.Head headType,
+                    EvolutionMaterials headMaterial,
+                    PartTypes.Handle handleType,
+                    EvolutionMaterials handleMaterial,
+                    boolean sharp) {
+        //TODO
+    }
+
+    @Override
+    public InteractionResultHolder<ItemStack> use(ItemStack stack, Level level, Player player, InteractionHand hand) {
+        //TODO implementation
+        return null;
     }
 }

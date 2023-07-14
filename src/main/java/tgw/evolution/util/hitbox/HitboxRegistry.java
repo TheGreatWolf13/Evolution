@@ -3,15 +3,19 @@ package tgw.evolution.util.hitbox;
 import net.minecraft.world.entity.EntityType;
 import tgw.evolution.Evolution;
 import tgw.evolution.util.UnregisteredFeatureException;
-import tgw.evolution.util.collection.*;
+import tgw.evolution.util.collection.lists.OArrayList;
+import tgw.evolution.util.collection.lists.OList;
+import tgw.evolution.util.collection.maps.*;
+import tgw.evolution.util.collection.sets.RHashSet;
+import tgw.evolution.util.collection.sets.RSet;
 
 public final class HitboxRegistry {
 
-    private static final R2OMap<EntityType, HitboxRegistry> REGISTRY = new R2OOpenHashMap<>();
+    private static final R2OMap<EntityType, HitboxRegistry> REGISTRY = new R2OHashMap<>();
     private static final HitboxRegistry DUMMY;
 
     static {
-        RList<HitboxType> list = new RArrayList<>();
+        OList<HitboxType> list = new OArrayList<>();
         list.add(HitboxType.ALL);
         list.add(HitboxType.EQUIP);
         DUMMY = new HitboxRegistry(list);
@@ -20,10 +24,10 @@ public final class HitboxRegistry {
     private final B2RMap<HitboxType> deserializer;
     private final R2BMap<HitboxType> serializer;
 
-    private HitboxRegistry(RList<HitboxType> list) {
+    private HitboxRegistry(OList<HitboxType> list) {
         int size = list.size();
-        this.deserializer = new B2ROpenHashMap<>();
-        this.serializer = new R2BOpenHashMap<>();
+        this.deserializer = new B2RHashMap<>();
+        this.serializer = new R2BHashMap<>();
         this.serializer.defaultReturnValue((byte) -1);
         for (byte b = 0; b < size; b++) {
             HitboxType type = list.get(b);
@@ -112,8 +116,8 @@ public final class HitboxRegistry {
     }
 
     public static final class Builder {
-        private final RList<HitboxType> list = new RArrayList<>();
-        private final RSet<HitboxType> set = new ROpenHashSet<>();
+        private final OList<HitboxType> list = new OArrayList<>();
+        private final RSet<HitboxType> set = new RHashSet<>();
         private int counter;
 
         public Builder() {

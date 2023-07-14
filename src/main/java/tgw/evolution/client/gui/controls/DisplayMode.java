@@ -14,7 +14,7 @@ public enum DisplayMode {
             if (key.getName().equals(keyEntry.getKey().getName()) || key.isUnbound()) {
                 continue;
             }
-            if (key.getKey().getValue() == keyEntry.getKey().getKey().getValue()) {
+            if (key.same(keyEntry.getKey())) {
                 return true;
             }
         }

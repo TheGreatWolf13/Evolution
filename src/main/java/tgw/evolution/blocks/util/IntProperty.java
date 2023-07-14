@@ -3,8 +3,8 @@ package tgw.evolution.blocks.util;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.ints.IntSets;
 import net.minecraft.world.level.block.state.properties.Property;
-import tgw.evolution.util.collection.IOpenHashSet;
-import tgw.evolution.util.collection.ISet;
+import tgw.evolution.util.collection.sets.IHashSet;
+import tgw.evolution.util.collection.sets.ISet;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -26,7 +26,7 @@ public class IntProperty extends Property<Integer> {
         }
         this.min = min;
         this.max = max;
-        ISet set = new IOpenHashSet();
+        ISet set = new IHashSet();
         for (int i = min; i <= max; ++i) {
             set.add(i);
         }

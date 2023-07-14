@@ -1,6 +1,5 @@
 package tgw.evolution.client.models;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.ItemOverrides;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
@@ -8,21 +7,20 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.client.model.data.IDynamicBakedModel;
-import net.minecraftforge.client.model.data.IModelData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import tgw.evolution.util.collection.RArrayList;
-import tgw.evolution.util.collection.RList;
+import tgw.evolution.client.models.data.IModelData;
+import tgw.evolution.util.collection.lists.OArrayList;
+import tgw.evolution.util.collection.lists.OList;
 
 import java.util.List;
 import java.util.Random;
 
 public class SimpleWeightedModel implements IDynamicBakedModel {
 
-    private final RList<BakedModel> list;
+    private final OList<BakedModel> list;
 
-    public SimpleWeightedModel(RList<BakedModel> list) {
+    public SimpleWeightedModel(OList<BakedModel> list) {
         this.list = list;
     }
 
@@ -32,7 +30,7 @@ public class SimpleWeightedModel implements IDynamicBakedModel {
     }
 
     @Override
-    public TextureAtlasSprite getParticleIcon(@NotNull IModelData data) {
+    public TextureAtlasSprite getParticleIcon(IModelData data) {
         return this.list.get(0).getParticleIcon(data);
     }
 
@@ -55,11 +53,6 @@ public class SimpleWeightedModel implements IDynamicBakedModel {
     }
 
     @Override
-    public BakedModel handlePerspective(ItemTransforms.TransformType cameraTransformType, PoseStack poseStack) {
-        return this.list.get(0).handlePerspective(cameraTransformType, poseStack);
-    }
-
-    @Override
     public boolean isCustomRenderer() {
         return this.list.get(0).isCustomRenderer();
     }
@@ -75,17 +68,12 @@ public class SimpleWeightedModel implements IDynamicBakedModel {
     }
 
     @Override
-    public boolean useAmbientOcclusion(BlockState state) {
-        return this.list.get(0).useAmbientOcclusion(state);
-    }
-
-    @Override
     public boolean usesBlockLight() {
         return this.list.get(0).usesBlockLight();
     }
 
     public static class Builder {
-        private final RList<BakedModel> list = new RArrayList<>();
+        private final OList<BakedModel> list = new OArrayList<>();
 
         public Builder add(@Nullable BakedModel model) {
             if (model != null) {

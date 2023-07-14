@@ -48,9 +48,8 @@ public class BlockPuzzle extends DirectionalBlock implements EntityBlock, GameMa
         return state.setValue(EvolutionBStates.DIRECTION, mirror.mirror(state.getValue(EvolutionBStates.DIRECTION)));
     }
 
-    @Nullable
     @Override
-    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+    public @Nullable BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new TEPuzzle(pos, state);
     }
 

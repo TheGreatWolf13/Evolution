@@ -11,8 +11,6 @@ import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import tgw.evolution.entities.projectiles.EntitySpear;
-import tgw.evolution.patches.IPoseStackPatch;
-import tgw.evolution.util.math.MathHelper;
 
 public class RenderSpear extends EntityRenderer<EntitySpear> {
 
@@ -28,9 +26,8 @@ public class RenderSpear extends EntityRenderer<EntitySpear> {
     @Override
     public void render(EntitySpear entity, float yaw, float partialTicks, PoseStack matrices, MultiBufferSource buffer, int packedLight) {
         matrices.pushPose();
-        IPoseStackPatch matricesExt = MathHelper.getExtendedMatrix(matrices);
-        matricesExt.mulPoseY(Mth.lerp(partialTicks, entity.yRotO, entity.getYRot()) - 90.0F);
-        matricesExt.mulPoseZ(Mth.lerp(partialTicks, entity.xRotO, entity.getXRot()) - 90.0F);
+        matrices.mulPoseY(Mth.lerp(partialTicks, entity.yRotO, entity.getYRot()) - 90.0F);
+        matrices.mulPoseZ(Mth.lerp(partialTicks, entity.xRotO, entity.getXRot()) - 90.0F);
         matrices.translate(-0.05, -0.7, 0);
         Minecraft.getInstance()
                  .getItemRenderer()

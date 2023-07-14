@@ -7,12 +7,12 @@ import net.minecraft.world.level.ClipContext;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 import tgw.evolution.Evolution;
+import tgw.evolution.EvolutionClient;
 import tgw.evolution.events.ClientEvents;
-import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.items.IMelee;
 import tgw.evolution.network.PacketCSSpecialHit;
-import tgw.evolution.util.collection.I2LMap;
-import tgw.evolution.util.collection.I2LOpenHashMap;
+import tgw.evolution.util.collection.maps.I2LHashMap;
+import tgw.evolution.util.collection.maps.I2LMap;
 import tgw.evolution.util.hitbox.Hitbox;
 import tgw.evolution.util.hitbox.HitboxRegistry;
 import tgw.evolution.util.hitbox.HitboxType;
@@ -24,7 +24,7 @@ import tgw.evolution.util.math.Vec3d;
 public class HitInformation implements IHitInfo {
 
     private final ClipContextMutable clipContext = new ClipContextMutable();
-    private final I2LMap data = new I2LOpenHashMap();
+    private final I2LMap data = new I2LHashMap();
     private final Vec3d[] vertices = new Vec3d[8];
     private final Vec3d[] verticesInHBVS = new Vec3d[8];
     private final Vec3d[] verticesInHBVSPartial = new Vec3d[8];
@@ -239,7 +239,7 @@ public class HitInformation implements IHitInfo {
             final long hitboxSet = entry.getLongValue();
             if (hitboxSet != 0) {
                 //noinspection ObjectAllocationInLoop
-                EvolutionNetwork.sendToServer(new PacketCSSpecialHit(entry.getIntKey(), type, hitboxSet));
+                EvolutionClient.sendToServer(new PacketCSSpecialHit(entry.getIntKey(), type, hitboxSet));
             }
         }
     }

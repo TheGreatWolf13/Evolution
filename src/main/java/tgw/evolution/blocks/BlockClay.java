@@ -18,7 +18,7 @@ public class BlockClay extends BlockPhysics {
 
     @Override
     public SoundEvent fallingSound() {
-        return EvolutionSounds.SOIL_COLLAPSE.get();
+        return EvolutionSounds.SOIL_COLLAPSE;
     }
 //    public int beamSize() {
 //        return 1;

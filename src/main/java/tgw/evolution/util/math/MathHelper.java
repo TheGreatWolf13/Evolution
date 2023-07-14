@@ -6,10 +6,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.internal.LazilyParsedNumber;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Matrix3f;
-import com.mojang.math.Matrix4f;
-import com.mojang.math.Quaternion;
 import com.mojang.math.Vector3d;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.core.BlockPos;
@@ -31,10 +27,9 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.tileentities.Patterns;
-import tgw.evolution.capabilities.modular.IModularTool;
 import tgw.evolution.init.EvolutionShapes;
 import tgw.evolution.items.modular.ItemModularTool;
-import tgw.evolution.patches.*;
+import tgw.evolution.patches.PatchLivingEntity;
 import tgw.evolution.util.*;
 import tgw.evolution.util.hitbox.Hitbox;
 import tgw.evolution.util.hitbox.HitboxType;
@@ -122,8 +117,8 @@ public final class MathHelper {
         if (itemA != itemB) {
             return false;
         }
-        if (itemA instanceof ItemModularTool) {
-            return IModularTool.get(a).isSimilar(IModularTool.get(b));
+        if (itemA instanceof ItemModularTool tool) {
+            return tool.isSimilarTo(a, b);
         }
         return a.sameItem(b);
     }
@@ -343,11 +338,11 @@ public final class MathHelper {
                                               float partialTicks,
                                               BlockHitResult[] hitResult,
                                               boolean checkBlocks, boolean onlyBlocks) {
-        HitboxEntity<LivingEntity> hitboxes = ((IEntityPatch) entity).getHitboxes();
+        HitboxEntity<LivingEntity> hitboxes = (HitboxEntity<LivingEntity>) entity.getHitboxes();
         if (hitboxes == null) {
             return;
         }
-        Hitbox collider = hitboxes.getEquipFor(entity, ((ILivingEntityPatch) entity).getSpecialAttackType(), entity.getMainArm());
+        Hitbox collider = hitboxes.getEquipFor(entity, ((PatchLivingEntity) entity).getSpecialAttackType(), entity.getMainArm());
         if (collider == null) {
             return;
         }
@@ -392,7 +387,7 @@ public final class MathHelper {
         }
         for (int i = 0, l = foundEntities.size(); i < l; i++) {
             Entity possibleVictim = foundEntities.get(i);
-            HitboxEntity<Entity> victimHitboxes = ((IEntityPatch) possibleVictim).getHitboxes();
+            HitboxEntity<Entity> victimHitboxes = (HitboxEntity<Entity>) possibleVictim.getHitboxes();
             if (victimHitboxes == null) {
                 collidingWithEntityBB(hits, possibleVictim);
             }
@@ -404,7 +399,7 @@ public final class MathHelper {
     }
 
     public static void collideOBBWithProjectile(ProjectileHitInformation hits, float partialTicks, Entity victim) {
-        HitboxEntity<Entity> victimHitboxes = ((IEntityPatch) victim).getHitboxes();
+        HitboxEntity<Entity> victimHitboxes = (HitboxEntity<Entity>) victim.getHitboxes();
         if (victimHitboxes == null) {
             collidingWithEntityBB(hits, victim);
         }
@@ -561,22 +556,6 @@ public final class MathHelper {
         return victim.oAttackAnim + f * partialTick;
     }
 
-    public static IPoseStackPatch getExtendedMatrix(PoseStack matrices) {
-        return (IPoseStackPatch) matrices;
-    }
-
-    public static IMatrix4fPatch getExtendedMatrix(Matrix4f matrix) {
-        return (IMatrix4fPatch) (Object) matrix;
-    }
-
-    public static IMatrix3fPatch getExtendedMatrix(Matrix3f matrix) {
-        return (IMatrix3fPatch) (Object) matrix;
-    }
-
-    public static IQuaternionPatch getExtendedQuaternion(Quaternion quaternion) {
-        return (IQuaternionPatch) (Object) quaternion;
-    }
-
     /**
      * Calculates the index of a number given a range.
      *
@@ -712,7 +691,7 @@ public final class MathHelper {
     @CanIgnoreReturnValue
     public static <E extends Entity> Vec3d getRelativeEyePosition(E entity, float partialTicks, @Nullable Vec3d result) {
         if (!(entity instanceof LivingEntity living && living.isDeadOrDying())) {
-            HitboxEntity<E> hitboxes = ((IEntityPatch<E>) entity).getHitboxes();
+            HitboxEntity<E> hitboxes = (HitboxEntity<E>) entity.getHitboxes();
             if (hitboxes != null) {
                 if (result != null) {
                     return result.set(hitboxes.getOffsetForCamera(entity, partialTicks));
@@ -816,6 +795,17 @@ public final class MathHelper {
         return hit;
     }
 
+    public static int indexOfOrLength(byte[] array, byte target) {
+        int i;
+        int len = array.length;
+        for (i = 0; i < len; ++i) {
+            if (array[i] == target) {
+                return i;
+            }
+        }
+        return i;
+    }
+
     public static boolean isMouseInArea(double mouseX, double mouseY, int x, int y, int dx, int dy) {
         return isMouseInRange(mouseX, mouseY, x, y, x + dx, y + dy);
     }
@@ -850,7 +840,7 @@ public final class MathHelper {
     }
 
     public static boolean isSitting(LivingEntity victim) {
-        return victim.isPassenger() && victim.getVehicle() != null && victim.getVehicle().shouldRiderSit();
+        return victim.isPassenger() && victim.getVehicle() != null;
     }
 
     /**
@@ -930,6 +920,28 @@ public final class MathHelper {
     public static float lerpRad(float partialTicks, float prevAngle, float angle, boolean wrap) {
         float delta = wrap ? wrapRadians(angle - prevAngle) : angle - prevAngle;
         return prevAngle + partialTicks * delta;
+    }
+
+    public static byte makeFlags(boolean a, boolean b, boolean c) {
+        byte flags = 0;
+        if (a) {
+            flags |= 1;
+        }
+        if (b) {
+            flags |= 2;
+        }
+        if (c) {
+            flags |= 4;
+        }
+        return flags;
+    }
+
+    public static byte makeFlags(boolean a, boolean b, boolean c, boolean d) {
+        byte flags = makeFlags(a, b, c);
+        if (d) {
+            flags |= 8;
+        }
+        return flags;
     }
 
     /**
@@ -1024,7 +1036,7 @@ public final class MathHelper {
                 Vec3 hitResult = optional.get();
                 double actualDistanceSquared = startVec.distanceToSqr(hitResult);
                 if (actualDistanceSquared < range || range == 0) {
-                    if (entityInBoundingBox.getRootVehicle() == toExclude.getRootVehicle() && !entityInBoundingBox.canRiderInteract()) {
+                    if (entityInBoundingBox.getRootVehicle() == toExclude.getRootVehicle()) {
                         if (range == 0) {
                             entity = entityInBoundingBox;
                             vec3d = hitResult;
@@ -1134,7 +1146,7 @@ public final class MathHelper {
         final double toX = fromX + lookX * reach;
         final double toY = fromY + lookY * reach;
         final double toZ = fromZ + lookZ * reach;
-        HitboxEntity<T> hitbox = (HitboxEntity<T>) ((IEntityPatch) victim).getHitboxes();
+        HitboxEntity<T> hitbox = (HitboxEntity<T>) victim.getHitboxes();
         if (hitbox == null) {
             AABB bb = victim.getBoundingBox();
             if (bb.contains(fromX, fromY, fromZ)) {

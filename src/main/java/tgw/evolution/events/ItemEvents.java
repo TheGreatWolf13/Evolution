@@ -4,6 +4,7 @@ import com.google.gson.JsonParseException;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -16,18 +17,17 @@ import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.Nullable;
-import tgw.evolution.Evolution;
+import tgw.evolution.EvolutionClient;
 import tgw.evolution.client.tooltip.*;
 import tgw.evolution.init.EvolutionStyles;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.items.*;
 import tgw.evolution.items.modular.ItemModular;
 import tgw.evolution.items.modular.part.ItemPart;
-import tgw.evolution.util.collection.EitherList;
-import tgw.evolution.util.collection.OArrayList;
-import tgw.evolution.util.collection.OList;
+import tgw.evolution.util.collection.lists.EitherList;
+import tgw.evolution.util.collection.lists.OArrayList;
+import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.constants.HarvestLevel;
 
 import java.util.function.Consumer;
@@ -97,31 +97,13 @@ public final class ItemEvents {
         tooltip.addLeft(EvolutionTexts.capacity(container));
     }
 
-    public static <E extends LivingEntity> void damageItem(ItemStack stack, E entity, ItemModular.DamageCause cause, @Nullable EquipmentSlot slot) {
-        Consumer<E> onBreak = slot == null ? e -> {
-        } : e -> e.broadcastBreakEvent(slot);
-        if (stack.getItem() instanceof ItemModular modular) {
-            modular.hurtAndBreak(stack, cause, entity, onBreak);
-        }
-        else {
-            int amount = switch (cause) {
-                case BREAK_BLOCK, HIT_ENTITY -> 1;
-                case HIT_BLOCK -> 0;
-                case BREAK_BAD_BLOCK -> 2;
-            };
-            stack.hurtAndBreak(amount, entity, onBreak);
-        }
-    }
-
     public static <E extends LivingEntity> void damageItem(ItemStack stack,
                                                            E entity,
                                                            ItemModular.DamageCause cause,
                                                            @Nullable EquipmentSlot slot,
                                                            @HarvestLevel int harvestLevel) {
-        Consumer<E> onBreak = slot == null ? e -> {
-        } : e -> e.broadcastBreakEvent(slot);
         if (stack.getItem() instanceof ItemModular modular) {
-            modular.hurtAndBreak(stack, cause, entity, onBreak, harvestLevel);
+            modular.hurtAndBreak(stack, cause, entity, slot, harvestLevel);
         }
         else {
             int amount = switch (cause) {
@@ -129,6 +111,7 @@ public final class ItemEvents {
                 case HIT_BLOCK -> 0;
                 case BREAK_BAD_BLOCK -> 2;
             };
+            Consumer<E> onBreak = slot == null ? e -> {} : e -> e.broadcastBreakEvent(slot);
             stack.hurtAndBreak(amount, entity, onBreak);
         }
     }
@@ -144,7 +127,7 @@ public final class ItemEvents {
         //Item specific information
         Item item = stack.getItem();
         boolean isAdvanced = Minecraft.getInstance().options.advancedItemTooltips;
-        item.appendHoverText(stack, Evolution.PROXY.getClientLevel(), TEMP_TOOLTIP_HOLDER,
+        item.appendHoverText(stack, EvolutionClient.getClientLevel(), TEMP_TOOLTIP_HOLDER,
                              isAdvanced ? TooltipFlag.Default.ADVANCED : TooltipFlag.Default.NORMAL);
         for (int i = 0, l = TEMP_TOOLTIP_HOLDER.size(); i < l; i++) {
             tooltip.addLeft(TEMP_TOOLTIP_HOLDER.get(i));
@@ -288,8 +271,7 @@ public final class ItemEvents {
         }
         //Advanced (registry name + nbt)
         if (isAdvanced) {
-            ResourceLocation key = ForgeRegistries.ITEMS.getKey(stack.getItem());
-            assert key != null;
+            ResourceLocation key = Registry.ITEM.getKey(stack.getItem());
             tooltip.addLeft(new TextComponent(key.toString()).withStyle(ChatFormatting.DARK_GRAY));
             if (stack.hasTag()) {
                 assert stack.getTag() != null;

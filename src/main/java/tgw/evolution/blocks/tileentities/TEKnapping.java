@@ -2,7 +2,6 @@ package tgw.evolution.blocks.tileentities;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -18,13 +17,12 @@ import tgw.evolution.util.constants.BlockFlags;
 
 public class TEKnapping extends BlockEntity {
 
-    @Nullable
-    public VoxelShape hitbox;
+    public @Nullable VoxelShape hitbox;
     public KnappingRecipe type = KnappingRecipe.NULL;
     private long parts = Patterns.MATRIX_TRUE;
 
     public TEKnapping(BlockPos pos, BlockState state) {
-        super(EvolutionTEs.KNAPPING.get(), pos, state);
+        super(EvolutionTEs.KNAPPING, pos, state);
     }
 
     public void checkParts(Player player) {
@@ -63,15 +61,10 @@ public class TEKnapping extends BlockEntity {
 
     @Override
     public void load(CompoundTag tag) {
+        this.hitbox = null; //Remove cache, since it might have changed
         super.load(tag);
         this.parts = tag.getLong("Parts");
         this.type = KnappingRecipe.byId(tag.getByte("Type"));
-    }
-
-    @Override
-    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
-        this.hitbox = null;
-        this.handleUpdateTag(packet.getTag());
     }
 
     @Override

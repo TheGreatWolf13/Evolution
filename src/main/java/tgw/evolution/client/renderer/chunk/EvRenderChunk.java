@@ -12,16 +12,16 @@ import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.chunk.PalettedContainer;
 import net.minecraft.world.level.levelgen.DebugLevelSource;
 import org.jetbrains.annotations.Nullable;
-import tgw.evolution.util.collection.OArrayList;
+import tgw.evolution.util.collection.lists.OArrayList;
+import tgw.evolution.util.collection.maps.L2OMap;
 
 import java.util.List;
-import java.util.Map;
 
 public final class EvRenderChunk {
 
     private static final EvRenderChunk DEBUG = new EvRenderChunk(false, true);
     private static final EvRenderChunk EMPTY = new EvRenderChunk(true, false);
-    private final @Nullable Map<BlockPos, BlockEntity> blockEntities;
+    private final @Nullable L2OMap<BlockEntity> blockEntities;
     /**
      * Bit 0: Empty;<br>
      * Bit 1: Debug;<br>
@@ -46,7 +46,7 @@ public final class EvRenderChunk {
     private EvRenderChunk(LevelChunk wrapped) {
         this.wrapped = wrapped;
         this.flags = 0;
-        this.blockEntities = wrapped.getBlockEntities();
+        this.blockEntities = wrapped.blockEntities_();
         LevelChunkSection[] sections = wrapped.getSections();
         this.sections = new OArrayList<>(sections.length);
         for (LevelChunkSection section : sections) {
@@ -64,22 +64,18 @@ public final class EvRenderChunk {
         return new EvRenderChunk(chunk);
     }
 
-    @Nullable
-    public BlockEntity getBlockEntity(BlockPos pos) {
+    public @Nullable BlockEntity getBlockEntity(int x, int y, int z) {
         if (this.flags != 0) {
             return null;
         }
         assert this.blockEntities != null;
-        return this.blockEntities.get(pos);
+        return this.blockEntities.get(BlockPos.asLong(x, y, z));
     }
 
-    public BlockState getBlockState(BlockPos pos) {
+    public BlockState getBlockState(int x, int y, int z) {
         if (this.isEmpty()) {
             return Blocks.AIR.defaultBlockState();
         }
-        int x = pos.getX();
-        int y = pos.getY();
-        int z = pos.getZ();
         if ((this.flags & 2) != 0) {
             if (y == 60) {
                 return Blocks.BARRIER.defaultBlockState();

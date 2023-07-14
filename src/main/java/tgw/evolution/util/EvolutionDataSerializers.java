@@ -3,10 +3,8 @@ package tgw.evolution.util;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.syncher.EntityDataSerializer;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.event.RegistryEvent;
-import net.minecraftforge.registries.DataSerializerEntry;
 
 public final class EvolutionDataSerializers {
 
@@ -35,7 +33,7 @@ public final class EvolutionDataSerializers {
         public void write(FriendlyByteBuf buffer, NonNullList<ItemStack> stacks) {
             buffer.writeInt(stacks.size());
             for (ItemStack stack : stacks) {
-                buffer.writeItemStack(stack, false);
+                buffer.writeItem(stack);
             }
         }
     };
@@ -43,9 +41,7 @@ public final class EvolutionDataSerializers {
     private EvolutionDataSerializers() {
     }
 
-    public static void register(RegistryEvent.Register<DataSerializerEntry> event, ResourceLocation registryName) {
-        DataSerializerEntry dataSerializerEntryItemList = new DataSerializerEntry(ITEM_LIST);
-        dataSerializerEntryItemList.setRegistryName(registryName);
-        event.getRegistry().register(dataSerializerEntryItemList);
+    public static void register() {
+        EntityDataSerializers.registerSerializer(ITEM_LIST);
     }
 }

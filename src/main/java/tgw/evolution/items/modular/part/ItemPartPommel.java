@@ -13,7 +13,7 @@ public class ItemPartPommel extends ItemPart<PartTypes.Pommel, ItemPartPommel, P
     }
 
     @Override
-    protected PartPommel createNew() {
+    public PartPommel createNew() {
         return new PartPommel();
     }
 
@@ -33,8 +33,8 @@ public class ItemPartPommel extends ItemPart<PartTypes.Pommel, ItemPartPommel, P
     }
 
     @Override
-    protected PartPommel getPartCap(ItemStack stack) {
-        return PartPommel.get(stack);
+    protected PartPommel getPartCap() {
+        return new PartPommel();
     }
 
     @Override

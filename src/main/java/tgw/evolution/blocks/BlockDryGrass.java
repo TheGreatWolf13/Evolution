@@ -48,7 +48,7 @@ public class BlockDryGrass extends BlockGenericSnowable implements IRockVariant 
 
     @Override
     public SoundEvent fallingSound() {
-        return EvolutionSounds.SOIL_COLLAPSE.get();
+        return EvolutionSounds.SOIL_COLLAPSE;
     }
 
     @Override
@@ -80,9 +80,6 @@ public class BlockDryGrass extends BlockGenericSnowable implements IRockVariant 
 
     @Override
     public void randomTick(BlockState state, ServerLevel level, BlockPos pos, Random random) {
-        if (!level.isAreaLoaded(pos, 3)) {
-            return;
-        }
         if (random.nextInt(2) == 0) {
             if (!canSustainGrass(level, pos)) {
                 level.setBlockAndUpdate(pos, this.variant.get(EvolutionBlocks.DIRTS).defaultBlockState());

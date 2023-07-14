@@ -1,43 +1,30 @@
 package tgw.evolution.network;
 
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.network.NetworkEvent;
-import tgw.evolution.Evolution;
+import tgw.evolution.patches.PatchClientPacketListener;
 
-import java.util.function.Supplier;
+public class PacketSCUpdateCameraTilt implements Packet<ClientGamePacketListener> {
 
-public class PacketSCUpdateCameraTilt implements IPacket {
+    public final float attackedAtYaw;
 
-    private final float attackedAtYaw;
-
-    private PacketSCUpdateCameraTilt(float attackedAtYaw) {
-        this.attackedAtYaw = attackedAtYaw;
+    public PacketSCUpdateCameraTilt(FriendlyByteBuf buf) {
+        this.attackedAtYaw = buf.readFloat();
     }
 
     public PacketSCUpdateCameraTilt(Player player) {
         this.attackedAtYaw = player.hurtDir;
     }
 
-    public static PacketSCUpdateCameraTilt decode(FriendlyByteBuf buffer) {
-        return new PacketSCUpdateCameraTilt(buffer.readFloat());
-    }
-
-    public static void encode(PacketSCUpdateCameraTilt packet, FriendlyByteBuf buffer) {
-        buffer.writeFloat(packet.attackedAtYaw);
-    }
-
-    public static void handle(PacketSCUpdateCameraTilt packet, Supplier<NetworkEvent.Context> context) {
-        NetworkEvent.Context c = context.get();
-        if (IPacket.checkSide(packet, c)) {
-            c.enqueueWork(() -> Evolution.PROXY.getClientPlayer().hurtDir = packet.attackedAtYaw);
-            c.setPacketHandled(true);
-        }
+    @Override
+    public void handle(ClientGamePacketListener listener) {
+        ((PatchClientPacketListener) listener).handleUpdateCameraTilt(this);
     }
 
     @Override
-    public LogicalSide getDestinationSide() {
-        return LogicalSide.CLIENT;
+    public void write(FriendlyByteBuf buf) {
+        buf.writeFloat(this.attackedAtYaw);
     }
 }

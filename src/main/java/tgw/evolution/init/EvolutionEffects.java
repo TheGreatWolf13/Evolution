@@ -1,18 +1,14 @@
 package tgw.evolution.init;
 
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import net.minecraft.core.Registry;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.RegistryObject;
 import org.jetbrains.annotations.Contract;
 import tgw.evolution.Evolution;
-import tgw.evolution.patches.IMobEffectInstancePatch;
-import tgw.evolution.patches.IMobEffectPatch;
+import tgw.evolution.patches.PatchMobEffect;
 import tgw.evolution.potion.*;
 import tgw.evolution.util.collection.ChanceEffectHolder;
 import tgw.evolution.util.collection.EffectHolder;
@@ -21,34 +17,32 @@ import java.util.List;
 
 public final class EvolutionEffects {
 
-    public static final RegistryObject<EffectGeneric> ANAEMIA;
-    public static final RegistryObject<EffectDehydration> DEHYDRATION;
-    public static final RegistryObject<EffectGeneric> DISORIENTED;
-    public static final RegistryObject<EffectDizziness> DIZZINESS;
-    public static final RegistryObject<EffectHydration> HYDRATION;
-    public static final RegistryObject<EffectGeneric> OVEREAT;
-    public static final RegistryObject<EffectSaturation> SATURATION;
-    public static final RegistryObject<EffectShivering> SHIVERING;
-    public static final RegistryObject<EffectGeneric> STARVATION;
-    public static final RegistryObject<EffectSweating> SWEATING;
-    public static final RegistryObject<EffectThirst> THIRST;
-    public static final RegistryObject<EffectWaterIntoxication> WATER_INTOXICATION;
-    //
-    private static final DeferredRegister<MobEffect> EFFECTS = DeferredRegister.create(ForgeRegistries.MOB_EFFECTS, Evolution.MODID);
+    public static final EffectGeneric ANAEMIA;
+    public static final EffectDehydration DEHYDRATION;
+    public static final EffectGeneric DISORIENTED;
+    public static final EffectDizziness DIZZINESS;
+    public static final EffectHydration HYDRATION;
+    public static final EffectGeneric OVEREAT;
+    public static final EffectSaturation SATURATION;
+    public static final EffectShivering SHIVERING;
+    public static final EffectGeneric STARVATION;
+    public static final EffectSweating SWEATING;
+    public static final EffectThirst THIRST;
+    public static final EffectWaterIntoxication WATER_INTOXICATION;
 
     static {
-        ANAEMIA = EFFECTS.register("anaemia", () -> new EffectGeneric(MobEffectCategory.HARMFUL, 0xdd_dd00));
-        DEHYDRATION = EFFECTS.register("dehydration", EffectDehydration::new);
-        DISORIENTED = EFFECTS.register("disoriented", () -> new EffectGeneric(MobEffectCategory.HARMFUL, 0xed_a677));
-        DIZZINESS = EFFECTS.register("dizziness", EffectDizziness::new);
-        HYDRATION = EFFECTS.register("hydration", EffectHydration::new);
-        OVEREAT = EFFECTS.register("overeat", () -> new EffectGeneric(MobEffectCategory.HARMFUL, 0));
-        SATURATION = EFFECTS.register("saturation", EffectSaturation::new);
-        SHIVERING = EFFECTS.register("shivering", EffectShivering::new);
-        STARVATION = EFFECTS.register("starvation", () -> new EffectGeneric(MobEffectCategory.HARMFUL, 0));
-        SWEATING = EFFECTS.register("sweating", EffectSweating::new);
-        THIRST = EFFECTS.register("thirst", EffectThirst::new);
-        WATER_INTOXICATION = EFFECTS.register("water_intoxication", EffectWaterIntoxication::new);
+        ANAEMIA = register("anaemia", new EffectGeneric(MobEffectCategory.HARMFUL, 0xdd_dd00));
+        DEHYDRATION = register("dehydration", new EffectDehydration());
+        DISORIENTED = register("disoriented", new EffectGeneric(MobEffectCategory.HARMFUL, 0xed_a677));
+        DIZZINESS = register("dizziness", new EffectDizziness());
+        HYDRATION = register("hydration", new EffectHydration());
+        OVEREAT = register("overeat", new EffectGeneric(MobEffectCategory.HARMFUL, 0));
+        SATURATION = register("saturation", new EffectSaturation());
+        SHIVERING = register("shivering", new EffectShivering());
+        STARVATION = register("starvation", new EffectGeneric(MobEffectCategory.HARMFUL, 0));
+        SWEATING = register("sweating", new EffectSweating());
+        THIRST = register("thirst", new EffectThirst());
+        WATER_INTOXICATION = register("water_intoxication", new EffectWaterIntoxication());
     }
 
     private EvolutionEffects() {
@@ -65,12 +59,12 @@ public final class EvolutionEffects {
     }
 
     private static Component getEffectComp(MobEffect effect, int lvl) {
-        return ((IMobEffectPatch) effect).getDescription(lvl);
+        return ((PatchMobEffect) effect).getDescription(lvl);
     }
 
     public static void getEffectDescription(List<Component> tooltips, MobEffect effect, int lvl) {
         tooltips.add(getEffectComp(effect, lvl));
-        IMobEffectPatch patch = (IMobEffectPatch) effect;
+        PatchMobEffect patch = (PatchMobEffect) effect;
         boolean addedCausesHeader = false;
         if (patch.disablesNaturalRegen()) {
             addedCausesHeader = addCause(tooltips, EvolutionTexts.TOOLTIP_EFFECT_DISABLE_REGEN, false);
@@ -131,12 +125,10 @@ public final class EvolutionEffects {
             addedCausesHeader = addCause(tooltips, EvolutionTexts.effectLuck(i), addedCausesHeader);
         }
         ObjectList<EffectHolder> causes = patch.causesEffect();
-        if (!causes.isEmpty()) {
-            for (int index = 0, l = causes.size(); index < l; index++) {
-                MobEffectInstance instance = causes.get(index).getInstance(lvl);
-                if (instance != null) {
-                    addedCausesHeader = addCause(tooltips, EvolutionTexts.effect(instance), addedCausesHeader);
-                }
+        for (int index = 0, l = causes.size(); index < l; index++) {
+            MobEffectInstance instance = causes.get(index).getInstance(lvl);
+            if (instance != null) {
+                addedCausesHeader = addCause(tooltips, EvolutionTexts.effect(instance), addedCausesHeader);
             }
         }
         boolean mayCauseAnything = patch.mayCauseAnything();
@@ -144,12 +136,10 @@ public final class EvolutionEffects {
             tooltips.add(EvolutionTexts.EMPTY);
             tooltips.add(EvolutionTexts.TOOLTIP_EFFECT_MAY_CAUSE);
             ObjectList<ChanceEffectHolder> mayCause = patch.mayCauseEffect();
-            if (!mayCause.isEmpty()) {
-                for (int index = 0, l = mayCause.size(); index < l; index++) {
-                    MobEffectInstance instance = mayCause.get(index).getInstance(lvl);
-                    if (instance != null) {
-                        tooltips.add(EvolutionTexts.effect(instance));
-                    }
+            for (int index = 0, l = mayCause.size(); index < l; index++) {
+                MobEffectInstance instance = mayCause.get(index).getInstance(lvl);
+                if (instance != null) {
+                    tooltips.add(EvolutionTexts.effect(instance));
                 }
             }
         }
@@ -166,11 +156,15 @@ public final class EvolutionEffects {
     @Contract("_, _, _, _, _ -> new")
     public static MobEffectInstance infiniteOf(MobEffect effect, int amplifier, boolean isAmbient, boolean showParticles, boolean showIcon) {
         MobEffectInstance instance = new MobEffectInstance(effect, 10, amplifier, isAmbient, showParticles, showIcon);
-        ((IMobEffectInstancePatch) instance).setInfinite(true);
+        instance.setInfinite(true);
         return instance;
     }
 
+    private static <E extends MobEffect> E register(String name, E effect) {
+        return Registry.register(Registry.MOB_EFFECT, Evolution.getResource(name), effect);
+    }
+
     public static void register() {
-        EFFECTS.register(FMLJavaModLoadingContext.get().getModEventBus());
+        //Effects are registered via class-loading.
     }
 }

@@ -1,58 +1,39 @@
 package tgw.evolution.network;
 
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
-import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import net.minecraft.core.Registry;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.stats.Stat;
 import net.minecraft.stats.StatType;
-import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.network.NetworkEvent;
 import org.jetbrains.annotations.Nullable;
-import tgw.evolution.Evolution;
+import tgw.evolution.patches.PatchClientPacketListener;
+import tgw.evolution.util.collection.maps.O2LHashMap;
+import tgw.evolution.util.collection.maps.O2LMap;
 
-import java.util.function.Supplier;
+public class PacketSCStatistics implements Packet<ClientGamePacketListener> {
 
-public class PacketSCStatistics implements IPacket {
+    public final O2LMap<Stat<?>> statsData;
 
-    private final Object2LongMap<Stat<?>> statsData;
-
-    public PacketSCStatistics(Object2LongMap<Stat<?>> statsData) {
+    public PacketSCStatistics(O2LMap<Stat<?>> statsData) {
         this.statsData = statsData;
     }
 
-    public static PacketSCStatistics decode(FriendlyByteBuf buffer) {
-        int size = buffer.readVarInt();
-        Object2LongMap<Stat<?>> statisticMap = new Object2LongOpenHashMap<>(size);
+    public PacketSCStatistics(FriendlyByteBuf buf) {
+        int size = buf.readVarInt();
+        O2LMap<Stat<?>> statisticMap = new O2LHashMap<>(size);
         for (int i = 0; i < size; ++i) {
-            readValues(statisticMap, Registry.STAT_TYPE.byId(buffer.readVarInt()), buffer);
+            readValues(statisticMap, Registry.STAT_TYPE.byId(buf.readVarInt()), buf);
         }
-        return new PacketSCStatistics(statisticMap);
-    }
-
-    public static void encode(PacketSCStatistics packet, FriendlyByteBuf buffer) {
-        buffer.writeVarInt(packet.statsData.size());
-        for (Object2LongMap.Entry<Stat<?>> entry : packet.statsData.object2LongEntrySet()) {
-            Stat<?> stat = entry.getKey();
-            buffer.writeVarInt(Registry.STAT_TYPE.getId(stat.getType()));
-            buffer.writeVarInt(getStatId(stat));
-            buffer.writeLong(entry.getLongValue());
-        }
+        this.statsData = statisticMap;
     }
 
     private static <T> int getStatId(Stat<T> stat) {
         return stat.getType().getRegistry().getId(stat.getValue());
     }
 
-    public static void handle(PacketSCStatistics packet, Supplier<NetworkEvent.Context> context) {
-        NetworkEvent.Context c = context.get();
-        if (IPacket.checkSide(packet, c)) {
-            c.enqueueWork(() -> Evolution.PROXY.updateStats(packet.statsData));
-            c.setPacketHandled(true);
-        }
-    }
-
-    private static <T> void readValues(Object2LongMap<Stat<?>> map, @Nullable StatType<T> statType, FriendlyByteBuf buffer) {
+    private static <T> void readValues(O2LMap<Stat<?>> map, @Nullable StatType<T> statType, FriendlyByteBuf buffer) {
         int statId = buffer.readVarInt();
         long amount = buffer.readLong();
         if (statType != null) {
@@ -63,7 +44,18 @@ public class PacketSCStatistics implements IPacket {
     }
 
     @Override
-    public LogicalSide getDestinationSide() {
-        return LogicalSide.CLIENT;
+    public void handle(ClientGamePacketListener listener) {
+        ((PatchClientPacketListener) listener).handleStatistics(this);
+    }
+
+    @Override
+    public void write(FriendlyByteBuf buf) {
+        buf.writeVarInt(this.statsData.size());
+        for (Object2LongMap.Entry<Stat<?>> entry : this.statsData.object2LongEntrySet()) {
+            Stat<?> stat = entry.getKey();
+            buf.writeVarInt(Registry.STAT_TYPE.getId(stat.getType()));
+            buf.writeVarInt(getStatId(stat));
+            buf.writeLong(entry.getLongValue());
+        }
     }
 }

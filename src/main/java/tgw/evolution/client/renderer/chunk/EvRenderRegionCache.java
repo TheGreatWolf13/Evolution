@@ -1,19 +1,19 @@
 package tgw.evolution.client.renderer.chunk;
 
-import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.LevelChunk;
-import tgw.evolution.util.collection.OArrayList;
-import tgw.evolution.util.collection.OList;
+import tgw.evolution.util.collection.lists.OArrayList;
+import tgw.evolution.util.collection.lists.OList;
+import tgw.evolution.util.collection.maps.L2OHashMap;
+import tgw.evolution.util.collection.maps.L2OMap;
 
 import javax.annotation.Nullable;
 
 public class EvRenderRegionCache {
-    private final Long2ObjectMap<LevelChunk> chunkCache = new Long2ObjectOpenHashMap<>();
-    private final Long2ObjectMap<EvRenderChunk> renderCache = new Long2ObjectOpenHashMap<>();
+    private final L2OMap<LevelChunk> chunkCache = new L2OHashMap<>();
+    private final L2OMap<EvRenderChunk> renderCache = new L2OHashMap<>();
     private final OList<LevelChunk> tempList = new OArrayList<>();
 
     public void clear() {

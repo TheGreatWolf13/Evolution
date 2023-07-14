@@ -2,8 +2,8 @@ package tgw.evolution.entities;
 
 import it.unimi.dsi.fastutil.floats.FloatListIterator;
 import net.minecraft.nbt.*;
-import tgw.evolution.util.collection.FArrayList;
-import tgw.evolution.util.collection.FList;
+import tgw.evolution.util.collection.lists.FArrayList;
+import tgw.evolution.util.collection.lists.FList;
 
 public class EffectHelper {
 

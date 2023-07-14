@@ -3,7 +3,7 @@ package tgw.evolution.util.math;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import tgw.evolution.mixin.AABBAccessor;
+import tgw.evolution.mixin.AccessorAABB;
 
 @SuppressWarnings("EqualsAndHashcode")
 public class AABBMutable extends AABB {
@@ -57,19 +57,19 @@ public class AABBMutable extends AABB {
     }
 
     public AABBMutable moveMutable(double dx, double dy, double dz) {
-        ((AABBAccessor) this).setMinX(this.minX + dx);
-        ((AABBAccessor) this).setMaxX(this.maxX + dx);
-        ((AABBAccessor) this).setMinY(this.minY + dy);
-        ((AABBAccessor) this).setMaxY(this.maxY + dy);
-        ((AABBAccessor) this).setMinZ(this.minZ + dz);
-        ((AABBAccessor) this).setMaxZ(this.maxZ + dz);
+        ((AccessorAABB) this).setMinX(this.minX + dx);
+        ((AccessorAABB) this).setMaxX(this.maxX + dx);
+        ((AccessorAABB) this).setMinY(this.minY + dy);
+        ((AccessorAABB) this).setMaxY(this.maxY + dy);
+        ((AccessorAABB) this).setMinZ(this.minZ + dz);
+        ((AccessorAABB) this).setMaxZ(this.maxZ + dz);
         return this;
     }
 
     @CanIgnoreReturnValue
     public AABBMutable moveY(double dy) {
-        ((AABBAccessor) this).setMinY(this.minY + dy);
-        ((AABBAccessor) this).setMaxY(this.maxY + dy);
+        ((AccessorAABB) this).setMinY(this.minY + dy);
+        ((AccessorAABB) this).setMaxY(this.maxY + dy);
         return this;
     }
 
@@ -78,12 +78,12 @@ public class AABBMutable extends AABB {
     }
 
     public AABBMutable set(double x1, double y1, double z1, double x2, double y2, double z2) {
-        ((AABBAccessor) this).setMinX(Math.min(x1, x2));
-        ((AABBAccessor) this).setMinY(Math.min(y1, y2));
-        ((AABBAccessor) this).setMinZ(Math.min(z1, z2));
-        ((AABBAccessor) this).setMaxX(Math.max(x1, x2));
-        ((AABBAccessor) this).setMaxY(Math.max(y1, y2));
-        ((AABBAccessor) this).setMaxZ(Math.max(z1, z2));
+        ((AccessorAABB) this).setMinX(Math.min(x1, x2));
+        ((AccessorAABB) this).setMinY(Math.min(y1, y2));
+        ((AccessorAABB) this).setMinZ(Math.min(z1, z2));
+        ((AccessorAABB) this).setMaxX(Math.max(x1, x2));
+        ((AccessorAABB) this).setMaxY(Math.max(y1, y2));
+        ((AccessorAABB) this).setMaxZ(Math.max(z1, z2));
         return this;
     }
 
@@ -92,18 +92,18 @@ public class AABBMutable extends AABB {
      * Only use if you're sure the parameters are in the right order.
      */
     public AABBMutable setUnchecked(double x1, double y1, double z1, double x2, double y2, double z2) {
-        ((AABBAccessor) this).setMinX(x1);
-        ((AABBAccessor) this).setMinY(y1);
-        ((AABBAccessor) this).setMinZ(z1);
-        ((AABBAccessor) this).setMaxX(x2);
-        ((AABBAccessor) this).setMaxY(y2);
-        ((AABBAccessor) this).setMaxZ(z2);
+        ((AccessorAABB) this).setMinX(x1);
+        ((AccessorAABB) this).setMinY(y1);
+        ((AccessorAABB) this).setMinZ(z1);
+        ((AccessorAABB) this).setMaxX(x2);
+        ((AccessorAABB) this).setMaxY(y2);
+        ((AccessorAABB) this).setMaxZ(z2);
         return this;
     }
 
     public AABBMutable setX(double x1, double x2) {
-        ((AABBAccessor) this).setMinX(Math.min(x1, x2));
-        ((AABBAccessor) this).setMaxX(Math.max(x1, x2));
+        ((AccessorAABB) this).setMinX(Math.min(x1, x2));
+        ((AccessorAABB) this).setMaxX(Math.max(x1, x2));
         return this;
     }
 }

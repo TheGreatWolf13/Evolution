@@ -5,7 +5,6 @@ import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.CrossbowItem;
 import net.minecraft.world.item.ItemStack;
-import tgw.evolution.capabilities.modular.IModularTool;
 import tgw.evolution.items.IEvolutionItem;
 import tgw.evolution.items.modular.ItemModularTool;
 import tgw.evolution.util.math.MathHelper;
@@ -201,7 +200,7 @@ public final class AnimationUtils {
             holder.translateY(item.getRenderOffsetY());
             holder.translateZ(item.getRenderOffsetZ());
         }
-        if (stack.getItem() instanceof ItemModularTool && IModularTool.get(stack).isShovel()) {
+        if (stack.getItem() instanceof ItemModularTool tool && tool.isShovel(stack)) {
             holder.setRotationZ(-90 * Mth.DEG_TO_RAD);
         }
     }

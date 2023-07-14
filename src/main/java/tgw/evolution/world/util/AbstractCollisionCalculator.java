@@ -5,7 +5,6 @@ import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.CollisionGetter;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.util.ILocked;
 import tgw.evolution.util.collection.AbstractReusableIterator;
@@ -39,8 +38,7 @@ public abstract class AbstractCollisionCalculator<T> extends AbstractReusableIte
         this.reset();
     }
 
-    @Nullable
-    protected BlockGetter getChunk(int x, int z) {
+    protected @Nullable BlockGetter getChunk(int x, int z) {
         byte flag = this.cursor.getRecalculationFlag();
         if (flag == 0) {
             assert this.cachedChunkX == SectionPos.blockToSectionCoord(x);
@@ -65,7 +63,6 @@ public abstract class AbstractCollisionCalculator<T> extends AbstractReusableIte
         return this.locked;
     }
 
-    @NotNull
     @Override
     public Iterator<T> iterator() {
         return this;

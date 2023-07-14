@@ -7,7 +7,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
@@ -21,7 +20,6 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.level.material.Material;
 import org.jetbrains.annotations.Nullable;
-import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.util.constants.BlockFlags;
 
 import static tgw.evolution.init.EvolutionBStates.HALF;
@@ -60,16 +58,6 @@ public class BlockDoublePlant extends BlockBush {
     }
 
     @Override
-    public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction face) {
-        return EvolutionBlocks.FIRE.get().getActualEncouragement(state);
-    }
-
-    @Override
-    public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction face) {
-        return EvolutionBlocks.FIRE.get().getActualFlammability(state);
-    }
-
-    @Override
     public OffsetType getOffsetType() {
         return OffsetType.XZ;
     }
@@ -79,9 +67,8 @@ public class BlockDoublePlant extends BlockBush {
         return Mth.getSeed(pos.getX(), pos.below(state.getValue(HALF) == DoubleBlockHalf.LOWER ? 0 : 1).getY(), pos.getZ());
     }
 
-    @Nullable
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext context) {
+    public @Nullable BlockState getStateForPlacement(BlockPlaceContext context) {
         BlockPos pos = context.getClickedPos();
         Level level = context.getLevel();
         return pos.getY() < level.dimensionType().logicalHeight() - 1 && level.getBlockState(pos.above()).canBeReplaced(context) ?

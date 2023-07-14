@@ -26,7 +26,6 @@ public class DamageSourcePlayer extends DamageSourceEntity {
     @Override
     public Component getLocalizedDeathMessage(LivingEntity deadEntity) {
         String message = "death.attack." + this.msgId + ".item";
-        assert this.damageSourceEntity != null;
         return new TranslatableComponent(message, deadEntity.getDisplayName(), this.damageSourceEntity.getDisplayName(), this.getItemDisplay());
     }
 }

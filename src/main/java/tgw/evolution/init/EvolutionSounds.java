@@ -1,32 +1,28 @@
 package tgw.evolution.init;
 
+import net.minecraft.core.Registry;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.RegistryObject;
 import tgw.evolution.Evolution;
 
 public final class EvolutionSounds {
 
-    public static final RegistryObject<SoundEvent> FIST_PUNCHES_BLOCK;
-    public static final RegistryObject<SoundEvent> METAL_SPEAR_HIT_ENTITY;
-    public static final RegistryObject<SoundEvent> METAL_SPEAR_THROW;
-    public static final RegistryObject<SoundEvent> METAL_WEAPON_BLOCKS;
-    public static final RegistryObject<SoundEvent> METAL_WEAPON_HIT_BLOCK;
-    public static final RegistryObject<SoundEvent> SOIL_COLLAPSE;
-    public static final RegistryObject<SoundEvent> STONE_BREAK;
-    public static final RegistryObject<SoundEvent> STONE_COLLAPSE;
-    public static final RegistryObject<SoundEvent> STONE_SPEAR_HIT_ENTITY;
-    public static final RegistryObject<SoundEvent> STONE_SPEAR_THROW;
-    public static final RegistryObject<SoundEvent> STONE_WEAPON_HIT_BLOCK;
-    public static final RegistryObject<SoundEvent> SWORD_SHEATHE;
-    public static final RegistryObject<SoundEvent> SWORD_UNSHEATHE;
-    public static final RegistryObject<SoundEvent> TREE_FALLING;
-    public static final RegistryObject<SoundEvent> WOOD_BREAK;
-    public static final RegistryObject<SoundEvent> WOOD_COLLAPSE;
-
-    private static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(ForgeRegistries.SOUND_EVENTS, Evolution.MODID);
+    public static final SoundEvent FIST_PUNCHES_BLOCK;
+    public static final SoundEvent METAL_SPEAR_HIT_ENTITY;
+    public static final SoundEvent METAL_SPEAR_THROW;
+    public static final SoundEvent METAL_WEAPON_BLOCKS;
+    public static final SoundEvent METAL_WEAPON_HIT_BLOCK;
+    public static final SoundEvent SOIL_COLLAPSE;
+    public static final SoundEvent STONE_BREAK;
+    public static final SoundEvent STONE_COLLAPSE;
+    public static final SoundEvent STONE_SPEAR_HIT_ENTITY;
+    public static final SoundEvent STONE_SPEAR_THROW;
+    public static final SoundEvent STONE_WEAPON_HIT_BLOCK;
+    public static final SoundEvent SWORD_SHEATHE;
+    public static final SoundEvent SWORD_UNSHEATHE;
+    public static final SoundEvent TREE_FALLING;
+    public static final SoundEvent WOOD_BREAK;
+    public static final SoundEvent WOOD_COLLAPSE;
 
     static {
         FIST_PUNCHES_BLOCK = register("fist_punches_block");
@@ -50,11 +46,12 @@ public final class EvolutionSounds {
     private EvolutionSounds() {
     }
 
-    private static RegistryObject<SoundEvent> register(String name) {
-        return SOUNDS.register(name, () -> new SoundEvent(Evolution.getResource(name)));
+    private static SoundEvent register(String name) {
+        ResourceLocation loc = Evolution.getResource(name);
+        return Registry.register(Registry.SOUND_EVENT, loc, new SoundEvent(loc));
     }
 
     public static void register() {
-        SOUNDS.register(FMLJavaModLoadingContext.get().getModEventBus());
+        //Sounds are registered via class-loading
     }
 }

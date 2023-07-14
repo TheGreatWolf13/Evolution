@@ -1,9 +1,8 @@
-@ParametersAreNonnullByDefault
-@MethodsReturnNonnullByDefault
-@FieldsAreNonnullByDefault
+@FieldsAreNotNullByDefault
+@MethodsReturnNotNullByDefault
+@ParametersAreNotNullByDefault
 package tgw.evolution.blocks;
 
-import com.mojang.math.MethodsReturnNonnullByDefault;
-import net.minecraft.FieldsAreNonnullByDefault;
-
-import javax.annotation.ParametersAreNonnullByDefault;
+import tgw.evolution.util.FieldsAreNotNullByDefault;
+import tgw.evolution.util.MethodsReturnNotNullByDefault;
+import tgw.evolution.util.ParametersAreNotNullByDefault;

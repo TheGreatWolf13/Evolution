@@ -11,5 +11,5 @@ public interface IBackWeapon {
      * @return The priority of the item when rendering, 0 being the most priority, bigger numbers being lower priority. Negative numbers simply
      * represent no priority at all, not even rendering.
      */
-    int getPriority(ItemStack stack);
+    int getBackPriority(ItemStack stack);
 }

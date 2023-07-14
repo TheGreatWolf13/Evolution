@@ -26,7 +26,7 @@ public class TEMetal extends BlockEntity {
     protected byte partialOxidation;
 
     public TEMetal(BlockPos pos, BlockState state) {
-        super(EvolutionTEs.METAL.get(), pos, state);
+        super(EvolutionTEs.METAL, pos, state);
     }
 
     public boolean isAirExposed() {

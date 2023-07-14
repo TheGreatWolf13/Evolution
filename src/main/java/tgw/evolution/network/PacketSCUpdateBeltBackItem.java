@@ -1,52 +1,39 @@
 package tgw.evolution.network;
 
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.network.NetworkEvent;
-import tgw.evolution.events.ClientEvents;
+import tgw.evolution.patches.PatchClientPacketListener;
 
-import java.util.function.Supplier;
+public class PacketSCUpdateBeltBackItem implements Packet<ClientGamePacketListener> {
 
-public class PacketSCUpdateBeltBackItem implements IPacket {
+    public final boolean back;
+    public final int entityId;
+    public final ItemStack stack;
 
-    private final boolean back;
-    private final int entityId;
-    private final ItemStack stack;
-
-    public PacketSCUpdateBeltBackItem(int entityId, boolean back, ItemStack stack) {
+    public PacketSCUpdateBeltBackItem(Entity entity, boolean back, ItemStack stack) {
         this.stack = stack;
         this.back = back;
-        this.entityId = entityId;
+        this.entityId = entity.getId();
     }
 
-    public static PacketSCUpdateBeltBackItem decode(FriendlyByteBuf buffer) {
-        return new PacketSCUpdateBeltBackItem(buffer.readInt(), buffer.readBoolean(), buffer.readItem());
-    }
-
-    public static void encode(PacketSCUpdateBeltBackItem packet, FriendlyByteBuf buffer) {
-        buffer.writeInt(packet.entityId);
-        buffer.writeBoolean(packet.back);
-        buffer.writeItemStack(packet.stack, false);
-    }
-
-    public static void handle(PacketSCUpdateBeltBackItem packet, Supplier<NetworkEvent.Context> context) {
-        NetworkEvent.Context c = context.get();
-        if (IPacket.checkSide(packet, c)) {
-            c.enqueueWork(() -> {
-                if (packet.back) {
-                    ClientEvents.BACK_ITEMS.put(packet.entityId, packet.stack);
-                }
-                else {
-                    ClientEvents.BELT_ITEMS.put(packet.entityId, packet.stack);
-                }
-            });
-            c.setPacketHandled(true);
-        }
+    public PacketSCUpdateBeltBackItem(FriendlyByteBuf buf) {
+        this.entityId = buf.readVarInt();
+        this.back = buf.readBoolean();
+        this.stack = buf.readItem();
     }
 
     @Override
-    public LogicalSide getDestinationSide() {
-        return LogicalSide.CLIENT;
+    public void handle(ClientGamePacketListener listener) {
+        ((PatchClientPacketListener) listener).handleUpdateBeltBackItem(this);
+    }
+
+    @Override
+    public void write(FriendlyByteBuf buf) {
+        buf.writeVarInt(this.entityId);
+        buf.writeBoolean(this.back);
+        buf.writeItem(this.stack);
     }
 }

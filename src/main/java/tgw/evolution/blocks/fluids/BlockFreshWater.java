@@ -32,12 +32,12 @@ public class BlockFreshWater extends BlockGenericFluid {
                 int amountAlreadyAtPos = FluidGeneric.getFluidAmount(level, pos, level.getFluidState(pos));
                 int capacity = FluidGeneric.getCapacity(state);
                 int placed = Math.min(amountAlreadyAtPos + amount, capacity);
-                EvolutionFluids.SALT_WATER.get().setBlockState(level, pos, placed);
+                EvolutionFluids.SALT_WATER.setBlockState(level, pos, placed);
                 amount = amount - placed + amountAlreadyAtPos;
                 return amount;
             }
         }
-        Evolution.warn("Try displace of " + this.getRegistryName() + " with " + otherFluid.getRegistryName() + " is not yet implemented!");
+        Evolution.warn("Try displace of " + this + " with " + otherFluid + " is not yet implemented!");
         return amount;
     }
 }

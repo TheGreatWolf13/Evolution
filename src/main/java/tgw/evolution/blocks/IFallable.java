@@ -32,7 +32,7 @@ public interface IFallable extends IPhysics {
     @Override
     default boolean fallLogic(Level level, BlockPos pos) {
         Evolution.info("Fall Logic called at {}", pos);
-        if (BlockUtils.isReplaceable(BlockUtils.getBlockState(level, pos.getX(), pos.getY() - 1, pos.getZ()))) {
+        if (BlockUtils.isReplaceable(level.getBlockState_(pos.getX(), pos.getY() - 1, pos.getZ()))) {
             Evolution.info("Block below is replaceable, falling");
             this.fall(level, pos);
             return true;

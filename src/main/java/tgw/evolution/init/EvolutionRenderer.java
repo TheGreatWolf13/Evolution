@@ -15,18 +15,18 @@ public final class EvolutionRenderer {
 
     public static void registryEntityRenders() {
         //Entities
-        EntityRenderers.register(EvolutionEntities.COW.get(), RenderCow::new);
-        EntityRenderers.register(EvolutionEntities.FALLING_PEAT.get(), RenderFallingPeat::new);
-        EntityRenderers.register(EvolutionEntities.FALLING_WEIGHT.get(), RenderFallingWeight::new);
-        EntityRenderers.register(EvolutionEntities.HOOK.get(), RenderHook::new);
-        EntityRenderers.register(EvolutionEntities.PLAYER_CORPSE.get(), RenderPlayerCorpse::new);
-        EntityRenderers.register(EvolutionEntities.SIT.get(), RenderDummy::new);
-        EntityRenderers.register(EvolutionEntities.SPEAR.get(), RenderSpear::new);
-        EntityRenderers.register(EvolutionEntities.TORCH.get(), RenderTorch::new);
+//        EntityRenderers.register(EvolutionEntities.COW, RenderCow::new);
+        EntityRenderers.register(EvolutionEntities.FALLING_PEAT, RenderFallingPeat::new);
+        EntityRenderers.register(EvolutionEntities.FALLING_WEIGHT, RenderFallingWeight::new);
+        EntityRenderers.register(EvolutionEntities.HOOK, RenderHook::new);
+        EntityRenderers.register(EvolutionEntities.PLAYER_CORPSE, RenderPlayerCorpse::new);
+        EntityRenderers.register(EvolutionEntities.SIT, RenderDummy::new);
+        EntityRenderers.register(EvolutionEntities.SPEAR, RenderSpear::new);
+        EntityRenderers.register(EvolutionEntities.TORCH, RenderTorch::new);
         //Tile Entities
-        BlockEntityRenderers.register(EvolutionTEs.CHOPPING.get(), RenderTEChopping::new);
-        BlockEntityRenderers.register(EvolutionTEs.MOLDING.get(), RenderTEMolding::new);
-        BlockEntityRenderers.register(EvolutionTEs.PIT_KILN.get(), RenderTEPitKiln::new);
-        BlockEntityRenderers.register(EvolutionTEs.SCHEMATIC.get(), RenderTESchematic::new);
+        BlockEntityRenderers.register(EvolutionTEs.CHOPPING, RenderTEChopping::new);
+        BlockEntityRenderers.register(EvolutionTEs.MOLDING, RenderTEMolding::new);
+        BlockEntityRenderers.register(EvolutionTEs.PIT_KILN, RenderTEPitKiln::new);
+        BlockEntityRenderers.register(EvolutionTEs.SCHEMATIC, RenderTESchematic::new);
     }
 }

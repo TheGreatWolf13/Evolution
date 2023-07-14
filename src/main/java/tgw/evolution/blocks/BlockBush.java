@@ -10,21 +10,11 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.PathComputationType;
-import net.minecraftforge.common.IPlantable;
-import tgw.evolution.blocks.util.BlockUtils;
 
-public class BlockBush extends BlockPhysics implements IPlantable, IReplaceable, IPoppable {
+public class BlockBush extends BlockPhysics implements IReplaceable, IPoppable {
 
     protected BlockBush(Properties builder) {
         super(builder);
-    }
-
-    /**
-     * Returns whether the blockstate can sustain the bush.
-     */
-    public static boolean isValidGround(BlockState state) {
-        Block block = state.getBlock(); //TODO proper farmlad
-        return block instanceof BlockGrass || block instanceof BlockDirt || block instanceof BlockDryGrass;
     }
 
     @Override
@@ -39,11 +29,8 @@ public class BlockBush extends BlockPhysics implements IPlantable, IReplaceable,
 
     @Override
     public boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
-        BlockPos blockpos = pos.below();
-        if (state.getBlock() == this) {
-            return BlockUtils.canSustainSapling(level.getBlockState(blockpos), this);
-        }
-        return isValidGround(level.getBlockState(blockpos));
+        Block blockBelow = level.getBlockState(pos.below()).getBlock();
+        return blockBelow instanceof BlockGrass || blockBelow instanceof BlockDirt || blockBelow instanceof BlockDryGrass;
     }
 
     @Override
@@ -54,15 +41,6 @@ public class BlockBush extends BlockPhysics implements IPlantable, IReplaceable,
     @Override
     public double getMass(Level level, BlockPos pos, BlockState state) {
         return 0;
-    }
-
-    @Override
-    public BlockState getPlant(BlockGetter level, BlockPos pos) {
-        BlockState state = level.getBlockState(pos);
-        if (state.getBlock() != this) {
-            return this.defaultBlockState();
-        }
-        return state;
     }
 
     @Override

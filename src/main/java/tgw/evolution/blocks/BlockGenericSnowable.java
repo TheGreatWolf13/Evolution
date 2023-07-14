@@ -22,7 +22,7 @@ public abstract class BlockGenericSnowable extends BlockPhysics implements IColl
     }
 
     @Override
-    public boolean collision(Level level, BlockPos pos, Entity entity, double speed, double mass, @Nullable Direction.Axis axis) {
+    public boolean collision(Level level, int x, int y, int z, Entity entity, double speed, double mass, @Nullable Direction.Axis axis) {
         return false;
     }
 

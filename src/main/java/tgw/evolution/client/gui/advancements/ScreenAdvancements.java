@@ -43,11 +43,9 @@ public class ScreenAdvancements extends Screen implements ClientAdvancements.Lis
     private final ClientAdvancements advManager;
     private final ResourceLocation resWindow = Evolution.getResource("textures/gui/window.png");
     private final Map<Advancement, GuiAdvancementTab> tabs = new LinkedHashMap<>();
-    @Nullable
-    private GuiAdvancementEntry advConnectedToMouse;
+    private @Nullable GuiAdvancementEntry advConnectedToMouse;
     private boolean isScrolling;
-    @Nullable
-    private GuiAdvancementTab selectedTab;
+    private @Nullable GuiAdvancementTab selectedTab;
     private float zoom = MIN_ZOOM;
 
     public ScreenAdvancements(ClientAdvancements advManager) {
@@ -55,14 +53,12 @@ public class ScreenAdvancements extends Screen implements ClientAdvancements.Lis
         this.advManager = advManager;
     }
 
-    @Nullable
-    public GuiAdvancementEntry getAdvancementGui(Advancement advancement) {
+    public @Nullable GuiAdvancementEntry getAdvancementGui(Advancement advancement) {
         GuiAdvancementTab advancementTab = this.getTab(advancement);
         return advancementTab == null ? null : advancementTab.getAdvancementGui(advancement);
     }
 
-    @Nullable
-    private GuiAdvancementTab getTab(Advancement advancement) {
+    private @Nullable GuiAdvancementTab getTab(Advancement advancement) {
         while (advancement.getParent() != null) {
             advancement = advancement.getParent();
         }
@@ -85,8 +81,7 @@ public class ScreenAdvancements extends Screen implements ClientAdvancements.Lis
     @Override
     public boolean keyPressed(@Key int keyCode, int scanCode, @Modifiers int modifiers) {
         assert this.minecraft != null;
-        //noinspection MagicConstant
-        if (keyCode == this.minecraft.options.keyAdvancements.getKey().getValue()) {
+        if (this.minecraft.options.keyAdvancements.matches(keyCode, scanCode)) {
             this.minecraft.setScreen(null);
             return true;
         }

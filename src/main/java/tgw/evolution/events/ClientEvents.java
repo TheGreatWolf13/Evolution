@@ -1,31 +1,18 @@
 package tgw.evolution.events;
 
 import com.mojang.authlib.minecraft.MinecraftSessionService;
-import com.mojang.blaze3d.platform.InputConstants;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import net.minecraft.ChatFormatting;
-import net.minecraft.Util;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.components.AbstractButton;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.events.GuiEventListener;
-import net.minecraft.client.gui.screens.ConfirmLinkScreen;
-import net.minecraft.client.gui.screens.PauseScreen;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.screens.achievement.StatsScreen;
-import net.minecraft.client.gui.screens.advancements.AdvancementsScreen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
-import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.player.Input;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.players.GameProfileCache;
@@ -33,7 +20,6 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.BlockItem;
@@ -45,72 +31,55 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
-import net.minecraftforge.client.ConfigGuiHandler;
-import net.minecraftforge.client.event.ModelBakeEvent;
-import net.minecraftforge.client.event.RenderGameOverlayEvent;
-import net.minecraftforge.client.event.ScreenEvent;
-import net.minecraftforge.client.event.ScreenOpenEvent;
-import net.minecraftforge.client.gui.ModListScreen;
-import net.minecraftforge.event.entity.EntityJoinWorldEvent;
-import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.ModContainer;
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.fml.config.ConfigTracker;
-import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 import org.lwjgl.glfw.GLFW;
-import tgw.evolution.ClientProxy;
 import tgw.evolution.Evolution;
+import tgw.evolution.EvolutionClient;
 import tgw.evolution.blocks.BlockGeneric;
 import tgw.evolution.client.audio.SoundEntityEmitted;
 import tgw.evolution.client.gui.GuiContainerCreativeHandler;
 import tgw.evolution.client.gui.GuiContainerHandler;
 import tgw.evolution.client.gui.IGuiScreenHandler;
-import tgw.evolution.client.gui.ScreenModList;
-import tgw.evolution.client.gui.advancements.ScreenAdvancements;
-import tgw.evolution.client.gui.config.ScreenModConfigSelection;
-import tgw.evolution.client.gui.stats.ScreenStats;
 import tgw.evolution.client.gui.toast.ToastCustomRecipe;
-import tgw.evolution.client.models.ModelRegistry;
 import tgw.evolution.client.renderer.ClientRenderer;
+import tgw.evolution.client.renderer.DimensionOverworld;
 import tgw.evolution.client.renderer.ambient.SkyRenderer;
 import tgw.evolution.client.util.ClientEffectInstance;
 import tgw.evolution.client.util.MouseButton;
 import tgw.evolution.entities.misc.EntityPlayerCorpse;
 import tgw.evolution.hooks.TickrateChanger;
-import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.init.EvolutionSounds;
 import tgw.evolution.init.EvolutionTexts;
-import tgw.evolution.inventory.extendedinventory.EvolutionRecipeBook;
 import tgw.evolution.items.*;
 import tgw.evolution.network.*;
-import tgw.evolution.patches.IGameRendererPatch;
-import tgw.evolution.patches.ILivingEntityPatch;
-import tgw.evolution.patches.IMinecraftPatch;
-import tgw.evolution.stats.EvolutionStatsCounter;
+import tgw.evolution.patches.PatchGameRenderer;
+import tgw.evolution.patches.PatchLivingEntity;
 import tgw.evolution.util.HitInformation;
 import tgw.evolution.util.PlayerHelper;
-import tgw.evolution.util.collection.*;
-import tgw.evolution.util.constants.OptiFineHelper;
+import tgw.evolution.util.collection.lists.EitherList;
+import tgw.evolution.util.collection.lists.OArrayList;
+import tgw.evolution.util.collection.lists.OList;
+import tgw.evolution.util.collection.maps.I2OHashMap;
+import tgw.evolution.util.collection.maps.I2OMap;
+import tgw.evolution.util.collection.sets.IHashSet;
+import tgw.evolution.util.collection.sets.ISet;
 import tgw.evolution.util.math.DirectionUtil;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.toast.ToastHolderRecipe;
 import tgw.evolution.util.toast.Toasts;
-import tgw.evolution.world.dimension.DimensionOverworld;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class ClientEvents {
 
     public static final OList<ClientEffectInstance> EFFECTS_TO_ADD = new OArrayList<>();
     public static final OList<ClientEffectInstance> EFFECTS = new OArrayList<>();
-    public static final I2OMap<ItemStack> BELT_ITEMS = new I2OOpenHashMap<>();
-    public static final I2OMap<ItemStack> BACK_ITEMS = new I2OOpenHashMap<>();
+    public static final I2OMap<ItemStack> BELT_ITEMS = new I2OHashMap<>();
+    public static final I2OMap<ItemStack> BACK_ITEMS = new I2OHashMap<>();
     private static final HitInformation MAINHAND_HITS = new HitInformation();
     private static final BlockHitResult[] MAINHAND_HIT_RESULT = new BlockHitResult[1];
     private static @Nullable ClientEvents instance;
@@ -119,9 +88,9 @@ public class ClientEvents {
     private static double accumulatedScrollDelta;
     private static boolean canDoLMBDrag;
     private static boolean canDoRMBDrag;
-    private final ISet currentShaders = new IOpenHashSet();
-    private final ISet desiredShaders = new IOpenHashSet();
-    private final ISet forcedShaders = new IOpenHashSet();
+    private final ISet currentShaders = new IHashSet();
+    private final ISet desiredShaders = new IHashSet();
+    private final ISet forcedShaders = new IHashSet();
     private final Minecraft mc;
     private final ClientRenderer renderer;
     public int effectToAddTicks;
@@ -148,26 +117,26 @@ public class ClientEvents {
         this.renderer = new ClientRenderer(mc, this);
     }
 
-    @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
-    private static void addConfigSetToMap(ModContainer container, ModConfig.Type type, Map<ModConfig.Type, Set<ModConfig>> configMap) {
-        if (type == ModConfig.Type.CLIENT && OptiFineHelper.isLoaded() && "forge".equals(container.getModId())) {
-            Evolution.info("Ignoring Forge's client config since OptiFine was detected");
-            return;
-        }
-        Map<ModConfig.Type, Set<ModConfig>> configSets = ObfuscationReflectionHelper.getPrivateValue(ConfigTracker.class, ConfigTracker.INSTANCE,
-                                                                                                     "configSets");
-        if (configSets != null) {
-            Set<ModConfig> configSet = configSets.get(type);
-            synchronized (configSet) {
-                Set<ModConfig> filteredConfigSets = configSet.stream()
-                                                             .filter(config -> config.getModId().equals(container.getModId()))
-                                                             .collect(Collectors.toSet());
-                if (!filteredConfigSets.isEmpty()) {
-                    configMap.put(type, filteredConfigSets);
-                }
-            }
-        }
-    }
+//    @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
+//    private static void addConfigSetToMap(ModContainer container, ModConfig.Type type, Map<ModConfig.Type, Set<ModConfig>> configMap) {
+//        if (type == ModConfig.Type.CLIENT && OptiFineHelper.isLoaded() && "forge".equals(container.getModId())) {
+//            Evolution.info("Ignoring Forge's client config since OptiFine was detected");
+//            return;
+//        }
+//        Map<ModConfig.Type, Set<ModConfig>> configSets = ObfuscationReflectionHelper.getPrivateValue(ConfigTracker.class, ConfigTracker.INSTANCE,
+//                                                                                                     "configSets");
+//        if (configSets != null) {
+//            Set<ModConfig> configSet = configSets.get(type);
+//            synchronized (configSet) {
+//                Set<ModConfig> filteredConfigSets = configSet.stream()
+//                                                             .filter(config -> config.getModId().equals(container.getModId()))
+//                                                             .collect(Collectors.toSet());
+//                if (!filteredConfigSets.isEmpty()) {
+//                    configMap.put(type, filteredConfigSets);
+//                }
+//            }
+//        }
+//    }
 
     private static boolean areStacksCompatible(ItemStack a, ItemStack b) {
         return a.isEmpty() || b.isEmpty() || a.sameItem(b) && ItemStack.tagMatches(a, b);
@@ -182,13 +151,13 @@ public class ClientEvents {
         return false;
     }
 
-    private static Map<ModConfig.Type, Set<ModConfig>> createConfigMap(ModContainer container) {
-        Map<ModConfig.Type, Set<ModConfig>> modConfigMap = new EnumMap<>(ModConfig.Type.class);
-        addConfigSetToMap(container, ModConfig.Type.CLIENT, modConfigMap);
-        addConfigSetToMap(container, ModConfig.Type.COMMON, modConfigMap);
-        addConfigSetToMap(container, ModConfig.Type.SERVER, modConfigMap);
-        return modConfigMap;
-    }
+//    private static Map<ModConfig.Type, Set<ModConfig>> createConfigMap(ModContainer container) {
+//        Map<ModConfig.Type, Set<ModConfig>> modConfigMap = new EnumMap<>(ModConfig.Type.class);
+//        addConfigSetToMap(container, ModConfig.Type.CLIENT, modConfigMap);
+//        addConfigSetToMap(container, ModConfig.Type.COMMON, modConfigMap);
+//        addConfigSetToMap(container, ModConfig.Type.SERVER, modConfigMap);
+//        return modConfigMap;
+//    }
 
     private static @Nullable IGuiScreenHandler findHandler(Screen currentScreen) {
         if (currentScreen instanceof CreativeModeInventoryScreen creativeScreen) {
@@ -198,23 +167,6 @@ public class ClientEvents {
             return new GuiContainerHandler(containerScreen);
         }
         return null;
-    }
-
-    public static void fixFont() {
-        Minecraft.getInstance().font.lineHeight = 10;
-    }
-
-    public static void fixInputMappings() {
-        InputConstants.Type.KEYSYM.displayTextSupplier = (keyCode, translationKey) -> {
-            String formattedString = I18n.get(translationKey);
-            if (formattedString.equals(translationKey)) {
-                String s = GLFW.glfwGetKeyName(keyCode, -1);
-                if (s != null) {
-                    return new TextComponent(s.toUpperCase(Locale.ROOT));
-                }
-            }
-            return new TranslatableComponent(translationKey);
-        };
     }
 
     public static @Nullable Direction getDirectionFromInput(Direction facing, Input input) {
@@ -274,20 +226,20 @@ public class ClientEvents {
 
     public static void onFinishLoading() {
         Evolution.info("Creating config GUI factories...");
-        ModList.get().forEachModContainer((modId, container) -> {
-            if (container.getCustomExtension(ConfigGuiHandler.ConfigGuiFactory.class).isPresent()) {
-                return;
-            }
-            Map<ModConfig.Type, Set<ModConfig>> modConfigMap = createConfigMap(container);
-            if (!modConfigMap.isEmpty()) {
-                Evolution.info("Registering config factory for mod {}. Found {} client config(s) and {} common config(s)", modId,
-                               modConfigMap.getOrDefault(ModConfig.Type.CLIENT, Collections.emptySet()).size(),
-                               modConfigMap.getOrDefault(ModConfig.Type.COMMON, Collections.emptySet()).size());
-                String displayName = container.getModInfo().getDisplayName();
-                container.registerExtensionPoint(ConfigGuiHandler.ConfigGuiFactory.class, () -> new ConfigGuiHandler.ConfigGuiFactory(
-                        (mc, screen) -> new ScreenModConfigSelection(screen, displayName, modConfigMap)));
-            }
-        });
+//        ModList.get().forEachModContainer((modId, container) -> {
+//            if (container.getCustomExtension(ConfigGuiHandler.ConfigGuiFactory.class).isPresent()) {
+//                return;
+//            }
+//            Map<ModConfig.Type, Set<ModConfig>> modConfigMap = createConfigMap(container);
+//            if (!modConfigMap.isEmpty()) {
+//                Evolution.info("Registering config factory for mod {}. Found {} client config(s) and {} common config(s)", modId,
+//                               modConfigMap.getOrDefault(ModConfig.Type.CLIENT, Collections.emptySet()).size(),
+//                               modConfigMap.getOrDefault(ModConfig.Type.COMMON, Collections.emptySet()).size());
+//                String displayName = container.getModInfo().getDisplayName();
+//                container.registerExtensionPoint(ConfigGuiHandler.ConfigGuiFactory.class, () -> new ConfigGuiHandler.ConfigGuiFactory(
+//                        (mc, screen) -> new ScreenModConfigSelection(screen, displayName, modConfigMap)));
+//            }
+//        });
     }
 
     public static void onGuiOpen(@Nullable Screen newScreen) {
@@ -299,11 +251,6 @@ public class ClientEvents {
         if (newScreen != null) {
             handler = findHandler(newScreen);
         }
-    }
-
-    @SubscribeEvent
-    public static void onModelBakeEvent(ModelBakeEvent event) {
-        ModelRegistry.register(event);
     }
 
     public static boolean removeEffect(OList<ClientEffectInstance> list, MobEffect effect) {
@@ -374,9 +321,9 @@ public class ClientEvents {
         this.forcedShaders.reset();
         if (this.mc.level == null) {
             this.updateClientTickrate(TickrateChanger.DEFAULT_TICKRATE);
-            if (((IMinecraftPatch) this.mc).isMultiplayerPaused()) {
+            if (this.mc.isMultiplayerPaused()) {
                 Evolution.info("Resuming client");
-                ((IMinecraftPatch) Minecraft.getInstance()).setMultiplayerPaused(false);
+                this.mc.setMultiplayerPaused(false);
             }
             this.warmUpTicks = 0;
         }
@@ -419,12 +366,12 @@ public class ClientEvents {
         return null;
     }
 
-    private @Nullable RList<Slot> findPushSlots(List<Slot> slots, Slot selectedSlot, int itemCount, boolean mustDistributeAll) {
+    private @Nullable OList<Slot> findPushSlots(List<Slot> slots, Slot selectedSlot, int itemCount, boolean mustDistributeAll) {
         ItemStack selectedSlotStack = selectedSlot.getItem();
         assert this.mc.player != null;
         boolean findInPlayerInventory = selectedSlot.container != this.mc.player.getInventory();
-        RList<Slot> rv = new RArrayList<>();
-        RList<Slot> goodEmptySlots = new RArrayList<>();
+        OList<Slot> rv = new OArrayList<>();
+        OList<Slot> goodEmptySlots = new OArrayList<>();
         for (int i = 0; i != slots.size() && itemCount > 0; i++) {
             Slot slot = slots.get(i);
             assert handler != null;
@@ -481,7 +428,7 @@ public class ClientEvents {
     }
 
     public float getMainhandIndicatorPercentage(float partialTicks) {
-        if (this.mc.player instanceof ILivingEntityPatch patch && (patch.isSpecialAttacking() || patch.isLockedInSpecialAttack())) {
+        if (this.mc.player instanceof PatchLivingEntity patch && (patch.isSpecialAttacking() || patch.isLockedInSpecialAttack())) {
             return patch.getSpecialAttackProgress(partialTicks);
         }
         return MathHelper.clamp((this.mainhandCooldownTime + partialTicks) / this.getItemCooldown(InteractionHand.MAIN_HAND), 0.0F, 1.0F);
@@ -591,19 +538,6 @@ public class ClientEvents {
         }
         this.mc.options.autoJump = false;
         System.gc();
-    }
-
-    @SubscribeEvent
-    public void onChatRender(RenderGameOverlayEvent.Chat event) {
-        event.setPosY(event.getPosY() - 10);
-    }
-
-    @SubscribeEvent
-    public void onEntityCreated(EntityJoinWorldEvent event) {
-        if (event.getEntity() instanceof LocalPlayer player && player.equals(this.mc.player)) {
-            this.mc.player.stats = new EvolutionStatsCounter();
-            this.mc.player.recipeBook = new EvolutionRecipeBook();
-        }
     }
 
     /**
@@ -751,7 +685,7 @@ public class ClientEvents {
                     return;
                 }
                 while (numItemsToMove-- > 0) {
-                    RList<Slot> targetSlots = this.findPushSlots(slots, selectedSlot, selectedSlotStack.getCount(), true);
+                    OList<Slot> targetSlots = this.findPushSlots(slots, selectedSlot, selectedSlotStack.getCount(), true);
                     if (targetSlots == null) {
                         break;
                     }
@@ -785,7 +719,7 @@ public class ClientEvents {
                 return;
             }
             numItemsToMove = Math.min(numItemsToMove, selectedSlotStack.getCount());
-            RList<Slot> targetSlots = this.findPushSlots(slots, selectedSlot, numItemsToMove, false);
+            OList<Slot> targetSlots = this.findPushSlots(slots, selectedSlot, numItemsToMove, false);
             assert targetSlots != null;
             if (targetSlots.isEmpty()) {
                 return;
@@ -840,80 +774,6 @@ public class ClientEvents {
                 }
             }
             handler.clickSlot(targetSlot, GLFW.GLFW_MOUSE_BUTTON_1, false);
-        }
-    }
-
-    @SubscribeEvent
-    public void onGUIOpen(ScreenOpenEvent event) {
-        Screen screen = event.getScreen();
-        if (screen instanceof InventoryScreen) {
-            event.setCanceled(true);
-            EvolutionNetwork.sendToServer(new PacketCSOpenExtendedInventory());
-        }
-        else if (screen instanceof AdvancementsScreen) {
-            assert this.mc.getConnection() != null;
-            event.setScreen(new ScreenAdvancements(this.mc.getConnection().getAdvancements()));
-        }
-        else if (screen instanceof StatsScreen) {
-            assert this.mc.player != null;
-            event.setScreen(new ScreenStats(this.mc.player.getStats()));
-        }
-        else if (screen instanceof ModListScreen) {
-            event.setScreen(new ScreenModList());
-        }
-        if (!event.isCanceled()) {
-            onGuiOpen(event.getScreen());
-        }
-    }
-
-    @SubscribeEvent
-    public void onGUIPostInit(ScreenEvent.InitScreenEvent.Post event) {
-        if (event.getScreen() instanceof PauseScreen) {
-            if (!event.getListenersList().isEmpty()) {
-                AbstractButton shareToLan = (AbstractButton) event.getListenersList().get(6);
-                event.addListener(new Button(shareToLan.x, shareToLan.y + 24, shareToLan.getWidth(), shareToLan.getHeight(),
-                                             EvolutionTexts.GUI_MENU_MOD_OPTIONS, button -> this.mc.setScreen(new ModListScreen(event.getScreen()))));
-                shareToLan.x = event.getScreen().width / 2 - 102;
-                shareToLan.setWidth(204);
-                AbstractButton returnToMenu = (AbstractButton) event.getListenersList().get(7);
-                returnToMenu.y += 24;
-                AbstractButton menuOptions = (AbstractButton) event.getListenersList().get(5);
-                menuOptions.y += 24;
-                GuiEventListener feedback = event.getListenersList().get(3);
-                GuiEventListener bugs = event.getListenersList().get(4);
-                event.removeListener(feedback);
-                event.removeListener(bugs);
-                String feedbackLink = "https://github.com/MGSchultz-13/Evolution/discussions/categories/feedback";
-                feedback = new Button(event.getScreen().width / 2 - 102, event.getScreen().height / 4 + 72 - 16, 98, 20,
-                                      EvolutionTexts.GUI_MENU_SEND_FEEDBACK, button -> this.mc.setScreen(new ConfirmLinkScreen(b -> {
-                    if (b) {
-                        Util.getPlatform().openUri(feedbackLink);
-                    }
-                    this.mc.setScreen(event.getScreen());
-                }, feedbackLink, true)));
-                String bugsLink = "https://github.com/MGSchultz-13/Evolution/issues";
-                bugs = new Button(event.getScreen().width / 2 + 4, event.getScreen().height / 4 + 72 - 16, 98, 20,
-                                  EvolutionTexts.GUI_MENU_REPORT_BUGS, button -> this.mc.setScreen(new ConfirmLinkScreen(b -> {
-                    if (b) {
-                        Util.getPlatform().openUri(bugsLink);
-                    }
-                    this.mc.setScreen(event.getScreen());
-                }, bugsLink, true)));
-                event.addListener(feedback);
-                event.addListener(bugs);
-            }
-        }
-    }
-
-    @SubscribeEvent
-    public void onLivingStartUsingItem(LivingEntityUseItemEvent.Start event) {
-        if (event.getEntity() instanceof Player player) {
-            if (player.level.isClientSide) {
-                ItemStack stack = event.getItem();
-                if (stack.getItem() instanceof ICancelableUse cancel && cancel.isCancelable(stack, player)) {
-                    player.displayClientMessage(cancel.getCancelMessage(this.mc.options.keyAttack.getTranslatedKeyMessage()), true);
-                }
-            }
         }
     }
 
@@ -972,13 +832,13 @@ public class ClientEvents {
             }
             //Handle creative features
             this.mc.getProfiler().popPush("creative");
-            if (this.mc.player.isCreative() && ClientProxy.KEY_BUILDING_ASSIST.isDown()) {
+            if (this.mc.player.isCreative() && EvolutionClient.KEY_BUILDING_ASSIST.isDown()) {
                 if (this.mc.player.getMainHandItem().getItem() instanceof BlockItem) {
                     assert this.mc.hitResult != null;
                     if (this.mc.hitResult.getType() == HitResult.Type.BLOCK) {
                         BlockPos pos = ((BlockHitResult) this.mc.hitResult).getBlockPos();
                         if (!this.mc.level.getBlockState(pos).isAir()) {
-                            EvolutionNetwork.sendToServer(new PacketCSChangeBlock((BlockHitResult) this.mc.hitResult));
+                            this.mc.player.connection.send(new PacketCSChangeBlock((BlockHitResult) this.mc.hitResult));
                             this.mc.player.swing(InteractionHand.MAIN_HAND);
                         }
                     }
@@ -988,7 +848,7 @@ public class ClientEvents {
             this.mc.getProfiler().popPush("swing");
             this.ticks++;
             assert this.mc.gameMode != null;
-            if (this.mc.player instanceof ILivingEntityPatch patch && patch.isSpecialAttacking()) {
+            if (this.mc.player instanceof PatchLivingEntity patch && patch.isSpecialAttacking()) {
                 this.cachedAttackType = patch.getSpecialAttackType();
                 if (patch.isInHitTicks()) {
                     MathHelper.collideOBBWithCollider(MAINHAND_HITS, this.mc.player, 1.0f, MAINHAND_HIT_RESULT, true, false);
@@ -1051,7 +911,7 @@ public class ClientEvents {
         if (this.desiredShaders.isEmpty()) {
             if (!this.currentShaders.isEmpty()) {
                 this.currentShaders.clear();
-                ((IGameRendererPatch) this.mc.gameRenderer).shutdownAllShaders();
+                ((PatchGameRenderer) this.mc.gameRenderer).shutdownAllShaders();
             }
         }
         else {
@@ -1060,7 +920,7 @@ public class ClientEvents {
                     int shader = it.nextInt();
                     if (!this.desiredShaders.contains(shader)) {
                         it.remove();
-                        ((IGameRendererPatch) this.mc.gameRenderer).shutdownShader(shader);
+                        ((PatchGameRenderer) this.mc.gameRenderer).shutdownShader(shader);
                     }
                 }
             }
@@ -1070,7 +930,7 @@ public class ClientEvents {
                     if (this.currentShaders.add(shader)) {
                         ResourceLocation shaderLoc = this.getShader(shader);
                         if (shaderLoc != null) {
-                            ((IGameRendererPatch) this.mc.gameRenderer).loadShader(shader, shaderLoc);
+                            ((PatchGameRenderer) this.mc.gameRenderer).loadShader(shader, shaderLoc);
                         }
                         else {
                             Evolution.warn("Unregistered shader id: {}", shader);
@@ -1101,7 +961,7 @@ public class ClientEvents {
             }
             //Prevents the player from attacking if on cooldown
             this.mc.getProfiler().popPush("cooldown");
-            boolean isSpecialAttacking = ((ILivingEntityPatch) this.mc.player).shouldRenderSpecialAttack();
+            boolean isSpecialAttacking = ((PatchLivingEntity) this.mc.player).shouldRenderSpecialAttack();
             if (this.wasSpecialAttacking && !isSpecialAttacking) {
                 this.resetCooldown(InteractionHand.MAIN_HAND);
             }
@@ -1134,7 +994,7 @@ public class ClientEvents {
         assert this.mc.player != null;
         if (this.mc.player.isUsingItem() && this.mc.player.getUsedItemHand() == hand) {
             this.mc.player.stopUsingItem();
-            EvolutionNetwork.sendToServer(new PacketCSStopUsingItem());
+            this.mc.player.connection.send(new PacketCSSimpleMessage(Message.C2S.STOP_USING_ITEM));
         }
     }
 
@@ -1144,7 +1004,7 @@ public class ClientEvents {
         assert this.mc.player != null;
         if (this.mc.player.isUsingItem()) {
             this.mc.player.stopUsingItem();
-            EvolutionNetwork.sendToServer(new PacketCSStopUsingItem());
+            this.mc.player.connection.send(new PacketCSSimpleMessage(Message.C2S.STOP_USING_ITEM));
         }
     }
 
@@ -1160,7 +1020,7 @@ public class ClientEvents {
         if (this.mc.player == null) {
             return false;
         }
-        return ((ILivingEntityPatch) this.mc.player).shouldRenderSpecialAttack();
+        return ((PatchLivingEntity) this.mc.player).shouldRenderSpecialAttack();
     }
 
     public void startChargeAttack(IMelee.ChargeAttackType chargeAttack) {
@@ -1172,7 +1032,7 @@ public class ClientEvents {
             }
             return;
         }
-        ILivingEntityPatch player = (ILivingEntityPatch) this.mc.player;
+        PatchLivingEntity player = (PatchLivingEntity) this.mc.player;
         if (!player.isLockedInSpecialAttack()) {
             if (this.mc.player.getSwimAmount(this.getPartialTicks()) != 0) {
                 this.mc.player.displayClientMessage(EvolutionTexts.ACTION_ATTACK_POSE, true);
@@ -1199,7 +1059,10 @@ public class ClientEvents {
             return;
         }
         IMelee.IAttackType type = stack.getItem() instanceof IMelee melee ? melee.getBasicAttackType(stack) : IMelee.BARE_HAND_ATTACK;
-        ILivingEntityPatch player = (ILivingEntityPatch) this.mc.player;
+        if (type == null) {
+            type = IMelee.BARE_HAND_ATTACK;
+        }
+        PatchLivingEntity player = (PatchLivingEntity) this.mc.player;
         if (player.isOnGracePeriod()) {
             if (player.canPerformFollowUp(type)) {
                 if (this.mc.player.getSwimAmount(this.getPartialTicks()) != 0) {
@@ -1252,7 +1115,7 @@ public class ClientEvents {
             assert this.mc.player != null;
             ItemStack stack = this.mc.player.getInventory().items.get(i);
             if (stack.getItem() instanceof IBackWeapon backWeapon) {
-                int stackPriority = backWeapon.getPriority(stack);
+                int stackPriority = backWeapon.getBackPriority(stack);
                 if (stackPriority >= 0 && priority > stackPriority) {
                     backStack = stack;
                     priority = stackPriority;
@@ -1268,7 +1131,7 @@ public class ClientEvents {
         }
         ItemStack oldStack = BACK_ITEMS.put(this.mc.player.getId(), backStack);
         if (oldStack != backStack) {
-            EvolutionNetwork.sendToServer(new PacketCSUpdateBeltBackItem(backStack, true));
+            this.mc.player.connection.send(new PacketCSUpdateBeltBackItem(backStack, true));
         }
     }
 
@@ -1298,12 +1161,11 @@ public class ClientEvents {
         if (!ItemStack.isSame(beltStack, oldStack)) {
             if (beltStack.getItem() instanceof IMelee melee && melee.shouldPlaySheatheSound(beltStack)) {
                 this.mc.getSoundManager()
-                       .play(new SoundEntityEmitted(this.mc.player, EvolutionSounds.SWORD_SHEATHE.get(), SoundSource.PLAYERS, 0.8f, 1.0f));
-                EvolutionNetwork.sendToServer(
-                        new PacketCSPlaySoundEntityEmitted(this.mc.player, EvolutionSounds.SWORD_SHEATHE.get(), SoundSource.PLAYERS, 0.8f, 1.0f));
+                       .play(new SoundEntityEmitted(this.mc.player, EvolutionSounds.SWORD_SHEATHE, SoundSource.PLAYERS, 0.8f, 1.0f));
+                this.mc.player.connection.send(new PacketCSPlaySoundEntityEmitted(EvolutionSounds.SWORD_SHEATHE, SoundSource.PLAYERS, 0.8f, 1.0f));
             }
             BELT_ITEMS.put(this.mc.player.getId(), beltStack);
-            EvolutionNetwork.sendToServer(new PacketCSUpdateBeltBackItem(beltStack, false));
+            this.mc.player.connection.send(new PacketCSUpdateBeltBackItem(beltStack, false));
         }
     }
 

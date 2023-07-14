@@ -2,38 +2,29 @@ package tgw.evolution.network;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.network.NetworkEvent;
-import tgw.evolution.client.gui.ScreenMolding;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import tgw.evolution.patches.PatchClientPacketListener;
 
-import java.util.function.Supplier;
+public class PacketSCOpenMoldingGui implements Packet<ClientGamePacketListener> {
 
-public class PacketSCOpenMoldingGui implements IPacket {
-
-    private final BlockPos pos;
+    public final BlockPos pos;
 
     public PacketSCOpenMoldingGui(BlockPos pos) {
         this.pos = pos;
     }
 
-    public static PacketSCOpenMoldingGui decode(FriendlyByteBuf buffer) {
-        return new PacketSCOpenMoldingGui(buffer.readBlockPos());
-    }
-
-    public static void encode(PacketSCOpenMoldingGui packet, FriendlyByteBuf buffer) {
-        buffer.writeBlockPos(packet.pos);
-    }
-
-    public static void handle(PacketSCOpenMoldingGui packet, Supplier<NetworkEvent.Context> context) {
-        NetworkEvent.Context c = context.get();
-        if (IPacket.checkSide(packet, c)) {
-            c.enqueueWork(() -> ScreenMolding.open(packet.pos));
-            c.setPacketHandled(true);
-        }
+    public PacketSCOpenMoldingGui(FriendlyByteBuf buf) {
+        this.pos = buf.readBlockPos();
     }
 
     @Override
-    public LogicalSide getDestinationSide() {
-        return LogicalSide.CLIENT;
+    public void handle(ClientGamePacketListener listener) {
+        ((PatchClientPacketListener) listener).handleOpenMoldingGui(this);
+    }
+
+    @Override
+    public void write(FriendlyByteBuf buf) {
+        buf.writeBlockPos(this.pos);
     }
 }

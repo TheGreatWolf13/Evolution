@@ -1,51 +1,34 @@
 package tgw.evolution.network;
 
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.network.NetworkEvent;
-import tgw.evolution.capabilities.food.HungerStats;
-import tgw.evolution.capabilities.food.IHunger;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import tgw.evolution.capabilities.player.CapabilityHunger;
+import tgw.evolution.patches.PatchClientPacketListener;
 
-import java.util.function.Supplier;
+public class PacketSCHungerData implements Packet<ClientGamePacketListener> {
 
-public class PacketSCHungerData implements IPacket {
+    public final int hungerLevel;
+    public final int saturationLevel;
 
-    private final short hungerLevel;
-    private final short saturationLevel;
-
-    public PacketSCHungerData(IHunger hunger) {
-        this.hungerLevel = (short) hunger.getHungerLevel();
-        this.saturationLevel = (short) hunger.getSaturationLevel();
+    public PacketSCHungerData(FriendlyByteBuf buf) {
+        this.hungerLevel = buf.readVarInt();
+        this.saturationLevel = buf.readVarInt();
     }
 
-    private PacketSCHungerData(short hungerLevel, short saturationLevel) {
-        this.hungerLevel = hungerLevel;
-        this.saturationLevel = saturationLevel;
-    }
-
-    public static PacketSCHungerData decode(FriendlyByteBuf buffer) {
-        return new PacketSCHungerData(buffer.readShort(), buffer.readShort());
-    }
-
-    public static void encode(PacketSCHungerData packet, FriendlyByteBuf buffer) {
-        buffer.writeShort(packet.hungerLevel);
-        buffer.writeShort(packet.saturationLevel);
-    }
-
-    public static void handle(PacketSCHungerData packet, Supplier<NetworkEvent.Context> context) {
-        NetworkEvent.Context c = context.get();
-        if (IPacket.checkSide(packet, c)) {
-            c.enqueueWork(() -> {
-                IHunger hunger = HungerStats.CLIENT_INSTANCE;
-                hunger.setHungerLevel(packet.hungerLevel);
-                hunger.setSaturationLevel(packet.saturationLevel);
-            });
-            c.setPacketHandled(true);
-        }
+    public PacketSCHungerData(CapabilityHunger hunger) {
+        this.hungerLevel = hunger.getHungerLevel();
+        this.saturationLevel = hunger.getSaturationLevel();
     }
 
     @Override
-    public LogicalSide getDestinationSide() {
-        return LogicalSide.CLIENT;
+    public void handle(ClientGamePacketListener listener) {
+        ((PatchClientPacketListener) listener).handleHungerData(this);
+    }
+
+    @Override
+    public void write(FriendlyByteBuf buf) {
+        buf.writeVarInt(this.hungerLevel);
+        buf.writeVarInt(this.saturationLevel);
     }
 }

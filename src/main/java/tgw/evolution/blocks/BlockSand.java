@@ -31,7 +31,7 @@ public class BlockSand extends BlockPhysics implements IRockVariant, ISloppable 
 
     @Override
     public SoundEvent fallingSound() {
-        return EvolutionSounds.SOIL_COLLAPSE.get();
+        return EvolutionSounds.SOIL_COLLAPSE;
     }
 
     @Override
