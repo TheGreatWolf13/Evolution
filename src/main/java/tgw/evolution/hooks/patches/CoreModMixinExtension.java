@@ -214,32 +214,32 @@ public class CoreModMixinExtension implements IClassTransformer {
         }
     }
 
-    private void handleStatic(ClassNode original, String originalName, ClassNode mixin, String mixinName) {
-        List<MethodNode> mixinMethods = mixin.methods;
-        for (int i = 0, len = mixinMethods.size(); i < len; ++i) {
-            MethodNode mixinMethod = mixinMethods.get(i);
-            List<AnnotationNode> annotations = mixinMethod.visibleAnnotations;
+    private void handleStatic(ClassNode original, String originalName, String mixinName) {
+        List<MethodNode> methods = original.methods;
+        for (int i = 0, len = methods.size(); i < len; ++i) {
+            MethodNode methodTemplate = methods.get(i);
+            List<AnnotationNode> annotations = methodTemplate.visibleAnnotations;
             if (annotations == null) {
                 continue;
             }
             for (int j = 0, len2 = annotations.size(); j < len2; ++j) {
                 if ("Ltgw/evolution/hooks/asm/ModifyStatic;".equals(annotations.get(j).desc)) {
-                    if (!"()V".equals(mixinMethod.desc)) {
-                        CoreModLoader.LOGGER.error("Invalid signature for ModifyStatic: {}", mixinMethod.desc);
+                    if (!"()V".equals(methodTemplate.desc)) {
+                        CoreModLoader.LOGGER.error("Invalid signature for ModifyStatic: {}", methodTemplate.desc);
                         return;
                     }
-                    if ((mixinMethod.access & ACC_STATIC) == 0) {
+                    if ((methodTemplate.access & ACC_STATIC) == 0) {
                         CoreModLoader.LOGGER.error("Method for ModifyStatic should be static");
                         return;
                     }
-                    List<MethodNode> methods = original.methods;
                     for (int k = 0, len3 = methods.size(); k < len3; ++k) {
                         MethodNode method = methods.get(k);
-                        if (this.findMethod(method, "<clinit>", mixinMethod.desc)) {
+                        if (this.findMethod(method, "<clinit>", methodTemplate.desc)) {
                             method.localVariables.clear();
                             method.tryCatchBlocks.clear();
-                            patchMixin(method.instructions, originalName, mixinMethod.instructions, mixinName);
-                            method.tryCatchBlocks.addAll(mixinMethod.tryCatchBlocks);
+                            patchMixin(method.instructions, originalName, methodTemplate.instructions, mixinName);
+                            method.tryCatchBlocks.addAll(methodTemplate.tryCatchBlocks);
+                            methods.remove(i);
                             return;
                         }
                     }
@@ -310,18 +310,15 @@ public class CoreModMixinExtension implements IClassTransformer {
         assert mixinClassName.charAt(index + 6) == '_';
         String modifiers = mixinClassName.substring(index + 7, mixinClassName.indexOf('_', index + 7));
         boolean hasConstructor = modifiers.indexOf('C') >= 0;
-        boolean hasStatic = modifiers.indexOf('S') >= 0;
-        if (hasConstructor || hasStatic) {
+        if (hasConstructor) {
             ClassNode mixinNode = this.readMixin(info, mixinClassName);
             if (mixinNode == null) {
                 return;
             }
-            if (hasConstructor) {
-                this.handleConstructors(classNode, className, mixinNode, mixinClassName);
-            }
-            if (hasStatic) {
-                this.handleStatic(classNode, className, mixinNode, mixinClassName);
-            }
+            this.handleConstructors(classNode, className, mixinNode, mixinClassName);
+        }
+        if (modifiers.indexOf('S') >= 0) {
+            this.handleStatic(classNode, className, mixinClassName);
         }
         if (modifiers.indexOf('F') >= 0) {
             this.handleFields(classNode);
