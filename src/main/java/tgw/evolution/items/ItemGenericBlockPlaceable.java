@@ -1,18 +1,17 @@
 package tgw.evolution.items;
 
 import net.minecraft.advancements.CriteriaTriggers;
-import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class ItemGenericBlockPlaceable extends ItemBlock {
@@ -21,74 +20,70 @@ public abstract class ItemGenericBlockPlaceable extends ItemBlock {
         super(block, builder);
     }
 
-    @Override
-    protected boolean canPlace(BlockPlaceContext context, BlockState state) {
-        Player player = context.getPlayer();
-        CollisionContext collisionContext = player == null ? CollisionContext.empty() : CollisionContext.of(player);
-        return state.canSurvive(context.getLevel(), context.getClickedPos()) &&
-               context.getLevel().isUnobstructed(state, context.getClickedPos(), collisionContext);
-    }
-
     public abstract boolean customCondition(Block blockAtPlacing, Block blockClicking);
 
-    public abstract @Nullable BlockState getCustomState(BlockPlaceContext context);
+    public abstract @Nullable BlockState getCustomState(Level level,
+                                                        int x,
+                                                        int y,
+                                                        int z,
+                                                        Player player,
+                                                        InteractionHand hand,
+                                                        BlockHitResult hitResult);
 
-    public abstract BlockState getSneakingState(BlockPlaceContext context);
+    public abstract BlockState getSneakingState(Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult);
 
     @Override
-    public InteractionResult place(BlockPlaceContext context) {
-        Level level = context.getLevel();
-        BlockPos pos = context.getClickedPos();
-        if (level.isClientSide) {
+    public InteractionResult place(Level level,
+                                   int x,
+                                   int y,
+                                   int z,
+                                   Player player,
+                                   InteractionHand hand,
+                                   BlockHitResult hitResult,
+                                   boolean canPlace) {
+        if (!canPlace) {
             return InteractionResult.FAIL;
         }
-        if (!context.canPlace()) {
-            return InteractionResult.FAIL;
+        BlockState stateForPlacement = this.getPlacementState(level, x, y, z, player, hand, hitResult);
+        if (player.isSecondaryUseActive()) {
+            stateForPlacement = this.getSneakingState(level, x, y, z, player, hand, hitResult);
         }
-        BlockState stateForPlacement = this.getPlacementState(context);
-        if (context.isSecondaryUseActive()) {
-            stateForPlacement = this.getSneakingState(context);
-        }
-        if (this.customCondition(level.getBlockState(pos).getBlock(),
-                                 level.getBlockState(pos.relative(context.getClickedFace().getOpposite())).getBlock())) {
-            stateForPlacement = this.getCustomState(context);
+        if (this.customCondition(level.getBlockState_(x, y, z).getBlock(),
+                                 level.getBlockStateAtSide(x, y, z, hitResult.getDirection().getOpposite()).getBlock())) {
+            stateForPlacement = this.getCustomState(level, x, y, z, player, hand, hitResult);
         }
         if (stateForPlacement == null) {
             return InteractionResult.FAIL;
         }
-        if (!this.canPlace(context, stateForPlacement)) {
+        if (!this.canPlace(level, x, y, z, player, stateForPlacement)) {
             return InteractionResult.FAIL;
         }
-        if (!stateForPlacement.canSurvive(level, pos)) {
+        if (!this.placeBlock(level, x, y, z, stateForPlacement)) {
             return InteractionResult.FAIL;
         }
-        if (!this.placeBlock(context, stateForPlacement)) {
-            return InteractionResult.FAIL;
-        }
-        if (context.getPlayer() instanceof ServerPlayer player) {
-            ItemStack stack = context.getItemInHand();
-            BlockState stateAtPos = level.getBlockState(pos);
+        if (player instanceof ServerPlayer p) {
+            ItemStack stack = player.getItemInHand(hand);
+            BlockState stateAtPos = level.getBlockState_(x, y, z);
             Block blockAtPos = stateAtPos.getBlock();
             if (blockAtPos == stateForPlacement.getBlock()) {
-                CriteriaTriggers.PLACED_BLOCK.trigger(player, pos, stack);
+                CriteriaTriggers.PLACED_BLOCK.trigger_(p, x, y, z, stack);
             }
-            if (player.isCrouching()) {
-                this.sneakingAction(context);
+            if (p.isCrouching()) {
+                this.sneakingAction(level, x, y, z, player, hand, hitResult);
             }
             SoundType soundtype = stateAtPos.getSoundType();
             level.playSound(null,
-                            pos,
+                            x + 0.5, y + 0.5, z + 0.5,
                             this.getPlaceSound(stateAtPos),
                             SoundSource.BLOCKS,
                             (soundtype.getVolume() + 1.0F) / 2.0F,
                             soundtype.getPitch() * 0.8F);
             stack.shrink(1);
-            player.swing(context.getHand());
             return InteractionResult.SUCCESS;
         }
         return InteractionResult.PASS;
     }
 
-    public void sneakingAction(BlockPlaceContext context) {
+    public void sneakingAction(Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult) {
     }
 }

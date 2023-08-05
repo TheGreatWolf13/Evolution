@@ -32,7 +32,6 @@ public final class Physics implements ILocked {
     private static final double EARTH_RADIUS_POLE = 6_356.752_3e3 * SI.METER;
     private static final double EARTH_MASS = 5.972e24 * SI.KILOGRAM;
     private static final double EARTH_ROTATION_RATE = Math.PI / 43_200 * SI.RADIAN / SI.SECOND;
-    private final BlockPos.MutableBlockPos helperPos = new BlockPos.MutableBlockPos();
     private double cachedAccX;
     private double cachedAccY;
     private double cachedAccZ;
@@ -332,8 +331,12 @@ public final class Physics implements ILocked {
             return 0;
         }
         assert this.level != null;
-        BlockState state = this.level.getBlockState_(entity.getFrictionPos());
-        if (state.isAir() || state.getCollisionShape(this.level, this.helperPos).isEmpty()) {
+        long pos = entity.getFrictionPos();
+        int x = BlockPos.getX(pos);
+        int y = BlockPos.getY(pos);
+        int z = BlockPos.getZ(pos);
+        BlockState state = this.level.getBlockState_(x, y, z);
+        if (state.isAir() || state.getCollisionShape_(this.level, x, y, z).isEmpty()) {
             return 0;
         }
         float frictionCoef = state.getBlock().getFrictionCoefficient(state) * entity.getFrictionModifier();

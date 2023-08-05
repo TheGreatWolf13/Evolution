@@ -11,13 +11,13 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
 @Mixin(ClientChunkCache.Storage.class)
 public abstract class MixinClientChunkCache_Storage implements PatchStorage {
 
+    @Shadow @Final public int chunkRadius;
+    @Shadow @Final public AtomicReferenceArray<LevelChunk> chunks;
     @Unique int cameraChunkCount;
     @Nullable @Unique AtomicReferenceArray<LevelChunk> cameraChunks;
     @Unique volatile int cameraViewCenterX;
     @Unique volatile int cameraViewCenterZ;
     @Shadow int chunkCount;
-    @Shadow @Final int chunkRadius;
-    @Shadow @Final AtomicReferenceArray<LevelChunk> chunks;
     @Shadow(aliases = "this$0") @Final ClientChunkCache field_16254;
     @Shadow @Final private int viewRange;
 
@@ -88,7 +88,7 @@ public abstract class MixinClientChunkCache_Storage implements PatchStorage {
     }
 
     @Shadow
-    abstract boolean inRange(int pX, int pZ);
+    public abstract boolean inRange(int pX, int pZ);
 
     /**
      * @author TheGreatWolf

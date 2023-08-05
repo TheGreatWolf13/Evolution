@@ -11,14 +11,13 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
-import tgw.evolution.patches.PatchMinecraft;
 import tgw.evolution.util.hitbox.hrs.HREntity;
 
 @SuppressWarnings("MethodMayBeStatic")
 @Mixin(EntityRenderer.class)
 public abstract class MixinEntityRenderer<T extends Entity> implements HREntity<T> {
 
-    @Shadow protected float shadowRadius;
+    @Shadow public float shadowRadius;
 
     /**
      * @author TheGreatWolf
@@ -76,6 +75,6 @@ public abstract class MixinEntityRenderer<T extends Entity> implements HREntity<
         if (!frustum.cubeInFrustum(minX, minY, minZ, maxX, maxY, maxZ)) {
             return false;
         }
-        return ((PatchMinecraft) Minecraft.getInstance()).lvlRenderer().visibleOcclusionCulling(minX, minY, minZ, maxX, maxY, maxZ);
+        return Minecraft.getInstance().lvlRenderer().visibleOcclusionCulling(minX, minY, minZ, maxX, maxY, maxZ);
     }
 }

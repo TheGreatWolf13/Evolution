@@ -17,10 +17,10 @@ import net.minecraft.world.level.material.FogType;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.*;
-import tgw.evolution.patches.PatchQuaternion;
 import tgw.evolution.patches.obj.NearPlane;
 import tgw.evolution.util.math.ClipContextMutable;
 import tgw.evolution.util.math.Vec3d;
+import tgw.evolution.util.math.VectorUtil;
 
 @Mixin(Camera.class)
 public abstract class MixinCamera {
@@ -76,7 +76,7 @@ public abstract class MixinCamera {
                                          ClipContext.Block.VISUAL, ClipContext.Fluid.NONE, this.entity));
             this.clipContext.reset();
             if (hitresult.getType() != HitResult.Type.MISS) {
-                double dist = hitresult.getLocation().distanceTo(this.position);
+                double dist = VectorUtil.dist(this.position, hitresult.x(), hitresult.y(), hitresult.z());
                 if (dist < startingDistance) {
                     startingDistance = dist - 0.1;
                     if (startingDistance < 0) {
@@ -132,8 +132,8 @@ public abstract class MixinCamera {
         this.xRot = xRot;
         this.yRot = yRot;
         this.rotation.set(0.0F, 0.0F, 0.0F, 1.0F);
-        this.rotation.mul(((PatchQuaternion) (Object) this.quatY).set(Vector3f.YP, -yRot, true));
-        this.rotation.mul(((PatchQuaternion) (Object) this.quatX).set(Vector3f.XP, xRot, true));
+        this.rotation.mul(this.quatY.set(Vector3f.YP, -yRot, true));
+        this.rotation.mul(this.quatX.set(Vector3f.XP, xRot, true));
         this.forwards.set(0.0F, 0.0F, 1.0F);
         this.forwards.transform(this.rotation);
         this.up.set(0.0F, 1.0F, 0.0F);

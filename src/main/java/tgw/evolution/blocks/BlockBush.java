@@ -28,18 +28,18 @@ public class BlockBush extends BlockPhysics implements IReplaceable, IPoppable {
     }
 
     @Override
-    public boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
-        Block blockBelow = level.getBlockState(pos.below()).getBlock();
+    public boolean canSurvive_(BlockState state, LevelReader level, int x, int y, int z) {
+        Block blockBelow = level.getBlockState_(x, y - 1, z).getBlock();
         return blockBelow instanceof BlockGrass || blockBelow instanceof BlockDirt || blockBelow instanceof BlockDryGrass;
     }
 
     @Override
-    public int getLightBlock(BlockState state, BlockGetter level, BlockPos pos) {
+    public int getLightBlock_(BlockState state, BlockGetter level, int x, int y, int z) {
         return 0;
     }
 
     @Override
-    public double getMass(Level level, BlockPos pos, BlockState state) {
+    public double getMass(Level level, int x, int y, int z, BlockState state) {
         return 0;
     }
 
@@ -54,14 +54,18 @@ public class BlockBush extends BlockPhysics implements IReplaceable, IPoppable {
     }
 
     @Override
-    public BlockState updateShape(BlockState state,
-                                  Direction direction,
-                                  BlockState fromState,
-                                  LevelAccessor level,
-                                  BlockPos pos,
-                                  BlockPos fromPos) {
-        return !state.canSurvive(level, pos) ?
+    public BlockState updateShape_(BlockState state,
+                                   Direction from,
+                                   BlockState fromState,
+                                   LevelAccessor level,
+                                   int x,
+                                   int y,
+                                   int z,
+                                   int fromX,
+                                   int fromY,
+                                   int fromZ) {
+        return !state.canSurvive_(level, x, y, z) ?
                Blocks.AIR.defaultBlockState() :
-               super.updateShape(state, direction, fromState, level, pos, fromPos);
+               super.updateShape_(state, from, fromState, level, x, y, z, fromX, fromY, fromZ);
     }
 }

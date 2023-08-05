@@ -2,6 +2,8 @@ package tgw.evolution.mixin;
 
 import com.mojang.datafixers.util.Either;
 import net.minecraft.Util;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.SectionPos;
 import net.minecraft.server.level.*;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.level.ChunkPos;
@@ -15,6 +17,8 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.storage.LevelData;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.*;
+import tgw.evolution.Evolution;
+import tgw.evolution.patches.PatchServerChunkCache;
 import tgw.evolution.util.collection.lists.BiArrayList;
 import tgw.evolution.util.math.MathHelper;
 
@@ -22,7 +26,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 @Mixin(ServerChunkCache.class)
-public abstract class MixinServerChunkCache extends ChunkSource {
+public abstract class MixinServerChunkCache extends ChunkSource implements PatchServerChunkCache {
 
     @Unique private static final ThreadLocal<BiArrayList<LevelChunk, ChunkHolder>> BILIST = ThreadLocal.withInitial(BiArrayList::new);
     @Shadow @Final public ChunkMap chunkMap;
@@ -32,6 +36,22 @@ public abstract class MixinServerChunkCache extends ChunkSource {
     @Shadow private @Nullable NaturalSpawner.SpawnState lastSpawnState;
     @Shadow private boolean spawnEnemies;
     @Shadow private boolean spawnFriendlies;
+
+    @Overwrite
+    public void blockChanged(BlockPos pos) {
+        Evolution.deprecatedMethod();
+        this.blockChanged_(pos.getX(), pos.getY(), pos.getZ());
+    }
+
+    @Override
+    public void blockChanged_(int x, int y, int z) {
+        int secX = SectionPos.blockToSectionCoord(x);
+        int secZ = SectionPos.blockToSectionCoord(z);
+        ChunkHolder chunkHolder = this.getVisibleChunkIfPresent(ChunkPos.asLong(secX, secZ));
+        if (chunkHolder != null) {
+            chunkHolder.blockChanged_(x, y, z);
+        }
+    }
 
     @Shadow
     protected abstract boolean chunkAbsent(@Nullable ChunkHolder p_8417_, int p_8418_);
@@ -128,9 +148,12 @@ public abstract class MixinServerChunkCache extends ChunkSource {
             for (int i = 0, len = list.size(); i < len; i++) {
                 LevelChunk chunk = list.getLeft(i);
                 ChunkPos chunkpos = chunk.getPos();
-                if (this.level.isNaturalSpawningAllowed(chunkpos) && this.chunkMap.anyPlayerCloseEnoughForSpawning(chunkpos)) {
+                if (this.level.isNaturalSpawningAllowed(chunkpos)) {
                     chunk.incrementInhabitedTime(deltaTime);
-                    if (doMobSpawn && (this.spawnEnemies || this.spawnFriendlies) && this.level.getWorldBorder().isWithinBounds(chunkpos)) {
+                    if (doMobSpawn &&
+                        (this.spawnEnemies || this.spawnFriendlies) &&
+                        this.level.getWorldBorder().isWithinBounds(chunkpos) &&
+                        this.chunkMap.anyPlayerCloseEnoughForSpawning(chunkpos)) {
                         NaturalSpawner.spawnForChunk(this.level, chunk, state, this.spawnFriendlies, this.spawnEnemies, shouldSpawnAnimals);
                     }
                     if (this.level.shouldTickBlocksAt(chunkpos.toLong())) {

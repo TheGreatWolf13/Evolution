@@ -12,15 +12,17 @@ import java.util.Random;
 
 public interface PatchModelBlockRenderer {
 
-    boolean tesselateBlock(BlockAndTintGetter level,
-                           BakedModel model,
-                           BlockState state,
-                           BlockPos pos,
-                           PoseStack matrices,
-                           VertexConsumer consumer,
-                           boolean checkSides,
-                           Random random,
-                           long seed,
-                           int packedOverlay,
-                           IModelData modelData);
+    default boolean tesselateBlock(BlockAndTintGetter level,
+                                   BakedModel model,
+                                   BlockState state,
+                                   BlockPos pos,
+                                   PoseStack matrices,
+                                   VertexConsumer consumer,
+                                   boolean checkSides,
+                                   Random random,
+                                   long seed,
+                                   int packedOverlay,
+                                   IModelData modelData) {
+        throw new AbstractMethodError();
+    }
 }

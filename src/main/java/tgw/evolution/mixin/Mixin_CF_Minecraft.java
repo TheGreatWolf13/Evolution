@@ -59,6 +59,7 @@ import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.client.tutorial.Tutorial;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Holder;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.*;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
@@ -72,6 +73,8 @@ import net.minecraft.server.packs.repository.Pack;
 import net.minecraft.server.packs.repository.PackRepository;
 import net.minecraft.server.packs.repository.PackSource;
 import net.minecraft.server.packs.resources.ReloadableResourceManager;
+import net.minecraft.sounds.Music;
+import net.minecraft.sounds.Musics;
 import net.minecraft.util.*;
 import net.minecraft.util.datafix.DataFixers;
 import net.minecraft.util.profiling.*;
@@ -85,6 +88,8 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.storage.LevelStorageSource;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
@@ -112,8 +117,6 @@ import tgw.evolution.items.IMelee;
 import tgw.evolution.items.ItemUtils;
 import tgw.evolution.network.Message;
 import tgw.evolution.network.PacketCSSimpleMessage;
-import tgw.evolution.patches.PatchKeyMapping;
-import tgw.evolution.patches.PatchLivingEntity;
 import tgw.evolution.patches.PatchMinecraft;
 import tgw.evolution.util.OptionalMutableBlockPos;
 import tgw.evolution.util.math.DirectionUtil;
@@ -566,11 +569,13 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
         if (this.missTime <= 0 && !this.player.isUsingItem()) {
             if (leftClick && this.hitResult != null && this.hitResult.getType() == HitResult.Type.BLOCK) {
                 BlockHitResult blockRayTrace = (BlockHitResult) this.hitResult;
-                BlockPos hitPos = blockRayTrace.getBlockPos();
-                if (!this.level.isEmptyBlock(hitPos) && !((PatchLivingEntity) this.player).shouldRenderSpecialAttack()) {
+                int x = blockRayTrace.posX();
+                int y = blockRayTrace.posY();
+                int z = blockRayTrace.posZ();
+                if (!this.level.isEmptyBlock_(x, y, z) && !this.player.shouldRenderSpecialAttack()) {
                     Direction face = blockRayTrace.getDirection();
-                    if (this.gameMode.continueDestroyBlock(hitPos, face)) {
-                        this.particleEngine.crack(hitPos, face);
+                    if (this.gameMode.continueDestroyBlock_(x, y, z, face, blockRayTrace)) {
+                        this.particleEngine.crack_(x, y, z, face);
                         this.player.swing(InteractionHand.MAIN_HAND);
                     }
                 }
@@ -733,6 +738,30 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
     @Shadow
     public abstract RenderTarget getMainRenderTarget();
 
+    @Overwrite
+    public Music getSituationalMusic() {
+        if (this.screen instanceof WinScreen) {
+            return Musics.CREDITS;
+        }
+        if (this.player != null) {
+            if (this.player.level.dimension() == Level.END) {
+                return this.gui.getBossOverlay().shouldPlayMusic() ? Musics.END_BOSS : Musics.END;
+            }
+            Holder<Biome> holder = this.player.level.getBiome_(this.player.blockPosition());
+            Biome.BiomeCategory biomeCategory = Biome.getBiomeCategory(holder);
+            if (this.musicManager.isPlayingMusic(Musics.UNDER_WATER) ||
+                this.player.isUnderWater() && (biomeCategory == Biome.BiomeCategory.OCEAN || biomeCategory == Biome.BiomeCategory.RIVER)) {
+                return Musics.UNDER_WATER;
+            }
+            return this.player.level.dimension() != Level.NETHER &&
+                   this.player.getAbilities().instabuild &&
+                   this.player.getAbilities().mayfly ?
+                   Musics.CREATIVE :
+                   holder.value().getBackgroundMusic().orElse(Musics.GAME);
+        }
+        return Musics.MENU;
+    }
+
     /**
      * @author TheGreatWolf
      * @reason Replace LevelRenderer
@@ -827,7 +856,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
         assert this.gameMode != null;
         assert this.getConnection() != null;
         boolean notPausedNorAttacking = !this.multiplayerPause && !ClientEvents.getInstance().shouldRenderSpecialAttack();
-        if (((PatchKeyMapping) this.options.keyTogglePerspective).consumeAllClicks()) {
+        if (this.options.keyTogglePerspective.consumeAllClicks()) {
             CameraType view = this.options.getCameraType();
             this.options.setCameraType(view.cycle());
             if (view.isFirstPerson() != this.options.getCameraType().isFirstPerson()) {
@@ -835,7 +864,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
             }
             this.lvlRenderer.needsUpdate();
         }
-        if (((PatchKeyMapping) this.options.keySmoothCamera).consumeAllClicks()) {
+        if (this.options.keySmoothCamera.consumeAllClicks()) {
             this.options.smoothCamera = !this.options.smoothCamera;
         }
         boolean isSaveToolbarDown = this.options.keySaveHotbarActivator.isDown();
@@ -856,7 +885,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
                 }
             }
         }
-        if (((PatchKeyMapping) this.options.keySocialInteractions).consumeAllClicks()) {
+        if (this.options.keySocialInteractions.consumeAllClicks()) {
             if (!this.isMultiplayerServer()) {
                 this.player.displayClientMessage(SOCIAL_INTERACTIONS_NOT_AVAILABLE, true);
                 NarratorChatListener.INSTANCE.sayNow(SOCIAL_INTERACTIONS_NOT_AVAILABLE.getString());
@@ -869,7 +898,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
                 this.setScreen(new SocialInteractionsScreen());
             }
         }
-        if (((PatchKeyMapping) this.options.keyInventory).consumeAllClicks()) {
+        if (this.options.keyInventory.consumeAllClicks()) {
             if (notPausedNorAttacking) {
                 if (this.gameMode.isServerControlledInventory()) {
                     this.player.sendOpenInventory();
@@ -880,7 +909,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
                 }
             }
         }
-        if (((PatchKeyMapping) this.options.keyAdvancements).consumeAllClicks()) {
+        if (this.options.keyAdvancements.consumeAllClicks()) {
             this.setScreen(new ScreenAdvancements(this.player.connection.getAdvancements()));
         }
         while (this.options.keySwapOffhand.consumeClick()) {
@@ -902,10 +931,10 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
                 }
             }
         }
-        if (((PatchKeyMapping) this.options.keyChat).consumeAllClicks()) {
+        if (this.options.keyChat.consumeAllClicks()) {
             this.openChatScreen("");
         }
-        if (this.screen == null && this.overlay == null && ((PatchKeyMapping) this.options.keyCommand).consumeAllClicks()) {
+        if (this.screen == null && this.overlay == null && this.options.keyCommand.consumeAllClicks()) {
             this.openChatScreen("/");
         }
         boolean shouldContinueAttacking = true;
@@ -917,7 +946,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
                     this.gameMode.releaseUsingItem(this.player);
                 }
             }
-            if (((PatchKeyMapping) this.options.keyAttack).consumeAllClicks()) {
+            if (this.options.keyAttack.consumeAllClicks()) {
                 if (!this.multiplayerPause) {
                     ItemStack usedStack = this.player.getUseItem();
                     if (usedStack.getItem() instanceof ICancelableUse cancelable) {
@@ -931,8 +960,8 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
                     //TODO shield bash
                 }
             }
-            ((PatchKeyMapping) this.options.keyUse).consumeAllClicks();
-            ((PatchKeyMapping) this.options.keyPickItem).consumeAllClicks();
+            this.options.keyUse.consumeAllClicks();
+            this.options.keyPickItem.consumeAllClicks();
             isAttackKeyDown = this.options.keyAttack.isDown();
         }
         //Not using item
@@ -998,7 +1027,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
                     }
                 }
                 else {
-                    if (((PatchKeyMapping) this.options.keyAttack).consumeAllClicks()) {
+                    if (this.options.keyAttack.consumeAllClicks()) {
                         if (!this.multiplayerPause) {
                             shouldContinueAttacking = this.startAttack();
                         }
@@ -1007,9 +1036,9 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
             }
             isAttackKeyDown = this.options.keyAttack.isDown();
             if (ClientEvents.getInstance().getMainhandIndicatorPercentage(0.0f) < 1) {
-                ((PatchKeyMapping) this.options.keyAttack).consumeAllClicks();
+                this.options.keyAttack.consumeAllClicks();
             }
-            if (((PatchKeyMapping) this.options.keyUse).consumeAllClicks()) {
+            if (this.options.keyUse.consumeAllClicks()) {
                 if (notPausedNorAttacking) {
                     this.useFlags = 2;
                     this.lastHoldingPos.remove();
@@ -1017,7 +1046,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
                     this.useFlags &= ~2;
                 }
             }
-            if (((PatchKeyMapping) this.options.keyPickItem).consumeAllClicks()) {
+            if (this.options.keyPickItem.consumeAllClicks()) {
                 if (!this.multiplayerPause) {
                     this.pickBlock();
                 }
@@ -1524,10 +1553,12 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
             }
             case BLOCK: {
                 BlockHitResult blockRayTrace = (BlockHitResult) this.hitResult;
-                BlockPos hitPos = blockRayTrace.getBlockPos();
-                if (!this.level.isEmptyBlock(hitPos) && !((PatchLivingEntity) this.player).shouldRenderSpecialAttack()) {
-                    this.gameMode.startDestroyBlock(hitPos, blockRayTrace.getDirection());
-                    if (this.level.getBlockState(hitPos).isAir()) {
+                int x = blockRayTrace.posX();
+                int y = blockRayTrace.posY();
+                int z = blockRayTrace.posZ();
+                if (!this.level.isEmptyBlock_(x, y, z) && !this.player.shouldRenderSpecialAttack()) {
+                    this.gameMode.startDestroyBlock_(blockRayTrace);
+                    if (this.level.isEmptyBlock_(x, y, z)) {
                         shouldContinueAttacking = false;
                     }
                     break;
@@ -1600,6 +1631,9 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
                 case BLOCK -> {
                     BlockHitResult blockRayTrace = (BlockHitResult) this.hitResult;
                     InteractionResult actResult = this.gameMode.useItemOn(this.player, this.level, hand, blockRayTrace);
+                    if (this.gameMode.wasLastInteractionUsedOnBlock()) {
+                        this.useFlags = 0;
+                    }
                     if (actResult.consumesAction()) {
                         if (actResult.shouldSwing()) {
                             this.player.swing(hand);
@@ -1609,7 +1643,8 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
                                 if (direction != null) {
                                     this.useFlags |= direction.ordinal() + 1 << 2;
                                 }
-                                this.lastHoldingPos.setWithOffset(blockRayTrace.getBlockPos(), blockRayTrace.getDirection());
+                                this.lastHoldingPos.setWithOffset(blockRayTrace.posX(), blockRayTrace.posY(), blockRayTrace.posZ(),
+                                                                  blockRayTrace.getDirection());
                             }
                         }
                         return;
@@ -1675,7 +1710,10 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
         }
         if (this.hitResult.getType() == HitResult.Type.BLOCK) {
             BlockHitResult blockRayTrace = (BlockHitResult) this.hitResult;
-            if (!this.lastHoldingPos.isSame(blockRayTrace.getBlockPos(), blockRayTrace.getDirection(), direction, true)) {
+            int x = blockRayTrace.posX();
+            int y = blockRayTrace.posY();
+            int z = blockRayTrace.posZ();
+            if (!this.lastHoldingPos.isSame(x, y, z, blockRayTrace.getDirection(), direction)) {
                 return true;
             }
             for (InteractionHand hand : MathHelper.HANDS_OFF_PRIORITY) {
@@ -1687,10 +1725,13 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
                     continue;
                 }
                 InteractionResult actResult = this.gameMode.useItemOn(this.player, this.level, hand, blockRayTrace);
+                if (this.gameMode.wasLastInteractionUsedOnBlock()) {
+                    this.useFlags = 0;
+                }
                 if (actResult.consumesAction()) {
                     if (actResult.shouldSwing()) {
                         this.player.swing(hand);
-                        this.lastHoldingPos.setWithOffset(blockRayTrace.getBlockPos(), blockRayTrace.getDirection());
+                        this.lastHoldingPos.setWithOffset(x, y, z, blockRayTrace.getDirection());
                     }
                     this.rightClickDelay = 4;
                     return true;

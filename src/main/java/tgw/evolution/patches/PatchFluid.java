@@ -3,11 +3,14 @@ package tgw.evolution.patches;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import tgw.evolution.util.math.Vec3d;
 import tgw.evolution.util.physics.Fluid;
+
+import java.util.Random;
 
 public interface PatchFluid {
 
@@ -33,6 +36,10 @@ public interface PatchFluid {
     }
 
     default VoxelShape getShape_(FluidState fluidState, BlockGetter level, int x, int y, int z) {
+        throw new AbstractMethodError();
+    }
+
+    default void randomTick_(Level level, int x, int y, int z, FluidState fluidState, Random random) {
         throw new AbstractMethodError();
     }
 }

@@ -3,10 +3,10 @@ package tgw.evolution.blocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
@@ -17,8 +17,8 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.material.Material;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.util.BlockUtils;
@@ -37,13 +37,18 @@ public class BlockRope extends BlockGeneric implements IReplaceable, IFallSufixB
         this.registerDefaultState(this.defaultBlockState().setValue(DIRECTION_HORIZONTAL, Direction.NORTH));
     }
 
-    public static boolean isSupported(BlockGetter level, BlockPos pos, Direction facing) {
-        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
-        mutablePos.set(pos);
+    public static boolean isSupported(BlockGetter level, int x, int y, int z, Direction facing) {
         Direction currentDirection = Direction.UP;
         for (int ropeCount = 1; ropeCount < 64; ropeCount++) {
-            mutablePos.move(currentDirection);
-            BlockState currentState = level.getBlockState(mutablePos);
+            switch (currentDirection) {
+                case UP -> ++y;
+                case DOWN -> --y;
+                case EAST -> ++x;
+                case WEST -> --x;
+                case NORTH -> --z;
+                case SOUTH -> ++z;
+            }
+            BlockState currentState = level.getBlockState_(x, y, z);
             if (currentState.getBlock() instanceof IRopeSupport ropeSupport) {
                 if (!ropeSupport.canSupport(currentState, currentDirection.getOpposite())) {
                     return false;
@@ -83,8 +88,8 @@ public class BlockRope extends BlockGeneric implements IReplaceable, IFallSufixB
     }
 
     @Override
-    public boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
-        return isSupported(level, pos, state.getValue(DIRECTION_HORIZONTAL));
+    public boolean canSurvive_(BlockState state, LevelReader level, int x, int y, int z) {
+        return isSupported(level, x, y, z, state.getValue(DIRECTION_HORIZONTAL));
     }
 
     @Override
@@ -93,7 +98,7 @@ public class BlockRope extends BlockGeneric implements IReplaceable, IFallSufixB
     }
 
     @Override
-    public ItemStack getCloneItemStack(BlockState state, HitResult target, BlockGetter level, BlockPos pos, Player player) {
+    public ItemStack getCloneItemStack(BlockState state, HitResult target, BlockGetter level, int x, int y, int z, Player player) {
         return new ItemStack(EvolutionItems.ROPE);
     }
 
@@ -113,19 +118,24 @@ public class BlockRope extends BlockGeneric implements IReplaceable, IFallSufixB
     }
 
     @Override
-    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+    public VoxelShape getShape_(BlockState state, BlockGetter level, int x, int y, int z, @Nullable Entity entity) {
         return switch (state.getValue(DIRECTION_HORIZONTAL)) {
             case NORTH -> EvolutionShapes.ROPE_WALL_NORTH;
             case EAST -> EvolutionShapes.ROPE_WALL_EAST;
             case SOUTH -> EvolutionShapes.ROPE_WALL_SOUTH;
-            case WEST -> EvolutionShapes.ROPE_WALL_WEST;
-            default -> throw new IllegalStateException("Could not find shape for " + state);
+            default -> EvolutionShapes.ROPE_WALL_WEST;
         };
     }
 
     @Override
-    public @Nullable BlockState getStateForPlacement(BlockPlaceContext context) {
-        return this.defaultBlockState().setValue(DIRECTION_HORIZONTAL, context.getHorizontalDirection());
+    public @Nullable BlockState getStateForPlacement_(Level level,
+                                                      int x,
+                                                      int y,
+                                                      int z,
+                                                      Player player,
+                                                      InteractionHand hand,
+                                                      BlockHitResult hitResult) {
+        return this.defaultBlockState().setValue(DIRECTION_HORIZONTAL, player.getDirection());
     }
 
     @Override
@@ -157,7 +167,7 @@ public class BlockRope extends BlockGeneric implements IReplaceable, IFallSufixB
     }
 
     @Override
-    public boolean isClimbable(BlockState state, LevelReader level, BlockPos pos, Entity entity) {
+    public boolean isClimbable(BlockState state, LevelReader level, int x, int y, int z, Entity entity) {
         return true;
     }
 
@@ -172,9 +182,19 @@ public class BlockRope extends BlockGeneric implements IReplaceable, IFallSufixB
     }
 
     @Override
-    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+    public void neighborChanged_(BlockState state,
+                                 Level level,
+                                 int x,
+                                 int y,
+                                 int z,
+                                 Block oldBlock,
+                                 int fromX,
+                                 int fromY,
+                                 int fromZ,
+                                 boolean isMoving) {
         if (!level.isClientSide) {
-            if (!state.canSurvive(level, pos)) {
+            if (!state.canSurvive_(level, x, y, z)) {
+                BlockPos pos = new BlockPos(x, y, z);
                 dropResources(state, level, pos);
                 level.removeBlock(pos, false);
             }
@@ -182,13 +202,13 @@ public class BlockRope extends BlockGeneric implements IReplaceable, IFallSufixB
     }
 
     @Override
-    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+    public void onRemove_(BlockState state, Level level, int x, int y, int z, BlockState newState, boolean isMoving) {
         if (!level.isClientSide) {
-            BlockPos support = pos.above().relative(state.getValue(DIRECTION_HORIZONTAL));
-            Block block = level.getBlockState(support).getBlock();
-            if (block instanceof IRopeSupport) {
-                level.scheduleTick(support, block, 2);
-            }
+//            BlockPos support = pos.above().relative(state.getValue(DIRECTION_HORIZONTAL));
+//            Block block = level.getBlockState(support).getBlock();
+//            if (block instanceof IRopeSupport) {
+//                level.scheduleTick(support, block, 2);
+//            }
         }
     }
 
@@ -198,10 +218,10 @@ public class BlockRope extends BlockGeneric implements IReplaceable, IFallSufixB
     }
 
     @Override
-    public void tick(BlockState state, ServerLevel level, BlockPos pos, Random random) {
-        if (!state.canSurvive(level, pos)) {
-            dropResources(state, level, pos);
-            level.removeBlock(pos, false);
+    public void tick_(BlockState state, ServerLevel level, int x, int y, int z, Random random) {
+        if (!state.canSurvive_(level, x, y, z)) {
+            BlockUtils.dropResources(state, level, x, y, z);
+            level.removeBlock_(x, y, z, false);
         }
     }
 }

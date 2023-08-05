@@ -1,6 +1,5 @@
 package tgw.evolution.blocks;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.SoundType;
@@ -25,7 +24,7 @@ public class BlockPlaceholder extends BlockPhysics {
     }
 
     @Override
-    public double getMass(Level level, BlockPos pos, BlockState state) {
+    public double getMass(Level level, int x, int y, int z, BlockState state) {
         return 1_000_000;
     }
 }

@@ -113,7 +113,7 @@ public final class EntityEvents {
                 LAST_TEMPERATURES[(int) (time % 20)] = Temperature.K2C(temperature.getAmbientBasedTemperature());
             }
             catch (Exception e) {
-                Evolution.warn("An exception was thrown while calculating temperature!");
+                Evolution.warn("An exception was thrown while calculating temperature!", e);
             }
             if (player.isCrouching() && time % 20 == 0) {
                 double sum = 0;

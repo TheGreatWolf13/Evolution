@@ -6,6 +6,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -23,7 +24,6 @@ import net.minecraft.world.level.material.Material;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.tileentities.TEMolding;
@@ -37,12 +37,12 @@ import static tgw.evolution.init.EvolutionBStates.LAYERS_1_5;
 public class BlockMolding extends BlockGeneric implements IReplaceable, EntityBlock {
 
     public BlockMolding() {
-        super(Properties.of(Material.CLAY).strength(0.0F).sound(SoundType.GRAVEL).noOcclusion());
+        super(Properties.of(Material.CLAY).dynamicShape().strength(0.0F).sound(SoundType.GRAVEL).noOcclusion());
         this.registerDefaultState(this.defaultBlockState().setValue(LAYERS_1_5, 1));
     }
 
-    private static void dropItemStack(Level level, BlockPos pos, ItemStack stack) {
-        ItemEntity entity = new ItemEntity(level, pos.getX() + 0.5, pos.getY() + 0.3, pos.getZ() + 0.5, stack);
+    private static void dropItemStack(Level level, int x, int y, int z, ItemStack stack) {
+        ItemEntity entity = new ItemEntity(level, x + 0.5, y + 0.3, z + 0.5, stack);
         Vec3 motion = entity.getDeltaMovement();
         entity.push(-motion.x, -motion.y, -motion.z);
         level.addFreshEntity(entity);
@@ -59,9 +59,8 @@ public class BlockMolding extends BlockGeneric implements IReplaceable, EntityBl
     }
 
     @Override
-    public boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
-        BlockState up = level.getBlockState(pos.above());
-        return BlockUtils.isReplaceable(up) && BlockUtils.hasSolidSide(level, pos.below(), Direction.UP);
+    public boolean canSurvive_(BlockState state, LevelReader level, int x, int y, int z) {
+        return BlockUtils.isReplaceable(level.getBlockState_(x, y + 1, z)) && BlockUtils.hasSolidFace(level, x, y - 1, z, Direction.UP);
     }
 
     @Override
@@ -70,7 +69,7 @@ public class BlockMolding extends BlockGeneric implements IReplaceable, EntityBl
     }
 
     @Override
-    public ItemStack getCloneItemStack(BlockState state, HitResult hitResult, BlockGetter level, BlockPos pos, Player player) {
+    public ItemStack getCloneItemStack(BlockState state, HitResult hitResult, BlockGetter level, int x, int y, int z, Player player) {
         return new ItemStack(EvolutionItems.CLAYBALL);
     }
 
@@ -85,8 +84,8 @@ public class BlockMolding extends BlockGeneric implements IReplaceable, EntityBl
     }
 
     @Override
-    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        TEMolding tile = (TEMolding) level.getBlockEntity_(pos);
+    public VoxelShape getShape_(BlockState state, BlockGetter level, int x, int y, int z, @Nullable Entity entity) {
+        TEMolding tile = (TEMolding) level.getBlockEntity_(x, y, z);
         if (tile != null) {
             return tile.getHitbox(state);
         }
@@ -99,9 +98,19 @@ public class BlockMolding extends BlockGeneric implements IReplaceable, EntityBl
     }
 
     @Override
-    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+    public void neighborChanged_(BlockState state,
+                                 Level level,
+                                 int x,
+                                 int y,
+                                 int z,
+                                 Block oldBlock,
+                                 int fromX,
+                                 int fromY,
+                                 int fromZ,
+                                 boolean isMoving) {
         if (!level.isClientSide) {
-            if (!state.canSurvive(level, pos)) {
+            if (!state.canSurvive_(level, x, y, z)) {
+                BlockPos pos = new BlockPos(x, y, z);
                 dropResources(state, level, pos);
                 level.removeBlock(pos, false);
             }
@@ -114,65 +123,64 @@ public class BlockMolding extends BlockGeneric implements IReplaceable, EntityBl
     }
 
     @Override
-    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+    public InteractionResult use_(BlockState state, Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hit) {
         int layers = state.getValue(LAYERS_1_5);
         if (player.getItemInHand(hand).getItem() == EvolutionItems.CLAYBALL) {
             if (layers < 5) {
-                level.setBlockAndUpdate(pos, state.setValue(LAYERS_1_5, layers + 1));
-                TEMolding tile = (TEMolding) level.getBlockEntity(pos);
-                assert tile != null;
-                tile.addLayer(layers);
-                level.playSound(player, pos, SoundEvents.GRAVEL_PLACE, SoundSource.BLOCKS, 0.5F, 0.8F);
-                if (!player.isCreative()) {
-                    player.getItemInHand(hand).shrink(1);
+                if (level.getBlockEntity_(x, y, z) instanceof TEMolding tile) {
+                    level.setBlockAndUpdate(new BlockPos(x, y, z), state.setValue(LAYERS_1_5, layers + 1));
+                    tile.addLayer(layers);
+                    level.playSound(player, x + 0.5, y + 0.5, z + 0.5, SoundEvents.GRAVEL_PLACE, SoundSource.BLOCKS, 0.5F, 0.8F);
+                    if (!player.isCreative()) {
+                        player.getItemInHand(hand).shrink(1);
+                    }
+                    return InteractionResult.SUCCESS;
                 }
-                return InteractionResult.SUCCESS;
             }
             return InteractionResult.PASS;
         }
         if (!player.getItemInHand(hand).isEmpty()) {
             return InteractionResult.PASS;
         }
-        TEMolding tile = (TEMolding) level.getBlockEntity(pos);
-        if (tile == null) {
-            return InteractionResult.PASS;
-        }
-        double hitX = (hit.getLocation().x - pos.getX()) * 16;
-        if (!MathHelper.rangeInclusive(hitX, 0.5, 15.5)) {
-            return InteractionResult.PASS;
-        }
-        double hitZ = (hit.getLocation().z - pos.getZ()) * 16;
-        if (!MathHelper.rangeInclusive(hitZ, 0.5, 15.5)) {
-            return InteractionResult.PASS;
-        }
-        double hitY = (hit.getLocation().y - pos.getY()) * 16;
-        int x = MathHelper.getIndex(5, 0.5, 15.5, MathHelper.hitOffset(Direction.Axis.X, hitX, hit.getDirection()));
-        int y = MathHelper.getIndex(5, 0, 15, MathHelper.hitOffset(Direction.Axis.Y, hitY, hit.getDirection()));
-        int z = MathHelper.getIndex(5, 0.5, 15.5, MathHelper.hitOffset(Direction.Axis.Z, hitZ, hit.getDirection()));
-//        if (!tile.matrices[y][x][z] || tile.molding.getPattern()[y][x][z]) {
+        if (level.getBlockEntity_(x, y, z) instanceof TEMolding tile) {
+            double hitX = (hit.getLocation().x - x) * 16;
+            if (!MathHelper.rangeInclusive(hitX, 0.5, 15.5)) {
+                return InteractionResult.PASS;
+            }
+            double hitZ = (hit.getLocation().z - z) * 16;
+            if (!MathHelper.rangeInclusive(hitZ, 0.5, 15.5)) {
+                return InteractionResult.PASS;
+            }
+            double hitY = (hit.getLocation().y - y) * 16;
+            int partX = MathHelper.getIndex(5, 0.5, 15.5, MathHelper.hitOffset(Direction.Axis.X, hitX, hit.getDirection()));
+            int partY = MathHelper.getIndex(5, 0, 15, MathHelper.hitOffset(Direction.Axis.Y, hitY, hit.getDirection()));
+            int partZ = MathHelper.getIndex(5, 0.5, 15.5, MathHelper.hitOffset(Direction.Axis.Z, hitZ, hit.getDirection()));
+//        if (!tile.matrices[partY][partX][partZ] || tile.molding.getPattern()[partY][partX][partZ]) {
 //            return ActionResultType.PASS;
 //        }
-        level.playSound(player, pos, SoundEvents.GRAVEL_BREAK, SoundSource.BLOCKS, 1.0F, 0.75F);
-//        tile.matrices[y][x][z] = false;
-        if (layers != 1) {
-            int fail = tile.check();
-            if (fail != -1) {
-                int count = 0;
-                for (int i = fail; i < layers; i++) {
-                    count++;
-                }
-                if (layers == count) {
-                    level.removeBlock(pos, false);
-                }
-                else {
-                    level.setBlockAndUpdate(pos, state.setValue(LAYERS_1_5, layers - count));
-                }
-                if (!level.isClientSide) {
-                    dropItemStack(level, pos, new ItemStack(EvolutionItems.CLAYBALL, count));
+            level.playSound(player, x + 0.5, y + 0.5, z + 0.5, SoundEvents.GRAVEL_BREAK, SoundSource.BLOCKS, 1.0F, 0.75F);
+//        tile.matrices[partY][partX][partZ] = false;
+            if (layers != 1) {
+                int fail = tile.check();
+                if (fail != -1) {
+                    int count = 0;
+                    for (int i = fail; i < layers; i++) {
+                        count++;
+                    }
+                    if (layers == count) {
+                        level.removeBlock(new BlockPos(x, y, z), false);
+                    }
+                    else {
+                        level.setBlockAndUpdate(new BlockPos(x, y, z), state.setValue(LAYERS_1_5, layers - count));
+                    }
+                    if (!level.isClientSide) {
+                        dropItemStack(level, x, y, z, new ItemStack(EvolutionItems.CLAYBALL, count));
+                    }
                 }
             }
+            tile.checkPatterns();
+            return InteractionResult.SUCCESS;
         }
-        tile.checkPatterns();
-        return InteractionResult.SUCCESS;
+        return InteractionResult.PASS;
     }
 }

@@ -7,6 +7,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.Random;
+
 @Mixin(Direction.class)
 public abstract class MixinDirection {
 
@@ -15,6 +17,11 @@ public abstract class MixinDirection {
     @Unique private int offsetY;
     @Unique private int offsetZ;
     @Shadow @Final private int oppositeIndex;
+
+    @Overwrite
+    public static Direction getRandom(Random random) {
+        return VALUES[random.nextInt(6)];
+    }
 
     /**
      * @author JellySquid

@@ -16,8 +16,11 @@ public abstract class MixinLiquidBlockRenderer {
      */
     @Overwrite
     private int getLightColor(BlockAndTintGetter level, BlockPos pos) {
-        int light = EvLevelRenderer.getLightColor(level, pos);
-        int lightAbove = EvLevelRenderer.getLightColor(level, pos.above());
+        int x = pos.getX();
+        int y = pos.getY();
+        int z = pos.getZ();
+        int light = EvLevelRenderer.getLightColor(level, x, y, z);
+        int lightAbove = EvLevelRenderer.getLightColor(level, x, y + 1, z);
         int k = light & 255;
         int l = lightAbove & 255;
         int i1 = light >> 16 & 255;

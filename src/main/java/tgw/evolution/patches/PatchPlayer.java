@@ -1,11 +1,16 @@
 package tgw.evolution.patches;
 
-import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
-public interface PatchPlayer extends PatchLivingEntity {
+public interface PatchPlayer {
 
-    float getDestroySpeed(BlockState state, BlockPos pos);
+    default boolean blockActionRestricted_(Level level, int x, int y, int z, GameType gameType) {
+        throw new AbstractMethodError();
+    }
+
+    float getDestroySpeed(BlockState state, int x, int y, int z);
 
     double getMotionX();
 

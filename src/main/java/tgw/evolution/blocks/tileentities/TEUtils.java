@@ -59,6 +59,6 @@ public final class TEUtils {
         BlockPos pos = tile.getBlockPos();
         assert level != null;
         BlockState state = level.getBlockState(pos);
-        level.sendBlockUpdated(pos, state, state, BlockFlags.RERENDER);
+        level.sendBlockUpdated(pos, state, state, BlockFlags.RENDER_MAINTHREAD);
     }
 }

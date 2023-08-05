@@ -1,6 +1,5 @@
 package tgw.evolution.blocks;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.SoundType;
@@ -47,12 +46,12 @@ public class BlockPlanks extends BlockPhysics {
     }
 
     @Override
-    public int getHarvestLevel(BlockState state, @Nullable Level level, @Nullable BlockPos pos) {
+    public int getHarvestLevel(BlockState state, Level level, int x, int y, int z) {
         return HarvestLevel.STONE;
     }
 
     @Override
-    public double getMass(Level level, BlockPos pos, BlockState state) {
+    public double getMass(Level level, int x, int y, int z, BlockState state) {
         //TODO implementation
         return 0;
     }

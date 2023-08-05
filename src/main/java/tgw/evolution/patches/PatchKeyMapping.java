@@ -2,5 +2,7 @@ package tgw.evolution.patches;
 
 public interface PatchKeyMapping {
 
-    boolean consumeAllClicks();
+    default boolean consumeAllClicks() {
+        throw new AbstractMethodError();
+    }
 }

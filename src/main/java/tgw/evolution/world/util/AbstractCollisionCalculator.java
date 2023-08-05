@@ -2,6 +2,7 @@ package tgw.evolution.world.util;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.CollisionGetter;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -16,7 +17,7 @@ public abstract class AbstractCollisionCalculator<T> extends AbstractReusableIte
     protected final AABBMutable box = new AABBMutable();
     protected final Cursor3DMutable cursor = new Cursor3DMutable();
     protected final BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
-    protected MutableCollisionContext context = new MutableCollisionContext();
+    protected @Nullable Entity entity;
     protected @Nullable VoxelShape entityShape;
     protected @Nullable CollisionGetter level;
     protected boolean onlySuffocatingBlocks;
@@ -31,7 +32,7 @@ public abstract class AbstractCollisionCalculator<T> extends AbstractReusableIte
     @Override
     public void close() {
         this.locked = false;
-        this.context.reset();
+        this.entity = null;
         this.entityShape = null;
         this.level = null;
         this.cachedChunk = null;

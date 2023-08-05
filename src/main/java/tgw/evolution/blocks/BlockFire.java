@@ -6,8 +6,9 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.*;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -16,8 +17,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.material.Material;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.BooleanOp;
-import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
@@ -96,65 +97,67 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
 
     @Override
     public void animateTick(BlockState state, Level level, BlockPos pos, Random rand) {
+        int x = pos.getX();
+        int y = pos.getY();
+        int z = pos.getZ();
         if (rand.nextInt(8) == 0) {
-            level.playLocalSound(pos.getX() + 0.5,
-                                 pos.getY() + 0.5,
-                                 pos.getZ() + 0.5,
+            level.playLocalSound(x + 0.5,
+                                 y + 0.5,
+                                 z + 0.5,
                                  SoundEvents.FIRE_AMBIENT,
                                  SoundSource.BLOCKS,
                                  1.0F + rand.nextFloat(),
                                  rand.nextFloat() * 0.7F + 0.3F,
                                  false);
         }
-        BlockPos posDown = pos.below();
-        if (!this.canBurn(level.getBlockState(posDown)) && !BlockUtils.hasSolidSide(level, posDown, Direction.UP)) {
-            if (this.canBurn(level.getBlockState(posDown.west()))) {
-                for (int j = 0; j < 2; ++j) {
-                    double x = pos.getX() + rand.nextDouble() * 0.1;
-                    double y = pos.getY() + rand.nextDouble();
-                    double z = pos.getZ() + rand.nextDouble();
-                    level.addParticle(ParticleTypes.LARGE_SMOKE, x, y, z, 0, 0, 0);
+        if (!this.canBurn(level.getBlockState_(x, y - 1, z)) && !BlockUtils.hasSolidFace(level, x, y - 1, z, Direction.UP)) {
+            if (this.canBurn(level.getBlockState_(x - 1, y, z))) {
+                for (int i = 0; i < 2; ++i) {
+                    double dx = x + rand.nextDouble() * 0.1;
+                    double dy = y + rand.nextDouble();
+                    double dz = z + rand.nextDouble();
+                    level.addParticle(ParticleTypes.LARGE_SMOKE, dx, dy, dz, 0, 0, 0);
                 }
             }
-            if (this.canBurn(level.getBlockState(pos.east()))) {
-                for (int k = 0; k < 2; ++k) {
-                    double x = (pos.getX() + 1) - rand.nextDouble() * 0.1;
-                    double y = pos.getY() + rand.nextDouble();
-                    double z = pos.getZ() + rand.nextDouble();
-                    level.addParticle(ParticleTypes.LARGE_SMOKE, x, y, z, 0, 0, 0);
+            if (this.canBurn(level.getBlockState_(x + 1, y, z))) {
+                for (int i = 0; i < 2; ++i) {
+                    double dx = x + 1 - rand.nextDouble() * 0.1;
+                    double dy = y + rand.nextDouble();
+                    double dz = z + rand.nextDouble();
+                    level.addParticle(ParticleTypes.LARGE_SMOKE, dx, dy, dz, 0, 0, 0);
                 }
             }
-            if (this.canBurn(level.getBlockState(pos.north()))) {
-                for (int l = 0; l < 2; ++l) {
-                    double x = pos.getX() + rand.nextDouble();
-                    double y = pos.getY() + rand.nextDouble();
-                    double z = pos.getZ() + rand.nextDouble() * 0.1;
-                    level.addParticle(ParticleTypes.LARGE_SMOKE, x, y, z, 0, 0, 0);
+            if (this.canBurn(level.getBlockState_(x, y, z - 1))) {
+                for (int i = 0; i < 2; ++i) {
+                    double dx = x + rand.nextDouble();
+                    double dy = y + rand.nextDouble();
+                    double dz = z + rand.nextDouble() * 0.1;
+                    level.addParticle(ParticleTypes.LARGE_SMOKE, dx, dy, dz, 0, 0, 0);
                 }
             }
-            if (this.canBurn(level.getBlockState(pos.south()))) {
-                for (int i1 = 0; i1 < 2; ++i1) {
-                    double x = pos.getX() + rand.nextDouble();
-                    double y = pos.getY() + rand.nextDouble();
-                    double z = (pos.getZ() + 1) - rand.nextDouble() * 0.1;
-                    level.addParticle(ParticleTypes.LARGE_SMOKE, x, y, z, 0, 0, 0);
+            if (this.canBurn(level.getBlockState_(x, y, z + 1))) {
+                for (int i = 0; i < 2; ++i) {
+                    double dx = x + rand.nextDouble();
+                    double dy = y + rand.nextDouble();
+                    double dz = z + 1 - rand.nextDouble() * 0.1;
+                    level.addParticle(ParticleTypes.LARGE_SMOKE, dx, dy, dz, 0, 0, 0);
                 }
             }
-            if (this.canBurn(level.getBlockState(pos.above()))) {
-                for (int j1 = 0; j1 < 2; ++j1) {
-                    double x = pos.getX() + rand.nextDouble();
-                    double y = (pos.getY() + 1) - rand.nextDouble() * 0.1;
-                    double z = pos.getZ() + rand.nextDouble();
-                    level.addParticle(ParticleTypes.LARGE_SMOKE, x, y, z, 0, 0, 0);
+            if (this.canBurn(level.getBlockState_(x, y + 1, z))) {
+                for (int i = 0; i < 2; ++i) {
+                    double dx = x + rand.nextDouble();
+                    double dy = y + 1 - rand.nextDouble() * 0.1;
+                    double dz = z + rand.nextDouble();
+                    level.addParticle(ParticleTypes.LARGE_SMOKE, dx, dy, dz, 0, 0, 0);
                 }
             }
         }
         else {
             for (int i = 0; i < 3; ++i) {
-                double x = pos.getX() + rand.nextDouble();
-                double y = pos.getY() + rand.nextDouble() * 0.5 + 0.5;
-                double z = pos.getZ() + rand.nextDouble();
-                level.addParticle(ParticleTypes.LARGE_SMOKE, x, y, z, 0, 0, 0);
+                double dx = x + rand.nextDouble();
+                double dy = y + rand.nextDouble() * 0.5 + 0.5;
+                double dz = z + rand.nextDouble();
+                level.addParticle(ParticleTypes.LARGE_SMOKE, dx, dy, dz, 0, 0, 0);
             }
         }
     }
@@ -174,20 +177,20 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
     }
 
     @Override
-    public boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
-        return BlockUtils.hasSolidSide(level, pos.below(), Direction.UP) || this.isValidFireLocation(level, pos);
+    public boolean canSurvive_(BlockState state, LevelReader level, int x, int y, int z) {
+        return BlockUtils.hasSolidFace(level, x, y - 1, z, Direction.UP) || this.isValidFireLocation(level, x, y, z);
     }
 
-    private void checkBurnOut(Level level, BlockPos pos, int chance, RandomGenerator random, int age) {
-        BlockState state = level.getBlockState(pos);
+    private void checkBurnOut(Level level, int x, int y, int z, int chance, RandomGenerator random, int age) {
+        BlockState state = level.getBlockState_(x, y, z);
         int odds = this.getBurnOdds(state);
         if (random.nextInt(chance) < odds) {
-            if (random.nextInt(age + 10) < 5 && !level.isRainingAt(pos)) {
+            if (random.nextInt(age + 10) < 5 /*&& !level.isRainingAt(pos)*/) {
                 int j = Math.min(age + random.nextInt(5) / 4, 15);
-                level.setBlockAndUpdate(pos, this.getStateWithAge(level, pos).setValue(AGE_0_15, j));
+                level.setBlockAndUpdate_(x, y, z, this.getStateWithAge(level, x, y, z).setValue(AGE_0_15, j));
             }
             else {
-                level.removeBlock(pos, false);
+                level.removeBlock_(x, y, z, false);
             }
 //            Block block = state.getBlock();
 //            if (block instanceof TntBlock) {
@@ -217,20 +220,20 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
         return this.burnOdds.getInt(state.getBlock());
     }
 
-    private int getFireOdds(LevelReader level, BlockPos pos) {
-        if (!level.isEmptyBlock(pos)) {
+    private int getFireOdds(LevelReader level, int x, int y, int z) {
+        if (!level.isEmptyBlock_(x, y, z)) {
             return 0;
         }
         int i = 0;
         for (Direction direction : DirectionUtil.ALL) {
-            BlockState blockstate = level.getBlockState(pos.relative(direction));
+            BlockState blockstate = level.getBlockStateAtSide(x, y, z, direction);
             i = Math.max(this.getBurnOdds(blockstate), i);
         }
         return i;
     }
 
     @Override
-    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+    public VoxelShape getShape_(BlockState state, BlockGetter level, int x, int y, int z, @Nullable Entity entity) {
         VoxelShape shape = Shapes.empty();
         if (state.getValue(NORTH)) {
             shape = EvolutionShapes.SLAB_16_N;
@@ -254,17 +257,22 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
     }
 
     @Override
-    public @Nullable BlockState getStateForPlacement(BlockPlaceContext context) {
-        return this.getStateWithAge(context.getLevel(), context.getClickedPos());
+    public @Nullable BlockState getStateForPlacement_(Level level,
+                                                      int x,
+                                                      int y,
+                                                      int z,
+                                                      Player player,
+                                                      InteractionHand hand,
+                                                      BlockHitResult hitResult) {
+        return this.getStateWithAge(level, x, y, z);
     }
 
-    public BlockState getStateWithAge(BlockGetter level, BlockPos pos) {
-        BlockPos posDown = pos.below();
-        if (!this.canBurn(level.getBlockState(pos)) && !BlockUtils.hasSolidSide(level, posDown, Direction.UP)) {
+    public BlockState getStateWithAge(BlockGetter level, int x, int y, int z) {
+        if (!this.canBurn(level.getBlockState_(x, y, z)) && !BlockUtils.hasSolidFace(level, x, y - 1, z, Direction.UP)) {
             BlockState state = this.defaultBlockState();
             for (Direction direction : DirectionUtil.ALL_EXCEPT_DOWN) {
                 BooleanProperty booleanProperty = directionToProperty(direction);
-                state = state.setValue(booleanProperty, this.canBurn(level.getBlockState(pos.relative(direction))));
+                state = state.setValue(booleanProperty, this.canBurn(level.getBlockStateAtSide(x, y, z, direction)));
             }
             return state;
         }
@@ -276,12 +284,12 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
         return true;
     }
 
-    protected boolean isNearRain(Level level, BlockPos pos) {
-        return level.isRainingAt(pos) ||
+    protected boolean isNearRain(Level level, int x, int y, int z) {
+        return /*level.isRainingAt(pos) ||
                level.isRainingAt(pos.west()) ||
                level.isRainingAt(pos.east()) ||
                level.isRainingAt(pos.north()) ||
-               level.isRainingAt(pos.south());
+               level.isRainingAt(pos.south())*/false;
     }
 
     @Override
@@ -289,9 +297,9 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
         return true;
     }
 
-    private boolean isValidFireLocation(BlockGetter level, BlockPos pos) {
+    private boolean isValidFireLocation(BlockGetter level, int x, int y, int z) {
         for (Direction direction : DirectionUtil.ALL) {
-            if (this.canBurn(level.getBlockState(pos.relative(direction)))) {
+            if (this.canBurn(level.getBlockStateAtSide(x, y, z, direction))) {
                 return true;
             }
         }
@@ -299,19 +307,19 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
     }
 
     @Override
-    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
+    public void onPlace_(BlockState state, Level level, int x, int y, int z, BlockState oldState, boolean isMoving) {
         if (oldState.getBlock() != state.getBlock()) {
-            if (!state.canSurvive(level, pos)) {
-                level.removeBlock(pos, false);
+            if (!state.canSurvive_(level, x, y, z)) {
+                level.removeBlock(new BlockPos(x, y, z), false);
             }
             else {
-                level.scheduleTick(pos, this, getTickCooldown(level.random));
-                BlockState stateDown = level.getBlockState(pos.below());
+                level.scheduleTick(new BlockPos(x, y, z), this, getTickCooldown(level.random));
+                BlockState stateDown = level.getBlockState_(x, y - 1, z);
                 if (stateDown.getBlock() == EvolutionBlocks.PIT_KILN && stateDown.getValue(LAYERS_0_16) == 16) {
-                    if (BlockPitKiln.canBurn(level, pos.below())) {
-                        TEPitKiln tile = (TEPitKiln) level.getBlockEntity(pos.below());
-                        assert tile != null;
-                        tile.start();
+                    if (BlockPitKiln.canBurn(level, x, y - 1, z)) {
+                        if (level.getBlockEntity_(x, y - 1, z) instanceof TEPitKiln tile) {
+                            tile.start();
+                        }
                     }
                 }
             }
@@ -327,83 +335,86 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
     }
 
     @Override
-    public void tick(BlockState state, ServerLevel level, BlockPos pos, Random random) {
+    public void tick_(BlockState state, ServerLevel level, int x, int y, int z, Random random) {
         if (level.getGameRules().getBoolean(GameRules.RULE_DOFIRETICK)) {
-            if (!state.canSurvive(level, pos)) {
-                level.removeBlock(pos, false);
+            if (!state.canSurvive_(level, x, y, z)) {
+                level.removeBlock_(x, y, z, false);
             }
-            BlockState stateDown = level.getBlockState(pos.below());
             int age = state.getValue(AGE_0_15);
-            if (level.isRaining() && this.isNearRain(level, pos) && random.nextFloat() < 0.2F + age * 0.03F) {
-                level.removeBlock(pos, false);
+//            if (level.isRaining() && this.isNearRain(level, pos) && random.nextFloat() < 0.2F + age * 0.03F) {
+//                level.removeBlock(pos, false);
+//            }
+//            else {
+            int j = Math.min(15, age + random.nextInt(3) / 2);
+            if (age != j) {
+                state = state.setValue(AGE_0_15, j);
+                level.setBlock_(x, y, z, state, BlockFlags.NO_RERENDER);
             }
-            else {
-                int j = Math.min(15, age + random.nextInt(3) / 2);
-                if (age != j) {
-                    state = state.setValue(AGE_0_15, j);
-                    level.setBlock(pos, state, BlockFlags.NO_RERENDER);
-                }
-                if (!stateDown.getBlock().isFireSource(stateDown, level, pos.below(), Direction.UP)) {
-                    level.scheduleTick(pos, this, getTickCooldown(level.random));
-                    if (!this.isValidFireLocation(level, pos)) {
-                        if (!BlockUtils.hasSolidSide(level, pos.below(), Direction.UP) || age > 3) {
-                            level.removeBlock(pos, false);
-                        }
-                        return;
+            BlockState stateDown = level.getBlockState_(x, y - 1, z);
+            if (!stateDown.getBlock().isFireSource(stateDown, level, x, y - 1, z, Direction.UP)) {
+                BlockUtils.schedulePreciseBlockTick(level, x, y, z, getTickCooldown(level.random));
+                if (!this.isValidFireLocation(level, x, y, z)) {
+                    if (!BlockUtils.hasSolidFace(level, x, y - 1, z, Direction.UP) || age > 3) {
+                        level.removeBlock_(x, y, z, false);
                     }
-                    if (age == 15 && random.nextInt(4) == 0 && !this.canBurn(level.getBlockState(pos.below()))) {
-                        level.removeBlock(pos, false);
-                        return;
-                    }
+                    return;
                 }
-                boolean isHighHumidity = level.isHumidAt(pos);
-                int humidyModifier = isHighHumidity ? -50 : 0;
-                this.checkBurnOut(level, pos.east(), 300 + humidyModifier, random, age);
-                this.checkBurnOut(level, pos.west(), 300 + humidyModifier, random, age);
-                this.checkBurnOut(level, pos.below(), 250 + humidyModifier, random, age);
-                this.checkBurnOut(level, pos.above(), 250 + humidyModifier, random, age);
-                this.checkBurnOut(level, pos.north(), 300 + humidyModifier, random, age);
-                this.checkBurnOut(level, pos.south(), 300 + humidyModifier, random, age);
-                BlockPos.MutableBlockPos mutableBlockPos = new BlockPos.MutableBlockPos();
-                for (int x = -1; x <= 1; ++x) {
-                    for (int z = -1; z <= 1; ++z) {
-                        for (int y = -1; y <= 4; ++y) {
-                            if (x != 0 || y != 0 || z != 0) {
-                                int k1 = 100;
-                                if (y > 1) {
-                                    k1 += (y - 1) * 100;
+                if (age == 15 && random.nextInt(4) == 0 && !this.canBurn(level.getBlockState_(x, y - 1, z))) {
+                    level.removeBlock_(x, y, z, false);
+                    return;
+                }
+            }
+            boolean isHighHumidity = level.isHumidAt_(x, y, z);
+            int humidyModifier = isHighHumidity ? -50 : 0;
+            this.checkBurnOut(level, x - 1, y, z, 300 + humidyModifier, random, age);
+            this.checkBurnOut(level, x + 1, y, z, 300 + humidyModifier, random, age);
+            this.checkBurnOut(level, x, y - 1, z, 250 + humidyModifier, random, age);
+            this.checkBurnOut(level, x, y + 1, z, 250 + humidyModifier, random, age);
+            this.checkBurnOut(level, x, y, z - 1, 300 + humidyModifier, random, age);
+            this.checkBurnOut(level, x, y, z + 1, 300 + humidyModifier, random, age);
+            for (int dx = -1; dx <= 1; ++dx) {
+                for (int dz = -1; dz <= 1; ++dz) {
+                    for (int dy = -1; dy <= 4; ++dy) {
+                        if (dx != 0 || dy != 0 || dz != 0) {
+                            int k1 = 100;
+                            if (dy > 1) {
+                                k1 += (dy - 1) * 100;
+                            }
+                            int fireOdds = this.getFireOdds(level, x + dx, y + dy, z + dz);
+                            if (fireOdds > 0) {
+                                int i2 = (fireOdds + 40 + level.getDifficulty().getId() * 7) / (age + 30);
+                                if (isHighHumidity) {
+                                    i2 /= 2;
                                 }
-                                mutableBlockPos.set(pos).move(x, y, z);
-                                int l1 = this.getFireOdds(level, mutableBlockPos);
-                                if (l1 > 0) {
-                                    int i2 = (l1 + 40 + level.getDifficulty().getId() * 7) / (age + 30);
-                                    if (isHighHumidity) {
-                                        i2 /= 2;
-                                    }
-                                    if (i2 > 0 && random.nextInt(k1) <= i2 && (!level.isRaining() || !this.isNearRain(level, mutableBlockPos))) {
-                                        int j2 = Math.min(15, age + random.nextInt(5) / 4);
-                                        level.setBlock(mutableBlockPos,
-                                                       this.getStateWithAge(level, mutableBlockPos).setValue(AGE_0_15, j2),
-                                                       BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE);
-                                    }
+                                if (i2 > 0 && random.nextInt(k1) <= i2 && (!level.isRaining() || !this.isNearRain(level, x + dx, y + dy, z + dz))) {
+                                    int j2 = Math.min(15, age + random.nextInt(5) / 4);
+                                    level.setBlock_(x + dx, y + dy, z + dz,
+                                                    this.getStateWithAge(level, x + dx, y + dy, z + dz)
+                                                        .setValue(AGE_0_15, j2),
+                                                    BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE);
                                 }
                             }
                         }
                     }
                 }
             }
+//            }
         }
     }
 
     @Override
-    public BlockState updateShape(BlockState state,
-                                  Direction facing,
-                                  BlockState facingState,
-                                  LevelAccessor level,
-                                  BlockPos currentPos,
-                                  BlockPos facingPos) {
-        return this.canSurvive(state, level, currentPos) ?
-               this.getStateWithAge(level, currentPos).setValue(AGE_0_15, state.getValue(AGE_0_15)) :
+    public BlockState updateShape_(BlockState state,
+                                   Direction from,
+                                   BlockState fromState,
+                                   LevelAccessor level,
+                                   int x,
+                                   int y,
+                                   int z,
+                                   int fromX,
+                                   int fromY,
+                                   int fromZ) {
+        return this.canSurvive_(state, level, x, y, z) ?
+               this.getStateWithAge(level, x, y, z).setValue(AGE_0_15, state.getValue(AGE_0_15)) :
                Blocks.AIR.defaultBlockState();
     }
 }

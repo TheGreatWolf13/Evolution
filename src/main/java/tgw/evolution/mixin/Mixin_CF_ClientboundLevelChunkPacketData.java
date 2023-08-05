@@ -1,6 +1,7 @@
 package tgw.evolution.mixin;
 
 import io.netty.buffer.ByteBuf;
+import net.minecraft.core.SectionPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.LongArrayTag;
 import net.minecraft.network.FriendlyByteBuf;
@@ -8,22 +9,22 @@ import net.minecraft.network.protocol.game.ClientboundLevelChunkPacketData;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.levelgen.Heightmap;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Mutable;
-import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.*;
 import tgw.evolution.hooks.asm.DummyConstructor;
 import tgw.evolution.hooks.asm.ModifyConstructor;
 import tgw.evolution.hooks.asm.RestoreFinal;
+import tgw.evolution.patches.PatchClientboundLevelChunkPacketData;
+import tgw.evolution.patches.obj.IBlockEntityTagOutput;
 import tgw.evolution.util.collection.ArrayUtils;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.maps.L2OMap;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 @Mixin(ClientboundLevelChunkPacketData.class)
-public abstract class Mixin_CF_ClientboundLevelChunkPacketData {
+public abstract class Mixin_CF_ClientboundLevelChunkPacketData implements PatchClientboundLevelChunkPacketData {
 
     @Mutable @Shadow @Final @RestoreFinal private List<ClientboundLevelChunkPacketData.BlockEntityInfo> blockEntitiesData;
     @Mutable @Shadow @Final @RestoreFinal private byte[] buffer;
@@ -65,6 +66,25 @@ public abstract class Mixin_CF_ClientboundLevelChunkPacketData {
     @Shadow
     public static void extractChunkData(FriendlyByteBuf friendlyByteBuf, LevelChunk levelChunk) {
         throw new AbstractMethodError();
+    }
+
+    @Unique
+    private void getBlockEntitiesTags(IBlockEntityTagOutput tag, int secX, int secZ) {
+        int x0 = 16 * secX;
+        int z0 = 16 * secZ;
+        for (int i = 0, len = this.blockEntitiesData.size(); i < len; ++i) {
+            ClientboundLevelChunkPacketData.BlockEntityInfo info = this.blockEntitiesData.get(i);
+            int x = x0 + SectionPos.sectionRelative(info.packedXZ >> 4);
+            int z = z0 + SectionPos.sectionRelative(info.packedXZ);
+            tag.accept(x, info.y, z, info.type, info.tag);
+        }
+    }
+
+    @Override
+    public Consumer<IBlockEntityTagOutput> getBlockEntitiesTagsConsumer_(int i, int j) {
+        return tag -> {
+            this.getBlockEntitiesTags(tag, i, j);
+        };
     }
 
     @Shadow

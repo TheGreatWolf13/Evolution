@@ -14,15 +14,20 @@ import tgw.evolution.blocks.IRockVariant;
 import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.init.EvolutionTEs;
 import tgw.evolution.util.constants.BlockFlags;
+import tgw.evolution.util.math.MathHelper;
 
 public class TEKnapping extends BlockEntity {
 
-    public @Nullable VoxelShape hitbox;
     public KnappingRecipe type = KnappingRecipe.NULL;
+    private @Nullable VoxelShape hitbox;
     private long parts = Patterns.MATRIX_TRUE;
 
     public TEKnapping(BlockPos pos, BlockState state) {
         super(EvolutionTEs.KNAPPING, pos, state);
+    }
+
+    private VoxelShape calculateHitbox() {
+        return MathHelper.generateShapeFromPattern(this.getParts());
     }
 
     public void checkParts(Player player) {
@@ -37,6 +42,13 @@ public class TEKnapping extends BlockEntity {
 
     public void clearPart(int i, int j) {
         this.parts &= ~(1L << 8 * j + i);
+    }
+
+    public VoxelShape getOrMakeHitbox() {
+        if (this.hitbox == null) {
+            this.hitbox = this.calculateHitbox();
+        }
+        return this.hitbox;
     }
 
     public boolean getPart(int i, int j) {
@@ -81,7 +93,7 @@ public class TEKnapping extends BlockEntity {
         this.level.sendBlockUpdated(this.worldPosition,
                                     this.level.getBlockState(this.worldPosition),
                                     this.level.getBlockState(this.worldPosition),
-                                    BlockFlags.RERENDER);
+                                    BlockFlags.RENDER_MAINTHREAD);
     }
 
     public void setType(KnappingRecipe type) {

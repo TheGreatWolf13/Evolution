@@ -1,6 +1,5 @@
 package tgw.evolution.items;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -234,11 +233,11 @@ public class ItemTorch extends ItemWallOrFloor implements IFireAspect, IThrowabl
     }
 
     @Override
-    protected boolean updateCustomBlockEntityTag(BlockPos pos, Level level, @Nullable Player player, ItemStack stack, BlockState state) {
+    protected void updateCustomBlockEntityTag(int x, int y, int z, Level level, Player player, ItemStack stack, BlockState state) {
         if (!state.getValue(EvolutionBStates.LIT)) {
-            level.levelEvent(LevelEvent.SOUND_EXTINGUISH_FIRE, pos, 0);
+            level.levelEvent_(LevelEvent.SOUND_EXTINGUISH_FIRE, x, y, z, 0);
         }
-        BlockEntity tile = level.getBlockEntity(pos);
+        BlockEntity tile = level.getBlockEntity_(x, y, z);
         if (tile instanceof TETorch teTorch) {
             if (stack.hasTag()) {
                 assert stack.getTag() != null;
@@ -248,7 +247,7 @@ public class ItemTorch extends ItemWallOrFloor implements IFireAspect, IThrowabl
                 teTorch.setTimePlaced(level.getDayTime());
             }
         }
-        return super.updateCustomBlockEntityTag(pos, level, player, stack, state);
+        super.updateCustomBlockEntityTag(x, y, z, level, player, stack, state);
     }
 
     @Override

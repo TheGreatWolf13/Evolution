@@ -26,9 +26,10 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.ICollisionBlock;
-import tgw.evolution.entities.IEntityPacket;
+import tgw.evolution.entities.IEntitySpawnData;
 import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionStats;
@@ -47,12 +48,13 @@ import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 import tgw.evolution.util.math.ClipContextMutable;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.math.Vec3d;
+import tgw.evolution.util.math.VectorUtil;
 import tgw.evolution.util.physics.Fluid;
 import tgw.evolution.util.physics.Physics;
 
 import java.util.UUID;
 
-public abstract class EntityGenericProjectile extends Entity implements IEntityPacket<EntityGenericProjectile> {
+public abstract class EntityGenericProjectile extends Entity implements IEntitySpawnData {
     private static final EntityDataAccessor<Byte> PIERCE_LEVEL = SynchedEntityData.defineId(EntityGenericProjectile.class,
                                                                                             EntityDataSerializers.BYTE);
     protected final ISet hitEntities = new IHashSet();
@@ -62,11 +64,11 @@ public abstract class EntityGenericProjectile extends Entity implements IEntityP
     public PickupStatus pickupStatus = PickupStatus.ALLOWED;
     public int ticksInAir;
     public int timeInGround;
+    protected double mass = 1;
     private @Nullable LivingEntity cachedOwner;
     private float damage = 2.0f;
     private int despawnTicks;
     private @Nullable BlockState inBlockState;
-    private double mass = 1;
     private @Nullable UUID ownerUUID;
 
     public EntityGenericProjectile(EntityType<? extends EntityGenericProjectile> type,
@@ -199,6 +201,11 @@ public abstract class EntityGenericProjectile extends Entity implements IEntityP
     }
 
     @Override
+    public EntityData getSpawnData() {
+        return new ProjectileData(this);
+    }
+
+    @Override
     public boolean isAttackable() {
         return false;
     }
@@ -225,7 +232,7 @@ public abstract class EntityGenericProjectile extends Entity implements IEntityP
 
     protected abstract void modifyMovementOnCollision();
 
-    protected abstract void onBlockHit(BlockState state);
+    protected abstract void onBlockHit(BlockState state, int x, int y, int z);
 
     protected final boolean onEntityHit(MultipleEntityHitResult hitResult) {
         if (this.damagesEntities()) {
@@ -239,7 +246,8 @@ public abstract class EntityGenericProjectile extends Entity implements IEntityP
                 }
                 if (hits == null) {
                     hits = new ProjectileHitInformation();
-                    hits.prepare(hitResult.getStart(), hitResult.getEnd(), Mth.SQRT_OF_TWO * this.getBbWidth());
+                    hits.prepare(hitResult.startX, hitResult.startY, hitResult.startZ, hitResult.endX, hitResult.endY, hitResult.endZ,
+                                 Mth.SQRT_OF_TWO * this.getBbWidth());
                 }
                 else {
                     hits.clear();
@@ -285,19 +293,24 @@ public abstract class EntityGenericProjectile extends Entity implements IEntityP
         }
         if (type == HitResult.Type.BLOCK) {
             BlockHitResult blockHitResult = (BlockHitResult) hitResult;
-            BlockPos pos = blockHitResult.getBlockPos();
-            if (this.onProjectileCollision(this.level.getBlockState_(pos.getX(), pos.getY(), pos.getZ()), pos.getX(), pos.getY(), pos.getZ())) {
-                Vec3 vec3d = blockHitResult.getLocation().subtract(this.position());
-                this.setDeltaMovement(vec3d);
-                Vec3 vec3d1 = vec3d.normalize().scale(0.05);
-                this.setPosRaw(this.getX() - vec3d1.x, this.getY() - vec3d1.y, this.getZ() - vec3d1.z);
+            int x = blockHitResult.posX();
+            int y = blockHitResult.posY();
+            int z = blockHitResult.posZ();
+            if (this.onProjectileCollision(this.level.getBlockState_(x, y, z), x, y, z)) {
+                Vec3 position = this.position();
+                double vx = blockHitResult.x() - position.x;
+                double vy = blockHitResult.y() - position.y;
+                double vz = blockHitResult.z() - position.z;
+                this.setDeltaMovement(vx, vy, vz);
+                double norm = VectorUtil.norm(vx, vy, vz) * 0.05;
+                this.setPosRaw(this.getX() - vx * norm, this.getY() - vy * norm, this.getZ() - vz * norm);
                 this.playSound(this.getHitBlockSound(), 1.0F, 1.2F / (this.random.nextFloat() * 0.2F + 0.9F));
                 this.inGround = true;
                 this.setPierceLevel((byte) 0);
                 this.resetHitEntities();
                 this.arrowShake = 7;
-                this.inBlockState = this.level.getBlockState_(pos.getX(), pos.getY(), pos.getZ());
-                this.onBlockHit(this.inBlockState);
+                this.inBlockState = this.level.getBlockState_(x, y, z);
+                this.onBlockHit(this.inBlockState, x, y, z);
             }
         }
         return true;
@@ -337,12 +350,13 @@ public abstract class EntityGenericProjectile extends Entity implements IEntityP
 
     protected abstract void postHitLogic(boolean attackSuccessful);
 
-    protected @Nullable MultipleEntityHitResult rayTraceEntities(Vec3 startVec, Vec3 endVec) {
-        return MathHelper.getProjectileHitResult(this.level, this, startVec, endVec, e -> !e.isSpectator() &&
-                                                                                          e.isAlive() &&
-                                                                                          e.isAttackable() &&
-                                                                                          e.isPickable() &&
-                                                                                          (e != this.getShooter() || this.ticksInAir >= 5), 1);
+    protected @Nullable MultipleEntityHitResult rayTraceEntities(double startX, double startY, double startZ, double endX, double endY, double endZ) {
+        return MathHelper.getProjectileHitResult(this.level, this, startX, startY, startZ, endX, endY, endZ, e -> !e.isSpectator() &&
+                                                                                                                  e.isAlive() &&
+                                                                                                                  e.isAttackable() &&
+                                                                                                                  e.isPickable() &&
+                                                                                                                  (e != this.getShooter() ||
+                                                                                                                   this.ticksInAir >= 5), 1);
     }
 
     @Override
@@ -360,18 +374,6 @@ public abstract class EntityGenericProjectile extends Entity implements IEntityP
         if (compound.hasUUID("OwnerUUID")) {
             this.ownerUUID = compound.getUUID("OwnerUUID");
         }
-    }
-
-    @Override
-    public void readAdditionalSyncData(FriendlyByteBuf buf) {
-        int id = buf.readVarInt();
-        if (id != 0) {
-            Entity entity = this.level.getEntity(id);
-            if (entity instanceof LivingEntity living) {
-                this.setShooter(living);
-            }
-        }
-        this.mass = buf.readFloat();
     }
 
     public void recordDamageStats(ServerPlayer shooter, float damage, EvolutionDamage.Type type, LivingEntity entity) {
@@ -497,16 +499,25 @@ public abstract class EntityGenericProjectile extends Entity implements IEntityP
         else {
             this.timeInGround = 0;
             this.ticksInAir++;
-            Vec3 positionVec = this.position();
-            Vec3 newPositionVec = positionVec.add(motion);
-            BlockHitResult blockHitResult = this.level.clip(
-                    this.clipContext.set(positionVec, newPositionVec, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
+            Vec3 position = this.position();
+            double positionX = position.x;
+            double positionY = position.y;
+            double positionZ = position.z;
+            double newPositionX = positionX + motion.x;
+            double newPositionY = positionY + motion.y;
+            double newPositionZ = positionZ + motion.z;
+            BlockHitResult blockHitResult = this.level.clip(this.clipContext.set(positionX, positionY, positionZ,
+                                                                                 newPositionX, newPositionY, newPositionZ,
+                                                                                 ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
             if (blockHitResult.getType() != HitResult.Type.MISS) {
-                newPositionVec = blockHitResult.getLocation();
+                newPositionX = blockHitResult.x();
+                newPositionY = blockHitResult.y();
+                newPositionZ = blockHitResult.z();
             }
             HitResult hitResult = blockHitResult;
             if (!this.level.isClientSide) {
-                MultipleEntityHitResult entityRayTrace = this.rayTraceEntities(positionVec, newPositionVec);
+                MultipleEntityHitResult entityRayTrace = this.rayTraceEntities(positionX, positionY, positionZ,
+                                                                               newPositionX, newPositionY, newPositionZ);
                 if (entityRayTrace != null) {
                     hitResult = entityRayTrace;
                 }
@@ -583,13 +594,6 @@ public abstract class EntityGenericProjectile extends Entity implements IEntityP
         }
     }
 
-    @Override
-    public void writeAdditionalSyncData(FriendlyByteBuf buf) {
-        Entity shooter = this.getShooter();
-        buf.writeVarInt(shooter == null ? 0 : shooter.getId());
-        buf.writeFloat((float) this.mass);
-    }
-
     public enum PickupStatus {
         DISALLOWED,
         ALLOWED,
@@ -602,6 +606,42 @@ public abstract class EntityGenericProjectile extends Entity implements IEntityP
                 ordinal = 0;
             }
             return VALUES[ordinal];
+        }
+    }
+
+    public static class ProjectileData<T extends EntityGenericProjectile> extends EntityData<T> {
+
+        private final float mass;
+        private final int shooterId;
+
+        public ProjectileData(T entity) {
+            Entity shooter = entity.getShooter();
+            this.shooterId = shooter == null ? 0 : shooter.getId();
+            this.mass = (float) entity.mass;
+        }
+
+        public ProjectileData(FriendlyByteBuf buf) {
+            this.shooterId = buf.readVarInt();
+            this.mass = buf.readFloat();
+        }
+
+        @Override
+        @MustBeInvokedByOverriders
+        public void read(T entity) {
+            if (this.shooterId != 0) {
+                Entity shooter = entity.level.getEntity(this.shooterId);
+                if (shooter instanceof LivingEntity living) {
+                    entity.setShooter(living);
+                }
+            }
+            entity.mass = this.mass;
+        }
+
+        @Override
+        @MustBeInvokedByOverriders
+        public void writeToBuffer(FriendlyByteBuf buf) {
+            buf.writeVarInt(this.shooterId);
+            buf.writeFloat(this.mass);
         }
     }
 }

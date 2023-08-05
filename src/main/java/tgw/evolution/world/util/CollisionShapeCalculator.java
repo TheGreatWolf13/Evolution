@@ -7,10 +7,11 @@ import net.minecraft.world.level.CollisionGetter;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
+import tgw.evolution.util.math.AABBMutable;
+import tgw.evolution.util.math.MathHelper;
 
 public final class CollisionShapeCalculator extends AbstractCollisionCalculator<VoxelShape> {
 
@@ -36,7 +37,7 @@ public final class CollisionShapeCalculator extends AbstractCollisionCalculator<
         assert !calculator.isLocked() :
                 "The local instance of CollisionShapeCalculator is locked, you probably forgot to unlock it! Use it with try-with-resources to " +
                 "unlock automatically.";
-        calculator.context.set(entity);
+        calculator.entity = entity;
         calculator.box.set(minX, minY, minZ, maxX, maxY, maxZ);
         calculator.entityShape = Shapes.create(calculator.box);
         calculator.level = level;
@@ -67,26 +68,18 @@ public final class CollisionShapeCalculator extends AbstractCollisionCalculator<
                 continue;
             }
             BlockState state = chunk.getBlockState_(x, y, z);
-            this.pos.set(x, y, z);
-            if (this.onlySuffocatingBlocks && !state.isSuffocating(chunk, this.pos) ||
+            assert this.level != null;
+            if (this.onlySuffocatingBlocks && !state.isSuffocating_(this.level, x, y, z) ||
                 type == Cursor3DMutable.FACE && !state.hasLargeCollisionShape() ||
                 type == Cursor3DMutable.EDGE && !state.is(Blocks.MOVING_PISTON)) {
                 continue;
             }
-            assert this.level != null;
-            VoxelShape shape = state.getCollisionShape(this.level, this.pos, this.context);
-            if (shape == Shapes.block()) {
-                if (!this.box.intersects(x, y, z, x + 1, y + 1, z + 1)) {
-                    continue;
-                }
-                return shape.move(x, y, z);
-            }
-            VoxelShape movedShape = shape.move(x, y, z);
-            assert this.entityShape != null;
-            if (!Shapes.joinIsNotEmpty(movedShape, this.entityShape, BooleanOp.AND)) {
+            VoxelShape shape = state.getCollisionShape_(this.level, x, y, z, this.entity);
+            AABBMutable box = this.box;
+            if (!MathHelper.doesShapeIntersect(shape, box.minX - x, box.minY - y, box.minZ - z, box.maxX - x, box.maxY - y, box.maxZ - z)) {
                 continue;
             }
-            return movedShape;
+            return shape;
         }
         return this.endOfData();
     }

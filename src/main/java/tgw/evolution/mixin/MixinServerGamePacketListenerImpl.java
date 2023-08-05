@@ -1,27 +1,33 @@
 package tgw.evolution.mixin;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.SectionPos;
+import net.minecraft.network.chat.ChatType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.PacketUtils;
 import net.minecraft.network.protocol.game.ClientboundKeepAlivePacket;
 import net.minecraft.network.protocol.game.ServerGamePacketListener;
+import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
+import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.ButtonBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Final;
@@ -40,12 +46,10 @@ import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.inventory.extendedinventory.ContainerInventoryProvider;
 import tgw.evolution.network.*;
-import tgw.evolution.patches.PatchLivingEntity;
-import tgw.evolution.patches.PatchMinecraftServer;
-import tgw.evolution.patches.PatchPlayer;
 import tgw.evolution.patches.PatchServerPacketListener;
 import tgw.evolution.util.EntityHelper;
 import tgw.evolution.util.constants.BlockFlags;
+import tgw.evolution.util.math.BlockPosUtil;
 
 @Mixin(ServerGamePacketListenerImpl.class)
 public abstract class MixinServerGamePacketListenerImpl implements ServerGamePacketListener, PatchServerPacketListener {
@@ -54,6 +58,7 @@ public abstract class MixinServerGamePacketListenerImpl implements ServerGamePac
     @Shadow public ServerPlayer player;
     @Shadow private int aboveGroundTickCount;
     @Shadow private int aboveGroundVehicleTickCount;
+    @Shadow private @Nullable Vec3 awaitingPositionFromClient;
     @Shadow private int chatSpamTickCount;
     @Shadow private boolean clientIsFloating;
     @Shadow private boolean clientVehicleIsFloating;
@@ -76,30 +81,38 @@ public abstract class MixinServerGamePacketListenerImpl implements ServerGamePac
     @Shadow private double vehicleLastGoodY;
     @Shadow private double vehicleLastGoodZ;
 
+    @Contract(value = "_, _ -> _")
+    @Shadow
+    private static boolean wasBlockPlacementAttempt(ServerPlayer serverPlayer, ItemStack itemStack) {
+        //noinspection Contract
+        throw new AbstractMethodError();
+    }
+
     @Shadow
     public abstract void disconnect(Component p_9943_);
 
     @Shadow
     public abstract ServerPlayer getPlayer();
 
-    @Override
-    public void handleChangeBlock(PacketCSChangeBlock packet) {
-        PacketUtils.ensureRunningOnSameThread(packet, this, this.player.getLevel());
-        Item item = this.player.getMainHandItem().getItem();
-        if (item instanceof BlockItem blockItem) {
-            Level level = this.player.level;
-            BlockHitResult result = new BlockHitResult(packet.vec, packet.direction, packet.pos, packet.isInside);
-            UseOnContext itemContext = new UseOnContext(this.player, InteractionHand.MAIN_HAND, result);
-            BlockPlaceContext blockContext = new BlockPlaceContext(itemContext);
-            BlockState state = blockItem.getBlock().getStateForPlacement(blockContext);
-            if (state != null) {
-                if (state.getBlock() instanceof ButtonBlock) {
-                    return;
-                }
-                level.setBlockAndUpdate(packet.pos, state);
-            }
-        }
-    }
+//    @Override
+//    public void handleChangeBlock(PacketCSChangeBlock packet) {
+//        PacketUtils.ensureRunningOnSameThread(packet, this, this.player.getLevel());
+//        Item item = this.player.getMainHandItem().getItem();
+//        if (item instanceof BlockItem blockItem) {
+//            Level level = this.player.level;
+//            BlockHitResult result = PatchBlockHitResult.create(packet.hitX, packet.hitY, packet.hitZ, packet.direction, packet.pos, packet
+//            .isInside);
+//            UseOnContext itemContext = new UseOnContext(this.player, InteractionHand.MAIN_HAND, result);
+//            BlockPlaceContext blockContext = new BlockPlaceContext(itemContext);
+//            BlockState state = blockItem.getBlock().getStateForPlacement(blockContext);
+//            if (state != null) {
+//                if (state.getBlock() instanceof ButtonBlock) {
+//                    return;
+//                }
+//                level.setBlockAndUpdate(packet.pos, state);
+//            }
+//        }
+//    }
 
     @Override
     public void handleCollision(PacketCSCollision packet) {
@@ -110,6 +123,25 @@ public abstract class MixinServerGamePacketListenerImpl implements ServerGamePac
         if (state.getBlock() instanceof ICollisionBlock collisionBlock) {
             double mass = this.player.getAttributeValue(EvolutionAttributes.MASS);
             collisionBlock.collision(level, BlockPos.getX(pos), BlockPos.getY(pos), BlockPos.getZ(pos), this.player, packet.speed, mass, packet.axis);
+        }
+    }
+
+    @Override
+    public void handleEntityInteraction(PacketCSEntityInteraction packet) {
+        ServerLevel level = this.player.getLevel();
+        PacketUtils.ensureRunningOnSameThread(packet, this, level);
+        Entity entity = level.getEntity(packet.entityId);
+        this.player.resetLastActionTime();
+        this.player.setShiftKeyDown(packet.secondaryAction);
+        if (entity == null) {
+            return;
+        }
+        BlockPos pos = entity.blockPosition();
+        if (!level.getWorldBorder().isWithinBounds_(pos.getX(), pos.getZ())) {
+            return;
+        }
+        if (this.player.distanceToSqr(entity) < 6 * 6) {
+            entity.interactAt_(this.player, packet.hitX, packet.hitY, packet.hitZ, packet.hand);
         }
     }
 
@@ -130,6 +162,39 @@ public abstract class MixinServerGamePacketListenerImpl implements ServerGamePac
     }
 
     @Override
+    public void handlePlayerAction(PacketCSPlayerAction packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.player.getLevel());
+        this.player.resetLastActionTime();
+        ServerboundPlayerActionPacket.Action action = packet.action;
+        switch (action) {
+            case SWAP_ITEM_WITH_OFFHAND -> {
+                if (!this.player.isSpectator()) {
+                    ItemStack itemStack = this.player.getItemInHand(InteractionHand.OFF_HAND);
+                    this.player.setItemInHand(InteractionHand.OFF_HAND, this.player.getItemInHand(InteractionHand.MAIN_HAND));
+                    this.player.setItemInHand(InteractionHand.MAIN_HAND, itemStack);
+                    this.player.stopUsingItem();
+                }
+            }
+            case DROP_ITEM -> {
+                if (!this.player.isSpectator()) {
+                    this.player.drop(false);
+                }
+            }
+            case DROP_ALL_ITEMS -> {
+                if (!this.player.isSpectator()) {
+                    this.player.drop(true);
+                }
+            }
+            case RELEASE_USE_ITEM -> this.player.releaseUsingItem();
+            case START_DESTROY_BLOCK, ABORT_DESTROY_BLOCK, STOP_DESTROY_BLOCK -> {
+                this.player.gameMode.handleBlockBreakAction_(packet.pos, action, packet.direction, packet.x, packet.y, packet.z,
+                                                             this.player.level.getMaxBuildHeight());
+            }
+            default -> throw new IllegalArgumentException("Invalid player action");
+        }
+    }
+
+    @Override
     public void handlePlayerFall(PacketCSPlayerFall packet) {
         PacketUtils.ensureRunningOnSameThread(packet, this, this.player.getLevel());
         LivingHooks.calculateFallDamage(this.player, packet.velocity, packet.distanceOfSlowDown, packet.water);
@@ -138,18 +203,22 @@ public abstract class MixinServerGamePacketListenerImpl implements ServerGamePac
     @Override
     public void handleSetCrawling(PacketCSSetCrawling packet) {
         PacketUtils.ensureRunningOnSameThread(packet, this, this.player.getLevel());
-        ((PatchPlayer) this.player).setCrawling(packet.crawling);
+        this.player.setCrawling(packet.crawling);
     }
 
     @Override
     public void handleSetKnappingType(PacketCSSetKnappingType packet) {
         PacketUtils.ensureRunningOnSameThread(packet, this, this.player.getLevel());
-        BlockEntity tile = this.player.level.getBlockEntity(packet.pos);
+        long pos = packet.pos;
+        int x = BlockPos.getX(pos);
+        int y = BlockPos.getY(pos);
+        int z = BlockPos.getZ(pos);
+        BlockEntity tile = this.player.level.getBlockEntity_(x, y, z);
         if (tile instanceof TEKnapping knapping) {
             knapping.setType(packet.type);
         }
         else {
-            Evolution.warn("Could not find TEKnapping at {}", packet.pos);
+            Evolution.warn("Could not find TEKnapping at [{}, {}, {}]", x, y, z);
         }
     }
 
@@ -184,13 +253,13 @@ public abstract class MixinServerGamePacketListenerImpl implements ServerGamePac
     @Override
     public void handleSpecialAttackStart(PacketCSSpecialAttackStart packet) {
         PacketUtils.ensureRunningOnSameThread(packet, this, this.player.getLevel());
-        ((PatchLivingEntity) this.player).startSpecialAttack(packet.type);
+        this.player.startSpecialAttack(packet.type);
     }
 
     @Override
     public void handleSpecialAttackStop(PacketCSSpecialAttackStop packet) {
         PacketUtils.ensureRunningOnSameThread(packet, this, this.player.getLevel());
-        ((PatchLivingEntity) this.player).stopSpecialAttack(packet.reason);
+        this.player.stopSpecialAttack(packet.reason);
     }
 
     @Override
@@ -284,6 +353,62 @@ public abstract class MixinServerGamePacketListenerImpl implements ServerGamePac
         }
     }
 
+    @Override
+    @Overwrite
+    public void handleUseItemOn(ServerboundUseItemOnPacket packet) {
+        ServerLevel level = this.player.getLevel();
+        PacketUtils.ensureRunningOnSameThread(packet, this, level);
+        InteractionHand hand = packet.getHand();
+        ItemStack stack = this.player.getItemInHand(hand);
+        BlockHitResult hitResult = packet.getHitResult();
+        double hitX = hitResult.x();
+        double hitY = hitResult.y();
+        double hitZ = hitResult.z();
+        int x = hitResult.posX();
+        int y = hitResult.posY();
+        int z = hitResult.posZ();
+        if (this.player.level.getServer() != null &&
+            BlockPosUtil.getChessBoardDistance(this.player.chunkPosition(), SectionPos.blockToSectionCoord(x), SectionPos.blockToSectionCoord(z)) <
+            this.player.level.getServer().getPlayerList().getViewDistance()) {
+            if (Math.abs(hitX - x - 0.5) < 1 && Math.abs(hitY - y - 0.5) < 1 && Math.abs(hitZ - z - 0.5) < 1) {
+                Direction dir = hitResult.getDirection();
+                this.player.resetLastActionTime();
+                int buildHeight = this.player.level.getMaxBuildHeight();
+                if (y < buildHeight) {
+                    if (this.awaitingPositionFromClient == null &&
+                        this.player.distanceToSqr(x + 0.5, y + 0.5, z + 0.5) < 9 * 9 &&
+                        level.mayInteract_(this.player, x, y, z)) {
+                        InteractionResult interactionResult = this.player.gameMode.useItemOn(this.player, level, stack, hand, hitResult);
+                        if (dir == Direction.UP &&
+                            !interactionResult.consumesAction() &&
+                            y >= buildHeight - 1 &&
+                            wasBlockPlacementAttempt(this.player, stack)) {
+                            this.player.sendMessage(new TranslatableComponent("build.tooHigh", buildHeight - 1).withStyle(ChatFormatting.RED),
+                                                    ChatType.GAME_INFO, Util.NIL_UUID);
+                        }
+                        else if (interactionResult.shouldSwing()) {
+                            this.player.swing(hand, true);
+                        }
+                    }
+                }
+                else {
+                    this.player.sendMessage(new TranslatableComponent("build.tooHigh", buildHeight - 1).withStyle(ChatFormatting.RED),
+                                            ChatType.GAME_INFO, Util.NIL_UUID);
+                }
+                this.player.connection.send(new PacketSCBlockUpdate(level, x, y, z));
+                this.player.connection.send(new PacketSCBlockUpdate(level, x + dir.getStepX(), y + dir.getStepY(), z + dir.getStepZ()));
+            }
+            else {
+                LOGGER.warn("Ignoring UseItemOnPacket from {}: Location [{}, {}, {}] too far away from hit block [{}, {}, {}].",
+                            this.player.getGameProfile().getName(), hitX, hitY, hitZ, x, y, z);
+            }
+        }
+        else {
+            LOGGER.warn("Ignoring UseItemOnPacket from {}: hit position [{}, {}, {}] too far away from player {}.",
+                        this.player.getGameProfile().getName(), x, y, z, this.player.blockPosition());
+        }
+    }
+
     @Shadow
     public abstract void resetPosition();
 
@@ -301,7 +426,7 @@ public abstract class MixinServerGamePacketListenerImpl implements ServerGamePac
         this.player.xo = this.player.getX();
         this.player.yo = this.player.getY();
         this.player.zo = this.player.getZ();
-        if (!((PatchMinecraftServer) this.server).isMultiplayerPaused()) { //Added check for multiplayer pause
+        if (!this.server.isMultiplayerPaused()) { //Added check for multiplayer pause
             this.player.doTick();
         }
         this.player.absMoveTo(this.firstGoodX, this.firstGoodY, this.firstGoodZ, this.player.getYRot(), this.player.getXRot());
@@ -309,7 +434,7 @@ public abstract class MixinServerGamePacketListenerImpl implements ServerGamePac
         this.knownMovePacketCount = this.receivedMovePacketCount;
         if (this.clientIsFloating &&
             !this.player.isSleeping() &&
-            !((PatchMinecraftServer) this.server).isMultiplayerPaused()) { //Added check for multiplayer pause
+            !this.server.isMultiplayerPaused()) { //Added check for multiplayer pause
             if (++this.aboveGroundTickCount > 80) {
                 LOGGER.warn("{} was kicked for floating too long!", this.player.getName().getString());
                 this.disconnect(new TranslatableComponent("multiplayer.disconnect.flying"));
@@ -330,7 +455,7 @@ public abstract class MixinServerGamePacketListenerImpl implements ServerGamePac
             this.vehicleLastGoodZ = this.lastVehicle.getZ();
             if (this.clientVehicleIsFloating &&
                 this.player.getRootVehicle().getControllingPassenger() == this.player &&
-                !((PatchMinecraftServer) this.server).isMultiplayerPaused()) { //Added check for multiplayer pause
+                !this.server.isMultiplayerPaused()) { //Added check for multiplayer pause
                 if (++this.aboveGroundVehicleTickCount > 80) {
                     LOGGER.warn("{} was kicked for floating a vehicle too long!", this.player.getName().getString());
                     this.disconnect(new TranslatableComponent("multiplayer.disconnect.flying"));
@@ -370,7 +495,7 @@ public abstract class MixinServerGamePacketListenerImpl implements ServerGamePac
         if (this.player.getLastActionTime() > 0L &&
             this.server.getPlayerIdleTimeout() > 0 &&
             //Added check for multiplayer pause
-            !((PatchMinecraftServer) this.server).isMultiplayerPaused() &&
+            !this.server.isMultiplayerPaused() &&
             Util.getMillis() - this.player.getLastActionTime() > this.server.getPlayerIdleTimeout() * 1_000L * 60L) {
             this.disconnect(new TranslatableComponent("multiplayer.disconnect.idling"));
         }

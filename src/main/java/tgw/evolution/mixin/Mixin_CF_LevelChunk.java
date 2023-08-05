@@ -9,6 +9,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
@@ -40,31 +42,32 @@ import tgw.evolution.hooks.asm.DeleteField;
 import tgw.evolution.hooks.asm.ModifyConstructor;
 import tgw.evolution.hooks.asm.RestoreFinal;
 import tgw.evolution.patches.PatchLevelChunk;
+import tgw.evolution.patches.obj.IBlockEntityTagOutput;
 import tgw.evolution.util.ChunkHolder;
 import tgw.evolution.util.collection.ArrayUtils;
 import tgw.evolution.util.collection.lists.IArrayList;
 import tgw.evolution.util.collection.lists.IList;
-import tgw.evolution.util.collection.lists.OArrayList;
-import tgw.evolution.util.collection.lists.OList;
+import tgw.evolution.util.collection.lists.LArrayList;
+import tgw.evolution.util.collection.lists.LList;
 import tgw.evolution.util.collection.maps.L2OHashMap;
 import tgw.evolution.util.collection.maps.L2OMap;
 import tgw.evolution.util.math.DirectionList;
 import tgw.evolution.util.math.DirectionUtil;
 
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 @Mixin(LevelChunk.class)
 public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLevelChunk {
 
     @Unique private static final ThreadLocal<IList> TO_UPDATE = ThreadLocal.withInitial(IArrayList::new);
-    @Unique private static final ThreadLocal<DirectionList> DIRECTION_LIST = ThreadLocal.withInitial(DirectionList::new);
     @Unique private static final ThreadLocal<ChunkHolder> HOLDER = ThreadLocal.withInitial(ChunkHolder::new);
     @Shadow @Final static Logger LOGGER;
     @Shadow @Final private static TickingBlockEntity NULL_TICKER;
     @Unique private final CapabilityChunkStorage chunkStorage;
     @Unique private final L2OMap<LevelChunk.RebindableTickingBlockEntityWrapper> tickersInLevel_;
-    @Mutable @Shadow @Final @RestoreFinal Level level;
+    @Mutable @Shadow @Final @RestoreFinal public Level level;
     @Mutable @Shadow @Final @RestoreFinal private LevelChunkTicks<Block> blockTicks;
     @Shadow private boolean clientLightReady;
     @Mutable @Shadow @Final @RestoreFinal private LevelChunkTicks<Fluid> fluidTicks;
@@ -343,18 +346,19 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
         }
     }
 
-    /**
-     * This implementation avoids iterating over empty chunk sections and uses direct access to read out block states
-     * instead. Instead of allocating a BlockPos for every block in the chunk, they're now only allocated once we find
-     * a light source.
-     *
-     * @reason Use optimized implementation
-     * @author JellySquid
-     */
+    @Shadow
+    public abstract net.minecraft.server.level.ChunkHolder.FullChunkStatus getFullStatus();
+
     @Override
     @Overwrite
     public Stream<BlockPos> getLights() {
-        OList<BlockPos> list = new OArrayList<>();
+        Evolution.deprecatedMethod();
+        return this.getLights_().longStream().mapToObj(BlockPos::of);
+    }
+
+    @Override
+    public LList getLights_() {
+        LList list = null;
         int minX = this.chunkPos.getMinBlockX();
         int minZ = this.chunkPos.getMinBlockZ();
         for (LevelChunkSection section : this.sections) {
@@ -367,21 +371,35 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
                     for (int z = 0; z < 16; z++) {
                         BlockState state = section.getBlockState(x, y, z);
                         if (state.getLightEmission() != 0) {
-                            //noinspection ObjectAllocationInLoop
-                            list.add(new BlockPos(minX + x, startY + y, minZ + z));
+                            if (list == null) {
+                                list = new LArrayList();
+                            }
+                            list.add(BlockPos.asLong(minX + x, startY + y, minZ + z));
                         }
                     }
                 }
             }
         }
-        if (list.isEmpty()) {
-            return Stream.empty();
+        if (list == null) {
+            return LList.EMPTY_LIST;
         }
-        return list.stream();
+        return list;
     }
 
     @Shadow
     protected abstract boolean isInLevel();
+
+    @Overwrite
+    public boolean isTicking(BlockPos pos) {
+        if (!this.level.getWorldBorder().isWithinBounds_(pos.getX(), pos.getZ())) {
+            return false;
+        }
+        if (!(this.level instanceof ServerLevel level)) {
+            return true;
+        }
+        return this.getFullStatus().isOrAfter(net.minecraft.server.level.ChunkHolder.FullChunkStatus.TICKING) &&
+               level.areEntitiesLoaded(ChunkPos.asLong(pos));
+    }
 
     /**
      * @author TheGreatWolf
@@ -526,22 +544,11 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
         }
     }
 
-    /**
-     * @author TheGreatWolf
-     * @reason Replace maps
-     */
-    //TODO THIS METHOD IS ONLY USING BLOCKPOS TO CARRY LONGS AROUND
     @Overwrite
     @Override
     public void removeBlockEntity(BlockPos pos) {
-        if (this.isInLevel()) {
-            BlockEntity te = this.blockEntities_().remove(pos.asLong());
-            if (te != null) {
-                this.removeGameEventListener(te);
-                te.setRemoved();
-            }
-        }
-        this.removeBlockEntityTicker_(pos.asLong());
+        Evolution.deprecatedMethod();
+        this.removeBlockEntity_(pos.asLong());
     }
 
     @Unique
@@ -552,8 +559,40 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
         }
     }
 
+    @Override
+    public void removeBlockEntity_(long pos) {
+        if (this.isInLevel()) {
+            BlockEntity te = this.blockEntities_().remove(pos);
+            if (te != null) {
+                this.removeGameEventListener(te);
+                te.setRemoved();
+            }
+        }
+        this.removeBlockEntityTicker_(pos);
+    }
+
     @Shadow
     protected abstract <T extends BlockEntity> void removeGameEventListener(T blockEntity);
+
+    @Override
+    public void replaceWithPacketData_(FriendlyByteBuf buf, CompoundTag tag, Consumer<IBlockEntityTagOutput> consumer) {
+        this.clearAllBlockEntities();
+        for (LevelChunkSection section : this.sections) {
+            section.read(buf);
+        }
+        for (Heightmap.Types types : ArrayUtils.HEIGHTMAP) {
+            String string = types.getSerializationKey();
+            if (tag.contains(string, Tag.TAG_LONG_ARRAY)) {
+                this.setHeightmap(types, tag.getLongArray(string));
+            }
+        }
+        consumer.accept((x, y, z, type, t) -> {
+            BlockEntity blockEntity = this.getBlockEntity_(x, y, z, LevelChunk.EntityCreationType.IMMEDIATE);
+            if (blockEntity != null && t != null && blockEntity.getType() == type) {
+                blockEntity.load(t);
+            }
+        });
+    }
 
     /**
      * @author TheGreatWolf
@@ -573,53 +612,55 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
         }
     }
 
-    /**
-     * @author TheGreatWolf
-     * @reason Handle atm when blocks are placed
-     */
     @Override
     @Overwrite
     public @Nullable BlockState setBlockState(BlockPos pos, BlockState state, boolean isMoving) {
-        int globalY = pos.getY();
-        LevelChunkSection section = this.getSection(this.getSectionIndex(globalY));
+        Evolution.deprecatedMethod();
+        return this.setBlockState_(pos.getX(), pos.getY(), pos.getZ(), state, isMoving);
+    }
+
+    @Override
+    public @Nullable BlockState setBlockState_(int x, int y, int z, BlockState state, boolean isMoving) {
+        LevelChunkSection section = this.getSection(this.getSectionIndex(y));
         boolean hadOnlyAir = section.hasOnlyAir();
         if (hadOnlyAir && state.isAir()) {
             return null;
         }
-        int x = pos.getX() & 15;
-        int y = globalY & 15;
-        int z = pos.getZ() & 15;
-        BlockState oldState = section.setBlockState(x, y, z, state);
+        int localX = x & 15;
+        int localY = y & 15;
+        int localZ = z & 15;
+        BlockState oldState = section.setBlockState(localX, localY, localZ, state);
         if (oldState == state) {
             return null;
         }
         Block newBlock = state.getBlock();
-        this.heightmaps.get(Heightmap.Types.MOTION_BLOCKING).update(x, globalY, z, state);
-        this.heightmaps.get(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES).update(x, globalY, z, state);
-        this.heightmaps.get(Heightmap.Types.OCEAN_FLOOR).update(x, globalY, z, state);
-        this.heightmaps.get(Heightmap.Types.WORLD_SURFACE).update(x, globalY, z, state);
+        this.heightmaps.get(Heightmap.Types.MOTION_BLOCKING).update(localX, y, localZ, state);
+        this.heightmaps.get(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES).update(localX, y, localZ, state);
+        this.heightmaps.get(Heightmap.Types.OCEAN_FLOOR).update(localX, y, localZ, state);
+        this.heightmaps.get(Heightmap.Types.WORLD_SURFACE).update(localX, y, localZ, state);
         boolean hasOnlyAir = section.hasOnlyAir();
         if (hadOnlyAir != hasOnlyAir) {
-            this.level.getChunkSource().getLightEngine().updateSectionStatus(pos, hasOnlyAir);
+            this.level.getChunkSource().getLightEngine().updateSectionStatus_block(x, y, z, hasOnlyAir);
         }
         boolean hadTE = oldState.hasBlockEntity();
         if (!this.level.isClientSide) {
-            oldState.onRemove(this.level, pos, state, isMoving);
+            oldState.onRemove_(this.level, x, y, z, state, isMoving);
         }
         else if ((!oldState.is(newBlock) || !state.hasBlockEntity()) && hadTE) {
-            this.removeBlockEntity(pos);
+            this.removeBlockEntity_(BlockPos.asLong(x, y, z));
         }
-        if (!section.getBlockState(x, y, z).is(newBlock)) {
+        if (!section.getBlockState(localX, localY, localZ).is(newBlock)) {
             //Idk when this could happen
             return null;
         }
         if (!this.level.isClientSide) {
-            state.onPlace(this.level, pos, oldState, isMoving);
+            state.onPlace_(this.level, x, y, z, oldState, isMoving);
         }
         if (state.hasBlockEntity()) {
-            BlockEntity tile = this.getBlockEntity(pos, LevelChunk.EntityCreationType.CHECK);
+            BlockEntity tile = this.getBlockEntity_(x, y, z, LevelChunk.EntityCreationType.CHECK);
             if (tile == null) {
-                tile = ((EntityBlock) newBlock).newBlockEntity(pos, state);
+                //Allocation here is fine
+                tile = ((EntityBlock) newBlock).newBlockEntity(new BlockPos(x, y, z), state);
                 if (tile != null) {
                     this.addAndRegisterBlockEntity(tile);
                 }
@@ -630,7 +671,7 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
             }
         }
         if (!this.level.isClientSide) {
-            this.chunkStorage.scheduleAtmTick((LevelChunk) (Object) this, x, globalY, z,
+            this.chunkStorage.scheduleAtmTick((LevelChunk) (Object) this, localX, y, localZ,
                                               newBlock instanceof IAir || oldState.getBlock() instanceof IAir);
         }
         this.unsaved = true;
@@ -641,17 +682,17 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
      * The last part of the Atm Priming. Here, we will propagate all the pending updates within this chunk.
      */
     @Unique
-    private void updateAtmFurther(IList toUpdate, ChunkHolder holder, DirectionList list) {
+    private void updateAtmFurther(IList toUpdate, ChunkHolder holder) {
         while (!toUpdate.isEmpty()) {
             int len = toUpdate.size();
             for (int i = 0; i < len; ++i) {
                 int pos = toUpdate.getInt(i);
                 int globalY = IAir.unpackY(pos);
-                int index = this.getSectionIndex(globalY);
-                if (index < 0 || index >= this.sections.length) {
+                int sectionIndex = this.getSectionIndex(globalY);
+                if (sectionIndex < 0 || sectionIndex >= this.sections.length) {
                     continue;
                 }
-                LevelChunkSection section = this.sections[index];
+                LevelChunkSection section = this.sections[sectionIndex];
                 int x = IAir.unpackX(pos);
                 int y = globalY & 15;
                 int z = IAir.unpackZ(pos);
@@ -672,7 +713,7 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
                 }
                 int lowestAtm = oldAtm;
                 Direction lowest = null;
-                list.clear();
+                int list = 0;
                 for (Direction dir : DirectionUtil.ALL) {
                     if (!isAir && !air.allowsFrom(state, dir)) {
                         continue;
@@ -680,10 +721,11 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
                     int x1 = x + dir.getStepX();
                     int y1 = y + dir.getStepY();
                     int z1 = z + dir.getStepZ();
-                    BlockState stateAtDir = CapabilityChunkStorage.safeGetBlockstate((LevelChunk) (Object) this, section, holder, x1, y1, z1, index);
+                    BlockState stateAtDir = CapabilityChunkStorage.safeGetBlockstate((LevelChunk) (Object) this, section, holder, x1, y1, z1,
+                                                                                     sectionIndex);
                     if (stateAtDir.isAir() || stateAtDir.getBlock() instanceof IAir a && a.allowsFrom(stateAtDir, dir.getOpposite())) {
-                        list.add(dir);
-                        int atm = CapabilityChunkStorage.safeGetAtm((LevelChunk) (Object) this, section, holder, x1, y1, z1, index);
+                        list = DirectionList.add(list, dir);
+                        int atm = CapabilityChunkStorage.safeGetAtm((LevelChunk) (Object) this, section, holder, x1, y1, z1, sectionIndex);
                         if (isAir) {
                             ++atm;
                         }
@@ -698,8 +740,10 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
                 }
                 if (lowestAtm < oldAtm) {
                     section.getAtmStorage().set(x, y, z, lowestAtm);
-                    while (!list.isEmpty()) {
-                        Direction dir = list.getLastAndRemove();
+                    while (!DirectionList.isEmpty(list)) {
+                        int index = DirectionList.getLast(list);
+                        Direction dir = DirectionList.get(list, index);
+                        list = DirectionList.remove(list, index);
                         if (dir == lowest) {
                             continue;
                         }
@@ -755,7 +799,6 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
      */
     @Unique
     private void updateShallowAtm(int deepestY, IList toUpdate) {
-        DirectionList list = DIRECTION_LIST.get();
         ChunkHolder holder = HOLDER.get();
         holder.reset();
         int len = toUpdate.size();
@@ -769,11 +812,11 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
                     continue;
                 }
             }
-            int index = this.getSectionIndex(globalY);
-            if (index < 0 || index >= this.sections.length) {
+            int sectionIndex = this.getSectionIndex(globalY);
+            if (sectionIndex < 0 || sectionIndex >= this.sections.length) {
                 continue;
             }
-            LevelChunkSection section = this.sections[index];
+            LevelChunkSection section = this.sections[sectionIndex];
             int y = globalY & 15;
             BlockState state = section.hasOnlyAir() ? Blocks.AIR.defaultBlockState() : section.getBlockState(x, y, z);
             boolean isAir = state.isAir();
@@ -787,7 +830,7 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
                 }
             }
             int lowestAtm = 31;
-            list.clear();
+            int list = 0;
             Direction lowest = null;
             for (Direction dir : DirectionUtil.ALL) {
                 if (!isAir && !air.allowsFrom(state, dir)) {
@@ -796,10 +839,11 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
                 int x1 = x + dir.getStepX();
                 int y1 = y + dir.getStepY();
                 int z1 = z + dir.getStepZ();
-                BlockState stateAtDir = CapabilityChunkStorage.safeGetBlockstate((LevelChunk) (Object) this, section, holder, x1, y1, z1, index);
+                BlockState stateAtDir = CapabilityChunkStorage.safeGetBlockstate((LevelChunk) (Object) this, section, holder, x1, y1, z1,
+                                                                                 sectionIndex);
                 if (stateAtDir.isAir() || stateAtDir.getBlock() instanceof IAir a && a.allowsFrom(stateAtDir, dir.getOpposite())) {
-                    list.add(dir);
-                    int atm = CapabilityChunkStorage.safeGetAtm((LevelChunk) (Object) this, section, holder, x1, y1, z1, index);
+                    list = DirectionList.add(list, dir);
+                    int atm = CapabilityChunkStorage.safeGetAtm((LevelChunk) (Object) this, section, holder, x1, y1, z1, sectionIndex);
                     if (isAir) {
                         ++atm;
                     }
@@ -814,8 +858,10 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
             }
             if (lowestAtm < 31) {
                 section.getAtmStorage().set(x, y, z, lowestAtm);
-                while (!list.isEmpty()) {
-                    Direction dir = list.getLastAndRemove();
+                while (!DirectionList.isEmpty(list)) {
+                    int index = DirectionList.getLast(list);
+                    Direction dir = DirectionList.get(list, index);
+                    list = DirectionList.remove(list, index);
                     if (dir == lowest) {
                         continue;
                     }
@@ -834,6 +880,6 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
             }
         }
         toUpdate.removeElements(0, len);
-        this.updateAtmFurther(toUpdate, holder, list);
+        this.updateAtmFurther(toUpdate, holder);
     }
 }

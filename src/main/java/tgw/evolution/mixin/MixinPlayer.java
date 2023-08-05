@@ -4,6 +4,7 @@ import com.mojang.datafixers.util.Either;
 import net.minecraft.SharedConstants;
 import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.resources.ResourceLocation;
@@ -32,8 +33,10 @@ import net.minecraft.world.inventory.PlayerEnderChestContainer;
 import net.minecraft.world.item.ItemCooldowns;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.pattern.BlockInWorld;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
@@ -270,6 +273,28 @@ public abstract class MixinPlayer extends LivingEntity implements PatchPlayer {
     @Shadow
     public abstract void awardStat(ResourceLocation pStatKey);
 
+    @Overwrite
+    public boolean blockActionRestricted(Level level, BlockPos pos, GameType gameType) {
+        Evolution.deprecatedMethod();
+        return this.blockActionRestricted_(level, pos.getX(), pos.getY(), pos.getZ(), gameType);
+    }
+
+    @Override
+    public boolean blockActionRestricted_(Level level, int x, int y, int z, GameType gameType) {
+        if (!gameType.isBlockPlacingRestricted()) {
+            return false;
+        }
+        if (gameType == GameType.SPECTATOR) {
+            return true;
+        }
+        if (this.mayBuild()) {
+            return false;
+        }
+        ItemStack stack = this.getMainHandItem();
+        return stack.isEmpty() || !stack.hasAdventureModeBreakTagForBlock(level.registryAccess().registryOrThrow(Registry.BLOCK_REGISTRY),
+                                                                          new BlockInWorld(level, new BlockPos(x, y, z), false));
+    }
+
     /**
      * @author TheGreatWolf
      * @reason Make fall damage depend on kinetic energy, not fall distance.
@@ -405,10 +430,10 @@ public abstract class MixinPlayer extends LivingEntity implements PatchPlayer {
     }
 
     @Override
-    public float getDestroySpeed(BlockState state, BlockPos pos) {
-        if (state.getBlock().getHarvestLevel(state, this.level, pos) > HarvestLevel.HAND) {
+    public float getDestroySpeed(BlockState state, int x, int y, int z) {
+        if (state.getBlock().getHarvestLevel(state, this.level, x, y, z) > HarvestLevel.HAND) {
             //Prevents players from breaking blocks if their tool cannot harvest the block
-            if (!ItemUtils.isCorrectToolForDrops(this.getMainHandItem(), state, this.level, pos)) {
+            if (!ItemUtils.isCorrectToolForDrops(this.getMainHandItem(), state, this.level, x, y, z)) {
                 return -1;
             }
         }
@@ -589,6 +614,9 @@ public abstract class MixinPlayer extends LivingEntity implements PatchPlayer {
         //noinspection ConstantConditions
         ((ServerPlayer) (Object) this).connection.send(new PacketSCSimpleMessage(Message.S2C.HITMARKER_KILL));
     }
+
+    @Shadow
+    public abstract boolean mayBuild();
 
     @Shadow
     protected abstract void moveCloak();

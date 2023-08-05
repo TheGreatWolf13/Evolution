@@ -4,13 +4,17 @@ import tgw.evolution.network.*;
 
 public interface PatchServerPacketListener {
 
-    void handleChangeBlock(PacketCSChangeBlock packet);
+//    void handleChangeBlock(PacketCSChangeBlock packet);
 
     void handleCollision(PacketCSCollision packet);
+
+    void handleEntityInteraction(PacketCSEntityInteraction packet);
 
     void handleImpactDamage(PacketCSImpactDamage packet);
 
     void handlePlaySoundEntityEmitted(PacketCSPlaySoundEntityEmitted packet);
+
+    void handlePlayerAction(PacketCSPlayerAction packet);
 
     void handlePlayerFall(PacketCSPlayerFall packet);
 

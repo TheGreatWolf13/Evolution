@@ -6,6 +6,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
@@ -18,7 +19,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
@@ -35,12 +35,8 @@ public class BlockKnapping extends BlockPhysics implements IReplaceable, IRockVa
     private final RockVariant variant;
 
     public BlockKnapping(RockVariant variant) {
-        super(Properties.of(Material.DECORATION).sound(SoundType.STONE).noOcclusion());
+        super(Properties.of(Material.DECORATION).sound(SoundType.STONE).noOcclusion().dynamicShape());
         this.variant = variant;
-    }
-
-    public static VoxelShape calculateHitbox(TEKnapping tile) {
-        return MathHelper.generateShapeFromPattern(tile.getParts());
     }
 
     @Override
@@ -59,16 +55,16 @@ public class BlockKnapping extends BlockPhysics implements IReplaceable, IRockVa
     }
 
     @Override
-    public boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
-        BlockState up = level.getBlockState(pos.above());
+    public boolean canSurvive_(BlockState state, LevelReader level, int x, int y, int z) {
+        BlockState up = level.getBlockState_(x, y + 1, z);
         if (!BlockUtils.isReplaceable(up)) {
             return false;
         }
-        return BlockUtils.hasSolidSide(level, pos.below(), Direction.UP);
+        return BlockUtils.hasSolidFace(level, x, y - 1, z, Direction.UP);
     }
 
     @Override
-    public ItemStack getCloneItemStack(BlockState state, HitResult target, BlockGetter world, BlockPos pos, Player player) {
+    public ItemStack getCloneItemStack(BlockState state, HitResult target, BlockGetter world, int x, int y, int z, Player player) {
         return new ItemStack(this.variant.get(EvolutionItems.ROCKS));
     }
 
@@ -78,19 +74,14 @@ public class BlockKnapping extends BlockPhysics implements IReplaceable, IRockVa
     }
 
     @Override
-    public double getMass(Level level, BlockPos pos, BlockState state) {
+    public double getMass(Level level, int x, int y, int z, BlockState state) {
         return 0;
     }
 
     @Override
-    public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
-        TEKnapping tile = (TEKnapping) world.getBlockEntity_(pos);
-        if (tile != null) {
-            if (tile.hitbox != null) {
-                return tile.hitbox;
-            }
-            tile.hitbox = calculateHitbox(tile);
-            return tile.hitbox;
+    public VoxelShape getShape_(BlockState state, BlockGetter world, int x, int y, int z, @Nullable Entity entity) {
+        if (world.getBlockEntity_(x, y, z) instanceof TEKnapping te) {
+            return te.getOrMakeHitbox();
         }
         return EvolutionShapes.SLAB_16_D[0];
     }
@@ -116,23 +107,24 @@ public class BlockKnapping extends BlockPhysics implements IReplaceable, IRockVa
     }
 
     @Override
-    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+    public InteractionResult use_(BlockState state, Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hit) {
         if (!(player.getItemInHand(hand).getItem() instanceof ItemRock)) {
             return InteractionResult.PASS;
         }
-        double hitX = (hit.getLocation().x - pos.getX()) * 16;
-        double hitZ = (hit.getLocation().z - pos.getZ()) * 16;
-        TEKnapping tileEntity = (TEKnapping) level.getBlockEntity(pos);
-        int x = MathHelper.getIndex(8, 0, 16, MathHelper.hitOffset(Direction.Axis.X, hitX, hit.getDirection()));
-        int z = MathHelper.getIndex(8, 0, 16, MathHelper.hitOffset(Direction.Axis.Z, hitZ, hit.getDirection()));
-        assert tileEntity != null;
-        if (!tileEntity.getPart(x, z) || tileEntity.type.getPatternPart(x, z)) {
-            return InteractionResult.FAIL;
+        if (level.getBlockEntity_(x, y, z) instanceof TEKnapping tile) {
+            double hitX = (hit.getLocation().x - x) * 16;
+            double hitZ = (hit.getLocation().z - z) * 16;
+            int partX = MathHelper.getIndex(8, 0, 16, MathHelper.hitOffset(Direction.Axis.X, hitX, hit.getDirection()));
+            int partZ = MathHelper.getIndex(8, 0, 16, MathHelper.hitOffset(Direction.Axis.Z, hitZ, hit.getDirection()));
+            if (!tile.getPart(partX, partZ) || tile.type.getPatternPart(partX, partZ)) {
+                return InteractionResult.FAIL;
+            }
+            level.playSound(player, x + 0.5, y + 0.5, z + 0.5, SoundEvents.STONE_BREAK, SoundSource.BLOCKS, 1.0F, 0.75F);
+            tile.clearPart(partX, partZ);
+            tile.sendRenderUpdate();
+            tile.checkParts(player);
+            return InteractionResult.SUCCESS;
         }
-        level.playSound(player, pos, SoundEvents.STONE_BREAK, SoundSource.BLOCKS, 1.0F, 0.75F);
-        tileEntity.clearPart(x, z);
-        tileEntity.sendRenderUpdate();
-        tileEntity.checkParts(player);
-        return InteractionResult.SUCCESS;
+        return InteractionResult.PASS;
     }
 }

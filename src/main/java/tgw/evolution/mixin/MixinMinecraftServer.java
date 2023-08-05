@@ -2,6 +2,7 @@ package tgw.evolution.mixin;
 
 import com.mojang.authlib.GameProfile;
 import net.minecraft.*;
+import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestTicker;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.protocol.game.ClientboundSetTimePacket;
@@ -22,6 +23,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.util.profiling.jfr.JvmProfiler;
 import net.minecraft.util.thread.ReentrantBlockableEventLoop;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameRules;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -141,6 +143,17 @@ public abstract class MixinMinecraftServer extends ReentrantBlockableEventLoop<T
 
     @Shadow
     public abstract boolean isSingleplayer();
+
+    @Overwrite
+    public boolean isUnderSpawnProtection(ServerLevel level, BlockPos pos, Player player) {
+        Evolution.deprecatedMethod();
+        return this.isUnderSpawnProtection_(level, pos.getX(), pos.getY(), pos.getZ(), player);
+    }
+
+    @Override
+    public boolean isUnderSpawnProtection_(ServerLevel level, int x, int y, int z, Player player) {
+        return false;
+    }
 
     @Shadow
     protected abstract void onServerCrash(CrashReport crashReport);

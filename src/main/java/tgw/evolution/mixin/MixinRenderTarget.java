@@ -4,7 +4,13 @@ import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.platform.TextureUtil;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.BufferUploader;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.math.Matrix4f;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.ShaderInstance;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
 import org.lwjgl.opengl.GL14;
@@ -24,6 +30,46 @@ public abstract class MixinRenderTarget implements PatchRenderTarget {
     @Shadow protected int colorTextureId;
     @Shadow protected int depthBufferId;
     @Unique private boolean stencilEnabled;
+
+    @Overwrite
+    private void _blitToScreen(int width, int height, boolean disableBlend) {
+        RenderSystem.assertOnRenderThread();
+        GlStateManager._colorMask(true, true, true, false);
+        GlStateManager._disableDepthTest();
+        GlStateManager._depthMask(false);
+        GlStateManager._viewport(0, 0, width, height);
+        if (disableBlend) {
+            GlStateManager._disableBlend();
+        }
+        ShaderInstance shader = Minecraft.getInstance().gameRenderer.blitShader;
+        shader.setSampler("DiffuseSampler", this.colorTextureId);
+        Matrix4f ortho = Matrix4f.orthographic(width, -height, 1_000.0F, 3_000.0F);
+        RenderSystem.setProjectionMatrix(ortho);
+        if (shader.MODEL_VIEW_MATRIX != null) {
+            //Pass the translation matrix directly (0, 0, -2000)
+            shader.MODEL_VIEW_MATRIX.setMat4x4(1, 0, 0, 0,
+                                               0, 1, 0, 0,
+                                               0, 0, 1, 0,
+                                               0, 0, -2_000, 1);
+        }
+        if (shader.PROJECTION_MATRIX != null) {
+            shader.PROJECTION_MATRIX.set(ortho);
+        }
+        shader.apply();
+        float u = this.viewWidth / (float) this.width;
+        float v = this.viewHeight / (float) this.height;
+        BufferBuilder builder = RenderSystem.renderThreadTesselator().getBuilder();
+        builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+        builder.vertex(0, height, 0).uv(0, 0).color(255, 255, 255, 255).endVertex();
+        builder.vertex(width, height, 0).uv(u, 0).color(255, 255, 255, 255).endVertex();
+        builder.vertex(width, 0, 0).uv(u, v).color(255, 255, 255, 255).endVertex();
+        builder.vertex(0, 0, 0).uv(0.0F, v).color(255, 255, 255, 255).endVertex();
+        builder.end();
+        BufferUploader._endInternal(builder);
+        shader.clear();
+        GlStateManager._depthMask(true);
+        GlStateManager._colorMask(true, true, true, true);
+    }
 
     @Shadow
     public abstract void checkStatus();

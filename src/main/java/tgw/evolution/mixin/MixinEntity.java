@@ -19,6 +19,8 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.player.Player;
@@ -39,7 +41,6 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
@@ -47,6 +48,7 @@ import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import tgw.evolution.Evolution;
 import tgw.evolution.blocks.IClimbable;
 import tgw.evolution.hooks.LivingHooks;
 import tgw.evolution.init.EvolutionAttributes;
@@ -266,10 +268,10 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
     }
 
     @Unique
-    private boolean canClimb(BlockState state, BlockPos pos) {
+    private boolean canClimb(BlockState state, int x, int y, int z) {
         return state.is(BlockTags.CLIMBABLE) ||
                state.is(Blocks.POWDER_SNOW) ||
-               state.getBlock() instanceof IClimbable climbable && climbable.isClimbable(state, this.level, pos, (Entity) (Object) this);
+               state.getBlock() instanceof IClimbable climbable && climbable.isClimbable(state, this.level, x, y, z, (Entity) (Object) this);
     }
 
     /**
@@ -375,6 +377,14 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
 
     @Shadow
     public abstract float getBbWidth();
+
+    @Overwrite
+    public float getBlockJumpFactor() {
+        if (this.supportingPos.isPresent()) {
+            return this.level.getBlockState_(this.supportingPos.get()).getBlock().getJumpFactor();
+        }
+        return this.level.getBlockState_(this.blockPosition()).getBlock().getJumpFactor();
+    }
 
     @Shadow
     protected abstract float getBlockSpeedFactor();
@@ -646,9 +656,32 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
     @Shadow
     public abstract boolean hurt(DamageSource p_19946_, float p_19947_);
 
+    @Overwrite
+    public InteractionResult interactAt(Player player, Vec3 hit, InteractionHand hand) {
+        Evolution.deprecatedMethod();
+        return this.interactAt_(player, hit.x, hit.y, hit.z, hand);
+    }
+
+    @Override
+    public InteractionResult interactAt_(Player player, double hitX, double hitY, double hitZ, InteractionHand hand) {
+        return InteractionResult.PASS;
+    }
+
     @Override
     public final boolean isAddedToWorld() {
         return this.isAddedToWorld;
+    }
+
+    @Overwrite
+    public boolean isColliding(BlockPos pos, BlockState state) {
+        Evolution.deprecatedMethod();
+        return this.isColliding_(pos.getX(), pos.getY(), pos.getZ(), state);
+    }
+
+    @Override
+    public boolean isColliding_(int x, int y, int z, BlockState state) {
+        VoxelShape shape = state.getCollisionShape_(this.level, x, y, z, (Entity) (Object) this);
+        return MathHelper.doesShapeIntersect(shape, this.getBoundingBox(), x, y, z);
     }
 
     @Shadow
@@ -719,20 +752,13 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
         int x1 = Mth.floor(maxX);
         int y1 = Mth.floor(maxY);
         int z1 = Mth.floor(maxZ);
-        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
-        VoxelShape comparing = null;
         for (int x = x0; x <= x1; x++) {
-            mutablePos.setX(x);
             for (int y = y0; y <= y1; y++) {
-                mutablePos.setY(y);
                 for (int z = z0; z <= z1; z++) {
-                    mutablePos.setZ(z);
                     BlockState state = this.level.getBlockState_(x, y, z);
-                    if (!state.isAir() && state.isSuffocating(this.level, mutablePos)) {
-                        if (comparing == null) {
-                            comparing = Shapes.create(minX, minY, minZ, maxX, maxY, maxZ);
-                        }
-                        if (Shapes.joinIsNotEmpty(state.getCollisionShape(this.level, mutablePos).move(x, y, z), comparing, BooleanOp.AND)) {
+                    if (!state.isAir() && state.isSuffocating_(this.level, x, y, z)) {
+                        if (MathHelper.doesShapeIntersect(state.getCollisionShape_(this.level, x, y, z), minX - x, minY - y, minZ - z, maxX - x,
+                                                          maxY - y, maxZ - z)) {
                             return true;
                         }
                     }
@@ -805,7 +831,7 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
         if (this.stuckSpeedMultiplier.lengthSqr() > 1.0E-7) {
             deltaMovement = deltaMovement.multiply(this.stuckSpeedMultiplier);
             this.stuckSpeedMultiplier = Vec3.ZERO;
-            this.setDeltaMovement(Vec3.ZERO);
+            this.setDeltaMovement(0, 0, 0);
         }
         deltaMovement = this.maybeBackOffFromEdge(deltaMovement, type);
         Vec3 allowedMovement = this.collide(deltaMovement);
@@ -862,7 +888,7 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
             this.flyDist += allowedMovement.length() * 0.6;
             BlockPos steppingPos = this.getSteppingPos();
             BlockState steppingState = this.level.getBlockState_(steppingPos.getX(), steppingPos.getY(), steppingPos.getZ());
-            boolean canClimb = this.canClimb(steppingState, steppingPos);
+            boolean canClimb = this.canClimb(steppingState, steppingPos.getX(), steppingPos.getY(), steppingPos.getZ());
             if (!canClimb) {
                 dy = 0.0;
             }
@@ -1180,6 +1206,9 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
      */
     @Overwrite
     public void setDeltaMovement(Vec3 motion) {
+        if (false && motion != Vec3.ZERO) {
+            Evolution.deprecatedMethod();
+        }
         ((Vec3d) this.deltaMovement).set(motion);
     }
 
@@ -1312,8 +1341,8 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
         if (state.isAir()) {
             return false;
         }
-        boolean climbable = this.canClimb(state, pos);
-        if ((this.isOnGround() || climbable || this.isCrouching() && movement.y == 0.0) && !this.isSwimming()) {
+        boolean climbable = this.canClimb(state, pos.getX(), pos.getY(), pos.getZ());
+        if ((this.isOnGround() || climbable || this.isCrouching() && movement.y == 0) && !this.isSwimming()) {
             if (playSound) {
                 this.playStepSounds(pos, state);
             }
@@ -1610,7 +1639,7 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
         else {
             this.setSwimming(this.isSprinting() &&
                              !this.isPassenger() &&
-                             this.level.getFluidState(this.blockPosition).is(FluidTags.WATER));
+                             this.level.getFluidState_(this.blockPosition).is(FluidTags.WATER));
         }
     }
 }

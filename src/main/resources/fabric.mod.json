@@ -48,6 +48,12 @@
       "net/minecraft/world/level/block/Block": [
         "tgw/evolution/patches/PatchBlock"
       ],
+      "net/minecraft/world/level/BlockAndTintGetter": [
+        "tgw/evolution/patches/PatchBlockAndTintGetter"
+      ],
+      "net/minecraft/world/level/block/state/BlockBehaviour$Properties": [
+        "tgw/evolution/patches/PatchBlockProperties"
+      ],
       "net/minecraft/world/level/chunk/BlockColumn": [
         "tgw/evolution/patches/PatchBlockColumn"
       ],
@@ -57,14 +63,17 @@
       "net/minecraft/world/level/BlockGetter": [
         "tgw/evolution/patches/PatchBlockGetter"
       ],
-      "net/minecraft/world/level/BlockAndTintGetter": [
-        "tgw/evolution/patches/PatchBlockAndTintGetter"
-      ],
       "net/minecraft/client/renderer/block/BlockRenderDispatcher": [
         "tgw/evolution/patches/PatchBlockRenderDispatcher"
       ],
+      "net/minecraft/world/level/block/state/BlockBehaviour&BlockStateBase": [
+        "tgw/evolution/patches/PatchBlockStateBase"
+      ],
       "net/minecraft/world/level/chunk/ChunkAccess": [
         "tgw/evolution/patches/PatchChunkAccess"
+      ],
+      "net/minecraft/network/protocol/game/ClientboundLevelChunkPacketData": [
+        "tgw/evolution/patches/PatchClientboundLevelChunkPacketData"
       ],
       "net/minecraft/network/protocol/game/ClientboundLoginPacket": [
         "tgw/evolution/patches/PatchClientboundLoginPacket"
@@ -93,17 +102,11 @@
       "net/minecraft/world/item/Item": [
         "tgw/evolution/patches/PatchItem"
       ],
-      "net/minecraft/world/level/lighting/LayerLightEventListener": [
-        "tgw/evolution/patches/PatchLayerLightEventListener"
-      ],
       "net/minecraft/world/level/chunk/LevelChunk": [
         "tgw/evolution/patches/PatchLevelChunk"
       ],
       "net/minecraft/world/level/chunk/LevelChunkSection": [
         "tgw/evolution/patches/PatchLevelChunkSection"
-      ],
-      "net/minecraft/world/level/lighting/LevelLightEngine": [
-        "tgw/evolution/patches/PatchLevelLightEngine"
       ],
       "net/minecraft/world/level/LevelReader": [
         "tgw/evolution/patches/PatchLevelReader"
@@ -147,6 +150,135 @@
       ],
       "net/minecraft/world/level/border/WorldBorder": [
         "tgw/evolution/patches/PatchWorldBorder"
+      ],
+      "net/minecraft/client/multiplayer/ClientChunkCache$Storage": [
+        "tgw/evolution/patches/PatchStorage"
+      ],
+      "net/minecraft/world/level/LevelAccessor": [
+        "tgw/evolution/patches/PatchLevelAccessor"
+      ],
+      "net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase": [
+        "tgw/evolution/patches/PatchBlockStateBase"
+      ],
+      "net/minecraft/client/KeyMapping": [
+        "tgw/evolution/patches/PatchKeyMapping"
+      ],
+      "net/minecraft/world/entity/LivingEntity": [
+        "tgw/evolution/patches/PatchLivingEntity"
+      ],
+      "net/minecraft/world/entity/player/Player": [
+        "tgw/evolution/patches/PatchPlayer"
+      ],
+      "net/minecraft/world/level/block/state/BlockBehaviour": [
+        "tgw/evolution/patches/PatchBlockBehaviour"
+      ],
+      "net/minecraft/client/renderer/block/ModelBlockRenderer$Cache": [
+        "tgw/evolution/patches/PatchModelBlockRendererCache"
+      ],
+      "net/minecraft/world/phys/shapes/CollisionContext": [
+        "tgw/evolution/patches/PatchCollisionContext"
+      ],
+      "net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase$Cache": [
+        "tgw/evolution/patches/PatchBlockStateCache"
+      ],
+      "net/minecraft/world/level/block/SupportType": [
+        "tgw/evolution/patches/PatchSupportType"
+      ],
+      "net/minecraft/world/level/ClipContext$ShapeGetter": [
+        "tgw/evolution/patches/PatchShapeGetter"
+      ],
+      "net/minecraft/world/level/ClipContext": [
+        "tgw/evolution/patches/PatchClipContext"
+      ],
+      "net/minecraft/world/phys/shapes/VoxelShape": [
+        "tgw/evolution/patches/PatchVoxelShape"
+      ],
+      "net/minecraft/world/level/Level": [
+        "tgw/evolution/patches/PatchLevel"
+      ],
+      "net/minecraft/world/phys/HitResult": [
+        "tgw/evolution/patches/PatchHitResult"
+      ],
+      "net/minecraft/world/phys/BlockHitResult": [
+        "tgw/evolution/patches/PatchBlockHitResult"
+      ],
+      "net/minecraft/world/phys/EntityHitResult": [
+        "tgw/evolution/patches/PatchEntityHitResult"
+      ],
+      "net/minecraft/client/multiplayer/MultiPlayerGameMode": [
+        "tgw/evolution/patches/PatchMultiPlayerGameMode"
+      ],
+      "net/minecraft/server/level/ServerPlayerGameMode": [
+        "tgw/evolution/patches/PatchServerPlayerGameMode"
+      ],
+      "net/minecraft/server/level/ServerLevel": [
+        "tgw/evolution/patches/PatchServerLevel"
+      ],
+      "net/minecraft/client/particle/ParticleEngine": [
+        "tgw/evolution/patches/PatchParticleEngine"
+      ],
+      "net/minecraft/client/particle/TerrainParticle": [
+        "tgw/evolution/patches/PatchTerrainParticle"
+      ],
+      "net/minecraft/world/item/ItemStack": [
+        "tgw/evolution/patches/PatchItemStack"
+      ],
+      "net/minecraft/advancements/critereon/ItemUsedOnBlockTrigger$TriggerInstance": [
+        "tgw/evolution/patches/PatchTriggerInstance"
+      ],
+      "net/minecraft/advancements/critereon/ItemUsedOnBlockTrigger": [
+        "tgw/evolution/patches/PatchSimpleCriteria"
+      ],
+      "net/minecraft/advancements/critereon/PlacedBlockTrigger": [
+        "tgw/evolution/patches/PatchSimpleCriteria"
+      ],
+      "net/minecraft/advancements/critereon/PlacedBlockTrigger$TriggerInstance": [
+        "tgw/evolution/patches/PatchTriggerInstance"
+      ],
+      "net/minecraft/world/level/CollisionGetter": [
+        "tgw/evolution/patches/PatchCollisionGetter"
+      ],
+      "net/minecraft/server/level/ChunkHolder": [
+        "tgw/evolution/patches/PatchChunkHolder"
+      ],
+      "net/minecraft/server/level/ServerChunkCache": [
+        "tgw/evolution/patches/PatchServerChunkCache"
+      ],
+      "net/minecraft/world/entity/ai/navigation/PathNavigation": [
+        "tgw/evolution/patches/PatchPathNavigation"
+      ],
+      "net/minecraft/world/entity/ai/village/poi/PoiManager": [
+        "tgw/evolution/patches/PatchPoiManager"
+      ],
+      "net/minecraft/world/entity/ai/village/poi/PoiSection": [
+        "tgw/evolution/patches/PatchPoiSection"
+      ],
+      "net/minecraft/world/level/LevelWriter": [
+        "tgw/evolution/patches/PatchLevelWriter"
+      ],
+      "net/minecraft/world/level/WorldGenLevel": [
+        "tgw/evolution/patches/PatchWorldGenLevel"
+      ],
+      "net/minecraft/client/multiplayer/ClientLevel": [
+        "tgw/evolution/patches/PatchClientLevel"
+      ],
+      "net/minecraft/world/level/lighting/LayerLightEventListener": [
+        "tgw/evolution/patches/PatchLayerLightEventListener"
+      ],
+      "net/minecraft/world/level/lighting/LevelLightEngine": [
+        "tgw/evolution/patches/PatchLevelLightEngine"
+      ],
+      "net/minecraft/world/level/lighting/LightEventListener": [
+        "tgw/evolution/patches/PatchLightEventListener"
+      ],
+      "net/minecraft/client/renderer/block/ModelBlockRenderer": [
+        "tgw/evolution/patches/PatchModelBlockRenderer"
+      ],
+      "net/minecraft/server/level/PlayerMap": [
+        "tgw/evolution/patches/PatchPlayerMap"
+      ],
+      "net/minecraft/server/level/ServerPlayer": [
+        "tgw/evolution/patches/PatchServerPlayer"
       ]
     }
   }

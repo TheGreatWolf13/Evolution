@@ -1,7 +1,6 @@
 package tgw.evolution.blocks;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
-import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -15,7 +14,7 @@ public interface IPhysics {
     /**
      * @return Whether the main physics branch should return.
      */
-    default boolean fallLogic(Level level, BlockPos pos) {
+    default boolean fallLogic(Level level, int x, int y, int z) {
         return false;
     }
 
@@ -25,7 +24,7 @@ public interface IPhysics {
 
     @Nullable SoundEvent fallingSound();
 
-    double getMass(Level level, BlockPos pos, BlockState state);
+    double getMass(Level level, int x, int y, int z, BlockState state);
 
     default BlockState getStateForPhysicsChange(BlockState state) {
         return state;
@@ -34,7 +33,7 @@ public interface IPhysics {
     /**
      * @return Whether the main physics branch should return.
      */
-    default boolean popLogic(Level level, BlockPos pos) {
+    default boolean popLogic(Level level, int x, int y, int z) {
         return false;
     }
 
@@ -46,7 +45,7 @@ public interface IPhysics {
      * @return Whether the main physics branch should return.
      */
     @CanIgnoreReturnValue
-    default boolean slopeLogic(Level level, BlockPos pos) {
+    default boolean slopeLogic(Level level, int x, int y, int z) {
         return false;
     }
 

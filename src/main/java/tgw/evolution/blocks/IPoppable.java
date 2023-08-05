@@ -17,16 +17,17 @@ public interface IPoppable extends IPhysics {
         return null;
     }
 
-    default void popDrops(BlockState state, Level level, BlockPos pos) {
-        Block.dropResources(state, level, pos);
+    default void popDrops(BlockState state, Level level, int x, int y, int z) {
+        //todo
+        Block.dropResources(state, level, new BlockPos(x, y, z));
     }
 
     @Override
-    default boolean popLogic(Level level, BlockPos pos) {
-        BlockState state = level.getBlockState(pos);
-        if (!state.canSurvive(level, pos)) {
-            this.popDrops(state, level, pos);
-            level.removeBlock(pos, false);
+    default boolean popLogic(Level level, int x, int y, int z) {
+        BlockState state = level.getBlockState_(x, y, z);
+        if (!state.canSurvive_(level, x, y, z)) {
+            this.popDrops(state, level, x, y, z);
+            level.removeBlock(new BlockPos(x, y, z), false);
             return true;
         }
         return false;

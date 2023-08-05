@@ -2,7 +2,6 @@ package tgw.evolution.util;
 
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.EntityHitResult;
-import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
@@ -11,15 +10,23 @@ import java.util.Comparator;
 
 public class MultipleEntityHitResult extends EntityHitResult {
 
-    private final Vec3 end;
+    public final double endX;
+    public final double endY;
+    public final double endZ;
+    public final double startX;
+    public final double startY;
+    public final double startZ;
     private final OList<DistanceHolder> hits = new OArrayList<>();
-    private final Vec3 start;
     private int index;
 
-    public MultipleEntityHitResult(Entity entity, Vec3 start, Vec3 end) {
+    public MultipleEntityHitResult(Entity entity, double startX, double startY, double startZ, double endX, double endY, double endZ) {
         super(entity);
-        this.start = start;
-        this.end = end;
+        this.startX = startX;
+        this.startY = startY;
+        this.startZ = startZ;
+        this.endX = endX;
+        this.endY = endY;
+        this.endZ = endZ;
     }
 
     public void add(Entity entity, double dist) {
@@ -35,17 +42,9 @@ public class MultipleEntityHitResult extends EntityHitResult {
         this.hits.sort(Comparator.comparingDouble(h -> h.dist));
     }
 
-    public Vec3 getEnd() {
-        return this.end;
-    }
-
     @Override
     public Entity getEntity() {
         return this.hits.get(0).entity;
-    }
-
-    public Vec3 getStart() {
-        return this.start;
     }
 
     public @Nullable Entity popEntity() {

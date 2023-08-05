@@ -1,11 +1,16 @@
 package tgw.evolution.util.collection.maps;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMaps;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.util.collection.ICollectionExtension;
 
 public interface L2OMap<V> extends Long2ObjectMap<V>, ICollectionExtension {
+
+    static <V> L2OMap<V> synchronize(L2OMap<V> map) {
+        return new Synchronized<>(map);
+    }
 
     @Override
     void clear();
@@ -21,6 +26,28 @@ public interface L2OMap<V> extends Long2ObjectMap<V>, ICollectionExtension {
      * The implementation is, of course, NOT thread-safe.
      */
     @Nullable Entry<V> fastEntries();
+
+    class Synchronized<V> extends Long2ObjectMaps.SynchronizedMap<V> implements L2OMap<V> {
+
+        protected final L2OMap<V> map;
+
+        protected Synchronized(L2OMap<V> m) {
+            super(m);
+            this.map = m;
+        }
+
+        @Override
+        public @Nullable L2OMap.Entry<V> fastEntries() {
+            return this.map.fastEntries();
+        }
+
+        @Override
+        public void trimCollection() {
+            synchronized (this.sync) {
+                this.map.trimCollection();
+            }
+        }
+    }
 
     class Entry<V> {
         protected long k;

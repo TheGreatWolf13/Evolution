@@ -4,9 +4,9 @@ import net.minecraft.core.SectionPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.chunk.LevelChunkSection;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
-import tgw.evolution.patches.PatchLevelChunkSection;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.physics.ClimateZone;
 import tgw.evolution.util.physics.EarthHelper;
@@ -327,13 +327,17 @@ public final class Temperature implements ILocked {
             //Outside
             return this.getSolarHighLowFactor();
         }
+        if (this.y < this.level.getMinBuildHeight()) {
+            //Inside
+            return 0.5f;
+        }
         if (this.y > this.level.getMaxBuildHeight()) {
             //Outside
             return this.getSolarHighLowFactor();
         }
         int y = Mth.floor(this.y);
         int index = chunk.getSectionIndex(y);
-        PatchLevelChunkSection section = (PatchLevelChunkSection) chunk.getSection(index);
+        LevelChunkSection section = chunk.getSection(index);
         int atm = section.getAtmStorage().get(x & 15, y & 15, z & 15);
         if (atm == 31) {
             //Inside

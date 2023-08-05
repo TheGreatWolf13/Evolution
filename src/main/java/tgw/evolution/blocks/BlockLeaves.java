@@ -3,12 +3,12 @@ package tgw.evolution.blocks;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.Vec3i;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
@@ -17,7 +17,10 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.material.Material;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
+import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.entities.misc.EntityFallingWeight;
 import tgw.evolution.init.EvolutionBlocks;
@@ -31,7 +34,6 @@ import static tgw.evolution.init.EvolutionBStates.TREE;
 public class BlockLeaves extends BlockGeneric implements IReplaceable {
 
     private static final Vec3 MOTION_MULTIPLIER = new Vec3(0.5, 1, 0.5);
-    private static final ThreadLocal<BlockPos.MutableBlockPos> MUTABLE_POS = ThreadLocal.withInitial(BlockPos.MutableBlockPos::new);
 
     public BlockLeaves() {
         super(Properties.of(Material.LEAVES).strength(0.2F, 0.2F).sound(SoundType.GRASS).noCollission());
@@ -50,10 +52,10 @@ public class BlockLeaves extends BlockGeneric implements IReplaceable {
     /**
      * Checks whether this block should fall.
      */
-    private static void checkFallable(Level level, BlockPos pos) {
-        if (canFallThrough(level.getBlockState(pos.below())) && pos.getY() >= 0) {
+    private static void checkFallable(Level level, int x, int y, int z) {
+        if (canFallThrough(level.getBlockState_(x, y - 1, z)) && y >= 0) {
             if (!level.isClientSide) {
-                fall(level, pos);
+                fall(level, x, y, z);
             }
         }
     }
@@ -61,8 +63,10 @@ public class BlockLeaves extends BlockGeneric implements IReplaceable {
     /**
      * Called when this block should fall.
      */
-    private static void fall(Level level, BlockPos pos) {
-        EntityFallingWeight entity = new EntityFallingWeight(level, pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, level.getBlockState(pos), pos);
+    private static void fall(Level level, int x, int y, int z) {
+        BlockState state = level.getBlockState_(x, y, z);
+        EntityFallingWeight entity = new EntityFallingWeight(level, x + 0.5, y, z + 0.5, state,
+                                                             state instanceof IPhysics physics ? physics.getMass(level, x, y, z, state) : 500);
         level.addFreshEntity(entity);
     }
 
@@ -79,12 +83,10 @@ public class BlockLeaves extends BlockGeneric implements IReplaceable {
     /**
      * Updates this blockstate in accordance with the distance away from logs.
      */
-    private static BlockState updateDistance(BlockState state, BlockGetter level, BlockPos pos) {
+    private static BlockState updateDistance(BlockState state, BlockGetter level, int x, int y, int z) {
         int i = 7;
-        BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
         for (Direction direction : DirectionUtil.ALL) {
-            mutable.setWithOffset(pos, direction);
-            i = Math.min(i, getDistance(level.getBlockState(mutable)) + 1);
+            i = Math.min(i, getDistance(level.getBlockStateAtSide(x, y, z, direction)) + 1);
             if (i == 1) {
                 break;
             }
@@ -130,13 +132,19 @@ public class BlockLeaves extends BlockGeneric implements IReplaceable {
     }
 
     @Override
-    public int getLightBlock(BlockState state, BlockGetter level, BlockPos pos) {
+    public int getLightBlock_(BlockState state, BlockGetter level, int x, int y, int z) {
         return 1;
     }
 
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext context) {
-        return updateDistance(this.defaultBlockState().setValue(TREE, false), context.getLevel(), context.getClickedPos());
+    public @Nullable BlockState getStateForPlacement_(Level level,
+                                                      int x,
+                                                      int y,
+                                                      int z,
+                                                      Player player,
+                                                      InteractionHand hand,
+                                                      BlockHitResult hitResult) {
+        return updateDistance(this.defaultBlockState().setValue(TREE, false), level, x, y, z);
     }
 
     @Override
@@ -150,22 +158,31 @@ public class BlockLeaves extends BlockGeneric implements IReplaceable {
     }
 
     @Override
-    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
+    public void onPlace_(BlockState state, Level level, int x, int y, int z, BlockState oldState, boolean isMoving) {
         if (!level.isClientSide) {
-            level.scheduleTick(pos, this, 2);
+            level.scheduleTick(new BlockPos(x, y, z), this, 2);
         }
     }
 
     @Override
-    public void randomTick(BlockState state, ServerLevel level, BlockPos pos, Random random) {
+    public void randomTick_(BlockState state, ServerLevel level, int x, int y, int z, Random random) {
         if (state.getValue(TREE) && state.getValue(DISTANCE_0_7) == 7) {
-            dropResources(state, level, pos);
-            level.removeBlock(pos, false);
+            BlockUtils.dropResources(state, level, x, y, z);
+            level.removeBlock_(x, y, z, false);
         }
     }
 
     @Override
-    public boolean shouldCull(BlockGetter level, BlockState state, BlockPos pos, BlockState adjacentState, BlockPos adjacentPos, Direction face) {
+    public boolean shouldCull(BlockGetter level,
+                              BlockState state,
+                              int x,
+                              int y,
+                              int z,
+                              BlockState adjacentState,
+                              int adjX,
+                              int adjY,
+                              int adjZ,
+                              Direction face) {
         if (!Minecraft.useFancyGraphics()) {
             return adjacentState.getBlock() == this;
         }
@@ -173,10 +190,8 @@ public class BlockLeaves extends BlockGeneric implements IReplaceable {
         if (leavesCulling == 0) {
             return false;
         }
-        Vec3i vec = face.getNormal();
-        BlockPos.MutableBlockPos mutablePos = MUTABLE_POS.get();
         for (int i = 1; i <= leavesCulling; i++) {
-            BlockState s = level.getBlockState(mutablePos.set(pos).move(face, i));
+            BlockState s = level.getBlockStateAtSide(x, y, z, face, i);
             if (!(s.getBlock() == this)) {
                 return false;
             }
@@ -185,23 +200,27 @@ public class BlockLeaves extends BlockGeneric implements IReplaceable {
     }
 
     @Override
-    public void tick(BlockState state, ServerLevel level, BlockPos pos, Random random) {
-        level.setBlockAndUpdate(pos, updateDistance(state, level, pos));
+    public void tick_(BlockState state, ServerLevel level, int x, int y, int z, Random random) {
+        level.setBlockAndUpdate_(x, y, z, updateDistance(state, level, x, y, z));
         if (!state.getValue(TREE) && state.getValue(DISTANCE_0_7) == 7) {
-            checkFallable(level, pos);
+            checkFallable(level, x, y, z);
         }
     }
 
     @Override
-    public BlockState updateShape(BlockState state,
-                                  Direction facing,
-                                  BlockState facingState,
-                                  LevelAccessor level,
-                                  BlockPos currentPos,
-                                  BlockPos facingPos) {
-        int i = getDistance(facingState) + 1;
+    public BlockState updateShape_(BlockState state,
+                                   Direction from,
+                                   BlockState fromState,
+                                   LevelAccessor level,
+                                   int x,
+                                   int y,
+                                   int z,
+                                   int fromX,
+                                   int fromY,
+                                   int fromZ) {
+        int i = getDistance(fromState) + 1;
         if (i != 1 || state.getValue(DISTANCE_0_7) != i) {
-            level.scheduleTick(currentPos, this, 1);
+            level.scheduleTick(new BlockPos(x, y, z), this, 1);
         }
         return state;
     }

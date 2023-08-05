@@ -20,10 +20,14 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.Evolution;
+import tgw.evolution.util.collection.lists.LList;
+
+import java.util.stream.Stream;
 
 @Mixin(ImposterProtoChunk.class)
 public abstract class MixinImposterProtoChunk extends ProtoChunk {
 
+    @Shadow @Final private boolean allowWrites;
     @Shadow @Final private LevelChunk wrapped;
 
     public MixinImposterProtoChunk(ChunkPos chunkPos,
@@ -44,7 +48,7 @@ public abstract class MixinImposterProtoChunk extends ProtoChunk {
     @Overwrite
     @Override
     public @Nullable BlockEntity getBlockEntity(BlockPos pos) {
-        Evolution.warn("getBlockEntity(BlockPos) should not be called!");
+        Evolution.deprecatedMethod();
         return this.getBlockEntity_(pos.getX(), pos.getY(), pos.getZ());
     }
 
@@ -55,7 +59,7 @@ public abstract class MixinImposterProtoChunk extends ProtoChunk {
     @Overwrite
     @Override
     public @Nullable CompoundTag getBlockEntityNbt(BlockPos pos) {
-        Evolution.warn("getBlockEntityNbt(BlockPos) should not be called!");
+        Evolution.deprecatedMethod();
         return this.getBlockEntityNbt_(pos.getX(), pos.getY(), pos.getZ());
     }
 
@@ -66,7 +70,7 @@ public abstract class MixinImposterProtoChunk extends ProtoChunk {
     @Overwrite
     @Override
     public @Nullable CompoundTag getBlockEntityNbtForSaving(BlockPos pos) {
-        Evolution.warn("getBlockEntityNbtForSaving(BlockPos) should not be called");
+        Evolution.deprecatedMethod();
         return this.getBlockEntityNbtForSaving_(pos.getX(), pos.getY(), pos.getZ());
     }
 
@@ -92,7 +96,7 @@ public abstract class MixinImposterProtoChunk extends ProtoChunk {
     @Override
     @Overwrite
     public BlockState getBlockState(BlockPos pos) {
-        Evolution.warn("getBlockState(BlockPos) should not be called!");
+        Evolution.deprecatedMethod();
         return this.getBlockState_(pos.getX(), pos.getY(), pos.getZ());
     }
 
@@ -108,13 +112,25 @@ public abstract class MixinImposterProtoChunk extends ProtoChunk {
     @Override
     @Overwrite
     public FluidState getFluidState(BlockPos pos) {
-        Evolution.warn("getFluidState(BlockPos) should not be called!");
+        Evolution.deprecatedMethod();
         return this.getFluidState_(pos.getX(), pos.getY(), pos.getZ());
     }
 
     @Override
     public FluidState getFluidState_(int x, int y, int z) {
         return this.wrapped.getFluidState_(x, y, z);
+    }
+
+    @Override
+    @Overwrite
+    public Stream<BlockPos> getLights() {
+        Evolution.deprecatedMethod();
+        return this.wrapped.getLights();
+    }
+
+    @Override
+    public LList getLights_() {
+        return this.wrapped.getLights_();
     }
 
     /**
@@ -124,11 +140,32 @@ public abstract class MixinImposterProtoChunk extends ProtoChunk {
     @Override
     @Overwrite
     public void markPosForPostprocessing(BlockPos pos) {
-        Evolution.warn("markPosForPostprocessing(BlockPos) should not be called!");
-        this.markPosForPostprocessing_(pos.getX(), pos.getY(), pos.getZ());
+        Evolution.deprecatedMethod();
     }
 
     @Override
     public void markPosForPostprocessing_(int x, int y, int z) {
+    }
+
+    @Override
+    @Overwrite
+    public void removeBlockEntity(BlockPos pos) {
+        Evolution.deprecatedMethod();
+    }
+
+    @Override
+    public void removeBlockEntity_(long pos) {
+    }
+
+    @Override
+    @Overwrite
+    public @Nullable BlockState setBlockState(BlockPos pos, BlockState state, boolean isMoving) {
+        Evolution.deprecatedMethod();
+        return this.setBlockState_(pos.getX(), pos.getY(), pos.getZ(), state, isMoving);
+    }
+
+    @Override
+    public @Nullable BlockState setBlockState_(int x, int y, int z, BlockState state, boolean isMoving) {
+        return this.allowWrites ? this.wrapped.setBlockState_(x, y, z, state, isMoving) : null;
     }
 }

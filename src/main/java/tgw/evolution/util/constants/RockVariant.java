@@ -40,11 +40,11 @@ public enum RockVariant implements IVariant {
     SCHIST(12, METAMORPHIC, "schist", 2_732, 5_000_000),
     SHALE(13, SEDIMENTARY, "shale", 2_335, 5_000_000),
     SLATE(14, METAMORPHIC, "slate", 2_691, 10_000_000),
-    PEAT(15, null, "peat", 1_156, 0),
-    CLAY(16, null, "clay", 2_067, 0);
+    //    PEAT(15, null, "peat", 1_156, 0),
+    CLAY(15, null, "clay", 2_067, 0);
 
     public static final RockVariant[] VALUES = values();
-    public static final RockVariant[] VALUES_STONE = Arrays.stream(VALUES).filter(v -> v != PEAT && v != CLAY).toArray(RockVariant[]::new);
+    public static final RockVariant[] VALUES_STONE = Arrays.stream(VALUES).filter(v -> v != CLAY).toArray(RockVariant[]::new);
     private static final Byte2ReferenceMap<RockVariant> REGISTRY;
 
     static {
@@ -123,7 +123,7 @@ public enum RockVariant implements IVariant {
 
     private EvolutionMaterials getMaterial() {
         return switch (this) {
-            case CLAY, PEAT -> throw new IllegalStateException("This variant is not a valid material!");
+            case CLAY -> throw new IllegalStateException("This variant is not a valid material!");
             case ANDESITE -> EvolutionMaterials.ANDESITE;
             case BASALT -> EvolutionMaterials.BASALT;
             case CHERT -> EvolutionMaterials.CHERT;

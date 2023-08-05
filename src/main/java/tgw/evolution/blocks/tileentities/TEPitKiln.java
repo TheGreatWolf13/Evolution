@@ -121,15 +121,17 @@ public class TEPitKiln extends BlockEntity {
     public void onRemoved() {
         assert this.level != null;
         if (!this.level.isClientSide) {
-            BlockUtils.dropItemStack(this.level, this.worldPosition, this.nwStack);
-            BlockUtils.dropItemStack(this.level, this.worldPosition, this.neStack);
-            BlockUtils.dropItemStack(this.level, this.worldPosition, this.swStack);
-            BlockUtils.dropItemStack(this.level, this.worldPosition, this.seStack);
+            int x = this.worldPosition.getX();
+            int y = this.worldPosition.getY();
+            int z = this.worldPosition.getZ();
+            BlockUtils.dropItemStack(this.level, x, y, z, this.nwStack);
+            BlockUtils.dropItemStack(this.level, x, y, z, this.neStack);
+            BlockUtils.dropItemStack(this.level, x, y, z, this.swStack);
+            BlockUtils.dropItemStack(this.level, x, y, z, this.seStack);
             for (int i = 0; i < 8; i++) {
                 if (this.logs[i] != -1) {
                     //noinspection ObjectAllocationInLoop
-                    BlockUtils.dropItemStack(this.level, this.worldPosition,
-                                             new ItemStack(WoodVariant.byId(this.logs[i]).get(EvolutionItems.FIREWOODS)));
+                    BlockUtils.dropItemStack(this.level, x, y, z, new ItemStack(WoodVariant.byId(this.logs[i]).get(EvolutionItems.FIREWOODS)));
                 }
                 else {
                     break;

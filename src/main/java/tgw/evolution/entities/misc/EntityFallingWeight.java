@@ -2,7 +2,6 @@ package tgw.evolution.entities.misc;
 
 import net.minecraft.CrashReportCategory;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.BlockPos.MutableBlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.FriendlyByteBuf;
@@ -29,13 +28,13 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.BlockKnapping;
-import tgw.evolution.blocks.IPhysics;
 import tgw.evolution.blocks.util.BlockUtils;
-import tgw.evolution.entities.IEntityPacket;
+import tgw.evolution.entities.IEntitySpawnData;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionEntities;
 import tgw.evolution.network.PacketSCCustomEntity;
+import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 import tgw.evolution.util.math.ClipContextMutable;
 import tgw.evolution.util.physics.Fluid;
@@ -44,22 +43,21 @@ import tgw.evolution.util.physics.SI;
 
 import java.util.List;
 
-public class EntityFallingWeight extends Entity implements IEntityPacket<EntityFallingWeight> {
+public class EntityFallingWeight extends Entity implements IEntitySpawnData {
 
     private final ClipContextMutable clipContext = new ClipContextMutable();
-    private final MutableBlockPos mutablePos = new MutableBlockPos();
     public int fallTime;
-    private double mass = 500;
-    private BlockState state = EvolutionBlocks.DESTROY_9.defaultBlockState();
+    protected double mass = 500;
+    protected BlockState state = EvolutionBlocks.DESTROY_9.defaultBlockState();
 
     public EntityFallingWeight(EntityType<? extends EntityFallingWeight> type, Level level) {
         super(type, level);
     }
 
-    public EntityFallingWeight(Level level, double x, double y, double z, BlockState state, BlockPos pos) {
+    public EntityFallingWeight(Level level, double x, double y, double z, BlockState state, double mass) {
         this(EvolutionEntities.FALLING_WEIGHT, level);
         this.state = state;
-        this.mass = this.state.getBlock() instanceof IPhysics physics ? physics.getMass(this.level, pos, this.state) : 500;
+        this.mass = mass;
         this.blocksBuilding = true;
         this.setPos(x, y, z);
         this.setDeltaMovement(Vec3.ZERO);
@@ -174,6 +172,11 @@ public class EntityFallingWeight extends Entity implements IEntityPacket<EntityF
     }
 
     @Override
+    public EntityData getSpawnData() {
+        return new FallingWeightData(this);
+    }
+
+    @Override
     public double getVolume() {
         return 1 * SI.CUBIC_METER;
     }
@@ -191,12 +194,6 @@ public class EntityFallingWeight extends Entity implements IEntityPacket<EntityF
     protected void readAdditionalSaveData(CompoundTag tag) {
         this.state = NbtUtils.readBlockState(tag.getCompound("BlockState"));
         this.fallTime = tag.getInt("Time");
-    }
-
-    @Override
-    public void readAdditionalSyncData(FriendlyByteBuf buf) {
-        this.state = Block.stateById(buf.readInt());
-        this.mass = buf.readFloat();
     }
 
     @Override
@@ -270,16 +267,26 @@ public class EntityFallingWeight extends Entity implements IEntityPacket<EntityF
         }
         this.setDeltaMovement(motionX, motionY, motionZ);
         this.move(MoverType.SELF, this.getDeltaMovement());
-        this.mutablePos.set(this.blockPosition());
-        boolean isInWater = this.level.getFluidState(this.mutablePos).is(FluidTags.WATER);
+        BlockPos pos = this.blockPosition();
+        int x = pos.getX();
+        int y = pos.getY();
+        int z = pos.getZ();
+        boolean isInWater = this.level.getFluidState_(x, y, z).is(FluidTags.WATER);
         double motionLenSqr = this.getDeltaMovement().lengthSqr();
         if (motionLenSqr > 1) {
             BlockHitResult hitResult = this.level.clip(this.clipContext.set(this.xo, this.yo, this.zo,
                                                                             this.getX(), this.getY(), this.getZ(),
                                                                             ClipContext.Block.COLLIDER, ClipContext.Fluid.SOURCE_ONLY, this));
-            if (hitResult.getType() != HitResult.Type.MISS && this.level.getFluidState(hitResult.getBlockPos()).is(FluidTags.WATER)) {
-                this.mutablePos.set(hitResult.getBlockPos());
-                isInWater = true;
+            if (hitResult.getType() != HitResult.Type.MISS) {
+                int hitX = hitResult.posX();
+                int hitY = hitResult.posY();
+                int hitZ = hitResult.posZ();
+                if (this.level.getFluidState_(hitX, hitY, hitZ).is(FluidTags.WATER)) {
+                    x = hitX;
+                    y = hitY;
+                    z = hitZ;
+                    isInWater = true;
+                }
             }
         }
         if (BlockUtils.isReplaceable(this.level.getBlockState_(Mth.floor(this.getX()), Mth.floor(this.getY() - 0.01), Mth.floor(this.getZ())))) {
@@ -288,15 +295,15 @@ public class EntityFallingWeight extends Entity implements IEntityPacket<EntityF
                 return;
             }
         }
-        BlockState state = this.level.getBlockState(this.mutablePos);
+        BlockState state = this.level.getBlockState_(x, y, z);
         if ((!isInWater || this.onGround) && state.getBlock() != Blocks.MOVING_PISTON) {
             this.discard();
             if (BlockUtils.isReplaceable(state)) {
-                BlockUtils.destroyBlock(this.level, this.mutablePos);
-                this.level.setBlockAndUpdate(this.mutablePos, this.state);
+                this.level.destroyBlock_(x, y, z, true);
+                this.level.setBlockAndUpdate_(x, y, z, this.state);
             }
             else if (this.level.getGameRules().getBoolean(GameRules.RULE_DOENTITYDROPS) && !this.level.isClientSide) {
-                List<ItemStack> drops = Block.getDrops(this.state, (ServerLevel) this.level, this.mutablePos.immutable(), null);
+                OList<ItemStack> drops = this.state.getDrops((ServerLevel) this.level, x, y, z, ItemStack.EMPTY, null, null, this.level.random);
                 for (int i = 0, len = drops.size(); i < len; i++) {
                     this.spawnAtLocation(drops.get(i));
                 }
@@ -304,9 +311,31 @@ public class EntityFallingWeight extends Entity implements IEntityPacket<EntityF
         }
     }
 
-    @Override
-    public void writeAdditionalSyncData(FriendlyByteBuf buf) {
-        buf.writeInt(Block.getId(this.state));
-        buf.writeFloat((float) this.mass);
+    public static class FallingWeightData<T extends EntityFallingWeight> extends EntityData<T> {
+
+        private final float mass;
+        private final BlockState state;
+
+        public FallingWeightData(T entity) {
+            this.state = entity.state;
+            this.mass = (float) entity.mass;
+        }
+
+        public FallingWeightData(FriendlyByteBuf buf) {
+            this.state = Block.stateById(buf.readVarInt());
+            this.mass = buf.readFloat();
+        }
+
+        @Override
+        public void read(T entity) {
+            entity.state = this.state;
+            entity.mass = this.mass;
+        }
+
+        @Override
+        public void writeToBuffer(FriendlyByteBuf buf) {
+            buf.writeVarInt(Block.getId(this.state));
+            buf.writeFloat(this.mass);
+        }
     }
 }

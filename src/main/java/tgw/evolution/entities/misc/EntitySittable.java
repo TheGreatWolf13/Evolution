@@ -36,28 +36,28 @@ public class EntitySittable extends Entity implements ISittableEntity {
         this.blocksBuilding = true;
     }
 
-    public EntitySittable(Level world, BlockPos pos, double yOffset, float zOffset, @Range(from = 0, to = 100) int comfort) {
+    public EntitySittable(Level world, int x, int y, int z, double yOffset, float zOffset, @Range(from = 0, to = 100) int comfort) {
         this(EvolutionEntities.SIT, world);
-        this.setPos(pos.getX() + 0.5, pos.getY() + yOffset, pos.getZ() + 0.5);
-        this.source = pos;
-        this.xo = pos.getX() + 0.5;
-        this.yo = pos.getY() + yOffset;
-        this.zo = pos.getZ() + 0.5;
+        this.setPos(x + 0.5, y + yOffset, z + 0.5);
+        this.source = new BlockPos(x, y, z);
+        this.xo = x + 0.5;
+        this.yo = y + yOffset;
+        this.zo = z + 0.5;
         this.comfort = (byte) comfort;
         this.zOffset = zOffset;
     }
 
-    public static boolean create(Level level, BlockPos pos, Player player) {
-        Block block = level.getBlockState(pos).getBlock();
+    public static boolean create(Level level, int x, int y, int z, Player player) {
+        Block block = level.getBlockState_(x, y, z).getBlock();
         if (block instanceof ISittableBlock sittable) {
             if (!level.isClientSide) {
                 AABB bb = player.getBoundingBox();
                 if (LevelUtils.collidesWithSuffocatingBlock(level, player,
-                                                            pos.getX() + 1e-7, bb.minY + 1e-7, pos.getZ() + 1e-7,
-                                                            pos.getX() + 1 - 1e-7, bb.maxY - 1e-7, pos.getZ() + 1 - 1e-7)) {
+                                                            x + 1e-7, bb.minY + 1e-7, z + 1e-7,
+                                                            x + 1 - 1e-7, bb.maxY - 1e-7, z + 1 - 1e-7)) {
                     return false;
                 }
-                EntitySittable seat = new EntitySittable(level, pos, sittable.getYOffset(), sittable.getZOffset(), sittable.getComfort());
+                EntitySittable seat = new EntitySittable(level, x, y, z, sittable.getYOffset(), sittable.getZOffset(), sittable.getComfort());
                 level.addFreshEntity(seat);
                 player.startRiding(seat, false);
             }

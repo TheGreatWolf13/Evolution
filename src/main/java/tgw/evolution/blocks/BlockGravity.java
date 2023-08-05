@@ -5,15 +5,12 @@ import net.minecraft.core.Direction;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Material;
 import tgw.evolution.init.EvolutionSounds;
 import tgw.evolution.util.math.DirectionUtil;
 import tgw.evolution.util.physics.Fluid;
 import tgw.evolution.util.physics.Physics;
-
-import static tgw.evolution.init.EvolutionBStates.LAYERS_1_4;
 
 public class BlockGravity {
 
@@ -22,12 +19,8 @@ public class BlockGravity {
 //    }
 
     public static boolean canFallThrough(BlockState state) {
-        Block block = state.getBlock();
-        if (block instanceof BlockPeat) {
-            return state.getValue(LAYERS_1_4) != 4;
-        }
         Material material = state.getMaterial();
-        return state.isAir() || material.isLiquid() || material.isReplaceable() || block instanceof IReplaceable;
+        return state.isAir() || material.isLiquid() || material.isReplaceable() || state.getBlock() instanceof IReplaceable;
     }
 
     public boolean beamCondition(BlockState checkingState, BlockState state) {

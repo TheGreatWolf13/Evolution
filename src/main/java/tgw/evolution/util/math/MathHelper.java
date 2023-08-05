@@ -29,8 +29,8 @@ import tgw.evolution.Evolution;
 import tgw.evolution.blocks.tileentities.Patterns;
 import tgw.evolution.init.EvolutionShapes;
 import tgw.evolution.items.modular.ItemModularTool;
-import tgw.evolution.patches.PatchLivingEntity;
 import tgw.evolution.util.*;
+import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.hitbox.Hitbox;
 import tgw.evolution.util.hitbox.HitboxType;
 import tgw.evolution.util.hitbox.Matrix4d;
@@ -342,7 +342,7 @@ public final class MathHelper {
         if (hitboxes == null) {
             return;
         }
-        Hitbox collider = hitboxes.getEquipFor(entity, ((PatchLivingEntity) entity).getSpecialAttackType(), entity.getMainArm());
+        Hitbox collider = hitboxes.getEquipFor(entity, entity.getSpecialAttackType(), entity.getMainArm());
         if (collider == null) {
             return;
         }
@@ -367,8 +367,8 @@ public final class MathHelper {
             if (result != null && result.getType() != HitResult.Type.MISS) {
                 int mul = result.getDirection().getAxisDirection() == Direction.AxisDirection.POSITIVE ? -1 : 1;
                 switch (result.getDirection().getAxis()) {
-                    case X -> radiusX = Math.abs(result.getLocation().x - entity.getX() + mul * entity.getBbWidth() / 2);
-                    case Z -> radiusZ = Math.abs(result.getLocation().z - entity.getZ() + mul * entity.getBbWidth() / 2);
+                    case X -> radiusX = Math.abs(result.x() - entity.getX() + mul * entity.getBbWidth() / 2);
+                    case Z -> radiusZ = Math.abs(result.z() - entity.getZ() + mul * entity.getBbWidth() / 2);
                 }
             }
         }
@@ -514,6 +514,14 @@ public final class MathHelper {
         return Mth.cos(deg * Mth.DEG_TO_RAD);
     }
 
+    public static int deleteBits(int value, int bitIndex, int length) {
+        assert 0 <= bitIndex && bitIndex < 31;
+        assert 1 <= length && length < 32;
+        int upper = value & -1 << bitIndex + length;
+        int lower = value & (1 << bitIndex) - 1;
+        return upper >> length | lower;
+    }
+
     /**
      * Calculates the shortest distance between two points in euclidean space.
      */
@@ -526,6 +534,41 @@ public final class MathHelper {
         double dy = y0 - y1;
         double dz = z0 - z1;
         return dx * dx + dy * dy + dz * dz;
+    }
+
+    public static boolean doesShapeIntersect(VoxelShape shape, AABB bb, int x, int y, int z) {
+        return doesShapeIntersect(shape, bb.minX - x, bb.minY - y, bb.minZ - z, bb.maxX - x, bb.maxY - y, bb.maxZ - z);
+    }
+
+    public static boolean doesShapeIntersect(VoxelShape shape,
+                                             double x0,
+                                             double y0,
+                                             double z0,
+                                             double x1,
+                                             double y1,
+                                             double z1) {
+        if (shape.isEmpty()) {
+            return false;
+        }
+        if (shape == Shapes.block()) {
+            return x0 < 1 && x1 > 0 && y0 < 1 && y1 > 0 && z0 < 1 && z1 > 0;
+        }
+        if (shape.min(Direction.Axis.X) >= x1 ||
+            shape.max(Direction.Axis.X) <= x0 ||
+            shape.min(Direction.Axis.Y) >= y1 ||
+            shape.max(Direction.Axis.Y) <= y0 ||
+            shape.min(Direction.Axis.Z) >= z1 ||
+            shape.max(Direction.Axis.Z) <= z0) {
+            return false;
+        }
+        OList<AABB> aabbs = shape.cachedBoxes();
+        for (int i = 0, len = aabbs.size(); i < len; ++i) {
+            AABB bb = aabbs.get(i);
+            if (bb.minX < x1 && bb.maxX > x0 && bb.minY < y1 && bb.maxY > y0 && bb.minZ < z1 && bb.maxZ > z0) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static HumanoidArm fromHand(LivingEntity victim, InteractionHand hand) {
@@ -541,7 +584,7 @@ public final class MathHelper {
                 }
             }
         }
-        return shape;
+        return shape.optimize();
     }
 
     public static float getAgeInTicks(LivingEntity victim, float partialTicks) {
@@ -639,11 +682,12 @@ public final class MathHelper {
 
     public static @Nullable MultipleEntityHitResult getProjectileHitResult(EntityGetter level,
                                                                            Entity projectile,
-                                                                           Vec3 start,
-                                                                           Vec3 end,
+                                                                           double startX, double startY, double startZ,
+                                                                           double endX, double endY, double endZ,
                                                                            Predicate<Entity> filter,
                                                                            double inflation) {
-        List<Entity> foundEntities = level.getEntities(projectile, new AABBMutable(start, end).inflateMutable(inflation), filter);
+        List<Entity> foundEntities = level.getEntities(projectile,
+                                                       new AABBMutable(startX, startY, startZ, endX, endY, endZ).inflateMutable(inflation), filter);
         AABBMutable tempBB = null;
         MultipleEntityHitResult hitResult = null;
         for (int i = 0, l = foundEntities.size(); i < l; i++) {
@@ -652,17 +696,17 @@ public final class MathHelper {
                 tempBB = new AABBMutable();
             }
             tempBB.set(probableVictim.getBoundingBox()).inflateMutable(inflation);
-            if (tempBB.contains(start)) {
+            if (tempBB.contains(startX, startY, startZ)) {
                 if (hitResult == null) {
-                    hitResult = new MultipleEntityHitResult(probableVictim, start, end);
+                    hitResult = new MultipleEntityHitResult(probableVictim, startX, startY, startZ, endX, endY, endZ);
                 }
                 hitResult.add(probableVictim, 0);
                 continue;
             }
-            double dist = clipDist(tempBB, start, end);
+            double dist = clipDist(tempBB, startX, startY, startZ, endX, endY, endZ);
             if (!Double.isNaN(dist)) {
                 if (hitResult == null) {
-                    hitResult = new MultipleEntityHitResult(probableVictim, start, end);
+                    hitResult = new MultipleEntityHitResult(probableVictim, startX, startY, startZ, endX, endY, endZ);
                 }
                 hitResult.add(probableVictim, dist);
             }
@@ -826,17 +870,6 @@ public final class MathHelper {
      */
     public static boolean isShapeTotallyInside(VoxelShape inside, VoxelShape reference) {
         return !Shapes.joinIsNotEmpty(reference, inside, BooleanOp.ONLY_SECOND);
-    }
-
-    /**
-     * Calculates if the {@link VoxelShape} is totally outside another one.
-     *
-     * @param outside   The {@link VoxelShape} that should be totally outside the reference.
-     * @param reference The reference {@link VoxelShape}.
-     * @return {@code true} if the first {@link VoxelShape} is totally outside the reference one, {@code false} otherwise.
-     */
-    public static boolean isShapeTotallyOutside(VoxelShape outside, VoxelShape reference) {
-        return !Shapes.joinIsNotEmpty(reference, outside, BooleanOp.AND);
     }
 
     public static boolean isSitting(LivingEntity victim) {
@@ -1109,7 +1142,7 @@ public final class MathHelper {
         double hitX = from.x + promDist * (toX - from.x);
         double hitY = from.y + promDist * (toY - from.y);
         double hitZ = from.z + promDist * (toZ - from.z);
-        return new AdvancedEntityHitResult(promEntity, new Vec3(hitX, hitY, hitZ), promBox);
+        return new AdvancedEntityHitResult(promEntity, hitX, hitY, hitZ, promBox);
     }
 
     /**
@@ -1297,6 +1330,7 @@ public final class MathHelper {
         int times = (to.get2DDataValue() - from.get2DDataValue() + 4) % 4;
         for (int i = 0; i < times; i++) {
             //noinspection ObjectAllocationInLoop
+            //TODO
             buffer[0].forAllBoxes(
                     (minX, minY, minZ, maxX, maxY, maxZ) -> buffer[1] = Shapes.or(buffer[1],
                                                                                   Shapes.box(1 - maxZ, minY, minX, 1 - minZ, maxY, maxX)));

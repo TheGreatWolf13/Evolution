@@ -13,6 +13,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.events.ItemEvents;
 import tgw.evolution.init.EvolutionDamage;
@@ -103,6 +104,11 @@ public class EntitySpear extends EntityGenericProjectile implements IAerodynamic
         return this.cachedProjectile;
     }
 
+    @Override
+    public EntityData getSpawnData() {
+        return new SpearData(this);
+    }
+
     public ItemStack getStack() {
         return this.stack;
     }
@@ -120,11 +126,11 @@ public class EntitySpear extends EntityGenericProjectile implements IAerodynamic
     }
 
     @Override
-    protected void onBlockHit(BlockState state) {
+    protected void onBlockHit(BlockState state, int x, int y, int z) {
         LivingEntity shooter = this.getShooter();
         if (shooter != null) {
             ItemEvents.damageItem(this.stack, shooter, ItemModular.DamageCause.HIT_BLOCK, null,
-                                  state.getBlock().getHarvestLevel(state, this.level, null));
+                                  state.getBlock().getHarvestLevel(state, this.level, x, y, z));
         }
     }
 
@@ -154,13 +160,7 @@ public class EntitySpear extends EntityGenericProjectile implements IAerodynamic
         }
     }
 
-    @Override
-    public void readAdditionalSyncData(FriendlyByteBuf buf) {
-        super.readAdditionalSyncData(buf);
-        this.setStack(buf.readItem());
-    }
-
-    private void setStack(ItemStack stack) {
+    protected void setStack(ItemStack stack) {
         this.stack = stack.copy();
         this.cachedProjectile = (IProjectile) stack.getItem();
         //TODO
@@ -190,9 +190,32 @@ public class EntitySpear extends EntityGenericProjectile implements IAerodynamic
         }
     }
 
-    @Override
-    public void writeAdditionalSyncData(FriendlyByteBuf buf) {
-        super.writeAdditionalSyncData(buf);
-        buf.writeItem(this.stack);
+    public static class SpearData<T extends EntitySpear> extends ProjectileData<T> {
+
+        private final ItemStack stack;
+
+        public SpearData(T entity) {
+            super(entity);
+            this.stack = entity.getStack();
+        }
+
+        public SpearData(FriendlyByteBuf buf) {
+            super(buf);
+            this.stack = buf.readItem();
+        }
+
+        @Override
+        @MustBeInvokedByOverriders
+        public void read(T entity) {
+            super.read(entity);
+            entity.setStack(this.stack);
+        }
+
+        @Override
+        @MustBeInvokedByOverriders
+        public void writeToBuffer(FriendlyByteBuf buf) {
+            super.writeToBuffer(buf);
+            buf.writeItem(this.stack);
+        }
     }
 }

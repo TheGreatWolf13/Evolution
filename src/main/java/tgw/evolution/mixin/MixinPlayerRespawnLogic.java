@@ -34,14 +34,13 @@ public abstract class MixinPlayerRespawnLogic {
         if (surface <= height && surface > chunk.getHeight(Heightmap.Types.OCEAN_FLOOR, x & 15, z & 15)) {
             return null;
         }
-        BlockPos.MutableBlockPos mutableBlockPos = new BlockPos.MutableBlockPos();
         for (int y = height + 1; y >= level.getMinBuildHeight(); --y) {
             BlockState state = level.getBlockState_(x, y, z);
             if (!state.getFluidState().isEmpty()) {
                 break;
             }
-            if (Block.isFaceFull(state.getCollisionShape(level, mutableBlockPos.set(x, y, z)), Direction.UP)) {
-                return mutableBlockPos.setY(y + 1).immutable();
+            if (Block.isFaceFull(state.getCollisionShape_(level, x, y, z), Direction.UP)) {
+                return new BlockPos(x, y + 1, z);
             }
         }
         return null;

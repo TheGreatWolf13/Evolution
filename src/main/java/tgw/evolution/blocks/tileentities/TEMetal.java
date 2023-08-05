@@ -78,19 +78,20 @@ public class TEMetal extends BlockEntity {
     }
 
     public void refreshExposed() {
+        assert this.level != null;
         this.exposed = 0;
-        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
         boolean exp = false;
         boolean water = false;
         boolean air = false;
+        int x = this.worldPosition.getX();
+        int y = this.worldPosition.getY();
+        int z = this.worldPosition.getZ();
         for (Direction dir : DirectionUtil.ALL) {
             if (exp && water && air) {
                 break;
             }
-            mutablePos.setWithOffset(this.worldPosition, dir);
             if (!water) {
-                assert this.level != null;
-                FluidState fluid = this.level.getFluidState(mutablePos);
+                FluidState fluid = this.level.getFluidStateAtSide(x, y, z, dir);
                 if (fluid.is(FluidTags.WATER)) {
                     water = true;
                     exp = true;
@@ -100,8 +101,8 @@ public class TEMetal extends BlockEntity {
                 }
             }
             if (!air) {
-                if (!BlockUtils.hasSolidSide(this.level, mutablePos, dir.getOpposite())) {
-                    FluidState fluid = this.level.getFluidState(mutablePos);
+                if (!BlockUtils.hasSolidFaceAtSide(this.level, x, y, z, dir)) {
+                    FluidState fluid = this.level.getFluidStateAtSide(x, y, z, dir);
                     if (fluid.isEmpty()) {
                         air = true;
                         exp = true;

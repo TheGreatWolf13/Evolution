@@ -19,7 +19,7 @@ import java.util.List;
 @Mixin(CubeListBuilder.class)
 public abstract class MixinCubeListBuilder {
 
-    @Mutable @Shadow @Final private List<CubeDefinition> cubes;
+    @Mutable @Shadow @Final public List<CubeDefinition> cubes;
 
     @Redirect(method = "<init>",
             at = @At(value = "FIELD", target = "Lnet/minecraft/client/model/geom/builders/CubeListBuilder;" +

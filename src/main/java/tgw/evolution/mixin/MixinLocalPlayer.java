@@ -27,12 +27,11 @@ import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.client.util.EvolutionInput;
 import tgw.evolution.items.IEvolutionItem;
 import tgw.evolution.network.PacketCSSkinType;
-import tgw.evolution.patches.PatchPlayer;
 import tgw.evolution.util.math.DirectionUtil;
 import tgw.evolution.world.util.LevelUtils;
 
 @Mixin(LocalPlayer.class)
-public abstract class MixinLocalPlayer extends AbstractClientPlayer implements PatchPlayer {
+public abstract class MixinLocalPlayer extends AbstractClientPlayer {
 
     @Shadow @Final public ClientPacketListener connection;
     @Shadow public Input input;

@@ -9,6 +9,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import org.spongepowered.asm.mixin.Mixin;
@@ -34,7 +35,14 @@ public abstract class MixinBlockEntityRenderDispatcher {
                                                                PoseStack matrices,
                                                                MultiBufferSource bufferSource) {
         Level level = tile.getLevel();
-        int light = level != null ? EvLevelRenderer.getLightColor(level, tile.getBlockPos()) : 0xf0_00f0;
+        int light;
+        if (level != null) {
+            BlockPos pos = tile.getBlockPos();
+            light = EvLevelRenderer.getLightColor(level, pos.getX(), pos.getY(), pos.getZ());
+        }
+        else {
+            light = 0xf0_00f0;
+        }
         renderer.render(tile, partialTick, matrices, bufferSource, light, OverlayTexture.NO_OVERLAY);
     }
 

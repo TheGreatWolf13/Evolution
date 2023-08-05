@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class MixinRenderSystem {
 
     @Shadow @Final public static Vector3f[] shaderLightDirections;
-
+    @Shadow private static Matrix4f projectionMatrix;
     @Shadow private static PoseStack modelViewStack;
     @Shadow private static Matrix4f modelViewMatrix;
 
@@ -59,5 +59,18 @@ public abstract class MixinRenderSystem {
     @Shadow
     public static void recordRenderCall(RenderCall renderCall) {
         throw new AbstractMethodError();
+    }
+
+    @Overwrite
+    public static void setProjectionMatrix(Matrix4f matrix) {
+        if (!isOnRenderThread()) {
+            Matrix4f copy = matrix.copy();
+            recordRenderCall(() -> {
+                projectionMatrix = copy;
+            });
+        }
+        else {
+            projectionMatrix = matrix;
+        }
     }
 }

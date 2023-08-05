@@ -31,19 +31,17 @@ public class BlockDryGrass extends BlockGenericSnowable implements IRockVariant 
         this.variant = variant;
     }
 
-    private static boolean canSustainGrass(BlockGetter level, BlockPos pos) {
-        BlockPos posUp = pos.above();
-        BlockState stateUp = level.getBlockState(posUp);
+    private static boolean canSustainGrass(BlockGetter level, int x, int y, int z) {
+        BlockState stateUp = level.getBlockState_(x, y + 1, z);
         //TODO proper snow
         if (stateUp.getBlock() == Blocks.SNOW && stateUp.getValue(SnowLayerBlock.LAYERS) == 1) {
             return true;
         }
-        return !BlockUtils.hasSolidSide(level, posUp, Direction.DOWN);
+        return !stateUp.isFaceSturdy_(level, x, y + 1, z, Direction.DOWN);
     }
 
-    private static boolean canSustainGrassWater(BlockGetter level, BlockPos pos) {
-        BlockPos posUp = pos.above();
-        return canSustainGrass(level, pos) && !level.getFluidState(posUp).is(FluidTags.WATER);
+    private static boolean canSustainGrassWater(BlockGetter level, int x, int y, int z) {
+        return canSustainGrass(level, x, y, z) && !level.getFluidState_(x, y + 1, z).is(FluidTags.WATER);
     }
 
     @Override
@@ -57,7 +55,7 @@ public class BlockDryGrass extends BlockGenericSnowable implements IRockVariant 
     }
 
     @Override
-    public double getMass(Level level, BlockPos pos, BlockState state) {
+    public double getMass(Level level, int x, int y, int z, BlockState state) {
         return this.rockVariant().getMass() / 4;
     }
 
@@ -67,33 +65,44 @@ public class BlockDryGrass extends BlockGenericSnowable implements IRockVariant 
     }
 
     @Override
-    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
-        super.neighborChanged(state, level, pos, block, fromPos, isMoving);
+    public void neighborChanged_(BlockState state,
+                                 Level level,
+                                 int x,
+                                 int y,
+                                 int z,
+                                 Block oldBlock,
+                                 int fromX,
+                                 int fromY,
+                                 int fromZ,
+                                 boolean isMoving) {
+        super.neighborChanged_(state, level, x, y, z, oldBlock, fromX, fromY, fromZ, isMoving);
         if (!level.isClientSide) {
-            if (pos.above().equals(fromPos)) {
-                if (BlockUtils.hasSolidSide(level, fromPos, Direction.DOWN)) {
-                    level.setBlockAndUpdate(pos, this.variant.get(EvolutionBlocks.DIRTS).defaultBlockState());
+            if (x == fromX && z == fromZ && y + 1 == fromY) {
+                if (BlockUtils.hasSolidFace(level, x, y + 1, z, Direction.DOWN)) {
+                    level.setBlockAndUpdate(new BlockPos(x, y, z), this.variant.get(EvolutionBlocks.DIRTS).defaultBlockState());
                 }
             }
         }
     }
 
     @Override
-    public void randomTick(BlockState state, ServerLevel level, BlockPos pos, Random random) {
+    public void randomTick_(BlockState state, ServerLevel level, int x, int y, int z, Random random) {
         if (random.nextInt(2) == 0) {
-            if (!canSustainGrass(level, pos)) {
-                level.setBlockAndUpdate(pos, this.variant.get(EvolutionBlocks.DIRTS).defaultBlockState());
+            if (!canSustainGrass(level, x, y, z)) {
+                level.setBlockAndUpdate_(x, y, z, this.variant.get(EvolutionBlocks.DIRTS).defaultBlockState());
             }
             else {
                 for (int i = 0; i < 4; ++i) {
-                    BlockPos randomPos = pos.offset(random.nextInt(3) - 1, random.nextInt(5) - 3, random.nextInt(3) - 1);
-                    Block blockAtPos = level.getBlockState(randomPos).getBlock();
-                    if (blockAtPos instanceof BlockDirt dirt && canSustainGrassWater(level, randomPos)) {
+                    int rx = x + random.nextInt(3) - 1;
+                    int ry = y + random.nextInt(5) - 3;
+                    int rz = z + random.nextInt(3) - 1;
+                    Block blockAtPos = level.getBlockState_(rx, ry, rz).getBlock();
+                    if (blockAtPos instanceof BlockDirt dirt && canSustainGrassWater(level, rx, ry, rz)) {
                         //TODO proper snow
-                        level.setBlockAndUpdate(randomPos, dirt.rockVariant()
-                                                               .get(EvolutionBlocks.DRY_GRASSES)
-                                                               .defaultBlockState()
-                                                               .setValue(SNOWY, level.getBlockState(randomPos.above()).getBlock() == Blocks.SNOW));
+                        level.setBlockAndUpdate_(rx, ry, rz, dirt.rockVariant()
+                                                                 .get(EvolutionBlocks.DRY_GRASSES)
+                                                                 .defaultBlockState()
+                                                                 .setValue(SNOWY, level.getBlockState_(rx, ry + 1, rz).getBlock() == Blocks.SNOW));
                     }
                 }
             }

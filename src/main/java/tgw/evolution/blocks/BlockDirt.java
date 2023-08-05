@@ -1,6 +1,5 @@
 package tgw.evolution.blocks;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -22,13 +21,12 @@ public class BlockDirt extends BlockPhysics implements IRockVariant, ISloppable 
     }
 
     @Override
-    public boolean canSlope(BlockGetter level, BlockPos pos) {
-        Block blockUp = level.getBlockState_(pos.getX(), pos.getY() + 1, pos.getZ()).getBlock();
+    public boolean canSlope(BlockGetter level, int x, int y, int z) {
+        Block blockUp = level.getBlockState_(x, y + 1, z).getBlock();
         if (blockUp == this.variant.get(EvolutionBlocks.GRASSES)) {
             return false;
         }
-        return blockUp != this ||
-               level.getBlockState_(pos.getX(), pos.getY() + 2, pos.getZ()).getBlock() != this.variant.get(EvolutionBlocks.GRASSES);
+        return blockUp != this || level.getBlockState_(x, y + 2, z).getBlock() != this.variant.get(EvolutionBlocks.GRASSES);
     }
 
     @Override
@@ -47,7 +45,7 @@ public class BlockDirt extends BlockPhysics implements IRockVariant, ISloppable 
     }
 
     @Override
-    public double getMass(Level level, BlockPos pos, BlockState state) {
+    public double getMass(Level level, int x, int y, int z, BlockState state) {
         return this.rockVariant().getMass() / 4;
     }
 

@@ -1,7 +1,6 @@
 package tgw.evolution.util;
 
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 import tgw.evolution.Evolution;
@@ -20,11 +19,15 @@ public class ProjectileHitInformation implements IHitInfo {
     private final Vec3d[] verticesInHBVS = new Vec3d[8];
     private final Vec3d[] verticesInHBVSPartial = new Vec3d[8];
     private long data;
-    private @Nullable Vec3 end;
+    private double endX;
+    private double endY;
+    private double endZ;
     private @Nullable HitboxEntity<?> hitboxes;
     private boolean prepared;
     private boolean preparedInHBVS;
-    private @Nullable Vec3 start;
+    private double startX;
+    private double startY;
+    private double startZ;
     private double victimX;
     private double victimY;
     private double victimZ;
@@ -123,13 +126,11 @@ public class ProjectileHitInformation implements IHitInfo {
         if (!vertex.isNull()) {
             return vertex;
         }
-        assert this.start != null;
-        assert this.end != null;
         if (index < 4) {
-            vertex.set(this.start);
+            vertex.set(this.startX, this.startY, this.startZ);
         }
         else {
-            vertex.set(this.end);
+            vertex.set(this.endX, this.endY, this.endZ);
         }
         Vec3d ortho = index % 2 == 0 ? this.firstOrtho : this.secondOrtho;
         if (index % 4 < 2) {
@@ -164,13 +165,17 @@ public class ProjectileHitInformation implements IHitInfo {
         return this.data == 0;
     }
 
-    public void prepare(Vec3 start, Vec3 end, double radius) {
-        this.start = start;
-        this.end = end;
+    public void prepare(double startX, double startY, double startZ, double endX, double endY, double endZ, double radius) {
+        this.startX = startX;
+        this.startY = startY;
+        this.startZ = startZ;
+        this.endX = endX;
+        this.endY = endY;
+        this.endZ = endZ;
         for (Vec3d vertex : this.vertices) {
             vertex.set(Vec3d.NULL);
         }
-        this.directorVec.set(this.end).subMutable(this.start);
+        this.directorVec.set(endX, endY, endZ).subMutable(startX, startY, startZ);
         if (this.directorVec.y != 0 || this.directorVec.z != 0) {
             this.firstOrtho.set(1, 0, 0);
         }
@@ -202,8 +207,6 @@ public class ProjectileHitInformation implements IHitInfo {
 
     public void release() {
         this.prepared = false;
-        this.start = null;
-        this.end = null;
     }
 
     @Override

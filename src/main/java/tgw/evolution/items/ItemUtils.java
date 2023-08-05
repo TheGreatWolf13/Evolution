@@ -1,7 +1,7 @@
 package tgw.evolution.items;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -15,7 +15,8 @@ public final class ItemUtils {
     }
 
     public static boolean canRepeatUse(ItemStack stack) {
-        return stack.getItem() instanceof BlockItem;
+        Item item = stack.getItem();
+        return item instanceof ItemBlock || item instanceof BlockItem;
     }
 
     public static double getDmgMultiplier(ItemStack stack, EvolutionDamage.Type type) {
@@ -30,9 +31,9 @@ public final class ItemUtils {
         return stack.getItem() instanceof ItemModular mod && mod.isAxe(stack);
     }
 
-    public static boolean isCorrectToolForDrops(ItemStack stack, BlockState state, Level level, BlockPos pos) {
+    public static boolean isCorrectToolForDrops(ItemStack stack, BlockState state, Level level, int x, int y, int z) {
         if (stack.getItem() instanceof IEvolutionItem item) {
-            return item.isCorrectToolForDrops(stack, state, level, pos);
+            return item.isCorrectToolForDrops(stack, state, level, x, y, z);
         }
         return stack.isCorrectToolForDrops(state);
     }

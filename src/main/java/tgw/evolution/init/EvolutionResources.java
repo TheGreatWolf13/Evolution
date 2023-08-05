@@ -91,11 +91,9 @@ public final class EvolutionResources {
 
     static {
         BLOCK_KNAPPING = new ResourceLocation[RockVariant.VALUES.length];
-        for (RockVariant variant : RockVariant.VALUES) {
-            if (variant != RockVariant.CLAY && variant != RockVariant.PEAT) {
-                //noinspection ObjectAllocationInLoop
-                BLOCK_KNAPPING[variant.getId()] = Evolution.getResource("block/stone_" + variant.getName());
-            }
+        for (RockVariant variant : RockVariant.VALUES_STONE) {
+            //noinspection ObjectAllocationInLoop
+            BLOCK_KNAPPING[variant.getId()] = Evolution.getResource("block/stone_" + variant.getName());
         }
         BLOCK_LOG_SIDE = new ResourceLocation[WoodVariant.VALUES.length];
         for (WoodVariant variant : WoodVariant.VALUES) {

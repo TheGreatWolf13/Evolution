@@ -10,6 +10,13 @@ public final class VectorUtil {
     private VectorUtil() {
     }
 
+    public static double dist(Vec3 vec, double x, double y, double z) {
+        double dx = vec.x - x;
+        double dy = vec.y - y;
+        double dz = vec.z - z;
+        return Math.sqrt(dx * dx + dy * dy + dz * dz);
+    }
+
     public static double distSqr(Vec3i vec, int x, int y, int z) {
         double dx = vec.getX() + 0.5 - x;
         double dy = vec.getY() + 0.5 - y;

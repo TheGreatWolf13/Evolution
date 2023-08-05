@@ -1,9 +1,12 @@
 package tgw.evolution.entities;
 
 import com.mojang.authlib.GameProfile;
+import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import tgw.evolution.world.util.LevelUtils;
 
 import java.util.UUID;
@@ -14,6 +17,10 @@ public final class EntityUtils {
     public static final GameProfile EMPTY_PROFILE = new GameProfile(UUID_ZERO, "");
 
     private EntityUtils() {
+    }
+
+    public static boolean isAbove(Entity entity, VoxelShape shape, int y) {
+        return entity.getY() > y + shape.max(Direction.Axis.Y) - 1e-5;
     }
 
     public static boolean isPlayerNearUnloadedChunks(Player player) {

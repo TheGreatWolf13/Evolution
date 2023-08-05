@@ -35,11 +35,11 @@ public abstract class BlockPhysics extends BlockGeneric implements IPhysics {
         }
     }
 
-    public final void checkPhysics(Level level, BlockPos pos) {
-        if (this.pops() && this.popLogic(level, pos)) {
+    public final void checkPhysics(Level level, int x, int y, int z) {
+        if (this.pops() && this.popLogic(level, x, y, z)) {
             return;
         }
-        if (this.fallable() && this.fallLogic(level, pos)) {
+        if (this.fallable() && this.fallLogic(level, x, y, z)) {
             return;
         }
 //        if (this.shouldFall(level, pos)) {
@@ -74,7 +74,7 @@ public abstract class BlockPhysics extends BlockGeneric implements IPhysics {
 //            return;
 //        }
         if (this.slopes()) {
-            this.slopeLogic(level, pos);
+            this.slopeLogic(level, x, y, z);
         }
     }
 
@@ -86,10 +86,19 @@ public abstract class BlockPhysics extends BlockGeneric implements IPhysics {
     }
 
     @Override
-    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+    public void neighborChanged_(BlockState state,
+                                 Level level,
+                                 int x,
+                                 int y,
+                                 int z,
+                                 Block oldBlock,
+                                 int fromX,
+                                 int fromY,
+                                 int fromZ,
+                                 boolean isMoving) {
         if (!level.isClientSide) {
             if (this.pops()) {
-                this.popLogic(level, pos);
+                this.popLogic(level, x, y, z);
             }
 //            if (pos.getX() == fromPos.getX() && pos.getZ() == fromPos.getZ() && pos.getY() + 1 == fromPos.getY()) {
 //                updateWeight(level, pos);
@@ -98,33 +107,37 @@ public abstract class BlockPhysics extends BlockGeneric implements IPhysics {
     }
 
     @Override
-    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
+    public void onPlace_(BlockState state, Level level, int x, int y, int z, BlockState oldState, boolean isMoving) {
         if (!level.isClientSide) {
-            BlockUtils.scheduleBlockTick(level, pos.getX(), pos.getY(), pos.getZ());
+            BlockUtils.scheduleBlockTick(level, x, y, z);
         }
     }
 
     @Override
-    public void playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
+    public void playerWillDestroy_(Level level, int x, int y, int z, BlockState state, Player player) {
         if (!level.isClientSide) {
-            BlockUtils.updateSlopingBlocks(level, pos.getX(), pos.getY(), pos.getZ());
+            BlockUtils.updateSlopingBlocks(level, x, y, z);
         }
-        super.playerWillDestroy(level, pos, state, player);
+        super.playerWillDestroy_(level, x, y, z, state, player);
     }
 
     @Override
-    public void tick(BlockState state, ServerLevel level, BlockPos pos, Random random) {
-        this.checkPhysics(level, pos);
+    public void tick_(BlockState state, ServerLevel level, int x, int y, int z, Random random) {
+        this.checkPhysics(level, x, y, z);
     }
 
     @Override
-    public BlockState updateShape(BlockState state,
-                                  Direction direction,
-                                  BlockState fromState,
-                                  LevelAccessor level,
-                                  BlockPos pos,
-                                  BlockPos fromPos) {
-        BlockUtils.scheduleBlockTick(level, pos.getX(), pos.getY(), pos.getZ());
-        return super.updateShape(state, direction, fromState, level, pos, fromPos);
+    public BlockState updateShape_(BlockState state,
+                                   Direction from,
+                                   BlockState fromState,
+                                   LevelAccessor level,
+                                   int x,
+                                   int y,
+                                   int z,
+                                   int fromX,
+                                   int fromY,
+                                   int fromZ) {
+        BlockUtils.scheduleBlockTick(level, x, y, z);
+        return super.updateShape_(state, from, fromState, level, x, y, z, fromX, fromY, fromZ);
     }
 }

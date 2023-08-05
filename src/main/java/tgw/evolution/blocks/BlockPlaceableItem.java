@@ -2,14 +2,14 @@ package tgw.evolution.blocks;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.init.EvolutionShapes;
@@ -36,12 +36,12 @@ public class BlockPlaceableItem extends BlockPhysics implements IReplaceable, IP
     }
 
     @Override
-    public boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
-        return BlockUtils.hasSolidSide(level, pos.below(), Direction.UP);
+    public boolean canSurvive_(BlockState state, LevelReader level, int x, int y, int z) {
+        return BlockUtils.hasSolidFace(level, x, y - 1, z, Direction.UP);
     }
 
     @Override
-    public double getMass(Level level, BlockPos pos, BlockState state) {
+    public double getMass(Level level, int x, int y, int z, BlockState state) {
         return 0;
     }
 
@@ -51,9 +51,8 @@ public class BlockPlaceableItem extends BlockPhysics implements IReplaceable, IP
     }
 
     @Override
-    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        Vec3 offset = state.getOffset(level, pos);
-        return EvolutionShapes.GROUND_ITEM.move(offset.x, offset.y, offset.z);
+    public VoxelShape getShape_(BlockState state, BlockGetter level, int x, int y, int z, @Nullable Entity entity) {
+        return this.moveShapeByOffset(EvolutionShapes.GROUND_ITEM, x, z);
     }
 
     @Override
@@ -67,9 +66,19 @@ public class BlockPlaceableItem extends BlockPhysics implements IReplaceable, IP
     }
 
     @Override
-    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+    public void neighborChanged_(BlockState state,
+                                 Level level,
+                                 int x,
+                                 int y,
+                                 int z,
+                                 Block oldBlock,
+                                 int fromX,
+                                 int fromY,
+                                 int fromZ,
+                                 boolean isMoving) {
         if (!level.isClientSide) {
-            if (!state.canSurvive(level, pos)) {
+            if (!state.canSurvive_(level, x, y, z)) {
+                BlockPos pos = new BlockPos(x, y, z);
                 dropResources(state, level, pos);
                 level.removeBlock(pos, false);
             }

@@ -11,21 +11,32 @@ import net.minecraft.world.phys.shapes.DiscreteVoxelShape;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
+import org.jetbrains.annotations.UnmodifiableView;
+import org.spongepowered.asm.mixin.*;
+import tgw.evolution.Evolution;
+import tgw.evolution.patches.PatchBlockHitResult;
+import tgw.evolution.patches.PatchVoxelShape;
+import tgw.evolution.util.collection.lists.OArrayList;
+import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.math.DirectionUtil;
 import tgw.evolution.util.math.Vec3d;
 import tgw.evolution.util.math.VectorUtil;
 
-import java.util.List;
 import java.util.Optional;
 
 @Mixin(VoxelShape.class)
-public abstract class MixinVoxelShape {
+public abstract class MixinVoxelShape implements PatchVoxelShape {
 
     @Shadow @Final protected DiscreteVoxelShape shape;
+    @Unique private @Nullable OList<AABB> cachedBoxes;
+
+    @Override
+    public @UnmodifiableView OList<AABB> cachedBoxes() {
+        if (this.cachedBoxes == null) {
+            this.makeCache();
+        }
+        return this.cachedBoxes;
+    }
 
     /**
      * @author TheGreatWolf
@@ -33,6 +44,12 @@ public abstract class MixinVoxelShape {
      */
     @Overwrite
     public @Nullable BlockHitResult clip(Vec3 start, Vec3 end, BlockPos pos) {
+        Evolution.deprecatedMethod();
+        return this.clip_(start, end, pos.getX(), pos.getY(), pos.getZ());
+    }
+
+    @Override
+    public @Nullable BlockHitResult clip_(Vec3 start, Vec3 end, int x, int y, int z) {
         if (this.isEmpty()) {
             return null;
         }
@@ -45,11 +62,44 @@ public abstract class MixinVoxelShape {
         double incX = start.x + dx * 0.001;
         double incY = start.y + dy * 0.001;
         double incZ = start.z + dz * 0.001;
-        return this.shape.isFullWide(this.findIndex(Direction.Axis.X, incX - pos.getX()),
-                                     this.findIndex(Direction.Axis.Y, incY - pos.getY()),
-                                     this.findIndex(Direction.Axis.Z, incZ - pos.getZ())) ?
-               new BlockHitResult(new Vec3d(incX, incY, incZ), Direction.getNearest(dx, dy, dz).getOpposite(), pos, true) :
-               AABB.clip(this.toAabbs(), start, end, pos);
+        if (this.shape.isFullWide(this.findIndex(Direction.Axis.X, incX - x),
+                                  this.findIndex(Direction.Axis.Y, incY - y),
+                                  this.findIndex(Direction.Axis.Z, incZ - z))) {
+            return PatchBlockHitResult.create(incX, incY, incZ, Direction.getNearest(dx, dy, dz).getOpposite(), x, y, z, true);
+        }
+        double[] ds = {1.0};
+        Direction[] direction = {null};
+        this.forAllBoxes((x0, y0, z0, x1, y1, z1) -> {
+            if (dx > 1.0E-7) {
+                direction[0] = AABB.clipPoint(ds, direction[0], dx, dy, dz,
+                                              x0 + x, y0 + y, y1 + y, z0 + z, z1 + z, Direction.WEST, start.x, start.y, start.z);
+            }
+            else if (dx < -1.0E-7) {
+                direction[0] = AABB.clipPoint(ds, direction[0], dx, dy, dz,
+                                              x1 + x, y0 + y, y1 + y, z0 + z, z1 + z, Direction.EAST, start.x, start.y, start.z);
+            }
+            if (dy > 1.0E-7) {
+                direction[0] = AABB.clipPoint(ds, direction[0], dy, dz, dx,
+                                              y0 + y, z0 + z, z1 + z, x0 + x, x1 + x, Direction.DOWN, start.y, start.z, start.x);
+            }
+            else if (dy < -1.0E-7) {
+                direction[0] = AABB.clipPoint(ds, direction[0], dy, dz, dx,
+                                              y1 + y, z0 + z, z1 + z, x0 + x, x1 + x, Direction.UP, start.y, start.z, start.x);
+            }
+            if (dz > 1.0E-7) {
+                direction[0] = AABB.clipPoint(ds, direction[0], dz, dx, dy,
+                                              z0 + z, x0 + x, x1 + x, y0 + y, y1 + y, Direction.NORTH, start.z, start.x, start.y);
+            }
+            else if (dz < -1.0E-7) {
+                direction[0] = AABB.clipPoint(ds, direction[0], dz, dx, dy,
+                                              z1 + z, x0 + x, x1 + x, y0 + y, y1 + y, Direction.SOUTH, start.z, start.x, start.y);
+            }
+        });
+        if (direction[0] == null) {
+            return null;
+        }
+        double dist = ds[0];
+        return PatchBlockHitResult.create(start.x + dist * dx, start.y + dist * dy, start.z + dist * dz, direction[0], x, y, z, false);
     }
 
     /**
@@ -173,6 +223,21 @@ public abstract class MixinVoxelShape {
     @Shadow
     public abstract boolean isEmpty();
 
+    @Unique
+    private void makeCache() {
+        if (this.isEmpty()) {
+            this.cachedBoxes = OList.emptyList();
+        }
+        else {
+            OList<AABB> list = new OArrayList<>();
+            this.forAllBoxes((x0, y0, z0, x1, y1, z1) -> {
+                list.add(new AABB(x0, y0, z0, x1, y1, z1));
+            });
+            list.trimCollection();
+            this.cachedBoxes = list.view();
+        }
+    }
+
     /**
      * @author TheGreatWolf
      * @reason Simplify and inline.
@@ -196,7 +261,4 @@ public abstract class MixinVoxelShape {
         int k = this.shape.firstFull(axis, i, j);
         return k >= this.shape.getSize(axis) ? Double.POSITIVE_INFINITY : this.get(axis, k);
     }
-
-    @Shadow
-    public abstract List<AABB> toAabbs();
 }

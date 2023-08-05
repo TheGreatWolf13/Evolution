@@ -8,7 +8,6 @@ import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.PaintingRenderer;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.decoration.Painting;
@@ -57,7 +56,6 @@ public abstract class MixinPaintingRenderer extends EntityRenderer<Painting> {
         int j = height / 16;
         double d0 = 16.0 / i;
         double d1 = 16.0 / j;
-        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
         for (int k = 0; k < i; ++k) {
             for (int l = 0; l < j; ++l) {
                 float f15 = f + (k + 1) * 16;
@@ -74,7 +72,7 @@ public abstract class MixinPaintingRenderer extends EntityRenderer<Painting> {
                     case SOUTH -> x = Mth.floor(painting.getX() - (f15 + f16) / 32.0F);
                     case EAST -> z = Mth.floor(painting.getZ() + (f15 + f16) / 32.0F);
                 }
-                int l1 = EvLevelRenderer.getLightColor(painting.level, mutablePos.set(x, y, z));
+                int l1 = EvLevelRenderer.getLightColor(painting.level, x, y, z);
                 float f19 = sprite.getU(d0 * (i - k));
                 float f20 = sprite.getU(d0 * (i - (k + 1)));
                 float f21 = sprite.getV(d1 * (j - l));

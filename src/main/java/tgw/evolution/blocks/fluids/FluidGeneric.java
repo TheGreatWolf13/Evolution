@@ -22,12 +22,14 @@ import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.init.EvolutionFluids;
-import tgw.evolution.util.math.*;
+import tgw.evolution.util.math.DirectionDiagonal;
+import tgw.evolution.util.math.DirectionDiagonalList;
+import tgw.evolution.util.math.DirectionList;
+import tgw.evolution.util.math.DirectionUtil;
 
 public abstract class FluidGeneric extends FlowingFluid {
     public static final byte FRESH_WATER = 1;
     public static final byte SALT_WATER = 2;
-    private final DirectionList auxList = new DirectionList();
     private final BlockPos.MutableBlockPos auxPos = new BlockPos.MutableBlockPos();
     private final BlockGenericFluid block;
     private final DirectionDiagonalList diagList = new DirectionDiagonalList();
@@ -238,20 +240,22 @@ public abstract class FluidGeneric extends FlowingFluid {
         if (this.tryFall(level, pos, fluidState)) {
             return;
         }
-        this.auxList.clear();
+        int list = 0;
         for (Direction direction : DirectionUtil.HORIZ_NESW) {
             if (BlockUtils.canBeReplacedByFluid(level.getBlockState(this.auxPos.set(pos).move(direction)))) {
-                this.auxList.add(direction);
+                list = DirectionList.add(list, direction);
             }
         }
-        if (this.auxList.isEmpty()) {
+        if (DirectionList.isEmpty(list)) {
             this.tryToLevel(level, pos, fluidState);
             return;
         }
         BlockState state = level.getBlockState(pos);
         int tolerance = getTolerance(level, pos);
-        while (!this.auxList.isEmpty()) {
-            Direction direction = this.auxList.getRandomAndRemove(MathHelper.RANDOM);
+        while (!DirectionList.isEmpty(list)) {
+            int index = DirectionList.getRandom(list, level.random);
+            Direction direction = DirectionList.get(list, index);
+            list = DirectionList.remove(list, index);
             if (!canSendToOrReceiveFrom(state, direction)) {
                 continue;
             }
@@ -335,9 +339,11 @@ public abstract class FluidGeneric extends FlowingFluid {
         FluidState fluidDown = level.getFluidState(this.auxPos);
         if (this == fluidDown.getType()) {
             this.diagList.clear();
-            this.auxList.fillHorizontal();
-            while (!this.auxList.isEmpty()) {
-                Direction direction = this.auxList.getRandomAndRemove(MathHelper.RANDOM);
+            int list = DirectionList.fillHorizontal();
+            while (!DirectionList.isEmpty(list)) {
+                int index = DirectionList.getRandom(list, level.random);
+                Direction direction = DirectionList.get(list, index);
+                list = DirectionList.remove(list, index);
                 if (!canSendToOrReceiveFrom(stateDown, direction)) {
                     continue;
                 }
@@ -388,7 +394,7 @@ public abstract class FluidGeneric extends FlowingFluid {
                 }
             }
             while (!this.diagList.isEmpty()) {
-                DirectionDiagonal diagonal = this.diagList.getRandomAndRemove(MathHelper.RANDOM);
+                DirectionDiagonal diagonal = this.diagList.getRandomAndRemove(level.random);
                 diagonal.movePos(this.auxPos.set(pos).move(Direction.DOWN));
                 FluidState fluidAtPos = level.getFluidState(this.auxPos);
                 if (this == fluidAtPos.getType()) {

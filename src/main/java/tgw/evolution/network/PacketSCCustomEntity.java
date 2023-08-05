@@ -8,14 +8,15 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.phys.Vec3;
-import org.jetbrains.annotations.Nullable;
-import tgw.evolution.entities.IEntityPacket;
+import tgw.evolution.entities.IEntitySpawnData;
+import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.patches.PatchClientPacketListener;
 
 import java.util.UUID;
 
-public class PacketSCCustomEntity<T extends Entity & IEntityPacket<T>> implements Packet<ClientGamePacketListener> {
+public class PacketSCCustomEntity<T extends Entity & IEntitySpawnData> implements Packet<ClientGamePacketListener> {
 
+    public final IEntitySpawnData.EntityData<T> data;
     public final int id;
     public final EntityType<T> type;
     public final UUID uuid;
@@ -27,11 +28,8 @@ public class PacketSCCustomEntity<T extends Entity & IEntityPacket<T>> implement
     public final double y;
     public final float yRot;
     public final double z;
-    private final @Nullable FriendlyByteBuf buf;
-    private final @Nullable T entity;
 
     public PacketSCCustomEntity(T entity) {
-        this.entity = entity;
         this.id = entity.getId();
         this.uuid = entity.getUUID();
         this.x = entity.getX();
@@ -44,11 +42,10 @@ public class PacketSCCustomEntity<T extends Entity & IEntityPacket<T>> implement
         this.vx = velocity.x;
         this.vy = velocity.y;
         this.vz = velocity.z;
-        this.buf = null;
+        this.data = entity.getSpawnData();
     }
 
     public PacketSCCustomEntity(FriendlyByteBuf buf) {
-        this.buf = buf;
         this.id = buf.readVarInt();
         this.uuid = buf.readUUID();
         this.type = (EntityType<T>) Registry.ENTITY_TYPE.byId(buf.readVarInt());
@@ -60,12 +57,7 @@ public class PacketSCCustomEntity<T extends Entity & IEntityPacket<T>> implement
         this.vx = buf.readShort() / 8_000.0;
         this.vy = buf.readShort() / 8_000.0;
         this.vz = buf.readShort() / 8_000.0;
-        this.entity = null;
-    }
-
-    public FriendlyByteBuf getBuffer() {
-        assert this.buf != null;
-        return this.buf;
+        this.data = EvolutionNetwork.readData(buf.readVarInt(), buf);
     }
 
     @Override
@@ -86,7 +78,7 @@ public class PacketSCCustomEntity<T extends Entity & IEntityPacket<T>> implement
         buf.writeShort((int) (Mth.clamp(this.vx, -4, 4) * 8_000));
         buf.writeShort((int) (Mth.clamp(this.vy, -4, 4) * 8_000));
         buf.writeShort((int) (Mth.clamp(this.vz, -4, 4) * 8_000));
-        assert this.entity != null;
-        this.entity.writeData(this.entity, buf);
+        buf.writeVarInt(EvolutionNetwork.getId(this.data));
+        this.data.writeToBuffer(buf);
     }
 }

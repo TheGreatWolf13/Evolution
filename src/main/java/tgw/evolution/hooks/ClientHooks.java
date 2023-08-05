@@ -5,7 +5,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
-import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Inventory;
@@ -44,24 +43,23 @@ public final class ClientHooks {
         boolean isCreative = player.getAbilities().instabuild;
         BlockEntity te = null;
         if (target.getType() == HitResult.Type.BLOCK) {
-            BlockPos pos = ((BlockHitResult) target).getBlockPos();
-            BlockState state = level.getBlockState(pos);
+            BlockHitResult blockHitResult = (BlockHitResult) target;
+            int x = blockHitResult.posX();
+            int y = blockHitResult.posY();
+            int z = blockHitResult.posZ();
+            BlockState state = level.getBlockState_(x, y, z);
             if (state.isAir()) {
                 return;
             }
             if (isCreative && Screen.hasControlDown() && state.hasBlockEntity()) {
-                te = level.getBlockEntity(pos);
+                te = level.getBlockEntity_(x, y, z);
             }
-            result = state.getBlock().getCloneItemStack(state, target, level, pos, player);
-            if (result.isEmpty()) {
-                Evolution.warn("Picking on: [{}] {} gave null item", target.getType(), state.getBlock());
-                return;
-            }
+            result = state.getBlock().getCloneItemStack(state, target, level, x, y, z, player);
         }
         else if (target.getType() == HitResult.Type.ENTITY) {
             Entity entity = ((EntityHitResult) target).getEntity();
             result = entity.getPickResult();
-            if (result == null || result.isEmpty()) {
+            if (result == null) {
                 Evolution.warn("Picking on: [{}] {} gave null item", target.getType(), entity.getType());
                 return;
             }

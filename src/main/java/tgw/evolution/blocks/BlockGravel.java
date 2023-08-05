@@ -1,6 +1,5 @@
 package tgw.evolution.blocks;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -20,7 +19,7 @@ public class BlockGravel extends BlockPhysics implements IRockVariant, ISloppabl
     }
 
     @Override
-    public boolean canSlope(BlockGetter level, BlockPos pos) {
+    public boolean canSlope(BlockGetter level, int x, int y, int z) {
         return true;
     }
 
@@ -40,7 +39,7 @@ public class BlockGravel extends BlockPhysics implements IRockVariant, ISloppabl
     }
 
     @Override
-    public double getMass(Level level, BlockPos pos, BlockState state) {
+    public double getMass(Level level, int x, int y, int z, BlockState state) {
         return this.rockVariant().getMass() / 2;
     }
 

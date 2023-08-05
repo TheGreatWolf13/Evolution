@@ -82,7 +82,7 @@ public class EntityTorch extends EntityGenericProjectile {
     }
 
     @Override
-    protected void onBlockHit(BlockState state) {
+    protected void onBlockHit(BlockState state, int x, int y, int z) {
     }
 
     @Override
@@ -93,7 +93,8 @@ public class EntityTorch extends EntityGenericProjectile {
         if (player != null) {
             Evolution.usingPlaceholder(player, "sound");
         }
-        BlockUtils.dropItemStack(this.level, this.blockPosition(), this.getArrowStack());
+        BlockPos pos = this.blockPosition();
+        BlockUtils.dropItemStack(this.level, pos.getX(), pos.getY(), pos.getZ(), this.getArrowStack());
         this.discard();
         return true;
     }
@@ -117,9 +118,12 @@ public class EntityTorch extends EntityGenericProjectile {
         super.tick();
         if (this.isInWater()) {
             BlockPos pos = this.blockPosition();
+            int x = pos.getX();
+            int y = pos.getY();
+            int z = pos.getZ();
             this.level.playSound(null, pos, SoundEvents.FIRE_EXTINGUISH, SoundSource.BLOCKS, 1.0F,
                                  2.6F + (this.random.nextFloat() - this.random.nextFloat()) * 0.8F);
-            BlockUtils.dropItemStack(this.level, pos, new ItemStack(EvolutionItems.TORCH_UNLIT));
+            BlockUtils.dropItemStack(this.level, x, y, z, new ItemStack(EvolutionItems.TORCH_UNLIT));
             this.discard();
             return;
         }
@@ -138,14 +142,17 @@ public class EntityTorch extends EntityGenericProjectile {
             return;
         }
         BlockPos pos = this.blockPosition();
-        if (this.level.isEmptyBlock(pos)) {
+        int x = pos.getX();
+        int y = pos.getY();
+        int z = pos.getZ();
+        if (this.level.isEmptyBlock_(x, y, z)) {
             BlockHitResult hitResult = MathHelper.rayTraceBlocksFromYawAndPitch(this, 1, false);
             Direction face = hitResult.getDirection();
-            if (BlockUtils.hasSolidSide(this.level, pos.relative(face.getOpposite()), face)) {
+            if (BlockUtils.hasSolidFaceAtSide(this.level, x, y, z, face.getOpposite())) {
                 if (face == Direction.UP) {
                     BlockState state = EvolutionBlocks.TORCH.defaultBlockState();
                     this.level.setBlockAndUpdate(pos, state);
-                    BlockEntity tile = this.level.getBlockEntity(pos);
+                    BlockEntity tile = this.level.getBlockEntity_(x, y, z);
                     if (tile instanceof TETorch teTorch) {
                         teTorch.setTimePlaced(this.timeCreated);
                     }
@@ -153,6 +160,6 @@ public class EntityTorch extends EntityGenericProjectile {
                 }
             }
         }
-        BlockUtils.dropItemStack(this.level, pos, this.getArrowStack());
+        BlockUtils.dropItemStack(this.level, x, y, z, this.getArrowStack());
     }
 }

@@ -11,9 +11,7 @@ import org.spongepowered.asm.mixin.Shadow;
 public abstract class MixinVec3 {
 
     @Shadow @Final public double x;
-
     @Shadow @Final public double y;
-
     @Shadow @Final public double z;
 
     /**

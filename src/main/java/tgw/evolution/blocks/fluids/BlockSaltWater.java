@@ -21,7 +21,7 @@ public class BlockSaltWater extends BlockGenericFluid {
     }
 
     @Override
-    public double getMass(Level level, BlockPos pos, BlockState state) {
+    public double getMass(Level level, int x, int y, int z, BlockState state) {
         return state.getValue(LEVEL) * (1_023 / 8.0);
     }
 

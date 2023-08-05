@@ -4,9 +4,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
@@ -18,7 +19,6 @@ import net.minecraft.world.level.material.Material;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
@@ -40,40 +40,27 @@ public class BlockFirewoodPile extends BlockPhysics implements IReplaceable, Ent
     }
 
     @Override
-    public void attack(BlockState state, Level level, BlockPos pos, Player player) {
+    public void attack_(BlockState state, Level level, int x, int y, int z, Direction face, double hitX, double hitY, double hitZ, Player player) {
         if (level.isClientSide) {
             return;
         }
-        if (Math.abs(pos.getX() + 0.5 - player.getX()) < 1.75 &&
-            Math.abs(pos.getY() - player.getY()) < 1.75 &&
-            Math.abs(pos.getZ() + 0.5 - player.getZ()) < 1.75) {
-            TEFirewoodPile tile = (TEFirewoodPile) level.getBlockEntity(pos);
-            assert tile != null;
+        if (Math.abs(x + 0.5 - player.getX()) < 1.75 &&
+            Math.abs(y - player.getY()) < 1.75 &&
+            Math.abs(z + 0.5 - player.getZ()) < 1.75 && level.getBlockEntity_(x, y, z) instanceof TEFirewoodPile tile) {
             ItemStack stack = new ItemStack(tile.removeLastFirewood());
             if (!player.getInventory().add(stack)) {
-                BlockUtils.dropItemStack(level, pos, stack);
+                BlockUtils.dropItemStack(level, x, y, z, stack);
             }
             else {
-                level.playSound(null, pos.getX() + 0.5f, pos.getY() + 0.5f, pos.getZ() + 0.5f, SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, 0.2f,
+                level.playSound(null, x + 0.5, y + 0.5, z + 0.5, SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, 0.2f,
                                 ((level.random.nextFloat() - level.random.nextFloat()) * 0.7f + 1) * 2);
             }
             if (state.getValue(FIREWOOD_COUNT) == 1) {
-                level.removeBlock(pos, false);
+                level.removeBlock(new BlockPos(x, y, z), false);
                 return;
             }
-            level.setBlockAndUpdate(pos, state.setValue(FIREWOOD_COUNT, state.getValue(FIREWOOD_COUNT) - 1));
+            level.setBlockAndUpdate(new BlockPos(x, y, z), state.setValue(FIREWOOD_COUNT, state.getValue(FIREWOOD_COUNT) - 1));
         }
-    }
-
-    @Override
-    public boolean canBeReplaced(BlockState state, BlockPlaceContext context) {
-        if (state.getValue(FIREWOOD_COUNT) < 16) {
-            ItemStack stack = context.getItemInHand();
-            if (stack.getItem() instanceof ItemFirewood) {
-                return true;
-            }
-        }
-        return super.canBeReplaced(state, context);
     }
 
     @Override
@@ -87,9 +74,26 @@ public class BlockFirewoodPile extends BlockPhysics implements IReplaceable, Ent
     }
 
     @Override
-    public boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
-        return (state.getValue(FIREWOOD_COUNT) == 16 || BlockUtils.isReplaceable(level.getBlockState(pos.above()))) &&
-               BlockUtils.hasSolidSide(level, pos.below(), Direction.UP);
+    public boolean canBeReplaced_(BlockState state,
+                                  Level level,
+                                  int x,
+                                  int y,
+                                  int z,
+                                  Player player,
+                                  InteractionHand hand,
+                                  BlockHitResult hitResult) {
+        if (state.getValue(FIREWOOD_COUNT) < 16) {
+            if (player.getItemInHand(hand).getItem() instanceof ItemFirewood) {
+                return true;
+            }
+        }
+        return super.canBeReplaced_(state, level, x, y, z, player, hand, hitResult);
+    }
+
+    @Override
+    public boolean canSurvive_(BlockState state, LevelReader level, int x, int y, int z) {
+        return (state.getValue(FIREWOOD_COUNT) == 16 || BlockUtils.isReplaceable(level.getBlockState_(x, y + 1, z))) &&
+               BlockUtils.hasSolidFace(level, x, y - 1, z, Direction.UP);
     }
 
     @Override
@@ -98,39 +102,34 @@ public class BlockFirewoodPile extends BlockPhysics implements IReplaceable, Ent
     }
 
     @Override
-    public ItemStack getCloneItemStack(BlockGetter blockGetter, BlockPos blockPos, BlockState blockState) {
-        //TODO implementation
-        return super.getCloneItemStack(blockGetter, blockPos, blockState);
-    }
-
-    @Override
-    public ItemStack getCloneItemStack(BlockState state, HitResult target, BlockGetter level, BlockPos pos, Player player) {
-        TEFirewoodPile tile = (TEFirewoodPile) level.getBlockEntity(pos);
-        assert tile != null;
-        if (target instanceof BlockHitResult hit) {
-            Vec3 location = hit.getLocation();
-            int y = (int) ((location.y - pos.getY() + 0.001) * 16) / 4;
-            Direction stateDirection = state.getValue(DIRECTION_HORIZONTAL);
-            int x;
-            if (stateDirection.getAxis() == Direction.Axis.Z) {
-                x = (int) ((location.x - pos.getX() + 0.001) * 16) / 4;
+    public ItemStack getCloneItemStack(BlockState state, HitResult target, BlockGetter level, int x, int y, int z, Player player) {
+        if (level.getBlockEntity_(x, y, z) instanceof TEFirewoodPile tile) {
+            if (target instanceof BlockHitResult hit) {
+                Vec3 location = hit.getLocation();
+                int hitY = (int) ((location.y - y + 0.001) * 16) / 4;
+                Direction stateDirection = state.getValue(DIRECTION_HORIZONTAL);
+                int hitX;
+                if (stateDirection.getAxis() == Direction.Axis.Z) {
+                    hitX = (int) ((location.x - x + 0.001) * 16) / 4;
+                }
+                else {
+                    hitX = (int) ((location.z - z + 0.001) * 16) / 4;
+                }
+                Direction hitDirection = hit.getDirection();
+                if (hitDirection == Direction.UP) {
+                    hitY--;
+                }
+                else if (hitDirection.getAxisDirection() == Direction.AxisDirection.POSITIVE && hitDirection.getAxis() != stateDirection.getAxis()) {
+                    hitX--;
+                }
+                if (stateDirection == Direction.SOUTH || stateDirection == Direction.WEST) {
+                    hitX = 3 - hitX;
+                }
+                return new ItemStack(tile.getFirewoodAt(4 * hitY + hitX));
             }
-            else {
-                x = (int) ((location.z - pos.getZ() + 0.001) * 16) / 4;
-            }
-            Direction hitDirection = hit.getDirection();
-            if (hitDirection == Direction.UP) {
-                y--;
-            }
-            else if (hitDirection.getAxisDirection() == Direction.AxisDirection.POSITIVE && hitDirection.getAxis() != stateDirection.getAxis()) {
-                x--;
-            }
-            if (stateDirection == Direction.SOUTH || stateDirection == Direction.WEST) {
-                x = 3 - x;
-            }
-            return new ItemStack(tile.getFirewoodAt(4 * y + x));
+            return new ItemStack(tile.getFirewoodAt(0));
         }
-        return new ItemStack(tile.getFirewoodAt(0));
+        return ItemStack.EMPTY;
     }
 
     @Override
@@ -139,21 +138,20 @@ public class BlockFirewoodPile extends BlockPhysics implements IReplaceable, Ent
     }
 
     @Override
-    public int getHarvestLevel(BlockState state, @Nullable Level level, @Nullable BlockPos pos) {
+    public int getHarvestLevel(BlockState state, Level level, int x, int y, int z) {
         return HarvestLevel.UNBREAKABLE;
     }
 
     @Override
-    public double getMass(Level level, BlockPos pos, BlockState state) {
-        BlockEntity tile = level.getBlockEntity(pos);
-        if (tile instanceof TEFirewoodPile te) {
+    public double getMass(Level level, int x, int y, int z, BlockState state) {
+        if (level.getBlockEntity_(x, y, z) instanceof TEFirewoodPile te) {
             return te.calculateMass();
         }
         return 0;
     }
 
     @Override
-    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+    public VoxelShape getShape_(BlockState state, BlockGetter level, int x, int y, int z, @Nullable Entity entity) {
         int logCount = state.getValue(FIREWOOD_COUNT);
         if (logCount == 16) {
             return Shapes.block();
@@ -188,14 +186,14 @@ public class BlockFirewoodPile extends BlockPhysics implements IReplaceable, Ent
     }
 
     @Override
-    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+    public void onRemove_(BlockState state, Level level, int x, int y, int z, BlockState newState, boolean isMoving) {
         if (!state.is(newState.getBlock())) {
-            BlockEntity tile = level.getBlockEntity(pos);
+            BlockEntity tile = level.getBlockEntity_(x, y, z);
             if (tile instanceof TEFirewoodPile te) {
-                te.dropAll(level, pos);
+                te.dropAll(level, x, y, z);
             }
         }
-        super.onRemove(state, level, pos, newState, isMoving);
+        super.onRemove_(state, level, x, y, z, newState, isMoving);
     }
 
     @Override

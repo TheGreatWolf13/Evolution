@@ -5,7 +5,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -38,8 +37,14 @@ public class BlockPuzzle extends DirectionalBlock implements EntityBlock, GameMa
     }
 
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext context) {
-        return this.defaultBlockState().setValue(EvolutionBStates.DIRECTION, context.getClickedFace());
+    public @Nullable BlockState getStateForPlacement_(Level level,
+                                                      int x,
+                                                      int y,
+                                                      int z,
+                                                      Player player,
+                                                      InteractionHand hand,
+                                                      BlockHitResult hitResult) {
+        return this.defaultBlockState().setValue(EvolutionBStates.DIRECTION, hitResult.getDirection());
     }
 
     @Override
@@ -59,9 +64,8 @@ public class BlockPuzzle extends DirectionalBlock implements EntityBlock, GameMa
     }
 
     @Override
-    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
-        BlockEntity tile = level.getBlockEntity(pos);
-        if (tile instanceof TEPuzzle tePuzzle && player.canUseGameMasterBlocks()) {
+    public InteractionResult use_(BlockState state, Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hit) {
+        if (player.canUseGameMasterBlocks() && level.getBlockEntity_(x, y, z) instanceof TEPuzzle tePuzzle) {
             if (level.isClientSide) {
                 ScreenPuzzle.open(tePuzzle);
             }

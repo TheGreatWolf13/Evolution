@@ -4,6 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.FluidTags;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -19,9 +20,9 @@ import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.level.storage.loot.LootContext;
-import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.BlockPhysics;
 import tgw.evolution.blocks.IBlockFluidContainer;
@@ -31,9 +32,7 @@ import tgw.evolution.blocks.util.IntProperty;
 import tgw.evolution.init.EvolutionBStates;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
-import tgw.evolution.util.math.DirectionList;
 import tgw.evolution.util.math.DirectionUtil;
-import tgw.evolution.util.math.MathHelper;
 
 import java.util.Collections;
 import java.util.List;
@@ -135,7 +134,7 @@ public abstract class BlockGenericFluid extends BlockPhysics implements IBlockFl
     }
 
     @Override
-    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+    public VoxelShape getShape_(BlockState state, BlockGetter level, int x, int y, int z, @Nullable Entity entity) {
         return Shapes.empty();
     }
 
@@ -162,69 +161,83 @@ public abstract class BlockGenericFluid extends BlockPhysics implements IBlockFl
     }
 
     @Override
-    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
-        if (this.reactWithNeighbors(level, pos)) {
-            BlockUtils.scheduleFluidTick(level, pos);
+    public void neighborChanged_(BlockState state,
+                                 Level level,
+                                 int x,
+                                 int y,
+                                 int z,
+                                 Block oldBlock,
+                                 int fromX,
+                                 int fromY,
+                                 int fromZ,
+                                 boolean isMoving) {
+        if (this.reactWithNeighbors(level, x, y, z)) {
+            BlockUtils.scheduleFluidTick(level, new BlockPos(x, y, z));
         }
     }
 
     @Override
-    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
-        if (this.reactWithNeighbors(level, pos)) {
-            BlockUtils.scheduleFluidTick(level, pos);
+    public void onPlace_(BlockState state, Level level, int x, int y, int z, BlockState oldState, boolean isMoving) {
+        if (this.reactWithNeighbors(level, x, y, z)) {
+            BlockUtils.scheduleFluidTick(level, new BlockPos(x, y, z));
         }
     }
 
     @Override
-    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
-        if (isMoving) {
-            return;
-        }
-        Block newBlock = newState.getBlock();
-        if (newBlock instanceof BlockGenericFluid || newBlock == Blocks.AIR) {
-            return;
-        }
-        FluidState fluidState;
-        if (!(state.getBlock() instanceof BlockGenericFluid)) {
-            fluidState = level.getFluidState(pos);
-        }
-        else {
-            fluidState = state.getFluidState();
-        }
-        int currentAmount = getFluidAmount(level, pos, state, fluidState);
-        if (currentAmount == 0) {
-            return;
-        }
-        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
-        DirectionList list = new DirectionList();
-        list.fillHorizontal();
-        //Try placing liquid to the sides
-        while (!list.isEmpty()) {
-            currentAmount = this.tryDisplaceToDirection(level, pos, list.getRandomAndRemove(MathHelper.RANDOM), currentAmount, 16);
-            if (currentAmount == 0) {
-                return;
-            }
-        }
-        mutablePos.set(pos);
-        //try placing liquid up
-        currentAmount = this.tryDisplaceToDirection(level, pos, Direction.UP, currentAmount, 255 - pos.getY());
-        if (currentAmount == 0) {
-            return;
-        }
+    public void onRemove_(BlockState state, Level level, int x, int y, int z, BlockState newState, boolean isMoving) {
+        //todo
+//        if (isMoving) {
+//            return;
+//        }
+//        Block newBlock = newState.getBlock();
+//        if (newBlock instanceof BlockGenericFluid || newBlock == Blocks.AIR) {
+//            return;
+//        }
+//        FluidState fluidState;
+//        if (!(state.getBlock() instanceof BlockGenericFluid)) {
+//            fluidState = level.getFluidState_(x, y, z);
+//        }
+//        else {
+//            fluidState = state.getFluidState();
+//        }
+//        int currentAmount = getFluidAmount(level, pos, state, fluidState);
+//        if (currentAmount == 0) {
+//            return;
+//        }
+//        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
+//        int list = DirectionList.fillHorizontal();
+//        //Try placing liquid to the sides
+//        while (!DirectionList.isEmpty(list)) {
+//            int index = DirectionList.getRandom(list, level.random);
+//            Direction dir = DirectionList.get(list, index);
+//            list = DirectionList.remove(list, index);
+//            currentAmount = this.tryDisplaceToDirection(level, pos, dir, currentAmount, 16);
+//            if (currentAmount == 0) {
+//                return;
+//            }
+//        }
+//        mutablePos.set(pos);
+//        //try placing liquid up
+//        currentAmount = this.tryDisplaceToDirection(level, pos, Direction.UP, currentAmount, 255 - pos.getY());
+//        if (currentAmount == 0) {
+//            return;
+//        }
 //        CapabilityChunkStorage.add(level.getChunkAt(pos), EnumStorage.WATER, currentAmount);
     }
 
     @Override
-    public boolean propagatesSkylightDown(BlockState state, BlockGetter level, BlockPos pos) {
+    public boolean propagatesSkylightDown_(BlockState state, BlockGetter level, int x, int y, int z) {
         return false;
     }
 
     @Override
-    public void randomTick(BlockState state, ServerLevel level, BlockPos pos, Random random) {
-        level.getFluidState(pos).randomTick(level, pos, random);
+    public void randomTick_(BlockState state, ServerLevel level, int x, int y, int z, Random random) {
+        level.getFluidState_(x, y, z).randomTick(level, new BlockPos(x, y, z), random);
     }
 
-    public boolean reactWithNeighbors(Level level, BlockPos pos) {
+    public boolean reactWithNeighbors(Level level, int x, int y, int z) {
+        //todo
+        BlockPos pos = new BlockPos(x, y, z);
         if (this.getFluid().is(FluidTags.LAVA)) {
             boolean flag = false;
             for (Direction direction : DirectionUtil.ALL) {
@@ -315,13 +328,17 @@ public abstract class BlockGenericFluid extends BlockPhysics implements IBlockFl
     }
 
     @Override
-    public BlockState updateShape(BlockState state,
-                                  Direction direction,
-                                  BlockState fromState,
-                                  LevelAccessor level,
-                                  BlockPos pos,
-                                  BlockPos fromPos) {
-        BlockUtils.scheduleFluidTick(level, pos);
-        return super.updateShape(state, direction, fromState, level, pos, fromPos);
+    public BlockState updateShape_(BlockState state,
+                                   Direction from,
+                                   BlockState fromState,
+                                   LevelAccessor level,
+                                   int x,
+                                   int y,
+                                   int z,
+                                   int fromX,
+                                   int fromY,
+                                   int fromZ) {
+        BlockUtils.scheduleFluidTick(level, new BlockPos(x, y, z));
+        return super.updateShape_(state, from, fromState, level, x, y, z, fromX, fromY, fromZ);
     }
 }

@@ -2,6 +2,7 @@ package tgw.evolution.mixin;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.lighting.LevelLightEngine;
 import org.spongepowered.asm.mixin.Mixin;
@@ -11,7 +12,18 @@ import tgw.evolution.Evolution;
 import tgw.evolution.patches.PatchBlockAndTintGetter;
 
 @Mixin(BlockAndTintGetter.class)
-public interface MixinBlockAndTintGetter extends PatchBlockAndTintGetter {
+public interface MixinBlockAndTintGetter extends BlockGetter, PatchBlockAndTintGetter {
+
+    @Overwrite
+    default boolean canSeeSky(BlockPos pos) {
+        Evolution.deprecatedMethod();
+        return this.canSeeSky_(pos.asLong());
+    }
+
+    @Override
+    default boolean canSeeSky_(long pos) {
+        return this.getBrightness_(LightLayer.SKY, pos) >= this.getMaxLightLevel();
+    }
 
     @Overwrite
     default int getBrightness(LightLayer lightLayer, BlockPos pos) {
@@ -33,7 +45,7 @@ public interface MixinBlockAndTintGetter extends PatchBlockAndTintGetter {
     }
 
     @Override
-    default int getRawBrightness_(long pos, int subtractedSkyLight) {
-        return this.getLightEngine().getRawBrightness_(pos, subtractedSkyLight);
+    default int getRawBrightness_(long pos, int skyDarken) {
+        return this.getLightEngine().getRawBrightness_(pos, skyDarken);
     }
 }

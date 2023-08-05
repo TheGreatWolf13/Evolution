@@ -39,7 +39,7 @@ public class OArrayFIFOQueue<K> extends ObjectArrayFIFOQueue<K> {
             throw new IllegalStateException("Can only enqueue many while empty!");
         }
         int size = list.size();
-        this.ensureCapacity(size);
+        this.ensureCapacity(size + 1);
         this.start = 0;
         this.end = size;
         list.getElements(0, this.array, 0, size);
@@ -50,5 +50,6 @@ public class OArrayFIFOQueue<K> extends ObjectArrayFIFOQueue<K> {
             return;
         }
         this.array = ObjectArrays.ensureCapacity(this.array, capacity, 0);
+        this.length = this.array.length;
     }
 }

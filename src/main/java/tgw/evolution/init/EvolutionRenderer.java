@@ -16,7 +16,7 @@ public final class EvolutionRenderer {
     public static void registryEntityRenders() {
         //Entities
 //        EntityRenderers.register(EvolutionEntities.COW, RenderCow::new);
-        EntityRenderers.register(EvolutionEntities.FALLING_PEAT, RenderFallingPeat::new);
+//        EntityRenderers.register(EvolutionEntities.FALLING_PEAT, RenderFallingPeat::new);
         EntityRenderers.register(EvolutionEntities.FALLING_WEIGHT, RenderFallingWeight::new);
         EntityRenderers.register(EvolutionEntities.HOOK, RenderHook::new);
         EntityRenderers.register(EvolutionEntities.PLAYER_CORPSE, RenderPlayerCorpse::new);

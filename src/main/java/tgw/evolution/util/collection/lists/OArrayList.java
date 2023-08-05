@@ -3,12 +3,16 @@ package tgw.evolution.util.collection.lists;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectCollection;
 import it.unimi.dsi.fastutil.objects.ObjectListIterator;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnmodifiableView;
 import tgw.evolution.Evolution;
 
 import java.util.Arrays;
 import java.util.Collection;
 
 public class OArrayList<K> extends ObjectArrayList<K> implements OList<K> {
+
+    protected @Nullable OList<K> view;
 
     public OArrayList(Collection<? extends K> c) {
         super(c);
@@ -65,5 +69,13 @@ public class OArrayList<K> extends ObjectArrayList<K> implements OList<K> {
     @Override
     public void trimCollection() {
         this.trim();
+    }
+
+    @Override
+    public @UnmodifiableView OList<K> view() {
+        if (this.view == null) {
+            this.view = new View<>(this);
+        }
+        return this.view;
     }
 }

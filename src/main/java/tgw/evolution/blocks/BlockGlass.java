@@ -11,7 +11,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Material;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.EvolutionClient;
-import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.network.PacketCSCollision;
 
@@ -36,7 +35,7 @@ public class BlockGlass extends BlockGeneric implements ICollisionBlock {
         }
         double energyDensity = kineticEnergy / area;
         if (energyDensity >= 5_000 * 400) {
-            BlockUtils.destroyBlock(level, new BlockPos(x, y, z));
+            level.destroyBlock_(x, y, z, true);
             return true;
         }
         return false;
@@ -60,7 +59,7 @@ public class BlockGlass extends BlockGeneric implements ICollisionBlock {
     }
 
     @Override
-    public float getShadeBrightness(BlockState state, BlockGetter level, BlockPos pos) {
+    public float getShadeBrightness_(BlockState state, BlockGetter level, int x, int y, int z) {
         return 1.0F;
     }
 
@@ -75,7 +74,7 @@ public class BlockGlass extends BlockGeneric implements ICollisionBlock {
     }
 
     @Override
-    public boolean propagatesSkylightDown(BlockState state, BlockGetter level, BlockPos pos) {
+    public boolean propagatesSkylightDown_(BlockState state, BlockGetter level, int x, int y, int z) {
         return true;
     }
 

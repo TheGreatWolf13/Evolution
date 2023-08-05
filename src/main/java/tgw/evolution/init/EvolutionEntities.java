@@ -5,7 +5,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.biome.Biome;
 import tgw.evolution.Evolution;
-import tgw.evolution.entities.misc.EntityFallingPeat;
 import tgw.evolution.entities.misc.EntityFallingWeight;
 import tgw.evolution.entities.misc.EntityPlayerCorpse;
 import tgw.evolution.entities.misc.EntitySittable;
@@ -19,7 +18,7 @@ public final class EvolutionEntities {
 
     //Entities
 //    public static final EntityType<EntityCow> COW;
-    public static final EntityType<EntityFallingPeat> FALLING_PEAT;
+//    public static final EntityType<EntityFallingPeat> FALLING_PEAT;
     public static final EntityType<EntityFallingWeight> FALLING_WEIGHT;
     public static final EntityType<EntityHook> HOOK;
     public static final EntityType<EntityPlayerCorpse> PLAYER_CORPSE;
@@ -29,7 +28,7 @@ public final class EvolutionEntities {
 
     static {
 //        COW = register("cow", EntityType.Builder.of(EntityCow::new, CREATURE).sized(0.9f, 1.4f));
-        FALLING_PEAT = register("falling_peat", EntityType.Builder.<EntityFallingPeat>of(EntityFallingPeat::new, MISC).sized(1.0F, 1.0F));
+//        FALLING_PEAT = register("falling_peat", EntityType.Builder.<EntityFallingPeat>of(EntityFallingPeat::new, MISC).sized(1.0F, 1.0F));
         FALLING_WEIGHT = register("falling_weight", EntityType.Builder.<EntityFallingWeight>of(EntityFallingWeight::new, MISC).sized(1.0F, 1.0F));
         HOOK = register("hook", EntityType.Builder.<EntityHook>of(EntityHook::new, MISC).sized(0.5f, 0.5f));
         PLAYER_CORPSE = register("player_corpse", EntityType.Builder.<EntityPlayerCorpse>of(EntityPlayerCorpse::new, MISC).sized(0.9F, 0.4F));

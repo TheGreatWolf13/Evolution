@@ -2,7 +2,9 @@ package tgw.evolution.blocks;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
@@ -11,7 +13,7 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.material.Material;
-import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
@@ -54,9 +56,8 @@ public class BlockMoldClay extends BlockGeneric implements IReplaceable {
     }
 
     @Override
-    public boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
-        BlockState up = level.getBlockState(pos.above());
-        return BlockUtils.isReplaceable(up) && BlockUtils.hasSolidSide(level, pos.below(), Direction.UP);
+    public boolean canSurvive_(BlockState state, LevelReader level, int x, int y, int z) {
+        return BlockUtils.isReplaceable(level.getBlockState_(x, y + 1, z)) && BlockUtils.hasSolidFace(level, x, y - 1, z, Direction.UP);
     }
 
     @Override
@@ -70,7 +71,7 @@ public class BlockMoldClay extends BlockGeneric implements IReplaceable {
     }
 
     @Override
-    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+    public VoxelShape getShape_(BlockState state, BlockGetter level, int x, int y, int z, @Nullable Entity entity) {
         if (this.layers != 0) {
             return EvolutionShapes.MOLD_CLAY[this.layers - 1];
         }
@@ -83,11 +84,17 @@ public class BlockMoldClay extends BlockGeneric implements IReplaceable {
     }
 
     @Override
-    public @Nullable BlockState getStateForPlacement(BlockPlaceContext context) {
-        if (context.isSecondaryUseActive()) {
+    public @Nullable BlockState getStateForPlacement_(Level level,
+                                                      int x,
+                                                      int y,
+                                                      int z,
+                                                      Player player,
+                                                      InteractionHand hand,
+                                                      BlockHitResult hitResult) {
+        if (player.isSecondaryUseActive()) {
             return null;
         }
-        return this.defaultBlockState().setValue(DIRECTION_HORIZONTAL, context.getHorizontalDirection());
+        return this.defaultBlockState().setValue(DIRECTION_HORIZONTAL, player.getDirection());
     }
 
     @Override
@@ -96,9 +103,19 @@ public class BlockMoldClay extends BlockGeneric implements IReplaceable {
     }
 
     @Override
-    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+    public void neighborChanged_(BlockState state,
+                                 Level level,
+                                 int x,
+                                 int y,
+                                 int z,
+                                 Block oldBlock,
+                                 int fromX,
+                                 int fromY,
+                                 int fromZ,
+                                 boolean isMoving) {
         if (!level.isClientSide) {
-            if (!state.canSurvive(level, pos)) {
+            if (!state.canSurvive_(level, x, y, z)) {
+                BlockPos pos = new BlockPos(x, y, z);
                 dropResources(state, level, pos);
                 level.removeBlock(pos, false);
             }

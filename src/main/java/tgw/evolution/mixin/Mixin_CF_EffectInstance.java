@@ -13,10 +13,7 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.GsonHelper;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.Nullable;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Mutable;
-import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.*;
 import tgw.evolution.hooks.asm.DummyConstructor;
 import tgw.evolution.hooks.asm.ModifyConstructor;
 import tgw.evolution.hooks.asm.RestoreFinal;
@@ -186,6 +183,12 @@ public abstract class Mixin_CF_EffectInstance {
 
     @Shadow
     protected abstract void parseUniformNode(JsonElement jsonElement) throws ChainedJsonException;
+
+    @Overwrite
+    public void setSampler(String string, IntSupplier intSupplier) {
+        this.samplerMap.put(string, intSupplier);
+        this.markDirty();
+    }
 
     @Shadow
     protected abstract void updateLocations();

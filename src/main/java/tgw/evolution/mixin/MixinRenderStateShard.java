@@ -11,9 +11,9 @@ import tgw.evolution.patches.PatchMinecraft;
 @Mixin(RenderStateShard.class)
 public abstract class MixinRenderStateShard {
 
-    @Mutable @Shadow @Final protected static RenderStateShard.OutputStateShard PARTICLES_TARGET;
-    @Mutable @Shadow @Final protected static RenderStateShard.OutputStateShard WEATHER_TARGET;
-    @Mutable @Shadow @Final protected static RenderStateShard.OutputStateShard CLOUDS_TARGET;
+    @Mutable @Shadow @Final public static RenderStateShard.OutputStateShard PARTICLES_TARGET;
+    @Mutable @Shadow @Final public static RenderStateShard.OutputStateShard WEATHER_TARGET;
+    @Mutable @Shadow @Final public static RenderStateShard.OutputStateShard CLOUDS_TARGET;
     @Mutable @Shadow @Final protected static RenderStateShard.OutputStateShard OUTLINE_TARGET;
     @Mutable @Shadow @Final protected static RenderStateShard.OutputStateShard TRANSLUCENT_TARGET;
 

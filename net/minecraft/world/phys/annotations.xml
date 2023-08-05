@@ -1,0 +1,20 @@
+<root>
+    <item name='net.minecraft.world.phys.BlockHitResult net.minecraft.core.BlockPos getBlockPos()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt; fail&quot;"/>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+    <item name='net.minecraft.world.phys.HitResult net.minecraft.world.phys.Vec3 getLocation()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt; fail&quot;"/>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+</root>

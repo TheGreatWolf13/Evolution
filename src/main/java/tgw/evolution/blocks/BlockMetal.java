@@ -48,12 +48,12 @@ public class BlockMetal extends BlockPhysics implements EntityBlock {
     }
 
     @Override
-    public int getHarvestLevel(BlockState state, @Nullable Level level, @Nullable BlockPos pos) {
+    public int getHarvestLevel(BlockState state, Level level, int x, int y, int z) {
         return this.metal.getHarvestLevel();
     }
 
     @Override
-    public double getMass(Level level, BlockPos pos, BlockState state) {
+    public double getMass(Level level, int x, int y, int z, BlockState state) {
         //TODO implementation
         return 0;
     }
@@ -80,21 +80,21 @@ public class BlockMetal extends BlockPhysics implements EntityBlock {
     }
 
     @Override
-    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
+    public void onPlace_(BlockState state, Level level, int x, int y, int z, BlockState oldState, boolean isMoving) {
         if (!level.isClientSide && this.metal.doesOxidize() && this.oxidation != Oxidation.OXIDIZED) {
-            TEMetal tile = (TEMetal) level.getBlockEntity(pos);
-            assert tile != null;
-            tile.oxidationTick(this.metal, this.oxidation);
+            if (level.getBlockEntity_(x, y, z) instanceof TEMetal tile) {
+                tile.oxidationTick(this.metal, this.oxidation);
+            }
         }
-        super.onPlace(state, level, pos, oldState, isMoving);
+        super.onPlace_(state, level, x, y, z, oldState, isMoving);
     }
 
     @Override
-    public void randomTick(BlockState state, ServerLevel level, BlockPos pos, Random rand) {
+    public void randomTick_(BlockState state, ServerLevel level, int x, int y, int z, Random random) {
         if (this.metal.doesOxidize() && this.oxidation != Oxidation.OXIDIZED) {
-            TEMetal tile = (TEMetal) level.getBlockEntity(pos);
-            assert tile != null;
-            tile.oxidationTick(this.metal, this.oxidation);
+            if (level.getBlockEntity_(x, y, z) instanceof TEMetal tile) {
+                tile.oxidationTick(this.metal, this.oxidation);
+            }
         }
     }
 
@@ -120,13 +120,21 @@ public class BlockMetal extends BlockPhysics implements EntityBlock {
     }
 
     @Override
-    public BlockState updateShape(BlockState state, Direction direction, BlockState fromState, LevelAccessor level, BlockPos pos, BlockPos fromPos) {
+    public BlockState updateShape_(BlockState state,
+                                   Direction from,
+                                   BlockState fromState,
+                                   LevelAccessor level,
+                                   int x,
+                                   int y,
+                                   int z,
+                                   int fromX,
+                                   int fromY,
+                                   int fromZ) {
         if (!level.isClientSide() && this.metal.doesOxidize() && this.oxidation != Oxidation.OXIDIZED) {
-            TEMetal tile = (TEMetal) level.getBlockEntity(pos);
-            if (tile != null) {
+            if (level.getBlockEntity_(x, y, z) instanceof TEMetal tile) {
                 tile.oxidationTick(this.metal, this.oxidation);
             }
         }
-        return super.updateShape(state, direction, fromState, level, pos, fromPos);
+        return super.updateShape_(state, from, fromState, level, x, y, z, fromX, fromY, fromZ);
     }
 }

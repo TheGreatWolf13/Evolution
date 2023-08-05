@@ -9,9 +9,11 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import tgw.evolution.util.collection.maps.O2OMap;
 import tgw.evolution.util.hitbox.hms.HM;
 
 import java.util.List;
+import java.util.Map;
 
 @Mixin(ModelPart.class)
 public abstract class MixinModelPart implements HM {
@@ -23,6 +25,7 @@ public abstract class MixinModelPart implements HM {
     @Shadow public float yRot;
     @Shadow public float z;
     @Shadow public float zRot;
+    @Shadow @Final private Map<String, ModelPart> children;
     @Shadow @Final private List<ModelPart.Cube> cubes;
 
     @Override
@@ -40,13 +43,6 @@ public abstract class MixinModelPart implements HM {
         this.zRot += dz;
     }
 
-    /**
-     * @author TheGreatWolf
-     * @reason Avoid allocations, use quick matrix transformations
-     * <p>
-     * <p>
-     * Obs.: When trying to use VertexSink, the player model geometry gets distorted, i dont know why :(
-     */
     @Overwrite
     private void compile(PoseStack.Pose matrices,
                          VertexConsumer vertexConsumer,
@@ -58,8 +54,9 @@ public abstract class MixinModelPart implements HM {
                          float alpha) {
         Matrix4f poseMat = matrices.pose();
         Matrix3f normalMat = matrices.normal();
-        for (ModelPart.Cube cube : this.cubes) {
-            for (ModelPart.Polygon polygon : cube.polygons) {
+        List<ModelPart.Cube> cubes = this.cubes;
+        for (int i = 0, len = cubes.size(); i < len; ++i) {
+            for (ModelPart.Polygon polygon : cubes.get(i).polygons) {
                 float normX = normalMat.transformVecX(polygon.normal);
                 float normY = normalMat.transformVecY(polygon.normal);
                 float normZ = normalMat.transformVecZ(polygon.normal);
@@ -89,6 +86,22 @@ public abstract class MixinModelPart implements HM {
     @Override
     public float getPivotZ() {
         return this.z;
+    }
+
+    @Overwrite
+    public void render(PoseStack matrices, VertexConsumer builder, int light, int overlay, float r, float g, float b, float a) {
+        if (this.visible) {
+            if (!this.cubes.isEmpty() || !this.children.isEmpty()) {
+                matrices.pushPose();
+                this.translateAndRotate(matrices);
+                this.compile(matrices.last(), builder, light, overlay, r, g, b, a);
+                O2OMap<String, ModelPart> children = (O2OMap<String, ModelPart>) this.children;
+                for (O2OMap.Entry<String, ModelPart> e = children.fastEntries(); e != null; e = children.fastEntries()) {
+                    e.value().render(matrices, builder, light, overlay, r, g, b, a);
+                }
+                matrices.popPose();
+            }
+        }
     }
 
     @Override

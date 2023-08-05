@@ -1,6 +1,5 @@
 package tgw.evolution.capabilities.chunk;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
@@ -9,7 +8,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.levelgen.Heightmap;
-import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.IAir;
 import tgw.evolution.commands.CommandAtm;
 import tgw.evolution.util.ChunkHolder;
@@ -56,12 +54,12 @@ public class CapabilityChunkStorage {
             throw new IllegalStateException("Should not be called on the client!");
         }
     };
-    private static final ThreadLocal<BlockPos.MutableBlockPos> MUTABLE_POS = ThreadLocal.withInitial(BlockPos.MutableBlockPos::new);
     private static final ThreadLocal<ChunkHolder> HOLDER = ThreadLocal.withInitial(ChunkHolder::new);
-    private static final ThreadLocal<DirectionList> DIRECTION_LIST = ThreadLocal.withInitial(DirectionList::new);
     private final IList pendingAtmTicks = new IArrayList();
     private final IList pendingBlockTicks = new IArrayList();
+    private final TickStorage pendingPreciseBlockTicks = new TickStorage();
     private boolean continuousAtmDebug;
+    private boolean needsSorting;
     private byte updateTicks;
 
     /**
@@ -173,9 +171,36 @@ public class CapabilityChunkStorage {
         int[] pendingAtmTicks = nbt.getIntArray("PendingAtmTicks");
         this.pendingAtmTicks.size(pendingAtmTicks.length);
         this.pendingAtmTicks.setElements(pendingAtmTicks);
+        this.pendingPreciseBlockTicks.deserializeNbt(nbt.getCompound("PendingPreciseBlockTicks"));
+        this.needsSorting = true;
         this.continuousAtmDebug = nbt.getBoolean("ContinuousAtmDebug");
         if (this.continuousAtmDebug) {
             this.updateTicks = 40;
+        }
+    }
+
+    private void processPreciseTicks(ServerLevel level, LevelChunk chunk) {
+        if (!this.pendingPreciseBlockTicks.isEmpty()) {
+            if (this.needsSorting) {
+                this.needsSorting = false;
+                this.pendingPreciseBlockTicks.sort();
+            }
+            int len = this.pendingPreciseBlockTicks.size();
+            int i = len;
+            long currentTick = chunk.level.getGameTime();
+            while (this.pendingPreciseBlockTicks.getTick(--i) == currentTick) {
+                int pos = this.pendingPreciseBlockTicks.getPos(i);
+                int x = IAir.unpackX(pos);
+                int y = IAir.unpackY(pos);
+                int z = IAir.unpackZ(pos);
+                BlockState state = chunk.getBlockState_(x, y, z);
+                state.tick_(level, x, y, z, level.random);
+                if (i == 0) {
+                    this.pendingPreciseBlockTicks.clear();
+                    return;
+                }
+            }
+            this.pendingPreciseBlockTicks.removeElements(i + 1, len);
         }
     }
 
@@ -199,6 +224,15 @@ public class CapabilityChunkStorage {
         }
     }
 
+    public void schedulePreciseBlockTick(LevelChunk chunk, int x, int y, int z, int ticksInTheFuture) {
+        assert ticksInTheFuture > 0 : "Cannot schedule a tick to happen now or in the past!";
+        this.needsSorting |= this.pendingPreciseBlockTicks.add(chunk.level.getGameTime() + ticksInTheFuture, IAir.packInternalPos(x & 15, y, z & 15));
+        chunk.setUnsaved(true);
+        if (this.continuousAtmDebug) {
+            this.updateTicks = 40;
+        }
+    }
+
     public CompoundTag serializeNBT() {
         CompoundTag nbt = new CompoundTag();
         if (!this.pendingBlockTicks.isEmpty()) {
@@ -206,6 +240,9 @@ public class CapabilityChunkStorage {
         }
         if (!this.pendingAtmTicks.isEmpty()) {
             nbt.putIntArray("PendingAtmTicks", this.pendingAtmTicks.toIntArray());
+        }
+        if (!this.pendingPreciseBlockTicks.isEmpty()) {
+            nbt.put("PendingPreciseBlockTicks", this.pendingPreciseBlockTicks.serializeNbt());
         }
         if (this.continuousAtmDebug) {
             nbt.putBoolean("ContinuousAtmDebug", true);
@@ -221,17 +258,20 @@ public class CapabilityChunkStorage {
                               int z,
                               int atm,
                               int globalY,
-                              @Nullable DirectionList list) {
+                              int directionList) {
         section.getAtmStorage().set(x, y, z, atm);
         chunk.setUnsaved(true);
-        if (list == null) {
+        if (directionList == DirectionList.NULL) {
             for (Direction dir : DirectionUtil.ALL) {
                 this.update(chunk, holder, x, globalY, z, dir);
             }
         }
         else {
-            while (!list.isEmpty()) {
-                this.update(chunk, holder, x, globalY, z, list.getLastAndRemove());
+            while (!DirectionList.isEmpty(directionList)) {
+                int index = DirectionList.getLast(directionList);
+                Direction dir = DirectionList.get(directionList, index);
+                directionList = DirectionList.remove(directionList, index);
+                this.update(chunk, holder, x, globalY, z, dir);
             }
         }
     }
@@ -253,15 +293,15 @@ public class CapabilityChunkStorage {
 
     public void tick(LevelChunk chunk) {
         ServerLevel level = (ServerLevel) chunk.getLevel();
-        BlockPos.MutableBlockPos mutablePos = MUTABLE_POS.get();
+        this.processPreciseTicks(level, chunk);
         int len = this.pendingBlockTicks.size();
         for (int i = 0; i < len; i++) {
             int pos = this.pendingBlockTicks.getInt(i);
             int x = IAir.unpackX(pos);
             int y = IAir.unpackY(pos);
             int z = IAir.unpackZ(pos);
-            BlockState state = level.getBlockState_(x, y, z);
-            state.tick(level, mutablePos.set(x, y, z), level.random);
+            BlockState state = chunk.getBlockState_(x, y, z);
+            state.tick_(level, x, y, z, level.random);
         }
         this.pendingBlockTicks.removeElements(0, len);
         ChunkHolder holder = HOLDER.get();
@@ -316,7 +356,7 @@ public class CapabilityChunkStorage {
             }
             else {
                 if (oldAtm != 31) {
-                    this.setAndUpdate(chunk, section, holder, x, y, z, 31, globalY, null);
+                    this.setAndUpdate(chunk, section, holder, x, y, z, 31, globalY, DirectionList.NULL);
                 }
                 return;
             }
@@ -324,14 +364,13 @@ public class CapabilityChunkStorage {
         if (isAir || air.allowsFrom(state, Direction.UP)) {
             if (globalY == chunk.getMaxBuildHeight() - 1 || globalY > chunk.getHeight(Heightmap.Types.WORLD_SURFACE, x, z)) {
                 if (oldAtm != 0 || IAir.unpackForceUpdate(internalPos)) {
-                    this.setAndUpdate(chunk, section, holder, x, y, z, 0, globalY, null);
+                    this.setAndUpdate(chunk, section, holder, x, y, z, 0, globalY, DirectionList.NULL);
                 }
                 return;
             }
         }
         int lowestAtm = 31;
-        DirectionList list = DIRECTION_LIST.get();
-        list.clear();
+        int list = 0;
         for (Direction dir : DirectionUtil.ALL) {
             if (!isAir && !air.allowsFrom(state, dir)) {
                 continue;
@@ -341,7 +380,7 @@ public class CapabilityChunkStorage {
             int z1 = z + dir.getStepZ();
             BlockState stateAtDir = safeGetBlockstate(chunk, section, holder, x1, y1, z1, index);
             if (stateAtDir.isAir() || stateAtDir.getBlock() instanceof IAir a && a.allowsFrom(stateAtDir, dir.getOpposite())) {
-                list.add(dir);
+                list = DirectionList.add(list, dir);
                 int atm = safeGetAtm(chunk, section, holder, x1, y1, z1, index);
                 if (dir != Direction.UP || atm != 0) {
                     if (isAir) {
@@ -357,7 +396,7 @@ public class CapabilityChunkStorage {
             }
         }
         if (IAir.unpackForceUpdate(internalPos)) {
-            this.setAndUpdate(chunk, section, holder, x, y, z, lowestAtm, globalY, null);
+            this.setAndUpdate(chunk, section, holder, x, y, z, lowestAtm, globalY, DirectionList.NULL);
         }
         else if (lowestAtm != oldAtm) {
             this.setAndUpdate(chunk, section, holder, x, y, z, lowestAtm, globalY, list);

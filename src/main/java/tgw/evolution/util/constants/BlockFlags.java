@@ -7,21 +7,26 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import org.intellij.lang.annotations.MagicConstant;
 
+import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.SOURCE)
+@Target(ElementType.TYPE_USE)
 @MagicConstant(flagsFromClass = BlockFlags.class)
 public @interface BlockFlags {
     /**
      * Calls
-     * {@link net.minecraft.world.level.block.Block#neighborChanged(BlockState, Level, BlockPos, Block, BlockPos, boolean)} on surrounding blocks
+     * {@link tgw.evolution.patches.PatchBlockBehaviour#neighborChanged_(BlockState, Level, int, int, int, Block, int, int, int, boolean)} on
+     * surrounding blocks
      * (with isMoving as false). Also updates comparator output state.
      */
     int NOTIFY = 1;
     /**
      * Calls {@link Level#sendBlockUpdated(BlockPos, BlockState, BlockState, int)}.<br>
-     * Server-side, this updates all the path-finding navigators.
+     * Server-side, this updates all the path-finding navigators.<br>
+     * Client-side, this asks for a render update.
      */
     int BLOCK_UPDATE = 2;
     /**
@@ -32,7 +37,7 @@ public @interface BlockFlags {
      * Makes the block be re-rendered immediately, on the main thread.
      * If NO_RERENDER is set, then this will be ignored
      */
-    int RERENDER = 8;
+    int RENDER_MAINTHREAD = 8;
     /**
      * Causes neighbor updates to be sent to all surrounding blocks (including
      * diagonals).
@@ -50,4 +55,5 @@ public @interface BlockFlags {
      * as the last parameter.
      */
     int IS_MOVING = 64;
+    int SUPRESS_LIGHT_UPDATES = 128;
 }

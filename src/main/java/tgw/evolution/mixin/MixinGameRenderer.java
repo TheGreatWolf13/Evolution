@@ -19,12 +19,21 @@ import net.minecraft.client.Screenshot;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.PostChain;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.pattern.BlockInWorld;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
@@ -42,7 +51,6 @@ import tgw.evolution.client.renderer.chunk.EvLevelRenderer;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.patches.PatchGameRenderer;
-import tgw.evolution.patches.PatchMinecraft;
 import tgw.evolution.util.collection.maps.I2OHashMap;
 import tgw.evolution.util.collection.maps.I2OMap;
 import tgw.evolution.util.math.MathHelper;
@@ -55,11 +63,13 @@ import java.util.Locale;
 @Mixin(GameRenderer.class)
 public abstract class MixinGameRenderer implements PatchGameRenderer {
 
+    @Unique private static final Vector3f NAUSEA_VECTOR = new Vector3f(0.0F, Mth.SQRT_OF_TWO / 2.0F, Mth.SQRT_OF_TWO / 2.0F);
     @Shadow @Final public static int EFFECT_NONE;
     @Shadow @Final private static Logger LOGGER;
     @Unique private final PoseStack matrices = new PoseStack();
     @Unique private final I2OMap<PostChain> postEffects = new I2OHashMap<>();
     @Unique private final Matrix4f projMatrix = new Matrix4f();
+    @Unique private final PoseStack projectionMatrices = new PoseStack();
     @Shadow public boolean effectActive;
     @Shadow private float darkenWorldAmount;
     @Shadow private float darkenWorldAmountO;
@@ -71,6 +81,7 @@ public abstract class MixinGameRenderer implements PatchGameRenderer {
     @Shadow @Final private Camera mainCamera;
     @Shadow @Final private Minecraft minecraft;
     @Shadow private @Nullable PostChain postEffect;
+    @Shadow private boolean renderBlockOutline;
     @Shadow private float renderDistance;
     @Shadow @Final private ResourceManager resourceManager;
     @Shadow private int tick;
@@ -78,8 +89,25 @@ public abstract class MixinGameRenderer implements PatchGameRenderer {
     @Shadow private float zoomX;
     @Shadow private float zoomY;
 
-    @Shadow
-    protected abstract void bobHurt(PoseStack pMatrixStack, float pPartialTicks);
+    @Overwrite
+    private void bobHurt(PoseStack matrices, float partialTicks) {
+        if (this.minecraft.getCameraEntity() instanceof LivingEntity entity) {
+            float hurtTime = entity.hurtTime - partialTicks;
+            if (entity.isDeadOrDying()) {
+                matrices.mulPoseZ(40.0F - 8_000.0F / (Math.min(entity.deathTime + partialTicks, 20.0F) + 200.0F));
+            }
+            if (hurtTime < 0.0F) {
+                return;
+            }
+            hurtTime /= entity.hurtDuration;
+            hurtTime = Mth.sin(hurtTime * hurtTime * hurtTime * hurtTime * Mth.PI);
+            float hurtDir = entity.hurtDir;
+            matrices.mulPoseY(-hurtDir);
+            matrices.mulPoseZ(-hurtTime * 14.0F);
+            matrices.mulPoseY(hurtDir);
+        }
+
+    }
 
     @Shadow
     public abstract float getDepthFar();
@@ -168,8 +196,9 @@ public abstract class MixinGameRenderer implements PatchGameRenderer {
                 double reachDistance = this.minecraft.player.getAttributeValue(EvolutionAttributes.REACH_DISTANCE);
                 Vec3 cameraPos = entity.getEyePosition(partialTicks);
                 this.minecraft.hitResult = entity.pick(reachDistance, partialTicks, false);
-                if (this.minecraft.hitResult.getType() == HitResult.Type.BLOCK) {
-                    reachDistance = cameraPos.distanceTo(this.minecraft.hitResult.getLocation());
+                HitResult hitResult = this.minecraft.hitResult;
+                if (hitResult.getType() == HitResult.Type.BLOCK) {
+                    reachDistance = Math.sqrt(cameraPos.distanceToSqr(hitResult.x(), hitResult.y(), hitResult.z()));
                 }
                 EntityHitResult leftRayTrace = MathHelper.rayTraceEntitiesFromEyes(this.minecraft.player, partialTicks, reachDistance);
                 if (leftRayTrace != null) {
@@ -229,7 +258,7 @@ public abstract class MixinGameRenderer implements PatchGameRenderer {
                 this.matrices.reset();
                 this.renderLevel(partialTicks, startTime, this.matrices);
                 this.tryTakeScreenshotIfNeeded();
-                ((PatchMinecraft) this.minecraft).lvlRenderer().doEntityOutline();
+                this.minecraft.lvlRenderer().doEntityOutline();
                 RenderSystem.clear(GL11C.GL_DEPTH_BUFFER_BIT, Minecraft.ON_OSX);
                 Matrix4f orthoMat = Matrix4f.orthographic(0.0F, (float) (width / guiScale), 0.0F, (float) (height / guiScale), 1_000, 3_000);
                 RenderSystem.setProjectionMatrix(orthoMat);
@@ -354,10 +383,11 @@ public abstract class MixinGameRenderer implements PatchGameRenderer {
         this.minecraft.getProfiler().popPush("camera");
         Camera camera = this.mainCamera;
         this.renderDistance = this.minecraft.options.getEffectiveRenderDistance() * 16;
-        PoseStack posestack = new PoseStack();
         double fov = this.getFov(camera, partialTicks, true);
-        posestack.last().pose().multiply(this.getProjectionMatrix(fov));
-        this.bobHurt(posestack, partialTicks);
+        PoseStack projMatrices = this.projectionMatrices;
+        projMatrices.reset();
+        projMatrices.last().pose().multiply(this.getProjectionMatrix(fov));
+        this.bobHurt(projMatrices, partialTicks);
         float portalWarp = Mth.lerp(partialTicks, this.minecraft.player.oPortalTime, this.minecraft.player.portalTime) *
                            this.minecraft.options.screenEffectScale *
                            this.minecraft.options.screenEffectScale;
@@ -365,13 +395,12 @@ public abstract class MixinGameRenderer implements PatchGameRenderer {
             int i = this.minecraft.player.hasEffect(MobEffects.CONFUSION) ? 7 : 20;
             float f1 = 5.0F / (portalWarp * portalWarp + 5.0F) - portalWarp * 0.04F;
             f1 *= f1;
-            Vector3f vector3f = new Vector3f(0.0F, Mth.SQRT_OF_TWO / 2.0F, Mth.SQRT_OF_TWO / 2.0F);
-            posestack.mulPose(vector3f.rotationDegrees((this.tick + partialTicks) * i));
-            posestack.scale(1.0F / f1, 1.0F, 1.0F);
+            projMatrices.mulPose(NAUSEA_VECTOR.rotationDegrees((this.tick + partialTicks) * i));
+            projMatrices.scale(1.0F / f1, 1.0F, 1.0F);
             float f2 = -(this.tick + partialTicks) * i;
-            posestack.mulPose(vector3f.rotationDegrees(f2));
+            projMatrices.mulPose(NAUSEA_VECTOR.rotationDegrees(f2));
         }
-        Matrix4f projMatrix = posestack.last().pose();
+        Matrix4f projMatrix = projMatrices.last().pose();
         this.resetProjectionMatrix(projMatrix);
         assert this.minecraft.level != null;
         camera.setup(this.minecraft.level,
@@ -383,7 +412,7 @@ public abstract class MixinGameRenderer implements PatchGameRenderer {
         if (matrix3f.invert()) {
             RenderSystem.setInverseViewRotationMatrix(matrix3f);
         }
-        EvLevelRenderer levelRenderer = ((PatchMinecraft) this.minecraft).lvlRenderer();
+        EvLevelRenderer levelRenderer = this.minecraft.lvlRenderer();
         levelRenderer.prepareCullFrustum(matrices, camera.getPosition(), this.getProjectionMatrix(Math.max(fov, this.minecraft.options.fov)));
         levelRenderer.renderLevel(matrices, partialTicks, endTickTime, shouldRenderOutline, camera, (GameRenderer) (Object) this,
                                   this.lightTexture, projMatrix);
@@ -405,11 +434,42 @@ public abstract class MixinGameRenderer implements PatchGameRenderer {
         for (PostChain shader : this.postEffects.values()) {
             shader.resize(width, height);
         }
-        ((PatchMinecraft) this.minecraft).lvlRenderer().resize(width, height);
+        this.minecraft.lvlRenderer().resize(width, height);
     }
 
     @Shadow
-    protected abstract boolean shouldRenderBlockOutline();
+    private boolean shouldRenderBlockOutline() {
+        assert this.minecraft.level != null;
+        assert this.minecraft.gameMode != null;
+        if (!this.renderBlockOutline) {
+            return false;
+        }
+        Entity camera = this.minecraft.getCameraEntity();
+        if (!this.minecraft.options.hideGui && camera instanceof Player player) {
+            if (!player.getAbilities().mayBuild) {
+                ItemStack itemStack = ((LivingEntity) camera).getMainHandItem();
+                HitResult hitResult = this.minecraft.hitResult;
+                if (hitResult != null && hitResult.getType() == HitResult.Type.BLOCK) {
+                    BlockHitResult blockHitResult = (BlockHitResult) hitResult;
+                    int x = blockHitResult.posX();
+                    int y = blockHitResult.posY();
+                    int z = blockHitResult.posZ();
+                    BlockState blockState = this.minecraft.level.getBlockState_(x, y, z);
+                    if (this.minecraft.gameMode.getPlayerMode() == GameType.SPECTATOR) {
+                        return blockState.getMenuProvider(this.minecraft.level, new BlockPos(x, y, z)) != null;
+                    }
+                    BlockInWorld blockInWorld = new BlockInWorld(this.minecraft.level, new BlockPos(x, y, z), false);
+                    Registry<Block> registry = this.minecraft.level.registryAccess().registryOrThrow(Registry.BLOCK_REGISTRY);
+                    return !itemStack.isEmpty() &&
+                           (itemStack.hasAdventureModeBreakTagForBlock(registry, blockInWorld) ||
+                            itemStack.hasAdventureModePlaceTagForBlock(registry, blockInWorld));
+                }
+                return false;
+            }
+            return true;
+        }
+        return false;
+    }
 
     @Override
     public void shutdownAllShaders() {
@@ -433,7 +493,7 @@ public abstract class MixinGameRenderer implements PatchGameRenderer {
      */
     @Overwrite
     private void takeAutoScreenshot(Path path) {
-        EvLevelRenderer levelRenderer = ((PatchMinecraft) this.minecraft).lvlRenderer();
+        EvLevelRenderer levelRenderer = this.minecraft.lvlRenderer();
         if (levelRenderer.countRenderedChunks() > 10 && levelRenderer.hasRenderedAllChunks()) {
             NativeImage screenshot = Screenshot.takeScreenshot(this.minecraft.getMainRenderTarget());
             Util.ioPool().execute(() -> {
@@ -492,7 +552,7 @@ public abstract class MixinGameRenderer implements PatchGameRenderer {
         this.mainCamera.tick();
         ++this.tick;
 //        this.itemInHandRenderer.tick();
-        ((PatchMinecraft) this.minecraft).lvlRenderer().tickRain(this.mainCamera);
+        this.minecraft.lvlRenderer().tickRain(this.mainCamera);
         this.darkenWorldAmountO = this.darkenWorldAmount;
         if (this.minecraft.gui.getBossOverlay().shouldDarkenScreen()) {
             this.darkenWorldAmount += 0.05F;

@@ -1,13 +1,11 @@
 package tgw.evolution.blocks;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Material;
-import org.jetbrains.annotations.Nullable;
 import tgw.evolution.init.EvolutionSounds;
 import tgw.evolution.util.constants.HarvestLevel;
 import tgw.evolution.util.constants.RockVariant;
@@ -22,7 +20,7 @@ public class BlockCobblestone extends BlockPhysics implements IRockVariant, ISlo
     }
 
     @Override
-    public boolean canSlope(BlockGetter level, BlockPos pos) {
+    public boolean canSlope(BlockGetter level, int x, int y, int z) {
         return true;
     }
 
@@ -42,12 +40,12 @@ public class BlockCobblestone extends BlockPhysics implements IRockVariant, ISlo
     }
 
     @Override
-    public int getHarvestLevel(BlockState state, @Nullable Level level, @Nullable BlockPos pos) {
+    public int getHarvestLevel(BlockState state, Level level, int x, int y, int z) {
         return HarvestLevel.LOW_METAL;
     }
 
     @Override
-    public double getMass(Level level, BlockPos pos, BlockState state) {
+    public double getMass(Level level, int x, int y, int z, BlockState state) {
         return this.rockVariant().getMass();
     }
 

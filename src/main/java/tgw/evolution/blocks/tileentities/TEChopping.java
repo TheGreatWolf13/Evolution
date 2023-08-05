@@ -38,10 +38,14 @@ public class TEChopping extends BlockEntity {
         if (this.level != null && !this.level.isClientSide) {
             Item firewood = WoodVariant.byId(this.id).get(EvolutionItems.FIREWOODS);
             ItemStack stack = new ItemStack(firewood, 16);
-            BlockUtils.dropItemStack(this.level, this.worldPosition, stack, 0.5);
+            BlockPos pos = this.worldPosition;
+            int x = pos.getX();
+            int y = pos.getY();
+            int z = pos.getZ();
+            BlockUtils.dropItemStack(this.level, x, y, z, stack, 0.5);
             Block block = WoodVariant.byId(this.id).get(EvolutionBlocks.LOGS);
             ItemEvents.damageItem(player.getMainHandItem(), player, ItemModular.DamageCause.BREAK_BLOCK, EquipmentSlot.MAINHAND,
-                                  block.getHarvestLevel(block.defaultBlockState(), this.level, null));
+                                  block.getHarvestLevel(block.defaultBlockState(), this.level, x, y, z));
             player.awardStat(Stats.ITEM_CRAFTED.get(firewood), 16);
         }
         this.id = -1;
@@ -51,7 +55,8 @@ public class TEChopping extends BlockEntity {
 
     public void dropLog() {
         if (this.level != null && this.hasLog() && !this.level.isClientSide) {
-            BlockUtils.dropItemStack(this.level, this.worldPosition, this.getItemStack());
+            BlockPos pos = this.worldPosition;
+            BlockUtils.dropItemStack(this.level, pos.getX(), pos.getY(), pos.getZ(), this.getItemStack());
         }
         this.id = -1;
         this.breakProgress = 0;
@@ -109,7 +114,8 @@ public class TEChopping extends BlockEntity {
         ItemStack stack = this.getItemStack();
         assert this.level != null;
         if (!this.level.isClientSide && !player.getInventory().add(stack)) {
-            BlockUtils.dropItemStack(this.level, this.worldPosition, stack);
+            BlockPos pos = this.worldPosition;
+            BlockUtils.dropItemStack(this.level, pos.getX(), pos.getY(), pos.getZ(), stack);
         }
         this.id = -1;
         this.breakProgress = 0;

@@ -266,6 +266,14 @@ public abstract class MixinServerPlayer extends Player implements PatchServerPla
         this.getCombatTracker().recheckStatus();
     }
 
+    @Overwrite
+    public void doCheckFallDamage(double y, boolean onGround) {
+        if (!this.touchingUnloadedChunk()) {
+            BlockPos pos = this.getOnPos();
+            super.checkFallDamage(y, onGround, this.level.getBlockState_(pos), pos);
+        }
+    }
+
     /**
      * @author TheGreatWolf
      * @reason Modify Stats.

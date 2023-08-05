@@ -39,7 +39,6 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.*;
-import tgw.evolution.patches.PatchParticleEngine;
 import tgw.evolution.util.AllocationRateCalculator;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
@@ -157,7 +156,7 @@ public abstract class MixinDebugScreenOverlay extends GuiComponent {
         this.gameInfo.add(this.minecraft.lvlRenderer().getChunkStatistics());
         this.gameInfo.add(this.minecraft.lvlRenderer().getEntityStatistics());
         this.gameInfo.add("P: " +
-                          ((PatchParticleEngine) this.minecraft.particleEngine).getRenderedParticles() +
+                          this.minecraft.particleEngine.getRenderedParticles() +
                           "/" +
                           this.minecraft.particleEngine.countParticles());
         this.gameInfo.add(this.minecraft.level.dimension().location() + " FC: " + forcedChunks.size());
@@ -196,15 +195,16 @@ public abstract class MixinDebugScreenOverlay extends GuiComponent {
             this.clearChunkCache();
         }
         else {
-            int light = this.minecraft.level.getChunkSource().getLightEngine().getRawBrightness(pos, 0);
-            int skyLight = this.minecraft.level.getBrightness(LightLayer.SKY, pos);
-            int blockLight = this.minecraft.level.getBrightness(LightLayer.BLOCK, pos);
+            long packedPos = pos.asLong();
+            int light = this.minecraft.level.getChunkSource().getLightEngine().getRawBrightness_(packedPos, 0);
+            int skyLight = this.minecraft.level.getBrightness_(LightLayer.SKY, packedPos);
+            int blockLight = this.minecraft.level.getBrightness_(LightLayer.BLOCK, packedPos);
             this.gameInfo.add("Client Light: " + light + " (" + skyLight + " sky, " + blockLight + " block)");
             if (pos.getY() >= this.minecraft.level.getMinBuildHeight() && pos.getY() < this.minecraft.level.getMaxBuildHeight()) {
                 this.gameInfo.add("Biome: " +
                                   this.minecraft.level.registryAccess()
                                                       .registryOrThrow(Registry.BIOME_REGISTRY)
-                                                      .getKey(this.minecraft.level.getBiome(pos).value()));
+                                                      .getKey(this.minecraft.level.getBiome_(pos).value()));
             }
             this.gameInfo.add("Day " + (1 + (this.minecraft.level.getDayTime() + 6L * Time.TICKS_PER_HOUR) / Time.TICKS_PER_DAY));
         }
@@ -348,10 +348,13 @@ public abstract class MixinDebugScreenOverlay extends GuiComponent {
             return this.systemInfo;
         }
         if (this.block.getType() == HitResult.Type.BLOCK) {
-            BlockPos hitPos = ((BlockHitResult) this.block).getBlockPos();
-            BlockState state = this.minecraft.level.getBlockState(hitPos);
+            BlockHitResult block = (BlockHitResult) this.block;
+            int x = block.posX();
+            int y = block.posY();
+            int z = block.posZ();
+            BlockState state = this.minecraft.level.getBlockState_(x, y, z);
             this.systemInfo.add("");
-            this.systemInfo.add(ChatFormatting.UNDERLINE + "Targeted Block: " + hitPos.getX() + ", " + hitPos.getY() + ", " + hitPos.getZ());
+            this.systemInfo.add(ChatFormatting.UNDERLINE + "Targeted Block: " + x + ", " + y + ", " + z);
             this.systemInfo.add(String.valueOf(Registry.BLOCK.getKey(state.getBlock())));
             for (Map.Entry<Property<?>, Comparable<?>> entry : state.getValues().entrySet()) {
                 this.systemInfo.add(this.getPropertyValueString(entry));
@@ -359,10 +362,13 @@ public abstract class MixinDebugScreenOverlay extends GuiComponent {
             state.getTags().forEach(t -> this.systemInfo.add("#" + t.location()));
         }
         if (this.liquid.getType() == HitResult.Type.BLOCK) {
-            BlockPos blockpos1 = ((BlockHitResult) this.liquid).getBlockPos();
-            FluidState fluidstate = this.minecraft.level.getFluidState(blockpos1);
+            BlockHitResult liquid = (BlockHitResult) this.liquid;
+            int x = liquid.posX();
+            int y = liquid.posY();
+            int z = liquid.posZ();
+            FluidState fluidstate = this.minecraft.level.getFluidState_(x, y, z);
             this.systemInfo.add("");
-            this.systemInfo.add(ChatFormatting.UNDERLINE + "Targeted Fluid: " + blockpos1.getX() + ", " + blockpos1.getY() + ", " + blockpos1.getZ());
+            this.systemInfo.add(ChatFormatting.UNDERLINE + "Targeted Fluid: " + x + ", " + y + ", " + z);
             this.systemInfo.add(String.valueOf(Registry.FLUID.getKey(fluidstate.getType())));
             for (Map.Entry<Property<?>, Comparable<?>> entry1 : fluidstate.getValues().entrySet()) {
                 this.systemInfo.add(this.getPropertyValueString(entry1));

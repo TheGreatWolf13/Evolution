@@ -9,9 +9,9 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
@@ -27,11 +27,11 @@ import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 import tgw.evolution.blocks.tileentities.TETorch;
+import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionShapes;
@@ -79,8 +79,8 @@ public class BlockTorch extends BlockPhysics implements IReplaceable, IFireSourc
     }
 
     @Override
-    public boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
-        return canSupportCenter(level, pos.below(), Direction.UP);
+    public boolean canSurvive_(BlockState state, LevelReader level, int x, int y, int z) {
+        return BlockUtils.canSupportCenter(level, x, y - 1, z, Direction.UP);
     }
 
     @Override
@@ -101,20 +101,24 @@ public class BlockTorch extends BlockPhysics implements IReplaceable, IFireSourc
     }
 
     @Override
-    public double getMass(Level level, BlockPos pos, BlockState state) {
+    public double getMass(Level level, int x, int y, int z, BlockState state) {
         return 0;
     }
 
     @Override
-    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+    public VoxelShape getShape_(BlockState state, BlockGetter level, int x, int y, int z, @Nullable Entity entity) {
         return EvolutionShapes.TORCH;
     }
 
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext context) {
-        Level level = context.getLevel();
-        BlockPos pos = context.getClickedPos();
-        if (!level.getFluidState(pos).isEmpty()) {
+    public @Nullable BlockState getStateForPlacement_(Level level,
+                                                      int x,
+                                                      int y,
+                                                      int z,
+                                                      Player player,
+                                                      InteractionHand hand,
+                                                      BlockHitResult hitResult) {
+        if (!level.getFluidState_(x, y, z).isEmpty()) {
             return this.defaultBlockState().setValue(LIT, false);
         }
         return this.defaultBlockState();
@@ -146,54 +150,58 @@ public class BlockTorch extends BlockPhysics implements IReplaceable, IFireSourc
     }
 
     @Override
-    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
+    public void onPlace_(BlockState state, Level level, int x, int y, int z, BlockState oldState, boolean isMoving) {
         if (level.isClientSide) {
             return;
         }
         if (!state.getValue(LIT)) {
             return;
         }
-        if (level.getBlockEntity(pos) instanceof TETorch te) {
+        if (level.getBlockEntity_(x, y, z) instanceof TETorch te) {
             te.setPlaceTime();
         }
     }
 
     @Override
-    public void randomTick(BlockState state, ServerLevel level, BlockPos pos, Random random) {
+    public void randomTick_(BlockState state, ServerLevel level, int x, int y, int z, Random random) {
         if (!state.getValue(LIT)) {
             return;
         }
-        BlockEntity tile = level.getBlockEntity(pos);
+        BlockEntity tile = level.getBlockEntity_(x, y, z);
         if (tile instanceof TETorch teTorch) {
             int torchTime = EvolutionConfig.SERVER.torchTime.get();
             if (torchTime == 0) {
                 return;
             }
             if (level.getDayTime() >= teTorch.getTimePlaced() + (long) torchTime * Time.TICKS_PER_HOUR) {
-                level.setBlockAndUpdate(pos, state.setValue(LIT, false));
+                level.setBlockAndUpdate_(x, y, z, state.setValue(LIT, false));
             }
         }
     }
 
     @Override
-    public BlockState updateShape(BlockState state,
-                                  Direction direction,
-                                  BlockState fromState,
-                                  LevelAccessor level,
-                                  BlockPos pos,
-                                  BlockPos fromPos) {
-        return direction == Direction.DOWN && !this.canSurvive(state, level, pos) ?
+    public BlockState updateShape_(BlockState state,
+                                   Direction from,
+                                   BlockState fromState,
+                                   LevelAccessor level,
+                                   int x,
+                                   int y,
+                                   int z,
+                                   int fromX,
+                                   int fromY,
+                                   int fromZ) {
+        return from == Direction.DOWN && !this.canSurvive_(state, level, x, y, z) ?
                Blocks.AIR.defaultBlockState() :
-               super.updateShape(state, direction, fromState, level, pos, fromPos);
+               super.updateShape_(state, from, fromState, level, x, y, z, fromX, fromY, fromZ);
     }
 
     @Override
-    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+    public InteractionResult use_(BlockState state, Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hit) {
         ItemStack stack = player.getItemInHand(hand);
         if (stack.isEmpty() && state.getValue(LIT)) {
-            level.setBlockAndUpdate(pos, state.setValue(LIT, false));
+            level.setBlockAndUpdate(new BlockPos(x, y, z), state.setValue(LIT, false));
             level.playSound(player,
-                            pos,
+                            x + 0.5, y + 0.5, z + 0.5,
                             SoundEvents.FIRE_EXTINGUISH,
                             SoundSource.BLOCKS,
                             1.0F,
@@ -201,10 +209,11 @@ public class BlockTorch extends BlockPhysics implements IReplaceable, IFireSourc
             return InteractionResult.SUCCESS;
         }
         if (stack.getItem() == EvolutionItems.TORCH && !state.getValue(LIT)) {
-            level.setBlockAndUpdate(pos, state.setValue(LIT, true));
-            level.playSound(player, pos, SoundEvents.FIRE_AMBIENT, SoundSource.BLOCKS, 1.0F, level.random.nextFloat() * 0.7F + 0.3F);
+            level.setBlockAndUpdate(new BlockPos(x, y, z), state.setValue(LIT, true));
+            level.playSound(player, x + 0.5, y + 0.5, z + 0.5, SoundEvents.FIRE_AMBIENT, SoundSource.BLOCKS, 1.0F,
+                            level.random.nextFloat() * 0.7F + 0.3F);
             if (!level.isClientSide) {
-                if (level.getBlockEntity(pos) instanceof TETorch te) {
+                if (level.getBlockEntity_(x, y, z) instanceof TETorch te) {
                     te.setPlaceTime();
                 }
             }

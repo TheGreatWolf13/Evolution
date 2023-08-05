@@ -1419,7 +1419,7 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
         }
         BlockPos pos = this.blockPosition();
         BlockState state = this.getFeetBlockState();
-        return state.getBlock().isLadder(state, this.level, pos, (LivingEntity) (Object) this);
+        return state.getBlock().isLadder(state, this.level, pos.getX(), pos.getY(), pos.getZ(), (LivingEntity) (Object) this);
     }
 
     @Shadow

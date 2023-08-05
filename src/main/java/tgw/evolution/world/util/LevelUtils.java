@@ -5,13 +5,17 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.CollisionGetter;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.util.OptionalMutableBlockPos;
@@ -29,6 +33,34 @@ public final class LevelUtils {
             for (VoxelShape shape : calculator) {
                 if (!shape.isEmpty()) {
                     return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public static boolean containsAnyLiquid(LevelReader level, double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
+        return containsAnyLiquid(level, Mth.floor(minX), Mth.floor(minY), Mth.floor(minZ), Mth.ceil(maxX), Mth.ceil(maxY), Mth.ceil(maxZ));
+    }
+
+    public static boolean containsAnyLiquid(LevelReader level, int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
+        int cachedX = Integer.MAX_VALUE;
+        int cachedZ = Integer.MAX_VALUE;
+        LevelChunk cachedChunk = null;
+        for (int x = minX; x < maxX; ++x) {
+            int chunkX = SectionPos.blockToSectionCoord(x);
+            for (int z = minZ; z < maxZ; ++z) {
+                int chunkZ = SectionPos.blockToSectionCoord(z);
+                if (chunkX != cachedX || chunkZ != cachedZ) {
+                    cachedX = chunkX;
+                    cachedZ = chunkZ;
+                    cachedChunk = (LevelChunk) level.getChunk(chunkX, chunkZ);
+                }
+                assert cachedChunk != null;
+                for (int y = minY; y < maxY; ++y) {
+                    if (!cachedChunk.getFluidState(x, y, z).isEmpty()) {
+                        return true;
+                    }
                 }
             }
         }
@@ -118,5 +150,26 @@ public final class LevelUtils {
             }
         }
         return true;
+    }
+
+    public static int getLightBlockInto(BlockGetter level,
+                                        BlockState state,
+                                        int x,
+                                        int y,
+                                        int z,
+                                        BlockState blockingState,
+                                        int bx,
+                                        int by,
+                                        int bz,
+                                        Direction direction,
+                                        int lightBlock) {
+        boolean occludes = state.canOcclude() && state.useShapeForLightOcclusion();
+        boolean blockingOccludes = blockingState.canOcclude() && blockingState.useShapeForLightOcclusion();
+        if (!occludes && !blockingOccludes) {
+            return lightBlock;
+        }
+        VoxelShape shape = occludes ? state.getOcclusionShape_(level, x, y, z) : Shapes.empty();
+        VoxelShape blockingShape = blockingOccludes ? blockingState.getOcclusionShape_(level, bx, by, bz) : Shapes.empty();
+        return Shapes.mergedFaceOccludes(shape, blockingShape, direction) ? 16 : lightBlock;
     }
 }

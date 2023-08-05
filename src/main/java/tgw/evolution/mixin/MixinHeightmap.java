@@ -16,11 +16,14 @@ import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.collection.sets.SimpleEnumSet;
 
 import java.util.Set;
+import java.util.function.Predicate;
 
 @Mixin(Heightmap.class)
 public abstract class MixinHeightmap {
 
     @Shadow @Final private static Logger LOGGER;
+    @Shadow @Final public Predicate<BlockState> isOpaque;
+    @Shadow @Final private ChunkAccess chunk;
     @Shadow @Final private BitStorage data;
 
     /**
@@ -34,8 +37,10 @@ public abstract class MixinHeightmap {
         int y0 = chunk.getMinBuildHeight();
         for (int x = 0; x < 16; ++x) {
             for (int z = 0; z < 16; ++z) {
-                for (Heightmap.Types types : set) {
-                    list.add(chunk.getOrCreateHeightmapUnprimed(types));
+                for (Heightmap.Types type : ArrayUtils.HEIGHTMAP) {
+                    if (set.contains(type)) {
+                        list.add(chunk.getOrCreateHeightmapUnprimed(type));
+                    }
                 }
                 for (int y = y1 - 1; y >= y0; --y) {
                     BlockState state = chunk.getBlockState_(x, y, z);
@@ -56,6 +61,12 @@ public abstract class MixinHeightmap {
         }
     }
 
+    @Shadow
+    public abstract int getFirstAvailable(int i, int j);
+
+    @Shadow
+    public abstract void setHeight(int i, int j, int k);
+
     /**
      * @author TheGreatWolf
      * @reason Use new map
@@ -75,5 +86,30 @@ public abstract class MixinHeightmap {
                         ls.length);
             primeHeightmaps(chunkAccess, SimpleEnumSet.of(ArrayUtils.HEIGHTMAP, types));
         }
+    }
+
+    @Overwrite
+    public boolean update(int localX, int y, int localZ, BlockState state) {
+        int currentY = this.getFirstAvailable(localX, localZ);
+        if (y <= currentY - 2) {
+            return false;
+        }
+        if (this.isOpaque.test(state)) {
+            if (y >= currentY) {
+                this.setHeight(localX, localZ, y + 1);
+                return true;
+            }
+        }
+        else if (currentY - 1 == y) {
+            for (int dy = y - 1; dy >= this.chunk.getMinBuildHeight(); --dy) {
+                if (this.isOpaque.test(this.chunk.getBlockState_(localX, dy, localZ))) {
+                    this.setHeight(localX, localZ, dy + 1);
+                    return true;
+                }
+            }
+            this.setHeight(localX, localZ, this.chunk.getMinBuildHeight());
+            return true;
+        }
+        return false;
     }
 }

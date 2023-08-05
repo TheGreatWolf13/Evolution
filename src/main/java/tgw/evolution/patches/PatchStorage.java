@@ -7,21 +7,39 @@ import org.jetbrains.annotations.Nullable;
 public interface PatchStorage {
 
     @CanIgnoreReturnValue
-    LevelChunk cameraReplace(int index, LevelChunk oldChunk, @Nullable LevelChunk newChunk);
+    default LevelChunk cameraReplace(int index, LevelChunk oldChunk, @Nullable LevelChunk newChunk) {
+        throw new AbstractMethodError();
+    }
 
-    void cameraReplace(int index, LevelChunk chunk);
+    default void cameraReplace(int index, LevelChunk chunk) {
+        throw new AbstractMethodError();
+    }
 
-    int getCamViewCenterX();
+    default int getCamViewCenterX() {
+        throw new AbstractMethodError();
+    }
 
-    int getCamViewCenterZ();
+    default int getCamViewCenterZ() {
+        throw new AbstractMethodError();
+    }
 
-    @Nullable LevelChunk getCameraChunk(int index);
+    default @Nullable LevelChunk getCameraChunk(int index) {
+        throw new AbstractMethodError();
+    }
 
-    int getCameraChunksLength();
+    default int getCameraChunksLength() {
+        throw new AbstractMethodError();
+    }
 
-    int getCameraIndex(int x, int z);
+    default int getCameraIndex(int x, int z) {
+        throw new AbstractMethodError();
+    }
 
-    boolean inCameraRange(int x, int z);
+    default boolean inCameraRange(int x, int z) {
+        throw new AbstractMethodError();
+    }
 
-    void setCamViewCenter(int x, int z);
+    default void setCamViewCenter(int x, int z) {
+        throw new AbstractMethodError();
+    }
 }

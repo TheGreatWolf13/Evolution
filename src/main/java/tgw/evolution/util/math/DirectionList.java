@@ -4,66 +4,78 @@ import net.minecraft.core.Direction;
 
 import java.util.random.RandomGenerator;
 
-public class DirectionList {
+public final class DirectionList {
 
-    private final Direction[] values = new Direction[6];
-    private int current;
+    public static final int NULL = -1;
 
-    public void add(Direction direction) {
-        if (this.current == 6) {
+    private DirectionList() {
+    }
+
+    public static int add(int data, Direction direction) {
+        int size = size(data);
+        if (size == 6) {
             throw new ArrayIndexOutOfBoundsException("List is full");
         }
-        this.values[this.current] = direction;
-        this.current++;
+        data = set(data, size++, direction);
+        return setSize(data, size);
     }
 
-    public void clear() {
-        this.current = 0;
+    public static int fillHorizontal() {
+        return 0b100_011_101_010_100;
     }
 
-    public void fillHorizontal() {
-        System.arraycopy(DirectionUtil.HORIZ_NESW, 0, this.values, 0, 4);
-        this.current = 4;
+    public static Direction get(int data, int index) {
+        assert 0 <= index && index < 6 : "Invalid index: " + index;
+        assert index < size(data) : "Index >= size: " + index;
+        return DirectionUtil.ALL[data >> (index + 1) * 3 & 0b111];
     }
 
-    public Direction getLastAndRemove() {
-        if (this.current == 0) {
-            throw new IllegalStateException("List is empty, cannot get last Direction");
+    public static int getLast(int data) {
+        int size = size(data);
+        if (size == 0) {
+            throw new IllegalStateException("List is empty, cannot get last");
         }
-        return this.values[--this.current];
+        return size - 1;
     }
 
-    public Direction getRandomAndRemove(RandomGenerator random) {
-        if (this.current == 0) {
+    public static int getRandom(int data, RandomGenerator random) {
+        int size = size(data);
+        if (size == 0) {
             throw new IllegalStateException("List is empty, cannot get a random Direction");
         }
-        int index = random.nextInt(this.current);
-        Direction direction = this.values[index];
-        this.current--;
-        if (index != 5) {
-            System.arraycopy(this.values, index + 1, this.values, index, 5 - index);
+        return random.nextInt(size);
+    }
+
+    public static boolean isEmpty(int data) {
+        return (data & 0b111) == 0;
+    }
+
+    public static int remove(int data, int index) {
+        int size = size(data);
+        if (size == 0) {
+            throw new IllegalStateException("List is empty, cannot remove");
         }
-        return direction;
-    }
-
-    public boolean isEmpty() {
-        return this.current == 0;
-    }
-
-    public void remove(Direction direction) {
-        for (int i = 0; i < this.current; i++) {
-            if (this.values[i] == direction) {
-                this.current--;
-                if (i == 5) {
-                    break;
-                }
-                System.arraycopy(this.values, i + 1, this.values, i, 5 - i);
-                break;
-            }
+        data = setSize(data, --size);
+        if (index != size) {
+            data = MathHelper.deleteBits(data, (index + 1) * 3, 3);
         }
+        return data;
     }
 
-    public int size() {
-        return this.current;
+    private static int set(int data, int index, Direction dir) {
+        assert 0 <= index && index < 6;
+        int offset = (index + 1) * 3;
+        data &= ~(0b111 << offset);
+        return data | dir.ordinal() << offset;
+    }
+
+    private static int setSize(int data, int size) {
+        assert 0 <= size && size <= 6;
+        data &= ~0b111;
+        return data | size;
+    }
+
+    private static int size(int data) {
+        return data & 0b111;
     }
 }

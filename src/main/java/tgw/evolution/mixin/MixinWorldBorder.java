@@ -1,5 +1,6 @@
 package tgw.evolution.mixin;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.border.WorldBorder;
@@ -16,6 +17,18 @@ public abstract class MixinWorldBorder implements PatchWorldBorder {
     @Shadow
     public abstract double getDistanceToBorder(Entity entity);
 
+    @Shadow
+    public abstract double getMaxX();
+
+    @Shadow
+    public abstract double getMaxZ();
+
+    @Shadow
+    public abstract double getMinX();
+
+    @Shadow
+    public abstract double getMinZ();
+
     @Overwrite
     public boolean isInsideCloseToBorder(Entity entity, AABB bb) {
         Evolution.deprecatedMethod();
@@ -28,6 +41,17 @@ public abstract class MixinWorldBorder implements PatchWorldBorder {
         return this.getDistanceToBorder(entity) < maxSize * 2.0D && this.isWithinBounds(entity.getX(), entity.getZ(), maxSize);
     }
 
+    @Overwrite
+    public boolean isWithinBounds(BlockPos pos) {
+        Evolution.deprecatedMethod();
+        return this.isWithinBounds_(pos.getX(), pos.getZ());
+    }
+
     @Shadow
     public abstract boolean isWithinBounds(double d, double e, double f);
+
+    @Override
+    public boolean isWithinBounds_(int x, int z) {
+        return x + 1 > this.getMinX() && x < this.getMaxX() && z + 1 > this.getMinZ() && z < this.getMaxZ();
+    }
 }

@@ -6,7 +6,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
-import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
@@ -23,7 +22,7 @@ import tgw.evolution.util.constants.RockVariant;
 
 public class ScreenKnapping extends Screen {
 
-    private final BlockPos pos;
+    private final long pos;
     private final ResourceLocation resBackground = Evolution.getResource("textures/gui/knapping.png");
     private final ItemStack[] stacks = new ItemStack[KnappingRecipe.VALUES.length - 1];
     private Button button;
@@ -34,7 +33,7 @@ public class ScreenKnapping extends Screen {
     private int selectedRecipeIndex = -1;
     private int startIndex;
 
-    public ScreenKnapping(BlockPos pos, RockVariant variant) {
+    public ScreenKnapping(long pos, RockVariant variant) {
         super(new TranslatableComponent("evolution.gui.knapping"));
         this.pos = pos;
         for (int i = 0; i < this.stacks.length; i++) {
@@ -43,7 +42,7 @@ public class ScreenKnapping extends Screen {
         }
     }
 
-    public static void open(BlockPos pos, RockVariant variant) {
+    public static void open(long pos, RockVariant variant) {
         Minecraft.getInstance().setScreen(new ScreenKnapping(pos, variant));
     }
 

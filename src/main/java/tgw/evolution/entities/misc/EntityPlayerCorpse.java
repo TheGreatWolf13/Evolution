@@ -32,12 +32,13 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.capabilities.player.CapabilityInventory;
 import tgw.evolution.entities.EntityPlayerDummy;
 import tgw.evolution.entities.EntitySkeletonDummy;
 import tgw.evolution.entities.EntityUtils;
-import tgw.evolution.entities.IEntityPacket;
+import tgw.evolution.entities.IEntitySpawnData;
 import tgw.evolution.init.EvolutionEntities;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.inventory.AdditionalSlotType;
@@ -46,7 +47,6 @@ import tgw.evolution.inventory.ContainerChecker;
 import tgw.evolution.inventory.IContainerCheckable;
 import tgw.evolution.inventory.corpse.ContainerCorpse;
 import tgw.evolution.network.PacketSCCustomEntity;
-import tgw.evolution.patches.PatchServerPlayer;
 import tgw.evolution.patches.PatchSynchedEntityData;
 import tgw.evolution.util.EvolutionDataSerializers;
 import tgw.evolution.util.NBTHelper;
@@ -59,7 +59,7 @@ import tgw.evolution.util.time.Time;
 import java.util.Optional;
 import java.util.UUID;
 
-public class EntityPlayerCorpse extends Entity implements IContainerCheckable, IEntityPacket<EntityPlayerCorpse>, MenuProvider, Container {
+public class EntityPlayerCorpse extends Entity implements IContainerCheckable, IEntitySpawnData, MenuProvider, Container {
 
     public static final EntityDataAccessor<Boolean> SKELETON = SynchedEntityData.defineId(EntityPlayerCorpse.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<NonNullList<ItemStack>> EQUIPMENT = SynchedEntityData.defineId(EntityPlayerCorpse.class,
@@ -68,20 +68,20 @@ public class EntityPlayerCorpse extends Entity implements IContainerCheckable, I
     private static @Nullable MinecraftSessionService sessionService;
     private final ContainerChecker<EntityPlayerCorpse> containerChecker;
     private final BasicContainer inventory;
-    private Component deathMessage = EvolutionTexts.EMPTY;
+    protected Component deathMessage = EvolutionTexts.EMPTY;
+    protected long gameDeathTime;
+    protected byte model;
+    protected String playerName = "";
+    protected UUID playerUUID = EntityUtils.UUID_ZERO;
+    protected int selected;
+    protected long systemDeathTime;
     private int deathTimer;
-    private long gameDeathTime;
     private boolean isSkeleton;
     private long lastTick;
-    private byte model;
     private @Nullable EntityPlayerDummy player;
-    private String playerName = "";
     private GameProfile playerProfile = EntityUtils.EMPTY_PROFILE;
-    private UUID playerUUID = EntityUtils.UUID_ZERO;
     private byte recheckTime;
-    private int selected;
     private @Nullable EntitySkeletonDummy skeleton;
-    private long systemDeathTime;
 
     {
         this.containerChecker = new ContainerChecker<>() {
@@ -138,7 +138,7 @@ public class EntityPlayerCorpse extends Entity implements IContainerCheckable, I
         for (EquipmentSlot slot : AdditionalSlotType.SLOTS) {
             equip.set(i++, player.getItemBySlot(slot).copy());
         }
-        CapabilityInventory additionalEquip = ((PatchServerPlayer) player).getExtraInventory();
+        CapabilityInventory additionalEquip = player.getExtraInventory();
         for (AdditionalSlotType slot : AdditionalSlotType.VALUES) {
             equip.set(i++, additionalEquip.getItem(slot.ordinal()).copy());
         }
@@ -325,7 +325,7 @@ public class EntityPlayerCorpse extends Entity implements IContainerCheckable, I
         return this.playerProfile;
     }
 
-    public @Nullable UUID getPlayerUUID() {
+    public UUID getPlayerUUID() {
         return this.playerUUID;
     }
 
@@ -344,6 +344,11 @@ public class EntityPlayerCorpse extends Entity implements IContainerCheckable, I
             return this.skeleton;
         }
         return null;
+    }
+
+    @Override
+    public EntityData getSpawnData() {
+        return new PlayerCorpseData(this);
     }
 
     public long getSystemDeathTime() {
@@ -442,18 +447,6 @@ public class EntityPlayerCorpse extends Entity implements IContainerCheckable, I
     }
 
     @Override
-    public void readAdditionalSyncData(FriendlyByteBuf buf) {
-        this.playerUUID = buf.readUUID();
-        this.playerName = buf.readUtf();
-        this.model = buf.readByte();
-        this.selected = buf.readByte();
-        this.systemDeathTime = buf.readLong();
-        this.gameDeathTime = buf.readLong();
-        this.deathMessage = buf.readComponent();
-        this.setPlayerProfile(new GameProfile(this.playerUUID, this.playerName));
-    }
-
-    @Override
     public ItemStack removeItem(int slot, int amount) {
         return this.inventory.removeItem(slot, amount);
     }
@@ -482,7 +475,7 @@ public class EntityPlayerCorpse extends Entity implements IContainerCheckable, I
             inv.set(3 - i, ItemStack.EMPTY);
         }
         //Extra Inventory
-        CapabilityInventory extraInventory = ((PatchServerPlayer) player).getExtraInventory();
+        CapabilityInventory extraInventory = player.getExtraInventory();
         for (int i = 0, len = extraInventory.getContainerSize(); i < len; ++i) {
             ItemStack stack = extraInventory.getItem(i);
             extraInventory.setItem(i, ItemStack.EMPTY);
@@ -631,14 +624,59 @@ public class EntityPlayerCorpse extends Entity implements IContainerCheckable, I
         this.playerProfile = updateGameProfile(this.playerProfile);
     }
 
-    @Override
-    public void writeAdditionalSyncData(FriendlyByteBuf buf) {
-        buf.writeUUID(this.playerUUID);
-        buf.writeUtf(this.playerName);
-        buf.writeByte(this.model);
-        buf.writeByte(this.selected);
-        buf.writeLong(this.systemDeathTime);
-        buf.writeLong(this.gameDeathTime);
-        buf.writeComponent(this.deathMessage);
+    public static class PlayerCorpseData<T extends EntityPlayerCorpse> extends EntityData<T> {
+
+        private final Component deathMessage;
+        private final long gameDeathTime;
+        private final byte model;
+        private final String playerName;
+        private final UUID playerUUID;
+        private final byte selected;
+        private final long systemDeathTime;
+
+        public PlayerCorpseData(T entity) {
+            this.playerUUID = entity.playerUUID;
+            this.playerName = entity.playerName;
+            this.model = entity.model;
+            this.gameDeathTime = entity.gameDeathTime;
+            this.systemDeathTime = entity.systemDeathTime;
+            this.deathMessage = entity.deathMessage;
+            this.selected = (byte) entity.selected;
+        }
+
+        public PlayerCorpseData(FriendlyByteBuf buf) {
+            this.playerUUID = buf.readUUID();
+            this.playerName = buf.readUtf();
+            this.model = buf.readByte();
+            this.selected = buf.readByte();
+            this.systemDeathTime = buf.readLong();
+            this.gameDeathTime = buf.readLong();
+            this.deathMessage = buf.readComponent();
+        }
+
+        @Override
+        @MustBeInvokedByOverriders
+        public void read(T entity) {
+            entity.playerUUID = this.playerUUID;
+            entity.playerName = this.playerName;
+            entity.model = this.model;
+            entity.selected = this.selected;
+            entity.systemDeathTime = this.systemDeathTime;
+            entity.gameDeathTime = this.gameDeathTime;
+            entity.deathMessage = this.deathMessage;
+            entity.setPlayerProfile(new GameProfile(this.playerUUID, this.playerName));
+        }
+
+        @Override
+        @MustBeInvokedByOverriders
+        public void writeToBuffer(FriendlyByteBuf buf) {
+            buf.writeUUID(this.playerUUID);
+            buf.writeUtf(this.playerName);
+            buf.writeByte(this.model);
+            buf.writeByte(this.selected);
+            buf.writeLong(this.systemDeathTime);
+            buf.writeLong(this.gameDeathTime);
+            buf.writeComponent(this.deathMessage);
+        }
     }
 }

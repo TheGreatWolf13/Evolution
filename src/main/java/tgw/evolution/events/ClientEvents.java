@@ -8,11 +8,14 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.Input;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.players.GameProfileCache;
@@ -428,8 +431,9 @@ public class ClientEvents {
     }
 
     public float getMainhandIndicatorPercentage(float partialTicks) {
-        if (this.mc.player instanceof PatchLivingEntity patch && (patch.isSpecialAttacking() || patch.isLockedInSpecialAttack())) {
-            return patch.getSpecialAttackProgress(partialTicks);
+        assert this.mc.player != null;
+        if (this.mc.player.isSpecialAttacking() || this.mc.player.isLockedInSpecialAttack()) {
+            return this.mc.player.getSpecialAttackProgress(partialTicks);
         }
         return MathHelper.clamp((this.mainhandCooldownTime + partialTicks) / this.getItemCooldown(InteractionHand.MAIN_HAND), 0.0F, 1.0F);
     }
@@ -797,8 +801,10 @@ public class ClientEvents {
         if (this.tickStart()) {
             return;
         }
-        assert this.mc.level != null;
-        assert this.mc.player != null;
+        ClientLevel level = this.mc.level;
+        LocalPlayer player = this.mc.player;
+        assert level != null;
+        assert player != null;
         if (!this.mc.isPaused()) {
             this.warmUpTicks++;
             //Remove inactive effects
@@ -808,7 +814,7 @@ public class ClientEvents {
                 for (int i = 0, l = EFFECTS.size(); i < l; i++) {
                     ClientEffectInstance instance = EFFECTS.get(i);
                     MobEffect effect = instance.getEffect();
-                    if (instance.getDuration() == 0 || !this.mc.player.hasEffect(effect) && this.warmUpTicks >= 100) {
+                    if (instance.getDuration() == 0 || !player.hasEffect(effect) && this.warmUpTicks >= 100) {
                         needsRemoving = true;
                     }
                     else {
@@ -818,7 +824,7 @@ public class ClientEvents {
                 if (needsRemoving) {
                     for (int i = 0; i < EFFECTS.size(); i++) {
                         ClientEffectInstance instance = EFFECTS.get(i);
-                        if (instance.getDuration() == 0 || !this.mc.player.hasEffect(instance.getEffect())) {
+                        if (instance.getDuration() == 0 || !player.hasEffect(instance.getEffect())) {
                             EFFECTS.remove(i--);
                         }
                     }
@@ -832,14 +838,15 @@ public class ClientEvents {
             }
             //Handle creative features
             this.mc.getProfiler().popPush("creative");
-            if (this.mc.player.isCreative() && EvolutionClient.KEY_BUILDING_ASSIST.isDown()) {
-                if (this.mc.player.getMainHandItem().getItem() instanceof BlockItem) {
+            if (player.isCreative() && EvolutionClient.KEY_BUILDING_ASSIST.isDown()) {
+                if (player.getMainHandItem().getItem() instanceof BlockItem) {
                     assert this.mc.hitResult != null;
                     if (this.mc.hitResult.getType() == HitResult.Type.BLOCK) {
-                        BlockPos pos = ((BlockHitResult) this.mc.hitResult).getBlockPos();
-                        if (!this.mc.level.getBlockState(pos).isAir()) {
-                            this.mc.player.connection.send(new PacketCSChangeBlock((BlockHitResult) this.mc.hitResult));
-                            this.mc.player.swing(InteractionHand.MAIN_HAND);
+                        BlockHitResult hitResult = (BlockHitResult) this.mc.hitResult;
+                        if (!level.getBlockState_(hitResult.posX(), hitResult.posY(), hitResult.posZ()).isAir()) {
+                            player.displayClientMessage(new TextComponent("Not implemented"), false);
+//                            this.mc.player.connection.send(new PacketCSChangeBlock((BlockHitResult) this.mc.hitResult));
+                            player.swing(InteractionHand.MAIN_HAND);
                         }
                     }
                 }
@@ -848,14 +855,17 @@ public class ClientEvents {
             this.mc.getProfiler().popPush("swing");
             this.ticks++;
             assert this.mc.gameMode != null;
-            if (this.mc.player instanceof PatchLivingEntity patch && patch.isSpecialAttacking()) {
-                this.cachedAttackType = patch.getSpecialAttackType();
-                if (patch.isInHitTicks()) {
-                    MathHelper.collideOBBWithCollider(MAINHAND_HITS, this.mc.player, 1.0f, MAINHAND_HIT_RESULT, true, false);
-                    if (MAINHAND_HIT_RESULT[0] != null && MAINHAND_HIT_RESULT[0].getType() != HitResult.Type.MISS) {
-                        patch.stopSpecialAttack(IMelee.StopReason.HIT_BLOCK);
-                        Evolution.info("Collided with {} at {} on {}", this.mc.level.getBlockState(MAINHAND_HIT_RESULT[0].getBlockPos()),
-                                       MAINHAND_HIT_RESULT[0].getBlockPos(), MAINHAND_HIT_RESULT[0].getLocation());
+            if (player.isSpecialAttacking()) {
+                this.cachedAttackType = player.getSpecialAttackType();
+                if (player.isInHitTicks()) {
+                    MathHelper.collideOBBWithCollider(MAINHAND_HITS, player, 1.0f, MAINHAND_HIT_RESULT, true, false);
+                    BlockHitResult hitResult = MAINHAND_HIT_RESULT[0];
+                    if (hitResult != null && hitResult.getType() != HitResult.Type.MISS) {
+                        player.stopSpecialAttack(IMelee.StopReason.HIT_BLOCK);
+                        Evolution.info("Collided with {} at [{}, {}, {}] on [{}, {}, {}]",
+                                       level.getBlockState_(hitResult.posX(), hitResult.posY(), hitResult.posZ()),
+                                       hitResult.posX(), hitResult.posY(), hitResult.posZ(),
+                                       hitResult.x(), hitResult.y(), hitResult.z());
                     }
                 }
             }
@@ -961,7 +971,7 @@ public class ClientEvents {
             }
             //Prevents the player from attacking if on cooldown
             this.mc.getProfiler().popPush("cooldown");
-            boolean isSpecialAttacking = ((PatchLivingEntity) this.mc.player).shouldRenderSpecialAttack();
+            boolean isSpecialAttacking = this.mc.player.shouldRenderSpecialAttack();
             if (this.wasSpecialAttacking && !isSpecialAttacking) {
                 this.resetCooldown(InteractionHand.MAIN_HAND);
             }
@@ -1020,7 +1030,7 @@ public class ClientEvents {
         if (this.mc.player == null) {
             return false;
         }
-        return ((PatchLivingEntity) this.mc.player).shouldRenderSpecialAttack();
+        return this.mc.player.shouldRenderSpecialAttack();
     }
 
     public void startChargeAttack(IMelee.ChargeAttackType chargeAttack) {
@@ -1032,7 +1042,7 @@ public class ClientEvents {
             }
             return;
         }
-        PatchLivingEntity player = (PatchLivingEntity) this.mc.player;
+        PatchLivingEntity player = this.mc.player;
         if (!player.isLockedInSpecialAttack()) {
             if (this.mc.player.getSwimAmount(this.getPartialTicks()) != 0) {
                 this.mc.player.displayClientMessage(EvolutionTexts.ACTION_ATTACK_POSE, true);
@@ -1062,7 +1072,7 @@ public class ClientEvents {
         if (type == null) {
             type = IMelee.BARE_HAND_ATTACK;
         }
-        PatchLivingEntity player = (PatchLivingEntity) this.mc.player;
+        PatchLivingEntity player = this.mc.player;
         if (player.isOnGracePeriod()) {
             if (player.canPerformFollowUp(type)) {
                 if (this.mc.player.getSwimAmount(this.getPartialTicks()) != 0) {

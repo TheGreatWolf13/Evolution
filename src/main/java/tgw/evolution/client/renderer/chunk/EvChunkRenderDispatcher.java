@@ -414,8 +414,8 @@ public class EvChunkRenderDispatcher {
                 for (int dy = 0; dy < 16; ++dy) {
                     mutable.setY(posY + dy);
                     for (int dz = 0; dz < 16; ++dz) {
-                        BlockState blockState = chunk.getBlockState(mutable.setZ(posZ + dz));
-                        if (blockState.isSolidRender(EvChunkRenderDispatcher.this.level, mutable)) {
+                        BlockState blockState = chunk.getBlockState_(posX + dx, posY + dy, posZ + dz);
+                        if (blockState.isSolidRender(EvChunkRenderDispatcher.this.level, mutable.setZ(posZ + dz))) {
                             visgraph.setOpaque(dx, dy, dz);
                         }
                         if (blockState.hasBlockEntity()) {
@@ -786,16 +786,20 @@ public class EvChunkRenderDispatcher {
                     BlockRenderDispatcher dispatcher = Minecraft.getInstance().getBlockRenderer();
                     BlockPos.MutableBlockPos mutable = POS_CACHE.get();
                     for (int dx = 0; dx < 16; ++dx) {
-                        mutable.setX(posX + dx);
+                        int pX = posX + dx;
+                        mutable.setX(pX);
                         for (int dy = 0; dy < 16; ++dy) {
-                            mutable.setY(posY + dy);
+                            int pY = posY + dy;
+                            mutable.setY(pY);
                             for (int dz = 0; dz < 16; ++dz) {
-                                BlockState blockState = region.getBlockState_(posX + dx, posY + dy, posZ + dz);
-                                if (blockState.isSolidRender(region, mutable.setZ(posZ + dz))) {
+                                int pZ = posZ + dz;
+                                mutable.setZ(pZ);
+                                BlockState blockState = region.getBlockState_(pX, pY, pZ);
+                                if (blockState.isSolidRender_(region, pX, pY, pZ)) {
                                     visgraph.setOpaque(dx, dy, dz);
                                 }
                                 if (blockState.hasBlockEntity()) {
-                                    BlockEntity tile = region.getBlockEntity_(posX + dx, posY + dy, posZ + dz);
+                                    BlockEntity tile = region.getBlockEntity_(pX, pY, pZ);
                                     if (tile != null) {
                                         BlockEntityRenderer<BlockEntity> renderer = Minecraft.getInstance()
                                                                                              .getBlockEntityRenderDispatcher()
@@ -814,7 +818,7 @@ public class EvChunkRenderDispatcher {
                                     }
                                 }
                                 FluidState fluidState = blockState.getFluidState();
-                                IModelData modelData = this.getModelData(mutable.asLong());
+                                IModelData modelData = this.getModelData(BlockPos.asLong(pX, pY, pZ));
                                 for (int i = RenderLayer.SOLID, len = ChunkBuilderPack.RENDER_TYPES.length; i < len; i++) {
                                     RenderType renderType = ChunkBuilderPack.RENDER_TYPES[i];
                                     if (!fluidState.isEmpty() && ItemBlockRenderTypes.getRenderLayer(fluidState) == renderType) {

@@ -16,12 +16,12 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.*;
 import tgw.evolution.Evolution;
+import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.client.models.data.IModelData;
 import tgw.evolution.client.renderer.EvAmbientOcclusionFace;
 import tgw.evolution.client.renderer.chunk.EvLevelRenderer;
@@ -39,7 +39,6 @@ public abstract class MixinModelBlockRenderer implements PatchModelBlockRenderer
 
     @Unique private static final ThreadLocal<EvAmbientOcclusionFace> AOF = ThreadLocal.withInitial(EvAmbientOcclusionFace::new);
     @Unique private static final ThreadLocal<float[]> SHAPES = ThreadLocal.withInitial(() -> new float[12]);
-    @Unique private static final ThreadLocal<BlockPos.MutableBlockPos> MUTABLE_POS = ThreadLocal.withInitial(BlockPos.MutableBlockPos::new);
     @Shadow @Final static Direction[] DIRECTIONS;
     @Unique private final XoRoShiRoRandom random = new XoRoShiRoRandom();
     @Shadow @Final private BlockColors blockColors;
@@ -293,7 +292,7 @@ public abstract class MixinModelBlockRenderer implements PatchModelBlockRenderer
                                    int packedOverlay) {
         for (int i = 0, l = quads.size(); i < l; i++) {
             BakedQuad bakedQuad = quads.get(i);
-            AoFace.calculate(level, state, pos, bakedQuad.getDirection(), shape,
+            AoFace.calculate(level, state, pos.getX(), pos.getY(), pos.getZ(), bakedQuad.getDirection(), shape,
                              calculateShape(level, state, pos, bakedQuad.getVertices(), bakedQuad.getDirection(), shape), bakedQuad.isShade());
             this.putQuadData(level, state, pos, consumer, matrices.last(), bakedQuad, AoFace.brightness0, AoFace.brightness1, AoFace.brightness2,
                              AoFace.brightness3, AoFace.lightmap0, AoFace.lightmap1, AoFace.lightmap2, AoFace.lightmap3, packedOverlay);
@@ -313,10 +312,14 @@ public abstract class MixinModelBlockRenderer implements PatchModelBlockRenderer
         for (int i = 0, l = quads.size(); i < l; i++) {
             BakedQuad quad = quads.get(i);
             if (repackLight) {
-                BlockPos blockpos = calculateShape(level, state, pos, quad.getVertices(), quad.getDirection()) ?
-                                    MUTABLE_POS.get().setWithOffset(pos, quad.getDirection()) :
-                                    pos;
-                light = EvLevelRenderer.getLightColor(level, state, blockpos);
+                Direction dir = quad.getDirection();
+                if (calculateShape(level, state, pos, quad.getVertices(), dir)) {
+                    light = EvLevelRenderer.getLightColor(level, state, pos.getX() + dir.getStepX(), pos.getY() + dir.getStepY(),
+                                                          pos.getZ() + dir.getStepZ());
+                }
+                else {
+                    light = EvLevelRenderer.getLightColor(level, state, pos.getX(), pos.getY(), pos.getZ());
+                }
             }
             float bright = level.getShade(quad.getDirection(), quad.isShade());
             this.putQuadData(level, state, pos, buffer, matrices.last(), quad, bright, bright, bright, bright, light, light, light, light, overlay);
@@ -384,16 +387,18 @@ public abstract class MixinModelBlockRenderer implements PatchModelBlockRenderer
                                     long seed,
                                     int packedOverlay,
                                     IModelData modelData) {
+        int x = pos.getX();
+        int y = pos.getY();
+        int z = pos.getZ();
         boolean hasRendered = false;
         float[] shapes = SHAPES.get();
         EvAmbientOcclusionFace ambientOcclusionFace = AOF.get();
-        BlockPos.MutableBlockPos mutableBlockPos = MUTABLE_POS.get().set(pos);
-        for (Direction direction : DIRECTIONS) {
+        for (Direction dir : DIRECTIONS) {
             random.setSeed(seed);
-            List<BakedQuad> quads = model.getQuads(state, direction, random, modelData);
+            List<BakedQuad> quads = model.getQuads(state, dir, random, modelData);
             if (!quads.isEmpty()) {
-                mutableBlockPos.setWithOffset(pos, direction);
-                if (!checkSides || Block.shouldRenderFace(state, level, pos, direction, mutableBlockPos)) {
+                if (!checkSides ||
+                    BlockUtils.shouldRenderFace(state, level, x, y, z, dir, x + dir.getStepX(), y + dir.getStepY(), z + dir.getStepZ())) {
                     this.renderModelFaceAO(level, state, pos, matrices, consumer, quads, shapes, ambientOcclusionFace, packedOverlay);
                     hasRendered = true;
                 }
@@ -458,15 +463,19 @@ public abstract class MixinModelBlockRenderer implements PatchModelBlockRenderer
                                        long seed,
                                        int packedOverlay,
                                        IModelData modelData) {
+        int x = pos.getX();
+        int y = pos.getY();
+        int z = pos.getZ();
         boolean hasAnything = false;
-        BlockPos.MutableBlockPos mutablePos = MUTABLE_POS.get();
-        for (Direction direction : DIRECTIONS) {
+        for (Direction dir : DIRECTIONS) {
             random.setSeed(seed);
-            List<BakedQuad> quads = model.getQuads(state, direction, random, modelData);
+            List<BakedQuad> quads = model.getQuads(state, dir, random, modelData);
             if (!quads.isEmpty()) {
-                mutablePos.setWithOffset(pos, direction);
-                if (!checkSides || Block.shouldRenderFace(state, level, pos, direction, mutablePos)) {
-                    int light = EvLevelRenderer.getLightColor(level, state, mutablePos);
+                int offX = x + dir.getStepX();
+                int offY = y + dir.getStepY();
+                int offZ = z + dir.getStepZ();
+                if (!checkSides || BlockUtils.shouldRenderFace(state, level, x, y, z, dir, offX, offY, offZ)) {
+                    int light = EvLevelRenderer.getLightColor(level, state, offX, offY, offZ);
                     this.renderModelFaceFlat(level, state, pos, light, packedOverlay, false, matrices, builder, quads);
                     hasAnything = true;
                 }

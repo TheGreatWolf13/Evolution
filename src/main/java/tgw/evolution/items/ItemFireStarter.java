@@ -2,6 +2,7 @@ package tgw.evolution.items;
 
 import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -15,7 +16,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
-import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.state.BlockState;
@@ -24,18 +24,15 @@ import net.minecraft.world.phys.HitResult;
 import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionCreativeTabs;
-import tgw.evolution.patches.PatchItem;
 
-public class ItemFireStarter extends ItemEv implements IDurability, PatchItem {
+public class ItemFireStarter extends ItemEv implements IDurability {
 
     public ItemFireStarter() {
         super(new Item.Properties().tab(EvolutionCreativeTabs.MISC).durability(10));
     }
 
-    public static boolean canSetFire(LevelReader level, BlockPos pos) {
-        BlockState state = level.getBlockState(pos);
-        BlockState fireState = EvolutionBlocks.FIRE.getStateWithAge(level, pos);
-        return state.isAir() && fireState.canSurvive(level, pos);
+    public static boolean canSetFire(LevelReader level, int x, int y, int z) {
+        return level.getBlockState_(x, y, z).isAir() && EvolutionBlocks.FIRE.getStateWithAge(level, x, y, z).canSurvive_(level, x, y, z);
     }
 
     @Override
@@ -47,13 +44,17 @@ public class ItemFireStarter extends ItemEv implements IDurability, PatchItem {
         if (living instanceof Player) {
             distance = (float) living.getAttributeValue(EvolutionAttributes.REACH_DISTANCE);
         }
-        BlockHitResult rayTrace = (BlockHitResult) living.pick(distance, 1.0f, false);
-        BlockPos pos = rayTrace.getBlockPos();
-        BlockPos facingPos = pos.relative(rayTrace.getDirection());
-        if (rayTrace.getType() == HitResult.Type.BLOCK && canSetFire(level, facingPos)) {
+        BlockHitResult hitResult = (BlockHitResult) living.pick(distance, 1.0f, false);
+        BlockPos pos = hitResult.getBlockPos();
+        Direction dir = hitResult.getDirection();
+        int x = pos.getX() + dir.getStepX();
+        int y = pos.getY() + dir.getStepY();
+        int z = pos.getZ() + dir.getStepZ();
+        BlockPos facingPos = new BlockPos(x, y, z);
+        if (hitResult.getType() == HitResult.Type.BLOCK && canSetFire(level, x, y, z)) {
             if (level.random.nextInt(3) == 0) {
                 level.playSound(null, facingPos, SoundEvents.FLINTANDSTEEL_USE, SoundSource.BLOCKS, 1.0F, level.random.nextFloat() * 0.4F + 0.8F);
-                BlockState state = EvolutionBlocks.FIRE.getStateWithAge(level, facingPos);
+                BlockState state = EvolutionBlocks.FIRE.getStateWithAge(level, x, y, z);
                 level.setBlockAndUpdate(facingPos, state);
             }
             if (living instanceof ServerPlayer serverPlayer) {
@@ -119,16 +120,21 @@ public class ItemFireStarter extends ItemEv implements IDurability, PatchItem {
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         float distance = (float) player.getAttributeValue(EvolutionAttributes.REACH_DISTANCE);
         BlockHitResult hitResult = (BlockHitResult) player.pick(distance, 1.0f, false);
-        if (hitResult.getType() == HitResult.Type.BLOCK && canSetFire(level, hitResult.getBlockPos().relative(hitResult.getDirection()))) {
-            player.startUsingItem(hand);
-            return new InteractionResultHolder<>(InteractionResult.CONSUME, player.getItemInHand(hand));
+        if (hitResult.getType() == HitResult.Type.BLOCK) {
+            BlockPos pos = hitResult.getBlockPos();
+            Direction dir = hitResult.getDirection();
+            if (canSetFire(level, pos.getX() + dir.getStepX(), pos.getY() + dir.getStepY(), pos.getZ() + dir.getStepZ())) {
+                player.startUsingItem(hand);
+                return new InteractionResultHolder<>(InteractionResult.CONSUME, player.getItemInHand(hand));
+            }
         }
         return new InteractionResultHolder<>(InteractionResult.FAIL, player.getItemInHand(hand));
     }
 
     @Override
-    public InteractionResult useOn(UseOnContext context) {
-        if (canSetFire(context.getLevel(), context.getClickedPos().relative(context.getClickedFace()))) {
+    public InteractionResult useOn_(Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult) {
+        Direction face = hitResult.getDirection();
+        if (canSetFire(level, x + face.getStepX(), y + face.getStepY(), z + face.getStepZ())) {
             return InteractionResult.PASS;
         }
         return InteractionResult.FAIL;

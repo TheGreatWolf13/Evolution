@@ -6,10 +6,10 @@ import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
+import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionTEs;
 import tgw.evolution.items.ItemFirewood;
@@ -45,12 +45,12 @@ public class TEFirewoodPile extends BlockEntity {
         return mass;
     }
 
-    public void dropAll(Level level, BlockPos pos) {
+    public void dropAll(Level level, int x, int y, int z) {
         while (this.currentIndex > 0) {
             Item item = this.removeLastFirewood();
             if (item != null) {
                 //noinspection ObjectAllocationInLoop
-                Block.popResource(level, pos, new ItemStack(item));
+                BlockUtils.popResource(level, x, y, z, new ItemStack(item));
             }
         }
     }

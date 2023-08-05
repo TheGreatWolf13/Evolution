@@ -1,6 +1,5 @@
 package tgw.evolution.network;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -9,16 +8,16 @@ import tgw.evolution.util.constants.RockVariant;
 
 public class PacketSCOpenKnappingGui implements Packet<ClientGamePacketListener> {
 
-    public final BlockPos pos;
+    public final long pos;
     public final RockVariant variant;
 
-    public PacketSCOpenKnappingGui(BlockPos pos, RockVariant variant) {
+    public PacketSCOpenKnappingGui(long pos, RockVariant variant) {
         this.pos = pos;
         this.variant = variant;
     }
 
     public PacketSCOpenKnappingGui(FriendlyByteBuf buf) {
-        this.pos = buf.readBlockPos();
+        this.pos = buf.readLong();
         this.variant = RockVariant.fromId(buf.readByte());
     }
 
@@ -29,7 +28,7 @@ public class PacketSCOpenKnappingGui implements Packet<ClientGamePacketListener>
 
     @Override
     public void write(FriendlyByteBuf buf) {
-        buf.writeBlockPos(this.pos);
+        buf.writeLong(this.pos);
         buf.writeByte(this.variant.getId());
     }
 }

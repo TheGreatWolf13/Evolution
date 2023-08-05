@@ -2,7 +2,6 @@ package tgw.evolution.mixin;
 
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.Particle;
-import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.AABB;
@@ -48,7 +47,7 @@ public abstract class MixinParticle {
     public int getLightColor(float partialTick) {
         int x = Mth.floor(this.x);
         int z = Mth.floor(this.z);
-        return this.level.hasChunkAt(x, z) ? EvLevelRenderer.getLightColor(this.level, new BlockPos(x, Mth.floor(this.y), z)) : 0;
+        return this.level.hasChunkAt(x, z) ? EvLevelRenderer.getLightColor(this.level, x, Mth.floor(this.y), z) : 0;
     }
 
     /**

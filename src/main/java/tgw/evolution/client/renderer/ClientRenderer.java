@@ -54,20 +54,17 @@ import tgw.evolution.items.IDrink;
 import tgw.evolution.items.IFood;
 import tgw.evolution.items.IMelee;
 import tgw.evolution.network.PacketCSPlaySoundEntityEmitted;
-import tgw.evolution.patches.PatchLivingEntity;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.hitbox.Hitbox;
 import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 import tgw.evolution.util.math.MathHelper;
-import tgw.evolution.world.util.MutableCollisionContext;
 
 import java.util.Collections;
 import java.util.Random;
 
 public class ClientRenderer {
 
-    private static final MutableCollisionContext COLLISION_CONTEXT = new MutableCollisionContext();
     private static @Nullable ClientRenderer instance;
     private static int slotMainHand;
     private final ClientEvents client;
@@ -157,9 +154,9 @@ public class ClientRenderer {
                                          double x,
                                          double y,
                                          double z,
-                                         BlockPos pos,
+                                         int pX, int pY, int pZ,
                                          BlockState state) {
-        drawShape(matrices, buffer, state.getShape(entity.level, pos, COLLISION_CONTEXT.set(entity)), pos.getX() - x, pos.getY() - y, pos.getZ() - z,
+        drawShape(matrices, buffer, state.getShape_(entity.level, pX, pY, pZ, entity), pX - x, pY - y, pZ - z,
                   0.0F, 0.0F, 0.0F, 0.4F);
     }
 
@@ -361,10 +358,10 @@ public class ClientRenderer {
         return false;
     }
 
-    public void renderBlockOutlines(PoseStack matrices, MultiBufferSource buffer, Camera camera, BlockPos hitPos) {
+    public void renderBlockOutlines(PoseStack matrices, MultiBufferSource buffer, Camera camera, int x, int y, int z) {
         assert this.mc.level != null;
-        BlockState state = this.mc.level.getBlockState_(hitPos);
-        if (!state.isAir() && this.mc.level.getWorldBorder().isWithinBounds(hitPos)) {
+        BlockState state = this.mc.level.getBlockState_(x, y, z);
+        if (!state.isAir() && this.mc.level.getWorldBorder().isWithinBounds_(x, z)) {
             RenderSystem.enableBlend();
             Blending.DEFAULT.apply();
             RenderSystem.lineWidth(Math.max(2.5F, this.mc.getWindow().getWidth() / 1_920.0F * 2.5F));
@@ -373,7 +370,7 @@ public class ClientRenderer {
             double projX = camera.getPosition().x;
             double projY = camera.getPosition().y;
             double projZ = camera.getPosition().z;
-            drawSelectionBox(matrices, buffer.getBuffer(RenderType.lines()), camera.getEntity(), projX, projY, projZ, hitPos, state);
+            drawSelectionBox(matrices, buffer.getBuffer(RenderType.lines()), camera.getEntity(), projX, projY, projZ, x, y, z, state);
             matrices.popPose();
             RenderSystem.enableTexture();
             RenderSystem.disableBlend();
@@ -382,11 +379,12 @@ public class ClientRenderer {
 
     public void renderCrosshair(PoseStack matrices, float partialTicks, int width, int height) {
         Options options = this.mc.options;
+        LocalPlayer player = this.mc.player;
         if (options.getCameraType() == CameraType.FIRST_PERSON) {
             assert this.mc.gameMode != null;
-            assert this.mc.player != null;
+            assert player != null;
             if (this.mc.gameMode.getPlayerMode() != GameType.SPECTATOR || this.rayTraceMouse(this.mc.hitResult)) {
-                if (options.renderDebug && !options.hideGui && !this.mc.player.isReducedDebugInfo() && !options.reducedDebugInfo) {
+                if (options.renderDebug && !options.hideGui && !player.isReducedDebugInfo() && !options.reducedDebugInfo) {
                     PoseStack internalMat = RenderSystem.getModelViewStack();
                     internalMat.pushPose();
                     internalMat.translate(width / 2.0, height / 2.0, this.mc.gui.getBlitOffset());
@@ -451,17 +449,16 @@ public class ClientRenderer {
                         boolean shouldRenderOff = offhandPerc < 1;
                         y += 17;
                         if (shouldRenderMain) {
-                            renderAttackIndicator(this.mc.player.getMainArm(), matrix, x, y, mainhandPerc,
-                                                  shouldRenderOff || !this.mc.player.getOffhandItem().isEmpty());
+                            renderAttackIndicator(player.getMainArm(), matrix, x, y, mainhandPerc,
+                                                  shouldRenderOff || !player.getOffhandItem().isEmpty());
                         }
                         if (shouldRenderOff) {
-                            renderAttackIndicator(this.mc.player.getMainArm().getOpposite(), matrix, x, y, offhandPerc, true);
+                            renderAttackIndicator(player.getMainArm().getOpposite(), matrix, x, y, offhandPerc, true);
                         }
                     }
                     GUIUtils.endBlitBatch();
                     //FollowUp Indicator
                     if (EvolutionConfig.CLIENT.followUps.get() && this.client.shouldRenderSpecialAttack()) {
-                        PatchLivingEntity player = (PatchLivingEntity) this.mc.player;
                         IMelee.IAttackType type = player.getSpecialAttackType();
                         if (type != null) {
                             if (type.getFollowUps() > 0) {
@@ -1066,7 +1063,7 @@ public class ClientRenderer {
         RenderSystem.disableBlend();
     }
 
-    public void renderOutlines(PoseStack matrices, MultiBufferSource buffer, VoxelShape shape, Camera info, BlockPos pos) {
+    public void renderOutlines(PoseStack matrices, MultiBufferSource buffer, VoxelShape shape, Camera info, int x, int y, int z) {
         RenderSystem.enableBlend();
         Blending.DEFAULT.apply();
         RenderSystem.lineWidth(Math.max(2.5F, this.mc.getWindow().getWidth() / 1_920.0F * 2.5F));
@@ -1076,8 +1073,7 @@ public class ClientRenderer {
         double projX = info.getPosition().x;
         double projY = info.getPosition().y;
         double projZ = info.getPosition().z;
-        drawShape(matrices, buffer.getBuffer(RenderType.LINES), shape, pos.getX() - projX, pos.getY() - projY, pos.getZ() - projZ, 1.0F, 1.0F, 0.0F,
-                  1.0F);
+        drawShape(matrices, buffer.getBuffer(RenderType.LINES), shape, x - projX, y - projY, z - projZ, 1.0F, 1.0F, 0.0F, 1.0F);
         matrices.popPose();
         RenderSystem.enableTexture();
         RenderSystem.disableBlend();

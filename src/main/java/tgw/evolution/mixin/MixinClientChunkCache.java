@@ -13,58 +13,61 @@ import net.minecraft.world.level.chunk.ChunkSource;
 import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
+import tgw.evolution.Evolution;
 import tgw.evolution.client.renderer.chunk.EvModelDataManager;
 import tgw.evolution.patches.PatchClientChunkCache;
-import tgw.evolution.patches.PatchMinecraft;
-import tgw.evolution.patches.PatchStorage;
+import tgw.evolution.patches.obj.IBlockEntityTagOutput;
 
+import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.function.Consumer;
 
 @Mixin(ClientChunkCache.class)
 public abstract class MixinClientChunkCache extends ChunkSource implements PatchClientChunkCache {
 
-    @Shadow @Final static Logger LOGGER;
     @Shadow @Final public ClientLevel level;
     @Shadow volatile ClientChunkCache.Storage storage;
     @Shadow @Final private LevelChunk emptyChunk;
 
     @Shadow
-    private static boolean isValidChunk(@Nullable LevelChunk chunk, int x, int z) {
+    private static int calculateStorageRange(int i) {
         throw new AbstractMethodError();
     }
 
+    @Overwrite
+    private static boolean isValidChunk(@Nullable LevelChunk chunk, int x, int z) {
+        if (chunk == null) {
+            return false;
+        }
+        ChunkPos chunkPos = chunk.getPos();
+        return chunkPos.x == x && chunkPos.z == z;
+    }
+
     /**
-     * @author TheGreatWolf
-     * @reason Handle when camera is not the player
+     * Runs on the main thread. Called by {@link net.minecraft.network.protocol.game.ClientboundForgetLevelChunkPacket}
      */
     @Overwrite
     public void drop(int x, int z) {
-        if (this.storage.inRange(x, z)) {
-            int index = this.storage.getIndex(x, z);
-            LevelChunk chunk = this.storage.getChunk(index);
+        ClientChunkCache.Storage storage = this.storage;
+        if (storage.inRange(x, z)) {
+            int index = storage.getIndex(x, z);
+            LevelChunk chunk = storage.getChunk(index);
             if (isValidChunk(chunk, x, z)) {
                 EvModelDataManager.onChunkUnload(chunk);
-                this.storage.replace(index, chunk, null);
+                storage.replace(index, chunk, null);
             }
         }
-        else //noinspection ConstantConditions
-            if ((Object) this.storage instanceof PatchStorage patch && patch.inCameraRange(x, z)) {
-                int index = patch.getCameraIndex(x, z);
-                LevelChunk chunk = patch.getCameraChunk(index);
-                if (isValidChunk(chunk, x, z)) {
-                    EvModelDataManager.onChunkUnload(chunk);
-                    patch.cameraReplace(index, chunk, null);
-                }
+        else if (storage.inCameraRange(x, z)) {
+            int index = storage.getCameraIndex(x, z);
+            LevelChunk chunk = storage.getCameraChunk(index);
+            if (isValidChunk(chunk, x, z)) {
+                EvModelDataManager.onChunkUnload(chunk);
+                storage.cameraReplace(index, chunk, null);
             }
+        }
     }
 
     /**
@@ -74,7 +77,7 @@ public abstract class MixinClientChunkCache extends ChunkSource implements Patch
     @Override
     @Overwrite
     public String gatherStats() {
-        return (this.storage.chunks.length() + ((PatchStorage) (Object) this.storage).getCameraChunksLength()) +
+        return (this.storage.chunks.length() + this.storage.getCameraChunksLength()) +
                ", " +
                this.getLoadedChunksCount();
     }
@@ -88,15 +91,15 @@ public abstract class MixinClientChunkCache extends ChunkSource implements Patch
     public @Nullable LevelChunk getChunk(int x, int z, ChunkStatus status, boolean load) {
         ClientChunkCache.Storage storage = this.storage;
         if (storage.inRange(x, z)) {
-            LevelChunk chunk = storage.getChunk(storage.getIndex(x, z));
+            int index = storage.getIndex(x, z);
+            LevelChunk chunk = storage.getChunk(index);
             if (isValidChunk(chunk, x, z)) {
                 return chunk;
             }
         }
         else {
-            PatchStorage patch = (PatchStorage) (Object) storage;
-            if (patch.inCameraRange(x, z)) {
-                LevelChunk chunk = patch.getCameraChunk(patch.getCameraIndex(x, z));
+            if (storage.inCameraRange(x, z)) {
+                LevelChunk chunk = storage.getCameraChunk(storage.getCameraIndex(x, z));
                 if (isValidChunk(chunk, x, z)) {
                     return chunk;
                 }
@@ -112,36 +115,7 @@ public abstract class MixinClientChunkCache extends ChunkSource implements Patch
     @Override
     @Overwrite
     public void onLightUpdate(LightLayer type, SectionPos pos) {
-        ((PatchMinecraft) Minecraft.getInstance()).lvlRenderer().setSectionDirty(pos.x(), pos.y(), pos.z());
-    }
-
-    @Inject(method = "updateViewRadius", at = @At(value = "FIELD", target = "Lnet/minecraft/client/multiplayer/ClientChunkCache$Storage;" +
-                                                                            "viewCenterX:I", ordinal = 0), locals = LocalCapture.CAPTURE_FAILHARD)
-    private void onUpdateViewRadius0(int viewDistance, CallbackInfo ci, int i, int j, ClientChunkCache.Storage storage) {
-        PatchStorage patch = (PatchStorage) (Object) storage;
-        PatchStorage patch1 = (PatchStorage) (Object) this.storage;
-        patch.setCamViewCenter(patch1.getCamViewCenterX(), patch1.getCamViewCenterZ());
-    }
-
-    @Inject(method = "updateViewRadius", at = @At(value = "FIELD", target = "Lnet/minecraft/client/multiplayer/ClientChunkCache;" +
-                                                                            "storage:Lnet/minecraft/client/multiplayer/ClientChunkCache$Storage;",
-            ordinal = 5), locals = LocalCapture.CAPTURE_FAILHARD)
-    private void onUpdateViewRadius1(int viewDistance,
-                                     CallbackInfo ci,
-                                     int i,
-                                     int j,
-                                     ClientChunkCache.Storage storage) {
-        PatchStorage thisPatch = (PatchStorage) (Object) this.storage;
-        PatchStorage patch = (PatchStorage) (Object) storage;
-        for (int h = 0; h < thisPatch.getCameraChunksLength(); h++) {
-            LevelChunk chunk = thisPatch.getCameraChunk(h);
-            if (chunk != null) {
-                ChunkPos pos = chunk.getPos();
-                if (patch.inCameraRange(pos.x, pos.z)) {
-                    patch.cameraReplace(patch.getCameraIndex(pos.x, pos.z), chunk);
-                }
-            }
-        }
+        Minecraft.getInstance().lvlRenderer().setSectionDirty(pos.x(), pos.y(), pos.z());
     }
 
     /**
@@ -154,43 +128,85 @@ public abstract class MixinClientChunkCache extends ChunkSource implements Patch
                                                       FriendlyByteBuf buf,
                                                       CompoundTag tag,
                                                       Consumer<ClientboundLevelChunkPacketData.BlockEntityTagOutput> consumer) {
-        if (this.storage.inRange(x, z)) {
-            int index = this.storage.getIndex(x, z);
-            LevelChunk chunk = this.storage.getChunk(index);
+        Evolution.deprecatedMethod();
+        return null;
+    }
+
+    /**
+     * Runs on the main thread. Called by {@link ClientboundLevelChunkPacketData}
+     */
+    @Override
+    public @Nullable LevelChunk replaceWithPacketData_(int x, int z, FriendlyByteBuf buf, CompoundTag tag, Consumer<IBlockEntityTagOutput> consumer) {
+        ClientChunkCache.Storage storage = this.storage;
+        if (storage.inRange(x, z)) {
+            int index = storage.getIndex(x, z);
+            LevelChunk chunk = storage.getChunk(index);
             ChunkPos pos = new ChunkPos(x, z);
             if (!isValidChunk(chunk, x, z)) {
                 chunk = new LevelChunk(this.level, pos);
-                chunk.replaceWithPacketData(buf, tag, consumer);
-                this.storage.replace(index, chunk);
+                chunk.replaceWithPacketData_(buf, tag, consumer);
+                storage.replace(index, chunk);
             }
             else {
-                chunk.replaceWithPacketData(buf, tag, consumer);
+                chunk.replaceWithPacketData_(buf, tag, consumer);
             }
             this.level.onChunkLoaded(pos);
             return chunk;
         }
-        //noinspection ConstantConditions
-        if ((Object) this.storage instanceof PatchStorage patch && patch.inCameraRange(x, z)) {
-            int index = patch.getCameraIndex(x, z);
-            LevelChunk chunk = patch.getCameraChunk(index);
+        if (storage.inCameraRange(x, z)) {
+            int index = storage.getCameraIndex(x, z);
+            LevelChunk chunk = storage.getCameraChunk(index);
             ChunkPos pos = new ChunkPos(x, z);
             if (!isValidChunk(chunk, x, z)) {
                 chunk = new LevelChunk(this.level, pos);
-                chunk.replaceWithPacketData(buf, tag, consumer);
-                patch.cameraReplace(index, chunk);
+                chunk.replaceWithPacketData_(buf, tag, consumer);
+                storage.cameraReplace(index, chunk);
             }
             else {
-                chunk.replaceWithPacketData(buf, tag, consumer);
+                chunk.replaceWithPacketData_(buf, tag, consumer);
             }
             this.level.onChunkLoaded(pos);
             return chunk;
         }
-        LOGGER.warn("Ignoring chunk since it's not in the view range: {}, {}", x, z);
+        Evolution.warn("Ignoring chunk since it's not in the view range: {}, {}", x, z);
         return null;
     }
 
     @Override
     public void updateCameraViewCenter(int x, int z) {
-        ((PatchStorage) (Object) this.storage).setCamViewCenter(x, z);
+        this.storage.setCamViewCenter(x, z);
+    }
+
+    @Overwrite
+    public void updateViewRadius(int radius) {
+        ClientChunkCache.Storage oldStorage = this.storage;
+        int oldRadius = oldStorage.chunkRadius;
+        int newRadius = calculateStorageRange(radius);
+        if (oldRadius != newRadius) {
+            ClientChunkCache.Storage newStorage = ((ClientChunkCache) (Object) this).new Storage(newRadius);
+            newStorage.setCamViewCenter(oldStorage.getCamViewCenterX(), oldStorage.getCamViewCenterZ());
+            newStorage.viewCenterX = oldStorage.viewCenterX;
+            newStorage.viewCenterZ = oldStorage.viewCenterZ;
+            AtomicReferenceArray<LevelChunk> chunks = oldStorage.chunks;
+            for (int i = 0, len = chunks.length(); i < len; ++i) {
+                LevelChunk chunk = chunks.get(i);
+                if (chunk != null) {
+                    ChunkPos chunkPos = chunk.getPos();
+                    if (newStorage.inRange(chunkPos.x, chunkPos.z)) {
+                        newStorage.replace(newStorage.getIndex(chunkPos.x, chunkPos.z), chunk);
+                    }
+                }
+            }
+            for (int i = 0, len = oldStorage.getCameraChunksLength(); i < len; ++i) {
+                LevelChunk chunk = oldStorage.getCameraChunk(i);
+                if (chunk != null) {
+                    ChunkPos pos = chunk.getPos();
+                    if (newStorage.inCameraRange(pos.x, pos.z)) {
+                        newStorage.cameraReplace(newStorage.getCameraIndex(pos.x, pos.z), chunk);
+                    }
+                }
+            }
+            this.storage = newStorage;
+        }
     }
 }

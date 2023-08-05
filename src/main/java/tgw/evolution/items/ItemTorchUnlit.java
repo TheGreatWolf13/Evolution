@@ -1,23 +1,18 @@
 package tgw.evolution.items;
 
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.chunk.LevelChunk;
-import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.IFireSource;
 import tgw.evolution.blocks.util.BlockUtils;
@@ -26,8 +21,6 @@ import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionTexts;
 
 import java.util.List;
-
-import static tgw.evolution.init.EvolutionBStates.LIT;
 
 public class ItemTorchUnlit extends ItemWallOrFloor {
 
@@ -46,42 +39,20 @@ public class ItemTorchUnlit extends ItemWallOrFloor {
     }
 
     @Override
-    protected @Nullable BlockState getPlacementState(BlockPlaceContext context) {
-        BlockState wallState = this.wallBlock.getStateForPlacement(context);
-        BlockState stateForPlacement = null;
-        LevelReader level = context.getLevel();
-        BlockPos blockpos = context.getClickedPos();
-        for (Direction direction : context.getNearestLookingDirections()) {
-            if (direction != Direction.UP) {
-                BlockState floorState = direction == Direction.DOWN ? this.getBlock().getStateForPlacement(context) : wallState;
-                if (floorState != null && floorState.canSurvive(level, blockpos)) {
-                    stateForPlacement = floorState.setValue(LIT, false);
-                    break;
-                }
-            }
-        }
-        return stateForPlacement != null && level.isUnobstructed(stateForPlacement, blockpos, CollisionContext.empty()) ? stateForPlacement : null;
-    }
-
-    @Override
-    public InteractionResult useOn(UseOnContext context) {
-        Level level = context.getLevel();
-        BlockPos pos = context.getClickedPos();
-        BlockState state = level.getBlockState(pos);
+    public InteractionResult useOn_(Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult) {
+        BlockState state = level.getBlockState_(x, y, z);
         Block block = state.getBlock();
         if (block instanceof IFireSource fireSource && fireSource.isFireSource(state)) {
-            LevelChunk chunk = level.getChunkAt(pos);
-            Player player = context.getPlayer();
-            context.getItemInHand().shrink(1);
+            player.getItemInHand(hand).shrink(1);
             ItemStack stack = ItemTorch.createStack(level, 1);
-            assert player != null;
             if (!player.getInventory().add(stack)) {
-                BlockUtils.dropItemStack(level, pos, stack);
+                BlockUtils.dropItemStack(level, x, y, z, stack);
             }
-            level.playSound(player, pos, SoundEvents.FIRE_AMBIENT, SoundSource.PLAYERS, 1.0F, level.random.nextFloat() * 0.7F + 0.3F);
+            level.playSound(player, x + 0.5, y + 0.5, z + 0.5, SoundEvents.FIRE_AMBIENT, SoundSource.PLAYERS, 1.0F,
+                            level.random.nextFloat() * 0.7F + 0.3F);
             player.awardStat(Stats.ITEM_CRAFTED.get(EvolutionItems.TORCH));
             return InteractionResult.SUCCESS;
         }
-        return super.useOn(context);
+        return super.useOn_(level, x, y, z, player, hand, hitResult);
     }
 }

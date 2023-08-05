@@ -1,6 +1,5 @@
 package tgw.evolution.capabilities.modular;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.sounds.SoundEvent;
@@ -143,7 +142,7 @@ public class ModularTool implements IModular {
         return false;
     }
 
-    public boolean isCorrecToolForDrops(ItemStack stack, BlockState state, Level level, BlockPos pos) {
+    public boolean isCorrecToolForDrops(ItemStack stack, BlockState state, Level level, int x, int y, int z) {
         //TODO IMPLEMENTATIN
         return false;
     }
@@ -177,7 +176,7 @@ public class ModularTool implements IModular {
         return false;
     }
 
-    public void mineBlock(ItemStack stack, Level level, BlockState state, BlockPos pos, LivingEntity entity) {
+    public void mineBlock(ItemStack stack, Level level, BlockState state, int x, int y, int z, LivingEntity entity) {
         //TODO
     }
 

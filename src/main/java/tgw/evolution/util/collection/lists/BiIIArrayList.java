@@ -10,17 +10,13 @@ import it.unimi.dsi.fastutil.ints.IntArrays;
 public class BiIIArrayList {
 
     /**
-     * The initial default capacity of an array list.
-     */
-    public static final int DEFAULT_INITIAL_CAPACITY = 10;
-    /**
      * The backing array of the left elements.
      */
-    protected transient int[] a;
+    protected int[] a;
     /**
      * The backing array of the right elements.
      */
-    protected transient int[] b;
+    protected int[] b;
     /**
      * The current actual size of the list (never greater than the backing-array
      * length).
@@ -85,8 +81,8 @@ public class BiIIArrayList {
         if (this.a != IntArrays.DEFAULT_EMPTY_ARRAY) {
             capacity = (int) Math.max(Math.min((long) this.a.length + (this.a.length >> 1), Arrays.MAX_ARRAY_SIZE), capacity);
         }
-        else if (capacity < DEFAULT_INITIAL_CAPACITY) {
-            capacity = DEFAULT_INITIAL_CAPACITY;
+        else if (capacity < 10) {
+            capacity = 10;
         }
         this.a = IntArrays.forceCapacity(this.a, capacity, this.size);
         this.b = IntArrays.forceCapacity(this.b, capacity, this.size);

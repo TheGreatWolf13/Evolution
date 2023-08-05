@@ -20,13 +20,10 @@ public class OptionalMutableBlockPos {
         return this.isPresent;
     }
 
-    public boolean isSame(BlockPos pos, Direction offset, @Nullable Direction moving, boolean tolerance) {
+    public boolean isSame(int x, int y, int z, Direction offset, @Nullable Direction moving) {
         if (!this.isPresent()) {
             return false;
         }
-        int x = pos.getX();
-        int y = pos.getY();
-        int z = pos.getZ();
         switch (offset) {
             case UP -> ++y;
             case DOWN -> --y;
@@ -38,44 +35,29 @@ public class OptionalMutableBlockPos {
         int px = this.pos.getX();
         int py = this.pos.getY();
         int pz = this.pos.getZ();
-        int tx = px;
-        int ty = py;
-        int tz = pz;
         if (moving != null) {
             switch (moving) {
                 case DOWN -> {
                     --py;
-                    ty -= 2;
                 }
                 case UP -> {
                     ++py;
-                    ty += 2;
                 }
                 case WEST -> {
                     --px;
-                    tx -= 2;
                 }
                 case EAST -> {
                     ++px;
-                    tx += 2;
                 }
                 case NORTH -> {
                     --pz;
-                    tz -= 2;
                 }
                 case SOUTH -> {
                     ++pz;
-                    tz += 2;
                 }
             }
         }
-        if (px == x && py == y && pz == z) {
-            return true;
-        }
-        if (moving == null || !tolerance) {
-            return false;
-        }
-        return tx == x && ty == y && tz == z;
+        return px == x && py == y && pz == z;
     }
 
     public void remove() {
@@ -87,8 +69,8 @@ public class OptionalMutableBlockPos {
         this.pos.set(x, y, z);
     }
 
-    public void setWithOffset(BlockPos pos, Direction offset) {
+    public void setWithOffset(int x, int y, int z, Direction offset) {
         this.isPresent = true;
-        this.pos.setWithOffset(pos, offset);
+        this.pos.set(x, y, z).move(offset);
     }
 }

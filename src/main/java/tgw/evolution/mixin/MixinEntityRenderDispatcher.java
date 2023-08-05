@@ -15,6 +15,7 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -62,17 +63,19 @@ public abstract class MixinEntityRenderDispatcher {
                                           double z,
                                           float size,
                                           float weight) {
-        BlockState stateBelow = level.getBlockState_(pos.getX(), pos.getY() - 1, pos.getZ());
-        int brightness = level.getMaxLocalRawBrightness_(pos.getX(), pos.getY(), pos.getZ());
+        int posX = pos.getX();
+        int posY = pos.getY();
+        int posZ = pos.getZ();
+        BlockState stateBelow = level.getBlockState_(posX, posY - 1, posZ);
+        int brightness = level.getMaxLocalRawBrightness_(posX, posY, posZ);
         if (stateBelow.getRenderShape() == RenderShape.INVISIBLE || brightness <= 3) {
             return;
         }
-        BlockPos posBelow = pos.below();
-        if (!stateBelow.isCollisionShapeFullBlock(level, posBelow)) {
+        if (!stateBelow.isCollisionShapeFullBlock_(level, posX, posY - 1, posZ)) {
             return;
         }
-        VoxelShape shape = stateBelow.getShape(level, posBelow);
-        if (shape.isEmpty()) {
+        VoxelShape shapeBelow = stateBelow.getShape_(level, posX, posY - 1, posZ);
+        if (shapeBelow.isEmpty()) {
             return;
         }
         float f = LightTextureEv.getLightBrightness(level, brightness);
@@ -81,12 +84,11 @@ public abstract class MixinEntityRenderDispatcher {
             if (alpha > 1.0F) {
                 alpha = 1.0F;
             }
-            AABB aabb = shape.bounds();
-            double minX = pos.getX() + aabb.minX;
-            double maxX = pos.getX() + aabb.maxX;
-            double minY = pos.getY() + aabb.minY;
-            double minZ = pos.getZ() + aabb.minZ;
-            double maxZ = pos.getZ() + aabb.maxZ;
+            double minX = posX + shapeBelow.min(Direction.Axis.X);
+            double maxX = posX + shapeBelow.max(Direction.Axis.X);
+            double minY = posY + shapeBelow.min(Direction.Axis.Y);
+            double minZ = posZ + shapeBelow.min(Direction.Axis.Z);
+            double maxZ = posZ + shapeBelow.max(Direction.Axis.Z);
             float dMinX = (float) (minX - x);
             float dMaxX = (float) (maxX - x);
             float dy = (float) (minY - y);

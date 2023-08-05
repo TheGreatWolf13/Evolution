@@ -15,9 +15,9 @@ import tgw.evolution.EvolutionClient;
 import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.network.PacketCSPlayerFall;
-import tgw.evolution.patches.PatchLivingEntity;
 import tgw.evolution.util.math.AABBMutable;
 import tgw.evolution.util.physics.Fluid;
+import tgw.evolution.world.util.LevelUtils;
 
 public final class LivingHooks {
 
@@ -48,7 +48,7 @@ public final class LivingHooks {
         if (velocity == 0) {
             return 0;
         }
-        distanceOfSlowDown += ((PatchLivingEntity) entity).intrinsicSlowdown();
+        distanceOfSlowDown += entity.intrinsicSlowdown();
         AttributeInstance massAttribute = entity.getAttribute(EvolutionAttributes.MASS);
         assert massAttribute != null;
         double baseMass = massAttribute.getBaseValue();
@@ -93,28 +93,6 @@ public final class LivingHooks {
     }
 
     public static boolean hasEmptySpaceForEmerging(Entity entity, double preVelX, double preVelY, double preVelZ, double oldY) {
-//        //Try to find the axis of collision
-//        Vec3 movement = entity.getDeltaMovement();
-//        if (movement.x == 0) {
-//            if (preVelX == 0) {
-//                return false;
-//            }
-//            int x;
-//            if (preVelX < 0) {
-//                x = Mth.floor(entity.getBoundingBox().minX + 0.001) - 1;
-//            }
-//            else {
-//                x = Mth.floor(entity.getBoundingBox().maxX - 0.001) + 1;
-//            }
-//
-//        }
-//        else if (movement.z == 0) {
-//
-//        }
-//        else {
-//            //No collision, but we should have collision
-//            return false;
-//        }
         AABB box = entity.getBoundingBox();
         double minY = box.minY;
         int steps = Mth.ceil((box.maxY - minY) * 2);
@@ -123,12 +101,12 @@ public final class LivingHooks {
             AABBMutable bb = new AABBMutable(box).moveMutable(preVelX, deltaY + 0.062_5, preVelZ);
             Level level = entity.level;
             for (int i = 0; i < steps; ++i) {
-                if (level.noCollision(entity, bb) && !level.containsAnyLiquid(bb)) {
+                if (level.noCollision(entity, bb) && !LevelUtils.containsAnyLiquid(level, bb.minX, bb.minY, bb.minZ, bb.maxX, bb.maxY, bb.maxZ)) {
                     return true;
                 }
                 bb.moveY(0.5);
             }
-            return level.noCollision(entity, bb) && !level.containsAnyLiquid(bb);
+            return level.noCollision(entity, bb) && !LevelUtils.containsAnyLiquid(level, bb.minX, bb.minY, bb.minZ, bb.maxX, bb.maxY, bb.maxZ);
         }
         return false;
     }
@@ -155,7 +133,7 @@ public final class LivingHooks {
         if (entity.getOffhandItem().getItem() == Items.CROSSBOW) {
             return CrossbowItem.isCharged(entity.getOffhandItem());
         }
-        return ((PatchLivingEntity) entity).shouldRenderSpecialAttack();
+        return entity.shouldRenderSpecialAttack();
     }
 
     public static float xDelta(Entity entity, float partialTicks) {

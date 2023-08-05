@@ -1,7 +1,7 @@
 package tgw.evolution.blocks;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
@@ -9,8 +9,8 @@ import net.minecraft.world.level.block.grower.AbstractTreeGrower;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.material.Material;
-import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.init.EvolutionShapes;
 
 import java.util.Random;
@@ -45,7 +45,7 @@ public class BlockSapling extends BlockBush {
     }
 
     @Override
-    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+    public VoxelShape getShape_(BlockState state, BlockGetter level, int x, int y, int z, @Nullable Entity entity) {
         return EvolutionShapes.SAPLING;
     }
 
@@ -77,8 +77,8 @@ public class BlockSapling extends BlockBush {
 //    }
 
     @Override
-    public void randomTick(BlockState state, ServerLevel level, BlockPos pos, Random random) {
-        if (level.getBrightness(pos.above()) >= 9 && random.nextInt(7) == 0) {
+    public void randomTick_(BlockState state, ServerLevel level, int x, int y, int z, Random random) {
+        if (level.getBrightness_(x, y + 1, z) >= 9 && random.nextInt(7) == 0) {
 //            this.placeTree(level, pos, state, random);
         }
     }

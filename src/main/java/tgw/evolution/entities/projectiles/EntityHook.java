@@ -157,7 +157,7 @@ public class EntityHook extends EntityGenericProjectile {
     }
 
     @Override
-    protected void onBlockHit(BlockState state) {
+    protected void onBlockHit(BlockState state, int x, int y, int z) {
     }
 
     @Override
@@ -199,11 +199,12 @@ public class EntityHook extends EntityGenericProjectile {
 
     public void tryPlaceBlock() {
         BlockPos pos = this.blockPosition();
-        BlockPos down = pos.below();
-        if (this.level.isEmptyBlock(pos) && BlockUtils.hasSolidSide(this.level, down, Direction.UP)) {
-            this.level.setBlockAndUpdate(this.blockPosition(), EvolutionBlocks.CLIMBING_HOOK.defaultBlockState()
-                                                                                            .setValue(DIRECTION_HORIZONTAL,
-                                                                                                      this.facing.getOpposite()));
+        int x = pos.getX();
+        int y = pos.getY();
+        int z = pos.getZ();
+        if (this.level.isEmptyBlock_(x, y, z) && BlockUtils.hasSolidFace(this.level, x, y - 1, z, Direction.UP)) {
+            this.level.setBlockAndUpdate(pos, EvolutionBlocks.CLIMBING_HOOK.defaultBlockState()
+                                                                           .setValue(DIRECTION_HORIZONTAL, this.facing.getOpposite()));
             LivingEntity shooter = this.getShooter();
             if (shooter instanceof Player) {
                 ItemStack stack = shooter.getOffhandItem();
@@ -212,16 +213,15 @@ public class EntityHook extends EntityGenericProjectile {
                     int placed = tryPlaceRopes(this.level, pos, this.facing, count);
                     if (placed > 0) {
                         stack.shrink(placed);
-                        this.level.setBlockAndUpdate(this.blockPosition(), EvolutionBlocks.CLIMBING_HOOK.defaultBlockState()
-                                                                                                        .setValue(DIRECTION_HORIZONTAL,
-                                                                                                                  this.facing.getOpposite())
-                                                                                                        .setValue(ATTACHED, true));
+                        this.level.setBlockAndUpdate(pos, EvolutionBlocks.CLIMBING_HOOK.defaultBlockState()
+                                                                                       .setValue(DIRECTION_HORIZONTAL, this.facing.getOpposite())
+                                                                                       .setValue(ATTACHED, true));
                     }
                 }
             }
         }
         else {
-            BlockUtils.dropItemStack(this.level, pos, this.getArrowStack());
+            BlockUtils.dropItemStack(this.level, x, y, z, this.getArrowStack());
         }
     }
 }

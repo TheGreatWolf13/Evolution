@@ -6,6 +6,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -18,7 +19,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
@@ -44,19 +44,18 @@ public class BlockChopping extends BlockPhysics implements IReplaceable, ISittab
     }
 
     @Override
-    public void attack(BlockState state, Level level, BlockPos pos, Player player) {
-        BlockEntity tile = level.getBlockEntity(pos);
-        if (!(tile instanceof TEChopping chopping)) {
+    public void attack_(BlockState state, Level level, int x, int y, int z, Direction face, double hitX, double hitY, double hitZ, Player player) {
+        if (!(level.getBlockEntity_(x, y, z) instanceof TEChopping chopping)) {
             return;
         }
         if (chopping.hasLog()) {
             if (ItemUtils.isAxe(player.getMainHandItem())) {
                 if (chopping.increaseBreakProgress() == 4) {
                     chopping.breakLog(player);
-                    level.playSound(player, pos, SoundEvents.WOOD_BREAK, SoundSource.PLAYERS, 1.0f, 1.0f);
+                    level.playSound(player, x + 0.5, y + 0.5, z + 0.5, SoundEvents.WOOD_BREAK, SoundSource.PLAYERS, 1.0f, 1.0f);
                 }
                 else {
-                    level.playSound(player, pos, SoundEvents.WOOD_HIT, SoundSource.PLAYERS, 1.0f, 1.0f);
+                    level.playSound(player, x + 0.5, y + 0.5, z + 0.5, SoundEvents.WOOD_HIT, SoundSource.PLAYERS, 1.0f, 1.0f);
                 }
             }
         }
@@ -73,8 +72,8 @@ public class BlockChopping extends BlockPhysics implements IReplaceable, ISittab
     }
 
     @Override
-    public boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
-        return BlockUtils.hasSolidSide(level, pos.below(), Direction.UP);
+    public boolean canSurvive_(BlockState state, LevelReader level, int x, int y, int z) {
+        return BlockUtils.hasSolidFace(level, x, y - 1, z, Direction.UP);
     }
 
     @Override
@@ -94,25 +93,22 @@ public class BlockChopping extends BlockPhysics implements IReplaceable, ISittab
     }
 
     @Override
-    public int getHarvestLevel(BlockState state, @Nullable Level level, @Nullable BlockPos pos) {
-        if (level != null && pos != null) {
-            BlockEntity tile = level.getBlockEntity(pos);
-            if (tile instanceof TEChopping te) {
-                if (te.hasLog()) {
-                    return HarvestLevel.UNBREAKABLE;
-                }
+    public int getHarvestLevel(BlockState state, Level level, int x, int y, int z) {
+        if (level.getBlockEntity_(x, y, z) instanceof TEChopping te) {
+            if (te.hasLog()) {
+                return HarvestLevel.UNBREAKABLE;
             }
         }
         return HarvestLevel.STONE;
     }
 
     @Override
-    public double getMass(Level level, BlockPos pos, BlockState state) {
+    public double getMass(Level level, int x, int y, int z, BlockState state) {
         return this.woodVariant().getMass() / 2.0;
     }
 
     @Override
-    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+    public VoxelShape getShape_(BlockState state, BlockGetter level, int x, int y, int z, @Nullable Entity entity) {
         return EvolutionShapes.SLAB_2_D;
     }
 
@@ -137,14 +133,14 @@ public class BlockChopping extends BlockPhysics implements IReplaceable, ISittab
     }
 
     @Override
-    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+    public void onRemove_(BlockState state, Level level, int x, int y, int z, BlockState newState, boolean isMoving) {
         if (!state.is(newState.getBlock())) {
-            BlockEntity tile = level.getBlockEntity(pos);
+            BlockEntity tile = level.getBlockEntity_(x, y, z);
             if (tile instanceof TEChopping te && te.hasLog()) {
                 te.dropLog();
             }
         }
-        super.onRemove(state, level, pos, newState, isMoving);
+        super.onRemove_(state, level, x, y, z, newState, isMoving);
     }
 
     @Override
@@ -160,8 +156,8 @@ public class BlockChopping extends BlockPhysics implements IReplaceable, ISittab
     }
 
     @Override
-    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
-        BlockEntity tile = level.getBlockEntity(pos);
+    public InteractionResult use_(BlockState state, Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult) {
+        BlockEntity tile = level.getBlockEntity_(x, y, z);
         if (!(tile instanceof TEChopping chopping)) {
             return InteractionResult.PASS;
         }
@@ -172,8 +168,8 @@ public class BlockChopping extends BlockPhysics implements IReplaceable, ISittab
             }
         }
         if (!chopping.hasLog() && !state.getValue(OCCUPIED)) {
-            if (!player.isCrouching() && EntitySittable.create(level, pos, player)) {
-                level.setBlockAndUpdate(pos, state.setValue(OCCUPIED, true));
+            if (!player.isCrouching() && EntitySittable.create(level, x, y, z, player)) {
+                level.setBlockAndUpdate(new BlockPos(x, y, z), state.setValue(OCCUPIED, true));
                 return InteractionResult.SUCCESS;
             }
             return InteractionResult.PASS;

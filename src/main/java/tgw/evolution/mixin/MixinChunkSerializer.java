@@ -195,11 +195,11 @@ public abstract class MixinChunkSerializer {
             if (isLightOn) {
                 if (compound.contains("BlockLight", Tag.TAG_BYTE_ARRAY)) {
                     //noinspection ObjectAllocationInLoop
-                    lightEngine.queueSectionData(LightLayer.BLOCK, SectionPos.of(pos, y), new DataLayer(compound.getByteArray("BlockLight")), true);
+                    lightEngine.queueSectionData_(LightLayer.BLOCK, pos.x, y, pos.z, new DataLayer(compound.getByteArray("BlockLight")), true);
                 }
                 if (hasSkyLight && compound.contains("SkyLight", Tag.TAG_BYTE_ARRAY)) {
                     //noinspection ObjectAllocationInLoop
-                    lightEngine.queueSectionData(LightLayer.SKY, SectionPos.of(pos, y), new DataLayer(compound.getByteArray("SkyLight")), true);
+                    lightEngine.queueSectionData_(LightLayer.SKY, pos.x, y, pos.z, new DataLayer(compound.getByteArray("SkyLight")), true);
                 }
             }
         }

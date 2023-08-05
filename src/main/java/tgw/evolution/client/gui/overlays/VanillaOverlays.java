@@ -12,7 +12,6 @@ import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -66,7 +65,6 @@ public final class VanillaOverlays {
     public static final ResourceLocation TEXT_COLUMNS = new ResourceLocation("text_columns");
     public static final ResourceLocation TITLE_TEXT = new ResourceLocation("title_text");
     public static final ResourceLocation VIGNETTE = new ResourceLocation("vignette");
-    private static final BlockPos.MutableBlockPos POS = new BlockPos.MutableBlockPos();
 
     private VanillaOverlays() {}
 
@@ -416,9 +414,11 @@ public final class VanillaOverlays {
         }
         if (!entity.noPhysics) {
             Vec3 eyePos = entity.getEyePosition(partialTicks);
-            POS.set(eyePos.x, eyePos.y, eyePos.z);
-            BlockState state = entity.level.getBlockState_(POS);
-            if (state.getRenderShape() != RenderShape.INVISIBLE && state.isViewBlocking(entity.level, POS)) {
+            int x = Mth.floor(eyePos.x);
+            int y = Mth.floor(eyePos.y);
+            int z = Mth.floor(eyePos.z);
+            BlockState state = entity.level.getBlockState_(x, y, z);
+            if (state.getRenderShape() != RenderShape.INVISIBLE && state.isViewBlocking_(entity.level, x, y, z)) {
                 GUIUtils.renderTex(width, height, mc.getBlockRenderer().getBlockModelShaper().getParticleIcon(state), matrices);
             }
         }

@@ -7,6 +7,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
@@ -21,7 +22,6 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +32,6 @@ import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.items.ItemClayMolded;
 import tgw.evolution.items.ItemLog;
 import tgw.evolution.util.math.DirectionDiagonal;
-import tgw.evolution.util.math.DirectionUtil;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.time.Time;
 
@@ -47,17 +46,20 @@ public class BlockPitKiln extends BlockGeneric implements IReplaceable, EntityBl
         this.registerDefaultState(this.defaultBlockState().setValue(LAYERS_0_16, 0));
     }
 
-    public static boolean canBurn(BlockGetter level, BlockPos pos) {
-        for (Direction dir : DirectionUtil.HORIZ_NESW) {
-            if (!checkDirection(level, pos, dir)) {
-                return false;
-            }
+    public static boolean canBurn(BlockGetter level, int x, int y, int z) {
+        if (level.getBlockState_(x, y + 1, z).getBlock() != EvolutionBlocks.FIRE) {
+            return false;
         }
-        return level.getBlockState(pos.above()).getBlock() == EvolutionBlocks.FIRE;
-    }
-
-    private static boolean checkDirection(BlockGetter level, BlockPos pos, Direction direction) {
-        return BlockUtils.hasSolidSide(level, pos.relative(direction), direction.getOpposite());
+        if (!BlockUtils.hasSolidFace(level, x + 1, y, z, Direction.WEST)) {
+            return false;
+        }
+        if (!BlockUtils.hasSolidFace(level, x - 1, y, z, Direction.EAST)) {
+            return false;
+        }
+        if (!BlockUtils.hasSolidFace(level, x, y, z + 1, Direction.NORTH)) {
+            return false;
+        }
+        return BlockUtils.hasSolidFace(level, x, y, z - 1, Direction.SOUTH);
     }
 
     private static InteractionResult manageStack(TEPitKiln tile, ItemStack handStack, Player player, DirectionDiagonal direction) {
@@ -74,7 +76,8 @@ public class BlockPitKiln extends BlockGeneric implements IReplaceable, EntityBl
             Level level = tile.getLevel();
             assert level != null;
             if (!level.isClientSide && !player.getInventory().add(stack)) {
-                BlockUtils.dropItemStack(level, tile.getBlockPos(), stack);
+                BlockPos pos = tile.getBlockPos();
+                BlockUtils.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), stack);
             }
             tile.setStack(ItemStack.EMPTY, direction);
             tile.setChanged();
@@ -85,7 +88,7 @@ public class BlockPitKiln extends BlockGeneric implements IReplaceable, EntityBl
     }
 
     @Override
-    public void attack(BlockState state, Level level, BlockPos pos, Player player) {
+    public void attack_(BlockState state, Level level, int x, int y, int z, Direction face, double hitX, double hitY, double hitZ, Player player) {
         if (level.isClientSide) {
             return;
         }
@@ -94,21 +97,21 @@ public class BlockPitKiln extends BlockGeneric implements IReplaceable, EntityBl
             return;
         }
         if (layers <= 8) {
-            level.setBlockAndUpdate(pos, state.setValue(LAYERS_0_16, layers - 1));
+            level.setBlockAndUpdate(new BlockPos(x, y, z), state.setValue(LAYERS_0_16, layers - 1));
             ItemStack stack = new ItemStack(EvolutionItems.STRAW);
             if (!player.getInventory().add(stack)) {
-                BlockUtils.dropItemStack(level, pos, stack);
+                BlockUtils.dropItemStack(level, x, y, z, stack);
             }
             return;
         }
-        TEPitKiln tile = (TEPitKiln) level.getBlockEntity(pos);
-        level.setBlockAndUpdate(pos, state.setValue(LAYERS_0_16, layers - 1));
-        assert tile != null;
-        ItemStack stack = tile.getLogStack(layers - 9);
-        tile.setLog(layers - 9, (byte) -1);
-        tile.setChanged();
-        if (!player.getInventory().add(stack)) {
-            BlockUtils.dropItemStack(level, pos, stack);
+        if (level.getBlockEntity_(x, y, z) instanceof TEPitKiln tile) {
+            level.setBlockAndUpdate(new BlockPos(x, y, z), state.setValue(LAYERS_0_16, layers - 1));
+            ItemStack stack = tile.getLogStack(layers - 9);
+            tile.setLog(layers - 9, (byte) -1);
+            tile.setChanged();
+            if (!player.getInventory().add(stack)) {
+                BlockUtils.dropItemStack(level, x, y, z, stack);
+            }
         }
     }
 
@@ -123,8 +126,8 @@ public class BlockPitKiln extends BlockGeneric implements IReplaceable, EntityBl
     }
 
     @Override
-    public boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
-        return BlockUtils.hasSolidSide(level, pos.below(), Direction.UP);
+    public boolean canSurvive_(BlockState state, LevelReader level, int x, int y, int z) {
+        return BlockUtils.hasSolidFace(level, x, y - 1, z, Direction.UP);
     }
 
     @Override
@@ -133,7 +136,7 @@ public class BlockPitKiln extends BlockGeneric implements IReplaceable, EntityBl
     }
 
     @Override
-    public ItemStack getCloneItemStack(BlockState state, HitResult hit, BlockGetter level, BlockPos pos, Player player) {
+    public ItemStack getCloneItemStack(BlockState state, HitResult hit, BlockGetter level, int x, int y, int z, Player player) {
         return new ItemStack(EvolutionItems.STRAW);
     }
 
@@ -143,7 +146,7 @@ public class BlockPitKiln extends BlockGeneric implements IReplaceable, EntityBl
     }
 
     @Override
-    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+    public VoxelShape getShape_(BlockState state, BlockGetter level, int x, int y, int z, @Nullable Entity entity) {
         //TODO implementation
         return Shapes.block();
     }
@@ -160,7 +163,7 @@ public class BlockPitKiln extends BlockGeneric implements IReplaceable, EntityBl
     }
 
     @Override
-    public boolean isFireSource(BlockState state, LevelReader level, BlockPos pos, Direction side) {
+    public boolean isFireSource(BlockState state, LevelReader level, int x, int y, int z, Direction side) {
         return side == Direction.UP && state.getValue(LAYERS_0_16) == 16;
     }
 
@@ -180,73 +183,72 @@ public class BlockPitKiln extends BlockGeneric implements IReplaceable, EntityBl
     }
 
     @Override
-    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+    public void onRemove_(BlockState state, Level level, int x, int y, int z, BlockState newState, boolean isMoving) {
         if (state.getBlock() != newState.getBlock()) {
-            TEPitKiln te = (TEPitKiln) level.getBlockEntity(pos);
-            assert te != null;
-            te.onRemoved();
-        }
-        super.onRemove(state, level, pos, newState, isMoving);
-    }
-
-    @Override
-    public void randomTick(BlockState state, ServerLevel level, BlockPos pos, Random random) {
-        TEPitKiln tile = (TEPitKiln) level.getBlockEntity(pos);
-        assert tile != null;
-        if (canBurn(level, pos)) {
-            if (level.getDayTime() > tile.getTimeStart() + 8L * Time.TICKS_PER_HOUR) {
-                level.setBlockAndUpdate(pos, state.setValue(LAYERS_0_16, 0));
-                tile.finish();
+            if (level.getBlockEntity_(x, y, z) instanceof TEPitKiln tile) {
+                tile.onRemoved();
             }
         }
-        else {
-            tile.reset();
+        super.onRemove_(state, level, x, y, z, newState, isMoving);
+    }
+
+    @Override
+    public void randomTick_(BlockState state, ServerLevel level, int x, int y, int z, Random random) {
+        if (level.getBlockEntity_(x, y, z) instanceof TEPitKiln tile) {
+            if (canBurn(level, x, y, z)) {
+                if (level.getDayTime() > tile.getTimeStart() + 8L * Time.TICKS_PER_HOUR) {
+                    level.setBlockAndUpdate_(x, y, z, state.setValue(LAYERS_0_16, 0));
+                    tile.finish();
+                }
+            }
+            else {
+                tile.reset();
+            }
         }
     }
 
     @Override
-    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+    public InteractionResult use_(BlockState state, Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hit) {
         int layers = state.getValue(LAYERS_0_16);
-        TEPitKiln tile = (TEPitKiln) level.getBlockEntity(pos);
-        if (tile == null) {
-            return InteractionResult.PASS;
-        }
-        ItemStack stack = player.getItemInHand(hand);
-        if (layers == 0) {
-            if (stack.getItem() == EvolutionItems.STRAW && !tile.hasFinished()) {
-                level.setBlockAndUpdate(pos, state.setValue(LAYERS_0_16, 1));
+        if (level.getBlockEntity_(x, y, z) instanceof TEPitKiln tile) {
+            ItemStack stack = player.getItemInHand(hand);
+            if (layers == 0) {
+                if (stack.getItem() == EvolutionItems.STRAW && !tile.hasFinished()) {
+                    level.setBlockAndUpdate(new BlockPos(x, y, z), state.setValue(LAYERS_0_16, 1));
+                    if (!player.isCreative()) {
+                        stack.shrink(1);
+                    }
+                    level.playSound(player, x + 0.5, y + 0.5, z + 0.5, SoundEvents.COMPOSTER_FILL_SUCCESS, SoundSource.BLOCKS, 1.0F, 1.0F);
+                    return InteractionResult.SUCCESS;
+                }
+                if (tile.isSingle()) {
+                    return manageStack(tile, stack, player, DirectionDiagonal.NORTH_WEST);
+                }
+                int partX = MathHelper.getIndex(2, 0, 16, (hit.getLocation().x - x) * 16);
+                int partZ = MathHelper.getIndex(2, 0, 16, (hit.getLocation().z - z) * 16);
+                return manageStack(tile, stack, player, MathHelper.DIAGONALS[partZ][partX]);
+            }
+            if (layers < 8) {
+                if (stack.getItem() == EvolutionItems.STRAW) {
+                    level.setBlockAndUpdate(new BlockPos(x, y, z), state.setValue(LAYERS_0_16, layers + 1));
+                    if (!player.isCreative()) {
+                        stack.shrink(1);
+                    }
+                    level.playSound(player, x + 0.5, y + 0.5, z + 0.5, SoundEvents.COMPOSTER_FILL_SUCCESS, SoundSource.BLOCKS, 1.0F, 1.0F);
+                    return InteractionResult.SUCCESS;
+                }
+                return InteractionResult.PASS;
+            }
+            if (layers != 16 && stack.getItem() instanceof ItemLog) {
+                level.setBlockAndUpdate(new BlockPos(x, y, z), state.setValue(LAYERS_0_16, layers + 1));
+                tile.setLog(layers - 8, ((ItemLog) stack.getItem()).variant.getId());
                 if (!player.isCreative()) {
                     stack.shrink(1);
                 }
-                level.playSound(player, pos, SoundEvents.COMPOSTER_FILL_SUCCESS, SoundSource.BLOCKS, 1.0F, 1.0F);
-                return InteractionResult.SUCCESS;
-            }
-            if (tile.isSingle()) {
-                return manageStack(tile, stack, player, DirectionDiagonal.NORTH_WEST);
-            }
-            int x = MathHelper.getIndex(2, 0, 16, (hit.getLocation().x - pos.getX()) * 16);
-            int z = MathHelper.getIndex(2, 0, 16, (hit.getLocation().z - pos.getZ()) * 16);
-            return manageStack(tile, stack, player, MathHelper.DIAGONALS[z][x]);
-        }
-        if (layers < 8) {
-            if (stack.getItem() == EvolutionItems.STRAW) {
-                level.setBlockAndUpdate(pos, state.setValue(LAYERS_0_16, layers + 1));
-                if (!player.isCreative()) {
-                    stack.shrink(1);
-                }
-                level.playSound(player, pos, SoundEvents.COMPOSTER_FILL_SUCCESS, SoundSource.BLOCKS, 1.0F, 1.0F);
+                level.playSound(player, x + 0.5, y + 0.5, z + 0.5, SoundEvents.WOOD_PLACE, SoundSource.BLOCKS, 1.0F, 0.75F);
                 return InteractionResult.SUCCESS;
             }
             return InteractionResult.PASS;
-        }
-        if (layers != 16 && stack.getItem() instanceof ItemLog) {
-            level.setBlockAndUpdate(pos, state.setValue(LAYERS_0_16, layers + 1));
-            tile.setLog(layers - 8, ((ItemLog) stack.getItem()).variant.getId());
-            if (!player.isCreative()) {
-                stack.shrink(1);
-            }
-            level.playSound(player, pos, SoundEvents.WOOD_PLACE, SoundSource.BLOCKS, 1.0F, 0.75F);
-            return InteractionResult.SUCCESS;
         }
         return InteractionResult.PASS;
     }

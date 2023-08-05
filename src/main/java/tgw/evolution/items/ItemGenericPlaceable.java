@@ -5,15 +5,16 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.util.constants.BlockFlags;
@@ -36,7 +37,8 @@ public abstract class ItemGenericPlaceable extends ItemEv {
     }
 
     protected static boolean placeBlock(BlockPlaceContext context, BlockState state) {
-        return context.getLevel().setBlock(context.getClickedPos(), state, BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE | BlockFlags.RERENDER);
+        return context.getLevel()
+                      .setBlock(context.getClickedPos(), state, BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE | BlockFlags.RENDER_MAINTHREAD);
     }
 
     public abstract boolean customCondition(Block block);
@@ -99,11 +101,8 @@ public abstract class ItemGenericPlaceable extends ItemEv {
     }
 
     @Override
-    public InteractionResult useOn(UseOnContext context) {
-        InteractionResult resultType = this.tryPlace(new BlockPlaceContext(context));
-        Player player = context.getPlayer();
-        return resultType != InteractionResult.SUCCESS && this.isEdible() && player != null ?
-               this.use(context.getLevel(), player, context.getHand()).getResult() :
-               resultType;
+    public InteractionResult useOn_(Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult) {
+        InteractionResult result = this.tryPlace(new BlockPlaceContext(player, hand, player.getItemInHand(hand), hitResult));
+        return result != InteractionResult.SUCCESS && this.isEdible() ? this.use(level, player, hand).getResult() : result;
     }
 }

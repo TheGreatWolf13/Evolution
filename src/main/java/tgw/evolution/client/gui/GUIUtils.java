@@ -24,7 +24,6 @@ import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelBakery;
-import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
@@ -49,7 +48,7 @@ public final class GUIUtils {
     private static boolean inBlitBatch;
 
     static {
-        setDifficulty(null);
+        setDifficulty();
     }
 
     private GUIUtils() {
@@ -728,12 +727,11 @@ public final class GUIUtils {
         RenderSystem.setShaderColor((color >> 16 & 255) / 255.0F, (color >> 8 & 255) / 255.0F, (color & 255) / 255.0F, 1.0f);
     }
 
-    public static void setDifficulty(@Nullable BlockPos pos) {
+    private static void setDifficulty() {
         Level level = Minecraft.getInstance().level;
         if (level != null) {
             LevelData levelData = level.getLevelData();
-            difficulty = level.getCurrentDifficultyAt(
-                    pos == null ? new BlockPos(levelData.getXSpawn(), levelData.getYSpawn(), levelData.getZSpawn()) : pos);
+            difficulty = level.getCurrentDifficultyAt_(levelData.getXSpawn(), levelData.getYSpawn(), levelData.getZSpawn());
         }
     }
 

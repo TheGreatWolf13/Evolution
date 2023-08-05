@@ -1,6 +1,5 @@
 package tgw.evolution.items.modular;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.LivingEntity;
@@ -20,7 +19,6 @@ import tgw.evolution.inventory.SlotType;
 import tgw.evolution.items.IBackWeapon;
 import tgw.evolution.items.IThrowable;
 import tgw.evolution.items.ITwoHanded;
-import tgw.evolution.patches.PatchLivingEntity;
 import tgw.evolution.util.constants.HarvestLevel;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.physics.SI;
@@ -49,11 +47,11 @@ public class ItemModularTool extends ItemModular<ModularTool> implements IThrowa
     }
 
     @Override
-    public boolean canAttackBlock(BlockState state, Level level, BlockPos pos, Player player) {
+    public boolean canAttackBlock_(BlockState state, Level level, int x, int y, int z, Player player) {
         if (player.isCreative()) {
             return false;
         }
-        return !((PatchLivingEntity) player).shouldRenderSpecialAttack();
+        return !player.shouldRenderSpecialAttack();
     }
 
     @Override
@@ -182,11 +180,11 @@ public class ItemModularTool extends ItemModular<ModularTool> implements IThrowa
     }
 
     @Override
-    public boolean isCorrectToolForDrops(ItemStack stack, BlockState state, @Nullable Level level, @Nullable BlockPos pos) {
+    public boolean isCorrectToolForDrops(ItemStack stack, BlockState state, Level level, int x, int y, int z) {
         if (!verifyStack(stack)) {
             return false;
         }
-        return this.getModular().isCorrecToolForDrops(stack, state, level, pos);
+        return this.getModular().isCorrecToolForDrops(stack, state, level, x, y, z);
     }
 
     @Override
@@ -226,9 +224,9 @@ public class ItemModularTool extends ItemModular<ModularTool> implements IThrowa
     }
 
     @Override
-    public boolean mineBlock(ItemStack stack, Level level, BlockState state, BlockPos pos, LivingEntity entity) {
-        if (!level.isClientSide && state.getDestroySpeed(level, pos) != 0.0F) {
-            this.getModular().mineBlock(stack, level, state, pos, entity);
+    public boolean mineBlock_(ItemStack stack, Level level, BlockState state, int x, int y, int z, LivingEntity entity) {
+        if (!level.isClientSide && state.getDestroySpeed_() != 0.0F) {
+            this.getModular().mineBlock(stack, level, state, x, y, z, entity);
         }
         return true;
     }

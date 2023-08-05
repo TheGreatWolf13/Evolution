@@ -9,17 +9,14 @@ import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Material;
-import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionSounds;
 import tgw.evolution.util.constants.HarvestLevel;
 import tgw.evolution.util.constants.RockVariant;
-import tgw.evolution.util.math.DirectionUtil;
 
 public class BlockStone extends BlockPhysics implements IRockVariant, IPoppable, IFallable {
 
-    private static final ThreadLocal<BlockPos.MutableBlockPos> MUTABLE_POS = ThreadLocal.withInitial(BlockPos.MutableBlockPos::new);
     private final RockVariant variant;
 
     public BlockStone(RockVariant variant) {
@@ -33,15 +30,23 @@ public class BlockStone extends BlockPhysics implements IRockVariant, IPoppable,
 //    }
 
     @Override
-    public boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
-        BlockPos.MutableBlockPos mutablePos = MUTABLE_POS.get();
-        for (Direction dir : DirectionUtil.ALL) {
-            mutablePos.setWithOffset(pos, dir);
-            if (BlockUtils.hasSolidSide(level, mutablePos, dir.getOpposite())) {
-                return true;
-            }
+    public boolean canSurvive_(BlockState state, LevelReader level, int x, int y, int z) {
+        if (BlockUtils.hasSolidFace(level, x + 1, y, z, Direction.WEST)) {
+            return true;
         }
-        return false;
+        if (BlockUtils.hasSolidFace(level, x - 1, y, z, Direction.EAST)) {
+            return true;
+        }
+        if (BlockUtils.hasSolidFace(level, x, y + 1, z, Direction.DOWN)) {
+            return true;
+        }
+        if (BlockUtils.hasSolidFace(level, x, y - 1, z, Direction.UP)) {
+            return true;
+        }
+        if (BlockUtils.hasSolidFace(level, x, y, z + 1, Direction.NORTH)) {
+            return true;
+        }
+        return BlockUtils.hasSolidFace(level, x, y, z - 1, Direction.SOUTH);
     }
 
     @Override
@@ -60,7 +65,7 @@ public class BlockStone extends BlockPhysics implements IRockVariant, IPoppable,
 //    }
 
     @Override
-    public int getHarvestLevel(BlockState state, @Nullable Level level, @Nullable BlockPos pos) {
+    public int getHarvestLevel(BlockState state, Level level, int x, int y, int z) {
         return HarvestLevel.LOW_METAL;
     }
 
@@ -88,7 +93,7 @@ public class BlockStone extends BlockPhysics implements IRockVariant, IPoppable,
 //    }
 
     @Override
-    public double getMass(Level level, BlockPos pos, BlockState state) {
+    public double getMass(Level level, int x, int y, int z, BlockState state) {
         return this.rockVariant().getMass();
     }
 
@@ -98,8 +103,8 @@ public class BlockStone extends BlockPhysics implements IRockVariant, IPoppable,
     }
 
     @Override
-    public void popDrops(BlockState state, Level level, BlockPos pos) {
-        popResource(level, pos, new ItemStack(this));
+    public void popDrops(BlockState state, Level level, int x, int y, int z) {
+        popResource(level, new BlockPos(x, y, z), new ItemStack(this));
     }
 
     //    @Override

@@ -1,13 +1,16 @@
 package tgw.evolution.items;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.BlockKnapping;
 import tgw.evolution.blocks.IRockVariant;
@@ -44,13 +47,14 @@ public class ItemRock extends ItemGenericBlockPlaceable implements IRockVariant 
     }
 
     @Override
-    public @Nullable BlockState getCustomState(BlockPlaceContext context) {
+    public @Nullable BlockState getCustomState(Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult) {
         return null;
     }
 
     @Override
-    public BlockState getSneakingState(BlockPlaceContext context) {
+    public BlockState getSneakingState(Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult) {
         return this.variant.get(EvolutionBlocks.KNAPPING_BLOCKS).defaultBlockState();
+
     }
 
     @Override
@@ -59,9 +63,9 @@ public class ItemRock extends ItemGenericBlockPlaceable implements IRockVariant 
     }
 
     @Override
-    public void sneakingAction(BlockPlaceContext context) {
-        if (context.getPlayer() instanceof ServerPlayer player) {
-            player.connection.send(new PacketSCOpenKnappingGui(context.getClickedPos(), this.variant));
+    public void sneakingAction(Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult) {
+        if (player instanceof ServerPlayer p) {
+            p.connection.send(new PacketSCOpenKnappingGui(BlockPos.asLong(x, y, z), this.variant));
         }
     }
 }

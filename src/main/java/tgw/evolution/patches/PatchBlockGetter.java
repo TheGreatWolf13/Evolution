@@ -25,15 +25,19 @@ public interface PatchBlockGetter {
         throw new AbstractMethodError();
     }
 
-    default BlockState getBlockStateAtSide(int x, int y, int z, Direction direction) {
+    default BlockState getBlockStateAtSide(int x, int y, int z, Direction direction, int offset) {
         return switch (direction) {
-            case WEST -> this.getBlockState_(x - 1, y, z);
-            case EAST -> this.getBlockState_(x + 1, y, z);
-            case DOWN -> this.getBlockState_(x, y - 1, z);
-            case UP -> this.getBlockState_(x, y + 1, z);
-            case NORTH -> this.getBlockState_(x, y, z - 1);
-            case SOUTH -> this.getBlockState_(x, y, z + 1);
+            case WEST -> this.getBlockState_(x - offset, y, z);
+            case EAST -> this.getBlockState_(x + offset, y, z);
+            case DOWN -> this.getBlockState_(x, y - offset, z);
+            case UP -> this.getBlockState_(x, y + offset, z);
+            case NORTH -> this.getBlockState_(x, y, z - offset);
+            case SOUTH -> this.getBlockState_(x, y, z + offset);
         };
+    }
+
+    default BlockState getBlockStateAtSide(int x, int y, int z, Direction direction) {
+        return this.getBlockStateAtSide(x, y, z, direction, 1);
     }
 
     default BlockState getBlockStateAtSide(long pos, Direction dir) {

@@ -58,7 +58,7 @@ public final class EvolutionBlocks {
     public static final Block MOLD_CLAY_SPEAR;
     public static final Block MOLD_CLAY_SWORD;
     public static final Block MOLDING_BLOCK;
-    public static final Block PEAT;
+    //    public static final Block PEAT;
     public static final Block PIT_KILN;
     public static final Block ROPE;
     public static final Block ROPE_GROUND;
@@ -123,7 +123,7 @@ public final class EvolutionBlocks {
         MOLD_CLAY_SPEAR = register("mold_clay_spear", new BlockMoldClay(1));
         MOLD_CLAY_SWORD = register("mold_clay_sword", new BlockMoldClay(1));
         MOLDING_BLOCK = register("molding_block", new BlockMolding());
-        PEAT = register("peat", new BlockPeat());
+//        PEAT = register("peat", new BlockPeat());
         PIT_KILN = register("pit_kiln", new BlockPitKiln());
         ROPE = register("rope", new BlockRope());
         ROPE_GROUND = register("rope_ground", new BlockRopeGround());

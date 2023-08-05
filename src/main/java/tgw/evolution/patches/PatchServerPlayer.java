@@ -4,27 +4,49 @@ import net.minecraft.core.SectionPos;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.capabilities.player.*;
 
-public interface PatchServerPlayer extends PatchPlayer {
+public interface PatchServerPlayer {
 
-    boolean getCameraUnload();
+    default boolean getCameraUnload() {
+        throw new AbstractMethodError();
+    }
 
-    CapabilityInventory getExtraInventory();
+    default CapabilityInventory getExtraInventory() {
+        throw new AbstractMethodError();
+    }
 
-    CapabilityHealth getHealthStats();
+    default CapabilityHealth getHealthStats() {
+        throw new AbstractMethodError();
+    }
 
-    CapabilityHunger getHungerStats();
+    default CapabilityHunger getHungerStats() {
+        throw new AbstractMethodError();
+    }
 
-    @Nullable SectionPos getLastCameraSectionPos();
+    default @Nullable SectionPos getLastCameraSectionPos() {
+        throw new AbstractMethodError();
+    }
 
-    CapabilityStamina getStaminaStats();
+    default CapabilityStamina getStaminaStats() {
+        throw new AbstractMethodError();
+    }
 
-    CapabilityTemperature getTemperatureStats();
+    default CapabilityTemperature getTemperatureStats() {
+        throw new AbstractMethodError();
+    }
 
-    CapabilityThirst getThirstStats();
+    default CapabilityThirst getThirstStats() {
+        throw new AbstractMethodError();
+    }
 
-    CapabilityToast getToastStats();
+    default CapabilityToast getToastStats() {
+        throw new AbstractMethodError();
+    }
 
-    void setCameraUnload(boolean shouldUnload);
+    default void setCameraUnload(boolean shouldUnload) {
+        throw new AbstractMethodError();
+    }
 
-    void setLastCameraSectionPos(@Nullable SectionPos pos);
+    default void setLastCameraSectionPos(@Nullable SectionPos pos) {
+        throw new AbstractMethodError();
+    }
 }

@@ -4,7 +4,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -36,7 +35,13 @@ public class BlockSchematic extends Block implements GameMasterBlock, EntityBloc
     }
 
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext context) {
+    public @Nullable BlockState getStateForPlacement_(Level level,
+                                                      int x,
+                                                      int y,
+                                                      int z,
+                                                      Player player,
+                                                      InteractionHand hand,
+                                                      BlockHitResult hitResult) {
         return this.defaultBlockState().setValue(SCHEMATIC_MODE, SchematicMode.SAVE);
     }
 
@@ -46,8 +51,8 @@ public class BlockSchematic extends Block implements GameMasterBlock, EntityBloc
     }
 
     @Override
-    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
-        BlockEntity tileentity = level.getBlockEntity(pos);
+    public InteractionResult use_(BlockState state, Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hit) {
+        BlockEntity tileentity = level.getBlockEntity_(x, y, z);
         return tileentity instanceof TESchematic teSchematic && teSchematic.usedBy(player) ? InteractionResult.SUCCESS : InteractionResult.PASS;
     }
 }

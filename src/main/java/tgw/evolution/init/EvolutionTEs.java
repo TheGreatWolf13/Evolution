@@ -37,7 +37,6 @@ public final class EvolutionTEs {
         PUZZLE = register("te_puzzle", Builder.of(TEPuzzle::new, EvolutionBlocks.PUZZLE).build(null));
         SCHEMATIC = register("te_schematic", Builder.of(TESchematic::new, SCHEMATIC_BLOCK).build(null));
         TORCH = register("te_torch", Builder.of(TETorch::new, EvolutionBlocks.TORCH, TORCH_WALL).build(null));
-        Evolution.info("Registered TileEntities");
     }
 
     private EvolutionTEs() {

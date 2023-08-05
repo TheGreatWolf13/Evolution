@@ -5,11 +5,13 @@ import net.minecraft.core.Direction;
 
 public final class DirectionUtil {
 
+    public static final Direction.Axis[] AXIS = Direction.Axis.values();
     public static final Direction[] ALL = Direction.values();
     public static final Direction[] ALL_EXCEPT_DOWN = {Direction.UP, Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
     public static final Direction[] HORIZ_NESW = {Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
     public static final Direction[] HORIZ_WENS = {Direction.WEST, Direction.EAST, Direction.NORTH, Direction.SOUTH};
     public static final Direction[] NSWEU = {Direction.NORTH, Direction.SOUTH, Direction.WEST, Direction.EAST, Direction.UP};
+    public static final Direction[] UPDATE_ORDER = {Direction.WEST, Direction.EAST, Direction.NORTH, Direction.SOUTH, Direction.DOWN, Direction.UP};
     public static final Direction[] X = {Direction.WEST, Direction.EAST};
     public static final Direction[] Z = {Direction.NORTH, Direction.SOUTH};
 

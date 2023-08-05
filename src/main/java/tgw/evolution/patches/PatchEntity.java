@@ -2,8 +2,12 @@ package tgw.evolution.patches;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
@@ -87,8 +91,16 @@ public interface PatchEntity {
         return false;
     }
 
+    default InteractionResult interactAt_(Player player, double hitX, double hitY, double hitZ, InteractionHand hand) {
+        throw new AbstractMethodError();
+    }
+
     default boolean isAddedToWorld() {
         //Is implemented on MixinEntity
+        throw new AbstractMethodError();
+    }
+
+    default boolean isColliding_(int x, int y, int z, BlockState state) {
         throw new AbstractMethodError();
     }
 

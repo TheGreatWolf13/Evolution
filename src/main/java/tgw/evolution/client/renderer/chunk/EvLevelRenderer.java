@@ -78,7 +78,6 @@ import tgw.evolution.events.ClientEvents;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.mixin.AccessorRenderSystem;
 import tgw.evolution.patches.PatchDebugRenderer;
-import tgw.evolution.patches.PatchLevelReader;
 import tgw.evolution.resources.IKeyedReloadListener;
 import tgw.evolution.resources.ReloadListernerKeys;
 import tgw.evolution.util.AdvancedEntityHitResult;
@@ -136,6 +135,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
     private final Minecraft mc;
     private final AtomicBoolean needsFrustumUpdate = new AtomicBoolean(false);
     private final AtomicLong nextFullUpdateMillis = new AtomicLong(0L);
+    private final Random rainRandom = new Random();
     private final float[] rainSizeX = new float[1_024];
     private final float[] rainSizeZ = new float[1_024];
     private final OList<EvChunkRenderDispatcher.RenderChunk> recentlyCompiledChunks = new OArrayList<>();
@@ -153,6 +153,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
     private int lastCameraChunkY = Integer.MIN_VALUE;
     private int lastCameraChunkZ = Integer.MIN_VALUE;
     private @Nullable Future<?> lastFullRenderChunkUpdate;
+    private int lastTransparencyTick;
     private int lastViewDistance = -1;
     /**
      * Bits as in {@link RenderLayer}
@@ -255,17 +256,17 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
         }
     }
 
-    public static int getLightColor(BlockAndTintGetter level, BlockPos pos) {
-        return getLightColor(level, level.getBlockState_(pos), pos);
+    public static int getLightColor(BlockAndTintGetter level, int x, int y, int z) {
+        return getLightColor(level, level.getBlockState_(x, y, z), x, y, z);
     }
 
-    public static int getLightColor(BlockAndTintGetter level, BlockState state, BlockPos pos) {
-        if (state.emissiveRendering(level, pos)) {
+    public static int getLightColor(BlockAndTintGetter level, BlockState state, int x, int y, int z) {
+        if (state.emissiveRendering_(level, x, y, z)) {
             return 15_728_880;
         }
-        long l = pos.asLong();
-        int skyLight = level.getBrightness_(LightLayer.SKY, l);
-        int blockLight = level.getBrightness_(LightLayer.BLOCK, l);
+        long packed = BlockPos.asLong(x, y, z);
+        int skyLight = level.getBrightness_(LightLayer.SKY, packed);
+        int blockLight = level.getBrightness_(LightLayer.BLOCK, packed);
         int emission = state.getLightEmission();
         if (blockLight < emission) {
             blockLight = emission;
@@ -529,8 +530,8 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
         this.mc.getProfiler().pop();
     }
 
-    public void blockChanged(BlockPos pos, BlockState oldState, BlockState newState, @BlockFlags int flags) {
-        this.setBlockDirty(pos, (flags & BlockFlags.RERENDER) != 0);
+    public void blockChanged(int x, int y, int z, BlockState oldState, BlockState newState, @BlockFlags int flags) {
+        this.setBlockDirty(x, y, z, (flags & BlockFlags.RENDER_MAINTHREAD) != 0);
     }
 
     private void buildClouds(BufferBuilder builder, double x, double y, double z, Vec3 cloudColor) {
@@ -1036,15 +1037,15 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
      *             LevelEvent#SOUND_DRAGON_DEATH the dragon's death sound}, and {@linkplain
      *             LevelEvent#SOUND_END_PORTAL_SPAWN the end portal spawn sound}.
      */
-    public void globalLevelEvent(@LvlEvent int type, BlockPos pos) {
+    public void globalLevelEvent(@LvlEvent int type, int x, int y, int z) {
         assert this.level != null;
         switch (type) {
             case LevelEvent.SOUND_WITHER_BOSS_SPAWN, LevelEvent.SOUND_DRAGON_DEATH, LevelEvent.SOUND_END_PORTAL_SPAWN -> {
                 Camera camera = this.mc.gameRenderer.getMainCamera();
                 if (camera.isInitialized()) {
-                    double d0 = pos.getX() - camera.getPosition().x;
-                    double d1 = pos.getY() - camera.getPosition().y;
-                    double d2 = pos.getZ() - camera.getPosition().z;
+                    double d0 = x - camera.getPosition().x;
+                    double d1 = y - camera.getPosition().y;
+                    double d2 = z - camera.getPosition().z;
                     double d3 = Math.sqrt(d0 * d0 + d1 * d1 + d2 * d2);
                     double d4 = camera.getPosition().x;
                     double d5 = camera.getPosition().y;
@@ -1180,8 +1181,8 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
         return chunk != null && chunk.compiled != EvChunkRenderDispatcher.CompiledChunk.UNCOMPILED;
     }
 
-    public void levelEvent(@LvlEvent int type, BlockPos pos, int data) {
-        this.listener.levelEvent(type, pos, data);
+    public void levelEvent(@LvlEvent int type, int x, int y, int z, int data) {
+        this.listener.levelEvent(type, x, y, z, data);
     }
 
     public LevelEventListener listener() {
@@ -1678,20 +1679,23 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
         if (hitResult != null) {
             if (renderBlockOutline && hitResult.getType() == HitResult.Type.BLOCK) {
                 profiler.popPush("outline");
-                BlockPos hitPos = ((BlockHitResult) hitResult).getBlockPos();
-                if (this.level.getWorldBorder().isWithinBounds(hitPos)) {
-                    Block block = this.level.getBlockState_(hitPos).getBlock();
+                BlockHitResult blockHitResult = (BlockHitResult) hitResult;
+                int x = blockHitResult.posX();
+                int y = blockHitResult.posY();
+                int z = blockHitResult.posZ();
+                if (this.level.getWorldBorder().isWithinBounds_(x, z)) {
+                    Block block = this.level.getBlockState_(x, y, z).getBlock();
                     if (block instanceof BlockKnapping) {
-                        TEKnapping tile = (TEKnapping) this.level.getBlockEntity_(hitPos);
+                        TEKnapping tile = (TEKnapping) this.level.getBlockEntity_(x, y, z);
                         assert tile != null;
-                        client.getRenderer().renderOutlines(matrices, buffer, tile.type.getShape(), camera, hitPos);
+                        client.getRenderer().renderOutlines(matrices, buffer, tile.type.getShape(), camera, x, y, z);
                     }
                     else if (block instanceof BlockMolding) {
-                        TEMolding tile = (TEMolding) this.level.getBlockEntity_(hitPos);
+                        TEMolding tile = (TEMolding) this.level.getBlockEntity_(x, y, z);
                         assert tile != null;
-                        client.getRenderer().renderOutlines(matrices, buffer, tile.molding.getShape(), camera, hitPos);
+                        client.getRenderer().renderOutlines(matrices, buffer, tile.molding.getShape(), camera, x, y, z);
                     }
-                    client.getRenderer().renderBlockOutlines(matrices, buffer, camera, hitPos);
+                    client.getRenderer().renderBlockOutlines(matrices, buffer, camera, x, y, z);
                 }
             }
             else if (hitResult.getType() == HitResult.Type.ENTITY) {
@@ -1854,14 +1858,13 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
             RenderSystem.setShader(RenderHelper.SHADER_PARTICLE);
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
             BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
-            Random random = new Random();
             int cy = Mth.floor(camY);
             for (int z = k - l; z <= k + l; ++z) {
                 for (int x = i - l; x <= i + l; ++x) {
                     int l1 = (z - k + 16) * 32 + x - i + 16;
                     double d0 = this.rainSizeX[l1] * 0.5;
                     double d1 = this.rainSizeZ[l1] * 0.5;
-                    Biome biome = ((PatchLevelReader) level).getBiome_(x, cy, z).value();
+                    Biome biome = level.getBiome_(x, cy, z).value();
                     if (biome.getPrecipitation() != Biome.Precipitation.NONE) {
                         int i2 = level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z);
                         int y = j - l;
@@ -1873,10 +1876,9 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
                             k2 = i2;
                         }
                         if (y != k2) {
-                            random.setSeed(3_121L * x * x + x * 45_238_971L ^ 418_711L * z * z + z * 13_761L);
-                            mutablePos.set(x, y, z);
+                            this.rainRandom.setSeed(3_121L * x * x + x * 45_238_971L ^ 418_711L * z * z + z * 13_761L);
                             int l2 = Math.max(i2, j);
-                            if (biome.warmEnoughToRain(mutablePos)) {
+                            if (biome.warmEnoughToRain(mutablePos.set(x, y, z))) {
                                 if (i1 != 0) {
                                     if (i1 >= 0) {
                                         tesselator.end();
@@ -1886,13 +1888,12 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
                                     builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.PARTICLE);
                                 }
                                 int i3 = this.ticks + x * x * 3_121 + x * 45_238_971 + z * z * 418_711 + z * 13_761 & 31;
-                                float f2 = -(i3 + partialTick) / 32.0F * (3.0F + random.nextFloat());
+                                float f2 = -(i3 + partialTick) / 32.0F * (3.0F + this.rainRandom.nextFloat());
                                 double d2 = x + 0.5 - camX;
                                 double d4 = z + 0.5 - camZ;
                                 float f3 = (float) Math.sqrt(d2 * d2 + d4 * d4) / l;
                                 float f4 = ((1.0F - f3 * f3) * 0.5F + 0.5F) * f;
-                                mutablePos.set(x, l2, z);
-                                int j3 = getLightColor(level, mutablePos);
+                                int j3 = getLightColor(level, x, l2, z);
                                 builder.vertex(x - camX - d0 + 0.5, k2 - camY, z - camZ - d1 + 0.5)
                                        .uv(0.0F, y * 0.25F + f2)
                                        .color(1.0F, 1.0F, 1.0F, f4)
@@ -1924,14 +1925,13 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
                                     builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.PARTICLE);
                                 }
                                 float f5 = -((this.ticks & 511) + partialTick) / 512.0F;
-                                float f6 = (float) (random.nextDouble() + f1 * 0.01 * (float) random.nextGaussian());
-                                float f7 = (float) (random.nextDouble() + (f1 * (float) random.nextGaussian()) * 0.001);
+                                float f6 = (float) (this.rainRandom.nextDouble() + f1 * 0.01 * (float) this.rainRandom.nextGaussian());
+                                float f7 = (float) (this.rainRandom.nextDouble() + (f1 * (float) this.rainRandom.nextGaussian()) * 0.001);
                                 double d3 = x + 0.5 - camX;
                                 double d5 = z + 0.5 - camZ;
                                 float f8 = (float) Math.sqrt(d3 * d3 + d5 * d5) / l;
                                 float f9 = ((1.0F - f8 * f8) * 0.3F + 0.5F) * f;
-                                mutablePos.set(x, l2, z);
-                                int k3 = getLightColor(level, mutablePos);
+                                int k3 = getLightColor(level, x, l2, z);
                                 int l3 = k3 >> 16 & '\uffff';
                                 int i4 = k3 & '\uffff';
                                 int j4 = (l3 * 3 + 240) / 4;
@@ -2080,21 +2080,21 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
         }
     }
 
-    private void setBlockDirty(BlockPos pos, boolean reRenderOnMainThread) {
-        for (int z = pos.getZ() - 1; z <= pos.getZ() + 1; ++z) {
-            int secZ = SectionPos.blockToSectionCoord(z);
-            for (int x = pos.getX() - 1; x <= pos.getX() + 1; ++x) {
-                int secX = SectionPos.blockToSectionCoord(x);
-                for (int y = pos.getY() - 1; y <= pos.getY() + 1; ++y) {
-                    this.setSectionDirty(secX, SectionPos.blockToSectionCoord(y), secZ, reRenderOnMainThread);
+    private void setBlockDirty(int x, int y, int z, boolean reRenderOnMainThread) {
+        for (int dz = z - 1; dz <= z + 1; ++dz) {
+            int secZ = SectionPos.blockToSectionCoord(dz);
+            for (int dx = x - 1; dx <= x + 1; ++dx) {
+                int secX = SectionPos.blockToSectionCoord(dx);
+                for (int dy = y - 1; dy <= y + 1; ++dy) {
+                    this.setSectionDirty(secX, SectionPos.blockToSectionCoord(dy), secZ, reRenderOnMainThread);
                 }
             }
         }
     }
 
-    public void setBlockDirty(BlockPos pos, BlockState oldState, BlockState newState) {
+    public void setBlockDirty(int x, int y, int z, BlockState oldState, BlockState newState) {
         if (this.mc.getModelManager().requiresRender(oldState, newState)) {
-            this.setBlocksDirty(pos.getX(), pos.getY(), pos.getZ(), pos.getX(), pos.getY(), pos.getZ());
+            this.setBlocksDirty(x, y, z, x, y, z);
         }
     }
 
@@ -2223,7 +2223,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
             this.needsFullRenderChunkUpdate = false;
             this.lastFullRenderChunkUpdate = Util.backgroundExecutor().submit(() -> {
                 OArrayFIFOQueue<RenderChunkInfo> queue = QUEUE_CACHE.get();
-                assert queue.isEmpty();
+                queue.clear();
                 this.initializeQueueForFullUpdate(camera, queue);
                 RenderChunkStorage renderChunkStorage = new RenderChunkStorage(this.viewArea.chunks.length);
                 this.updateRenderChunks(renderChunkStorage, camPos, queue, smartCull);
@@ -2259,22 +2259,26 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
     }
 
     private boolean shouldSortTransparent(double camX, double camY, double camZ) {
-        double d0 = camX - this.xTransparentOld;
-        double d1 = camY - this.yTransparentOld;
-        double d2 = camZ - this.zTransparentOld;
-        return d0 * d0 + d1 * d1 + d2 * d2 > 1;
+        double dx = camX - this.xTransparentOld;
+        double dy = camY - this.yTransparentOld;
+        double dz = camZ - this.zTransparentOld;
+        if (this.ticks - this.lastTransparencyTick >= 5) {
+            this.lastTransparencyTick = this.ticks;
+            return dx != 0 || dy != 0 || dz != 0;
+        }
+        return dx * dx + dy * dy + dz * dz > 1;
     }
 
     public void tick() {
         ++this.ticks;
         if (this.ticks % 20 == 0) {
-            Iterator<EvBlockDestructionProgress> iterator = this.destroyingBlocks.values().iterator();
-            while (iterator.hasNext()) {
-                EvBlockDestructionProgress blockdestructionprogress = iterator.next();
-                int i = blockdestructionprogress.getUpdatedRenderTick();
+            I2OMap<EvBlockDestructionProgress> destroyingBlocks = this.destroyingBlocks;
+            for (I2OMap.Entry<EvBlockDestructionProgress> e = destroyingBlocks.fastEntries(); e != null; e = destroyingBlocks.fastEntries()) {
+                EvBlockDestructionProgress progress = e.value();
+                int i = progress.getUpdatedRenderTick();
                 if (this.ticks - i > 400) {
-                    iterator.remove();
-                    this.removeProgress(blockdestructionprogress);
+                    destroyingBlocks.remove(e.key());
+                    this.removeProgress(progress);
                 }
             }
         }

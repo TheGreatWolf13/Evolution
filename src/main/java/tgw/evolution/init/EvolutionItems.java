@@ -80,7 +80,7 @@ public final class EvolutionItems {
     public static final ItemPartHead PART_HEAD;
     public static final ItemPartPole PART_POLE;
     public static final ItemPartPommel PART_POMMEL;
-    public static final Item PEAT;
+    //    public static final Item PEAT;
     public static final Item ROPE;
     public static final Item STICK;
     public static final Item STRAW;
@@ -168,7 +168,7 @@ public final class EvolutionItems {
         PART_HEAD = register("part_head", new ItemPartHead(propPartTool()));
         PART_POLE = register("part_pole", new ItemPartPole(propPartTool()));
         PART_POMMEL = register("part_pommel", new ItemPartPommel(propPartTool()));
-        PEAT = makeBlock(EvolutionBlocks.PEAT, itemBlock(EvolutionBlocks.PEAT));
+//        PEAT = makeBlock(EvolutionBlocks.PEAT, itemBlock(EvolutionBlocks.PEAT));
         ROPE = register("rope", item(propMisc()));
         STICK = makeBlock(EvolutionBlocks.STICK, new ItemStick(EvolutionBlocks.STICK, propTreesAndWood()));
         STRAW = register("straw", item(propMisc()));
@@ -292,6 +292,9 @@ public final class EvolutionItems {
     }
 
     private static <I extends Item> I register(ResourceLocation loc, I item) {
+        if (item instanceof ItemBlock i) {
+            i.registerBlocks(Item.BY_BLOCK, item);
+        }
         return Registry.register(Registry.ITEM, loc, item);
     }
 

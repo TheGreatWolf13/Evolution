@@ -30,7 +30,6 @@ public class ScreenCrash extends Screen {
         super(new TranslatableComponent("evolution.gui.crash"));
         this.report = report;
         this.comment = getWittyComment();
-        //noinspection ConstantConditions
         if (this.report.getSaveFile() != null) {
             this.textComp = new TextComponent(this.report.getSaveFile().getName()).withStyle(ChatFormatting.UNDERLINE)
                                                                                   .withStyle(style -> style.withClickEvent(
@@ -130,7 +129,6 @@ public class ScreenCrash extends Screen {
         this.font.drawWordWrap(this.textReport, this.width / 2 - 140, this.height / 4 + 35, 280, textColor);
         String file;
         int fileColor = 0x00_FF00;
-        //noinspection ConstantConditions
         if (this.report.getSaveFile() != null) {
             file = this.textComp.getString();
             this.clickWidth = this.font.width(file);
