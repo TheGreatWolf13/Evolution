@@ -24,7 +24,7 @@ public abstract class MixinModelBlockRenderer_Cache implements PatchModelBlockRe
     @DeleteMethod
     @Overwrite
     public int getLightColor(BlockState state, BlockAndTintGetter level, BlockPos pos) {
-        return 0;
+        throw new AbstractMethodError();
     }
 
     @Override
@@ -49,7 +49,7 @@ public abstract class MixinModelBlockRenderer_Cache implements PatchModelBlockRe
     @Overwrite
     @DeleteMethod
     public float getShadeBrightness(BlockState state, BlockAndTintGetter level, BlockPos pos) {
-        return 0;
+        throw new AbstractMethodError();
     }
 
     @Override
