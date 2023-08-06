@@ -350,10 +350,13 @@ public class ClientRenderer {
             return ((EntityHitResult) rayTraceResult).getEntity() instanceof InventoryCarrier;
         }
         if (rayTraceResult.getType() == HitResult.Type.BLOCK) {
-            BlockPos blockpos = ((BlockHitResult) rayTraceResult).getBlockPos();
+            BlockHitResult blockHitResult = (BlockHitResult) rayTraceResult;
+            int x = blockHitResult.posX();
+            int y = blockHitResult.posY();
+            int z = blockHitResult.posZ();
             Level level = this.mc.level;
             assert level != null;
-            return level.getBlockState(blockpos).getMenuProvider(level, blockpos) != null;
+            return level.getBlockState_(x, y, z).getMenuProvider(level, new BlockPos(x, y, z)) != null;
         }
         return false;
     }
