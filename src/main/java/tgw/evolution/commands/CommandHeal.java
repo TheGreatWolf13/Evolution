@@ -10,7 +10,6 @@ import net.minecraft.server.level.ServerPlayer;
 import tgw.evolution.capabilities.player.CapabilityHunger;
 import tgw.evolution.capabilities.player.CapabilityThirst;
 import tgw.evolution.init.EvolutionEffects;
-import tgw.evolution.patches.PatchServerPlayer;
 
 public final class CommandHeal implements Command<CommandSourceStack> {
 
@@ -20,14 +19,17 @@ public final class CommandHeal implements Command<CommandSourceStack> {
     }
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(Commands.literal("heal").requires(cs -> cs.getEntity() instanceof ServerPlayer && cs.hasPermission(2)).executes(CMD));
+        dispatcher.register(Commands.literal("heal")
+                                    .requires(cs -> cs.getEntity() instanceof ServerPlayer && cs.hasPermission(2))
+                                    .executes(CMD)
+        );
     }
 
     @Override
     public int run(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
-        CapabilityThirst thirst = ((PatchServerPlayer) player).getThirstStats();
-        CapabilityHunger hunger = ((PatchServerPlayer) player).getHungerStats();
+        CapabilityThirst thirst = player.getThirstStats();
+        CapabilityHunger hunger = player.getHungerStats();
         player.setHealth(player.getMaxHealth());
         thirst.setThirstLevel(CapabilityThirst.THIRST_CAPACITY);
         thirst.setHydrationLevel(0);

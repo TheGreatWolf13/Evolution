@@ -1,49 +1,46 @@
 package tgw.evolution.commands;
 
-import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.server.MinecraftServer;
 import tgw.evolution.init.EvolutionTexts;
-import tgw.evolution.patches.PatchMinecraftServer;
 
-public final class CommandPause implements Command<CommandSourceStack> {
-
-    private static final Command<CommandSourceStack> CMD = new CommandPause();
+public final class CommandPause {
 
     private CommandPause() {
     }
 
-    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(Commands.literal("pause").requires(cs -> cs.hasPermission(2)).executes(CMD));
-        dispatcher.register(Commands.literal("resume").requires(cs -> cs.hasPermission(2)).executes(CMD));
+    private static int pause(CommandSourceStack source) {
+        MinecraftServer server = source.getServer();
+        if (!server.isMultiplayerPaused()) {
+            server.setMultiplayerPaused(true);
+            source.sendSuccess(EvolutionTexts.COMMAND_PAUSE_PAUSE_SUCCESS, true);
+            return 1;
+        }
+        source.sendFailure(EvolutionTexts.COMMAND_PAUSE_PAUSE_FAIL);
+        return 0;
     }
 
-    @Override
-    public int run(CommandContext<CommandSourceStack> context) {
-        String input = context.getInput();
-        PatchMinecraftServer server = (PatchMinecraftServer) context.getSource().getServer();
-        switch (input) {
-            case "/pause" -> {
-                if (!server.isMultiplayerPaused()) {
-                    server.setMultiplayerPaused(true);
-                    context.getSource().sendSuccess(EvolutionTexts.COMMAND_PAUSE_PAUSE_SUCCESS, true);
-                    return SINGLE_SUCCESS;
-                }
-                context.getSource().sendFailure(EvolutionTexts.COMMAND_PAUSE_PAUSE_FAIL);
-                return 0;
-            }
-            case "/resume" -> {
-                if (server.isMultiplayerPaused()) {
-                    server.setMultiplayerPaused(false);
-                    context.getSource().sendSuccess(EvolutionTexts.COMMAND_PAUSE_RESUME_SUCCESS, true);
-                    return SINGLE_SUCCESS;
-                }
-                context.getSource().sendFailure(EvolutionTexts.COMMAND_PAUSE_RESUME_FAIL);
-                return 0;
-            }
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        dispatcher.register(Commands.literal("pause")
+                                    .requires(cs -> cs.hasPermission(2))
+                                    .executes(c -> pause(c.getSource()))
+        );
+        dispatcher.register(Commands.literal("resume")
+                                    .requires(cs -> cs.hasPermission(2))
+                                    .executes(c -> resume(c.getSource()))
+        );
+    }
+
+    private static int resume(CommandSourceStack source) {
+        MinecraftServer server = source.getServer();
+        if (server.isMultiplayerPaused()) {
+            server.setMultiplayerPaused(false);
+            source.sendSuccess(EvolutionTexts.COMMAND_PAUSE_RESUME_SUCCESS, true);
+            return 1;
         }
+        source.sendFailure(EvolutionTexts.COMMAND_PAUSE_RESUME_FAIL);
         return 0;
     }
 }

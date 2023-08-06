@@ -89,9 +89,9 @@ public class ItemTorch extends ItemWallOrFloor implements IFireAspect, IThrowabl
     }
 
     @Override
-    public void fillItemCategory(CreativeModeTab tab, NonNullList<ItemStack> items) {
+    public void fillItemCategory(CreativeModeTab tab, NonNullList<ItemStack> list) {
         if (this.allowdedIn(tab)) {
-            items.add(this.getDefaultInstance());
+            list.add(this.getDefaultInstance());
         }
     }
 

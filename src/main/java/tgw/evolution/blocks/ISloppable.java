@@ -1,6 +1,5 @@
 package tgw.evolution.blocks;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.level.BlockGetter;
@@ -30,7 +29,7 @@ public interface ISloppable extends IFallable {
                                                              stateForPhysicsChange.getBlock() instanceof IPhysics physics ?
                                                              physics.getMass(level, x, y, z, stateForPhysicsChange) :
                                                              500);
-        level.removeBlock(new BlockPos(x, y, z), true);
+        level.removeBlock_(x, y, z, true);
         level.addFreshEntity(entity);
         SoundEvent soundEvent = this.fallingSound();
         if (soundEvent != null) {

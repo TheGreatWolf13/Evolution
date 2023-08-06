@@ -1,6 +1,5 @@
 package tgw.evolution.commands;
 
-import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
@@ -13,116 +12,149 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.LevelWriter;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import tgw.evolution.init.EvolutionBlocks;
-import tgw.evolution.util.constants.BlockFlags;
+import tgw.evolution.init.IVariant;
+import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.constants.RockVariant;
 import tgw.evolution.util.constants.WoodVariant;
+
+import java.util.Map;
 
 public class CommandVariantDebug implements Command<CommandSourceStack> {
 
     private static final Command<CommandSourceStack> CMD = new CommandVariantDebug();
 
-    private static void make3by3(LevelWriter level, BlockPos.MutableBlockPos mutablePos, BlockState state, Direction primary, Direction secondary) {
+    private static void make3by3(LevelWriter level, int x, int y, int z, BlockState state) {
         for (int dx = 0; dx < 3; dx++) {
             for (int dz = 0; dz < 3; dz++) {
-                level.setBlock(mutablePos, state, BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE);
-                mutablePos.move(primary);
+                level.setBlockAndUpdate_(x + dx, y, z + dz, state);
             }
-            mutablePos.move(primary.getOpposite(), 3);
-            mutablePos.move(secondary);
-        }
-        mutablePos.move(secondary.getOpposite(), 3);
-    }
-
-    private static void makeBorder(LevelWriter level, BlockPos.MutableBlockPos mutablePos, int minX, int minZ, int maxX, int maxZ) {
-        mutablePos.setZ(minZ);
-        for (int x = minX; x <= maxX; x++) {
-            mutablePos.setX(x);
-            level.setBlock(mutablePos, Blocks.GOLD_BLOCK.defaultBlockState(), BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE);
-        }
-        mutablePos.setZ(maxZ);
-        for (int x = minX; x <= maxX; x++) {
-            mutablePos.setX(x);
-            level.setBlock(mutablePos, Blocks.GOLD_BLOCK.defaultBlockState(), BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE);
-        }
-        mutablePos.setX(minX);
-        for (int z = minZ; z <= maxZ; z++) {
-            mutablePos.setZ(z);
-            level.setBlock(mutablePos, Blocks.GOLD_BLOCK.defaultBlockState(), BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE);
-        }
-        mutablePos.setX(maxX);
-        for (int z = minZ; z <= maxZ; z++) {
-            mutablePos.setZ(z);
-            level.setBlock(mutablePos, Blocks.GOLD_BLOCK.defaultBlockState(), BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE);
         }
     }
 
-    @CanIgnoreReturnValue
-    private static int makeCake(LevelWriter level, BlockPos.MutableBlockPos mutablePos, BlockState state, Direction primary, Direction secondary) {
-        mutablePos.move(Direction.DOWN);
-        make3by3(level, mutablePos, Blocks.BEDROCK.defaultBlockState(), primary, secondary);
-        mutablePos.move(Direction.UP);
-        make3by3(level, mutablePos, state, primary, secondary);
-        mutablePos.move(primary, 3);
-        return mutablePos.get(secondary.getAxis()) + 3 * secondary.getStepX() + 3 * secondary.getStepZ();
-    }
-
-    private static void placeRockVariant(LevelWriter level, BlockPos pos, Direction facing) {
-        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
-        mutablePos.set(pos);
-        Direction secondaryDir = facing.getClockWise();
-        int returningPos = mutablePos.get(facing.getAxis());
-        int primaryMaxPos = returningPos;
-        int secondaryMaxPos = pos.get(secondaryDir.getAxis());
-        for (RockVariant variant : RockVariant.VALUES_STONE) {
-            makeCake(level, mutablePos, variant.get(EvolutionBlocks.STONES).defaultBlockState(), facing, secondaryDir);
-            makeCake(level, mutablePos, variant.get(EvolutionBlocks.COBBLESTONES).defaultBlockState(), facing, secondaryDir);
-            makeCake(level, mutablePos, variant.get(EvolutionBlocks.POLISHED_STONES).defaultBlockState(), facing, secondaryDir);
-            makeCake(level, mutablePos, variant.get(EvolutionBlocks.STONEBRICKS).defaultBlockState(), facing, secondaryDir);
-            makeCake(level, mutablePos, variant.get(EvolutionBlocks.GRAVELS).defaultBlockState(), facing, secondaryDir);
-            makeCake(level, mutablePos, variant.get(EvolutionBlocks.SANDS).defaultBlockState(), facing, secondaryDir);
-            makeCake(level, mutablePos, variant.get(EvolutionBlocks.DIRTS).defaultBlockState(), facing, secondaryDir);
-            makeCake(level, mutablePos, variant.get(EvolutionBlocks.DRY_GRASSES).defaultBlockState(), facing, secondaryDir);
-            secondaryMaxPos = makeCake(level, mutablePos, variant.get(EvolutionBlocks.GRASSES).defaultBlockState(), facing, secondaryDir);
-            primaryMaxPos = mutablePos.get(facing.getAxis());
-            int delta = Math.abs(mutablePos.get(facing.getAxis()) - returningPos);
-            mutablePos.move(facing.getOpposite(), delta);
-            mutablePos.move(secondaryDir, 3);
-        }
-        int primaryMinPos = pos.get(facing.getAxis()) - facing.getStepX() - facing.getStepZ();
-        int secondaryMinPos = pos.get(secondaryDir.getAxis()) - secondaryDir.getStepX() - secondaryDir.getStepZ();
-        if (facing.getAxis() == Direction.Axis.X) {
-            makeBorder(level, mutablePos, Math.min(primaryMinPos, primaryMaxPos), Math.min(secondaryMinPos, secondaryMaxPos),
-                       Math.max(primaryMinPos, primaryMaxPos), Math.max(secondaryMinPos, secondaryMaxPos));
+    private static void makeBorder(LevelWriter level, int y, int startX, int startZ, int endX, int endZ) {
+        int minX;
+        int maxX;
+        if (startX < endX) {
+            minX = startX;
+            maxX = endX;
         }
         else {
-            makeBorder(level, mutablePos, Math.min(secondaryMinPos, secondaryMaxPos), Math.min(primaryMinPos, primaryMaxPos),
-                       Math.max(secondaryMinPos, secondaryMaxPos), Math.max(primaryMinPos, primaryMaxPos));
+            minX = endX;
+            maxX = startX;
+        }
+        int minZ;
+        int maxZ;
+        if (startZ < endZ) {
+            minZ = startZ;
+            maxZ = endZ;
+        }
+        else {
+            minZ = endZ;
+            maxZ = startZ;
+        }
+        for (int x = minX; x <= maxX; x++) {
+            level.setBlockAndUpdate_(x, y, minZ, Blocks.GOLD_BLOCK.defaultBlockState());
+        }
+        for (int x = minX; x <= maxX; x++) {
+            level.setBlockAndUpdate_(x, y, maxZ, Blocks.GOLD_BLOCK.defaultBlockState());
+        }
+        for (int z = minZ; z <= maxZ; z++) {
+            level.setBlockAndUpdate_(minX, y, z, Blocks.GOLD_BLOCK.defaultBlockState());
+        }
+        for (int z = minZ; z <= maxZ; z++) {
+            level.setBlockAndUpdate_(maxX, y, z, Blocks.GOLD_BLOCK.defaultBlockState());
         }
     }
 
-    private static void placeWoodVariant(LevelWriter level, BlockPos pos, Direction facing) {
-        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
-        mutablePos.set(pos);
+    private static void makeCake(LevelWriter level, int x, int y, int z, BlockState state) {
+        make3by3(level, x, y - 1, z, Blocks.BEDROCK.defaultBlockState());
+        make3by3(level, x, y, z, state);
+    }
+
+    private static <T extends IVariant<T>> void placeVariant(LevelWriter level, int x, int y, int z, Direction facing, T[] array) {
+        int startX = x;
+        int startZ = z;
         Direction secondaryDir = facing.getClockWise();
-        int returningPos = mutablePos.get(facing.getAxis());
-        for (WoodVariant variant : WoodVariant.VALUES) {
-            makeCake(level, mutablePos, variant.get(EvolutionBlocks.LOGS).defaultBlockState(), facing, secondaryDir);
-            makeCake(level, mutablePos, variant.get(EvolutionBlocks.PLANKS).defaultBlockState(), facing, secondaryDir);
-            makeCake(level, mutablePos, variant.get(EvolutionBlocks.LEAVES).defaultBlockState(), facing, secondaryDir);
-            int delta = Math.abs(mutablePos.get(facing.getAxis()) - returningPos);
-            mutablePos.move(facing.getOpposite(), delta);
-            mutablePos.move(secondaryDir, 3);
+        boolean isPrimaryX = facing.getAxis() == Direction.Axis.X;
+        boolean isPrimaryNegative = facing.getAxisDirection() == Direction.AxisDirection.NEGATIVE;
+        int primaryInc;
+        if (isPrimaryNegative) {
+            primaryInc = -3;
+            if (isPrimaryX) {
+                x -= 2;
+                ++startX;
+            }
+            else {
+                z -= 2;
+                ++startZ;
+            }
+        }
+        else {
+            primaryInc = 3;
+            if (isPrimaryX) {
+                --startX;
+            }
+            else {
+                --startZ;
+            }
+        }
+        boolean isSecondaryNegative = secondaryDir.getAxisDirection() == Direction.AxisDirection.NEGATIVE;
+        int secondaryInc;
+        if (isSecondaryNegative) {
+            secondaryInc = -3;
+            if (isPrimaryX) {
+                z -= 2;
+            }
+            else {
+                x -= 2;
+            }
+        }
+        else {
+            secondaryInc = 3;
+        }
+        int px = x;
+        int pz = z;
+        OList<Map<T, ? extends Block>> blocks = array[0].getBlocks();
+        for (T variant : array) {
+            for (int i = 0, len = blocks.size(); i < len; ++i) {
+                makeCake(level, px, y, pz, variant.get(blocks.get(i)).defaultBlockState());
+                if (isPrimaryX) {
+                    px += primaryInc;
+                }
+                else {
+                    pz += primaryInc;
+                }
+            }
+            if (isPrimaryX) {
+                px = x;
+                pz += secondaryInc;
+            }
+            else {
+                px += secondaryInc;
+                pz = z;
+            }
+        }
+        if (isPrimaryX) {
+            makeBorder(level, y, startX, startZ + (isSecondaryNegative ? 1 : -1), startX + blocks.size() * primaryInc + (isPrimaryNegative ? -1 : 1), pz + (isSecondaryNegative ? 2 : 0));
+        }
+        else {
+            makeBorder(level, y, startX + (isSecondaryNegative ? 1 : -1), startZ, px + (isSecondaryNegative ? 2 : 0), startZ + blocks.size() * primaryInc + (isPrimaryNegative ? -1 : 1));
         }
     }
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("variant_debug")
                                     .requires(cs -> cs.getEntity() instanceof Player && cs.hasPermission(4))
-                                    .then(Commands.literal("rock").executes(CMD))
-                                    .then(Commands.literal("wood").executes(CMD)));
+                                    .then(Commands.literal("rock")
+                                                  .executes(CMD)
+                                    )
+                                    .then(Commands.literal("wood")
+                                                  .executes(CMD)
+                                    )
+        );
     }
 
     @Override
@@ -130,15 +162,16 @@ public class CommandVariantDebug implements Command<CommandSourceStack> {
         ServerPlayer player = context.getSource().getPlayerOrException();
         BlockPos pos = player.blockPosition();
         ServerLevel level = player.getLevel();
-        if (pos.getY() < level.getMinBuildHeight() + 2) {
+        int y = pos.getY();
+        if (y < level.getMinBuildHeight() + 2) {
             return 0;
         }
-        if (pos.getY() > level.getMaxBuildHeight()) {
+        if (y > level.getMaxBuildHeight()) {
             return 0;
         }
         switch (context.getInput()) {
-            case "/variant_debug rock" -> placeRockVariant(level, pos.below(), player.getDirection());
-            case "/variant_debug wood" -> placeWoodVariant(level, pos.below(), player.getDirection());
+            case "/variant_debug rock" -> placeVariant(level, pos.getX(), y - 1, pos.getZ(), player.getDirection(), RockVariant.VALUES_STONE);
+            case "/variant_debug wood" -> placeVariant(level, pos.getX(), y - 1, pos.getZ(), player.getDirection(), WoodVariant.VALUES);
         }
         return SINGLE_SUCCESS;
     }

@@ -291,6 +291,17 @@ public final class BlockUtils {
         return true;
     }
 
+    public static BlockState updateFromNeighbourShapes(BlockState state, LevelAccessor level, int x, int y, int z) {
+        BlockState updatedState = state;
+        updatedState = updatedState.updateShape_(Direction.WEST, level.getBlockState_(x - 1, y, z), level, x, y, z, x - 1, y, z);
+        updatedState = updatedState.updateShape_(Direction.EAST, level.getBlockState_(x + 1, y, z), level, x, y, z, x + 1, y, z);
+        updatedState = updatedState.updateShape_(Direction.NORTH, level.getBlockState_(x, y, z - 1), level, x, y, z, x, y, z - 1);
+        updatedState = updatedState.updateShape_(Direction.SOUTH, level.getBlockState_(x, y, z + 1), level, x, y, z, x, y, z + 1);
+        updatedState = updatedState.updateShape_(Direction.DOWN, level.getBlockState_(x, y - 1, z), level, x, y, z, x, y - 1, z);
+        updatedState = updatedState.updateShape_(Direction.UP, level.getBlockState_(x, y + 1, z), level, x, y, z, x, y + 1, z);
+        return updatedState;
+    }
+
     public static void updateOrDestroy(BlockState state,
                                        BlockState updatedState,
                                        LevelAccessor level,

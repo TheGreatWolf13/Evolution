@@ -18,9 +18,13 @@ public final class CommandCamera implements Command<CommandSourceStack> {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("camera")
                                     .requires(cs -> cs.getEntity() instanceof Player && cs.hasPermission(2))
-                                    .then(Commands.literal("reset").executes(CMD))
-                                    .then(Commands.argument("target",
-                                                            EntityArgument.entity()).executes(CMD)));
+                                    .then(Commands.literal("reset")
+                                                  .executes(CMD)
+                                    )
+                                    .then(Commands.argument("target", EntityArgument.entity())
+                                                  .executes(CMD)
+                                    )
+        );
     }
 
     @Override

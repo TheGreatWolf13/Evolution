@@ -13,7 +13,6 @@ public final class EvolutionCommands {
         CommandAtm.register(dispatcher);
         CommandCamera.register(dispatcher);
         CommandDate.register(dispatcher);
-        CommandGamemode.register(dispatcher);
         CommandGC.register(dispatcher);
         CommandHeal.register(dispatcher);
         CommandPause.register(dispatcher);

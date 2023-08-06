@@ -6,6 +6,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnmodifiableView;
 import tgw.evolution.blocks.tileentities.KnappingRecipe;
 import tgw.evolution.capabilities.modular.part.IPart;
 import tgw.evolution.capabilities.modular.part.IPartType;
@@ -16,6 +17,8 @@ import tgw.evolution.init.EvolutionMaterials;
 import tgw.evolution.init.IVariant;
 import tgw.evolution.items.modular.part.ItemPart;
 import tgw.evolution.util.UnregisteredFeatureException;
+import tgw.evolution.util.collection.lists.OArrayList;
+import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.collection.maps.B2RHashMap;
 import tgw.evolution.util.collection.maps.B2RMap;
 
@@ -24,7 +27,7 @@ import java.util.Map;
 
 import static tgw.evolution.util.constants.RockType.*;
 
-public enum RockVariant implements IVariant {
+public enum RockVariant implements IVariant<RockVariant> {
     ANDESITE(0, IGNEOUS_EXTRUSIVE, "andesite", 2_565, 40_000_000),
     BASALT(1, IGNEOUS_EXTRUSIVE, "basalt", 2_768, 30_000_000),
     CHERT(2, SEDIMENTARY, "chert", 2_564, 9_000_000),
@@ -46,6 +49,7 @@ public enum RockVariant implements IVariant {
     public static final RockVariant[] VALUES = values();
     public static final RockVariant[] VALUES_STONE = Arrays.stream(VALUES).filter(v -> v != CLAY).toArray(RockVariant[]::new);
     private static final Byte2ReferenceMap<RockVariant> REGISTRY;
+    private static final OList<Map<RockVariant, ? extends Block>> BLOCKS = new OArrayList<>();
 
     static {
         B2RMap<RockVariant> map = new B2RHashMap<>();
@@ -93,10 +97,9 @@ public enum RockVariant implements IVariant {
         };
     }
 
-    public <T> T get(Map<RockVariant, T> registry) {
-        T object = registry.get(this);
-        this.checkNull(object);
-        return object;
+    @Override
+    public @UnmodifiableView OList<Map<RockVariant, ? extends Block>> getBlocks() {
+        return BLOCKS.view();
     }
 
     public byte getId() {
@@ -161,5 +164,10 @@ public enum RockVariant implements IVariant {
 
     public int getShearStrength() {
         return this.shearStrength;
+    }
+
+    @Override
+    public void registerBlocks(Map<RockVariant, ? extends Block> blocks) {
+        BLOCKS.add(blocks);
     }
 }

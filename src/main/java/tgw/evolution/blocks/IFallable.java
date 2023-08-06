@@ -1,6 +1,5 @@
 package tgw.evolution.blocks;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -20,7 +19,7 @@ public interface IFallable extends IPhysics {
                                                              stateForPhysicsChange.getBlock() instanceof IPhysics physics ?
                                                              physics.getMass(level, x, y, z, stateForPhysicsChange) :
                                                              500);
-        level.removeBlock(new BlockPos(x, y, z), true);
+        level.removeBlock_(x, y, z, true);
         level.addFreshEntity(entity);
         Evolution.info("Spawned entity for [{}, {}, {}]", x, y, z);
         SoundEvent soundEvent = this.fallingSound();

@@ -187,6 +187,12 @@ public abstract class Mixin_FS_Block extends BlockBehaviour implements PatchBloc
     }
 
     @Overwrite
+    public static BlockState updateFromNeighbourShapes(BlockState state, LevelAccessor level, BlockPos pos) {
+        Evolution.deprecatedMethod();
+        return BlockUtils.updateFromNeighbourShapes(state, level, pos.getX(), pos.getY(), pos.getZ());
+    }
+
+    @Overwrite
     public static void updateOrDestroy(BlockState state,
                                        BlockState updatedState,
                                        LevelAccessor level,

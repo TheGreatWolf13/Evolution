@@ -1,6 +1,5 @@
 package tgw.evolution.commands;
 
-import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -13,9 +12,8 @@ import tgw.evolution.util.time.Date;
 import tgw.evolution.util.time.FullDate;
 import tgw.evolution.util.time.Time;
 
-public final class CommandDate implements Command<CommandSourceStack> {
+public final class CommandDate {
 
-    private static final Command<CommandSourceStack> CMD = new CommandDate();
     private static final IntegerArgumentType DAY = IntegerArgumentType.integer(1, Time.DAYS_PER_MONTH);
     private static final EnumArgument<Date.Month> MONTH = EnumArgument.enumArgument(Date.Month.class);
     private static final IntegerArgumentType YEAR = IntegerArgumentType.integer(Time.STARTING_YEAR);
@@ -25,7 +23,7 @@ public final class CommandDate implements Command<CommandSourceStack> {
     private CommandDate() {
     }
 
-    public static int addDate(CommandContext<CommandSourceStack> context, int type) {
+    private static int addDate(CommandContext<CommandSourceStack> context, int type) {
         int increment = IntegerArgumentType.getInteger(context, "increment");
         switch (type) {
             case 0 -> increment = (int) (increment * Time.TICKS_PER_HOUR / 60.0);
@@ -34,23 +32,23 @@ public final class CommandDate implements Command<CommandSourceStack> {
             case 3 -> increment *= Time.TICKS_PER_MONTH;
             default -> increment *= Time.TICKS_PER_YEAR;
         }
+        CommandSourceStack source = context.getSource();
         long daytime = 0;
-        for (ServerLevel level : context.getSource().getServer().getAllLevels()) {
+        for (ServerLevel level : source.getServer().getAllLevels()) {
             daytime = level.getDayTime();
             break;
         }
         daytime += increment;
         if (daytime < 0) {
-            context.getSource()
-                   .sendFailure(new TranslatableComponent("command.evolution.date.error", Date.STARTING_DATE.getDisplayName(), Time.START_TIME));
+            source.sendFailure(new TranslatableComponent("command.evolution.date.error", Date.STARTING_DATE.getDisplayName(), Time.START_TIME));
             return 0;
         }
-        for (ServerLevel level : context.getSource().getServer().getAllLevels()) {
+        for (ServerLevel level : source.getServer().getAllLevels()) {
             level.setDayTime(daytime);
         }
         FullDate fullDate = new FullDate(daytime);
-        context.getSource().sendSuccess(new TranslatableComponent("command.evolution.date.success", fullDate.getDisplayName()), true);
-        return SINGLE_SUCCESS;
+        source.sendSuccess(new TranslatableComponent("command.evolution.date.success", fullDate.getDisplayName()), true);
+        return 1;
     }
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
@@ -67,39 +65,45 @@ public final class CommandDate implements Command<CommandSourceStack> {
                                                   .then(Commands.argument("day", DAY)
                                                                 .then(Commands.argument("month", MONTH)
                                                                               .then(Commands.argument("year", YEAR)
-                                                                                            .executes(CMD)
+                                                                                            .executes(c -> set(c.getSource(),
+                                                                                                               IntegerArgumentType.getInteger(c, "day"),
+                                                                                                               c.getArgument("month", Date.Month.class),
+                                                                                                               IntegerArgumentType.getInteger(c, "year"),
+                                                                                                               6,
+                                                                                                               0)
+                                                                                            )
                                                                                             .then(Commands.argument("hour", HOUR)
                                                                                                           .then(Commands.argument("minute", MINUTE)
-                                                                                                                        .executes(CMD))))))));
+                                                                                                                        .executes(c -> set(c.getSource(),
+                                                                                                                                           IntegerArgumentType.getInteger(c, "day"),
+                                                                                                                                           c.getArgument("month", Date.Month.class),
+                                                                                                                                           IntegerArgumentType.getInteger(c, "year"),
+                                                                                                                                           IntegerArgumentType.getInteger(c, "hour"),
+                                                                                                                                           IntegerArgumentType.getInteger(c, "minute"))
+                                                                                                                        )
+                                                                                                          )
+                                                                                            )
+                                                                              )
+                                                                )
+                                                  )
+                                    )
+        );
     }
 
-    @Override
-    public int run(CommandContext<CommandSourceStack> context) {
-        int day = IntegerArgumentType.getInteger(context, "day");
-        Date.Month month = context.getArgument("month", Date.Month.class);
-        int year = IntegerArgumentType.getInteger(context, "year");
-        int hour = 6;
-        int minute = 0;
-        try {
-            hour = IntegerArgumentType.getInteger(context, "hour");
-            minute = IntegerArgumentType.getInteger(context, "minute");
-        }
-        catch (IllegalArgumentException ignored) {
-        }
+    private static int set(CommandSourceStack source, int day, Date.Month month, int year, int hour, int minute) {
         try {
             Date date = new Date(year, month, day);
             Time time = new Time(hour, minute);
             FullDate fullDate = new FullDate(date, time);
             long ticks = fullDate.toTicks();
-            for (ServerLevel level : context.getSource().getServer().getAllLevels()) {
+            for (ServerLevel level : source.getServer().getAllLevels()) {
                 level.setDayTime(ticks);
             }
-            context.getSource().sendSuccess(new TranslatableComponent("command.evolution.date.success", fullDate.getDisplayName()), true);
-            return SINGLE_SUCCESS;
+            source.sendSuccess(new TranslatableComponent("command.evolution.date.success", fullDate.getDisplayName()), true);
+            return 1;
         }
         catch (IllegalStateException e) {
-            context.getSource()
-                   .sendFailure(new TranslatableComponent("command.evolution.date.error", Date.STARTING_DATE.getDisplayName(), Time.START_TIME));
+            source.sendFailure(new TranslatableComponent("command.evolution.date.error", Date.STARTING_DATE.getDisplayName(), Time.START_TIME));
             return 0;
         }
     }

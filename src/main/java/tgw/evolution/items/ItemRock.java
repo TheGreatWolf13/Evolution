@@ -31,7 +31,7 @@ public class ItemRock extends ItemGenericBlockPlaceable implements IRockVariant 
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flagIn) {
+    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         switch (this.variant.getRockType()) {
             case IGNEOUS_EXTRUSIVE -> tooltip.add(EvolutionTexts.TOOLTIP_ROCK_TYPE_IGEXTRUSIVE);
             case IGNEOUS_INTRUSIVE -> tooltip.add(EvolutionTexts.TOOLTIP_ROCK_TYPE_IGINTRUSIVE);

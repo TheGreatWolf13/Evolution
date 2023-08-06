@@ -437,7 +437,7 @@ public abstract class MixinGameRenderer implements PatchGameRenderer {
         this.minecraft.lvlRenderer().resize(width, height);
     }
 
-    @Shadow
+    @Overwrite
     private boolean shouldRenderBlockOutline() {
         assert this.minecraft.level != null;
         assert this.minecraft.gameMode != null;

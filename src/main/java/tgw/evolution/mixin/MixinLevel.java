@@ -212,6 +212,17 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
     }
 
     @Overwrite
+    public boolean isInWorldBounds(BlockPos pos) {
+        Evolution.deprecatedMethod();
+        return this.isInWorldBounds_(pos.getX(), pos.getY(), pos.getZ());
+    }
+
+    @Override
+    public boolean isInWorldBounds_(int x, int y, int z) {
+        return !this.isOutsideBuildHeight(y) && x >= -30_000_000 && z >= -30_000_000 && x < 30_000_000 && z < 30_000_000;
+    }
+
+    @Overwrite
     public boolean isLoaded(BlockPos pos) {
         Evolution.deprecatedMethod();
         return this.isLoaded_(pos.getX(), pos.getY(), pos.getZ());

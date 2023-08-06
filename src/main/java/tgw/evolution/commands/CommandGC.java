@@ -16,7 +16,10 @@ public final class CommandGC implements Command<CommandSourceStack> {
     }
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(Commands.literal("gc").requires(cs -> cs.hasPermission(4)).executes(CMD));
+        dispatcher.register(Commands.literal("gc")
+                                    .requires(cs -> cs.hasPermission(4))
+                                    .executes(CMD)
+        );
     }
 
     @Override

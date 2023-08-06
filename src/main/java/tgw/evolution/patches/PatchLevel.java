@@ -28,6 +28,10 @@ public interface PatchLevel {
         throw new AbstractMethodError();
     }
 
+    default boolean isInWorldBounds_(int x, int y, int z) {
+        throw new AbstractMethodError();
+    }
+
     default boolean isLoaded_(int x, int y, int z) {
         throw new AbstractMethodError();
     }

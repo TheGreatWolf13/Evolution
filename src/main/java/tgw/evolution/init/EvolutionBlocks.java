@@ -1,5 +1,6 @@
 package tgw.evolution.init;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import net.minecraft.core.Registry;
 import net.minecraft.world.level.block.Block;
@@ -133,22 +134,22 @@ public final class EvolutionBlocks {
         TORCH = register("torch", new BlockTorch());
         TORCH_WALL = register("torch_wall", new BlockTorchWall());
         //Collection
-        CHOPPING_BLOCKS = make(WoodVariant.class, WoodVariant.VALUES, "chopping_block_", BlockChopping::new);
-        COBBLESTONES = make(RockVariant.class, RockVariant.VALUES_STONE, "cobblestone_", BlockCobblestone::new);
-        DIRTS = make(RockVariant.class, RockVariant.VALUES_STONE, "dirt_", BlockDirt::new);
-        DRY_GRASSES = make(RockVariant.class, RockVariant.VALUES_STONE, "dry_grass_", BlockDryGrass::new);
-        GRASSES = make(RockVariant.class, RockVariant.VALUES, "grass_", BlockGrass::new);
-        GRAVELS = make(RockVariant.class, RockVariant.VALUES_STONE, "gravel_", BlockGravel::new);
-        KNAPPING_BLOCKS = make(RockVariant.class, RockVariant.VALUES_STONE, "knapping_block_", BlockKnapping::new);
-        LEAVES = make(WoodVariant.class, WoodVariant.VALUES, "leaves_", e -> new BlockLeaves());
-        LOGS = make(WoodVariant.class, WoodVariant.VALUES, "log_", BlockLog::new);
-        PLANKS = make(WoodVariant.class, WoodVariant.VALUES, "planks_", BlockPlanks::new);
-        POLISHED_STONES = make(RockVariant.class, RockVariant.VALUES_STONE, "polished_stone_", BlockPolishedStone::new);
-        ROCKS = make(RockVariant.class, RockVariant.VALUES_STONE, "rock_", e -> new BlockPlaceableRock());
-        SANDS = make(RockVariant.class, RockVariant.VALUES_STONE, "sand_", BlockSand::new);
-        SAPLINGS = make(WoodVariant.class, WoodVariant.VALUES, "sapling_", e -> new BlockSapling(null));
-        STONEBRICKS = make(RockVariant.class, RockVariant.VALUES_STONE, "stonebricks_", BlockStoneBricks::new);
-        STONES = make(RockVariant.class, RockVariant.VALUES_STONE, "stone_", BlockStone::new);
+        CHOPPING_BLOCKS = make(WoodVariant.class, WoodVariant.VALUES, "chopping_block_", BlockChopping::new, false);
+        COBBLESTONES = make(RockVariant.class, RockVariant.VALUES_STONE, "cobblestone_", BlockCobblestone::new, true);
+        DIRTS = make(RockVariant.class, RockVariant.VALUES_STONE, "dirt_", BlockDirt::new, true);
+        DRY_GRASSES = make(RockVariant.class, RockVariant.VALUES_STONE, "dry_grass_", BlockDryGrass::new, true);
+        GRASSES = make(RockVariant.class, RockVariant.VALUES, "grass_", BlockGrass::new, true);
+        GRAVELS = make(RockVariant.class, RockVariant.VALUES_STONE, "gravel_", BlockGravel::new, true);
+        KNAPPING_BLOCKS = make(RockVariant.class, RockVariant.VALUES_STONE, "knapping_block_", BlockKnapping::new, false);
+        LEAVES = make(WoodVariant.class, WoodVariant.VALUES, "leaves_", e -> new BlockLeaves(), true);
+        LOGS = make(WoodVariant.class, WoodVariant.VALUES, "log_", BlockLog::new, true);
+        PLANKS = make(WoodVariant.class, WoodVariant.VALUES, "planks_", BlockPlanks::new, true);
+        POLISHED_STONES = make(RockVariant.class, RockVariant.VALUES_STONE, "polished_stone_", BlockPolishedStone::new, true);
+        ROCKS = make(RockVariant.class, RockVariant.VALUES_STONE, "rock_", e -> new BlockPlaceableRock(), true);
+        SANDS = make(RockVariant.class, RockVariant.VALUES_STONE, "sand_", BlockSand::new, true);
+        SAPLINGS = make(WoodVariant.class, WoodVariant.VALUES, "sapling_", e -> new BlockSapling(null), false);
+        STONEBRICKS = make(RockVariant.class, RockVariant.VALUES_STONE, "stonebricks_", BlockStoneBricks::new, true);
+        STONES = make(RockVariant.class, RockVariant.VALUES_STONE, "stone_", BlockStone::new, true);
         //Fluids
         FRESH_WATER = register("fresh_water", new BlockFreshWater());
         SALT_WATER = register("salt_water", new BlockSaltWater());
@@ -157,16 +158,21 @@ public final class EvolutionBlocks {
     private EvolutionBlocks() {
     }
 
-    @Contract("_, _, _, _ -> new")
+    @Contract("_, _, _, _, _ -> new")
     private static <E extends Enum<E> & IVariant, B extends Block> Map<E, B> make(Class<E> clazz,
                                                                                   E[] values,
                                                                                   String name,
-                                                                                  Function<E, B> blockMaker) {
+                                                                                  Function<E, B> blockMaker,
+                                                                                  boolean shouldRegister) {
         Map<E, B> map = new EnumMap<>(clazz);
         for (E e : values) {
             map.put(e, register(name + e.getName(), blockMaker.apply(e)));
         }
-        return Maps.immutableEnumMap(map);
+        ImmutableMap<E, B> imm = Maps.immutableEnumMap(map);
+        if (shouldRegister) {
+            values[0].registerBlocks(imm);
+        }
+        return imm;
     }
 
     private static <B extends Block> B register(String name, B block) {

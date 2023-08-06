@@ -2,14 +2,18 @@ package tgw.evolution.util.constants;
 
 import it.unimi.dsi.fastutil.bytes.Byte2ReferenceMap;
 import it.unimi.dsi.fastutil.bytes.Byte2ReferenceMaps;
+import net.minecraft.world.level.block.Block;
+import org.jetbrains.annotations.UnmodifiableView;
 import tgw.evolution.init.IVariant;
 import tgw.evolution.util.UnregisteredFeatureException;
+import tgw.evolution.util.collection.lists.OArrayList;
+import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.collection.maps.B2RHashMap;
 import tgw.evolution.util.collection.maps.B2RMap;
 
 import java.util.Map;
 
-public enum WoodVariant implements IVariant {
+public enum WoodVariant implements IVariant<WoodVariant> {
     ACACIA(0, "acacia", 750, 14_412_500),
     ASPEN(1, "aspen", 420, 6_650_000),
     BIRCH(2, "birch", 640, 12_233_333),
@@ -31,6 +35,7 @@ public enum WoodVariant implements IVariant {
 
     public static final WoodVariant[] VALUES = values();
     private static final Byte2ReferenceMap<WoodVariant> REGISTRY;
+    private static final OList<Map<WoodVariant, ? extends Block>> BLOCKS = new OArrayList<>();
 
     static {
         B2RMap<WoodVariant> map = new B2RHashMap<>();
@@ -63,10 +68,9 @@ public enum WoodVariant implements IVariant {
         return variant;
     }
 
-    public <T> T get(Map<WoodVariant, T> registry) {
-        T object = registry.get(this);
-        this.checkNull(object);
-        return object;
+    @Override
+    public @UnmodifiableView OList<Map<WoodVariant, ? extends Block>> getBlocks() {
+        return BLOCKS.view();
     }
 
     public byte getId() {
@@ -84,5 +88,10 @@ public enum WoodVariant implements IVariant {
 
     public int getShearStrength() {
         return this.shearStrength;
+    }
+
+    @Override
+    public void registerBlocks(Map<WoodVariant, ? extends Block> blocks) {
+        BLOCKS.add(blocks);
     }
 }

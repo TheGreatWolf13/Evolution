@@ -23,6 +23,10 @@ public interface PatchLevelWriter {
         throw new AbstractMethodError();
     }
 
+    default boolean setBlockAndUpdate_(int x, int y, int z, BlockState state) {
+        return this.setBlock_(x, y, z, state, BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE);
+    }
+
     default boolean setBlock_(int x, int y, int z, BlockState state, @BlockFlags int flags, int limit) {
         throw new AbstractMethodError();
     }
