@@ -32,7 +32,7 @@ public final class CommandShader {
     }
 
     private static int run(ServerPlayer player, int id) {
-        player.connection.send(new PacketSCShader(PacketSCShader.TOGGLE));
+        player.connection.send(new PacketSCShader(id));
         return 1;
     }
 }
