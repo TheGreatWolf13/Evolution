@@ -62,7 +62,7 @@ public class EvAmbientOcclusionFace {
                           Direction direction,
                           float[] shape,
                           byte flags,
-                          boolean shade) {
+                          boolean shadeDirection) {
         boolean offset = (flags & 1) != 0;
         int x = px;
         int y = py;
@@ -74,127 +74,127 @@ public class EvAmbientOcclusionFace {
         }
         ModelBlockRenderer.AdjacencyInfo adjacencyInfo = ModelBlockRenderer.AdjacencyInfo.fromFacing(direction);
         ModelBlockRenderer.Cache cache = ModelBlockRenderer.CACHE.get();
-        Direction dir0 = adjacencyInfo.corners[0];
-        int x0 = x + dir0.getStepX();
-        int y0 = y + dir0.getStepY();
-        int z0 = z + dir0.getStepZ();
-        BlockState state0 = level.getBlockState_(x0, y0, z0);
-        int color0 = cache.getLightColor_(state0, level, x0, y0, z0);
-        float bright0 = cache.getShadeBrightness_(state0, level, x0, y0, z0);
-        Direction dir1 = adjacencyInfo.corners[1];
-        int x1 = x + dir1.getStepX();
-        int y1 = y + dir1.getStepY();
-        int z1 = z + dir1.getStepZ();
-        BlockState state1 = level.getBlockState_(x1, y1, z1);
-        int light1 = cache.getLightColor_(state1, level, x1, y1, z1);
-        float bright1 = cache.getShadeBrightness_(state1, level, x1, y1, z1);
-        Direction dir2 = adjacencyInfo.corners[2];
-        int x2 = x + dir2.getStepX();
-        int y2 = y + dir2.getStepY();
-        int z2 = z + dir2.getStepZ();
-        BlockState state2 = level.getBlockState_(x2, y2, z2);
-        int color2 = cache.getLightColor_(state2, level, x2, y2, z2);
-        float bright2 = cache.getShadeBrightness_(state2, level, x2, y2, z2);
-        Direction dir3 = adjacencyInfo.corners[3];
-        int x3 = x + dir3.getStepX();
-        int y3 = y + dir3.getStepY();
-        int z3 = z + dir3.getStepZ();
-        BlockState state3 = level.getBlockState_(x3, y3, z3);
-        int color3 = cache.getLightColor_(state3, level, x3, y3, z3);
-        float bright3 = cache.getShadeBrightness_(state3, level, x3, y3, z3);
-        int x4 = x0 + direction.getStepX();
-        int y4 = y0 + direction.getStepY();
-        int z4 = z0 + direction.getStepZ();
-        BlockState state4 = level.getBlockState_(x4, y4, z4);
-        boolean flag0 = !state4.isViewBlocking_(level, x4, y4, z4) || state4.getLightBlock_(level, x4, y4, z4) == 0;
-        int x5 = x1 + direction.getStepX();
-        int y5 = y1 + direction.getStepY();
-        int z5 = z1 + direction.getStepZ();
-        BlockState state5 = level.getBlockState_(x5, y5, z5);
-        boolean flag1 = !state5.isViewBlocking_(level, x5, y5, z5) || state5.getLightBlock_(level, x5, y5, z5) == 0;
-        x2 += direction.getStepX();
-        y2 += direction.getStepY();
-        z2 += direction.getStepZ();
-        BlockState state6 = level.getBlockState_(x2, y2, z2);
-        boolean flag2 = !state6.isViewBlocking_(level, x2, y2, z2) || state6.getLightBlock_(level, x2, y2, z2) == 0;
-        x3 += direction.getStepX();
-        y3 += direction.getStepY();
-        z3 += direction.getStepZ();
-        BlockState state7 = level.getBlockState_(x3, y3, z3);
-        boolean flag3 = !state7.isViewBlocking_(level, x3, y3, z3) || state7.getLightBlock_(level, x3, y3, z3) == 0;
-        float f0;
-        int c0;
-        if (!flag2 && !flag0) {
-            f0 = bright0;
-            c0 = color0;
+        Direction dirE = adjacencyInfo.corners[0];
+        int xE = x + dirE.getStepX();
+        int yE = y + dirE.getStepY();
+        int zE = z + dirE.getStepZ();
+        BlockState stateEast = level.getBlockState_(xE, yE, zE);
+        int colorE = cache.getLightColor_(stateEast, level, xE, yE, zE);
+        float brightE = cache.getShadeBrightness_(stateEast, level, xE, yE, zE);
+        Direction dirW = adjacencyInfo.corners[1];
+        int xW = x + dirW.getStepX();
+        int yW = y + dirW.getStepY();
+        int zW = z + dirW.getStepZ();
+        BlockState stateW = level.getBlockState_(xW, yW, zW);
+        int colorW = cache.getLightColor_(stateW, level, xW, yW, zW);
+        float brightW = cache.getShadeBrightness_(stateW, level, xW, yW, zW);
+        Direction dirN = adjacencyInfo.corners[2];
+        int xN = x + dirN.getStepX();
+        int yN = y + dirN.getStepY();
+        int zN = z + dirN.getStepZ();
+        BlockState stateN = level.getBlockState_(xN, yN, zN);
+        int colorN = cache.getLightColor_(stateN, level, xN, yN, zN);
+        float brightN = cache.getShadeBrightness_(stateN, level, xN, yN, zN);
+        Direction dirS = adjacencyInfo.corners[3];
+        int xS = x + dirS.getStepX();
+        int yS = y + dirS.getStepY();
+        int zS = z + dirS.getStepZ();
+        BlockState stateS = level.getBlockState_(xS, yS, zS);
+        int colorS = cache.getLightColor_(stateS, level, xS, yS, zS);
+        float brightS = cache.getShadeBrightness_(stateS, level, xS, yS, zS);
+        int xEU = xE + direction.getStepX();
+        int yEU = yE + direction.getStepY();
+        int zEU = zE + direction.getStepZ();
+        BlockState stateEU = level.getBlockState_(xEU, yEU, zEU);
+        boolean flagE = !stateEU.isViewBlocking_(level, xEU, yEU, zEU) || stateEU.getLightBlock_(level, xEU, yEU, zEU) == 0;
+        int xWU = xW + direction.getStepX();
+        int yWU = yW + direction.getStepY();
+        int zWU = zW + direction.getStepZ();
+        BlockState stateWU = level.getBlockState_(xWU, yWU, zWU);
+        boolean flagW = !stateWU.isViewBlocking_(level, xWU, yWU, zWU) || stateWU.getLightBlock_(level, xWU, yWU, zWU) == 0;
+        xN += direction.getStepX();
+        yN += direction.getStepY();
+        zN += direction.getStepZ();
+        BlockState stateNU = level.getBlockState_(xN, yN, zN);
+        boolean flagN = !stateNU.isViewBlocking_(level, xN, yN, zN) || stateNU.getLightBlock_(level, xN, yN, zN) == 0;
+        xS += direction.getStepX();
+        yS += direction.getStepY();
+        zS += direction.getStepZ();
+        BlockState stateSU = level.getBlockState_(xS, yS, zS);
+        boolean flagS = !stateSU.isViewBlocking_(level, xS, yS, zS) || stateSU.getLightBlock_(level, xS, yS, zS) == 0;
+        float brightNE;
+        int colorNE;
+        if (!flagN && !flagE) {
+            brightNE = brightE;
+            colorNE = colorE;
         }
         else {
-            int xx = x0 + dir2.getStepX();
-            int yy = y0 + dir2.getStepY();
-            int zz = z0 + dir2.getStepZ();
-            BlockState state8 = level.getBlockState_(xx, yy, zz);
-            f0 = cache.getShadeBrightness_(state8, level, xx, yy, zz);
-            c0 = cache.getLightColor_(state8, level, xx, yy, zz);
+            int xNE = xE + dirN.getStepX();
+            int yNE = yE + dirN.getStepY();
+            int zNE = zE + dirN.getStepZ();
+            BlockState stateNE = level.getBlockState_(xNE, yNE, zNE);
+            brightNE = cache.getShadeBrightness_(stateNE, level, xNE, yNE, zNE);
+            colorNE = cache.getLightColor_(stateNE, level, xNE, yNE, zNE);
         }
-        float f1;
-        int j1;
-        if (!flag3 && !flag0) {
-            f1 = bright0;
-            j1 = color0;
-        }
-        else {
-            int xx = x0 + dir3.getStepX();
-            int yy = y0 + dir3.getStepY();
-            int zz = z0 + dir3.getStepZ();
-            BlockState blockstate10 = level.getBlockState_(xx, yy, zz);
-            f1 = cache.getShadeBrightness_(blockstate10, level, xx, yy, zz);
-            j1 = cache.getLightColor_(blockstate10, level, xx, yy, zz);
-        }
-        float f2;
-        int k1;
-        if (!flag2 && !flag1) {
-            f2 = bright0;
-            k1 = color0;
+        float brightSE;
+        int colorSE;
+        if (!flagS && !flagE) {
+            brightSE = brightE;
+            colorSE = colorE;
         }
         else {
-            int xx = x1 + dir2.getStepX();
-            int yy = y1 + dir2.getStepY();
-            int zz = z1 + dir2.getStepZ();
-            BlockState blockstate11 = level.getBlockState_(xx, yy, zz);
-            f2 = cache.getShadeBrightness_(blockstate11, level, xx, yy, zz);
-            k1 = cache.getLightColor_(blockstate11, level, xx, yy, zz);
+            int xSE = xE + dirS.getStepX();
+            int ySE = yE + dirS.getStepY();
+            int zSE = zE + dirS.getStepZ();
+            BlockState stateSE = level.getBlockState_(xSE, ySE, zSE);
+            brightSE = cache.getShadeBrightness_(stateSE, level, xSE, ySE, zSE);
+            colorSE = cache.getLightColor_(stateSE, level, xSE, ySE, zSE);
         }
-        float f3;
-        int l1;
-        if (!flag3 && !flag1) {
-            f3 = bright0;
-            l1 = color0;
+        float brightNW;
+        int colorNW;
+        if (!flagN && !flagW) {
+            brightNW = brightE;
+            colorNW = colorE;
         }
         else {
-            int xx = x1 + dir3.getStepX();
-            int yy = y1 + dir3.getStepY();
-            int zz = z1 + dir3.getStepZ();
-            BlockState blockstate12 = level.getBlockState_(xx, yy, zz);
-            f3 = cache.getShadeBrightness_(blockstate12, level, xx, yy, zz);
-            l1 = cache.getLightColor_(blockstate12, level, xx, yy, zz);
+            int xNW = xW + dirN.getStepX();
+            int yNW = yW + dirN.getStepY();
+            int zNW = zW + dirN.getStepZ();
+            BlockState stateNW = level.getBlockState_(xNW, yNW, zNW);
+            brightNW = cache.getShadeBrightness_(stateNW, level, xNW, yNW, zNW);
+            colorNW = cache.getLightColor_(stateNW, level, xNW, yNW, zNW);
         }
-        int i3 = cache.getLightColor_(state, level, px, py, pz);
-        int mx = px + direction.getStepX();
-        int my = py + direction.getStepY();
-        int mz = pz + direction.getStepZ();
-        BlockState blockstate9 = level.getBlockState_(mx, my, mz);
-        if (offset || !blockstate9.isSolidRender_(level, mx, my, mz)) {
-            i3 = cache.getLightColor_(blockstate9, level, mx, my, mz);
+        float brightSW;
+        int colorSW;
+        if (!flagS && !flagW) {
+            brightSW = brightE;
+            colorSW = colorE;
         }
-        float f8 = offset ?
-                   cache.getShadeBrightness_(level.getBlockState_(x, y, z), level, x, y, z) :
-                   cache.getShadeBrightness_(level.getBlockState_(px, py, pz), level, px, py, pz);
-        ModelBlockRenderer.AmbientVertexRemap ambientVertexRemap = ModelBlockRenderer.AmbientVertexRemap.fromFacing(direction);
+        else {
+            int xSW = xW + dirS.getStepX();
+            int ySW = yW + dirS.getStepY();
+            int zSW = zW + dirS.getStepZ();
+            BlockState stateSW = level.getBlockState_(xSW, ySW, zSW);
+            brightSW = cache.getShadeBrightness_(stateSW, level, xSW, ySW, zSW);
+            colorSW = cache.getLightColor_(stateSW, level, xSW, ySW, zSW);
+        }
+        int color = cache.getLightColor_(state, level, px, py, pz);
+        int xU = px + direction.getStepX();
+        int yU = py + direction.getStepY();
+        int zU = pz + direction.getStepZ();
+        BlockState stateU = level.getBlockState_(xU, yU, zU);
+        if (offset || !stateU.isSolidRender_(level, xU, yU, zU)) {
+            color = cache.getLightColor_(stateU, level, xU, yU, zU);
+        }
+        float bright = offset ?
+                       cache.getShadeBrightness_(level.getBlockState_(x, y, z), level, x, y, z) :
+                       cache.getShadeBrightness_(level.getBlockState_(px, py, pz), level, px, py, pz);
+        AmbientVertexRemap remap = AmbientVertexRemap.VALUES[direction.ordinal()];
         if ((flags & 2) != 0 && adjacencyInfo.doNonCubicWeight) {
-            float f29 = (bright3 + bright0 + f1 + f8) * 0.25F;
-            float f31 = (bright2 + bright0 + f0 + f8) * 0.25F;
-            float f32 = (bright2 + bright1 + f2 + f8) * 0.25F;
-            float f33 = (bright3 + bright1 + f3 + f8) * 0.25F;
+            float f29 = (brightS + brightE + brightSE + bright) * 0.25F;
+            float f31 = (brightN + brightE + brightNE + bright) * 0.25F;
+            float f32 = (brightN + brightW + brightNW + bright) * 0.25F;
+            float f33 = (brightS + brightW + brightSW + bright) * 0.25F;
             float f13 = shape[adjacencyInfo.vert0Weights[0].shape] * shape[adjacencyInfo.vert0Weights[1].shape];
             float f14 = shape[adjacencyInfo.vert0Weights[2].shape] * shape[adjacencyInfo.vert0Weights[3].shape];
             float f15 = shape[adjacencyInfo.vert0Weights[4].shape] * shape[adjacencyInfo.vert0Weights[5].shape];
@@ -211,38 +211,58 @@ public class EvAmbientOcclusionFace {
             float f26 = shape[adjacencyInfo.vert3Weights[2].shape] * shape[adjacencyInfo.vert3Weights[3].shape];
             float f27 = shape[adjacencyInfo.vert3Weights[4].shape] * shape[adjacencyInfo.vert3Weights[5].shape];
             float f28 = shape[adjacencyInfo.vert3Weights[6].shape] * shape[adjacencyInfo.vert3Weights[7].shape];
-            this.setBrightness(ambientVertexRemap.vert0, f29 * f13 + f31 * f14 + f32 * f15 + f33 * f16);
-            this.setBrightness(ambientVertexRemap.vert1, f29 * f17 + f31 * f18 + f32 * f19 + f33 * f20);
-            this.setBrightness(ambientVertexRemap.vert2, f29 * f21 + f31 * f22 + f32 * f23 + f33 * f24);
-            this.setBrightness(ambientVertexRemap.vert3, f29 * f25 + f31 * f26 + f32 * f27 + f33 * f28);
-            int i2 = blend(color3, color0, j1, i3);
-            int j2 = blend(color2, color0, c0, i3);
-            int k2 = blend(color2, light1, k1, i3);
-            int l2 = blend(color3, light1, l1, i3);
-            this.setLightmap(ambientVertexRemap.vert0, blend(i2, j2, k2, l2, f13, f14, f15, f16));
-            this.setLightmap(ambientVertexRemap.vert1, blend(i2, j2, k2, l2, f17, f18, f19, f20));
-            this.setLightmap(ambientVertexRemap.vert2, blend(i2, j2, k2, l2, f21, f22, f23, f24));
-            this.setLightmap(ambientVertexRemap.vert3, blend(i2, j2, k2, l2, f25, f26, f27, f28));
+            this.setBrightness(remap.vert0, f29 * f13 + f31 * f14 + f32 * f15 + f33 * f16);
+            this.setBrightness(remap.vert1, f29 * f17 + f31 * f18 + f32 * f19 + f33 * f20);
+            this.setBrightness(remap.vert2, f29 * f21 + f31 * f22 + f32 * f23 + f33 * f24);
+            this.setBrightness(remap.vert3, f29 * f25 + f31 * f26 + f32 * f27 + f33 * f28);
+            int i2 = blend(colorS, colorE, colorSE, color);
+            int j2 = blend(colorN, colorE, colorNE, color);
+            int k2 = blend(colorN, colorW, colorNW, color);
+            int l2 = blend(colorS, colorW, colorSW, color);
+            this.setLightmap(remap.vert0, blend(i2, j2, k2, l2, f13, f14, f15, f16));
+            this.setLightmap(remap.vert1, blend(i2, j2, k2, l2, f17, f18, f19, f20));
+            this.setLightmap(remap.vert2, blend(i2, j2, k2, l2, f21, f22, f23, f24));
+            this.setLightmap(remap.vert3, blend(i2, j2, k2, l2, f25, f26, f27, f28));
         }
         else {
-            float f9 = (bright3 + bright0 + f1 + f8) * 0.25F;
-            float f10 = (bright2 + bright0 + f0 + f8) * 0.25F;
-            float f11 = (bright2 + bright1 + f2 + f8) * 0.25F;
-            float f12 = (bright3 + bright1 + f3 + f8) * 0.25F;
-            this.setLightmap(ambientVertexRemap.vert0, blend(color3, color0, j1, i3));
-            this.setLightmap(ambientVertexRemap.vert1, blend(color2, color0, c0, i3));
-            this.setLightmap(ambientVertexRemap.vert2, blend(color2, light1, k1, i3));
-            this.setLightmap(ambientVertexRemap.vert3, blend(color3, light1, l1, i3));
-            this.setBrightness(ambientVertexRemap.vert0, f9);
-            this.setBrightness(ambientVertexRemap.vert1, f10);
-            this.setBrightness(ambientVertexRemap.vert2, f11);
-            this.setBrightness(ambientVertexRemap.vert3, f12);
+            float combBrightSE = (brightS + brightE + brightSE + bright) * 0.25F;
+            float combBrightNE = (brightN + brightE + brightNE + bright) * 0.25F;
+            float combBrightNW = (brightN + brightW + brightNW + bright) * 0.25F;
+            float combBrightSW = (brightS + brightW + brightSW + bright) * 0.25F;
+            this.setLightmap(remap.vert0, blend(colorS, colorE, colorSE, color));
+            this.setLightmap(remap.vert1, blend(colorN, colorE, colorNE, color));
+            this.setLightmap(remap.vert2, blend(colorN, colorW, colorNW, color));
+            this.setLightmap(remap.vert3, blend(colorS, colorW, colorSW, color));
+            this.setBrightness(remap.vert0, combBrightSE);
+            this.setBrightness(remap.vert1, combBrightNE);
+            this.setBrightness(remap.vert2, combBrightNW);
+            this.setBrightness(remap.vert3, combBrightSW);
         }
-        float f30 = level.getShade(direction, shade);
-        this.brightness0 *= f30;
-        this.brightness1 *= f30;
-        this.brightness2 *= f30;
-        this.brightness3 *= f30;
+        float shade = level.getShade(direction, shadeDirection);
+        this.brightness0 *= shade;
+        this.brightness1 *= shade;
+        this.brightness2 *= shade;
+        this.brightness3 *= shade;
+//        if (py == 63 && (px != 0 || pz != 0) && direction == Direction.UP) {
+//            String dir = "";
+//            switch (pz) {
+//                case -1 -> {
+//                    dir += "N";
+//                }
+//                case 1 -> {
+//                    dir += "S";
+//                }
+//            }
+//            switch (px) {
+//                case -1 -> {
+//                    dir += "W";
+//                }
+//                case 1 -> {
+//                    dir += "E";
+//                }
+//            }
+//            Evolution.info("{}: {}, {}, {}, {} / {}, {}, {}, {}", dir, this.brightness0, this.brightness1, this.brightness2, this.brightness3, Integer.toHexString(this.lightmap0), Integer.toHexString(this.lightmap1), Integer.toHexString(this.lightmap2), Integer.toHexString(this.lightmap3));
+//        }
     }
 
     public void setBrightness(int index, float brightness) {
@@ -262,6 +282,28 @@ public class EvAmbientOcclusionFace {
             case 2 -> this.lightmap2 = lightmap;
             case 3 -> this.lightmap3 = lightmap;
             default -> throw new IllegalArgumentException("Invalid index: " + index);
+        }
+    }
+
+    enum AmbientVertexRemap {
+        DOWN(0, 1, 2, 3),
+        UP(2, 3, 0, 1),
+        NORTH(3, 0, 1, 2),
+        SOUTH(0, 1, 2, 3),
+        WEST(3, 0, 1, 2),
+        EAST(1, 2, 3, 0);
+
+        static final AmbientVertexRemap[] VALUES = values();
+        public final int vert0;
+        public final int vert1;
+        public final int vert2;
+        public final int vert3;
+
+        AmbientVertexRemap(int j, int k, int l, int m) {
+            this.vert0 = j;
+            this.vert1 = k;
+            this.vert2 = l;
+            this.vert3 = m;
         }
     }
 }
