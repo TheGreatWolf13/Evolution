@@ -3,7 +3,10 @@ package tgw.evolution.client.renderer;
 import net.minecraft.client.renderer.block.ModelBlockRenderer;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import tgw.evolution.Evolution;
 
 public class EvAmbientOcclusionFace {
 
@@ -16,18 +19,27 @@ public class EvAmbientOcclusionFace {
     public int lightmap2;
     public int lightmap3;
 
-    /**
-     * @return the ambient occlusion light color
-     */
     private static int blend(int lightColor0, int lightColor1, int lightColor2, int lightColor3) {
         if (lightColor0 == 0) {
-            lightColor0 = lightColor3;
+            if (lightColor1 == 0) {
+                if (lightColor2 == 0) {
+                    return lightColor3;
+                }
+                return blend2(lightColor2, lightColor3);
+            }
+            if (lightColor2 == 0) {
+                return blend2(lightColor1, lightColor3);
+            }
+            return blend3(lightColor1, lightColor2, lightColor3);
         }
         if (lightColor1 == 0) {
-            lightColor1 = lightColor3;
+            if (lightColor2 == 0) {
+                return blend2(lightColor0, lightColor3);
+            }
+            return blend3(lightColor0, lightColor2, lightColor3);
         }
         if (lightColor2 == 0) {
-            lightColor2 = lightColor3;
+            return blend3(lightColor0, lightColor1, lightColor3);
         }
         return lightColor0 + lightColor1 + lightColor2 + lightColor3 >> 2 & 0xff_00ff;
     }
@@ -49,6 +61,14 @@ public class EvAmbientOcclusionFace {
                        (brightness2 & 255) * weight2 +
                        (brightness3 & 255) * weight3) & 255;
         return i << 16 | j;
+    }
+
+    private static int blend2(int lightColor0, int lightColor1) {
+        return lightColor0 + lightColor1 >> 1 & 0xff_00ff;
+    }
+
+    private static int blend3(int lightColor0, int lightColor1, int lightColor2) {
+        return ((lightColor0 & 0xff) + (lightColor1 & 0xff) + (lightColor2 & 0xff)) / 3 & 0xff | ((lightColor0 & 0xff_0000) + (lightColor1 & 0xff_0000) + (lightColor2 & 0xff_0000)) / 3 & 0xff_0000;
     }
 
     /**
@@ -78,9 +98,9 @@ public class EvAmbientOcclusionFace {
         int xE = x + dirE.getStepX();
         int yE = y + dirE.getStepY();
         int zE = z + dirE.getStepZ();
-        BlockState stateEast = level.getBlockState_(xE, yE, zE);
-        int colorE = cache.getLightColor_(stateEast, level, xE, yE, zE);
-        float brightE = cache.getShadeBrightness_(stateEast, level, xE, yE, zE);
+        BlockState stateE = level.getBlockState_(xE, yE, zE);
+        int colorE = cache.getLightColor_(stateE, level, xE, yE, zE);
+        float brightE = cache.getShadeBrightness_(stateE, level, xE, yE, zE);
         Direction dirW = adjacencyInfo.corners[1];
         int xW = x + dirW.getStepX();
         int yW = y + dirW.getStepY();
@@ -102,29 +122,41 @@ public class EvAmbientOcclusionFace {
         BlockState stateS = level.getBlockState_(xS, yS, zS);
         int colorS = cache.getLightColor_(stateS, level, xS, yS, zS);
         float brightS = cache.getShadeBrightness_(stateS, level, xS, yS, zS);
-        int xEU = xE + direction.getStepX();
-        int yEU = yE + direction.getStepY();
-        int zEU = zE + direction.getStepZ();
-        BlockState stateEU = level.getBlockState_(xEU, yEU, zEU);
-        boolean flagE = !stateEU.isViewBlocking_(level, xEU, yEU, zEU) || stateEU.getLightBlock_(level, xEU, yEU, zEU) == 0;
-        int xWU = xW + direction.getStepX();
-        int yWU = yW + direction.getStepY();
-        int zWU = zW + direction.getStepZ();
-        BlockState stateWU = level.getBlockState_(xWU, yWU, zWU);
-        boolean flagW = !stateWU.isViewBlocking_(level, xWU, yWU, zWU) || stateWU.getLightBlock_(level, xWU, yWU, zWU) == 0;
-        xN += direction.getStepX();
-        yN += direction.getStepY();
-        zN += direction.getStepZ();
-        BlockState stateNU = level.getBlockState_(xN, yN, zN);
-        boolean flagN = !stateNU.isViewBlocking_(level, xN, yN, zN) || stateNU.getLightBlock_(level, xN, yN, zN) == 0;
-        xS += direction.getStepX();
-        yS += direction.getStepY();
-        zS += direction.getStepZ();
-        BlockState stateSU = level.getBlockState_(xS, yS, zS);
-        boolean flagS = !stateSU.isViewBlocking_(level, xS, yS, zS) || stateSU.getLightBlock_(level, xS, yS, zS) == 0;
+        boolean freeE;
+        boolean freeW;
+        boolean freeN;
+        boolean freeS;
+        if (offset) {
+            freeE = !stateE.isViewBlocking_(level, xE, yE, zE) || stateE.getLightBlock_(level, xE, yE, zE) == 0;
+            freeW = !stateW.isViewBlocking_(level, xW, yW, zW) || stateW.getLightBlock_(level, xW, yW, zW) == 0;
+            freeN = !stateN.isViewBlocking_(level, xN, yN, zN) || stateN.getLightBlock_(level, xN, yN, zN) == 0;
+            freeS = !stateS.isViewBlocking_(level, xS, yS, zS) || stateS.getLightBlock_(level, xS, yS, zS) == 0;
+        }
+        else {
+            int xEU = xE + direction.getStepX();
+            int yEU = yE + direction.getStepY();
+            int zEU = zE + direction.getStepZ();
+            BlockState stateEU = level.getBlockState_(xEU, yEU, zEU);
+            freeE = !stateEU.isViewBlocking_(level, xEU, yEU, zEU) || stateEU.getLightBlock_(level, xEU, yEU, zEU) == 0;
+            int xWU = xW + direction.getStepX();
+            int yWU = yW + direction.getStepY();
+            int zWU = zW + direction.getStepZ();
+            BlockState stateWU = level.getBlockState_(xWU, yWU, zWU);
+            freeW = !stateWU.isViewBlocking_(level, xWU, yWU, zWU) || stateWU.getLightBlock_(level, xWU, yWU, zWU) == 0;
+            xN += direction.getStepX();
+            yN += direction.getStepY();
+            zN += direction.getStepZ();
+            BlockState stateNU = level.getBlockState_(xN, yN, zN);
+            freeN = !stateNU.isViewBlocking_(level, xN, yN, zN) || stateNU.getLightBlock_(level, xN, yN, zN) == 0;
+            xS += direction.getStepX();
+            yS += direction.getStepY();
+            zS += direction.getStepZ();
+            BlockState stateSU = level.getBlockState_(xS, yS, zS);
+            freeS = !stateSU.isViewBlocking_(level, xS, yS, zS) || stateSU.getLightBlock_(level, xS, yS, zS) == 0;
+        }
         float brightNE;
         int colorNE;
-        if (!flagN && !flagE) {
+        if (!freeN && !freeE) {
             brightNE = brightE;
             colorNE = colorE;
         }
@@ -138,7 +170,7 @@ public class EvAmbientOcclusionFace {
         }
         float brightSE;
         int colorSE;
-        if (!flagS && !flagE) {
+        if (!freeS && !freeE) {
             brightSE = brightE;
             colorSE = colorE;
         }
@@ -152,9 +184,9 @@ public class EvAmbientOcclusionFace {
         }
         float brightNW;
         int colorNW;
-        if (!flagN && !flagW) {
-            brightNW = brightE;
-            colorNW = colorE;
+        if (!freeN && !freeW) {
+            brightNW = brightW;
+            colorNW = colorW;
         }
         else {
             int xNW = xW + dirN.getStepX();
@@ -166,9 +198,9 @@ public class EvAmbientOcclusionFace {
         }
         float brightSW;
         int colorSW;
-        if (!flagS && !flagW) {
-            brightSW = brightE;
-            colorSW = colorE;
+        if (!freeS && !freeW) {
+            brightSW = brightW;
+            colorSW = colorW;
         }
         else {
             int xSW = xW + dirS.getStepX();
@@ -243,26 +275,10 @@ public class EvAmbientOcclusionFace {
         this.brightness1 *= shade;
         this.brightness2 *= shade;
         this.brightness3 *= shade;
-//        if (py == 63 && (px != 0 || pz != 0) && direction == Direction.UP) {
-//            String dir = "";
-//            switch (pz) {
-//                case -1 -> {
-//                    dir += "N";
-//                }
-//                case 1 -> {
-//                    dir += "S";
-//                }
-//            }
-//            switch (px) {
-//                case -1 -> {
-//                    dir += "W";
-//                }
-//                case 1 -> {
-//                    dir += "E";
-//                }
-//            }
-//            Evolution.info("{}: {}, {}, {}, {} / {}, {}, {}, {}", dir, this.brightness0, this.brightness1, this.brightness2, this.brightness3, Integer.toHexString(this.lightmap0), Integer.toHexString(this.lightmap1), Integer.toHexString(this.lightmap2), Integer.toHexString(this.lightmap3));
-//        }
+        Block block = state.getBlock();
+        if (direction == Direction.WEST && (block == Blocks.SMOOTH_SANDSTONE || block == Blocks.YELLOW_CONCRETE || block == Blocks.WHITE_CONCRETE || block == Blocks.IRON_BLOCK)) {
+            Evolution.info("{} : {}, {}, {}, {} / {}, {}, {}, {}", state, this.brightness0, this.brightness1, this.brightness2, this.brightness3, Integer.toHexString(this.lightmap0), Integer.toHexString(this.lightmap1), Integer.toHexString(this.lightmap2), Integer.toHexString(this.lightmap3));
+        }
     }
 
     public void setBrightness(int index, float brightness) {
