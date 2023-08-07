@@ -3,6 +3,7 @@ package tgw.evolution.patches;
 import net.minecraft.core.Direction;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -94,6 +95,10 @@ public interface PatchBlock {
     }
 
     default void spawnDestroyParticles_(Level level, Player player, int x, int y, int z, BlockState state) {
+        throw new AbstractMethodError();
+    }
+
+    default void stepOn_(Level level, int x, int y, int z, BlockState state, Entity entity) {
         throw new AbstractMethodError();
     }
 }

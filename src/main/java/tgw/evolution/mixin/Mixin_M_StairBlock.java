@@ -137,6 +137,18 @@ public abstract class Mixin_M_StairBlock extends Block implements SimpleWaterlog
     @Override
     @Overwrite
     @DeleteMethod
+    public void stepOn(Level level, BlockPos blockPos, BlockState blockState, Entity entity) {
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public void stepOn_(Level level, int x, int y, int z, BlockState state, Entity entity) {
+        this.base.stepOn_(level, x, y, z, state, entity);
+    }
+
+    @Override
+    @Overwrite
+    @DeleteMethod
     public void tick(BlockState blockState, ServerLevel serverLevel, BlockPos blockPos, Random random) {
         throw new AbstractMethodError();
     }

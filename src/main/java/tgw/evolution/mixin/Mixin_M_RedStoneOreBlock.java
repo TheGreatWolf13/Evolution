@@ -5,6 +5,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
@@ -85,6 +86,19 @@ public abstract class Mixin_M_RedStoneOreBlock extends Block {
             int i = 1 + level.random.nextInt(5);
             this.popExperience(level, new BlockPos(x, y, z), i);
         }
+    }
+
+    @Override
+    @Overwrite
+    @DeleteMethod
+    public void stepOn(Level level, BlockPos blockPos, BlockState blockState, Entity entity) {
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public void stepOn_(Level level, int x, int y, int z, BlockState state, Entity entity) {
+        interact(state, level, new BlockPos(x, y, z));
+        super.stepOn_(level, x, y, z, state, entity);
     }
 
     @Override

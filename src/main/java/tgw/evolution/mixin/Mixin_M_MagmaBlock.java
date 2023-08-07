@@ -7,6 +7,10 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.FluidTags;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
@@ -54,6 +58,21 @@ public abstract class Mixin_M_MagmaBlock extends Block {
                             1.8F + level.random.nextFloat() * 1.6F);
             level.sendParticles(ParticleTypes.LARGE_SMOKE, x + 0.5, y + 1 + 0.25, z + 0.5, 8, 0.5, 0.25, 0.5, 0);
         }
+    }
+
+    @Override
+    @Overwrite
+    @DeleteMethod
+    public void stepOn(Level level, BlockPos blockPos, BlockState blockState, Entity entity) {
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public void stepOn_(Level level, int x, int y, int z, BlockState state, Entity entity) {
+        if (!entity.fireImmune() && entity instanceof LivingEntity living && !EnchantmentHelper.hasFrostWalker(living)) {
+            entity.hurt(DamageSource.HOT_FLOOR, 1.0F);
+        }
+        super.stepOn_(level, x, y, z, state, entity);
     }
 
     @Override

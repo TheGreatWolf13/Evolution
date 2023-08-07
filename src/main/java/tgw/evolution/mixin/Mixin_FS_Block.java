@@ -309,6 +309,16 @@ public abstract class Mixin_FS_Block extends BlockBehaviour implements PatchBloc
     }
 
     @Overwrite
+    public void stepOn(Level level, BlockPos pos, BlockState state, Entity entity) {
+        Evolution.deprecatedMethod();
+        this.stepOn_(level, pos.getX(), pos.getY(), pos.getZ(), state, entity);
+    }
+
+    @Override
+    public void stepOn_(Level level, int x, int y, int z, BlockState state, Entity entity) {
+    }
+
+    @Overwrite
     public void updateEntityAfterFallOn(BlockGetter level, Entity entity) {
         Vec3 velocity = entity.getDeltaMovement();
         entity.setDeltaMovement(velocity.x, 0, velocity.z);

@@ -878,7 +878,7 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
             block.updateEntityAfterFallOn(this.level, (Entity) (Object) this);
         }
         if (this.onGround && !this.isSteppingCarefully()) {
-            block.stepOn(this.level, landingPos, landingState, (Entity) (Object) this);
+            block.stepOn_(this.level, landingPos.getX(), landingPos.getY(), landingPos.getZ(), landingState, (Entity) (Object) this);
         }
         Entity.MovementEmission movementEmission = this.getMovementEmission();
         if (movementEmission.emitsAnything() && !this.isPassenger()) {
