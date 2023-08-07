@@ -279,6 +279,9 @@
       ],
       "net/minecraft/server/level/ServerPlayer": [
         "tgw/evolution/patches/PatchServerPlayer"
+      ],
+      "net/minecraft/commands/arguments/blocks/BlockInput": [
+        "tgw/evolution/patches/PatchBlockInput"
       ]
     }
   }

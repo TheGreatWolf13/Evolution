@@ -25,6 +25,7 @@
     "Mixin_CF_ResourceLocation",
     "Mixin_CFM_BlockBehaviourCache",
     "Mixin_CFM_ProtoChunk",
+    "Mixin_FillCommand",
     "Mixin_FS_Block",
     "Mixin_FS_Blocks",
     "Mixin_M_AbstractCauldronBlock",

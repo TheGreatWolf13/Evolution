@@ -12,13 +12,15 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import tgw.evolution.Evolution;
 import tgw.evolution.blocks.util.BlockUtils;
+import tgw.evolution.patches.PatchBlockInput;
 import tgw.evolution.util.constants.BlockFlags;
 
 import java.util.function.Predicate;
 
 @Mixin(BlockInput.class)
-public abstract class MixinBlockInput implements Predicate<BlockInWorld> {
+public abstract class MixinBlockInput implements Predicate<BlockInWorld>, PatchBlockInput {
 
     @Shadow @Final private BlockState state;
 
@@ -26,9 +28,12 @@ public abstract class MixinBlockInput implements Predicate<BlockInWorld> {
 
     @Overwrite
     public boolean place(ServerLevel level, BlockPos pos, @BlockFlags int flags) {
-        int x = pos.getX();
-        int y = pos.getY();
-        int z = pos.getZ();
+        Evolution.deprecatedMethod();
+        return this.place_(level, pos.getX(), pos.getY(), pos.getZ(), flags);
+    }
+
+    @Override
+    public boolean place_(ServerLevel level, int x, int y, int z, @BlockFlags int flags) {
         BlockState updatedState = BlockUtils.updateFromNeighbourShapes(this.state, level, x, y, z);
         if (updatedState.isAir()) {
             updatedState = this.state;

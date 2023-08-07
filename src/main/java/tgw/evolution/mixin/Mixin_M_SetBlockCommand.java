@@ -100,7 +100,7 @@ public abstract class Mixin_M_SetBlockCommand {
             Clearable.tryClear(level.getBlockEntity_(x, y, z));
             worked = true;
         }
-        if (worked && !input.place(level, pos, BlockFlags.BLOCK_UPDATE)) {
+        if (worked && !input.place_(level, x, y, z, BlockFlags.BLOCK_UPDATE)) {
             throw ERROR_FAILED.create();
         }
         level.blockUpdated_(x, y, z, input.getState().getBlock());

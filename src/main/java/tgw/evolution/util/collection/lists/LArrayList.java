@@ -12,6 +12,10 @@ public class LArrayList extends LongArrayList implements LList {
         super();
     }
 
+    public LArrayList(int capacity) {
+        super(capacity);
+    }
+
     public LArrayList(Iterator<? extends Long> i) {
         super(i);
     }

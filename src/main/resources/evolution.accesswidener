@@ -8,6 +8,7 @@ accessible class net/minecraft/client/particle/ParticleEngine$SpriteParticleRegi
 accessible class net/minecraft/client/renderer/block/ModelBlockRenderer$Cache
 accessible class net/minecraft/client/renderer/RenderStateShard$OutputStateShard
 accessible class net/minecraft/client/resources/model/ModelBakery$BlockStateDefinitionException
+accessible class net/minecraft/server/commands/FillCommand$Mode
 accessible class net/minecraft/server/level/ChunkMap$DistanceManager
 accessible class net/minecraft/server/level/DistanceManager$ChunkTicketTracker
 accessible class net/minecraft/server/level/DistanceManager$FixedPlayerDistanceChunkTracker
@@ -105,6 +106,7 @@ accessible field net/minecraft/network/protocol/game/ClientboundLevelChunkPacket
 accessible field net/minecraft/network/protocol/game/ClientboundLevelChunkPacketData$BlockEntityInfo type Lnet/minecraft/world/level/block/entity/BlockEntityType;
 accessible field net/minecraft/network/protocol/game/ClientboundLevelChunkPacketData$BlockEntityInfo y I
 accessible field net/minecraft/network/protocol/game/ClientboundSetCameraPacket cameraId I
+accessible field net/minecraft/server/commands/FillCommand HOLLOW_CORE Lnet/minecraft/commands/arguments/blocks/BlockInput;
 accessible field net/minecraft/server/level/ChunkMap viewDistance I
 accessible field net/minecraft/server/level/ChunkMap$TrackedEntity entity Lnet/minecraft/world/entity/Entity;
 accessible field net/minecraft/server/level/ServerLevel dragonParts Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;
