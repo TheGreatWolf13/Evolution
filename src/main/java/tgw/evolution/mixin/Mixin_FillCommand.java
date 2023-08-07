@@ -23,6 +23,7 @@ import org.spongepowered.asm.mixin.*;
 import tgw.evolution.commands.vanilla.FillMode;
 import tgw.evolution.hooks.asm.DeleteMethod;
 import tgw.evolution.util.BlockInWorldPredicate;
+import tgw.evolution.util.MutableBlockInWorld;
 import tgw.evolution.util.collection.lists.LArrayList;
 import tgw.evolution.util.collection.lists.LList;
 import tgw.evolution.util.constants.BlockFlags;
@@ -114,13 +115,13 @@ public abstract class Mixin_FillCommand {
                                                                                             .then(Commands.argument("filter", BlockPredicateArgument.blockPredicate())
                                                                                                           .executes(c -> {
                                                                                                                         Predicate<BlockInWorld> filter = BlockPredicateArgument.getBlockPredicate(c, "filter");
-                                                                                                                        BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
+                                                                                                                        MutableBlockInWorld blockInWorld = new MutableBlockInWorld();
                                                                                                                         return fillBlocks(c.getSource(),
                                                                                                                                           BoundingBox.fromCorners(BlockPosArgument.getLoadedBlockPos(c, "from"),
                                                                                                                                                                   BlockPosArgument.getLoadedBlockPos(c, "to")),
                                                                                                                                           BlockStateArgument.getBlock(c, "block"),
                                                                                                                                           FillCommand.Mode.REPLACE,
-                                                                                                                                          (l, x, y, z, b) -> filter.test(new BlockInWorld(l, mutable.set(x, y, z), b))
+                                                                                                                                          (l, x, y, z, b) -> filter.test(blockInWorld.set(l, x, y, z, b))
                                                                                                                         );
                                                                                                                     }
                                                                                                           )

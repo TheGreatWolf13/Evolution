@@ -107,6 +107,15 @@ accessible field net/minecraft/network/protocol/game/ClientboundLevelChunkPacket
 accessible field net/minecraft/network/protocol/game/ClientboundLevelChunkPacketData$BlockEntityInfo y I
 accessible field net/minecraft/network/protocol/game/ClientboundSetCameraPacket cameraId I
 accessible field net/minecraft/server/commands/FillCommand HOLLOW_CORE Lnet/minecraft/commands/arguments/blocks/BlockInput;
+accessible field net/minecraft/world/level/block/state/pattern/BlockInWorld cachedEntity Z
+accessible field net/minecraft/world/level/block/state/pattern/BlockInWorld entity Lnet/minecraft/world/level/block/entity/BlockEntity;
+accessible field net/minecraft/world/level/block/state/pattern/BlockInWorld level Lnet/minecraft/world/level/LevelReader;
+mutable field net/minecraft/world/level/block/state/pattern/BlockInWorld level Lnet/minecraft/world/level/LevelReader;
+accessible field net/minecraft/world/level/block/state/pattern/BlockInWorld loadChunks Z
+mutable field net/minecraft/world/level/block/state/pattern/BlockInWorld loadChunks Z
+accessible field net/minecraft/world/level/block/state/pattern/BlockInWorld pos Lnet/minecraft/core/BlockPos;
+mutable field net/minecraft/world/level/block/state/pattern/BlockInWorld pos Lnet/minecraft/core/BlockPos;
+accessible field net/minecraft/world/level/block/state/pattern/BlockInWorld state Lnet/minecraft/world/level/block/state/BlockState;
 accessible field net/minecraft/server/level/ChunkMap viewDistance I
 accessible field net/minecraft/server/level/ChunkMap$TrackedEntity entity Lnet/minecraft/world/entity/Entity;
 accessible field net/minecraft/server/level/ServerLevel dragonParts Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;
