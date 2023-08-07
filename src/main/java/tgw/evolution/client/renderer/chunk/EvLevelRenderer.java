@@ -2217,7 +2217,17 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
         this.prevCamY = currentCamY;
         this.prevCamZ = currentCamZ;
         profiler.popPush("update");
-        boolean smartCull = !isSpectator || !this.level.getBlockState(camera.getBlockPosition()).isSolidRender(this.level, camera.getBlockPosition());
+        boolean smartCull;
+        if (!isSpectator) {
+            smartCull = true;
+        }
+        else {
+            BlockPos pos = camera.getBlockPosition();
+            int x = pos.getX();
+            int y = pos.getY();
+            int z = pos.getZ();
+            smartCull = !this.level.getBlockState_(x, y, z).isSolidRender_(this.level, x, y, z);
+        }
         if (this.needsFullRenderChunkUpdate && (this.lastFullRenderChunkUpdate == null || this.lastFullRenderChunkUpdate.isDone())) {
             profiler.push("full_update_schedule");
             this.needsFullRenderChunkUpdate = false;
