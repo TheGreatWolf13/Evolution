@@ -3,13 +3,14 @@ package tgw.evolution.capabilities.chunk;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.ThreadingDetector;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 import tgw.evolution.Evolution;
 
 public class AtmStorage {
 
     private final ThreadingDetector threadingDetector = new ThreadingDetector("AtmStorage");
-    private volatile long[] data;
+    private long @Nullable [] data;
     private short nonEmptyCount;
 
     @Contract("_ -> new")
@@ -44,6 +45,7 @@ public class AtmStorage {
     }
 
     private int get(int localZ, int offset) {
+        assert this.data != null;
         return switch (localZ) {
             case 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 -> {
                 long prev = this.data[offset];
@@ -109,6 +111,7 @@ public class AtmStorage {
         try {
             tag.putShort("NonEmptyCount", this.nonEmptyCount);
             if (this.nonEmptyCount != 0) {
+                assert this.data != null;
                 tag.putLongArray("Data", this.data);
             }
             return tag;
@@ -141,17 +144,24 @@ public class AtmStorage {
             if (this.nonEmptyCount == 0) {
                 return;
             }
-            this.data = new long[5 * 4_096 / 64];
+            assert this.data != null;
         }
         else {
-            if (this.nonEmptyCount++ == 0) {
-                this.data = new long[5 * 4_096 / 64];
+            if (this.nonEmptyCount == 0) {
+                if (this.data == null) {
+                    this.data = new long[5 * 4_096 / 64];
+                }
+            }
+            else {
+                assert this.data != null;
             }
         }
+        int old = 0;
         switch (localZ) {
             case 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 -> {
                 long prev = this.data[offset];
                 int shift = 4 + (11 - localZ) * 5;
+                old = (int) (prev >>> shift & 0b1_1111);
                 prev &= ~(0b1_1111L << shift);
                 prev |= (long) value << shift;
                 this.data[offset] = prev;
@@ -160,6 +170,7 @@ public class AtmStorage {
                 //4 bits from prev0, 1 bit from prev1
                 long prev0 = this.data[offset];
                 long prev1 = this.data[offset + 1];
+                old = (int) ((prev0 & 0b1111) << 1 | prev1 >> 63 & 0b1);
                 prev0 &= ~0b1111;
                 prev1 &= ~(0b1L << 63);
                 prev0 |= value >>> 1 & 0b1111;
@@ -170,6 +181,7 @@ public class AtmStorage {
             case 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24 -> {
                 long prev = this.data[offset + 1];
                 int shift = 3 + (24 - localZ) * 5;
+                old = (int) (prev >>> shift & 0b1_1111);
                 prev &= ~(0b1_1111L << shift);
                 prev |= (long) value << shift;
                 this.data[offset + 1] = prev;
@@ -178,6 +190,7 @@ public class AtmStorage {
                 //3 bits from prev1, 2 bits from prev2
                 long prev1 = this.data[offset + 1];
                 long prev2 = this.data[offset + 2];
+                old = (int) ((prev1 & 0b111) << 2 | prev2 >> 62 & 0b11);
                 prev1 &= ~0b111;
                 prev2 &= ~(0b11L << 62);
                 prev1 |= value >>> 2 & 0b111;
@@ -188,6 +201,7 @@ public class AtmStorage {
             case 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37 -> {
                 long prev = this.data[offset + 2];
                 int shift = 2 + (37 - localZ) * 5;
+                old = (int) (prev >>> shift & 0b1_1111);
                 prev &= ~(0b1_1111L << shift);
                 prev |= (long) value << shift;
                 this.data[offset + 2] = prev;
@@ -196,6 +210,7 @@ public class AtmStorage {
                 //2 bits from prev2, 3 bits from prev3
                 long prev2 = this.data[offset + 2];
                 long prev3 = this.data[offset + 3];
+                old = (int) ((prev2 & 0b11) << 3 | prev3 >> 61 & 0b111);
                 prev2 &= ~0b11;
                 prev3 &= ~(0b111L << 61);
                 prev2 |= value >>> 3 & 0b11;
@@ -206,6 +221,7 @@ public class AtmStorage {
             case 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50 -> {
                 long prev = this.data[offset + 3];
                 int shift = 1 + (50 - localZ) * 5;
+                old = (int) (prev >>> shift & 0b1_1111);
                 prev &= ~(0b1_1111L << shift);
                 prev |= (long) value << shift;
                 this.data[offset + 3] = prev;
@@ -214,6 +230,7 @@ public class AtmStorage {
                 //1 bit from prev3, 4 bits from prev4
                 long prev3 = this.data[offset + 3];
                 long prev4 = this.data[offset + 4];
+                old = (int) ((prev3 & 0b1) << 4 | prev4 >> 60 & 0b1111);
                 prev3 &= ~0b1;
                 prev4 &= ~(0b1111L << 60);
                 prev3 |= value >>> 4 & 0b1;
@@ -224,11 +241,23 @@ public class AtmStorage {
             case 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63 -> {
                 long prev = this.data[offset + 4];
                 int shift = (63 - localZ) * 5;
+                old = (int) (prev >>> shift & 0b1_1111);
                 prev &= ~(0b1_1111L << shift);
                 prev |= (long) value << shift;
                 this.data[offset + 4] = prev;
             }
         }
+        if (old == 0) {
+            if (value != 0) {
+                ++this.nonEmptyCount;
+            }
+        }
+        else {
+            if (value == 0) {
+                --this.nonEmptyCount;
+            }
+        }
+        assert 0 <= this.nonEmptyCount && this.nonEmptyCount <= 4_096;
     }
 }
 

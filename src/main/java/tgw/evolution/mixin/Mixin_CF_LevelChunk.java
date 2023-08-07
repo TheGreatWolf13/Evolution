@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.*;
 import tgw.evolution.Evolution;
+import tgw.evolution.blocks.BlockAtm;
 import tgw.evolution.blocks.IAir;
 import tgw.evolution.blocks.tileentities.TEUtils;
 import tgw.evolution.capabilities.chunk.CapabilityChunkStorage;
@@ -670,9 +671,8 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
                 this.updateBlockEntityTicker(tile);
             }
         }
-        if (!this.level.isClientSide) {
-            this.chunkStorage.scheduleAtmTick((LevelChunk) (Object) this, localX, y, localZ,
-                                              newBlock instanceof IAir || oldState.getBlock() instanceof IAir);
+        if (!this.level.isClientSide && !(newBlock instanceof BlockAtm)) {
+            this.chunkStorage.scheduleAtmTick((LevelChunk) (Object) this, localX, y, localZ, newBlock instanceof IAir || oldState.getBlock() instanceof IAir);
         }
         this.unsaved = true;
         return oldState;

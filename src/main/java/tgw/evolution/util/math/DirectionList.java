@@ -7,6 +7,8 @@ import java.util.random.RandomGenerator;
 public final class DirectionList {
 
     public static final int NULL = -1;
+    public static final int HORIZONTAL = 0b100_011_101_010_100;
+    public static final int ALL_EXCEPT_UP = 0b100_011_101_010_101;
 
     private DirectionList() {
     }
@@ -18,10 +20,6 @@ public final class DirectionList {
         }
         data = set(data, size++, direction);
         return setSize(data, size);
-    }
-
-    public static int fillHorizontal() {
-        return 0b100_011_101_010_100;
     }
 
     public static Direction get(int data, int index) {

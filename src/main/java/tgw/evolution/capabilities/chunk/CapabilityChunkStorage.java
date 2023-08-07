@@ -11,6 +11,7 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import tgw.evolution.blocks.IAir;
 import tgw.evolution.commands.CommandAtm;
 import tgw.evolution.util.ChunkHolder;
+import tgw.evolution.util.DirectionHolder;
 import tgw.evolution.util.collection.lists.IArrayList;
 import tgw.evolution.util.collection.lists.IList;
 import tgw.evolution.util.math.DirectionList;
@@ -55,6 +56,7 @@ public class CapabilityChunkStorage {
         }
     };
     private static final ThreadLocal<ChunkHolder> HOLDER = ThreadLocal.withInitial(ChunkHolder::new);
+    private static final ThreadLocal<DirectionHolder> DIR_HOLDER = ThreadLocal.withInitial(DirectionHolder::new);
     private final IList pendingAtmTicks = new IArrayList();
     private final IList pendingBlockTicks = new IArrayList();
     private final TickStorage pendingPreciseBlockTicks = new TickStorage();
@@ -295,22 +297,28 @@ public class CapabilityChunkStorage {
         ServerLevel level = (ServerLevel) chunk.getLevel();
         this.processPreciseTicks(level, chunk);
         int len = this.pendingBlockTicks.size();
-        for (int i = 0; i < len; i++) {
-            int pos = this.pendingBlockTicks.getInt(i);
-            int x = IAir.unpackX(pos);
-            int y = IAir.unpackY(pos);
-            int z = IAir.unpackZ(pos);
-            BlockState state = chunk.getBlockState_(x, y, z);
-            state.tick_(level, x, y, z, level.random);
+        if (len > 0) {
+            for (int i = 0; i < len; i++) {
+                int pos = this.pendingBlockTicks.getInt(i);
+                int x = IAir.unpackX(pos);
+                int y = IAir.unpackY(pos);
+                int z = IAir.unpackZ(pos);
+                BlockState state = chunk.getBlockState_(x, y, z);
+                state.tick_(level, x, y, z, level.random);
+            }
+            this.pendingBlockTicks.removeElements(0, len);
         }
-        this.pendingBlockTicks.removeElements(0, len);
-        ChunkHolder holder = HOLDER.get();
         len = this.pendingAtmTicks.size();
-        for (int i = 0; i < len; i++) {
-            this.updateAtm(chunk, holder, this.pendingAtmTicks.getInt(i));
+        if (len > 0) {
+            ChunkHolder holder = HOLDER.get();
+            DirectionHolder dirHolder = DIR_HOLDER.get();
+            int maxSectionIndex = chunk.getSections().length;
+            for (int i = 0; i < len; i++) {
+                this.updateAtm(chunk, holder, this.pendingAtmTicks.getInt(i), dirHolder, maxSectionIndex);
+            }
+            holder.reset();
+            this.pendingAtmTicks.removeElements(0, len);
         }
-        holder.reset();
-        this.pendingAtmTicks.removeElements(0, len);
         if (this.continuousAtmDebug) {
             if ((chunk.isUnsaved() || this.updateTicks > 0) && level.getGameTime() % 20 == 0) {
                 CommandAtm.fill(chunk, CommandAtm.AIR, true, CommandAtm.ATM_MAKER);
@@ -336,10 +344,10 @@ public class CapabilityChunkStorage {
         }
     }
 
-    private void updateAtm(LevelChunk chunk, ChunkHolder holder, int internalPos) {
+    private void updateAtm(LevelChunk chunk, ChunkHolder holder, int internalPos, DirectionHolder dirHolder, int maxSectionIndex) {
         int globalY = IAir.unpackY(internalPos);
         int index = chunk.getSectionIndex(globalY);
-        if (0 > index || index >= chunk.getSections().length) {
+        if (0 > index || index >= maxSectionIndex) {
             return;
         }
         LevelChunkSection section = chunk.getSection(index);
@@ -356,7 +364,7 @@ public class CapabilityChunkStorage {
             }
             else {
                 if (oldAtm != 31) {
-                    this.setAndUpdate(chunk, section, holder, x, y, z, 31, globalY, DirectionList.NULL);
+                    this.setAndUpdate(chunk, section, holder, x, y, z, 31, globalY, oldAtm == 0 ? DirectionList.ALL_EXCEPT_UP : DirectionList.NULL);
                 }
                 return;
             }
@@ -364,13 +372,12 @@ public class CapabilityChunkStorage {
         if (isAir || air.allowsFrom(state, Direction.UP)) {
             if (globalY == chunk.getMaxBuildHeight() - 1 || globalY > chunk.getHeight(Heightmap.Types.WORLD_SURFACE, x, z)) {
                 if (oldAtm != 0 || IAir.unpackForceUpdate(internalPos)) {
-                    this.setAndUpdate(chunk, section, holder, x, y, z, 0, globalY, DirectionList.NULL);
+                    this.setAndUpdate(chunk, section, holder, x, y, z, 0, globalY, DirectionList.ALL_EXCEPT_UP);
                 }
                 return;
             }
         }
-        int lowestAtm = 31;
-        int list = 0;
+        dirHolder.reset();
         for (Direction dir : DirectionUtil.ALL) {
             if (!isAir && !air.allowsFrom(state, dir)) {
                 continue;
@@ -380,7 +387,12 @@ public class CapabilityChunkStorage {
             int z1 = z + dir.getStepZ();
             BlockState stateAtDir = safeGetBlockstate(chunk, section, holder, x1, y1, z1, index);
             if (stateAtDir.isAir() || stateAtDir.getBlock() instanceof IAir a && a.allowsFrom(stateAtDir, dir.getOpposite())) {
-                list = DirectionList.add(list, dir);
+                if (oldAtm == 0) {
+                    if (dir == Direction.DOWN) {
+                        dirHolder.store(Direction.DOWN, 31);
+                        continue;
+                    }
+                }
                 int atm = safeGetAtm(chunk, section, holder, x1, y1, z1, index);
                 if (dir != Direction.UP || atm != 0) {
                     if (isAir) {
@@ -390,16 +402,15 @@ public class CapabilityChunkStorage {
                         atm += air.increment(state, dir);
                     }
                 }
-                if (lowestAtm > atm) {
-                    lowestAtm = atm;
-                }
+                dirHolder.store(dir, atm);
             }
         }
+        int lowestAtm = dirHolder.getLowestAtm();
         if (IAir.unpackForceUpdate(internalPos)) {
             this.setAndUpdate(chunk, section, holder, x, y, z, lowestAtm, globalY, DirectionList.NULL);
         }
         else if (lowestAtm != oldAtm) {
-            this.setAndUpdate(chunk, section, holder, x, y, z, lowestAtm, globalY, list);
+            this.setAndUpdate(chunk, section, holder, x, y, z, lowestAtm, globalY, dirHolder.computeList(oldAtm == 0));
         }
     }
 }

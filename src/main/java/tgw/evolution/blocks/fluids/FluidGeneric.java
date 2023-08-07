@@ -339,7 +339,7 @@ public abstract class FluidGeneric extends FlowingFluid {
         FluidState fluidDown = level.getFluidState(this.auxPos);
         if (this == fluidDown.getType()) {
             this.diagList.clear();
-            int list = DirectionList.fillHorizontal();
+            int list = DirectionList.HORIZONTAL;
             while (!DirectionList.isEmpty(list)) {
                 int index = DirectionList.getRandom(list, level.random);
                 Direction direction = DirectionList.get(list, index);

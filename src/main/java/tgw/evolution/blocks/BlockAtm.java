@@ -7,6 +7,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.material.Material;
@@ -48,7 +49,18 @@ public class BlockAtm extends Block implements IAir {
     }
 
     @Override
+    public RenderShape getRenderShape(BlockState state) {
+        if (state.getValue(EvolutionBStates.ATM) == 0) {
+            return RenderShape.INVISIBLE;
+        }
+        return RenderShape.MODEL;
+    }
+
+    @Override
     public VoxelShape getShape_(BlockState state, BlockGetter level, int x, int y, int z, @Nullable Entity entity) {
+        if (entity instanceof Player player && player.isCreative() && player.isShiftKeyDown()) {
+            return Shapes.block();
+        }
         return Shapes.empty();
     }
 

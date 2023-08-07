@@ -27,9 +27,7 @@ public final class CommandAtm {
     public static final Predicate<BlockState> AIR = s -> s.isAir() || s.getBlock() == EvolutionBlocks.ATM;
     public static final Predicate<BlockState> ATM = s -> s.getBlock() == EvolutionBlocks.ATM;
     public static final IntFunction<BlockState> AIR_MAKER = i -> Blocks.AIR.defaultBlockState();
-    public static final IntFunction<BlockState> ATM_MAKER = i -> i == 0 ?
-                                                                 Blocks.AIR.defaultBlockState() :
-                                                                 EvolutionBlocks.ATM.defaultBlockState().setValue(EvolutionBStates.ATM, i);
+    public static final IntFunction<BlockState> ATM_MAKER = i -> EvolutionBlocks.ATM.defaultBlockState().setValue(EvolutionBStates.ATM, i);
 
     private CommandAtm() {}
 
