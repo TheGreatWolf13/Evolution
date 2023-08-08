@@ -231,7 +231,7 @@ public class BlockGravity {
     }
 
     public final int shearStrength(Level level, int x, int y, int z) {
-        try (Physics physics = Physics.getInstance(level, x, y, z, 0, 0, 0, 0, 0, 0, 0, Fluid.AIR)) {
+        try (Physics physics = Physics.getInstance(level, x, y, z, 0, 0, 0, 0, 0, 0, Fluid.AIR)) {
             return (int) (this.getShearStrength() / (physics.calcAccGravity() * 400));
         }
     }

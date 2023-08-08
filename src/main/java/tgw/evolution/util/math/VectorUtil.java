@@ -37,11 +37,8 @@ public final class VectorUtil {
     }
 
     public static double norm(double x, double y, double z) {
-        return Mth.fastInvSqrt(x * x + y * y + z * z);
-    }
-
-    public static double normalizeComponent(double x, double norm) {
-        return 1.0E4 < norm ? 0 : x * norm;
+        double norm = Mth.fastInvSqrt(x * x + y * y + z * z);
+        return norm > 1e4 ? 0 : norm;
     }
 
     public static double subtractLengthSqr(Vec3 vec, double x, double y, double z) {

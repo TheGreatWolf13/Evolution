@@ -43,7 +43,6 @@ public final class Physics implements ILocked {
     private double cachedNormal = Double.NaN;
     private double cachedRadius = Double.NaN;
     private float cachedSinLat = Float.NaN;
-    private double coefDrag;
     private @Nullable Fluid fluid;
     private boolean hasCachedAcceleration;
     private @Nullable Level level;
@@ -78,7 +77,6 @@ public final class Physics implements ILocked {
                                       double sizeX,
                                       double sizeY,
                                       double sizeZ,
-                                      double coefDrag,
                                       Fluid fluid) {
         Physics physics = CACHE.get();
         assert !physics.isLocked() : "The local instance of Physics is locked, you probably forgot to unlock it! Use it with try-with-resources to " +
@@ -93,7 +91,6 @@ public final class Physics implements ILocked {
         physics.sizeX = sizeX;
         physics.sizeY = sizeY;
         physics.sizeZ = sizeZ;
-        physics.coefDrag = coefDrag;
         physics.fluid = fluid;
         physics.lock();
         return physics;
@@ -101,8 +98,7 @@ public final class Physics implements ILocked {
 
     public static Physics getInstance(Entity entity, Fluid fluid) {
         Vec3 vel = entity.getDeltaMovement();
-        return getInstance(entity.level, entity.getX(), entity.getY(), entity.getZ(), vel.x, vel.y, vel.z, entity.getBbWidth(), entity.getBbHeight(),
-                           entity.getBbWidth(), coefOfDrag(entity), fluid);
+        return getInstance(entity.level, entity.getX(), entity.getY(), entity.getZ(), vel.x, vel.y, vel.z, entity.getBbWidth(), entity.getBbHeight(), entity.getBbWidth(), fluid);
     }
 
     /**
@@ -290,33 +286,6 @@ public final class Physics implements ILocked {
         }
         return this.calcAccNormal() * this.fluid.density() * volumeDisplaced;
     }
-
-//    public double calcForceDragX(double windVelX) {
-//        assert this.fluid != null;
-//        if (this.fluid == Fluid.VACUUM) {
-//            return 0;
-//        }
-//        double relVel = windVelX - this.velX;
-//        return Math.signum(relVel) * 0.5 * this.fluid.density() * this.sizeZ * this.sizeY * this.coefDrag * relVel * relVel;
-//    }
-
-//    public double calcForceDragY(double windVelY) {
-//        assert this.fluid != null;
-//        if (this.fluid == Fluid.VACUUM) {
-//            return 0;
-//        }
-//        double relVel = windVelY - this.velY;
-//        return Math.signum(relVel) * 0.5 * this.fluid.density() * this.sizeZ * this.sizeX * this.coefDrag * relVel * relVel;
-//    }
-
-//    public double calcForceDragZ(double windVelZ) {
-//        assert this.fluid != null;
-//        if (this.fluid == Fluid.VACUUM) {
-//            return 0;
-//        }
-//        double relVel = windVelZ - this.velZ;
-//        return Math.signum(relVel) * 0.5 * this.fluid.density() * this.sizeY * this.sizeX * this.coefDrag * relVel * relVel;
-//    }
 
     public float calcKineticFrictionCoef(Entity entity) {
         return this.calcStaticFrictionCoef(entity) * 0.8f;

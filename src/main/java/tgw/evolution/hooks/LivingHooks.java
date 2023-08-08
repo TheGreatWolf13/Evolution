@@ -1,5 +1,6 @@
 package tgw.evolution.hooks;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.Mth;
@@ -82,7 +83,11 @@ public final class LivingHooks {
             return;
         }
         TagKey<net.minecraft.world.level.material.Fluid> tag = fluid.tag();
-        double distanceOfSlowDown = entity.level.getFluidState(entity.blockPosition()).getHeight(entity.level, entity.blockPosition());
+        BlockPos pos = entity.blockPosition();
+        int x = pos.getX();
+        int y = pos.getY();
+        int z = pos.getZ();
+        double distanceOfSlowDown = entity.level.getFluidState_(x, y, z).getHeight_(entity.level, x, y, z);
         double fallDmgVel = entity.getDeltaMovement().y;
         if (player) {
             EvolutionClient.sendToServer(new PacketCSPlayerFall(fallDmgVel, distanceOfSlowDown, fluid == Fluid.WATER));

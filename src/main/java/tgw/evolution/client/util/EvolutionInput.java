@@ -4,7 +4,6 @@ import net.minecraft.client.Options;
 import net.minecraft.client.player.Input;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Pose;
@@ -14,15 +13,9 @@ import tgw.evolution.EvolutionClient;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.init.EvolutionEffects;
 import tgw.evolution.network.PacketCSSetCrawling;
-import tgw.evolution.patches.PatchLivingEntity;
-import tgw.evolution.patches.PatchPlayer;
 
 public class EvolutionInput extends Input {
 
-    /**
-     * Used for internal calculations.
-     */
-    private final BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
     private final Options options;
     private boolean crawl;
     private boolean crawlToggled;
@@ -76,7 +69,7 @@ public class EvolutionInput extends Input {
         else {
             this.tick = 0;
         }
-        if (!((PatchLivingEntity) player).isVerticalMotionLocked()) {
+        if (!player.isVerticalMotionLocked()) {
             this.jumping = inverted ? this.options.keyShift.isDown() : this.options.keyJump.isDown();
             this.shiftKeyDown = inverted ? this.options.keyJump.isDown() : this.options.keyShift.isDown();
             this.crawlToggled = EvolutionClient.KEY_CRAWL.isDown();
@@ -88,7 +81,8 @@ public class EvolutionInput extends Input {
         }
         //Stand up if jump is pressed
         if (this.crawlToggled && !this.onClimbable && player.isOnGround() && isJumpPressed) {
-            if (!player.level.getBlockState(this.mutablePos.set(player.blockPosition()).move(Direction.UP)).getMaterial().blocksMotion()) {
+            BlockPos playerPos = player.blockPosition();
+            if (!player.level.getBlockState_(playerPos.getX(), playerPos.getY() + 1, playerPos.getZ()).getMaterial().blocksMotion()) {
                 this.crawlToggled = false;
                 EvolutionClient.KEY_CRAWL.setDown(true);
                 EvolutionClient.KEY_CRAWL.release();
@@ -111,14 +105,20 @@ public class EvolutionInput extends Input {
 
     private void updateClientCrawlState(LocalPlayer player) {
         boolean shouldCrawl = this.crawlToggled;
-        shouldCrawl = shouldCrawl && this.canCrawl(player);
-        shouldCrawl = shouldCrawl ||
-                      this.crawlToggled &&
-                      this.onClimbable &&
-                      player.level.getBlockState(this.mutablePos.set(player.blockPosition()).move(Direction.UP, 2)).getMaterial().blocksMotion();
-        if (shouldCrawl != ((PatchPlayer) player).isCrawling()) {
+        if (shouldCrawl) {
+            shouldCrawl = this.canCrawl(player);
+        }
+        if (!shouldCrawl) {
+            if (this.crawlToggled && this.onClimbable) {
+                BlockPos playerPos = player.blockPosition();
+                if (player.level.getBlockState_(playerPos.getX(), playerPos.getY() + 2, playerPos.getZ()).getMaterial().blocksMotion()) {
+                    shouldCrawl = true;
+                }
+            }
+        }
+        if (shouldCrawl != player.isCrawling()) {
             player.connection.send(new PacketCSSetCrawling(shouldCrawl));
-            ((PatchPlayer) player).setCrawling(shouldCrawl);
+            player.setCrawling(shouldCrawl);
         }
     }
 }

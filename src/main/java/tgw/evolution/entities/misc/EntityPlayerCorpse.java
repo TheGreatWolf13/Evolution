@@ -121,7 +121,7 @@ public class EntityPlayerCorpse extends Entity implements IContainerCheckable, I
         double y = player.getY();
         double z = player.getZ();
         this.setPos(x, y, z);
-        this.setDeltaMovement(x - player.xOld, y - player.yOld, z - player.zOld);
+        this.setDeltaMovement(player.getMotionX(), player.getMotionY(), player.getMotionZ());
         this.xo = x;
         this.yo = y;
         this.zo = z;
@@ -545,10 +545,10 @@ public class EntityPlayerCorpse extends Entity implements IContainerCheckable, I
                 }
             }
         }
-        Vec3 motion = this.getDeltaMovement();
-        double motionX = motion.x;
-        double motionY = motion.y;
-        double motionZ = motion.z;
+        Vec3 velocity = this.getDeltaMovement();
+        double velX = velocity.x;
+        double velY = velocity.y;
+        double velZ = velocity.z;
         double mass = this.getBaseMass();
         try (Physics physics = Physics.getInstance(this, this.isInWater() ? Fluid.WATER : this.isInLava() ? Fluid.LAVA : Fluid.AIR)) {
             double accY = 0;
@@ -567,46 +567,26 @@ public class EntityPlayerCorpse extends Entity implements IContainerCheckable, I
             //Dissipative Forces
             double dissipativeX = 0;
             double dissipativeZ = 0;
-            if (this.isOnGround() && (motionX != 0 || motionZ != 0)) {
-                double norm = Mth.fastInvSqrt(motionX * motionX + motionZ * motionZ);
+            if (this.isOnGround() && (velX != 0 || velZ != 0)) {
+                double norm = Mth.fastInvSqrt(velX * velX + velZ * velZ);
                 double frictionAcc = physics.calcAccNormal() * physics.calcKineticFrictionCoef(this);
-                double frictionX = motionX * norm * frictionAcc;
-                double frictionZ = motionZ * norm * frictionAcc;
+                double frictionX = velX * norm * frictionAcc;
+                double frictionZ = velZ * norm * frictionAcc;
                 dissipativeX = frictionX;
-                if (Math.abs(dissipativeX) > Math.abs(motionX)) {
-                    dissipativeX = motionX;
+                if (Math.abs(dissipativeX) > Math.abs(velX)) {
+                    dissipativeX = velX;
                 }
                 dissipativeZ = frictionZ;
-                if (Math.abs(dissipativeZ) > Math.abs(motionZ)) {
-                    dissipativeZ = motionZ;
+                if (Math.abs(dissipativeZ) > Math.abs(velZ)) {
+                    dissipativeZ = velZ;
                 }
             }
-            //Drag
-            //TODO wind speed
-//            double windVelX = 0;
-//            double windVelY = 0;
-//            double windVelZ = 0;
-//            double dragX = physics.calcForceDragX(windVelX) / mass;
-//            double dragY = physics.calcForceDragY(windVelY) / mass;
-//            double dragZ = physics.calcForceDragZ(windVelZ) / mass;
-//            double maxDrag = Math.abs(windVelX - motionX);
-//            if (Math.abs(dragX) > maxDrag) {
-//                dragX = Math.signum(dragX) * maxDrag;
-//            }
-//            maxDrag = Math.abs(windVelY - motionY);
-//            if (Math.abs(dragY) > maxDrag) {
-//                dragY = Math.signum(dragY) * maxDrag;
-//            }
-//            maxDrag = Math.abs(windVelZ - motionZ);
-//            if (Math.abs(dragZ) > maxDrag) {
-//                dragZ = Math.signum(dragZ) * maxDrag;
-//            }
             //Update Motion
-            motionX += -dissipativeX + /*dragX +*/ accCoriolisX;
-            motionY += accY + /*dragY +*/ accCoriolisY + accCentrifugalY;
-            motionZ += -dissipativeZ + /*dragZ +*/ accCoriolisZ + accCentrifugalZ;
+            velX += -dissipativeX + accCoriolisX;
+            velY += accY + accCoriolisY + accCentrifugalY;
+            velZ += -dissipativeZ + accCoriolisZ + accCentrifugalZ;
         }
-        this.setDeltaMovement(motionX, motionY, motionZ);
+        this.setDeltaMovement(velX, velY, velZ);
         this.move(MoverType.SELF, this.getDeltaMovement());
     }
 

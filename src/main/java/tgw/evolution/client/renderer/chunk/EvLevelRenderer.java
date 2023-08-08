@@ -2460,10 +2460,10 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
                                 double deltaX = viewVector.x - chunkAtDirX;
                                 double deltaY = viewVector.y - chunkAtDirY;
                                 double deltaZ = viewVector.z - chunkAtDirZ;
-                                double norm = VectorUtil.norm(deltaX, deltaY, deltaZ);
-                                deltaX = VectorUtil.normalizeComponent(deltaX, norm) * 28;
-                                deltaY = VectorUtil.normalizeComponent(deltaY, norm) * 28;
-                                deltaZ = VectorUtil.normalizeComponent(deltaZ, norm) * 28;
+                                double norm = VectorUtil.norm(deltaX, deltaY, deltaZ) * 28;
+                                deltaX *= norm;
+                                deltaY *= norm;
+                                deltaZ *= norm;
                                 while (VectorUtil.subtractLengthSqr(viewVector, chunkAtDirX, chunkAtDirY, chunkAtDirZ) > 3_600) {
                                     chunkAtDirX += deltaX;
                                     chunkAtDirY += deltaY;
