@@ -14,6 +14,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.PlayerRideableJumping;
 import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.player.Abilities;
 import net.minecraft.world.item.ElytraItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -64,12 +65,12 @@ public abstract class MixinLocalPlayer extends AbstractClientPlayer {
         boolean isJumping = this.input.jumping;
         boolean isSneaking = this.input.shiftKeyDown;
         boolean hadImpulseToStartSprint = this.hasEnoughImpulseToStartSprinting();
-        this.crouching = !this.getAbilities().flying &&
+        Abilities abilities = this.getAbilities();
+        this.crouching = !abilities.flying &&
                          !this.isSwimming() &&
                          this.canEnterPose(Pose.CROUCHING) &&
                          (this.isShiftKeyDown() || !this.isSleeping() && !this.canEnterPose(Pose.STANDING));
         ((EvolutionInput) this.input).tick((LocalPlayer) (Object) this);
-        this.minecraft.getTutorial().onInput(this.input);
         if (!this.noPhysics) {
             this.moveTowardsClosestSpace(this.getX() - this.getBbWidth() * 0.35, this.getZ() + this.getBbWidth() * 0.35);
             this.moveTowardsClosestSpace(this.getX() - this.getBbWidth() * 0.35, this.getZ() - this.getBbWidth() * 0.35);
@@ -84,7 +85,7 @@ public abstract class MixinLocalPlayer extends AbstractClientPlayer {
         boolean startedToSprint = false;
         //Try to start sprinting by double tapping W
         if ((this.onGround ||
-             this.getAbilities().flying ||
+             abilities.flying ||
              this.isUnderWater() ||
              this.isInWater() && this.getFluidHeight(FluidTags.WATER) >= 0.5 * this.getBbHeight()) &&
             !isSneaking &&
@@ -104,7 +105,7 @@ public abstract class MixinLocalPlayer extends AbstractClientPlayer {
         //Try to start sprinting by pressing Ctrl
         if (!this.isSprinting() &&
             (this.onGround ||
-             this.getAbilities().flying ||
+             abilities.flying ||
              this.isUnderWater() ||
              this.isInWater() && this.getFluidHeight(FluidTags.WATER) >= 0.5 * this.getBbHeight()) &&
             !isSneaking &&
@@ -131,11 +132,11 @@ public abstract class MixinLocalPlayer extends AbstractClientPlayer {
             }
         }
         boolean isFlying = false;
-        if (this.getAbilities().mayfly) {
+        if (abilities.mayfly) {
             assert this.minecraft.gameMode != null;
             if (this.minecraft.gameMode.isAlwaysFlying()) {
-                if (!this.getAbilities().flying) {
-                    this.getAbilities().flying = true;
+                if (!abilities.flying) {
+                    abilities.flying = true;
                     isFlying = true;
                     this.onUpdateAbilities();
                 }
@@ -145,14 +146,14 @@ public abstract class MixinLocalPlayer extends AbstractClientPlayer {
                     this.jumpTriggerTime = 7;
                 }
                 else if (!this.isSwimming()) {
-                    this.getAbilities().flying = !this.getAbilities().flying;
+                    abilities.flying = !abilities.flying;
                     isFlying = true;
                     this.onUpdateAbilities();
                     this.jumpTriggerTime = 0;
                 }
             }
         }
-        if (this.input.jumping && !isFlying && !isJumping && !this.getAbilities().flying && !this.isPassenger() && !this.onClimbable()) {
+        if (this.input.jumping && !isFlying && !isJumping && !abilities.flying && !this.isPassenger() && !this.onClimbable()) {
             ItemStack chestStack = this.getItemBySlot(EquipmentSlot.CHEST);
             if (chestStack.is(Items.ELYTRA) && ElytraItem.isFlyEnabled(chestStack) && this.tryToStartFallFlying()) {
                 this.connection.send(new ServerboundPlayerCommandPacket(this, ServerboundPlayerCommandPacket.Action.START_FALL_FLYING));
@@ -167,7 +168,7 @@ public abstract class MixinLocalPlayer extends AbstractClientPlayer {
             this.isEyeInFluid(FluidTags.WATER);
             this.waterVisionTime = Mth.clamp(this.waterVisionTime - 10, 0, 600);
         }
-        if (this.getAbilities().flying && this.isControlledCamera()) {
+        if (abilities.flying && this.isControlledCamera()) {
             int j = 0;
             if (isSneaking) {
                 j--;
@@ -176,7 +177,8 @@ public abstract class MixinLocalPlayer extends AbstractClientPlayer {
                 j++;
             }
             if (j != 0) {
-                this.setDeltaMovement(this.getDeltaMovement().add(0, j * this.getAbilities().getFlyingSpeed() * 3.0F, 0));
+                Vec3 velocity = this.getDeltaMovement();
+                this.setDeltaMovement(velocity.x, velocity.y + abilities.getFlyingSpeed() * 3.0F, velocity.z);
             }
         }
         if (this.isRidingJumpable()) {
@@ -211,10 +213,10 @@ public abstract class MixinLocalPlayer extends AbstractClientPlayer {
             this.jumpRidingScale = 0.0F;
         }
         super.aiStep();
-        if (this.onGround && this.getAbilities().flying) {
+        if (this.onGround && abilities.flying) {
             assert this.minecraft.gameMode != null;
             if (!this.minecraft.gameMode.isAlwaysFlying()) {
-                this.getAbilities().flying = false;
+                abilities.flying = false;
                 this.onUpdateAbilities();
             }
         }
@@ -246,8 +248,13 @@ public abstract class MixinLocalPlayer extends AbstractClientPlayer {
     @Shadow
     protected abstract void handleNetherPortalClient();
 
-    @Shadow
-    protected abstract boolean hasEnoughImpulseToStartSprinting();
+    @Overwrite
+    private boolean hasEnoughImpulseToStartSprinting() {
+        if (this.horizontalCollision && !this.minorHorizontalCollision) {
+            return false;
+        }
+        return this.input.hasForwardImpulse();
+    }
 
     /**
      * @author TheGreatWolf
