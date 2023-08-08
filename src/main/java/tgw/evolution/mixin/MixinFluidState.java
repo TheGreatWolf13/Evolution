@@ -3,6 +3,7 @@ package tgw.evolution.mixin;
 import com.google.common.collect.ImmutableMap;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.StateHolder;
@@ -63,6 +64,11 @@ public abstract class MixinFluidState extends StateHolder<Fluid, FluidState> imp
 
     @Shadow
     public abstract Fluid getType();
+
+    @Overwrite
+    public boolean is(TagKey<Fluid> tagKey) {
+        return this.getType().fluid().tag() == tagKey;
+    }
 
     @Overwrite
     public void randomTick(Level level, BlockPos pos, Random random) {

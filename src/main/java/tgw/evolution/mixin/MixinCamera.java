@@ -47,8 +47,11 @@ public abstract class MixinCamera {
         if (!this.initialized) {
             return FogType.NONE;
         }
-        FluidState fluidState = this.level.getFluidState_(this.blockPosition);
-        if (fluidState.is(FluidTags.WATER) && this.position.y < this.blockPosition.getY() + fluidState.getHeight(this.level, this.blockPosition)) {
+        int x = this.blockPosition.getX();
+        int y = this.blockPosition.getY();
+        int z = this.blockPosition.getZ();
+        FluidState fluidState = this.level.getFluidState_(x, y, z);
+        if (fluidState.is(FluidTags.WATER) && this.position.y < y + fluidState.getHeight_(this.level, x, y, z)) {
             return FogType.WATER;
         }
         NearPlane nearPlane = this.setupAndGetNearPlane();

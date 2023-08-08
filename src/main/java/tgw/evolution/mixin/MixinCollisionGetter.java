@@ -56,11 +56,7 @@ public interface MixinCollisionGetter extends PatchCollisionGetter, BlockGetter 
     }
 
     @Override
-    default boolean isUnobstructed_(BlockState state,
-                                    int x,
-                                    int y,
-                                    int z,
-                                    @Nullable Entity entity) {
+    default boolean isUnobstructed_(BlockState state, int x, int y, int z, @Nullable Entity entity) {
         VoxelShape shape = state.getCollisionShape_(this, x, y, z, entity);
         return shape.isEmpty() || this.isUnobstructed(null, shape.move(x, y, z));
     }

@@ -1,6 +1,5 @@
 package tgw.evolution.mixin;
 
-import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -12,6 +11,9 @@ import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import tgw.evolution.util.physics.Fluid;
+import tgw.evolution.util.physics.Physics;
+import tgw.evolution.util.time.RealTime;
 
 @Mixin(ItemEntity.class)
 public abstract class MixinItemEntity extends Entity {
@@ -23,20 +25,24 @@ public abstract class MixinItemEntity extends Entity {
         super(entityType, level);
     }
 
+    @Override
+    public double getBaseMass() {
+        return 2;
+    }
+
     @Shadow
     public abstract ItemStack getItem();
+
+    @Override
+    public double getVolume() {
+        return 0.25 * super.getVolume();
+    }
 
     @Shadow
     protected abstract boolean isMergable();
 
     @Shadow
     protected abstract void mergeWithNeighbours();
-
-    @Shadow
-    protected abstract void setUnderLavaMovement();
-
-    @Shadow
-    protected abstract void setUnderwaterMovement();
 
     @Override
     @Overwrite
@@ -52,65 +58,73 @@ public abstract class MixinItemEntity extends Entity {
             this.xo = this.getX();
             this.yo = this.getY();
             this.zo = this.getZ();
-            Vec3 vec3 = this.getDeltaMovement();
-            float f = this.getEyeHeight() - 0.111_111_11F;
-            if (this.isInWater() && this.getFluidHeight(FluidTags.WATER) > f) {
-                this.setUnderwaterMovement();
-            }
-            else if (this.isInLava() && this.getFluidHeight(FluidTags.LAVA) > f) {
-                this.setUnderLavaMovement();
-            }
-            else if (!this.isNoGravity()) {
-                Vec3 deltaMovement = this.getDeltaMovement();
-                this.setDeltaMovement(deltaMovement.x, deltaMovement.y - 0.04, deltaMovement.z);
-            }
-            if (this.level.isClientSide) {
-                this.noPhysics = false;
-            }
-            else {
-                this.noPhysics = !this.level.noCollision(this, this.getBoundingBox().deflate(1.0E-7));
-                if (this.noPhysics) {
-                    this.moveTowardsClosestSpace(this.getX(), (this.getBoundingBox().minY + this.getBoundingBox().maxY) / 2, this.getZ());
+            //Physics
+            Vec3 velocity = this.getDeltaMovement();
+            double velX = velocity.x;
+            double velY = velocity.y;
+            double velZ = velocity.z;
+            try (Physics physics = Physics.getInstance(this, this.isInWater() ? Fluid.WATER : this.isInLava() ? Fluid.LAVA : Fluid.AIR)) {
+                double accY = 0;
+                if (!this.isNoGravity()) {
+                    accY += physics.calcAccGravity();
                 }
-            }
-            if (!this.onGround ||
-                this.getDeltaMovement().horizontalDistanceSqr() > 1e-5 ||
-                (this.tickCount + this.getId()) % 4 == 0) {
-                this.move(MoverType.SELF, this.getDeltaMovement());
-                float g = 0.98F;
-                if (this.onGround) {
-                    int x = Mth.floor(this.getX());
-                    int y = Mth.floor(this.getY() - 1);
-                    int z = Mth.floor(this.getZ());
-                    g = this.level.getBlockState_(x, y, z).getBlock().getFriction() * 0.98F;
+                if (!this.isOnGround()) {
+                    accY += physics.calcForceBuoyancy(this) / this.getBaseMass();
                 }
-                this.setDeltaMovement(this.getDeltaMovement().multiply(g, 0.98, g));
-                if (this.onGround) {
-                    Vec3 vec32 = this.getDeltaMovement();
-                    if (vec32.y < 0.0D) {
-                        this.setDeltaMovement(vec32.multiply(1.0D, -0.5D, 1.0D));
+                //Pseudo-forces
+                double accCoriolisX = physics.calcAccCoriolisX();
+                double accCoriolisY = physics.calcAccCoriolisY();
+                double accCoriolisZ = physics.calcAccCoriolisZ();
+                double accCentrifugalY = physics.calcAccCentrifugalY();
+                double accCentrifugalZ = physics.calcAccCentrifugalZ();
+                //Dissipative Forces
+                double dissipativeX = 0;
+                double dissipativeZ = 0;
+                if (this.isOnGround() && (velX != 0 || velZ != 0)) {
+                    double norm = Mth.fastInvSqrt(velX * velX + velZ * velZ);
+                    double frictionAcc = physics.calcAccNormal() * physics.calcKineticFrictionCoef(this);
+                    double frictionX = velX * norm * frictionAcc;
+                    double frictionZ = velZ * norm * frictionAcc;
+                    dissipativeX = frictionX;
+                    if (Math.abs(dissipativeX) > Math.abs(velX)) {
+                        dissipativeX = velX;
+                    }
+                    dissipativeZ = frictionZ;
+                    if (Math.abs(dissipativeZ) > Math.abs(velZ)) {
+                        dissipativeZ = velZ;
                     }
                 }
+                //Update Motion
+                velX += -dissipativeX + accCoriolisX;
+                velY += accY + accCoriolisY + accCentrifugalY;
+                velZ += -dissipativeZ + accCoriolisZ + accCentrifugalZ;
             }
-            boolean bl = Mth.floor(this.xo) != Mth.floor(this.getX()) ||
-                         Mth.floor(this.yo) != Mth.floor(this.getY()) ||
-                         Mth.floor(this.zo) != Mth.floor(this.getZ());
-            int i = bl ? 2 : 40;
-            if (this.tickCount % i == 0 && !this.level.isClientSide && this.isMergable()) {
-                this.mergeWithNeighbours();
+            this.setDeltaMovement(velX, velY, velZ);
+            if (!this.onGround || this.getDeltaMovement().horizontalDistanceSqr() > 1e-5 || (this.tickCount + this.getId()) % 4 == 0) {
+                this.move(MoverType.SELF, this.getDeltaMovement());
+            }
+            //End of physics
+            if (!this.level.isClientSide) {
+                boolean changedBlock = Mth.floor(this.xo) != Mth.floor(this.getX()) || Mth.floor(this.yo) != Mth.floor(this.getY()) || Mth.floor(this.zo) != Mth.floor(this.getZ());
+                if (this.tickCount % (changedBlock ? 2 : 40) == 0 && this.isMergable()) {
+                    this.mergeWithNeighbours();
+                }
             }
             if (this.age != Short.MIN_VALUE) {
                 ++this.age;
             }
-            this.hasImpulse |= this.updateInWaterStateAndDoFluidPushing();
+            this.hasImpulse |= this.isInAnyFluid();
             if (!this.level.isClientSide) {
-                double d = this.getDeltaMovement().subtract(vec3).lengthSqr();
-                if (d > 0.01D) {
+                Vec3 newVelocity = this.getDeltaMovement();
+                double dx = newVelocity.x - velocity.x;
+                double dy = newVelocity.y - velocity.y;
+                double dz = newVelocity.z - velocity.z;
+                if (dx * dx + dy * dy + dz * dz > 0.01) {
                     this.hasImpulse = true;
                 }
-            }
-            if (!this.level.isClientSide && this.age >= 6_000) {
-                this.discard();
+                if (this.age >= 5 * RealTime.MIN_TO_TICKS) {
+                    this.discard();
+                }
             }
         }
     }

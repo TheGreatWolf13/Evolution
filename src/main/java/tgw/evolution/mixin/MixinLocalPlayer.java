@@ -20,10 +20,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.*;
 import tgw.evolution.client.util.EvolutionInput;
 import tgw.evolution.items.IEvolutionItem;
 import tgw.evolution.network.PacketCSSkinType;
@@ -289,6 +286,7 @@ public abstract class MixinLocalPlayer extends AbstractClientPlayer {
     @Shadow
     public abstract boolean isUsingItem();
 
+    @Unique
     private boolean itemsAllowSprinting() {
         if (this.isUsingItem()) {
             Item item = this.getUseItem().getItem();

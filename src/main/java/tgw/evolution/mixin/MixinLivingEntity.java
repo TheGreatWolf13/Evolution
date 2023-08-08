@@ -334,7 +334,7 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
         this.level.getProfiler().pop();
         this.level.getProfiler().push("jump");
         if (this.jumping) {
-            if (this.onGround) {
+            if (this.onGround && !this.isSwimming()) {
                 this.jumpFromGround();
                 this.noJumpDelay = 10;
             }
@@ -1046,36 +1046,10 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
             if (Math.abs(dissipativeZ) > Math.abs(motionZ)) {
                 dissipativeZ = motionZ;
             }
-            //Drag
-            //TODO wind speed
-//            double windVelX = 0;
-//            double windVelY = 0;
-//            double windVelZ = 0;
-//            double dragX = physics.calcForceDragX(windVelX) / mass;
-//            double dragY = physics.calcForceDragY(windVelY) / mass;
-//            double dragZ = physics.calcForceDragZ(windVelZ) / mass;
-//            double maxDrag = Math.abs(windVelX - motionX);
-//            if (Math.abs(dragX) > maxDrag) {
-//                dragX = Math.signum(dragX) * maxDrag;
-//            }
-//            maxDrag = Math.abs(windVelY - motionY);
-//            if (Math.abs(dragY) > maxDrag) {
-//                if (fluid == Fluid.WATER) {
-//                    LivingHooks.calculateWaterFallDamage((LivingEntity) (Object) this);
-//                }
-//                else if (fluid == Fluid.LAVA) {
-//                    LivingHooks.calculateFallDamage((LivingEntity) (Object) this, 0.1);
-//                }
-//                dragY = Math.signum(dragY) * maxDrag;
-//            }
-//            maxDrag = Math.abs(windVelZ - motionZ);
-//            if (Math.abs(dragZ) > maxDrag) {
-//                dragZ = Math.signum(dragZ) * maxDrag;
-//            }
             //Update Motion
-            motionX += accX - dissipativeX + /*dragX +*/ accCoriolisX;
-            motionY += accY + /*dragY +*/ accCoriolisY + accCentrifugalY;
-            motionZ += accZ - dissipativeZ + /*dragZ +*/ accCoriolisZ + accCentrifugalZ;
+            motionX += accX - dissipativeX + accCoriolisX;
+            motionY += accY + accCoriolisY + accCentrifugalY;
+            motionZ += accZ - dissipativeZ + accCoriolisZ + accCentrifugalZ;
             if (Double.isNaN(motionX)) {
                 motionX = 0;
             }

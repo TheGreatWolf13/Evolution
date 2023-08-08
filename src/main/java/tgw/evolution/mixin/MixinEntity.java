@@ -55,7 +55,6 @@ import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.init.EvolutionBlockTags;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.patches.PatchEntity;
-import tgw.evolution.patches.PatchHolderReference;
 import tgw.evolution.util.OptionalMutableBlockPos;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
@@ -135,9 +134,6 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
     @Shadow private Vec3 position;
     @Shadow private int remainingFireTicks;
 
-    /**
-     * @reason Deprecated
-     */
     @Overwrite
     public static Vec3 collideBoundingBox(@Nullable Entity entity, Vec3 delta, AABB bb, Level level, List<VoxelShape> list) {
         OList<VoxelShape> shapes = new OArrayList<>(list.size() + 1);
@@ -595,7 +591,8 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
 
     @Override
     public double getVolume() {
-        return 0;
+        float width = this.dimensions.width;
+        return width * width * this.dimensions.height;
     }
 
     @Override
@@ -1379,6 +1376,7 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
         if (this.touchingUnloadedChunk()) {
             return;
         }
+        Vec3 velocity = this.getDeltaMovement();
         AABB bb = this.getBoundingBox();
         int minX = Mth.floor(bb.minX + 0.001);
         int maxX = Mth.ceil(bb.maxX - 0.001);
@@ -1394,7 +1392,6 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
         int submerged = 0;
         tgw.evolution.util.physics.Fluid lastSubmergedFluid = null;
         Vec3d flow = null;
-        BlockPos.MutableBlockPos flowPos = null;
         double velX = 0;
         double velY = 0;
         double velZ = 0;
@@ -1408,12 +1405,10 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
         tgw.evolution.util.physics.Fluid fallFluid = null;
         boolean fallDamage = false;
         if (pushedByFluid) {
-            flow = new Vec3d(Vec3.ZERO);
-            flowPos = new BlockPos.MutableBlockPos();
-            Vec3 deltaMovement = this.getDeltaMovement();
-            velX = deltaMovement.x;
-            velY = deltaMovement.y;
-            velZ = deltaMovement.z;
+            flow = new Vec3d();
+            velX = velocity.x;
+            velY = velocity.y;
+            velZ = velocity.z;
             //noinspection ConstantConditions
             mult = 0.5 * Physics.coefOfDrag((Entity) (Object) this) / ((Object) this instanceof LivingEntity living ?
                                                                        living.getAttributeValue(EvolutionAttributes.MASS) : this.getBaseMass());
@@ -1442,8 +1437,7 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
                             Fluid type = fluidState.getType();
                             fluid = type.fluid();
                             if (pushedByFluid) {
-                                type.getFlow(this.level, x, y, z, fluidState, flowPos, flow.set(Vec3.ZERO))
-                                    .scaleMutable(type.getFlowStrength(this.level.dimensionType()));
+                                type.getFlow(this.level, x, y, z, fluidState, flow.set(0, 0, 0)).scaleMutable(type.getFlowStrength(this.level.dimensionType()));
                             }
                             if (localHeight >= bb.maxY) {
                                 localHeight = bb.maxY;
@@ -1470,7 +1464,7 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
                             fluid = tgw.evolution.util.physics.Fluid.AIR;
                             localHeight = y + 1;
                             //TODO wind
-                            flow.set(Vec3.ZERO);
+                            flow.set(0, 0, 0);
                         }
                     }
                     else if (pushedByFluid) {
@@ -1478,7 +1472,7 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
                         fluid = tgw.evolution.util.physics.Fluid.AIR;
                         localHeight = y + 1;
                         //TODO wind
-                        flow.set(Vec3.ZERO);
+                        flow.set(0, 0, 0);
                     }
                     double properY = y;
                     boolean pushing = pushedByFluid;
@@ -1526,7 +1520,7 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
                             localHeight = y + 1;
                             properY = y + localSemiHeight;
                             //TODO wind
-                            flow.set(Vec3.ZERO);
+                            flow.set(0, 0, 0);
                         }
                         else {
                             pushing = false;
@@ -1539,7 +1533,7 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
         if (fallDamage && (Object) this instanceof LivingEntity living) {
             LivingHooks.calculateFluidFallDamage(living, fallFluid);
         }
-        ((Vec3d) this.getDeltaMovement()).addMutable(flowX, flowY, flowZ);
+        this.setDeltaMovement(velocity.x + flowX, velocity.y + flowY, velocity.z + flowZ);
         if (submerged >= maxSubmerged) {
             this.fluidFullySubmerged.add(lastSubmergedFluid.tag());
         }
@@ -1572,10 +1566,13 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
             }
         }
         BlockPos eyePos = this.eyeBlockPosition();
-        FluidState fluidstate = this.level.getFluidState(eyePos);
-        double height = eyePos.getY() + fluidstate.getHeight(this.level, eyePos);
+        int eyePosX = eyePos.getX();
+        int eyePosY = eyePos.getY();
+        int eyePosZ = eyePos.getZ();
+        FluidState fluidstate = this.level.getFluidState_(eyePosX, eyePosY, eyePosZ);
+        double height = eyePosY + fluidstate.getHeight_(this.level, eyePosX, eyePosY, eyePosZ);
         if (height > eyeY) {
-            this.fluidOnEyes.addAll(((PatchHolderReference<Fluid>) fluidstate.getType().builtInRegistryHolder()).getTags());
+            this.fluidOnEyes.add(fluidstate.getType().fluid().tag());
         }
     }
 

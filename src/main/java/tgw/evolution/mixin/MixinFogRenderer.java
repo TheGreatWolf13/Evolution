@@ -1,5 +1,6 @@
 package tgw.evolution.mixin;
 
+import com.mojang.blaze3d.shaders.FogShape;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.Util;
 import net.minecraft.client.Camera;
@@ -7,10 +8,12 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.FogRenderer;
 import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.core.Holder;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeManager;
 import net.minecraft.world.level.material.FogType;
 import org.spongepowered.asm.mixin.Mixin;
@@ -84,7 +87,7 @@ public abstract class MixinFogRenderer {
         switch (fogType) {
             case WATER -> {
                 long i = Util.getMillis();
-                int j = level.getBiome(camera.getBlockPosition()).value().getWaterFogColor();
+                int j = level.getBiome_(camera.getBlockPosition()).value().getWaterFogColor();
                 if (biomeChangedTime < 0L) {
                     targetBiomeFog = j;
                     previousBiomeFog = j;
@@ -226,5 +229,84 @@ public abstract class MixinFogRenderer {
             ClientEvents.getInstance().getDimension().setFogColor(fogRed, fogGreen, fogBlue);
         }
         RenderSystem.clearColor(fogRed, fogGreen, fogBlue, 0.0F);
+    }
+
+    @Overwrite
+    public static void setupFog(Camera camera, FogRenderer.FogMode fogMode, float renderDistance, boolean isFoggy) {
+        FogType fogType = camera.getFluidInCamera();
+        Entity entity = camera.getEntity();
+        FogShape fogShape = FogShape.SPHERE;
+        float g;
+        float h;
+        if (fogType == FogType.LAVA) {
+            if (entity.isSpectator()) {
+                g = -8.0F;
+                h = renderDistance * 0.5F;
+            }
+            else if (entity instanceof LivingEntity living && living.hasEffect(MobEffects.FIRE_RESISTANCE)) {
+                g = 0.0F;
+                h = 3.0F;
+            }
+            else {
+                g = 0.25F;
+                h = 1.0F;
+            }
+        }
+        else if (fogType == FogType.POWDER_SNOW) {
+            if (entity.isSpectator()) {
+                g = -8.0F;
+                h = renderDistance * 0.5F;
+            }
+            else {
+                g = 0.0F;
+                h = 2.0F;
+            }
+        }
+        else if (entity instanceof LivingEntity living && living.hasEffect(MobEffects.BLINDNESS)) {
+            //noinspection ConstantConditions
+            int duration = living.getEffect(MobEffects.BLINDNESS).getDuration();
+            float j = Mth.lerp(Math.min(1.0F, duration / 20.0F), renderDistance, 5.0F);
+            if (fogMode == FogRenderer.FogMode.FOG_SKY) {
+                g = 0.0F;
+                h = j * 0.8F;
+            }
+            else {
+                g = fogType == FogType.WATER ? -4.0F : j * 0.25F;
+                h = j;
+            }
+        }
+        else if (fogType == FogType.WATER) {
+            g = -8.0F;
+            h = 96.0F;
+            if (entity instanceof LocalPlayer player) {
+                h *= Math.max(0.25F, player.getWaterVision());
+                Holder<Biome> holder = player.level.getBiome_(player.blockPosition());
+                if (Biome.getBiomeCategory(holder) == Biome.BiomeCategory.SWAMP) {
+                    h *= 0.85F;
+                }
+            }
+            if (h > renderDistance) {
+                h = renderDistance;
+                fogShape = FogShape.CYLINDER;
+            }
+        }
+        else if (isFoggy) {
+            g = renderDistance * 0.05F;
+            h = Math.min(renderDistance, 192.0F) * 0.5F;
+        }
+        else if (fogMode == FogRenderer.FogMode.FOG_SKY) {
+            g = 0.0F;
+            h = renderDistance;
+            fogShape = FogShape.CYLINDER;
+        }
+        else {
+            float k = Mth.clamp(renderDistance / 10.0F, 4.0F, 64.0F);
+            g = renderDistance - k;
+            h = renderDistance;
+            fogShape = FogShape.CYLINDER;
+        }
+        RenderSystem.setShaderFogStart(g);
+        RenderSystem.setShaderFogEnd(h);
+        RenderSystem.setShaderFogShape(fogShape);
     }
 }

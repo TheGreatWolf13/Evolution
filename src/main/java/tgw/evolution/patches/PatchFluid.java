@@ -1,7 +1,6 @@
 package tgw.evolution.patches;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
-import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.dimension.DimensionType;
@@ -28,7 +27,7 @@ public interface PatchFluid {
      * The Vec3d should be zeroed when passed in.
      */
     @CanIgnoreReturnValue
-    default Vec3d getFlow(BlockGetter level, int x, int y, int z, FluidState fluidState, BlockPos.MutableBlockPos mutablePos, Vec3d flow) {
+    default Vec3d getFlow(BlockGetter level, int x, int y, int z, FluidState fluidState, Vec3d flow) {
         return flow;
     }
 

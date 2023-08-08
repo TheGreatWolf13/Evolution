@@ -3,6 +3,7 @@ package tgw.evolution.util.physics;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.tags.TagKey;
 import org.jetbrains.annotations.Nullable;
+import tgw.evolution.util.UnregisteredFeatureException;
 
 public enum Fluid {
     VACUUM(0, 0, null),
@@ -18,6 +19,16 @@ public enum Fluid {
         this.density = density;
         this.viscosity = viscosity;
         this.tag = tag;
+    }
+
+    public static Fluid fromTag(TagKey<net.minecraft.world.level.material.Fluid> tag) {
+        if (tag == FluidTags.WATER) {
+            return WATER;
+        }
+        if (tag == FluidTags.LAVA) {
+            return LAVA;
+        }
+        throw new UnregisteredFeatureException("Unknown fluid tag: " + tag);
     }
 
     public double density() {

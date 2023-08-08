@@ -15,6 +15,7 @@ import net.minecraft.stats.Stats;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
 import net.minecraft.util.Unit;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffectUtil;
@@ -24,6 +25,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.animal.Parrot;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Abilities;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -408,6 +410,45 @@ public abstract class MixinPlayer extends LivingEntity implements PatchPlayer {
 
     @Shadow
     protected abstract void closeContainer();
+
+    @Overwrite
+    public @Nullable ItemEntity drop(ItemStack stack, boolean dropAround, boolean setThrower) {
+        if (stack.isEmpty()) {
+            return null;
+        }
+        if (this.level.isClientSide) {
+            this.swing(InteractionHand.MAIN_HAND);
+            return null;
+        }
+        Vec3 eyePosition = this.getEyePosition();
+        ItemEntity itemEntity = new ItemEntity(this.level, eyePosition.x, eyePosition.y - EntityType.ITEM.getHeight(), eyePosition.z, stack);
+        itemEntity.setPickUpDelay(40);
+        if (setThrower) {
+            itemEntity.setThrower(this.getUUID());
+        }
+        double velX = this.getMotionX();
+        double velY = this.getMotionY();
+        double velZ = this.getMotionZ();
+        if (dropAround) {
+            float mult = this.random.nextFloat() * 0.5F;
+            float angle = this.random.nextFloat() * Mth.TWO_PI;
+            velX -= Mth.sin(angle) * mult;
+            velY += 0.2;
+            velZ += Mth.cos(angle) * mult;
+        }
+        else {
+            float xRot = this.getXRot();
+            float yRot = this.getYRot();
+            float h = Mth.cos(xRot * Mth.DEG_TO_RAD);
+            float smallAngle = this.random.nextFloat() * Mth.TWO_PI;
+            float smallAmpl = 0.015f * this.random.nextFloat();
+            velX += -Mth.sin(yRot * Mth.DEG_TO_RAD) * h * 0.15 + Mth.cos(smallAngle) * smallAmpl;
+            velY += -Mth.sin(xRot * Mth.DEG_TO_RAD) * 0.15 + 0.015 * (this.random.nextFloat() - 0.5);
+            velZ += Mth.cos(yRot * Mth.DEG_TO_RAD) * h * 0.15 + Mth.sin(smallAngle) * smallAmpl;
+        }
+        itemEntity.setDeltaMovement(velX, velY, velZ);
+        return itemEntity;
+    }
 
     @Override
     public double getBaseAttackDamage() {

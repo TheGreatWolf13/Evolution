@@ -17,15 +17,11 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.material.FlowingFluid;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
-import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.init.EvolutionFluids;
-import tgw.evolution.util.math.DirectionDiagonal;
-import tgw.evolution.util.math.DirectionDiagonalList;
-import tgw.evolution.util.math.DirectionList;
-import tgw.evolution.util.math.DirectionUtil;
+import tgw.evolution.util.math.*;
 
 public abstract class FluidGeneric extends FlowingFluid {
     public static final byte FRESH_WATER = 1;
@@ -164,8 +160,8 @@ public abstract class FluidGeneric extends FlowingFluid {
     }
 
     @Override
-    public Vec3 getFlow(BlockGetter level, BlockPos pos, FluidState state) {
-        return Vec3.ZERO;
+    public Vec3d getFlow(BlockGetter level, int x, int y, int z, FluidState fluidState, Vec3d flow) {
+        return flow;
     }
 
     @Override

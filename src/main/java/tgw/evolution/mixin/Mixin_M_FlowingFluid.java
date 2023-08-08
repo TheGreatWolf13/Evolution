@@ -9,17 +9,20 @@ import net.minecraft.world.level.material.FlowingFluid;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Material;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.spongepowered.asm.mixin.*;
 import tgw.evolution.Evolution;
+import tgw.evolution.hooks.asm.DeleteMethod;
 import tgw.evolution.util.math.DirectionUtil;
 import tgw.evolution.util.math.Vec3d;
+import tgw.evolution.util.math.VectorUtil;
 
 import java.util.Map;
 
 @Mixin(FlowingFluid.class)
-public abstract class MixinFlowingFluid extends Fluid {
+public abstract class Mixin_M_FlowingFluid extends Fluid {
 
     @Shadow @Final public static BooleanProperty FALLING;
     @Shadow @Final private Map<FluidState, VoxelShape> shapes;
@@ -33,45 +36,60 @@ public abstract class MixinFlowingFluid extends Fluid {
     protected abstract boolean affectsFlow(FluidState pState);
 
     @Override
-    public Vec3d getFlow(BlockGetter level, int x, int y, int z, FluidState state, BlockPos.MutableBlockPos mutablePos, Vec3d flow) {
-        double dx = 0;
-        double dz = 0;
-        for (Direction direction : DirectionUtil.HORIZ_NESW) {
-            FluidState fluidState = level.getFluidStateAtSide(x, y, z, direction);
-            if (this.affectsFlow(fluidState)) {
-                float height = fluidState.getOwnHeight();
+    public Vec3d getFlow(BlockGetter level, int x, int y, int z, FluidState state, Vec3d flow) {
+        double flowX = 0;
+        double flowZ = 0;
+        for (Direction dir : DirectionUtil.HORIZ_NESW) {
+            int offX = x + dir.getStepX();
+            int offZ = z + dir.getStepZ();
+            FluidState fluidAtSide = level.getFluidState_(offX, y, offZ);
+            if (this.affectsFlow(fluidAtSide)) {
+                float ownHeightAtSide = fluidAtSide.getOwnHeight();
                 float dHeight = 0.0F;
-                if (height == 0.0F) {
-                    if (!level.getBlockStateAtSide(x, y, z, direction).getMaterial().blocksMotion()) {
-                        FluidState stateBelow = level.getFluidStateAtSide(x, y - 1, z, direction);
-                        if (this.affectsFlow(stateBelow)) {
-                            height = stateBelow.getOwnHeight();
-                            if (height > 0) {
-                                dHeight = state.getOwnHeight() - (height - 8 / 9.0f);
+                if (ownHeightAtSide == 0.0F) {
+                    if (!level.getBlockState_(offX, y, offZ).getMaterial().blocksMotion()) {
+                        FluidState fluidAtSideBelow = level.getFluidState_(offX, y - 1, offZ);
+                        if (this.affectsFlow(fluidAtSideBelow)) {
+                            ownHeightAtSide = fluidAtSideBelow.getOwnHeight();
+                            if (ownHeightAtSide > 0.0F) {
+                                dHeight = state.getOwnHeight() - (ownHeightAtSide - 0.888_888_9F);
                             }
                         }
                     }
                 }
-                else if (height > 0.0F) {
-                    dHeight = state.getOwnHeight() - height;
+                else if (ownHeightAtSide > 0.0F) {
+                    dHeight = state.getOwnHeight() - ownHeightAtSide;
                 }
                 if (dHeight != 0.0F) {
-                    dx += direction.getStepX() * dHeight;
-                    dz += direction.getStepZ() * dHeight;
+                    flowX += dir.getStepX() * dHeight;
+                    flowZ += dir.getStepZ() * dHeight;
                 }
             }
         }
-        flow.set(dx, 0, dz);
+        double flowY = 0;
         if (state.getValue(FALLING)) {
-            for (Direction direction : DirectionUtil.HORIZ_NESW) {
-                mutablePos.set(x, y, z).move(direction);
-                if (this.isSolidFace(level, mutablePos, direction) || this.isSolidFace(level, mutablePos.move(Direction.UP), direction)) {
-                    flow.normalizeMutable().addMutable(0, -6, 0);
+            for (Direction dir : DirectionUtil.HORIZ_NESW) {
+                int offX = x + dir.getStepX();
+                int offZ = z + dir.getStepZ();
+                if (this.isSolidFace(level, offX, y, offZ, dir) || this.isSolidFace(level, offX, y + 1, offZ, dir)) {
+                    double norm = VectorUtil.norm(flowX, flowY, flowZ);
+                    flowX *= norm;
+                    flowY *= norm;
+                    flowZ *= norm;
+                    flowY -= 6;
                     break;
                 }
             }
         }
-        return flow.normalizeMutable();
+        double norm = VectorUtil.norm(flowX, flowY, flowZ);
+        return flow.set(flowX * norm, flowY * norm, flowZ * norm);
+    }
+
+    @Override
+    @Overwrite
+    public Vec3 getFlow(BlockGetter level, BlockPos pos, FluidState fluidState) {
+        Evolution.deprecatedMethod();
+        return this.getFlow(level, pos.getX(), pos.getY(), pos.getZ(), fluidState, new Vec3d());
     }
 
     @Override
@@ -107,14 +125,20 @@ public abstract class MixinFlowingFluid extends Fluid {
     }
 
     @Overwrite
+    @DeleteMethod
     public boolean isSolidFace(BlockGetter level, BlockPos pos, Direction dir) {
-        if (level.getFluidState_(pos).getType().isSame(this)) {
+        throw new AbstractMethodError();
+    }
+
+    @Unique
+    private boolean isSolidFace(BlockGetter level, int x, int y, int z, Direction dir) {
+        if (level.getFluidState_(x, y, z).getType().isSame(this)) {
             return false;
         }
         if (dir == Direction.UP) {
             return true;
         }
-        BlockState blockState = level.getBlockState_(pos);
-        return blockState.getMaterial() != Material.ICE && blockState.isFaceSturdy(level, pos, dir);
+        BlockState blockState = level.getBlockState_(x, y, z);
+        return blockState.getMaterial() != Material.ICE && blockState.isFaceSturdy_(level, x, y, z, dir);
     }
 }
