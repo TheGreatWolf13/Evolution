@@ -1,6 +1,7 @@
 package tgw.evolution.mixin;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.material.Fluid;
@@ -31,6 +32,12 @@ public abstract class MixinFluid implements PatchFluid {
         return 0.014;
     }
 
+    @Deprecated
+    @Overwrite
+    public boolean is(TagKey<Fluid> tag) {
+        return this.fluid().tag() == tag;
+    }
+
     @Overwrite
     public void randomTick(Level level, BlockPos pos, FluidState fluidState, Random random) {
         Evolution.deprecatedMethod();
@@ -39,5 +46,15 @@ public abstract class MixinFluid implements PatchFluid {
 
     @Override
     public void randomTick_(Level level, int x, int y, int z, FluidState fluidState, Random random) {
+    }
+
+    @Overwrite
+    public void tick(Level level, BlockPos pos, FluidState state) {
+        Evolution.deprecatedMethod();
+        this.tick_(level, pos.getX(), pos.getY(), pos.getZ(), state);
+    }
+
+    @Override
+    public void tick_(Level level, int x, int y, int z, FluidState state) {
     }
 }

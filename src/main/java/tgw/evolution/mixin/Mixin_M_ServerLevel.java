@@ -30,6 +30,7 @@ import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.entity.PersistentEntitySectionManager;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.storage.WritableLevelData;
 import net.minecraft.world.phys.shapes.BooleanOp;
@@ -320,5 +321,16 @@ public abstract class Mixin_M_ServerLevel extends Level implements WorldGenLevel
             }
         }
         profiler.pop();
+    }
+
+    @Overwrite
+    private void tickFluid(BlockPos pos, Fluid fluid) {
+        int x = pos.getX();
+        int y = pos.getY();
+        int z = pos.getZ();
+        FluidState state = this.getFluidState_(x, y, z);
+        if (state.is(fluid)) {
+            state.tick_(this, x, y, z);
+        }
     }
 }

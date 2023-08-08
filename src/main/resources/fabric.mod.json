@@ -282,6 +282,9 @@
       ],
       "net/minecraft/commands/arguments/blocks/BlockInput": [
         "tgw/evolution/patches/PatchBlockInput"
+      ],
+      "net/minecraft/world/level/material/FlowingFluid": [
+        "tgw/evolution/patches/PatchFlowingFluid"
       ]
     }
   }

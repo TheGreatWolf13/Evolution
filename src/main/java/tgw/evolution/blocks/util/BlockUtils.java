@@ -106,7 +106,7 @@ public final class BlockUtils {
     }
 
     public static void dropResources(BlockState state,
-                                     Level level,
+                                     LevelAccessor level,
                                      int x,
                                      int y,
                                      int z,
@@ -114,7 +114,7 @@ public final class BlockUtils {
                                      @Nullable Entity entity,
                                      ItemStack stack) {
         if (level instanceof ServerLevel l) {
-            OList<ItemStack> drops = state.getDrops(l, x, y, z, stack, tile, entity, level.random);
+            OList<ItemStack> drops = state.getDrops(l, x, y, z, stack, tile, entity, level.getRandom());
             for (int i = 0, len = drops.size(); i < len; ++i) {
                 popResource(level, x, y, z, drops.get(i));
             }
@@ -122,7 +122,7 @@ public final class BlockUtils {
         }
     }
 
-    public static void dropResources(BlockState state, Level level, int x, int y, int z) {
+    public static void dropResources(BlockState state, LevelAccessor level, int x, int y, int z) {
         dropResources(state, level, x, y, z, null, null, ItemStack.EMPTY);
     }
 
@@ -225,15 +225,18 @@ public final class BlockUtils {
         return false;
     }
 
-    public static void popResource(Level level, int x, int y, int z, ItemStack stack) {
-        if (!level.isClientSide && !stack.isEmpty() && level.getGameRules().getBoolean(GameRules.RULE_DOBLOCKDROPS)) {
-            float height = EntityType.ITEM.getHeight() / 2.0F;
-            double px = x + 0.5 + Mth.nextDouble(level.random, -0.25, 0.25);
-            double py = y + 0.5 + Mth.nextDouble(level.random, -0.25, 0.25) - height;
-            double pz = z + 0.5 + Mth.nextDouble(level.random, -0.25, 0.25);
-            ItemEntity itemEntity = new ItemEntity(level, px, py, pz, stack);
-            itemEntity.setDefaultPickUpDelay();
-            level.addFreshEntity(itemEntity);
+    public static void popResource(LevelAccessor level, int x, int y, int z, ItemStack stack) {
+        if (!level.isClientSide() && !stack.isEmpty()) {
+            ServerLevel l = (ServerLevel) level;
+            if (l.getGameRules().getBoolean(GameRules.RULE_DOBLOCKDROPS)) {
+                float height = EntityType.ITEM.getHeight() / 2.0F;
+                double px = x + 0.5 + Mth.nextDouble(l.random, -0.25, 0.25);
+                double py = y + 0.5 + Mth.nextDouble(l.random, -0.25, 0.25) - height;
+                double pz = z + 0.5 + Mth.nextDouble(l.random, -0.25, 0.25);
+                ItemEntity itemEntity = new ItemEntity(l, px, py, pz, stack);
+                itemEntity.setDefaultPickUpDelay();
+                level.addFreshEntity(itemEntity);
+            }
         }
     }
 

@@ -5,8 +5,6 @@ import net.minecraft.network.chat.*;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.item.ItemStack;
-import tgw.evolution.blocks.fluids.FluidGeneric;
 import tgw.evolution.items.IFireAspect;
 import tgw.evolution.items.IHeavyAttack;
 import tgw.evolution.items.IItemFluidContainer;
@@ -135,13 +133,13 @@ public final class EvolutionTexts {
         return new TranslatableComponent("evolution.config.range", range).setStyle(LIGHT_GREY);
     }
 
-    public static Component container(IItemFluidContainer container, ItemStack stack) {
-        return new TranslatableComponent("evolution.tooltip.containerAmount",
-                                         VOLUME.format(container.getAmount(stack) / 100.0f),
-                                         container.getFluid() instanceof FluidGeneric ?
-                                         ((FluidGeneric) container.getFluid()).getTextComp() :
-                                         "null").setStyle(BLUE);
-    }
+//    public static Component container(IItemFluidContainer container, ItemStack stack) {
+//        return new TranslatableComponent("evolution.tooltip.containerAmount",
+//                                         VOLUME.format(container.getAmount(stack) / 100.0f),
+//                                         container.getFluid() instanceof FluidGeneric ?
+//                                         ((FluidGeneric) container.getFluid()).getTextComp() :
+//                                         "null").setStyle(BLUE);
+//    }
 
     public static Component cooldown(double amount) {
         return new TranslatableComponent("evolution.tooltip.cooldown", TWO_PLACES.format(amount / 20)).setStyle(GREEN);

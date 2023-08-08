@@ -46,41 +46,41 @@ public abstract class MixinModelBlockRenderer implements PatchModelBlockRenderer
     @Unique
     private static byte calculateShape(BlockGetter level,
                                        BlockState state,
-                                       BlockPos pos,
+                                       int x, int y, int z,
                                        int[] vertices,
                                        Direction direction,
                                        float[] shape) {
-        float x = Float.intBitsToFloat(vertices[0]);
-        float y = Float.intBitsToFloat(vertices[1]);
-        float z = Float.intBitsToFloat(vertices[2]);
-        float minX = x;
-        float minY = y;
-        float minZ = z;
-        float maxX = x;
-        float maxY = y;
-        float maxZ = z;
+        float vx = Float.intBitsToFloat(vertices[0]);
+        float vy = Float.intBitsToFloat(vertices[1]);
+        float vz = Float.intBitsToFloat(vertices[2]);
+        float minX = vx;
+        float minY = vy;
+        float minZ = vz;
+        float maxX = vx;
+        float maxY = vy;
+        float maxZ = vz;
         for (int vertex = 1; vertex < 4; ++vertex) {
             int offset = vertex * 8;
-            x = Float.intBitsToFloat(vertices[offset]);
-            y = Float.intBitsToFloat(vertices[offset + 1]);
-            z = Float.intBitsToFloat(vertices[offset + 2]);
-            if (x < minX) {
-                minX = x;
+            vx = Float.intBitsToFloat(vertices[offset]);
+            vy = Float.intBitsToFloat(vertices[offset + 1]);
+            vz = Float.intBitsToFloat(vertices[offset + 2]);
+            if (vx < minX) {
+                minX = vx;
             }
-            else if (x > maxX) {
-                maxX = x;
+            else if (vx > maxX) {
+                maxX = vx;
             }
-            if (y < minY) {
-                minY = y;
+            if (vy < minY) {
+                minY = vy;
             }
-            else if (y > maxY) {
-                maxY = y;
+            else if (vy > maxY) {
+                maxY = vy;
             }
-            if (z < minZ) {
-                minZ = z;
+            if (vz < minZ) {
+                minZ = vz;
             }
-            else if (z > maxZ) {
-                maxZ = z;
+            else if (vz > maxZ) {
+                maxZ = vz;
             }
         }
         shape[0] = minY;
@@ -98,7 +98,7 @@ public abstract class MixinModelBlockRenderer implements PatchModelBlockRenderer
         byte flags = 0;
         switch (direction) {
             case DOWN -> {
-                if (minY == maxY && (minY < 1.0E-4F || state.isCollisionShapeFullBlock(level, pos))) {
+                if (minY == maxY && (minY < 1.0E-4F || state.isCollisionShapeFullBlock_(level, x, y, z))) {
                     flags = 1;
                 }
                 if (minX >= 1.0E-4F || minZ >= 1.0E-4F || maxX <= 0.999_9F || maxZ <= 0.999_9F) {
@@ -106,7 +106,7 @@ public abstract class MixinModelBlockRenderer implements PatchModelBlockRenderer
                 }
             }
             case UP -> {
-                if (minY == maxY && (maxY > 0.999_9F || state.isCollisionShapeFullBlock(level, pos))) {
+                if (minY == maxY && (maxY > 0.999_9F || state.isCollisionShapeFullBlock_(level, x, y, z))) {
                     flags = 1;
                 }
                 if (minX >= 1.0E-4F || minZ >= 1.0E-4F || maxX <= 0.999_9F || maxZ <= 0.999_9F) {
@@ -114,7 +114,7 @@ public abstract class MixinModelBlockRenderer implements PatchModelBlockRenderer
                 }
             }
             case NORTH -> {
-                if (minZ == maxZ && (minZ < 1.0E-4F || state.isCollisionShapeFullBlock(level, pos))) {
+                if (minZ == maxZ && (minZ < 1.0E-4F || state.isCollisionShapeFullBlock_(level, x, y, z))) {
                     flags = 1;
                 }
                 if (minX >= 1.0E-4F || minY >= 1.0E-4F || maxX <= 0.999_9F || maxY <= 0.999_9F) {
@@ -122,7 +122,7 @@ public abstract class MixinModelBlockRenderer implements PatchModelBlockRenderer
                 }
             }
             case SOUTH -> {
-                if (minZ == maxZ && (maxZ > 0.999_9F || state.isCollisionShapeFullBlock(level, pos))) {
+                if (minZ == maxZ && (maxZ > 0.999_9F || state.isCollisionShapeFullBlock_(level, x, y, z))) {
                     flags = 1;
                 }
                 if (minX >= 1.0E-4F || minY >= 1.0E-4F || maxX <= 0.999_9F || maxY <= 0.999_9F) {
@@ -130,7 +130,7 @@ public abstract class MixinModelBlockRenderer implements PatchModelBlockRenderer
                 }
             }
             case WEST -> {
-                if (minX == maxX && (minX < 1.0E-4F || state.isCollisionShapeFullBlock(level, pos))) {
+                if (minX == maxX && (minX < 1.0E-4F || state.isCollisionShapeFullBlock_(level, x, y, z))) {
                     flags = 1;
                 }
                 if (minY >= 1.0E-4F || minZ >= 1.0E-4F || maxY <= 0.999_9F || maxZ <= 0.999_9F) {
@@ -138,7 +138,7 @@ public abstract class MixinModelBlockRenderer implements PatchModelBlockRenderer
                 }
             }
             case EAST -> {
-                if (minX == maxX && (maxX > 0.999_9F || state.isCollisionShapeFullBlock(level, pos))) {
+                if (minX == maxX && (maxX > 0.999_9F || state.isCollisionShapeFullBlock_(level, x, y, z))) {
                     flags = 1;
                 }
                 if (minY >= 1.0E-4F || minZ >= 1.0E-4F || maxY <= 0.999_9F || maxZ <= 0.999_9F) {
@@ -290,10 +290,12 @@ public abstract class MixinModelBlockRenderer implements PatchModelBlockRenderer
                                    float[] shape,
                                    EvAmbientOcclusionFace AoFace,
                                    int packedOverlay) {
+        int x = pos.getX();
+        int y = pos.getY();
+        int z = pos.getZ();
         for (int i = 0, l = quads.size(); i < l; i++) {
             BakedQuad bakedQuad = quads.get(i);
-            AoFace.calculate(level, state, pos.getX(), pos.getY(), pos.getZ(), bakedQuad.getDirection(), shape,
-                             calculateShape(level, state, pos, bakedQuad.getVertices(), bakedQuad.getDirection(), shape), bakedQuad.isShade());
+            AoFace.calculate(level, state, x, y, z, bakedQuad.getDirection(), shape, calculateShape(level, state, x, y, z, bakedQuad.getVertices(), bakedQuad.getDirection(), shape), bakedQuad.isShade());
             this.putQuadData(level, state, pos, consumer, matrices.last(), bakedQuad, AoFace.brightness0, AoFace.brightness1, AoFace.brightness2,
                              AoFace.brightness3, AoFace.lightmap0, AoFace.lightmap1, AoFace.lightmap2, AoFace.lightmap3, packedOverlay);
         }
@@ -357,7 +359,7 @@ public abstract class MixinModelBlockRenderer implements PatchModelBlockRenderer
                                   long seed,
                                   int packedOverlay,
                                   IModelData modelData) {
-        boolean ao = Minecraft.useAmbientOcclusion() && state.getLightEmission() == 0 && model.useAmbientOcclusion();
+        boolean ao = Minecraft.useAmbientOcclusion() && state.getLightEmission() < 15 && model.useAmbientOcclusion();
         Vec3 vec3 = state.getOffset(level, pos);
         matrices.translate(vec3.x, vec3.y, vec3.z);
         modelData = model.getModelData(level, pos.getX(), pos.getY(), pos.getZ(), state, modelData);
@@ -392,14 +394,14 @@ public abstract class MixinModelBlockRenderer implements PatchModelBlockRenderer
         int z = pos.getZ();
         boolean hasRendered = false;
         float[] shapes = SHAPES.get();
-        EvAmbientOcclusionFace ambientOcclusionFace = AOF.get();
+        EvAmbientOcclusionFace aoFace = AOF.get();
         for (Direction dir : DIRECTIONS) {
             random.setSeed(seed);
             List<BakedQuad> quads = model.getQuads(state, dir, random, modelData);
             if (!quads.isEmpty()) {
                 if (!checkSides ||
                     BlockUtils.shouldRenderFace(state, level, x, y, z, dir, x + dir.getStepX(), y + dir.getStepY(), z + dir.getStepZ())) {
-                    this.renderModelFaceAO(level, state, pos, matrices, consumer, quads, shapes, ambientOcclusionFace, packedOverlay);
+                    this.renderModelFaceAO(level, state, pos, matrices, consumer, quads, shapes, aoFace, packedOverlay);
                     hasRendered = true;
                 }
             }
@@ -407,7 +409,7 @@ public abstract class MixinModelBlockRenderer implements PatchModelBlockRenderer
         random.setSeed(seed);
         List<BakedQuad> quads = model.getQuads(state, null, random, modelData);
         if (!quads.isEmpty()) {
-            this.renderModelFaceAO(level, state, pos, matrices, consumer, quads, shapes, ambientOcclusionFace, packedOverlay);
+            this.renderModelFaceAO(level, state, pos, matrices, consumer, quads, shapes, aoFace, packedOverlay);
             return true;
         }
         return hasRendered;

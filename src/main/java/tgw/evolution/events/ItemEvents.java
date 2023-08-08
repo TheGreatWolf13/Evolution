@@ -91,9 +91,9 @@ public final class ItemEvents {
         if (container.isEmpty(stack)) {
             tooltip.addLeft(EvolutionTexts.TOOLTIP_CONTAINER_EMPTY);
         }
-        else {
-            tooltip.addLeft(EvolutionTexts.container(container, stack));
-        }
+//        else {
+//            tooltip.addLeft(EvolutionTexts.container(container, stack));
+//        }
         tooltip.addLeft(EvolutionTexts.capacity(container));
     }
 

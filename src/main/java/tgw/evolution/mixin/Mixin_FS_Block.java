@@ -108,10 +108,6 @@ public abstract class Mixin_FS_Block extends BlockBehaviour implements PatchBloc
         }
     }
 
-    /**
-     * @author TheGreatWolf
-     * @reason Avoid lambda allocation
-     */
     @Overwrite
     public static void dropResources(BlockState state, LevelAccessor level, BlockPos pos, @Nullable BlockEntity te) {
         if (level instanceof ServerLevel serverLevel) {

@@ -10,9 +10,6 @@ import net.minecraft.world.level.material.Material;
 import org.jetbrains.annotations.Contract;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.*;
-import tgw.evolution.blocks.fluids.BlockFreshWater;
-import tgw.evolution.blocks.fluids.BlockGenericFluid;
-import tgw.evolution.blocks.fluids.BlockSaltWater;
 import tgw.evolution.util.constants.MetalVariant;
 import tgw.evolution.util.constants.Oxidation;
 import tgw.evolution.util.constants.RockVariant;
@@ -86,8 +83,8 @@ public final class EvolutionBlocks {
     public static final Map<RockVariant, Block> STONEBRICKS;
     public static final Map<RockVariant, Block> STONES;
     //Fluids
-    public static final BlockGenericFluid FRESH_WATER;
-    public static final BlockGenericFluid SALT_WATER;
+//    public static final BlockGenericFluid FRESH_WATER;
+//    public static final BlockGenericFluid SALT_WATER;
 
     static {
         //Temporary Blocks used for testing
@@ -151,8 +148,8 @@ public final class EvolutionBlocks {
         STONEBRICKS = make(RockVariant.class, RockVariant.VALUES_STONE, "stonebricks_", BlockStoneBricks::new, true);
         STONES = make(RockVariant.class, RockVariant.VALUES_STONE, "stone_", BlockStone::new, true);
         //Fluids
-        FRESH_WATER = register("fresh_water", new BlockFreshWater());
-        SALT_WATER = register("salt_water", new BlockSaltWater());
+//        FRESH_WATER = register("fresh_water", new BlockFreshWater());
+//        SALT_WATER = register("salt_water", new BlockSaltWater());
     }
 
     private EvolutionBlocks() {

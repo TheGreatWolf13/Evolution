@@ -3,7 +3,6 @@ package tgw.evolution.client.renderer;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.material.Fluid;
 import tgw.evolution.init.EvolutionBlocks;
-import tgw.evolution.init.EvolutionFluids;
 
 //TODO needs to be remade with mixins to account for leaves
 public enum EvolutionRenderLayer {
@@ -36,8 +35,8 @@ public enum EvolutionRenderLayer {
 
     public static void setup() {
         set(EvolutionBlocks.ATM, CUTOUT);
-        set(EvolutionFluids.FRESH_WATER, TRANSLUCENT);
-        set(EvolutionFluids.SALT_WATER, TRANSLUCENT);
+//        set(EvolutionFluids.FRESH_WATER, TRANSLUCENT);
+//        set(EvolutionFluids.SALT_WATER, TRANSLUCENT);
         set(EvolutionBlocks.CLIMBING_HOOK, CUTOUT);
         set(EvolutionBlocks.CLIMBING_STAKE, CUTOUT);
         for (Block block : EvolutionBlocks.DRY_GRASSES.values()) {

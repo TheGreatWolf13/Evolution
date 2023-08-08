@@ -4,6 +4,7 @@ import net.minecraft.client.renderer.block.ModelBlockRenderer;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 
 public class EvAmbientOcclusionFace {
 
@@ -69,7 +70,7 @@ public class EvAmbientOcclusionFace {
     }
 
     /**
-     * @param shape the array, of length 12, containing the shape bounds
+     * @param shape the array, of length 12, containing the shape bounds. Can only be null if the second flag is false.
      * @param flags the bit set to store the shape flags in. The first bit will be {@code true} if the face
      *              should be offset, and the second if the face is less than a block in width and height.
      */
@@ -77,7 +78,7 @@ public class EvAmbientOcclusionFace {
                           BlockState state,
                           final int px, final int py, final int pz,
                           Direction direction,
-                          float[] shape,
+                          float @Nullable [] shape,
                           byte flags,
                           boolean shadeDirection) {
         boolean offset = (flags & 1) != 0;
@@ -220,6 +221,7 @@ public class EvAmbientOcclusionFace {
                        cache.getShadeBrightness_(level.getBlockState_(px, py, pz), level, px, py, pz);
         AmbientVertexRemap remap = AmbientVertexRemap.VALUES[direction.ordinal()];
         if ((flags & 2) != 0 && adjacencyInfo.doNonCubicWeight) {
+            assert shape != null : "Shape can only be null if the second flag is false";
             float f29 = (brightS + brightE + brightSE + bright) * 0.25F;
             float f31 = (brightN + brightE + brightNE + bright) * 0.25F;
             float f32 = (brightN + brightW + brightNW + bright) * 0.25F;

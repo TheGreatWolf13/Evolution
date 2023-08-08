@@ -3,6 +3,7 @@ package tgw.evolution.mixin;
 import com.google.common.collect.ImmutableMap;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -15,6 +16,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.Evolution;
+import tgw.evolution.hooks.asm.DeleteMethod;
 import tgw.evolution.patches.PatchFluidState;
 
 import java.util.Random;
@@ -38,6 +40,18 @@ public abstract class MixinFluidState extends StateHolder<Fluid, FluidState> imp
     @Override
     public void animateTick_(Level level, int x, int y, int z, RandomGenerator random) {
         this.getType().animateTick_(level, x, y, z, (FluidState) (Object) this, random);
+    }
+
+    @Overwrite
+    @DeleteMethod
+    public boolean canBeReplacedWith(BlockGetter level, BlockPos pos, Fluid fluid, Direction direction) {
+        Evolution.deprecatedMethod();
+        return this.canBeReplacedWith_(level, pos.getX(), pos.getY(), pos.getZ(), fluid, direction);
+    }
+
+    @Override
+    public boolean canBeReplacedWith_(BlockGetter level, int x, int y, int z, Fluid fluid, Direction direction) {
+        return this.getType().canBeReplacedWith_((FluidState) (Object) this, level, x, y, z, fluid, direction);
     }
 
     @Overwrite
@@ -79,5 +93,16 @@ public abstract class MixinFluidState extends StateHolder<Fluid, FluidState> imp
     @Override
     public void randomTick_(Level level, int x, int y, int z, Random random) {
         this.getType().randomTick_(level, x, y, z, (FluidState) (Object) this, random);
+    }
+
+    @Overwrite
+    public void tick(Level level, BlockPos pos) {
+        Evolution.deprecatedMethod();
+        this.tick_(level, pos.getX(), pos.getY(), pos.getZ());
+    }
+
+    @Override
+    public void tick_(Level level, int x, int y, int z) {
+        this.getType().tick_(level, x, y, z, (FluidState) (Object) this);
     }
 }

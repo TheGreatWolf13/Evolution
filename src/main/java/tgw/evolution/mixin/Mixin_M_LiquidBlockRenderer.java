@@ -1,6 +1,7 @@
 package tgw.evolution.mixin;
 
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.client.renderer.block.LiquidBlockRenderer;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -20,6 +21,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.spongepowered.asm.mixin.*;
+import tgw.evolution.client.renderer.EvAmbientOcclusionFace;
 import tgw.evolution.client.renderer.chunk.EvLevelRenderer;
 import tgw.evolution.hooks.asm.DeleteMethod;
 import tgw.evolution.util.math.DirectionUtil;
@@ -29,6 +31,7 @@ import tgw.evolution.util.math.Vec3d;
 public abstract class Mixin_M_LiquidBlockRenderer {
 
     @Unique private static final ThreadLocal<Vec3d> VEC = ThreadLocal.withInitial(Vec3d::new);
+    @Unique private static final ThreadLocal<EvAmbientOcclusionFace> AO_FACE = ThreadLocal.withInitial(EvAmbientOcclusionFace::new);
     @Shadow @Final private TextureAtlasSprite[] lavaIcons;
     @Shadow @Final private TextureAtlasSprite[] waterIcons;
     @Shadow private TextureAtlasSprite waterOverlay;
@@ -199,6 +202,7 @@ public abstract class Mixin_M_LiquidBlockRenderer {
         if (!renderU && !renderD && !renderE && !renderW && !renderN && !renderS) {
             return false;
         }
+        boolean ao = Minecraft.useAmbientOcclusion() && state.getLightEmission() < 15;
         boolean rendered = false;
         float shadeD = level.getShade(Direction.DOWN, true);
         float shadeU = level.getShade(Direction.UP, true);
@@ -249,6 +253,37 @@ public abstract class Mixin_M_LiquidBlockRenderer {
             float v1;
             float v2;
             float v3;
+            float b0;
+            float b1;
+            float b2;
+            float b3;
+            int lm0;
+            int lm1;
+            int lm2;
+            int lm3;
+            if (!ao) {
+                int lightmapUp = getLightColor(level, x, y, z);
+                lm0 = lightmapUp;
+                lm1 = lightmapUp;
+                lm2 = lightmapUp;
+                lm3 = lightmapUp;
+                b0 = shadeU;
+                b1 = shadeU;
+                b2 = shadeU;
+                b3 = shadeU;
+            }
+            else {
+                EvAmbientOcclusionFace aoFace = AO_FACE.get();
+                aoFace.calculate(level, state, x, y, z, Direction.UP, null, (byte) 0, true);
+                lm0 = aoFace.lightmap0;
+                lm1 = aoFace.lightmap1;
+                lm2 = aoFace.lightmap2;
+                lm3 = aoFace.lightmap3;
+                b0 = aoFace.brightness0;
+                b1 = aoFace.brightness1;
+                b2 = aoFace.brightness2;
+                b3 = aoFace.brightness3;
+            }
             if (flow.x == 0 && flow.z == 0) {
                 sprite = sprites[0];
                 u0 = sprite.getU(0);
@@ -291,19 +326,15 @@ public abstract class Mixin_M_LiquidBlockRenderer {
             v1 = Mth.lerp(lerp, v1, vAverage);
             v2 = Mth.lerp(lerp, v2, vAverage);
             v3 = Mth.lerp(lerp, v3, vAverage);
-            int lightmapUp = getLightColor(level, x, y, z);
-            float r = shadeU * colorR;
-            float g = shadeU * colorG;
-            float b = shadeU * colorB;
-            this.vertex(builder, vx, vy + heightNW, vz, r, g, b, u0, v0, lightmapUp);
-            this.vertex(builder, vx, vy + heightSW, vz + 1, r, g, b, u1, v1, lightmapUp);
-            this.vertex(builder, vx + 1, vy + heightSE, vz + 1, r, g, b, u2, v2, lightmapUp);
-            this.vertex(builder, vx + 1, vy + heightNE, vz, r, g, b, u3, v3, lightmapUp);
+            this.vertex(builder, vx, vy + heightNW, vz, colorR * b0, colorG * b0, colorB * b0, u0, v0, lm0);
+            this.vertex(builder, vx, vy + heightSW, vz + 1, colorR * b1, colorG * b1, colorB * b1, u1, v1, lm1);
+            this.vertex(builder, vx + 1, vy + heightSE, vz + 1, colorR * b2, colorG * b2, colorB * b2, u2, v2, lm2);
+            this.vertex(builder, vx + 1, vy + heightNE, vz, colorR * b3, colorG * b3, colorB * b3, u3, v3, lm3);
             if (shouldRenderBackwardUpFace(fluid, level, x, y + 1, z)) {
-                this.vertex(builder, vx, vy + heightNW, vz, r, g, b, u0, v0, lightmapUp);
-                this.vertex(builder, vx + 1, vy + heightNE, vz, r, g, b, u3, v3, lightmapUp);
-                this.vertex(builder, vx + 1, vy + heightSE, vz + 1, r, g, b, u2, v2, lightmapUp);
-                this.vertex(builder, vx, vy + heightSW, vz + 1, r, g, b, u1, v1, lightmapUp);
+                this.vertex(builder, vx, vy + heightNW, vz, colorR * b0, colorG * b0, colorB * b0, u0, v0, lm0);
+                this.vertex(builder, vx + 1, vy + heightNE, vz, colorR * b3, colorG * b3, colorB * b3, u3, v3, lm3);
+                this.vertex(builder, vx + 1, vy + heightSE, vz + 1, colorR * b2, colorG * b2, colorB * b2, u2, v2, lm2);
+                this.vertex(builder, vx, vy + heightSW, vz + 1, colorR * b1, colorG * b1, colorB * b1, u1, v1, lm1);
             }
         }
         float yOffD = renderD ? 0.001F : 0;
