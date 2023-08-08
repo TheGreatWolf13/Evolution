@@ -178,7 +178,7 @@ public abstract class MixinLocalPlayer extends AbstractClientPlayer {
             }
             if (j != 0) {
                 Vec3 velocity = this.getDeltaMovement();
-                this.setDeltaMovement(velocity.x, velocity.y + abilities.getFlyingSpeed() * 3.0F, velocity.z);
+                this.setDeltaMovement(velocity.x, velocity.y + abilities.getFlyingSpeed() * 3.0F * j, velocity.z);
             }
         }
         if (this.isRidingJumpable()) {
