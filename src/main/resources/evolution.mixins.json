@@ -410,6 +410,7 @@
     "MixinSliceShape",
     "MixinSoundEvents",
     "MixinSpider",
+    "MixinStandingAndWallBlockItem",
     "MixinStateHolder",
     "MixinStats",
     "MixinStatType",
