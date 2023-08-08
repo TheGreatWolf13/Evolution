@@ -5,6 +5,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
@@ -80,6 +81,24 @@ public abstract class Mixin_M_WallTorchBlock extends TorchBlock {
     @Override
     public VoxelShape getShape_(BlockState state, BlockGetter level, int x, int y, int z, @Nullable Entity entity) {
         return getShape(state);
+    }
+
+    @Override
+    @Overwrite
+    public @Nullable BlockState getStateForPlacement(BlockPlaceContext context) {
+        BlockState state = this.defaultBlockState();
+        LevelReader level = context.getLevel();
+        BlockPos blockPos = context.getClickedPos();
+        for (Direction direction : context.getNearestLookingDirections()) {
+            if (direction.getAxis().isHorizontal()) {
+                Direction opp = direction.getOpposite();
+                state = state.setValue(FACING, opp);
+                if (state.canSurvive_(level, blockPos.getX(), blockPos.getY(), blockPos.getZ())) {
+                    return state;
+                }
+            }
+        }
+        return null;
     }
 
     @Override
