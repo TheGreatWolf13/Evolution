@@ -3,10 +3,7 @@ package tgw.evolution.client.renderer;
 import net.minecraft.client.renderer.block.ModelBlockRenderer;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockAndTintGetter;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import tgw.evolution.Evolution;
 
 public class EvAmbientOcclusionFace {
 
@@ -275,10 +272,6 @@ public class EvAmbientOcclusionFace {
         this.brightness1 *= shade;
         this.brightness2 *= shade;
         this.brightness3 *= shade;
-        Block block = state.getBlock();
-        if (direction == Direction.WEST && (block == Blocks.SMOOTH_SANDSTONE || block == Blocks.YELLOW_CONCRETE || block == Blocks.WHITE_CONCRETE || block == Blocks.IRON_BLOCK)) {
-            Evolution.info("{} : {}, {}, {}, {} / {}, {}, {}, {}", state, this.brightness0, this.brightness1, this.brightness2, this.brightness3, Integer.toHexString(this.lightmap0), Integer.toHexString(this.lightmap1), Integer.toHexString(this.lightmap2), Integer.toHexString(this.lightmap3));
-        }
     }
 
     public void setBrightness(int index, float brightness) {

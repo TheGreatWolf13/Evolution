@@ -4,7 +4,6 @@ import net.minecraft.world.item.ItemStack;
 import tgw.evolution.capabilities.modular.part.PartPommel;
 import tgw.evolution.capabilities.modular.part.PartTypes;
 import tgw.evolution.init.EvolutionMaterials;
-import tgw.evolution.util.math.MathHelper;
 
 public class ItemPartPommel extends ItemPart<PartTypes.Pommel, ItemPartPommel, PartPommel> {
 
@@ -24,10 +23,10 @@ public class ItemPartPommel extends ItemPart<PartTypes.Pommel, ItemPartPommel, P
 
     @Override
     public ItemStack getDefaultInstance() {
-        PartTypes.Pommel pommel = PartTypes.Pommel.getRandom(MathHelper.RANDOM);
-        EvolutionMaterials material = EvolutionMaterials.getRandom(MathHelper.RANDOM);
+        PartTypes.Pommel pommel = PartTypes.Pommel.getRandom(RANDOM);
+        EvolutionMaterials material = EvolutionMaterials.getRandom(RANDOM);
         while (!pommel.hasVariantIn(material)) {
-            material = EvolutionMaterials.getRandom(MathHelper.RANDOM);
+            material = EvolutionMaterials.getRandom(RANDOM);
         }
         return this.newStack(pommel, material);
     }

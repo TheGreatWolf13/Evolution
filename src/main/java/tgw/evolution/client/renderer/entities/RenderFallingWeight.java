@@ -15,12 +15,15 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
+import tgw.evolution.client.models.data.IModelData;
 import tgw.evolution.entities.misc.EntityFallingWeight;
-import tgw.evolution.util.math.MathHelper;
+
+import java.util.Random;
 
 public class RenderFallingWeight extends EntityRenderer<EntityFallingWeight> {
 
     private static final BlockPos.MutableBlockPos MUTABLE_POS = new BlockPos.MutableBlockPos();
+    private static final Random RANDOM = new Random();
 
     public RenderFallingWeight(EntityRendererProvider.Context context) {
         super(context);
@@ -42,9 +45,7 @@ public class RenderFallingWeight extends EntityRenderer<EntityFallingWeight> {
             matrices.translate(-0.5, 0, -0.5);
             BlockRenderDispatcher dispatcher = Minecraft.getInstance().getBlockRenderer();
             dispatcher.getModelRenderer()
-                      .tesselateBlock(level, dispatcher.getBlockModel(state), state, MUTABLE_POS, matrices,
-                                      buffer.getBuffer(ItemBlockRenderTypes.getMovingBlockRenderType(state)), false, MathHelper.RANDOM,
-                                      Mth.getSeed(MUTABLE_POS), OverlayTexture.NO_OVERLAY);
+                      .tesselateBlock(level, dispatcher.getBlockModel(state), state, MUTABLE_POS, matrices, buffer.getBuffer(ItemBlockRenderTypes.getMovingBlockRenderType(state)), false, RANDOM, Mth.getSeed(MUTABLE_POS), OverlayTexture.NO_OVERLAY, IModelData.EMPTY);
             matrices.popPose();
             super.render(entity, yaw, partialTicks, matrices, buffer, packedLight);
         }

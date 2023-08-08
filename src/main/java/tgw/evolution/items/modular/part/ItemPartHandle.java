@@ -5,7 +5,6 @@ import net.minecraft.world.item.ItemStack;
 import tgw.evolution.capabilities.modular.part.PartHandle;
 import tgw.evolution.capabilities.modular.part.PartTypes;
 import tgw.evolution.init.EvolutionMaterials;
-import tgw.evolution.util.math.MathHelper;
 
 public class ItemPartHandle extends ItemPart<PartTypes.Handle, ItemPartHandle, PartHandle> {
 
@@ -25,10 +24,10 @@ public class ItemPartHandle extends ItemPart<PartTypes.Handle, ItemPartHandle, P
 
     @Override
     public ItemStack getDefaultInstance() {
-        PartTypes.Handle handle = PartTypes.Handle.getRandom(MathHelper.RANDOM);
-        EvolutionMaterials material = EvolutionMaterials.getRandom(MathHelper.RANDOM);
+        PartTypes.Handle handle = PartTypes.Handle.getRandom(RANDOM);
+        EvolutionMaterials material = EvolutionMaterials.getRandom(RANDOM);
         while (!handle.hasVariantIn(material)) {
-            material = EvolutionMaterials.getRandom(MathHelper.RANDOM);
+            material = EvolutionMaterials.getRandom(RANDOM);
         }
         return this.newStack(handle, material);
     }

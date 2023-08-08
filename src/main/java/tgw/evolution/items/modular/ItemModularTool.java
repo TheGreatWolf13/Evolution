@@ -20,10 +20,13 @@ import tgw.evolution.items.IBackWeapon;
 import tgw.evolution.items.IThrowable;
 import tgw.evolution.items.ITwoHanded;
 import tgw.evolution.util.constants.HarvestLevel;
-import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.physics.SI;
 
+import java.util.Random;
+
 public class ItemModularTool extends ItemModular<ModularTool> implements IThrowable, ITwoHanded, IBackWeapon {
+
+    protected static final Random RANDOM = new Random();
 
     public ItemModularTool(Properties builder) {
         super(builder);
@@ -116,15 +119,15 @@ public class ItemModularTool extends ItemModular<ModularTool> implements IThrowa
 
     @Override
     public ItemStack getDefaultInstance() {
-        PartTypes.Head head = PartTypes.Head.getRandom(MathHelper.RANDOM);
-        EvolutionMaterials headMaterial = EvolutionMaterials.getRandom(MathHelper.RANDOM);
+        PartTypes.Head head = PartTypes.Head.getRandom(RANDOM);
+        EvolutionMaterials headMaterial = EvolutionMaterials.getRandom(RANDOM);
         while (!head.hasVariantIn(headMaterial)) {
-            headMaterial = EvolutionMaterials.getRandom(MathHelper.RANDOM);
+            headMaterial = EvolutionMaterials.getRandom(RANDOM);
         }
-        PartTypes.Handle handle = PartTypes.Handle.getRandom(MathHelper.RANDOM);
-        EvolutionMaterials handleMaterial = EvolutionMaterials.getRandom(MathHelper.RANDOM);
+        PartTypes.Handle handle = PartTypes.Handle.getRandom(RANDOM);
+        EvolutionMaterials handleMaterial = EvolutionMaterials.getRandom(RANDOM);
         while (!handle.hasVariantIn(handleMaterial)) {
-            handleMaterial = EvolutionMaterials.getRandom(MathHelper.RANDOM);
+            handleMaterial = EvolutionMaterials.getRandom(RANDOM);
         }
         return createNew(head, headMaterial, handle, handleMaterial, true);
     }

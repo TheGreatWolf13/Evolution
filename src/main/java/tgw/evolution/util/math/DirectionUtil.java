@@ -3,6 +3,8 @@ package tgw.evolution.util.math;
 import net.minecraft.core.AxisCycle;
 import net.minecraft.core.Direction;
 
+import java.util.random.RandomGenerator;
+
 public final class DirectionUtil {
 
     public static final Direction.Axis[] AXIS = Direction.Axis.values();
@@ -64,6 +66,10 @@ public final class DirectionUtil {
             index -= 4;
         }
         return HORIZ_NESW[index];
+    }
+
+    public static Direction getRandom(RandomGenerator random) {
+        return ALL[random.nextInt(6)];
     }
 
     public static int horizontalIndex(Direction dir) {
