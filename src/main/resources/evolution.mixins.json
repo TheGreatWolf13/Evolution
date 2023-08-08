@@ -515,6 +515,7 @@
     "MixinInventoryClient",
     "MixinItemBlockRenderTypes",
     "MixinItemModelGenerator",
+    "MixinItemPickupParticle",
     "MixinItemRenderer",
     "MixinItemTransform",
     "MixinKeyboardHandler",
