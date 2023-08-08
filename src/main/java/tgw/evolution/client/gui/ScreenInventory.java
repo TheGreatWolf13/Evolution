@@ -15,7 +15,6 @@ import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import org.jetbrains.annotations.Range;
 import org.lwjgl.glfw.GLFW;
 import tgw.evolution.Evolution;
 import tgw.evolution.client.gui.recipebook.ComponentRecipeBook;
@@ -29,23 +28,29 @@ import tgw.evolution.util.math.MathHelper;
 
 public class ScreenInventory extends ScreenDisplayEffects<ContainerInventory> implements IRecipeBookUpdateListener {
 
+    private static final int NUM_TABS = 2;
     private final ComponentRecipeBook recipeBook = new ComponentRecipeBook();
     private final ResourceLocation recipeBookIcon = Evolution.getResource("textures/gui/recipe_button.png");
     private final ResourceLocation resCrafting = Evolution.getResource("textures/gui/inventory_crafting.png");
-    private final ItemStack tab0Stack = new ItemStack(Items.CHEST);
-    private final ItemStack tab1Stack = new ItemStack(Items.CRAFTING_TABLE);
+    private final ItemStack[] tabStacks = {
+            new ItemStack(Items.CHEST),
+            new ItemStack(Items.CRAFTING_TABLE)
+    };
+    private final Component[] tabTexts = {
+            new TranslatableComponent("evolution.gui.inventory.tabInventory"),
+            new TranslatableComponent("evolution.gui.inventory.tabCrafting")
+    };
     private final Component textCrafting = new TranslatableComponent("evolution.gui.crafting");
     private final Component textEquipment = new TranslatableComponent("evolution.gui.inventory.equipment");
     private final Component textInventory = new TranslatableComponent("evolution.gui.inventory");
-    private final Component textTabCrafting = new TranslatableComponent("evolution.gui.inventory.tabCrafting");
-    private final Component textTabInventory = new TranslatableComponent("evolution.gui.inventory.tabInventory");
     private boolean buttonClicked;
+    private boolean justSwitchedTabs;
     private float oldMouseX;
     private float oldMouseY;
     private ImageButton recipeBookButton;
     private boolean recipeBookVisible;
     private boolean removeRecipeBook;
-    private @Range(from = 0, to = 1) int selectedTab = -1;
+    private int selectedTab = -1;
     private int tabX;
     private int tabY;
     private boolean widthTooNarrow;
@@ -72,12 +77,14 @@ public class ScreenInventory extends ScreenDisplayEffects<ContainerInventory> im
     }
 
     protected void drawTabs(PoseStack matrices) {
-        RenderSystem.setShaderTexture(0, EvolutionResources.GUI_TABS);
-        this.blit(matrices, this.tabX, this.tabY, 28, this.selectedTab == 0 ? 32 : 0, 28, 32);
-        this.blit(matrices, this.tabX + 30, this.tabY, 28, this.selectedTab == 1 ? 32 : 0, 28, 32);
         assert this.minecraft != null;
-        this.minecraft.getItemRenderer().renderAndDecorateItem(this.tab0Stack, this.tabX + 6, this.tabY + 7 + (this.selectedTab == 0 ? 0 : 2));
-        this.minecraft.getItemRenderer().renderAndDecorateItem(this.tab1Stack, this.tabX + 36, this.tabY + 7 + (this.selectedTab == 1 ? 0 : 2));
+        RenderSystem.setShaderTexture(0, EvolutionResources.GUI_TABS);
+        for (int i = 0; i < NUM_TABS; ++i) {
+            this.blit(matrices, this.tabX + 30 * i, this.tabY, 28, this.selectedTab == i ? 32 : 0, 28, 32);
+        }
+        for (int i = 0; i < NUM_TABS; ++i) {
+            this.minecraft.getItemRenderer().renderAndDecorateItem(this.tabStacks[i], this.tabX + 6 + 30 * i, this.tabY + 7 + (this.selectedTab == i ? 0 : 2));
+        }
     }
 
     @Override
@@ -90,7 +97,11 @@ public class ScreenInventory extends ScreenDisplayEffects<ContainerInventory> im
         if (MathHelper.isMouseInArea(mouseX, mouseY, guiLeft, guiTop, this.imageWidth, this.imageHeight)) {
             return false;
         }
-        if (MathHelper.isMouseInArea(mouseX, mouseY, guiLeft + 6, guiTop - 28, 2 * 30 - 2, 28)) {
+        if (MathHelper.isMouseInArea(mouseX, mouseY, guiLeft + 6, guiTop - 28, NUM_TABS * 30 - 2, 28)) {
+            return false;
+        }
+        if (this.justSwitchedTabs) {
+            this.justSwitchedTabs = false;
             return false;
         }
         return this.recipeBook.hasClickedOutside(mouseX, mouseY);
@@ -112,15 +123,14 @@ public class ScreenInventory extends ScreenDisplayEffects<ContainerInventory> im
             this.leftPos = this.recipeBook.updateScreenPosition(this.width, this.imageWidth);
             this.addWidget(this.recipeBook);
             this.setInitialFocus(this.recipeBook);
-            this.recipeBookButton = this.addRenderableWidget(
-                    new ImageButton(this.leftPos + 13, this.topPos + 41, 20, 18, 0, 0, 19, this.recipeBookIcon, button -> {
-                        this.recipeBook.toggleVisibility();
-                        this.recipeBookVisible = this.recipeBook.isVisible();
-                        this.leftPos = this.recipeBook.updateScreenPosition(this.width, this.imageWidth);
-                        this.tabX = this.leftPos + 6;
-                        ((ImageButton) button).setPosition(this.leftPos + 13, this.topPos + 41);
-                        this.buttonClicked = true;
-                    }));
+            this.recipeBookButton = this.addRenderableWidget(new ImageButton(this.leftPos + 13, this.topPos + 41, 20, 18, 0, 0, 19, this.recipeBookIcon, button -> {
+                this.recipeBook.toggleVisibility();
+                this.recipeBookVisible = this.recipeBook.isVisible();
+                this.leftPos = this.recipeBook.updateScreenPosition(this.width, this.imageWidth);
+                this.tabX = this.leftPos + 6;
+                ((ImageButton) button).setPosition(this.leftPos + 13, this.topPos + 41);
+                this.buttonClicked = true;
+            }));
             this.recipeBookButton.visible = this.selectedTab == 1;
             this.tabX = this.leftPos + 6;
             this.tabY = this.topPos - 28;
@@ -137,13 +147,12 @@ public class ScreenInventory extends ScreenDisplayEffects<ContainerInventory> im
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, @MouseButton int button) {
         if (button == GLFW.GLFW_MOUSE_BUTTON_1) {
-            if (MathHelper.isMouseInArea(mouseX, mouseY, this.tabX, this.tabY, 28, 32)) {
-                this.setSelectedTab(0, true);
-                return true;
-            }
-            if (MathHelper.isMouseInArea(mouseX, mouseY, this.tabX + 32, this.tabY, 28, 32)) {
-                this.setSelectedTab(1, true);
-                return true;
+            for (int i = 0; i < NUM_TABS; ++i) {
+                if (MathHelper.isMouseInArea(mouseX, mouseY, this.tabX + 32 * i, this.tabY, 28, 32)) {
+                    this.setSelectedTab(i, true);
+                    this.justSwitchedTabs = true;
+                    return true;
+                }
             }
         }
         if (this.recipeBook.mouseClicked(mouseX, mouseY, button)) {
@@ -236,18 +245,16 @@ public class ScreenInventory extends ScreenDisplayEffects<ContainerInventory> im
 
     @Override
     protected void renderTooltip(PoseStack matrices, int mouseX, int mouseY) {
-        if (MathHelper.isMouseInArea(mouseX, mouseY, this.tabX, this.tabY, 28, 32)) {
-            this.renderTooltip(matrices, this.textTabInventory, mouseX, mouseY);
-            return;
-        }
-        if (MathHelper.isMouseInArea(mouseX, mouseY, this.tabX + 30, this.tabY, 28, 32)) {
-            this.renderTooltip(matrices, this.textTabCrafting, mouseX, mouseY);
-            return;
+        for (int i = 0; i < NUM_TABS; ++i) {
+            if (MathHelper.isMouseInArea(mouseX, mouseY, this.tabX + 30 * i, this.tabY, 28, 32)) {
+                this.renderTooltip(matrices, this.tabTexts[i], mouseX, mouseY);
+                return;
+            }
         }
         super.renderTooltip(matrices, mouseX, mouseY);
     }
 
-    protected void setSelectedTab(@Range(from = 0, to = 1) int selectedTab, boolean playSound) {
+    protected void setSelectedTab(int selectedTab, boolean playSound) {
         if (this.selectedTab != selectedTab) {
             assert this.minecraft != null;
             if (playSound) {
