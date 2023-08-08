@@ -10,10 +10,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.PacketUtils;
-import net.minecraft.network.protocol.game.ClientboundKeepAlivePacket;
-import net.minecraft.network.protocol.game.ServerGamePacketListener;
-import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
-import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
+import net.minecraft.network.protocol.game.*;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -22,6 +19,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -94,6 +92,18 @@ public abstract class MixinServerGamePacketListenerImpl implements ServerGamePac
     @Shadow
     public abstract ServerPlayer getPlayer();
 
+    @Override
+    public void handleCollision(PacketCSCollision packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.player.getLevel());
+        Level level = this.player.level;
+        long pos = packet.pos;
+        BlockState state = level.getBlockState_(pos);
+        if (state.getBlock() instanceof ICollisionBlock collisionBlock) {
+            double mass = this.player.getAttributeValue(EvolutionAttributes.MASS);
+            collisionBlock.collision(level, BlockPos.getX(pos), BlockPos.getY(pos), BlockPos.getZ(pos), this.player, packet.speed, mass, packet.axis);
+        }
+    }
+
 //    @Override
 //    public void handleChangeBlock(PacketCSChangeBlock packet) {
 //        PacketUtils.ensureRunningOnSameThread(packet, this, this.player.getLevel());
@@ -113,18 +123,6 @@ public abstract class MixinServerGamePacketListenerImpl implements ServerGamePac
 //            }
 //        }
 //    }
-
-    @Override
-    public void handleCollision(PacketCSCollision packet) {
-        PacketUtils.ensureRunningOnSameThread(packet, this, this.player.getLevel());
-        Level level = this.player.level;
-        long pos = packet.pos;
-        BlockState state = level.getBlockState_(pos);
-        if (state.getBlock() instanceof ICollisionBlock collisionBlock) {
-            double mass = this.player.getAttributeValue(EvolutionAttributes.MASS);
-            collisionBlock.collision(level, BlockPos.getX(pos), BlockPos.getY(pos), BlockPos.getZ(pos), this.player, packet.speed, mass, packet.axis);
-        }
-    }
 
     @Override
     public void handleEntityInteraction(PacketCSEntityInteraction packet) {
@@ -198,6 +196,16 @@ public abstract class MixinServerGamePacketListenerImpl implements ServerGamePac
     public void handlePlayerFall(PacketCSPlayerFall packet) {
         PacketUtils.ensureRunningOnSameThread(packet, this, this.player.getLevel());
         LivingHooks.calculateFallDamage(this.player, packet.velocity, packet.distanceOfSlowDown, packet.water);
+    }
+
+    @Override
+    @Overwrite
+    public void handleRecipeBookSeenRecipePacket(ServerboundRecipeBookSeenRecipePacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.player.getLevel());
+        Recipe<?> recipe = this.server.getRecipeManager().byKey_(packet.getRecipe());
+        if (recipe != null) {
+            this.player.getRecipeBook().removeHighlight(recipe);
+        }
     }
 
     @Override
