@@ -32,7 +32,7 @@ public final class Transformers {
                 if (transformer.shouldRemoveAfterPatch()) {
                     TRANSFORMERS.remove(i--);
                 }
-                CoreModLoader.LOGGER.info("Successfully patched class {}", name);
+                CoreModLoader.LOGGER.debug("Successfully patched class {}", name);
             }
         }
     }
