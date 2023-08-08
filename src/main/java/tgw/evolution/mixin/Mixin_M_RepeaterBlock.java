@@ -2,6 +2,7 @@ package tgw.evolution.mixin;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -19,15 +20,42 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.hooks.asm.DeleteMethod;
 
+import java.util.Random;
+import java.util.random.RandomGenerator;
+
 @Mixin(RepeaterBlock.class)
 public abstract class Mixin_M_RepeaterBlock extends DiodeBlock {
 
     @Shadow @Final public static IntegerProperty DELAY;
-
     @Shadow @Final public static BooleanProperty LOCKED;
 
     public Mixin_M_RepeaterBlock(Properties properties) {
         super(properties);
+    }
+
+    @Override
+    @Overwrite
+    @DeleteMethod
+    public void animateTick(BlockState blockState, Level level, BlockPos blockPos, Random random) {
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public void animateTick_(BlockState state, Level level, int x, int y, int z, RandomGenerator random) {
+        if (state.getValue(POWERED)) {
+            Direction direction = state.getValue(FACING);
+            double px = x + 0.5 + (random.nextDouble() - 0.5) * 0.2;
+            double py = y + 0.4 + (random.nextDouble() - 0.5) * 0.2;
+            double pz = z + 0.5 + (random.nextDouble() - 0.5) * 0.2;
+            float g = -5.0F;
+            if (random.nextBoolean()) {
+                g = state.getValue(DELAY) * 2 - 1;
+            }
+            g /= 16.0F;
+            double h = g * direction.getStepX();
+            double i = g * direction.getStepZ();
+            level.addParticle(DustParticleOptions.REDSTONE, px + h, py, pz + i, 0, 0, 0);
+        }
     }
 
     @Override

@@ -2,6 +2,9 @@ package tgw.evolution.mixin;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
@@ -31,16 +34,41 @@ import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.hooks.asm.DeleteMethod;
 
 import java.util.Optional;
+import java.util.Random;
+import java.util.random.RandomGenerator;
 
 @Mixin(CampfireBlock.class)
 public abstract class Mixin_M_CampfireBlock extends BaseEntityBlock implements SimpleWaterloggedBlock {
 
     @Shadow @Final public static BooleanProperty WATERLOGGED;
     @Shadow @Final public static BooleanProperty SIGNAL_FIRE;
+    @Shadow @Final public static BooleanProperty LIT;
     @Shadow @Final protected static VoxelShape SHAPE;
+    @Shadow @Final private boolean spawnParticles;
 
     public Mixin_M_CampfireBlock(Properties properties) {
         super(properties);
+    }
+
+    @Override
+    @Overwrite
+    @DeleteMethod
+    public void animateTick(BlockState blockState, Level level, BlockPos blockPos, Random random) {
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public void animateTick_(BlockState state, Level level, int x, int y, int z, RandomGenerator random) {
+        if (state.getValue(LIT)) {
+            if (random.nextInt(10) == 0) {
+                level.playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents.CAMPFIRE_CRACKLE, SoundSource.BLOCKS, 0.5F + random.nextFloat(), random.nextFloat() * 0.7F + 0.6F, false);
+            }
+            if (this.spawnParticles && random.nextInt(5) == 0) {
+                for (int i = 0; i < random.nextInt(1) + 1; ++i) {
+                    level.addParticle(ParticleTypes.LAVA, x + 0.5, y + 0.5, z + 0.5, random.nextFloat() / 2.0F, 5.0E-5, random.nextFloat() / 2.0F);
+                }
+            }
+        }
     }
 
     @Override

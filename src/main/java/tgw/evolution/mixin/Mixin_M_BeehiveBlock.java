@@ -39,6 +39,9 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.hooks.asm.DeleteMethod;
 
+import java.util.Random;
+import java.util.random.RandomGenerator;
+
 @Mixin(BeehiveBlock.class)
 public abstract class Mixin_M_BeehiveBlock extends BaseEntityBlock {
 
@@ -55,6 +58,23 @@ public abstract class Mixin_M_BeehiveBlock extends BaseEntityBlock {
 
     @Shadow
     protected abstract void angerNearbyBees(Level level, BlockPos blockPos);
+
+    @Override
+    @Overwrite
+    @DeleteMethod
+    public void animateTick(BlockState blockState, Level level, BlockPos blockPos, Random random) {
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public void animateTick_(BlockState state, Level level, int x, int y, int z, RandomGenerator random) {
+        if (state.getValue(HONEY_LEVEL) >= 5) {
+            BlockPos pos = new BlockPos(x, y, z);
+            for (int i = 0; i < random.nextInt(1) + 1; ++i) {
+                this.trySpawnDripParticles(level, pos, state);
+            }
+        }
+    }
 
     @Shadow
     protected abstract boolean hiveContainsBees(Level level, BlockPos blockPos);
@@ -127,6 +147,9 @@ public abstract class Mixin_M_BeehiveBlock extends BaseEntityBlock {
 
     @Shadow
     public abstract void resetHoneyLevel(Level level, BlockState blockState, BlockPos blockPos);
+
+    @Shadow
+    protected abstract void trySpawnDripParticles(Level level, BlockPos blockPos, BlockState blockState);
 
     @Override
     @Overwrite

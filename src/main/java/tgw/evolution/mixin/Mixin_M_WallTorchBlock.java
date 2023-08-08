@@ -3,8 +3,10 @@ package tgw.evolution.mixin;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Blocks;
@@ -22,6 +24,9 @@ import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.hooks.asm.DeleteMethod;
 
+import java.util.Random;
+import java.util.random.RandomGenerator;
+
 @Mixin(WallTorchBlock.class)
 public abstract class Mixin_M_WallTorchBlock extends TorchBlock {
 
@@ -34,6 +39,23 @@ public abstract class Mixin_M_WallTorchBlock extends TorchBlock {
     @Shadow
     public static VoxelShape getShape(BlockState blockState) {
         throw new AbstractMethodError();
+    }
+
+    @Override
+    @Overwrite
+    @DeleteMethod
+    public void animateTick(BlockState blockState, Level level, BlockPos blockPos, Random random) {
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public void animateTick_(BlockState state, Level level, int x, int y, int z, RandomGenerator random) {
+        Direction dir = state.getValue(FACING).getOpposite();
+        double px = x + 0.5 + 0.27 * dir.getStepX();
+        double py = y + 0.92;
+        double pz = z + 0.5 + 0.27 * dir.getStepZ();
+        level.addParticle(ParticleTypes.SMOKE, px, py, pz, 0, 0, 0);
+        level.addParticle(this.flameParticle, px, py, pz, 0, 0, 0);
     }
 
     @Override

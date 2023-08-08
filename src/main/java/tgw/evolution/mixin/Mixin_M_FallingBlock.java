@@ -2,6 +2,8 @@ package tgw.evolution.mixin;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.particles.BlockParticleOption;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.item.FallingBlockEntity;
 import net.minecraft.world.level.Level;
@@ -16,6 +18,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.hooks.asm.DeleteMethod;
 
 import java.util.Random;
+import java.util.random.RandomGenerator;
 
 @Mixin(FallingBlock.class)
 public abstract class Mixin_M_FallingBlock extends Block implements Fallable {
@@ -27,6 +30,22 @@ public abstract class Mixin_M_FallingBlock extends Block implements Fallable {
     @Shadow
     public static boolean isFree(BlockState blockState) {
         throw new AbstractMethodError();
+    }
+
+    @Override
+    @Overwrite
+    @DeleteMethod
+    public void animateTick(BlockState blockState, Level level, BlockPos blockPos, Random random) {
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public void animateTick_(BlockState state, Level level, int x, int y, int z, RandomGenerator random) {
+        if (random.nextInt(16) == 0) {
+            if (isFree(level.getBlockState_(x, y - 1, z))) {
+                level.addParticle(new BlockParticleOption(ParticleTypes.FALLING_DUST, state), x + random.nextDouble(), y - 0.05, z + random.nextDouble(), 0, 0, 0);
+            }
+        }
     }
 
     @Shadow

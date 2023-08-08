@@ -31,6 +31,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.hooks.asm.DeleteMethod;
 
 import java.util.Random;
+import java.util.random.RandomGenerator;
 
 @Mixin(StairBlock.class)
 public abstract class Mixin_M_StairBlock extends Block implements SimpleWaterloggedBlock {
@@ -51,6 +52,18 @@ public abstract class Mixin_M_StairBlock extends Block implements SimpleWaterlog
     @Shadow
     private static StairsShape getStairsShape(BlockState blockState, BlockGetter blockGetter, BlockPos blockPos) {
         throw new AbstractMethodError();
+    }
+
+    @Override
+    @Overwrite
+    @DeleteMethod
+    public void animateTick(BlockState blockState, Level level, BlockPos blockPos, Random random) {
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public void animateTick_(BlockState state, Level level, int x, int y, int z, RandomGenerator random) {
+        this.base.animateTick_(state, level, x, y, z, random);
     }
 
     @Override

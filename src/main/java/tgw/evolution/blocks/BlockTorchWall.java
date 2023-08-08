@@ -1,6 +1,5 @@
 package tgw.evolution.blocks;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.InteractionHand;
@@ -22,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.init.EvolutionShapes;
 
-import java.util.Random;
+import java.util.random.RandomGenerator;
 
 import static tgw.evolution.init.EvolutionBStates.DIRECTION_HORIZONTAL;
 import static tgw.evolution.init.EvolutionBStates.LIT;
@@ -34,13 +33,13 @@ public class BlockTorchWall extends BlockTorch {
     }
 
     @Override
-    public void animateTick(BlockState state, Level level, BlockPos pos, Random rand) {
+    public void animateTick_(BlockState state, Level level, int x, int y, int z, RandomGenerator random) {
         if (!state.getValue(LIT)) {
             return;
         }
-        double dx = pos.getX() + 0.5;
-        double dy = pos.getY() + 0.7;
-        double dz = pos.getZ() + 0.5;
+        double dx = x + 0.5;
+        double dy = y + 0.7;
+        double dz = z + 0.5;
         Direction direction = state.getValue(DIRECTION_HORIZONTAL).getOpposite();
         level.addParticle(ParticleTypes.SMOKE, dx + 0.27 * direction.getStepX(), dy + 0.22, dz + 0.27 * direction.getStepZ(), 0, 0, 0);
         level.addParticle(ParticleTypes.FLAME, dx + 0.27 * direction.getStepX(), dy + 0.22, dz + 0.27 * direction.getStepZ(), 0, 0, 0);

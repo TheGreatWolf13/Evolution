@@ -1,6 +1,7 @@
 package tgw.evolution.mixin;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
@@ -21,9 +22,14 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.hooks.asm.DeleteMethod;
 
+import java.util.List;
+import java.util.Random;
+import java.util.random.RandomGenerator;
+
 @Mixin(EnchantmentTableBlock.class)
 public abstract class Mixin_M_EnchantmentTableBlock extends BaseEntityBlock {
 
+    @Shadow @Final public static List<BlockPos> BOOKSHELF_OFFSETS;
     @Shadow @Final protected static VoxelShape SHAPE;
 
     public Mixin_M_EnchantmentTableBlock(Properties properties) {
@@ -39,6 +45,26 @@ public abstract class Mixin_M_EnchantmentTableBlock extends BaseEntityBlock {
         int dy = offset.getY();
         int dz = offset.getZ();
         return level.getBlockState_(x + dx, y + dy, z + dz).is(Blocks.BOOKSHELF) && level.isEmptyBlock_(x + dx / 2, y + dy / 2, z + dz / 2);
+    }
+
+    @Override
+    @Overwrite
+    @DeleteMethod
+    public void animateTick(BlockState blockState, Level level, BlockPos blockPos, Random random) {
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public void animateTick_(BlockState state, Level level, int x, int y, int z, RandomGenerator random) {
+        super.animateTick_(state, level, x, y, z, random);
+        for (int i = 0, len = BOOKSHELF_OFFSETS.size(); i < len; ++i) {
+            BlockPos offset = BOOKSHELF_OFFSETS.get(i);
+            if (random.nextInt(16) == 0) {
+                if (isValidBookShelf(level, new BlockPos(x, y, z), offset)) {
+                    level.addParticle(ParticleTypes.ENCHANT, x + 0.5, y + 2, z + 0.5, offset.getX() + random.nextFloat() - 0.5, offset.getY() - random.nextFloat() - 1.0F, offset.getZ() + random.nextFloat() - 0.5);
+                }
+            }
+        }
     }
 
     @Override

@@ -2,12 +2,16 @@ package tgw.evolution.mixin;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -25,6 +29,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.hooks.asm.DeleteMethod;
 
 import java.util.Random;
+import java.util.random.RandomGenerator;
 
 @Mixin(NetherPortalBlock.class)
 public abstract class Mixin_M_NetherPortalBlock extends Block {
@@ -35,6 +40,38 @@ public abstract class Mixin_M_NetherPortalBlock extends Block {
 
     public Mixin_M_NetherPortalBlock(Properties properties) {
         super(properties);
+    }
+
+    @Override
+    @Overwrite
+    @DeleteMethod
+    public void animateTick(BlockState blockState, Level level, BlockPos blockPos, Random random) {
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public void animateTick_(BlockState state, Level level, int x, int y, int z, RandomGenerator random) {
+        if (random.nextInt(100) == 0) {
+            level.playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents.PORTAL_AMBIENT, SoundSource.BLOCKS, 0.5F, random.nextFloat() * 0.4F + 0.8F, false);
+        }
+        for (int i = 0; i < 4; ++i) {
+            double px = x + random.nextDouble();
+            double py = y + random.nextDouble();
+            double pz = z + random.nextDouble();
+            double vx = (random.nextFloat() - 0.5) * 0.5;
+            double vy = (random.nextFloat() - 0.5) * 0.5;
+            double vz = (random.nextFloat() - 0.5) * 0.5;
+            int k = random.nextInt(2) * 2 - 1;
+            if (!level.getBlockState_(x - 1, y, z).is(this) && !level.getBlockState_(x + 1, y, z).is(this)) {
+                px = x + 0.5 + 0.25 * k;
+                vx = random.nextFloat() * 2.0F * k;
+            }
+            else {
+                pz = z + 0.5 + 0.25 * k;
+                vz = random.nextFloat() * 2.0F * k;
+            }
+            level.addParticle(ParticleTypes.PORTAL, px, py, pz, vx, vy, vz);
+        }
     }
 
     @Override

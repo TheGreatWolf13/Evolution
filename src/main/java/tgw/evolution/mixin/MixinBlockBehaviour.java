@@ -51,26 +51,11 @@ public abstract class MixinBlockBehaviour implements PatchBlockBehaviour {
     }
 
     @Override
-    public void attack_(BlockState state,
-                        Level level,
-                        int x,
-                        int y,
-                        int z,
-                        Direction face,
-                        double hitX,
-                        double hitY,
-                        double hitZ, Player player) {
+    public void attack_(BlockState state, Level level, int x, int y, int z, Direction face, double hitX, double hitY, double hitZ, Player player) {
     }
 
     @Override
-    public boolean canBeReplaced_(BlockState state,
-                                  Level level,
-                                  int x,
-                                  int y,
-                                  int z,
-                                  Player player,
-                                  InteractionHand hand,
-                                  BlockHitResult hitResult) {
+    public boolean canBeReplaced_(BlockState state, Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult) {
         if (this.material.isReplaceable()) {
             ItemStack stack = player.getItemInHand(hand);
             return stack.isEmpty() || !stack.is(this.asItem());
@@ -109,8 +94,7 @@ public abstract class MixinBlockBehaviour implements PatchBlockBehaviour {
     //ok
     public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         Evolution.deprecatedMethod();
-        return this.getCollisionShape_(state, level, pos.getX(), pos.getY(), pos.getZ(),
-                                       context instanceof EntityCollisionContext c ? c.getEntity() : null);
+        return this.getCollisionShape_(state, level, pos.getX(), pos.getY(), pos.getZ(), context instanceof EntityCollisionContext c ? c.getEntity() : null);
     }
 
     @Override
@@ -209,12 +193,7 @@ public abstract class MixinBlockBehaviour implements PatchBlockBehaviour {
     }
 
     @Override
-    public VoxelShape getShape_(BlockState state,
-                                BlockGetter level,
-                                int x,
-                                int y,
-                                int z,
-                                @Nullable Entity entity) {
+    public VoxelShape getShape_(BlockState state, BlockGetter level, int x, int y, int z, @Nullable Entity entity) {
         return Shapes.block();
     }
 
@@ -223,17 +202,11 @@ public abstract class MixinBlockBehaviour implements PatchBlockBehaviour {
     //ok
     public VoxelShape getVisualShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         Evolution.deprecatedMethod();
-        return this.getVisualShape_(state, level, pos.getX(), pos.getY(), pos.getZ(),
-                                    context instanceof EntityCollisionContext c ? c.getEntity() : null);
+        return this.getVisualShape_(state, level, pos.getX(), pos.getY(), pos.getZ(), context instanceof EntityCollisionContext c ? c.getEntity() : null);
     }
 
     @Override
-    public VoxelShape getVisualShape_(BlockState state,
-                                      BlockGetter level,
-                                      int x,
-                                      int y,
-                                      int z,
-                                      @Nullable Entity entity) {
+    public VoxelShape getVisualShape_(BlockState state, BlockGetter level, int x, int y, int z, @Nullable Entity entity) {
         return this.getCollisionShape_(state, level, x, y, z, entity);
     }
 
@@ -273,16 +246,7 @@ public abstract class MixinBlockBehaviour implements PatchBlockBehaviour {
     }
 
     @Override
-    public void neighborChanged_(BlockState state,
-                                 Level level,
-                                 int x,
-                                 int y,
-                                 int z,
-                                 Block oldBlock,
-                                 int fromX,
-                                 int fromY,
-                                 int fromZ,
-                                 boolean isMoving) {
+    public void neighborChanged_(BlockState state, Level level, int x, int y, int z, Block oldBlock, int fromX, int fromY, int fromZ, boolean isMoving) {
     }
 
     @Deprecated
@@ -359,51 +323,25 @@ public abstract class MixinBlockBehaviour implements PatchBlockBehaviour {
     @Deprecated
     @Overwrite
     //ok
-    public BlockState updateShape(BlockState state,
-                                  Direction from,
-                                  BlockState fromState,
-                                  LevelAccessor level,
-                                  BlockPos pos,
-                                  BlockPos fromPos) {
+    public BlockState updateShape(BlockState state, Direction from, BlockState fromState, LevelAccessor level, BlockPos pos, BlockPos fromPos) {
         Evolution.deprecatedMethod();
         return this.updateShape_(state, from, fromState, level, pos.getX(), pos.getY(), pos.getZ(), fromPos.getX(), fromPos.getY(), fromPos.getZ());
     }
 
     @Override
-    public BlockState updateShape_(BlockState state,
-                                   Direction from,
-                                   BlockState fromState,
-                                   LevelAccessor level,
-                                   int x,
-                                   int y,
-                                   int z,
-                                   int fromX,
-                                   int fromY,
-                                   int fromZ) {
+    public BlockState updateShape_(BlockState state, Direction from, BlockState fromState, LevelAccessor level, int x, int y, int z, int fromX, int fromY, int fromZ) {
         return state;
     }
 
     @Deprecated
     @Overwrite
-    public InteractionResult use(BlockState state,
-                                 Level level,
-                                 BlockPos pos,
-                                 Player player,
-                                 InteractionHand hand,
-                                 BlockHitResult hitResult) {
+    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
         Evolution.deprecatedMethod();
         return this.use_(state, level, pos.getX(), pos.getY(), pos.getZ(), player, hand, hitResult);
     }
 
     @Override
-    public InteractionResult use_(BlockState state,
-                                  Level level,
-                                  int x,
-                                  int y,
-                                  int z,
-                                  Player player,
-                                  InteractionHand hand,
-                                  BlockHitResult hitResult) {
+    public InteractionResult use_(BlockState state, Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult) {
         return InteractionResult.PASS;
     }
 }

@@ -19,7 +19,6 @@ import org.spongepowered.asm.mixin.*;
 import tgw.evolution.Evolution;
 import tgw.evolution.client.models.data.IModelData;
 import tgw.evolution.patches.PatchBlockRenderDispatcher;
-import tgw.evolution.patches.PatchModelBlockRenderer;
 import tgw.evolution.resources.IKeyedReloadListener;
 import tgw.evolution.resources.ReloadListernerKeys;
 
@@ -75,10 +74,7 @@ public abstract class MixinBlockRenderDispatcher implements PatchBlockRenderDisp
                                  IModelData modelData) {
         try {
             RenderShape shape = state.getRenderShape();
-            return shape == RenderShape.MODEL &&
-                   ((PatchModelBlockRenderer) this.modelRenderer).tesselateBlock(level, this.getBlockModel(state), state, pos, matrices, builder,
-                                                                                 checkSides, random, state.getSeed(pos), OverlayTexture.NO_OVERLAY,
-                                                                                 modelData);
+            return shape == RenderShape.MODEL && this.modelRenderer.tesselateBlock(level, this.getBlockModel(state), state, pos, matrices, builder, checkSides, random, state.getSeed(pos), OverlayTexture.NO_OVERLAY, modelData);
         }
         catch (Throwable t) {
             CrashReport crash = CrashReport.forThrowable(t, "Tessellating block in world");
@@ -96,8 +92,7 @@ public abstract class MixinBlockRenderDispatcher implements PatchBlockRenderDisp
         if (state.getRenderShape() == RenderShape.MODEL) {
             BakedModel bakedModel = this.blockModelShaper.getBlockModel(state);
             long l = state.getSeed(pos);
-            ((PatchModelBlockRenderer) this.modelRenderer).tesselateBlock(level, bakedModel, state, pos, matrices, builder, true, this.random, l,
-                                                                          OverlayTexture.NO_OVERLAY, IModelData.EMPTY);
+            this.modelRenderer.tesselateBlock(level, bakedModel, state, pos, matrices, builder, true, this.random, l, OverlayTexture.NO_OVERLAY, IModelData.EMPTY);
         }
     }
 }

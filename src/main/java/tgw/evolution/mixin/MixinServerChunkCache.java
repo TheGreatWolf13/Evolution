@@ -20,7 +20,7 @@ import org.spongepowered.asm.mixin.*;
 import tgw.evolution.Evolution;
 import tgw.evolution.patches.PatchServerChunkCache;
 import tgw.evolution.util.collection.lists.BiArrayList;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.FastRandom;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
@@ -29,6 +29,7 @@ import java.util.function.Consumer;
 public abstract class MixinServerChunkCache extends ChunkSource implements PatchServerChunkCache {
 
     @Unique private static final ThreadLocal<BiArrayList<LevelChunk, ChunkHolder>> BILIST = ThreadLocal.withInitial(BiArrayList::new);
+    @Unique private final FastRandom randomForTicking = new FastRandom();
     @Shadow @Final public ChunkMap chunkMap;
     @Shadow @Final ServerLevel level;
     @Shadow @Final private DistanceManager distanceManager;
@@ -144,7 +145,7 @@ public abstract class MixinServerChunkCache extends ChunkSource implements Patch
             }
             profiler.popPush("spawnAndTick");
             boolean doMobSpawn = this.level.getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING);
-            list.shuffle(MathHelper.RANDOM);
+            list.shuffle(this.randomForTicking);
             for (int i = 0, len = list.size(); i < len; i++) {
                 LevelChunk chunk = list.getLeft(i);
                 ChunkPos chunkpos = chunk.getPos();

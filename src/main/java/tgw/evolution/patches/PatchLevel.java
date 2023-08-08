@@ -6,7 +6,7 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import tgw.evolution.util.constants.BlockFlags;
 import tgw.evolution.util.constants.LvlEvent;
 
-public interface PatchLevel {
+public interface PatchLevel extends PatchLevelWriter {
 
     default void addDestroyBlockEffect_(int x, int y, int z, BlockState state) {
         throw new AbstractMethodError();
@@ -52,6 +52,7 @@ public interface PatchLevel {
         throw new AbstractMethodError();
     }
 
+    @Override
     default boolean setBlockAndUpdate_(int x, int y, int z, BlockState state) {
         throw new AbstractMethodError();
     }

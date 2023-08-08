@@ -11,9 +11,20 @@ import tgw.evolution.Evolution;
 import tgw.evolution.patches.PatchFluid;
 
 import java.util.Random;
+import java.util.random.RandomGenerator;
 
 @Mixin(Fluid.class)
 public abstract class MixinFluid implements PatchFluid {
+
+    @Overwrite
+    public void animateTick(Level level, BlockPos pos, FluidState state, Random random) {
+        Evolution.deprecatedMethod();
+        this.animateTick_(level, pos.getX(), pos.getY(), pos.getZ(), state, random);
+    }
+
+    @Override
+    public void animateTick_(Level level, int x, int y, int z, FluidState state, RandomGenerator random) {
+    }
 
     @Override
     public double getFlowStrength(DimensionType type) {

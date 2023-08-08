@@ -2,6 +2,7 @@ package tgw.evolution.mixin;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.particles.DustColorTransitionOptions;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.BlockGetter;
@@ -25,8 +26,10 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.hooks.asm.DeleteMethod;
 import tgw.evolution.util.constants.BlockFlags;
+import tgw.evolution.util.math.DirectionUtil;
 
 import java.util.Random;
+import java.util.random.RandomGenerator;
 
 @Mixin(SculkSensorBlock.class)
 public abstract class Mixin_M_SculkSensorBlock extends BaseEntityBlock implements SimpleWaterloggedBlock {
@@ -53,6 +56,28 @@ public abstract class Mixin_M_SculkSensorBlock extends BaseEntityBlock implement
     @Shadow
     private static void updateNeighbours(Level level, BlockPos blockPos) {
         throw new AbstractMethodError();
+    }
+
+    @Override
+    @Overwrite
+    @DeleteMethod
+    public void animateTick(BlockState blockState, Level level, BlockPos blockPos, Random random) {
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public void animateTick_(BlockState state, Level level, int x, int y, int z, RandomGenerator random) {
+        if (getPhase(state) == SculkSensorPhase.ACTIVE) {
+            Direction dir = DirectionUtil.getRandom(random);
+            if (dir != Direction.UP && dir != Direction.DOWN) {
+                int stepX = dir.getStepX();
+                int stepZ = dir.getStepZ();
+                level.addParticle(DustColorTransitionOptions.SCULK_TO_REDSTONE,
+                                  x + 0.5 + (stepX == 0 ? 0.5 - random.nextDouble() : stepX * 0.6), y + 0.25, z + 0.5 + (stepZ == 0 ? 0.5 - random.nextDouble() : stepZ * 0.6),
+                                  0, random.nextFloat() * 0.04, 0
+                );
+            }
+        }
     }
 
     @Override

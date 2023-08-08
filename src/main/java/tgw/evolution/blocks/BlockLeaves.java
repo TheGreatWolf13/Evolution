@@ -27,6 +27,7 @@ import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.util.math.DirectionUtil;
 
 import java.util.Random;
+import java.util.random.RandomGenerator;
 
 import static tgw.evolution.init.EvolutionBStates.DISTANCE_0_7;
 import static tgw.evolution.init.EvolutionBStates.TREE;
@@ -95,12 +96,9 @@ public class BlockLeaves extends BlockGeneric implements IReplaceable {
     }
 
     @Override
-    public void animateTick(BlockState state, Level level, BlockPos pos, Random rand) {
-        if (level.isRainingAt(pos.above()) && !level.getBlockState(pos.below()).canOcclude() && rand.nextInt(15) == 1) {
-            double x = pos.getX() + rand.nextFloat();
-            double y = pos.getY() - 0.05;
-            double z = pos.getZ() + rand.nextFloat();
-            level.addParticle(ParticleTypes.DRIPPING_WATER, x, y, z, 0, 0, 0);
+    public void animateTick_(BlockState state, Level level, int x, int y, int z, RandomGenerator random) {
+        if (/*level.isRainingAt(pos.above())*/false && !level.getBlockState_(x, y - 1, z).canOcclude() && random.nextInt(15) == 1) {
+            level.addParticle(ParticleTypes.DRIPPING_WATER, x + random.nextFloat(), y - 0.05, z + random.nextFloat(), 0, 0, 0);
         }
     }
 

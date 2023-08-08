@@ -1,6 +1,7 @@
 package tgw.evolution.mixin;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
@@ -23,6 +24,9 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.hooks.asm.DeleteMethod;
 
+import java.util.Random;
+import java.util.random.RandomGenerator;
+
 @Mixin(BrewingStandBlock.class)
 public abstract class Mixin_M_BrewingStandBlock extends BaseEntityBlock {
 
@@ -30,6 +34,18 @@ public abstract class Mixin_M_BrewingStandBlock extends BaseEntityBlock {
 
     public Mixin_M_BrewingStandBlock(Properties properties) {
         super(properties);
+    }
+
+    @Override
+    @Overwrite
+    @DeleteMethod
+    public void animateTick(BlockState blockState, Level level, BlockPos blockPos, Random random) {
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public void animateTick_(BlockState state, Level level, int x, int y, int z, RandomGenerator random) {
+        level.addParticle(ParticleTypes.SMOKE, x + 0.4 + random.nextFloat() * 0.2, y + 0.7 + random.nextFloat() * 0.3, z + 0.4 + random.nextFloat() * 0.2, 0, 0, 0);
     }
 
     @Override

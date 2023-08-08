@@ -17,6 +17,7 @@ import tgw.evolution.Evolution;
 import tgw.evolution.patches.PatchFluidState;
 
 import java.util.Random;
+import java.util.random.RandomGenerator;
 
 @Mixin(FluidState.class)
 public abstract class MixinFluidState extends StateHolder<Fluid, FluidState> implements PatchFluidState {
@@ -25,6 +26,17 @@ public abstract class MixinFluidState extends StateHolder<Fluid, FluidState> imp
                            ImmutableMap<Property<?>, Comparable<?>> immutableMap,
                            MapCodec<FluidState> mapCodec) {
         super(object, immutableMap, mapCodec);
+    }
+
+    @Overwrite
+    public void animateTick(Level level, BlockPos pos, Random random) {
+        Evolution.deprecatedMethod();
+        this.animateTick_(level, pos.getX(), pos.getY(), pos.getZ(), random);
+    }
+
+    @Override
+    public void animateTick_(Level level, int x, int y, int z, RandomGenerator random) {
+        this.getType().animateTick_(level, x, y, z, (FluidState) (Object) this, random);
     }
 
     @Overwrite

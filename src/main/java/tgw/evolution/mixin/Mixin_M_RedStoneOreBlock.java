@@ -2,6 +2,7 @@ package tgw.evolution.mixin;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -18,13 +19,11 @@ import net.minecraft.world.level.block.RedStoneOreBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.phys.BlockHitResult;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.*;
 import tgw.evolution.hooks.asm.DeleteMethod;
 
 import java.util.Random;
+import java.util.random.RandomGenerator;
 
 @Mixin(RedStoneOreBlock.class)
 public abstract class Mixin_M_RedStoneOreBlock extends Block {
@@ -35,14 +34,61 @@ public abstract class Mixin_M_RedStoneOreBlock extends Block {
         super(properties);
     }
 
-    @Shadow
+    @Overwrite
+    @DeleteMethod
     private static void interact(BlockState blockState, Level level, BlockPos blockPos) {
         throw new AbstractMethodError();
     }
 
-    @Shadow
+    @Unique
+    private static void interact(BlockState state, Level level, int x, int y, int z) {
+        spawnParticles(level, x, y, z);
+        if (!state.getValue(LIT)) {
+            level.setBlockAndUpdate_(x, y, z, state.setValue(LIT, true));
+        }
+    }
+
+    @Overwrite
+    @DeleteMethod
     private static void spawnParticles(Level level, BlockPos blockPos) {
         throw new AbstractMethodError();
+    }
+
+    @Unique
+    private static void spawnParticles(Level level, int x, int y, int z) {
+        Random random = level.random;
+        if (!level.getBlockState_(x - 1, y, z).isSolidRender_(level, x - 1, y, z)) {
+            level.addParticle(DustParticleOptions.REDSTONE, x + 0.5 - 0.562_5, y + random.nextFloat(), z + random.nextFloat(), 0, 0, 0);
+        }
+        if (!level.getBlockState_(x + 1, y, z).isSolidRender_(level, x + 1, y, z)) {
+            level.addParticle(DustParticleOptions.REDSTONE, x + 0.5 + 0.562_5, y + random.nextFloat(), z + random.nextFloat(), 0, 0, 0);
+        }
+        if (!level.getBlockState_(x, y - 1, z).isSolidRender_(level, x, y - 1, z)) {
+            level.addParticle(DustParticleOptions.REDSTONE, x + random.nextFloat(), y + 0.5 - 0.562_5, z + random.nextFloat(), 0, 0, 0);
+        }
+        if (!level.getBlockState_(x, y + 1, z).isSolidRender_(level, x, y + 1, z)) {
+            level.addParticle(DustParticleOptions.REDSTONE, x + random.nextFloat(), y + 0.5 + 0.562_5, z + random.nextFloat(), 0, 0, 0);
+        }
+        if (!level.getBlockState_(x, y, z - 1).isSolidRender_(level, x, y, z - 1)) {
+            level.addParticle(DustParticleOptions.REDSTONE, x + random.nextFloat(), y + random.nextFloat(), z + 0.5 - 0.562_5, 0, 0, 0);
+        }
+        if (!level.getBlockState_(x, y, z + 1).isSolidRender_(level, x, y, z + 1)) {
+            level.addParticle(DustParticleOptions.REDSTONE, x + random.nextFloat(), y + random.nextFloat(), z + 0.5 + 0.562_5, 0, 0, 0);
+        }
+    }
+
+    @Override
+    @Overwrite
+    @DeleteMethod
+    public void animateTick(BlockState blockState, Level level, BlockPos blockPos, Random random) {
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public void animateTick_(BlockState state, Level level, int x, int y, int z, RandomGenerator random) {
+        if (state.getValue(LIT)) {
+            spawnParticles(level, x, y, z);
+        }
     }
 
     @Override
@@ -54,7 +100,7 @@ public abstract class Mixin_M_RedStoneOreBlock extends Block {
 
     @Override
     public void attack_(BlockState state, Level level, int x, int y, int z, Direction face, double hitX, double hitY, double hitZ, Player player) {
-        interact(state, level, new BlockPos(x, y, z));
+        interact(state, level, x, y, z);
         super.attack_(state, level, x, y, z, face, hitX, hitY, hitZ, player);
     }
 
@@ -97,7 +143,7 @@ public abstract class Mixin_M_RedStoneOreBlock extends Block {
 
     @Override
     public void stepOn_(Level level, int x, int y, int z, BlockState state, Entity entity) {
-        interact(state, level, new BlockPos(x, y, z));
+        interact(state, level, x, y, z);
         super.stepOn_(level, x, y, z, state, entity);
     }
 
@@ -116,14 +162,12 @@ public abstract class Mixin_M_RedStoneOreBlock extends Block {
     @Override
     public InteractionResult use_(BlockState state, Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult) {
         if (level.isClientSide) {
-            spawnParticles(level, new BlockPos(x, y, z));
+            spawnParticles(level, x, y, z);
         }
         else {
-            interact(state, level, new BlockPos(x, y, z));
+            interact(state, level, x, y, z);
         }
         ItemStack stack = player.getItemInHand(hand);
-        return stack.getItem() instanceof BlockItem && new BlockPlaceContext(player, hand, stack, hitResult).canPlace() ?
-               InteractionResult.PASS :
-               InteractionResult.SUCCESS;
+        return stack.getItem() instanceof BlockItem && new BlockPlaceContext(player, hand, stack, hitResult).canPlace() ? InteractionResult.PASS : InteractionResult.SUCCESS;
     }
 }

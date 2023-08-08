@@ -41,6 +41,7 @@ import tgw.evolution.util.time.Time;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.random.RandomGenerator;
 
 import static tgw.evolution.init.EvolutionBStates.LIT;
 
@@ -57,13 +58,13 @@ public class BlockTorch extends BlockPhysics implements IReplaceable, IFireSourc
     }
 
     @Override
-    public void animateTick(BlockState state, Level level, BlockPos pos, Random rand) {
+    public void animateTick_(BlockState state, Level level, int x, int y, int z, RandomGenerator random) {
         if (!state.getValue(LIT)) {
             return;
         }
-        double posX = pos.getX() + 0.5;
-        double posY = pos.getY() + 0.7;
-        double posZ = pos.getZ() + 0.5;
+        double posX = x + 0.5;
+        double posY = y + 0.7;
+        double posZ = z + 0.5;
         level.addParticle(ParticleTypes.SMOKE, posX, posY, posZ, 0, 0, 0);
         level.addParticle(ParticleTypes.FLAME, posX, posY, posZ, 0, 0, 0);
     }

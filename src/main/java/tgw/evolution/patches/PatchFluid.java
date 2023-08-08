@@ -11,8 +11,13 @@ import tgw.evolution.util.math.Vec3d;
 import tgw.evolution.util.physics.Fluid;
 
 import java.util.Random;
+import java.util.random.RandomGenerator;
 
 public interface PatchFluid {
+
+    default void animateTick_(Level level, int x, int y, int z, FluidState state, RandomGenerator random) {
+        throw new AbstractMethodError();
+    }
 
     default Fluid fluid() {
         return Fluid.VACUUM;

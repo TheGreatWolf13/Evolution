@@ -5,6 +5,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
@@ -16,6 +17,7 @@ import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.level.block.state.properties.DripstoneThickness;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -27,6 +29,7 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.hooks.asm.DeleteMethod;
 
+import java.util.Optional;
 import java.util.Random;
 
 @Mixin(PointedDripstoneBlock.class)
@@ -51,6 +54,21 @@ public abstract class Mixin_M_PointedDripstoneBlock extends Block implements Fal
                                                                   BlockPos blockPos,
                                                                   Direction direction,
                                                                   boolean bl) {
+        throw new AbstractMethodError();
+    }
+
+    @Shadow
+    public static boolean canDrip(BlockState blockState) {
+        throw new AbstractMethodError();
+    }
+
+    @Shadow
+    private static boolean canFillCauldron(Fluid fluid) {
+        throw new AbstractMethodError();
+    }
+
+    @Shadow
+    private static Optional<Fluid> getFluidAboveStalactite(Level level, BlockPos blockPos, BlockState blockState) {
         throw new AbstractMethodError();
     }
 
@@ -83,8 +101,31 @@ public abstract class Mixin_M_PointedDripstoneBlock extends Block implements Fal
     }
 
     @Shadow
+    private static void spawnDripParticle(Level level, BlockPos blockPos, BlockState blockState, Fluid fluid) {
+        throw new AbstractMethodError();
+    }
+
+    @Shadow
     private static void spawnFallingStalactite(BlockState blockState, ServerLevel serverLevel, BlockPos blockPos) {
         throw new AbstractMethodError();
+    }
+
+    @Override
+    @Overwrite
+    @DeleteMethod
+    public void animateTick(BlockState blockState, Level level, BlockPos blockPos, Random random) {
+        if (canDrip(blockState)) {
+            float f = random.nextFloat();
+            if (!(f > 0.12F)) {
+                Optional<Fluid> fluidAboveStalactite = getFluidAboveStalactite(level, blockPos, blockState);
+                if (fluidAboveStalactite.isPresent()) {
+                    Fluid fluid = fluidAboveStalactite.get();
+                    if (f < 0.02F || canFillCauldron(fluid)) {
+                        spawnDripParticle(level, blockPos, blockState, fluid);
+                    }
+                }
+            }
+        }
     }
 
     @Override

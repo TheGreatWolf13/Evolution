@@ -29,6 +29,8 @@ import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionShapes;
 import tgw.evolution.util.collection.maps.R2IHashMap;
 import tgw.evolution.util.collection.maps.R2IMap;
+import tgw.evolution.util.collection.maps.R2OHashMap;
+import tgw.evolution.util.collection.maps.R2OMap;
 import tgw.evolution.util.constants.BlockFlags;
 import tgw.evolution.util.constants.WoodVariant;
 import tgw.evolution.util.math.DirectionUtil;
@@ -40,25 +42,28 @@ import static tgw.evolution.init.EvolutionBStates.*;
 
 public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource {
 
-    public static final SoundType FIRE = new SoundType(0.5f,
-                                                       2.6f,
-                                                       SoundEvents.FIRE_EXTINGUISH,
-                                                       SoundEvents.WOOL_STEP,
-                                                       SoundEvents.WOOL_PLACE,
-                                                       SoundEvents.WOOL_HIT,
-                                                       SoundEvents.WOOL_FALL);
+    public static final SoundType FIRE = new SoundType(0.5f, 2.6f, SoundEvents.FIRE_EXTINGUISH, SoundEvents.WOOL_STEP, SoundEvents.WOOL_PLACE, SoundEvents.WOOL_HIT, SoundEvents.WOOL_FALL);
+    protected static final R2OMap<BlockState, VoxelShape> SHAPES = new R2OHashMap<>();
     private final R2IMap<Block> burnOdds = new R2IHashMap<>();
     private final R2IMap<Block> flameOdds = new R2IHashMap<>();
 
     public BlockFire() {
-        super(Properties.of(Material.FIRE).noCollission().randomTicks().strength(0).lightLevel(state -> 15).sound(FIRE).noDrops());
+        super(Properties.of(Material.FIRE)
+                        .noCollission()
+                        .randomTicks()
+                        .strength(0)
+                        .lightLevel(BlockUtils.LIGHT_15)
+                        .sound(FIRE)
+                        .noDrops()
+        );
         this.registerDefaultState(this.defaultBlockState()
                                       .setValue(AGE_0_15, 0)
                                       .setValue(NORTH, false)
                                       .setValue(EAST, false)
                                       .setValue(SOUTH, false)
                                       .setValue(WEST, false)
-                                      .setValue(UP, false));
+                                      .setValue(UP, false)
+        );
     }
 
     private static int getTickCooldown(RandomGenerator random) {
@@ -96,67 +101,57 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
     }
 
     @Override
-    public void animateTick(BlockState state, Level level, BlockPos pos, Random rand) {
-        int x = pos.getX();
-        int y = pos.getY();
-        int z = pos.getZ();
-        if (rand.nextInt(8) == 0) {
-            level.playLocalSound(x + 0.5,
-                                 y + 0.5,
-                                 z + 0.5,
-                                 SoundEvents.FIRE_AMBIENT,
-                                 SoundSource.BLOCKS,
-                                 1.0F + rand.nextFloat(),
-                                 rand.nextFloat() * 0.7F + 0.3F,
-                                 false);
+    public void animateTick_(BlockState state, Level level, int x, int y, int z, RandomGenerator random) {
+        if (random.nextInt(8) == 0) {
+            level.playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents.FIRE_AMBIENT, SoundSource.BLOCKS, 1.0F + random.nextFloat(), random.nextFloat() * 0.7F + 0.3F, false);
         }
         if (!this.canBurn(level.getBlockState_(x, y - 1, z)) && !BlockUtils.hasSolidFace(level, x, y - 1, z, Direction.UP)) {
             if (this.canBurn(level.getBlockState_(x - 1, y, z))) {
                 for (int i = 0; i < 2; ++i) {
-                    double dx = x + rand.nextDouble() * 0.1;
-                    double dy = y + rand.nextDouble();
-                    double dz = z + rand.nextDouble();
+                    double dx = x + random.nextDouble() * 0.1;
+                    double dy = y + random.nextDouble();
+                    double dz = z + random.nextDouble();
                     level.addParticle(ParticleTypes.LARGE_SMOKE, dx, dy, dz, 0, 0, 0);
                 }
             }
             if (this.canBurn(level.getBlockState_(x + 1, y, z))) {
                 for (int i = 0; i < 2; ++i) {
-                    double dx = x + 1 - rand.nextDouble() * 0.1;
-                    double dy = y + rand.nextDouble();
-                    double dz = z + rand.nextDouble();
+                    double dx = x + 1 - random.nextDouble() * 0.1;
+                    double dy = y + random.nextDouble();
+                    double dz = z + random.nextDouble();
                     level.addParticle(ParticleTypes.LARGE_SMOKE, dx, dy, dz, 0, 0, 0);
                 }
             }
             if (this.canBurn(level.getBlockState_(x, y, z - 1))) {
                 for (int i = 0; i < 2; ++i) {
-                    double dx = x + rand.nextDouble();
-                    double dy = y + rand.nextDouble();
-                    double dz = z + rand.nextDouble() * 0.1;
+                    double dx = x + random.nextDouble();
+                    double dy = y + random.nextDouble();
+                    double dz = z + random.nextDouble() * 0.1;
                     level.addParticle(ParticleTypes.LARGE_SMOKE, dx, dy, dz, 0, 0, 0);
                 }
             }
             if (this.canBurn(level.getBlockState_(x, y, z + 1))) {
                 for (int i = 0; i < 2; ++i) {
-                    double dx = x + rand.nextDouble();
-                    double dy = y + rand.nextDouble();
-                    double dz = z + 1 - rand.nextDouble() * 0.1;
+                    double dx = x + random.nextDouble();
+                    double dy = y + random.nextDouble();
+                    double dz = z + 1 - random.nextDouble() * 0.1;
                     level.addParticle(ParticleTypes.LARGE_SMOKE, dx, dy, dz, 0, 0, 0);
                 }
             }
             if (this.canBurn(level.getBlockState_(x, y + 1, z))) {
                 for (int i = 0; i < 2; ++i) {
-                    double dx = x + rand.nextDouble();
-                    double dy = y + 1 - rand.nextDouble() * 0.1;
-                    double dz = z + rand.nextDouble();
+                    double dx = x + random.nextDouble();
+                    double dy = y + 1 - random.nextDouble() * 0.1;
+                    double dz = z + random.nextDouble();
                     level.addParticle(ParticleTypes.LARGE_SMOKE, dx, dy, dz, 0, 0, 0);
                 }
             }
         }
         else {
             for (int i = 0; i < 3; ++i) {
-                double dx = x + rand.nextDouble();
-                double dy = y + rand.nextDouble() * 0.5 + 0.5;
-                double dz = z + rand.nextDouble();
+                double dx = x + random.nextDouble();
+                double dy = y + random.nextDouble() * 0.5 + 0.5;
+                double dz = z + random.nextDouble();
                 level.addParticle(ParticleTypes.LARGE_SMOKE, dx, dy, dz, 0, 0, 0);
             }
         }
@@ -234,36 +229,35 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
 
     @Override
     public VoxelShape getShape_(BlockState state, BlockGetter level, int x, int y, int z, @Nullable Entity entity) {
-        VoxelShape shape = Shapes.empty();
-        if (state.getValue(NORTH)) {
-            shape = EvolutionShapes.SLAB_16_N;
+        VoxelShape voxelShape = SHAPES.get(state);
+        if (voxelShape == null) {
+            VoxelShape shape = Shapes.empty();
+            if (state.getValue(NORTH)) {
+                shape = EvolutionShapes.SLAB_16_N;
+            }
+            if (state.getValue(SOUTH)) {
+                shape = Shapes.join(shape, EvolutionShapes.SLAB_16_S, BooleanOp.OR);
+            }
+            if (state.getValue(EAST)) {
+                shape = Shapes.join(shape, EvolutionShapes.SLAB_16_E, BooleanOp.OR);
+            }
+            if (state.getValue(WEST)) {
+                shape = Shapes.join(shape, EvolutionShapes.SLAB_16_W, BooleanOp.OR);
+            }
+            if (state.getValue(UP)) {
+                shape = Shapes.join(shape, EvolutionShapes.SLAB_16_U, BooleanOp.OR);
+            }
+            if (shape == Shapes.empty()) {
+                shape = EvolutionShapes.SLAB_16_D[0];
+            }
+            voxelShape = shape;
+            SHAPES.put(state, voxelShape);
         }
-        if (state.getValue(SOUTH)) {
-            shape = Shapes.join(shape, EvolutionShapes.SLAB_16_S, BooleanOp.OR);
-        }
-        if (state.getValue(EAST)) {
-            shape = Shapes.join(shape, EvolutionShapes.SLAB_16_E, BooleanOp.OR);
-        }
-        if (state.getValue(WEST)) {
-            shape = Shapes.join(shape, EvolutionShapes.SLAB_16_W, BooleanOp.OR);
-        }
-        if (state.getValue(UP)) {
-            shape = Shapes.join(shape, EvolutionShapes.SLAB_16_U, BooleanOp.OR);
-        }
-        if (shape == Shapes.empty()) {
-            return EvolutionShapes.SLAB_16_D[0];
-        }
-        return shape;
+        return voxelShape;
     }
 
     @Override
-    public @Nullable BlockState getStateForPlacement_(Level level,
-                                                      int x,
-                                                      int y,
-                                                      int z,
-                                                      Player player,
-                                                      InteractionHand hand,
-                                                      BlockHitResult hitResult) {
+    public @Nullable BlockState getStateForPlacement_(Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult) {
         return this.getStateWithAge(level, x, y, z);
     }
 
@@ -310,10 +304,10 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
     public void onPlace_(BlockState state, Level level, int x, int y, int z, BlockState oldState, boolean isMoving) {
         if (oldState.getBlock() != state.getBlock()) {
             if (!state.canSurvive_(level, x, y, z)) {
-                level.removeBlock(new BlockPos(x, y, z), false);
+                level.removeBlock_(x, y, z, false);
             }
             else {
-                level.scheduleTick(new BlockPos(x, y, z), this, getTickCooldown(level.random));
+                BlockUtils.schedulePreciseBlockTick(level, x, y, z, getTickCooldown(level.random));
                 BlockState stateDown = level.getBlockState_(x, y - 1, z);
                 if (stateDown.getBlock() == EvolutionBlocks.PIT_KILN && stateDown.getValue(LAYERS_0_16) == 16) {
                     if (BlockPitKiln.canBurn(level, x, y - 1, z)) {
@@ -388,10 +382,7 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
                                 }
                                 if (i2 > 0 && random.nextInt(k1) <= i2 && (!level.isRaining() || !this.isNearRain(level, x + dx, y + dy, z + dz))) {
                                     int j2 = Math.min(15, age + random.nextInt(5) / 4);
-                                    level.setBlock_(x + dx, y + dy, z + dz,
-                                                    this.getStateWithAge(level, x + dx, y + dy, z + dz)
-                                                        .setValue(AGE_0_15, j2),
-                                                    BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE);
+                                    level.setBlock_(x + dx, y + dy, z + dz, this.getStateWithAge(level, x + dx, y + dy, z + dz).setValue(AGE_0_15, j2), BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE);
                                 }
                             }
                         }
@@ -403,18 +394,7 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
     }
 
     @Override
-    public BlockState updateShape_(BlockState state,
-                                   Direction from,
-                                   BlockState fromState,
-                                   LevelAccessor level,
-                                   int x,
-                                   int y,
-                                   int z,
-                                   int fromX,
-                                   int fromY,
-                                   int fromZ) {
-        return this.canSurvive_(state, level, x, y, z) ?
-               this.getStateWithAge(level, x, y, z).setValue(AGE_0_15, state.getValue(AGE_0_15)) :
-               Blocks.AIR.defaultBlockState();
+    public BlockState updateShape_(BlockState state, Direction from, BlockState fromState, LevelAccessor level, int x, int y, int z, int fromX, int fromY, int fromZ) {
+        return this.canSurvive_(state, level, x, y, z) ? this.getStateWithAge(level, x, y, z).setValue(AGE_0_15, state.getValue(AGE_0_15)) : Blocks.AIR.defaultBlockState();
     }
 }

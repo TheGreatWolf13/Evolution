@@ -2,8 +2,10 @@ package tgw.evolution.mixin;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.LeavesBlock;
@@ -19,6 +21,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.hooks.asm.DeleteMethod;
 
 import java.util.Random;
+import java.util.random.RandomGenerator;
 
 @Mixin(LeavesBlock.class)
 public abstract class Mixin_M_LeavesBlock extends Block {
@@ -38,6 +41,25 @@ public abstract class Mixin_M_LeavesBlock extends Block {
     @Shadow
     private static BlockState updateDistance(BlockState blockState, LevelAccessor levelAccessor, BlockPos blockPos) {
         throw new AbstractMethodError();
+    }
+
+    @Override
+    @Overwrite
+    @DeleteMethod
+    public void animateTick(BlockState blockState, Level level, BlockPos blockPos, Random random) {
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public void animateTick_(BlockState state, Level level, int x, int y, int z, RandomGenerator random) {
+        if (level.isRainingAt(new BlockPos(x, y + 1, z))) {
+            if (random.nextInt(15) == 1) {
+                BlockState stateBelow = level.getBlockState_(x, y - 1, z);
+                if (!stateBelow.canOcclude() || !stateBelow.isFaceSturdy_(level, x, y - 1, z, Direction.UP)) {
+                    level.addParticle(ParticleTypes.DRIPPING_WATER, x + random.nextDouble(), y - 0.05, z + random.nextDouble(), 0, 0, 0);
+                }
+            }
+        }
     }
 
     @Override

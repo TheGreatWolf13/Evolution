@@ -1876,7 +1876,8 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
             this.profiler.popPush("animateTick");
             if (!this.pause && this.level != null) {
                 assert this.player != null;
-                this.level.animateTick(this.player.getBlockX(), this.player.getBlockY(), this.player.getBlockZ());
+                BlockPos pos = this.player.blockPosition();
+                this.level.animateTick(pos.getX(), pos.getY(), pos.getZ());
             }
             this.profiler.popPush("particles");
             if (!this.pause) {

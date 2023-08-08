@@ -2,7 +2,10 @@ package tgw.evolution.mixin;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.ParticleUtils;
+import net.minecraft.util.valueproviders.UniformInt;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.LightningRodBlock;
@@ -10,6 +13,7 @@ import net.minecraft.world.level.block.RodBlock;
 import net.minecraft.world.level.block.SimpleWaterloggedBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.material.Fluids;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -19,6 +23,7 @@ import tgw.evolution.hooks.asm.DeleteMethod;
 import tgw.evolution.util.constants.BlockFlags;
 
 import java.util.Random;
+import java.util.random.RandomGenerator;
 
 @Mixin(LightningRodBlock.class)
 public abstract class Mixin_M_LightningRodBlock extends RodBlock implements SimpleWaterloggedBlock {
@@ -28,6 +33,20 @@ public abstract class Mixin_M_LightningRodBlock extends RodBlock implements Simp
 
     public Mixin_M_LightningRodBlock(Properties properties) {
         super(properties);
+    }
+
+    @Override
+    @Overwrite
+    @DeleteMethod
+    public void animateTick(BlockState blockState, Level level, BlockPos blockPos, Random random) {
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public void animateTick_(BlockState state, Level level, int x, int y, int z, RandomGenerator random) {
+        if (level.isThundering() && level.random.nextInt(200) <= level.getGameTime() % 200L && y == level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1) {
+            ParticleUtils.spawnParticlesAlongAxis(state.getValue(FACING).getAxis(), level, new BlockPos(x, y, z), 0.125, ParticleTypes.ELECTRIC_SPARK, UniformInt.of(1, 2));
+        }
     }
 
     @Override

@@ -2,8 +2,10 @@ package tgw.evolution.mixin;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
@@ -20,6 +22,9 @@ import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.hooks.asm.DeleteMethod;
 
+import java.util.Random;
+import java.util.random.RandomGenerator;
+
 @Mixin(SporeBlossomBlock.class)
 public abstract class Mixin_M_SporeBlossomBlock extends Block {
 
@@ -27,6 +32,27 @@ public abstract class Mixin_M_SporeBlossomBlock extends Block {
 
     public Mixin_M_SporeBlossomBlock(Properties properties) {
         super(properties);
+    }
+
+    @Override
+    @Overwrite
+    @DeleteMethod
+    public void animateTick(BlockState blockState, Level level, BlockPos blockPos, Random random) {
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public void animateTick_(BlockState state, Level level, int x, int y, int z, RandomGenerator random) {
+        level.addParticle(ParticleTypes.FALLING_SPORE_BLOSSOM, x + random.nextDouble(), y + 0.7, z + random.nextDouble(), 0, 0, 0);
+        for (int l = 0; l < 14; ++l) {
+            int rx = x + random.nextInt(21) - 10;
+            int ry = y - random.nextInt(10);
+            int rz = z + random.nextInt(21) - 10;
+            BlockState stateAtRandom = level.getBlockState_(rx, ry, rz);
+            if (!stateAtRandom.isCollisionShapeFullBlock_(level, rx, ry, rz)) {
+                level.addParticle(ParticleTypes.SPORE_BLOSSOM_AIR, rx + random.nextDouble(), ry + random.nextDouble(), rz + random.nextDouble(), 0, 0, 0);
+            }
+        }
     }
 
     @Override

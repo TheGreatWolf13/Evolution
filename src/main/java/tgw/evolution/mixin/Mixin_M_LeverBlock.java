@@ -26,6 +26,9 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.hooks.asm.DeleteMethod;
 
+import java.util.Random;
+import java.util.random.RandomGenerator;
+
 @Mixin(LeverBlock.class)
 public abstract class Mixin_M_LeverBlock extends FaceAttachedHorizontalDirectionalBlock {
 
@@ -46,6 +49,20 @@ public abstract class Mixin_M_LeverBlock extends FaceAttachedHorizontalDirection
     @Shadow
     private static void makeParticle(BlockState blockState, LevelAccessor levelAccessor, BlockPos blockPos, float f) {
         throw new AbstractMethodError();
+    }
+
+    @Override
+    @Overwrite
+    @DeleteMethod
+    public void animateTick(BlockState blockState, Level level, BlockPos blockPos, Random random) {
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public void animateTick_(BlockState state, Level level, int x, int y, int z, RandomGenerator random) {
+        if (state.getValue(POWERED) && random.nextFloat() < 0.25F) {
+            makeParticle(state, level, new BlockPos(x, y, z), 0.5F);
+        }
     }
 
     @Overwrite

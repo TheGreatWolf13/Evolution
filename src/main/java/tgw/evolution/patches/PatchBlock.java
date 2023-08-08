@@ -18,7 +18,13 @@ import net.minecraft.world.phys.HitResult;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.util.constants.HarvestLevel;
 
+import java.util.random.RandomGenerator;
+
 public interface PatchBlock {
+
+    default void animateTick_(BlockState state, Level level, int x, int y, int z, RandomGenerator random) {
+        throw new AbstractMethodError();
+    }
 
     default void destroy_(LevelAccessor level, int x, int y, int z, BlockState state) {
         throw new AbstractMethodError();

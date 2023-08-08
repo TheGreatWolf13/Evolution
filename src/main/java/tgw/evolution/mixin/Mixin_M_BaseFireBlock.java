@@ -2,6 +2,9 @@ package tgw.evolution.mixin;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockGetter;
@@ -21,6 +24,8 @@ import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.hooks.asm.DeleteMethod;
 
 import java.util.Optional;
+import java.util.Random;
+import java.util.random.RandomGenerator;
 
 @Mixin(BaseFireBlock.class)
 public abstract class Mixin_M_BaseFireBlock extends Block {
@@ -35,6 +40,59 @@ public abstract class Mixin_M_BaseFireBlock extends Block {
     private static boolean inPortalDimension(Level level) {
         throw new AbstractMethodError();
     }
+
+    @Override
+    @Overwrite
+    @DeleteMethod
+    public void animateTick(BlockState blockState, Level level, BlockPos blockPos, Random random) {
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public void animateTick_(BlockState state, Level level, int x, int y, int z, RandomGenerator random) {
+        if (random.nextInt(24) == 0) {
+            level.playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents.FIRE_AMBIENT, SoundSource.BLOCKS, 1.0F + random.nextFloat(), random.nextFloat() * 0.7F + 0.3F, false);
+        }
+        BlockState stateBelow = level.getBlockState_(x, y - 1, z);
+        double d;
+        double e;
+        double f;
+        if (!this.canBurn(stateBelow) && !stateBelow.isFaceSturdy_(level, x, y - 1, z, Direction.UP)) {
+            if (this.canBurn(level.getBlockState_(x - 1, y, z))) {
+                for (int i = 0; i < 2; ++i) {
+                    level.addParticle(ParticleTypes.LARGE_SMOKE, x + random.nextDouble() * 0.1, y + random.nextDouble(), z + random.nextDouble(), 0, 0, 0);
+                }
+            }
+            if (this.canBurn(level.getBlockState_(x + 1, y, z))) {
+                for (int i = 0; i < 2; ++i) {
+                    level.addParticle(ParticleTypes.LARGE_SMOKE, (x + 1) - random.nextDouble() * 0.1, y + random.nextDouble(), z + random.nextDouble(), 0, 0, 0);
+                }
+            }
+            if (this.canBurn(level.getBlockState_(x, y, z - 1))) {
+                for (int i = 0; i < 2; ++i) {
+                    level.addParticle(ParticleTypes.LARGE_SMOKE, x + random.nextDouble(), y + random.nextDouble(), z + random.nextDouble() * 0.1, 0, 0, 0);
+                }
+            }
+            if (this.canBurn(level.getBlockState_(x, y, z + 1))) {
+                for (int i = 0; i < 2; ++i) {
+                    level.addParticle(ParticleTypes.LARGE_SMOKE, x + random.nextDouble(), y + random.nextDouble(), (z + 1) - random.nextDouble() * 0.1, 0, 0, 0);
+                }
+            }
+            if (this.canBurn(level.getBlockState_(x, y + 1, z))) {
+                for (int i = 0; i < 2; ++i) {
+                    level.addParticle(ParticleTypes.LARGE_SMOKE, x + random.nextDouble(), (y + 1) - random.nextDouble() * 0.1, z + random.nextDouble(), 0, 0, 0);
+                }
+            }
+        }
+        else {
+            for (int i = 0; i < 3; ++i) {
+                level.addParticle(ParticleTypes.LARGE_SMOKE, x + random.nextDouble(), y + random.nextDouble() * 0.5 + 0.5, z + random.nextDouble(), 0, 0, 0);
+            }
+        }
+    }
+
+    @Shadow
+    protected abstract boolean canBurn(BlockState blockState);
 
     @Override
     @Overwrite

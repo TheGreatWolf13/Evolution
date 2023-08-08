@@ -18,6 +18,7 @@ import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.level.block.state.properties.RedstoneSide;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Contract;
@@ -30,8 +31,11 @@ import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.hooks.asm.DeleteMethod;
 import tgw.evolution.util.constants.BlockFlags;
 import tgw.evolution.util.math.DirectionUtil;
+import tgw.evolution.util.math.MathHelper;
 
 import java.util.Map;
+import java.util.Random;
+import java.util.random.RandomGenerator;
 
 @Mixin(RedStoneWireBlock.class)
 public abstract class Mixin_M_RedStoneWireBlock extends Block {
@@ -39,6 +43,7 @@ public abstract class Mixin_M_RedStoneWireBlock extends Block {
     @Shadow @Final public static IntegerProperty POWER;
     @Shadow @Final public static Map<Direction, EnumProperty<RedstoneSide>> PROPERTY_BY_DIRECTION;
     @Shadow @Final private static Map<BlockState, VoxelShape> SHAPES_CACHE;
+    @Shadow @Final private static Vec3[] COLORS;
     @Shadow @Final private BlockState crossState;
 
     public Mixin_M_RedStoneWireBlock(Properties properties) {
@@ -57,6 +62,38 @@ public abstract class Mixin_M_RedStoneWireBlock extends Block {
     private static boolean isDot(BlockState blockState) {
         //noinspection Contract
         throw new AbstractMethodError();
+    }
+
+    @Override
+    @Overwrite
+    @DeleteMethod
+    public void animateTick(BlockState blockState, Level level, BlockPos blockPos, Random random) {
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public void animateTick_(BlockState state, Level level, int x, int y, int z, RandomGenerator random) {
+        int power = state.getValue(POWER);
+        if (power != 0) {
+            BlockPos pos = new BlockPos(x, y, z);
+            for (Direction dir : DirectionUtil.HORIZ_NESW) {
+                RedstoneSide side = state.getValue(PROPERTY_BY_DIRECTION.get(dir));
+                switch (side) {
+                    case UP: {
+                        this.spawnParticlesAlongLine(level, MathHelper.RANDOM, pos, COLORS[power], dir, Direction.UP, -0.5F, 0.5F);
+                        //Falls through
+                    }
+                    case SIDE: {
+                        this.spawnParticlesAlongLine(level, MathHelper.RANDOM, pos, COLORS[power], Direction.DOWN, dir, 0.0F, 0.5F);
+                        break;
+                    }
+                    case NONE: {
+                        this.spawnParticlesAlongLine(level, MathHelper.RANDOM, pos, COLORS[power], Direction.DOWN, dir, 0.0F, 0.3F);
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     @Override
@@ -166,6 +203,9 @@ public abstract class Mixin_M_RedStoneWireBlock extends Block {
             }
         }
     }
+
+    @Shadow
+    protected abstract void spawnParticlesAlongLine(Level level, Random random, BlockPos blockPos, Vec3 vec3, Direction direction, Direction direction2, float f, float g);
 
     @Override
     @Overwrite

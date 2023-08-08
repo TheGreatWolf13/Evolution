@@ -13,6 +13,7 @@ import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.entity.Entity;
@@ -30,25 +31,26 @@ import net.minecraft.world.level.entity.TransientEntitySectionManager;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.storage.WritableLevelData;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.*;
 import tgw.evolution.Evolution;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.hooks.asm.DeleteMethod;
 import tgw.evolution.patches.PatchClientLevel;
 import tgw.evolution.util.constants.BlockFlags;
 import tgw.evolution.util.constants.LvlEvent;
+import tgw.evolution.util.math.FastRandom;
 
 import java.util.Optional;
 import java.util.Random;
 import java.util.function.Supplier;
+import java.util.random.RandomGenerator;
 
 @Mixin(ClientLevel.class)
 public abstract class Mixin_M_ClientLevel extends Level implements PatchClientLevel {
 
+    @Unique private final RandomGenerator animRandom = new FastRandom();
     @Shadow @Final private ClientChunkCache chunkSource;
     @Shadow @Final private TransientEntitySectionManager<Entity> entityStorage;
     @Shadow @Final private Minecraft minecraft;
@@ -151,6 +153,15 @@ public abstract class Mixin_M_ClientLevel extends Level implements PatchClientLe
                 .addParticle(particleData, particleData.getType().getOverrideLimiter() || force, false, x, y, z, velX, velY, velZ);
     }
 
+    @Overwrite
+    public void animateTick(int x, int y, int z) {
+        Block block = this.getMarkerParticleTarget();
+        for (int i = 0; i < 667; ++i) {
+            this.doAnimateTick(x, y, z, 16, this.animRandom, block);
+            this.doAnimateTick(x, y, z, 32, this.animRandom, block);
+        }
+    }
+
     /**
      * @author TheGreatWolf
      * @reason Avoid allocations
@@ -200,44 +211,43 @@ public abstract class Mixin_M_ClientLevel extends Level implements PatchClientLe
      * @reason Avoid most allocations
      */
     @Overwrite
-    public void doAnimateTick(int posX,
-                              int posY,
-                              int posZ,
-                              int range,
-                              Random random,
-                              @Nullable Block block,
-                              BlockPos.MutableBlockPos pos) {
-        int i = posX + this.random.nextInt(range) - this.random.nextInt(range);
-        int j = posY + this.random.nextInt(range) - this.random.nextInt(range);
-        int k = posZ + this.random.nextInt(range) - this.random.nextInt(range);
-        pos.set(i, j, k);
-        BlockState blockState = this.getBlockState_(pos);
-        blockState.getBlock().animateTick(blockState, this, pos, random);
-        FluidState fluidState = this.getFluidState_(pos);
+    @DeleteMethod
+    public void doAnimateTick(int posX, int posY, int posZ, int range, Random random, @Nullable Block block, BlockPos.MutableBlockPos pos) {
+        throw new AbstractMethodError();
+    }
+
+    @Unique
+    private void doAnimateTick(int posX, int posY, int posZ, int range, RandomGenerator random, @Nullable Block particleBlock) {
+        int x = posX + this.random.nextInt(range) - this.random.nextInt(range);
+        int y = posY + this.random.nextInt(range) - this.random.nextInt(range);
+        int z = posZ + this.random.nextInt(range) - this.random.nextInt(range);
+        BlockState state = this.getBlockState_(x, y, z);
+        Block block = state.getBlock();
+        block.animateTick_(state, this, x, y, z, random);
+        FluidState fluidState = this.getFluidState_(x, y, z);
         if (!fluidState.isEmpty()) {
-            fluidState.animateTick(this, pos, random);
+            fluidState.animateTick_(this, x, y, z, random);
             ParticleOptions dripParticle = fluidState.getDripParticle();
             if (dripParticle != null && this.random.nextInt(10) == 0) {
-                boolean faceSturdy = blockState.isFaceSturdy(this, pos, Direction.DOWN);
-                pos.move(Direction.DOWN);
-                this.trySpawnDripParticles(pos, blockState, dripParticle, faceSturdy);
-                pos.move(Direction.UP);
+                this.trySpawnDripParticles(x, y - 1, z, dripParticle, state.isFaceSturdy_(this, x, y, z, Direction.DOWN));
             }
         }
-        if (block == blockState.getBlock()) {
-            this.addParticle(new BlockParticleOption(ParticleTypes.BLOCK_MARKER, blockState), i + 0.5, j + 0.5, k + 0.5, 0, 0, 0);
+        if (particleBlock == block) {
+            this.addParticle(new BlockParticleOption(ParticleTypes.BLOCK_MARKER, state), x + 0.5, y + 0.5, z + 0.5, 0, 0, 0);
         }
-        if (!blockState.isCollisionShapeFullBlock(this, pos)) {
-            Optional<AmbientParticleSettings> ambientParticle = this.getBiome_(pos.getX(), pos.getY(), pos.getZ()).value().getAmbientParticle();
+        if (!state.isCollisionShapeFullBlock_(this, x, y, z)) {
+            Optional<AmbientParticleSettings> ambientParticle = this.getBiome_(x, y, z).value().getAmbientParticle();
             if (ambientParticle.isPresent()) {
                 AmbientParticleSettings settings = ambientParticle.get();
                 if (settings.canSpawn(this.random)) {
-                    this.addParticle(settings.getOptions(), pos.getX() + this.random.nextDouble(), pos.getY() + this.random.nextDouble(),
-                                     pos.getZ() + this.random.nextDouble(), 0, 0, 0);
+                    this.addParticle(settings.getOptions(), x + this.random.nextDouble(), y + this.random.nextDouble(), z + this.random.nextDouble(), 0, 0, 0);
                 }
             }
         }
     }
+
+    @Shadow
+    protected abstract @Nullable Block getMarkerParticleTarget();
 
     @Overwrite
     public BlockPos getSharedSpawnPos() {
@@ -364,10 +374,50 @@ public abstract class Mixin_M_ClientLevel extends Level implements PatchClientLe
     }
 
     @Shadow
-    protected abstract void trySpawnDripParticles(BlockPos pBlockPos,
-                                                  BlockState pBlockState,
-                                                  ParticleOptions pParticleData,
-                                                  boolean pShapeDownSolid);
+    protected abstract void spawnFluidParticle(double d, double e, double f, double g, double h, ParticleOptions particleOptions);
+
+    @Overwrite
+    @DeleteMethod
+    private void spawnParticle(BlockPos blockPos, ParticleOptions particleOptions, VoxelShape voxelShape, double d) {
+        throw new AbstractMethodError();
+    }
+
+    @Unique
+    private void spawnParticle(int x, double y, int z, ParticleOptions particle, VoxelShape shape) {
+        this.spawnFluidParticle(x + shape.min(Direction.Axis.X), x + shape.max(Direction.Axis.X), z + shape.min(Direction.Axis.Z), z + shape.max(Direction.Axis.Z), y, particle);
+    }
+
+    @Unique
+    private void trySpawnDripParticles(int x, int y, int z, ParticleOptions particle, boolean downFaceRigid) {
+        if (this.getFluidState_(x, y, z).isEmpty()) {
+            BlockState state = this.getBlockState_(x, y, z);
+            VoxelShape shape = state.getCollisionShape_(this, x, y, z);
+            if (shape.max(Direction.Axis.Y) < 1) {
+                if (downFaceRigid) {
+                    this.spawnFluidParticle(x, x + 1, z, z + 1, y + 0.95, particle);
+                }
+            }
+            else if (!state.is(BlockTags.IMPERMEABLE)) {
+                double minY = shape.min(Direction.Axis.Y);
+                if (minY > 0) {
+                    this.spawnParticle(x, y + minY - 0.05, z, particle, shape);
+                }
+                else {
+                    BlockState stateBelow = this.getBlockState_(x, y - 1, z);
+                    VoxelShape shapeBelow = stateBelow.getCollisionShape_(this, x, y - 1, z);
+                    if (shapeBelow.max(Direction.Axis.Y) < 1 && this.getFluidState_(x, y - 1, z).isEmpty()) {
+                        this.spawnParticle(x, y - 0.05, z, particle, shape);
+                    }
+                }
+            }
+        }
+    }
+
+    @Overwrite
+    @DeleteMethod
+    private void trySpawnDripParticles(BlockPos blockPos, BlockState blockState, ParticleOptions particleOptions, boolean bl) {
+        throw new AbstractMethodError();
+    }
 
     @Overwrite
     public void unload(LevelChunk chunk) {

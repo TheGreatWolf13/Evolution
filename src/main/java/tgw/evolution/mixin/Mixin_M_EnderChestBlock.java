@@ -2,6 +2,7 @@ package tgw.evolution.mixin;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.stats.Stats;
@@ -36,6 +37,7 @@ import tgw.evolution.hooks.asm.DeleteMethod;
 
 import java.util.Random;
 import java.util.function.Supplier;
+import java.util.random.RandomGenerator;
 
 @Mixin(EnderChestBlock.class)
 public abstract class Mixin_M_EnderChestBlock extends AbstractChestBlock<EnderChestBlockEntity> implements SimpleWaterloggedBlock {
@@ -44,9 +46,26 @@ public abstract class Mixin_M_EnderChestBlock extends AbstractChestBlock<EnderCh
     @Shadow @Final protected static VoxelShape SHAPE;
     @Shadow @Final private static Component CONTAINER_TITLE;
 
-    public Mixin_M_EnderChestBlock(Properties properties,
-                                   Supplier<BlockEntityType<? extends EnderChestBlockEntity>> supplier) {
+    public Mixin_M_EnderChestBlock(Properties properties, Supplier<BlockEntityType<? extends EnderChestBlockEntity>> supplier) {
         super(properties, supplier);
+    }
+
+    @Override
+    @Overwrite
+    @DeleteMethod
+    public void animateTick(BlockState blockState, Level level, BlockPos blockPos, Random random) {
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public void animateTick_(BlockState state, Level level, int x, int y, int z, RandomGenerator random) {
+        for (int i = 0; i < 3; ++i) {
+            int j = random.nextInt(2) * 2 - 1;
+            int k = random.nextInt(2) * 2 - 1;
+            level.addParticle(ParticleTypes.PORTAL, x + 0.5 + 0.25 * j, y + random.nextFloat(), z + 0.5 + 0.25 * k,
+                              random.nextFloat() * j, (random.nextFloat() - 0.5) * 0.125, random.nextFloat() * k
+            );
+        }
     }
 
     @Override

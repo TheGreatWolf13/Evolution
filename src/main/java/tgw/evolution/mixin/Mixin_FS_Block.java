@@ -47,6 +47,7 @@ import tgw.evolution.util.constants.HarvestLevel;
 
 import java.util.List;
 import java.util.Random;
+import java.util.random.RandomGenerator;
 
 @Mixin(Block.class)
 public abstract class Mixin_FS_Block extends BlockBehaviour implements PatchBlock, ItemLike {
@@ -201,6 +202,16 @@ public abstract class Mixin_FS_Block extends BlockBehaviour implements PatchBloc
                                        int limit) {
         Evolution.deprecatedMethod();
         BlockUtils.updateOrDestroy(state, updatedState, level, pos.getX(), pos.getY(), pos.getZ(), flags, limit);
+    }
+
+    @Overwrite
+    public void animateTick(BlockState state, Level level, BlockPos pos, Random random) {
+        Evolution.deprecatedMethod();
+        this.animateTick_(state, level, pos.getX(), pos.getY(), pos.getZ(), random);
+    }
+
+    @Override
+    public void animateTick_(BlockState state, Level level, int x, int y, int z, RandomGenerator random) {
     }
 
     @Shadow

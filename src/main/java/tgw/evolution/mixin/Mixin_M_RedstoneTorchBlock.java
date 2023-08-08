@@ -23,6 +23,7 @@ import tgw.evolution.util.math.DirectionUtil;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.random.RandomGenerator;
 
 @Mixin(RedstoneTorchBlock.class)
 public abstract class Mixin_M_RedstoneTorchBlock extends TorchBlock {
@@ -39,6 +40,23 @@ public abstract class Mixin_M_RedstoneTorchBlock extends TorchBlock {
     private static boolean isToggledTooFrequently(Level level, BlockPos blockPos, boolean bl) {
         //noinspection Contract
         throw new AbstractMethodError();
+    }
+
+    @Override
+    @Overwrite
+    @DeleteMethod
+    public void animateTick(BlockState blockState, Level level, BlockPos blockPos, Random random) {
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public void animateTick_(BlockState state, Level level, int x, int y, int z, RandomGenerator random) {
+        if (state.getValue(LIT)) {
+            level.addParticle(this.flameParticle,
+                              x + 0.5 + (random.nextDouble() - 0.5) * 0.2, y + 0.7 + (random.nextDouble() - 0.5) * 0.2, z + 0.5 + (random.nextDouble() - 0.5) * 0.2,
+                              0, 0, 0
+            );
+        }
     }
 
     @Shadow
