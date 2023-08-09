@@ -38,6 +38,7 @@ import tgw.evolution.util.constants.BlockFlags;
 import tgw.evolution.util.math.DirectionList;
 import tgw.evolution.util.math.DirectionToIntMap;
 import tgw.evolution.util.math.DirectionUtil;
+import tgw.evolution.util.physics.SI;
 
 import java.util.Random;
 import java.util.function.ToIntFunction;
@@ -233,7 +234,7 @@ public final class BlockUtils {
                 double px = x + 0.5 + Mth.nextDouble(l.random, -0.25, 0.25);
                 double py = y + 0.5 + Mth.nextDouble(l.random, -0.25, 0.25) - height;
                 double pz = z + 0.5 + Mth.nextDouble(l.random, -0.25, 0.25);
-                ItemEntity itemEntity = new ItemEntity(l, px, py, pz, stack);
+                ItemEntity itemEntity = new ItemEntity(l, px, py, pz, stack, l.random.nextDouble() * 0.2 - 0.1, 1.5 * SI.METER / SI.SECOND, l.random.nextDouble() * 0.2 - 0.1);
                 itemEntity.setDefaultPickUpDelay();
                 level.addFreshEntity(itemEntity);
             }
