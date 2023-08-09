@@ -31,7 +31,7 @@ import tgw.evolution.util.constants.BlockFlags;
 import java.util.function.Predicate;
 
 @Mixin(FillCommand.class)
-public abstract class Mixin_FillCommand {
+public abstract class Mixin_M_FillCommand {
 
     @Shadow @Final private static Dynamic2CommandExceptionType ERROR_AREA_TOO_LARGE;
     @Shadow @Final private static SimpleCommandExceptionType ERROR_FAILED;
