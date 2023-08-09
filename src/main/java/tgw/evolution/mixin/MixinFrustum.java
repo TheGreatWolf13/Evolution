@@ -133,8 +133,7 @@ public abstract class MixinFrustum implements PatchFrustum {
 
     @Override
     public @Visibility int intersectWith(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
-        return this.intersect((float) (minX - this.camX), (float) (minY - this.camY), (float) (minZ - this.camZ),
-                              (float) (maxX - this.camX), (float) (maxY - this.camY), (float) (maxZ - this.camZ));
+        return this.intersect((float) (minX - this.camX), (float) (minY - this.camY), (float) (minZ - this.camZ), (float) (maxX - this.camX), (float) (maxY - this.camY), (float) (maxZ - this.camZ));
     }
 
     @Redirect(method = "<init>(Lcom/mojang/math/Matrix4f;Lcom/mojang/math/Matrix4f;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client" +

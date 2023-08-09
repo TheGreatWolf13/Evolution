@@ -773,8 +773,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
                         buildSync = chunk.isDirtyFromPlayer();
                     }
                     else if (this.mc.options.prioritizeChunkUpdates == PrioritizeChunkUpdates.NEARBY) {
-                        buildSync = chunk.isDirtyFromPlayer() ||
-                                    VectorUtil.distSqr(cameraPos, chunk.getX() + 8, chunk.getY() + 8, chunk.getZ() + 8) <= 24 * 24;
+                        buildSync = chunk.isDirtyFromPlayer() || VectorUtil.distSqr(cameraPos, chunk.getX() + 8, chunk.getY() + 8, chunk.getZ() + 8) <= 24 * 24;
                     }
                     if (buildSync) {
                         profiler.push("build_near_sync");
@@ -1452,14 +1451,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
                     pos.getX() - camX, pos.getY() - camY, pos.getZ() - camZ, 0.0F, 0.0F, 0.0F, 0.4F);
     }
 
-    public void renderLevel(PoseStack matrices,
-                            float partialTicks,
-                            long endTickTime,
-                            boolean renderBlockOutline,
-                            Camera camera,
-                            GameRenderer gameRenderer,
-                            LightTexture lightTexture,
-                            Matrix4f projectionMatrix) {
+    public void renderLevel(PoseStack matrices, float partialTicks, long endTickTime, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightTexture lightTexture, Matrix4f projectionMatrix) {
         assert this.level != null;
         assert this.mc.hitResult != null;
         assert this.mc.player != null;
@@ -1477,13 +1469,11 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
         float camY = (float) camPos.y;
         float camZ = (float) camPos.z;
         profiler.popPush("clear");
-        FogRenderer.setupColor(camera, partialTicks, this.level, this.mc.options.getEffectiveRenderDistance(),
-                               gameRenderer.getDarkenWorldAmount(partialTicks));
+        FogRenderer.setupColor(camera, partialTicks, this.level, this.mc.options.getEffectiveRenderDistance(), gameRenderer.getDarkenWorldAmount(partialTicks));
         FogRenderer.levelFogColor();
         RenderSystem.clear(GL11C.GL_COLOR_BUFFER_BIT | GL11C.GL_DEPTH_BUFFER_BIT, Minecraft.ON_OSX);
         float renderDistance = gameRenderer.getRenderDistance();
-        boolean isFoggy = this.level.effects().isFoggyAt(Mth.floor(camX), Mth.floor(camY)) ||
-                          this.mc.gui.getBossOverlay().shouldCreateWorldFog();
+        boolean isFoggy = this.level.effects().isFoggyAt(Mth.floor(camX), Mth.floor(camY)) || this.mc.gui.getBossOverlay().shouldCreateWorldFog();
         FogRenderer.setupFog(camera, FogRenderer.FogMode.FOG_SKY, renderDistance, isFoggy);
         profiler.popPush("sky");
         AccessorRenderSystem.setShader(GameRenderer.getPositionShader());
@@ -2202,10 +2192,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
         double currentCamX = Math.floor(camX / 8.0);
         double currentCamY = Math.floor(camY / 8.0);
         double currentCamZ = Math.floor(camZ / 8.0);
-        this.needsFullRenderChunkUpdate = this.needsFullRenderChunkUpdate ||
-                                          currentCamX != this.prevCamX ||
-                                          currentCamY != this.prevCamY ||
-                                          currentCamZ != this.prevCamZ;
+        this.needsFullRenderChunkUpdate = this.needsFullRenderChunkUpdate || currentCamX != this.prevCamX || currentCamY != this.prevCamY || currentCamZ != this.prevCamZ;
         this.nextFullUpdateMillis.updateAndGet(l -> {
             if (l > 0L && System.currentTimeMillis() > l) {
                 this.needsFullRenderChunkUpdate = true;

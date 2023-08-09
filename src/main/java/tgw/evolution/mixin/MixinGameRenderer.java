@@ -414,8 +414,7 @@ public abstract class MixinGameRenderer implements PatchGameRenderer {
         }
         EvLevelRenderer levelRenderer = this.minecraft.lvlRenderer();
         levelRenderer.prepareCullFrustum(matrices, camera.getPosition(), this.getProjectionMatrix(Math.max(fov, this.minecraft.options.fov)));
-        levelRenderer.renderLevel(matrices, partialTicks, endTickTime, shouldRenderOutline, camera, (GameRenderer) (Object) this,
-                                  this.lightTexture, projMatrix);
+        levelRenderer.renderLevel(matrices, partialTicks, endTickTime, shouldRenderOutline, camera, (GameRenderer) (Object) this, this.lightTexture, projMatrix);
         this.minecraft.getProfiler().pop();
     }
 

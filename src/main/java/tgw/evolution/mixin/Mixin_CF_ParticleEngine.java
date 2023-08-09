@@ -61,7 +61,6 @@ import java.io.InputStreamReader;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Mixin(ParticleEngine.class)
@@ -247,9 +246,13 @@ public abstract class Mixin_CF_ParticleEngine implements PreparableReloadListene
                         if (!bl) {
                             throw new IllegalStateException("Redundant texture list for particle " + resLoc);
                         }
-                        map.put(resLoc, list.stream().map(resourceLocationx -> {
-                            return new ResourceLocation(resourceLocationx.getNamespace(), "particle/" + resourceLocationx.getPath());
-                        }).collect(Collectors.toList()));
+                        OList<ResourceLocation> descList = new OArrayList<>(list.size());
+                        for (int i = 0, len = list.size(); i < len; ++i) {
+                            ResourceLocation rl = list.get(i);
+                            //noinspection ObjectAllocationInLoop
+                            descList.add(new ResourceLocation(rl.getNamespace(), "particle/" + rl.getPath()));
+                        }
+                        map.put(resLoc, descList);
                     }
                 }
                 catch (Throwable var12) {

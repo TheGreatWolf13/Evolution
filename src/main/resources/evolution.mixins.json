@@ -496,6 +496,7 @@
     "MixinCustomHeadLayer",
     "MixinDebugRenderer",
     "MixinDebugScreenOverlay",
+    "MixinEnchantmentTableParticle",
     "MixinEntityClient",
     "MixinEntityModel",
     "MixinEntityRenderDispatcher",
