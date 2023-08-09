@@ -227,7 +227,7 @@ public abstract class MixinModelBlockRenderer implements PatchModelBlockRenderer
         float g;
         float b;
         if (quad.isTinted()) {
-            int color = this.blockColors.getColor(state, level, pos, quad.getTintIndex());
+            int color = this.blockColors.getColor_(state, level, pos.getX(), pos.getY(), pos.getZ(), quad.getTintIndex());
             r = (color >> 16 & 255) / 255.0F;
             g = (color >> 8 & 255) / 255.0F;
             b = (color & 255) / 255.0F;

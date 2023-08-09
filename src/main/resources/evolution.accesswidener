@@ -1,6 +1,7 @@
 accessWidener	v1	named
 
 #Classes
+accessible class net/minecraft/client/color/block/BlockTintCache$CacheData
 accessible class net/minecraft/client/gui/screens/MenuScreens$ScreenConstructor
 accessible class net/minecraft/client/model/geom/ModelPart$Polygon
 accessible class net/minecraft/client/model/geom/ModelPart$Vertex
@@ -28,6 +29,7 @@ accessible field com/mojang/blaze3d/vertex/BufferBuilder$SortState sortX F
 accessible field com/mojang/blaze3d/vertex/BufferBuilder$SortState sortY F
 accessible field com/mojang/blaze3d/vertex/BufferBuilder$SortState sortZ F
 accessible field com/mojang/blaze3d/vertex/BufferBuilder$SortState vertices I
+accessible field net/minecraft/client/color/block/BlockTintCache$LatestCacheInfo cache Lnet/minecraft/client/color/block/BlockTintCache$CacheData;
 accessible field net/minecraft/client/gui/components/DebugScreenOverlay block Lnet/minecraft/world/phys/HitResult;
 accessible field net/minecraft/client/gui/components/DebugScreenOverlay liquid Lnet/minecraft/world/phys/HitResult;
 accessible field net/minecraft/client/gui/components/OptionsList$Entry children Ljava/util/List;
@@ -156,6 +158,8 @@ accessible method com/mojang/blaze3d/platform/InputConstants$Key <init> (Ljava/l
 accessible method com/mojang/blaze3d/vertex/BufferBuilder$SortState <init> (Lcom/mojang/blaze3d/vertex/VertexFormat$Mode;I[Lcom/mojang/math/Vector3f;FFF)V
 accessible method com/mojang/blaze3d/vertex/BufferBuilder$DrawState <init> (Lcom/mojang/blaze3d/vertex/VertexFormat;IILcom/mojang/blaze3d/vertex/VertexFormat$Mode;Lcom/mojang/blaze3d/vertex/VertexFormat$IndexType;ZZ)V
 accessible method com/mojang/blaze3d/vertex/PoseStack$Pose <init> (Lcom/mojang/math/Matrix4f;Lcom/mojang/math/Matrix3f;)V
+accessible method net/minecraft/client/color/block/BlockColors addColoringState (Lnet/minecraft/world/level/block/state/properties/Property;[Lnet/minecraft/world/level/block/Block;)V
+accessible method net/minecraft/client/color/block/BlockTintCache$LatestCacheInfo <init> ()V
 accessible method net/minecraft/client/gui/components/AbstractSelectionList bindEntryToSelf (Lnet/minecraft/client/gui/components/AbstractSelectionList$Entry;)V
 extendable method net/minecraft/client/gui/components/DebugScreenOverlay drawChart (Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/util/FrameTimer;IIZ)V
 accessible method net/minecraft/client/gui/Font getFontSet (Lnet/minecraft/resources/ResourceLocation;)Lnet/minecraft/client/gui/font/FontSet;

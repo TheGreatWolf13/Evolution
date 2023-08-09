@@ -1,11 +1,14 @@
 package tgw.evolution.mixin;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import net.minecraft.CrashReport;
 import net.minecraft.CrashReportCategory;
 import net.minecraft.ReportedException;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.color.block.BlockTintCache;
 import net.minecraft.client.multiplayer.ClientChunkCache;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
@@ -33,7 +36,10 @@ import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.storage.WritableLevelData;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
+import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.*;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import tgw.evolution.Evolution;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.hooks.asm.DeleteMethod;
@@ -54,6 +60,7 @@ public abstract class Mixin_M_ClientLevel extends Level implements PatchClientLe
     @Shadow @Final private ClientChunkCache chunkSource;
     @Shadow @Final private TransientEntitySectionManager<Entity> entityStorage;
     @Shadow @Final private Minecraft minecraft;
+    @Mutable @Shadow @Final private Object2ObjectArrayMap<ColorResolver, BlockTintCache> tintCaches;
 
     public Mixin_M_ClientLevel(WritableLevelData pLevelData,
                                ResourceKey<Level> pDimension,
@@ -162,27 +169,30 @@ public abstract class Mixin_M_ClientLevel extends Level implements PatchClientLe
         }
     }
 
-    /**
-     * @author TheGreatWolf
-     * @reason Avoid allocations
-     */
     @Overwrite
     public int calculateBlockTint(BlockPos pos, ColorResolver colorResolver) {
+        Evolution.deprecatedMethod();
+        return this.calculateBlockTint_(pos.getX(), pos.getY(), pos.getZ(), colorResolver);
+    }
+
+    @Override
+    public int calculateBlockTint_(int x, int y, int z, ColorResolver colorResolver) {
         int blend = Minecraft.getInstance().options.biomeBlendRadius;
         if (blend == 0) {
-            return colorResolver.getColor(this.getBiome(pos).value(), pos.getX(), pos.getZ());
+            return colorResolver.getColor(this.getBiome_(x, y, z).value(), x, z);
         }
         int r = 0;
         int g = 0;
         int b = 0;
         int total = 0;
-        int x1 = pos.getX() + blend;
-        int y = pos.getY();
-        int z1 = pos.getZ() + blend;
-        for (int x = pos.getX() - blend; x <= x1; ++x) {
-            for (int z = pos.getZ() - blend; z <= z1; ++z) {
+        int x0 = x - blend;
+        int x1 = x + blend;
+        int z0 = z - blend;
+        int z1 = z + blend;
+        for (int dx = x0; dx <= x1; ++dx) {
+            for (int dz = z0; dz <= z1; ++dz) {
                 ++total;
-                int color = colorResolver.getColor(this.getBiome_(x, y, z).value(), x, z);
+                int color = colorResolver.getColor(this.getBiome_(dx, y, dz).value(), dx, dz);
                 r += color >> 16 & 0xff;
                 g += color >> 8 & 0xff;
                 b += color & 0xff;
@@ -244,6 +254,19 @@ public abstract class Mixin_M_ClientLevel extends Level implements PatchClientLe
                 }
             }
         }
+    }
+
+    @Override
+    @Overwrite
+    public int getBlockTint(BlockPos pos, ColorResolver colorResolver) {
+        Evolution.deprecatedMethod();
+        return this.getBlockTint_(pos.getX(), pos.getY(), pos.getZ(), colorResolver);
+    }
+
+    @Override
+    public int getBlockTint_(int x, int y, int z, ColorResolver colorResolver) {
+        BlockTintCache tintCache = this.tintCaches.get(colorResolver);
+        return tintCache.getColor_(x, y, z);
     }
 
     @Shadow
@@ -320,6 +343,14 @@ public abstract class Mixin_M_ClientLevel extends Level implements PatchClientLe
             category.setDetail("Event data", data);
             throw new ReportedException(crash);
         }
+    }
+
+    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/client/multiplayer/ClientLevel;tintCaches:Lit/unimi/dsi/fastutil/objects/Object2ObjectArrayMap;", opcode = Opcodes.PUTFIELD))
+    private void onInit(ClientLevel instance, Object2ObjectArrayMap<ColorResolver, BlockTintCache> value) {
+        value.get(BiomeColors.GRASS_COLOR_RESOLVER).setSource((x, y, z) -> this.calculateBlockTint_(x, y, z, BiomeColors.GRASS_COLOR_RESOLVER));
+        value.get(BiomeColors.FOLIAGE_COLOR_RESOLVER).setSource((x, y, z) -> this.calculateBlockTint_(x, y, z, BiomeColors.FOLIAGE_COLOR_RESOLVER));
+        value.get(BiomeColors.WATER_COLOR_RESOLVER).setSource((x, y, z) -> this.calculateBlockTint_(x, y, z, BiomeColors.WATER_COLOR_RESOLVER));
+        this.tintCaches = value;
     }
 
     @Shadow

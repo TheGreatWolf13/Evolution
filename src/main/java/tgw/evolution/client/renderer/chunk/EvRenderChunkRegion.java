@@ -56,7 +56,13 @@ public class EvRenderChunkRegion implements BlockAndTintGetter {
 
     @Override
     public int getBlockTint(BlockPos pos, ColorResolver colorResolver) {
-        return this.level.getBlockTint(pos, colorResolver);
+        Evolution.deprecatedMethod();
+        return this.getBlockTint_(pos.getX(), pos.getY(), pos.getZ(), colorResolver);
+    }
+
+    @Override
+    public int getBlockTint_(int x, int y, int z, ColorResolver colorResolver) {
+        return this.level.getBlockTint_(x, y, z, colorResolver);
     }
 
     @Deprecated(forRemoval = true)

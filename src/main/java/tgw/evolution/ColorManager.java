@@ -6,10 +6,12 @@ import net.minecraft.client.color.item.ItemColor;
 import net.minecraft.client.color.item.ItemColors;
 import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.FoliageColor;
 import net.minecraft.world.level.GrassColor;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.block.Block;
+import tgw.evolution.client.renderer.IBlockColor;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.items.IItemTemperature;
@@ -24,24 +26,32 @@ public final class ColorManager {
     private ColorManager() {
     }
 
-    private static void register(BlockColors colors, BlockColor color, Block block) {
-        colors.register(color, block);
+    public static int getAverageFoliageColor(BlockAndTintGetter level, int x, int y, int z) {
+        return level.getBlockTint_(x, y, z, BiomeColors.FOLIAGE_COLOR_RESOLVER);
+    }
+
+    public static int getAverageGrassColor(BlockAndTintGetter level, int x, int y, int z) {
+        return level.getBlockTint_(x, y, z, BiomeColors.GRASS_COLOR_RESOLVER);
+    }
+
+    public static int getAverageWaterColor(BlockAndTintGetter level, int x, int y, int z) {
+        return level.getBlockTint_(x, y, z, BiomeColors.WATER_COLOR_RESOLVER);
     }
 
     private static void register(ItemColors colors, ItemColor color, ItemLike item) {
         colors.register(color, item);
     }
 
+    private static void register(BlockColors colors, BlockColor color, Block block) {
+        colors.register(color, block);
+    }
+
     public static void registerBlockColorHandlers(BlockColors colors) {
-        BlockColor grass = (state, world, pos, color) -> world != null && pos != null ?
-                                                         BiomeColors.getAverageGrassColor(world, pos) :
-                                                         GrassColor.get(0.5, 1.0);
-        BlockColor spruce = (state, world, pos, color) -> FoliageColor.getEvergreenColor();
-        BlockColor birch = (state, world, pos, color) -> FoliageColor.getBirchColor();
-        BlockColor aspen = (state, world, pos, color) -> 0xff_fc00;
-        BlockColor leaves = (state, world, pos, color) -> world != null && pos != null ?
-                                                          BiomeColors.getAverageFoliageColor(world, pos) :
-                                                          FoliageColor.getDefaultColor();
+        BlockColor grass = (IBlockColor) (state, level, x, y, z, data) -> level != null && x != Integer.MIN_VALUE ? getAverageGrassColor(level, x, y, z) : GrassColor.get(0.5, 1.0);
+        BlockColor spruce = (IBlockColor) (state, level, x, y, z, data) -> FoliageColor.getEvergreenColor();
+        BlockColor birch = (IBlockColor) (state, level, x, y, z, data) -> FoliageColor.getBirchColor();
+        BlockColor aspen = (IBlockColor) (state, level, x, y, z, data) -> 0xff_fc00;
+        BlockColor leaves = (IBlockColor) (state, level, x, y, z, data) -> level != null && x != Integer.MIN_VALUE ? getAverageFoliageColor(level, x, y, z) : FoliageColor.getDefaultColor();
         //Grass
         for (RockVariant variant : RockVariant.VALUES) {
             register(colors, grass, variant.get(EvolutionBlocks.GRASSES));

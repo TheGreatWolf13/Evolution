@@ -840,8 +840,7 @@ public class EvChunkRenderDispatcher {
                                         }
                                         matrices.pushPose();
                                         matrices.translate(dx, dy, dz);
-                                        if (dispatcher.renderBatched(blockState, mutable, region, matrices, builder,
-                                                                     true, random, modelData)) {
+                                        if (dispatcher.renderBatched(blockState, mutable, region, matrices, builder, true, random, modelData)) {
                                             compiledChunk.hasBlocks |= 1 << i;
                                         }
                                         matrices.popPose();

@@ -285,6 +285,12 @@
       ],
       "net/minecraft/world/level/material/FlowingFluid": [
         "tgw/evolution/patches/PatchFlowingFluid"
+      ],
+      "net/minecraft/client/color/block/BlockColors": [
+        "tgw/evolution/patches/PatchBlockColors"
+      ],
+      "net/minecraft/client/color/block/BlockTintCache": [
+        "tgw/evolution/patches/PatchBlockTintCache"
       ]
     }
   }

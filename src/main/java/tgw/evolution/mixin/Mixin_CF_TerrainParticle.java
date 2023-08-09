@@ -39,7 +39,7 @@ public abstract class Mixin_CF_TerrainParticle extends TextureSheetParticle impl
         this.posY = Mth.floor(y);
         this.posZ = Mth.floor(z);
         if (!state.is(Blocks.GRASS_BLOCK)) {
-            int color = Minecraft.getInstance().getBlockColors().getColor(state, level, new BlockPos(this.posX, this.posY, this.posZ), 0);
+            int color = Minecraft.getInstance().getBlockColors().getColor_(state, level, this.posX, this.posY, this.posZ, 0);
             this.rCol *= (color >> 16 & 255) / 255.0F;
             this.gCol *= (color >> 8 & 255) / 255.0F;
             this.bCol *= (color & 255) / 255.0F;

@@ -4,6 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.ColorResolver;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeManager;
@@ -41,6 +42,18 @@ public interface MixinLevelReader extends BlockAndTintGetter, PatchLevelReader {
     @Override
     default Holder<Biome> getBiome_(int x, int y, int z) {
         return this.getBiomeManager().getBiome_(x, y, z);
+    }
+
+    @Override
+    @Overwrite
+    default int getBlockTint(BlockPos pos, ColorResolver colorResolver) {
+        Evolution.deprecatedMethod();
+        return this.getBlockTint_(pos.getX(), pos.getY(), pos.getZ(), colorResolver);
+    }
+
+    @Override
+    default int getBlockTint_(int x, int y, int z, ColorResolver colorResolver) {
+        return colorResolver.getColor(this.getBiome_(x, y, z).value(), x, z);
     }
 
     @Deprecated
