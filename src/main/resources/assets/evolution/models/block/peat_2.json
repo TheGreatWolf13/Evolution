@@ -1,8 +1,0 @@
-{
-  "parent": "minecraft:block/slab",
-  "textures": {
-    "side": "evolution:block/peat",
-    "bottom": "evolution:block/peat",
-    "top": "evolution:block/peat"
-  }
-}
