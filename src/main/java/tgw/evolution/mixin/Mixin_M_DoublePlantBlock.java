@@ -2,6 +2,7 @@ package tgw.evolution.mixin;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -52,6 +53,18 @@ public abstract class Mixin_M_DoublePlantBlock extends BushBlock {
         }
         BlockState stateBelow = level.getBlockState_(x, y - 1, z);
         return stateBelow.is(this) && stateBelow.getValue(HALF) == DoubleBlockHalf.LOWER;
+    }
+
+    @Override
+    @Overwrite
+    @DeleteMethod
+    public long getSeed(BlockState blockState, BlockPos blockPos) {
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public long getSeed_(BlockState state, int x, int y, int z) {
+        return Mth.getSeed(x, state.getValue(HALF) == DoubleBlockHalf.LOWER ? y : y - 1, z);
     }
 
     @Override

@@ -17,7 +17,6 @@ import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.*;
 import tgw.evolution.Evolution;
@@ -25,9 +24,12 @@ import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.client.models.data.IModelData;
 import tgw.evolution.client.renderer.EvAmbientOcclusionFace;
 import tgw.evolution.client.renderer.chunk.EvLevelRenderer;
+import tgw.evolution.hooks.asm.DeleteMethod;
 import tgw.evolution.patches.PatchModelBlockRenderer;
 import tgw.evolution.patches.PatchVertexConsumer;
+import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.math.DirectionUtil;
+import tgw.evolution.util.math.IRandom;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.math.XoRoShiRoRandom;
 
@@ -35,7 +37,7 @@ import java.util.List;
 import java.util.Random;
 
 @Mixin(ModelBlockRenderer.class)
-public abstract class MixinModelBlockRenderer implements PatchModelBlockRenderer {
+public abstract class Mixin_M_ModelBlockRenderer implements PatchModelBlockRenderer {
 
     @Unique private static final ThreadLocal<EvAmbientOcclusionFace> AOF = ThreadLocal.withInitial(EvAmbientOcclusionFace::new);
     @Unique private static final ThreadLocal<float[]> SHAPES = ThreadLocal.withInitial(() -> new float[12]);
@@ -44,12 +46,7 @@ public abstract class MixinModelBlockRenderer implements PatchModelBlockRenderer
     @Shadow @Final private BlockColors blockColors;
 
     @Unique
-    private static byte calculateShape(BlockGetter level,
-                                       BlockState state,
-                                       int x, int y, int z,
-                                       int[] vertices,
-                                       Direction direction,
-                                       float[] shape) {
+    private static byte calculateShape(BlockGetter level, BlockState state, int x, int y, int z, int[] vertices, Direction direction, float[] shape) {
         float vx = Float.intBitsToFloat(vertices[0]);
         float vy = Float.intBitsToFloat(vertices[1]);
         float vz = Float.intBitsToFloat(vertices[2]);
@@ -150,11 +147,7 @@ public abstract class MixinModelBlockRenderer implements PatchModelBlockRenderer
     }
 
     @Unique
-    private static boolean calculateShape(BlockGetter level,
-                                          BlockState state,
-                                          BlockPos pos,
-                                          int[] vertices,
-                                          Direction direction) {
+    private static boolean calculateShape(BlockGetter level, BlockState state, int x, int y, int z, int[] vertices, Direction direction) {
         int offset = switch (direction.getAxis()) {
             case X -> 0;
             case Y -> 1;
@@ -173,9 +166,9 @@ public abstract class MixinModelBlockRenderer implements PatchModelBlockRenderer
             }
         }
         if (direction.getAxisDirection() == Direction.AxisDirection.NEGATIVE) {
-            return min == max && (min < 1.0E-4F || state.isCollisionShapeFullBlock(level, pos));
+            return min == max && (min < 1.0E-4F || state.isCollisionShapeFullBlock_(level, x, y, z));
         }
-        return min == max && (max > 0.999_9F || state.isCollisionShapeFullBlock(level, pos));
+        return min == max && (max > 0.999_9F || state.isCollisionShapeFullBlock_(level, x, y, z));
     }
 
     private static void renderQuad(PoseStack.Pose entry, VertexConsumer consumer, int defaultColor, List<BakedQuad> list, int light, int overlay) {
@@ -208,26 +201,18 @@ public abstract class MixinModelBlockRenderer implements PatchModelBlockRenderer
     }
 
     @Overwrite
-    private void putQuadData(BlockAndTintGetter level,
-                             BlockState state,
-                             BlockPos pos,
-                             VertexConsumer consumer,
-                             PoseStack.Pose entry,
-                             BakedQuad quad,
-                             float brightness0,
-                             float brightness1,
-                             float brightness2,
-                             float brightness3,
-                             int lightmap0,
-                             int lightmap1,
-                             int lightmap2,
-                             int lightmap3,
-                             int packedOverlay) {
+    @DeleteMethod
+    private void putQuadData(BlockAndTintGetter level, BlockState state, BlockPos pos, VertexConsumer consumer, PoseStack.Pose entry, BakedQuad quad, float brightness0, float brightness1, float brightness2, float brightness3, int lightmap0, int lightmap1, int lightmap2, int lightmap3, int packedOverlay) {
+        throw new AbstractMethodError();
+    }
+
+    @Unique
+    private void putQuadData(BlockAndTintGetter level, BlockState state, int x, int y, int z, VertexConsumer consumer, PoseStack.Pose entry, BakedQuad quad, float brightness0, float brightness1, float brightness2, float brightness3, int lightmap0, int lightmap1, int lightmap2, int lightmap3, int packedOverlay) {
         float r;
         float g;
         float b;
         if (quad.isTinted()) {
-            int color = this.blockColors.getColor_(state, level, pos.getX(), pos.getY(), pos.getZ(), quad.getTintIndex());
+            int color = this.blockColors.getColor_(state, level, x, y, z, quad.getTintIndex());
             r = (color >> 16 & 255) / 255.0F;
             g = (color >> 8 & 255) / 255.0F;
             b = (color & 255) / 255.0F;
@@ -237,12 +222,7 @@ public abstract class MixinModelBlockRenderer implements PatchModelBlockRenderer
             g = 1.0F;
             b = 1.0F;
         }
-        ((PatchVertexConsumer) consumer).putBulkData(entry,
-                                                     quad,
-                                                     brightness0, brightness1, brightness2, brightness3,
-                                                     r, g, b,
-                                                     lightmap0, lightmap1, lightmap2, lightmap3,
-                                                     packedOverlay);
+        ((PatchVertexConsumer) consumer).putBulkData(entry, quad, brightness0, brightness1, brightness2, brightness3, r, g, b, lightmap0, lightmap1, lightmap2, lightmap3, packedOverlay);
     }
 
     /**
@@ -281,50 +261,29 @@ public abstract class MixinModelBlockRenderer implements PatchModelBlockRenderer
      * @param shape the array, of length 12, to store the shape bounds in
      */
     @Unique
-    private void renderModelFaceAO(BlockAndTintGetter level,
-                                   BlockState state,
-                                   BlockPos pos,
-                                   PoseStack matrices,
-                                   VertexConsumer consumer,
-                                   List<BakedQuad> quads,
-                                   float[] shape,
-                                   EvAmbientOcclusionFace AoFace,
-                                   int packedOverlay) {
-        int x = pos.getX();
-        int y = pos.getY();
-        int z = pos.getZ();
+    private void renderModelFaceAO(BlockAndTintGetter level, BlockState state, int x, int y, int z, PoseStack matrices, VertexConsumer consumer, List<BakedQuad> quads, float[] shape, EvAmbientOcclusionFace AoFace, int packedOverlay) {
         for (int i = 0, l = quads.size(); i < l; i++) {
             BakedQuad bakedQuad = quads.get(i);
             AoFace.calculate(level, state, x, y, z, bakedQuad.getDirection(), shape, calculateShape(level, state, x, y, z, bakedQuad.getVertices(), bakedQuad.getDirection(), shape), bakedQuad.isShade());
-            this.putQuadData(level, state, pos, consumer, matrices.last(), bakedQuad, AoFace.brightness0, AoFace.brightness1, AoFace.brightness2,
-                             AoFace.brightness3, AoFace.lightmap0, AoFace.lightmap1, AoFace.lightmap2, AoFace.lightmap3, packedOverlay);
+            this.putQuadData(level, state, x, y, z, consumer, matrices.last(), bakedQuad, AoFace.brightness0, AoFace.brightness1, AoFace.brightness2, AoFace.brightness3, AoFace.lightmap0, AoFace.lightmap1, AoFace.lightmap2, AoFace.lightmap3, packedOverlay);
         }
     }
 
     @Unique
-    private void renderModelFaceFlat(BlockAndTintGetter level,
-                                     BlockState state,
-                                     BlockPos pos,
-                                     int light,
-                                     int overlay,
-                                     boolean repackLight,
-                                     PoseStack matrices,
-                                     VertexConsumer buffer,
-                                     List<BakedQuad> quads) {
+    private void renderModelFaceFlat(BlockAndTintGetter level, BlockState state, int x, int y, int z, int light, int overlay, boolean repackLight, PoseStack matrices, VertexConsumer buffer, List<BakedQuad> quads) {
         for (int i = 0, l = quads.size(); i < l; i++) {
             BakedQuad quad = quads.get(i);
             if (repackLight) {
                 Direction dir = quad.getDirection();
-                if (calculateShape(level, state, pos, quad.getVertices(), dir)) {
-                    light = EvLevelRenderer.getLightColor(level, state, pos.getX() + dir.getStepX(), pos.getY() + dir.getStepY(),
-                                                          pos.getZ() + dir.getStepZ());
+                if (calculateShape(level, state, x, y, z, quad.getVertices(), dir)) {
+                    light = EvLevelRenderer.getLightColor(level, state, x + dir.getStepX(), y + dir.getStepY(), z + dir.getStepZ());
                 }
                 else {
-                    light = EvLevelRenderer.getLightColor(level, state, pos.getX(), pos.getY(), pos.getZ());
+                    light = EvLevelRenderer.getLightColor(level, state, x, y, z);
                 }
             }
             float bright = level.getShade(quad.getDirection(), quad.isShade());
-            this.putQuadData(level, state, pos, buffer, matrices.last(), quad, bright, bright, bright, bright, light, light, light, light, overlay);
+            this.putQuadData(level, state, x, y, z, buffer, matrices.last(), quad, bright, bright, bright, bright, light, light, light, light, overlay);
         }
     }
 
@@ -348,68 +307,44 @@ public abstract class MixinModelBlockRenderer implements PatchModelBlockRenderer
     }
 
     @Override
-    public boolean tesselateBlock(BlockAndTintGetter level,
-                                  BakedModel model,
-                                  BlockState state,
-                                  BlockPos pos,
-                                  PoseStack matrices,
-                                  VertexConsumer builder,
-                                  boolean checkSides,
-                                  Random random,
-                                  long seed,
-                                  int packedOverlay,
-                                  IModelData modelData) {
+    public boolean tesselateBlock(BlockAndTintGetter level, BakedModel model, BlockState state, int x, int y, int z, PoseStack matrices, VertexConsumer builder, boolean checkSides, IRandom random, long seed, int packedOverlay, IModelData modelData) {
         boolean ao = Minecraft.useAmbientOcclusion() && state.getLightEmission() < 15 && model.useAmbientOcclusion();
-        Vec3 vec3 = state.getOffset(level, pos);
-        matrices.translate(vec3.x, vec3.y, vec3.z);
-        modelData = model.getModelData(level, pos.getX(), pos.getY(), pos.getZ(), state, modelData);
+        state.getBlock().translateByOffset(matrices, x, z);
+        modelData = model.getModelData(level, x, y, z, state, modelData);
         try {
             return ao ?
-                   this.tesselateWithAO(level, model, state, pos, matrices, builder, checkSides, random, seed, packedOverlay, modelData) :
-                   this.tesselateWithoutAO(level, model, state, pos, matrices, builder, checkSides, random, seed, packedOverlay, modelData);
+                   this.tesselateWithAO(level, model, state, x, y, z, matrices, builder, checkSides, random, seed, packedOverlay, modelData) :
+                   this.tesselateWithoutAO(level, model, state, x, y, z, matrices, builder, checkSides, random, seed, packedOverlay, modelData);
         }
         catch (Throwable t) {
             CrashReport crash = CrashReport.forThrowable(t, "Tessellating block model");
             CrashReportCategory category = crash.addCategory("Block model being tessellated");
-            CrashReportCategory.populateBlockDetails(category, level, pos, state);
+            category.setDetail("Block", state::toString);
+            category.setDetail("Block location", () -> CrashReportCategory.formatLocation(level, x, y, z));
             category.setDetail("Using AO", ao);
             throw new ReportedException(crash);
         }
     }
 
     @Unique
-    private boolean tesselateWithAO(BlockAndTintGetter level,
-                                    BakedModel model,
-                                    BlockState state,
-                                    BlockPos pos,
-                                    PoseStack matrices,
-                                    VertexConsumer consumer,
-                                    boolean checkSides,
-                                    Random random,
-                                    long seed,
-                                    int packedOverlay,
-                                    IModelData modelData) {
-        int x = pos.getX();
-        int y = pos.getY();
-        int z = pos.getZ();
+    private boolean tesselateWithAO(BlockAndTintGetter level, BakedModel model, BlockState state, int x, int y, int z, PoseStack matrices, VertexConsumer consumer, boolean checkSides, IRandom random, long seed, int packedOverlay, IModelData modelData) {
         boolean hasRendered = false;
         float[] shapes = SHAPES.get();
         EvAmbientOcclusionFace aoFace = AOF.get();
         for (Direction dir : DIRECTIONS) {
             random.setSeed(seed);
-            List<BakedQuad> quads = model.getQuads(state, dir, random, modelData);
+            OList<BakedQuad> quads = model.getQuads(state, dir, random, modelData);
             if (!quads.isEmpty()) {
-                if (!checkSides ||
-                    BlockUtils.shouldRenderFace(state, level, x, y, z, dir, x + dir.getStepX(), y + dir.getStepY(), z + dir.getStepZ())) {
-                    this.renderModelFaceAO(level, state, pos, matrices, consumer, quads, shapes, aoFace, packedOverlay);
+                if (!checkSides || BlockUtils.shouldRenderFace(state, level, x, y, z, dir, x + dir.getStepX(), y + dir.getStepY(), z + dir.getStepZ())) {
+                    this.renderModelFaceAO(level, state, x, y, z, matrices, consumer, quads, shapes, aoFace, packedOverlay);
                     hasRendered = true;
                 }
             }
         }
         random.setSeed(seed);
-        List<BakedQuad> quads = model.getQuads(state, null, random, modelData);
+        OList<BakedQuad> quads = model.getQuads(state, null, random, modelData);
         if (!quads.isEmpty()) {
-            this.renderModelFaceAO(level, state, pos, matrices, consumer, quads, shapes, aoFace, packedOverlay);
+            this.renderModelFaceAO(level, state, x, y, z, matrices, consumer, quads, shapes, aoFace, packedOverlay);
             return true;
         }
         return hasRendered;
@@ -454,20 +389,7 @@ public abstract class MixinModelBlockRenderer implements PatchModelBlockRenderer
     }
 
     @Unique
-    private boolean tesselateWithoutAO(BlockAndTintGetter level,
-                                       BakedModel model,
-                                       BlockState state,
-                                       BlockPos pos,
-                                       PoseStack matrices,
-                                       VertexConsumer builder,
-                                       boolean checkSides,
-                                       Random random,
-                                       long seed,
-                                       int packedOverlay,
-                                       IModelData modelData) {
-        int x = pos.getX();
-        int y = pos.getY();
-        int z = pos.getZ();
+    private boolean tesselateWithoutAO(BlockAndTintGetter level, BakedModel model, BlockState state, int x, int y, int z, PoseStack matrices, VertexConsumer builder, boolean checkSides, IRandom random, long seed, int packedOverlay, IModelData modelData) {
         boolean hasAnything = false;
         for (Direction dir : DIRECTIONS) {
             random.setSeed(seed);
@@ -478,7 +400,7 @@ public abstract class MixinModelBlockRenderer implements PatchModelBlockRenderer
                 int offZ = z + dir.getStepZ();
                 if (!checkSides || BlockUtils.shouldRenderFace(state, level, x, y, z, dir, offX, offY, offZ)) {
                     int light = EvLevelRenderer.getLightColor(level, state, offX, offY, offZ);
-                    this.renderModelFaceFlat(level, state, pos, light, packedOverlay, false, matrices, builder, quads);
+                    this.renderModelFaceFlat(level, state, x, y, z, light, packedOverlay, false, matrices, builder, quads);
                     hasAnything = true;
                 }
             }
@@ -486,7 +408,7 @@ public abstract class MixinModelBlockRenderer implements PatchModelBlockRenderer
         random.setSeed(seed);
         List<BakedQuad> quads = model.getQuads(state, null, random, modelData);
         if (!quads.isEmpty()) {
-            this.renderModelFaceFlat(level, state, pos, 0xffff_ffff, packedOverlay, true, matrices, builder, quads);
+            this.renderModelFaceFlat(level, state, x, y, z, 0xffff_ffff, packedOverlay, true, matrices, builder, quads);
             return true;
         }
         return hasAnything;

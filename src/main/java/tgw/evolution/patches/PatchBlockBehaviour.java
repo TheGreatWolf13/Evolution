@@ -1,5 +1,6 @@
 package tgw.evolution.patches;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
@@ -79,6 +80,10 @@ public interface PatchBlockBehaviour {
         throw new AbstractMethodError();
     }
 
+    default long getSeed_(BlockState state, int x, int y, int z) {
+        throw new AbstractMethodError();
+    }
+
     default float getShadeBrightness_(BlockState state, BlockGetter level, int x, int y, int z) {
         throw new AbstractMethodError();
     }
@@ -129,6 +134,10 @@ public interface PatchBlockBehaviour {
     }
 
     default void tick_(BlockState state, ServerLevel level, int x, int y, int z, Random random) {
+        throw new AbstractMethodError();
+    }
+
+    default void translateByOffset(PoseStack matrices, int x, int z) {
         throw new AbstractMethodError();
     }
 

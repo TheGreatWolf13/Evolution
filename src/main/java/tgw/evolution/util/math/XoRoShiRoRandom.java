@@ -8,7 +8,7 @@ import java.util.Random;
 // import Apache Commons.
 //
 // http://xoshiro.di.unimi.it/
-public class XoRoShiRoRandom extends Random {
+public class XoRoShiRoRandom extends Random implements IRandom {
 
     private static final SplitMixRandom SEED_UNIQUIFIER = new SplitMixRandom(System.nanoTime());
     private boolean hasSavedState; // True if we can be quickly reseed by using resetting the words

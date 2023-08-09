@@ -1,5 +1,6 @@
 package tgw.evolution.mixin;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -173,6 +174,18 @@ public abstract class MixinBlockBehaviour implements PatchBlockBehaviour {
 
     @Deprecated
     @Overwrite
+    public long getSeed(BlockState state, BlockPos pos) {
+        Evolution.deprecatedMethod();
+        return this.getSeed_(state, pos.getX(), pos.getY(), pos.getZ());
+    }
+
+    @Override
+    public long getSeed_(BlockState state, int x, int y, int z) {
+        return Mth.getSeed(x, y, z);
+    }
+
+    @Deprecated
+    @Overwrite
     //ok
     public float getShadeBrightness(BlockState state, BlockGetter level, BlockPos pos) {
         Evolution.deprecatedMethod();
@@ -307,6 +320,20 @@ public abstract class MixinBlockBehaviour implements PatchBlockBehaviour {
 
     @Override
     public void tick_(BlockState state, ServerLevel level, int x, int y, int z, Random random) {
+    }
+
+    @Override
+    public void translateByOffset(PoseStack matrices, int x, int z) {
+        BlockBehaviour.OffsetType offsetType = this.getOffsetType();
+        if (offsetType == BlockBehaviour.OffsetType.NONE) {
+            return;
+        }
+        long seed = Mth.getSeed(x, 0, z);
+        float horizOffset = this.getMaxHorizontalOffset();
+        double d = Mth.clamp(((seed & 15L) / 15.0F - 0.5) * 0.5, -horizOffset, horizOffset);
+        double e = offsetType == BlockBehaviour.OffsetType.XYZ ? ((seed >> 4 & 15L) / 15.0F - 1.0) * this.getMaxVerticalOffset() : 0;
+        double g = Mth.clamp(((seed >> 8 & 15L) / 15.0F - 0.5) * 0.5, -horizOffset, horizOffset);
+        matrices.translate(d, e, g);
     }
 
     @Deprecated

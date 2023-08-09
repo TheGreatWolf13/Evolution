@@ -9,7 +9,7 @@ import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.FallingBlockRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.core.BlockPos;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.item.FallingBlockEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.RenderShape;
@@ -24,7 +24,6 @@ import java.util.Random;
 public abstract class MixinFallingBlockRenderer extends EntityRenderer<FallingBlockEntity> {
 
     private static final Random RANDOM = new Random();
-    private static final BlockPos.MutableBlockPos MUTABLE_POS = new BlockPos.MutableBlockPos();
 
     public MixinFallingBlockRenderer(EntityRendererProvider.Context context) {
         super(context);
@@ -40,18 +39,18 @@ public abstract class MixinFallingBlockRenderer extends EntityRenderer<FallingBl
                 matrices.pushPose();
                 matrices.translate(-0.5, 0.0, -0.5);
                 BlockRenderDispatcher dispatcher = Minecraft.getInstance().getBlockRenderer();
-                dispatcher.getModelRenderer()
-                          .tesselateBlock(level,
-                                          dispatcher.getBlockModel(state),
-                                          state,
-                                          MUTABLE_POS.set(entity.getX(), entity.getBoundingBox().maxY, entity.getZ()),
-                                          matrices,
-                                          buffer.getBuffer(ItemBlockRenderTypes.getMovingBlockRenderType(state)),
-                                          false,
-                                          RANDOM,
-                                          state.getSeed(entity.getStartPos()),
-                                          OverlayTexture.NO_OVERLAY,
-                                          IModelData.EMPTY);
+                dispatcher.getModelRenderer().tesselateBlock(level,
+                                                             dispatcher.getBlockModel(state),
+                                                             state,
+                                                             Mth.floor(entity.getX()),
+                                                             Mth.floor(entity.getBoundingBox().maxY),
+                                                             Mth.floor(entity.getZ()),
+                                                             matrices,
+                                                             buffer.getBuffer(ItemBlockRenderTypes.getMovingBlockRenderType(state)),
+                                                             false,
+                                                             RANDOM,
+                                                             state.getSeed(entity.getStartPos()), OverlayTexture.NO_OVERLAY, IModelData.EMPTY
+                );
                 matrices.popPose();
                 super.render(entity, yaw, partialTicks, matrices, buffer, packedLight);
             }

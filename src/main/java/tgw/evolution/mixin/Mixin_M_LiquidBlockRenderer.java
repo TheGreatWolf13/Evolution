@@ -2,7 +2,6 @@ package tgw.evolution.mixin;
 
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.client.renderer.block.LiquidBlockRenderer;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
@@ -20,15 +19,19 @@ import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.Contract;
 import org.spongepowered.asm.mixin.*;
+import tgw.evolution.ColorManager;
+import tgw.evolution.Evolution;
 import tgw.evolution.client.renderer.EvAmbientOcclusionFace;
 import tgw.evolution.client.renderer.chunk.EvLevelRenderer;
 import tgw.evolution.hooks.asm.DeleteMethod;
+import tgw.evolution.patches.PatchLiquidBlockRenderer;
 import tgw.evolution.util.math.DirectionUtil;
 import tgw.evolution.util.math.Vec3d;
 
 @Mixin(LiquidBlockRenderer.class)
-public abstract class Mixin_M_LiquidBlockRenderer {
+public abstract class Mixin_M_LiquidBlockRenderer implements PatchLiquidBlockRenderer {
 
     @Unique private static final ThreadLocal<Vec3d> VEC = ThreadLocal.withInitial(Vec3d::new);
     @Unique private static final ThreadLocal<EvAmbientOcclusionFace> AO_FACE = ThreadLocal.withInitial(EvAmbientOcclusionFace::new);
@@ -98,13 +101,25 @@ public abstract class Mixin_M_LiquidBlockRenderer {
     }
 
     @Overwrite
+    @DeleteMethod
     private static boolean isFaceOccludedByNeighbor(BlockGetter level, BlockPos pos, Direction direction, float height, BlockState state) {
-        return isFaceOccludedByState(level, direction, height, pos.getX() + direction.getStepX(), pos.getY() + direction.getStepY(), pos.getZ() + direction.getStepZ(), state);
+        throw new AbstractMethodError();
+    }
+
+    @Unique
+    private static boolean isFaceOccludedByNeighbor(BlockGetter level, int x, int y, int z, Direction dir, float height, BlockState state) {
+        return isFaceOccludedByState(level, dir, height, x + dir.getStepX(), y + dir.getStepY(), z + dir.getStepZ(), state);
     }
 
     @Overwrite
+    @DeleteMethod
     private static boolean isFaceOccludedBySelf(BlockGetter level, BlockPos pos, BlockState state, Direction direction) {
-        return isFaceOccludedByState(level, direction.getOpposite(), 1.0F, pos.getX(), pos.getY(), pos.getZ(), state);
+        throw new AbstractMethodError();
+    }
+
+    @Unique
+    private static boolean isFaceOccludedBySelf(BlockGetter level, int x, int y, int z, BlockState state, Direction direction) {
+        return isFaceOccludedByState(level, direction.getOpposite(), 1.0F, x, y, z, state);
     }
 
     @Overwrite
@@ -123,8 +138,10 @@ public abstract class Mixin_M_LiquidBlockRenderer {
         return false;
     }
 
+    @Contract(value = "_, _ -> _")
     @Shadow
     private static boolean isNeighborSameFluid(FluidState fluidState, FluidState fluidState2) {
+        //noinspection Contract
         throw new AbstractMethodError();
     }
 
@@ -143,9 +160,14 @@ public abstract class Mixin_M_LiquidBlockRenderer {
         return false;
     }
 
-    @Shadow
+    @Overwrite
+    @DeleteMethod
     public static boolean shouldRenderFace(BlockAndTintGetter blockAndTintGetter, BlockPos blockPos, FluidState fluidState, BlockState blockState, Direction direction, FluidState fluidState2) {
-        throw new AbstractMethodError();
+        return !isFaceOccludedBySelf(blockAndTintGetter, blockPos, blockState, direction) && !isNeighborSameFluid(fluidState, fluidState2);
+    }
+
+    private static boolean shouldRenderFace(BlockAndTintGetter level, int x, int y, int z, FluidState fluid, BlockState state, Direction direction, FluidState fluidAtDir) {
+        return !isFaceOccludedBySelf(level, x, y, z, state, direction) && !isNeighborSameFluid(fluid, fluidAtDir);
     }
 
     @Overwrite
@@ -184,9 +206,12 @@ public abstract class Mixin_M_LiquidBlockRenderer {
 
     @Overwrite
     public boolean tesselate(BlockAndTintGetter level, BlockPos pos, VertexConsumer builder, BlockState state, FluidState fluidState) {
-        int x = pos.getX();
-        int y = pos.getY();
-        int z = pos.getZ();
+        Evolution.deprecatedMethod();
+        return this.tesselate(level, pos.getX(), pos.getY(), pos.getZ(), builder, state, fluidState);
+    }
+
+    @Override
+    public boolean tesselate(BlockAndTintGetter level, int x, int y, int z, VertexConsumer builder, BlockState state, FluidState fluidState) {
         FluidState fluidBelow = level.getFluidState_(x, y - 1, z);
         FluidState fluidAbove = level.getFluidState_(x, y + 1, z);
         FluidState fluidNorth = level.getFluidState_(x, y, z - 1);
@@ -194,11 +219,11 @@ public abstract class Mixin_M_LiquidBlockRenderer {
         FluidState fluidWest = level.getFluidState_(x - 1, y, z);
         FluidState fluidEast = level.getFluidState_(x + 1, y, z);
         boolean renderU = !isNeighborSameFluid(fluidState, fluidAbove);
-        boolean renderD = shouldRenderFace(level, pos, fluidState, state, Direction.DOWN, fluidBelow) && !isFaceOccludedByNeighbor(level, pos, Direction.DOWN, 0.888_888_9F, level.getBlockState_(x, y - 1, z));
-        boolean renderN = shouldRenderFace(level, pos, fluidState, state, Direction.NORTH, fluidNorth);
-        boolean renderS = shouldRenderFace(level, pos, fluidState, state, Direction.SOUTH, fluidSouth);
-        boolean renderW = shouldRenderFace(level, pos, fluidState, state, Direction.WEST, fluidWest);
-        boolean renderE = shouldRenderFace(level, pos, fluidState, state, Direction.EAST, fluidEast);
+        boolean renderD = shouldRenderFace(level, x, y, z, fluidState, state, Direction.DOWN, fluidBelow) && !isFaceOccludedByNeighbor(level, x, y, z, Direction.DOWN, 0.888_888_9F, level.getBlockState_(x, y - 1, z));
+        boolean renderN = shouldRenderFace(level, x, y, z, fluidState, state, Direction.NORTH, fluidNorth);
+        boolean renderS = shouldRenderFace(level, x, y, z, fluidState, state, Direction.SOUTH, fluidSouth);
+        boolean renderW = shouldRenderFace(level, x, y, z, fluidState, state, Direction.WEST, fluidWest);
+        boolean renderE = shouldRenderFace(level, x, y, z, fluidState, state, Direction.EAST, fluidEast);
         if (!renderU && !renderD && !renderE && !renderW && !renderN && !renderS) {
             return false;
         }
@@ -233,11 +258,11 @@ public abstract class Mixin_M_LiquidBlockRenderer {
         double vx = x & 15;
         double vy = y & 15;
         double vz = z & 15;
-        int color = isLava ? 0xff_ffff : BiomeColors.getAverageWaterColor(level, pos);
+        int color = isLava ? 0xff_ffff : ColorManager.getAverageWaterColor(level, x, y, z);
         float colorR = (color >> 16 & 255) / 255.0F;
         float colorG = (color >> 8 & 255) / 255.0F;
         float colorB = (color & 255) / 255.0F;
-        if (renderU && !isFaceOccludedByNeighbor(level, pos, Direction.UP, Math.min(Math.min(heightNW, heightSW), Math.min(heightSE, heightNE)), level.getBlockState_(x, y + 1, z))) {
+        if (renderU && !isFaceOccludedByNeighbor(level, x, y, z, Direction.UP, Math.min(Math.min(heightNW, heightSW), Math.min(heightSE, heightNE)), level.getBlockState_(x, y + 1, z))) {
             rendered = true;
             heightNW -= 0.001F;
             heightSW -= 0.001F;
@@ -370,7 +395,7 @@ public abstract class Mixin_M_LiquidBlockRenderer {
                     h0 = heightNW;
                     h1 = heightNE;
                     stateAtSide = level.getBlockStateAtSide(x, y, z, dir);
-                    if (isFaceOccludedByNeighbor(level, pos, dir, Math.max(h0, h1), stateAtSide)) {
+                    if (isFaceOccludedByNeighbor(level, x, y, z, dir, Math.max(h0, h1), stateAtSide)) {
                         continue;
                     }
                     vx0 = vx;
@@ -385,7 +410,7 @@ public abstract class Mixin_M_LiquidBlockRenderer {
                     h0 = heightSE;
                     h1 = heightSW;
                     stateAtSide = level.getBlockStateAtSide(x, y, z, dir);
-                    if (isFaceOccludedByNeighbor(level, pos, dir, Math.max(h0, h1), stateAtSide)) {
+                    if (isFaceOccludedByNeighbor(level, x, y, z, dir, Math.max(h0, h1), stateAtSide)) {
                         continue;
                     }
                     vx0 = vx + 1;
@@ -400,7 +425,7 @@ public abstract class Mixin_M_LiquidBlockRenderer {
                     h0 = heightSW;
                     h1 = heightNW;
                     stateAtSide = level.getBlockStateAtSide(x, y, z, dir);
-                    if (isFaceOccludedByNeighbor(level, pos, dir, Math.max(h0, h1), stateAtSide)) {
+                    if (isFaceOccludedByNeighbor(level, x, y, z, dir, Math.max(h0, h1), stateAtSide)) {
                         continue;
                     }
                     vx0 = vx + 0.001;
@@ -415,7 +440,7 @@ public abstract class Mixin_M_LiquidBlockRenderer {
                     h0 = heightNE;
                     h1 = heightSE;
                     stateAtSide = level.getBlockStateAtSide(x, y, z, dir);
-                    if (isFaceOccludedByNeighbor(level, pos, dir, Math.max(h0, h1), stateAtSide)) {
+                    if (isFaceOccludedByNeighbor(level, x, y, z, dir, Math.max(h0, h1), stateAtSide)) {
                         continue;
                     }
                     vx0 = vx + 1 - 0.001;

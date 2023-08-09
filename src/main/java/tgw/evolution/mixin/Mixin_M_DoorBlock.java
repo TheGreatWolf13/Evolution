@@ -2,6 +2,7 @@ package tgw.evolution.mixin;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
@@ -65,6 +66,18 @@ public abstract class Mixin_M_DoorBlock extends Block {
 
     @Shadow
     protected abstract int getOpenSound();
+
+    @Override
+    @Overwrite
+    @DeleteMethod
+    public long getSeed(BlockState blockState, BlockPos blockPos) {
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public long getSeed_(BlockState state, int x, int y, int z) {
+        return Mth.getSeed(x, state.getValue(HALF) == DoubleBlockHalf.LOWER ? y : y - 1, z);
+    }
 
     @Override
     @Overwrite

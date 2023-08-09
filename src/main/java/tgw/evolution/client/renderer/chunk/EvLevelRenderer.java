@@ -121,7 +121,6 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
     private final RenderChunkInfoComparator comparator = new RenderChunkInfoComparator();
     private final Frustum cullingFrustum = new Frustum(new Matrix4f(), new Matrix4f());
     private final I2OMap<EvBlockDestructionProgress> destroyingBlocks = new I2OHashMap<>();
-    private final BlockPos.MutableBlockPos destructionPos = new BlockPos.MutableBlockPos();
     private final L2OMap<SortedSet<EvBlockDestructionProgress>> destructionProgress = new L2OHashMap<>();
     private final EntityRenderDispatcher entityRenderDispatcher;
     /**
@@ -1642,10 +1641,13 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
         profiler.popPush("destroyProgress");
         L2OMap<SortedSet<EvBlockDestructionProgress>> destructions = this.destructionProgress;
         for (L2OMap.Entry<SortedSet<EvBlockDestructionProgress>> e = destructions.fastEntries(); e != null; e = destructions.fastEntries()) {
-            this.destructionPos.set(e.key());
-            double deltaX = this.destructionPos.getX() - camX;
-            double deltaY = this.destructionPos.getY() - camY;
-            double deltaZ = this.destructionPos.getZ() - camZ;
+            long pos = e.key();
+            int x = BlockPos.getX(pos);
+            int y = BlockPos.getY(pos);
+            int z = BlockPos.getZ(pos);
+            double deltaX = x - camX;
+            double deltaY = y - camY;
+            double deltaZ = z - camZ;
             if (!(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ > 1_024.0)) {
                 SortedSet<EvBlockDestructionProgress> destructionProgresses = e.value();
                 if (destructionProgresses != null && !destructionProgresses.isEmpty()) {
@@ -1654,12 +1656,8 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
                     matrices.translate(deltaX, deltaY, deltaZ);
                     PoseStack.Pose entry = matrices.last();
                     //noinspection ObjectAllocationInLoop
-                    VertexConsumer consumer = new SheetedDecalTextureGenerator(
-                            this.bufferHolder.crumblingBufferSource().getBuffer(ModelBakery.DESTROY_TYPES.get(progress)), entry.pose(),
-                            entry.normal());
-                    this.mc.getBlockRenderer()
-                           .renderBreakingTexture(this.level.getBlockState_(this.destructionPos), this.destructionPos, this.level, matrices,
-                                                  consumer);
+                    VertexConsumer consumer = new SheetedDecalTextureGenerator(this.bufferHolder.crumblingBufferSource().getBuffer(ModelBakery.DESTROY_TYPES.get(progress)), entry.pose(), entry.normal());
+                    this.mc.getBlockRenderer().renderBreakingTexture(this.level.getBlockState_(x, y, z), x, y, z, this.level, matrices, consumer);
                     matrices.popPose();
                 }
             }

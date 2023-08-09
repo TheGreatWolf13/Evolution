@@ -9,8 +9,11 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import tgw.evolution.Evolution;
 import tgw.evolution.client.models.data.IModelData;
+import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.collection.lists.WeightedList;
+import tgw.evolution.util.math.IRandom;
 
 import java.util.List;
 import java.util.Random;
@@ -39,11 +42,14 @@ public class ComplexWeightedModel implements IDynamicBakedModel {
     }
 
     @Override
-    public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state,
-                                             @Nullable Direction side,
-                                             @NotNull Random rand,
-                                             @NotNull IModelData extraData) {
+    public OList<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, IRandom rand, IModelData extraData) {
         return this.list.getWeighted(rand).getQuads(state, side, rand, extraData);
+    }
+
+    @Override
+    public List<BakedQuad> getQuads(@Nullable BlockState blockState, @Nullable Direction direction, Random random) {
+        Evolution.deprecatedMethod();
+        return List.of();
     }
 
     @Override

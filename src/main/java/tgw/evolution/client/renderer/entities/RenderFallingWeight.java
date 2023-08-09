@@ -9,7 +9,6 @@ import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlas;
-import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
@@ -22,7 +21,6 @@ import java.util.Random;
 
 public class RenderFallingWeight extends EntityRenderer<EntityFallingWeight> {
 
-    private static final BlockPos.MutableBlockPos MUTABLE_POS = new BlockPos.MutableBlockPos();
     private static final Random RANDOM = new Random();
 
     public RenderFallingWeight(EntityRendererProvider.Context context) {
@@ -41,11 +39,25 @@ public class RenderFallingWeight extends EntityRenderer<EntityFallingWeight> {
         if (state.getRenderShape() == RenderShape.MODEL) {
             Level level = entity.level;
             matrices.pushPose();
-            MUTABLE_POS.set(entity.getX(), entity.getBoundingBox().maxY, entity.getZ());
+            int x = Mth.floor(entity.getX());
+            int y = Mth.floor(entity.getBoundingBox().maxY);
+            int z = Mth.floor(entity.getZ());
             matrices.translate(-0.5, 0, -0.5);
             BlockRenderDispatcher dispatcher = Minecraft.getInstance().getBlockRenderer();
-            dispatcher.getModelRenderer()
-                      .tesselateBlock(level, dispatcher.getBlockModel(state), state, MUTABLE_POS, matrices, buffer.getBuffer(ItemBlockRenderTypes.getMovingBlockRenderType(state)), false, RANDOM, Mth.getSeed(MUTABLE_POS), OverlayTexture.NO_OVERLAY, IModelData.EMPTY);
+            dispatcher.getModelRenderer().tesselateBlock(level,
+                                                         dispatcher.getBlockModel(state),
+                                                         state,
+                                                         x,
+                                                         y,
+                                                         z,
+                                                         matrices,
+                                                         buffer.getBuffer(ItemBlockRenderTypes.getMovingBlockRenderType(state)),
+                                                         false,
+                                                         RANDOM,
+                                                         state.getSeed_(x, y, z),
+                                                         OverlayTexture.NO_OVERLAY,
+                                                         IModelData.EMPTY
+            );
             matrices.popPose();
             super.render(entity, yaw, partialTicks, matrices, buffer, packedLight);
         }

@@ -291,6 +291,12 @@
       ],
       "net/minecraft/client/color/block/BlockTintCache": [
         "tgw/evolution/patches/PatchBlockTintCache"
+      ],
+      "net/minecraft/client/renderer/block/LiquidBlockRenderer": [
+        "tgw/evolution/patches/PatchLiquidBlockRenderer"
+      ],
+      "net/minecraft/client/resources/model/SimpleBakedModel": [
+        "tgw/evolution/patches/PatchSimpleBakedModel"
       ]
     }
   }

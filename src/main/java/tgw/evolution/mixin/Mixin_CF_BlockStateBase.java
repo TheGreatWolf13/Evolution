@@ -252,6 +252,17 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
     }
 
     @Overwrite
+    public long getSeed(BlockPos pos) {
+        Evolution.deprecatedMethod();
+        return this.getSeed_(pos.getX(), pos.getY(), pos.getZ());
+    }
+
+    @Override
+    public long getSeed_(int x, int y, int z) {
+        return this.getBlock().getSeed_(this.asState(), x, y, z);
+    }
+
+    @Overwrite
     public float getShadeBrightness(BlockGetter level, BlockPos pos) {
         Evolution.deprecatedMethod();
         return this.getShadeBrightness_(level, pos.getX(), pos.getY(), pos.getZ());

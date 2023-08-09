@@ -6,10 +6,10 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import tgw.evolution.client.models.data.IModelData;
+import tgw.evolution.util.collection.lists.OList;
+import tgw.evolution.util.math.IRandom;
 
 import javax.annotation.Nullable;
-import java.util.List;
-import java.util.Random;
 
 public interface PatchBakedModel {
 
@@ -22,7 +22,7 @@ public interface PatchBakedModel {
 
     }
 
-    default List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, Random rand, IModelData extraData) {
+    default OList<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, IRandom rand, IModelData extraData) {
         throw new AbstractMethodError();
     }
 }

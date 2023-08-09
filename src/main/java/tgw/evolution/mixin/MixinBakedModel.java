@@ -33,9 +33,4 @@ public interface MixinBakedModel extends PatchBakedModel {
 
     @Shadow
     List<BakedQuad> getQuads(@Nullable BlockState blockState, @Nullable Direction direction, Random random);
-
-    @Override
-    default List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, Random rand, IModelData extraData) {
-        return this.getQuads(state, side, rand);
-    }
 }

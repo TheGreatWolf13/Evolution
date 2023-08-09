@@ -88,6 +88,10 @@ public interface PatchBlockStateBase {
         throw new AbstractMethodError();
     }
 
+    default long getSeed_(int x, int y, int z) {
+        throw new AbstractMethodError();
+    }
+
     default float getShadeBrightness_(BlockGetter level, int x, int y, int z) {
         throw new AbstractMethodError();
     }

@@ -7,9 +7,8 @@ import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.client.models.data.IModelData;
-
-import java.util.List;
-import java.util.Random;
+import tgw.evolution.util.collection.lists.OList;
+import tgw.evolution.util.math.IRandom;
 
 public interface IDynamicBakedModel extends BakedModel {
 
@@ -19,10 +18,5 @@ public interface IDynamicBakedModel extends BakedModel {
     }
 
     @Override
-    default List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, Random rand) {
-        return this.getQuads(state, side, rand, IModelData.EMPTY);
-    }
-
-    @Override
-    List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, Random rand, IModelData extraData);
+    OList<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, IRandom rand, IModelData extraData);
 }

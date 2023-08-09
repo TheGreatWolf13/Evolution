@@ -29,10 +29,12 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HalfTransparentBlock;
 import net.minecraft.world.level.block.StainedGlassPaneBlock;
 import org.spongepowered.asm.mixin.*;
+import tgw.evolution.client.models.data.IModelData;
 import tgw.evolution.items.IItemTemperature;
 import tgw.evolution.patches.PatchVertexConsumer;
 import tgw.evolution.resources.IKeyedReloadListener;
 import tgw.evolution.resources.ReloadListernerKeys;
+import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.math.DirectionUtil;
 import tgw.evolution.util.math.XoRoShiRoRandom;
 
@@ -269,12 +271,12 @@ public abstract class MixinItemRenderer implements IKeyedReloadListener {
     private void renderModelLists(BakedModel model, ItemStack stack, int light, int overlay, PoseStack matrices, VertexConsumer builder) {
         XoRoShiRoRandom random = this.random;
         for (Direction direction : DirectionUtil.ALL) {
-            List<BakedQuad> quads = model.getQuads(null, direction, random.setSeedAndReturn(42L));
+            OList<BakedQuad> quads = model.getQuads(null, direction, random.setSeedAndReturn(42L), IModelData.EMPTY);
             if (!quads.isEmpty()) {
                 this.renderQuadList(matrices, builder, quads, stack, light, overlay);
             }
         }
-        List<BakedQuad> quads = model.getQuads(null, null, random.setSeedAndReturn(42L));
+        OList<BakedQuad> quads = model.getQuads(null, null, random.setSeedAndReturn(42L), IModelData.EMPTY);
         if (!quads.isEmpty()) {
             this.renderQuadList(matrices, builder, quads, stack, light, overlay);
         }
@@ -282,7 +284,7 @@ public abstract class MixinItemRenderer implements IKeyedReloadListener {
 
     @Unique
     private void renderModelListsSpecial(BakedModel model, ItemStack stack, int light, int overlay, PoseStack matrices, VertexConsumer builder) {
-        List<BakedQuad> quads = model.getQuads(null, null, this.random.setSeedAndReturn(42L));
+        OList<BakedQuad> quads = model.getQuads(null, null, this.random.setSeedAndReturn(42L), IModelData.EMPTY);
         if (!quads.isEmpty()) {
             this.renderQuadListSpecial(matrices, builder, quads, stack, light, overlay);
         }
@@ -296,20 +298,30 @@ public abstract class MixinItemRenderer implements IKeyedReloadListener {
     private void renderQuadList(PoseStack matrices, VertexConsumer builder, List<BakedQuad> quads, ItemStack stack, int light, int overlay) {
         boolean notEmpty = !stack.isEmpty();
         PoseStack.Pose pose = matrices.last();
-        for (int i = 0, l = quads.size(); i < l; i++) {
-            BakedQuad quad = quads.get(i);
-            int color = 0xffff_ffff;
-            if (notEmpty && quad.isTinted()) {
-                color = this.itemColors.getColor(stack, quad.getTintIndex());
-            }
-            float r = (color >> 16 & 255) / 255.0F;
-            float g = (color >> 8 & 255) / 255.0F;
-            float b = (color & 255) / 255.0F;
-            if (stack.getItem() instanceof IItemTemperature) {
+        if (stack.getItem() instanceof IItemTemperature) {
+            for (int i = 0, l = quads.size(); i < l; i++) {
+                BakedQuad quad = quads.get(i);
+                int color = 0xffff_ffff;
+                if (notEmpty && quad.isTinted()) {
+                    color = this.itemColors.getColor(stack, quad.getTintIndex());
+                }
+                float r = (color >> 16 & 255) / 255.0F;
+                float g = (color >> 8 & 255) / 255.0F;
+                float b = (color & 255) / 255.0F;
                 float a = (color >> 24 & 255) / 255.0f;
                 addVertexDataTemperature(builder, pose, quad, r, g, b, a, light, overlay);
             }
-            else {
+        }
+        else {
+            for (int i = 0, l = quads.size(); i < l; i++) {
+                BakedQuad quad = quads.get(i);
+                int color = 0xffff_ffff;
+                if (notEmpty && quad.isTinted()) {
+                    color = this.itemColors.getColor(stack, quad.getTintIndex());
+                }
+                float r = (color >> 16 & 255) / 255.0F;
+                float g = (color >> 8 & 255) / 255.0F;
+                float b = (color & 255) / 255.0F;
                 ((PatchVertexConsumer) builder).putBulkData(pose, quad, r, g, b, light, overlay, true);
             }
         }

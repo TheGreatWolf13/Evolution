@@ -36,8 +36,13 @@ import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.collection.sets.RHashSet;
 import tgw.evolution.util.collection.sets.RSet;
 import tgw.evolution.util.constants.RenderLayer;
+import tgw.evolution.util.math.FastRandom;
+import tgw.evolution.util.math.IRandom;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.List;
+import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
@@ -51,8 +56,7 @@ public class EvChunkRenderDispatcher {
     private final EvVisGraph graph = new EvVisGraph();
     private final ProcessorMailbox<Runnable> mailbox;
     private final PoseStack matrices = new PoseStack();
-    private final BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
-    private final Random random = new Random();
+    private final IRandom random = new FastRandom();
     private final PriorityBlockingQueue<RenderChunk.ChunkCompileTask> toBatchHighPriority = new PriorityBlockingQueue<>();
     private final Queue<RenderChunk.ChunkCompileTask> toBatchLowPriority = new LinkedBlockingDeque();
     private final Queue<Runnable> toUpload = new ConcurrentLinkedQueue<>();
@@ -405,25 +409,23 @@ public class EvChunkRenderDispatcher {
             PoseStack matrices = EvChunkRenderDispatcher.this.matrices;
             matrices.reset();
             ModelBlockRenderer.enableCaching();
-            Random random = EvChunkRenderDispatcher.this.random;
+            IRandom random = EvChunkRenderDispatcher.this.random;
             BlockRenderDispatcher dispatcher = Minecraft.getInstance().getBlockRenderer();
-            BlockPos.MutableBlockPos mutable = EvChunkRenderDispatcher.this.mutablePos;
             Long2ObjectMap<IModelData> modelDataCache = EvModelDataManager.getModelData(EvChunkRenderDispatcher.this.level, chunkPos(this.x, this.z));
             for (int dx = 0; dx < 16; ++dx) {
-                mutable.setX(posX + dx);
+                int px = posX + dx;
                 for (int dy = 0; dy < 16; ++dy) {
-                    mutable.setY(posY + dy);
+                    int py = posY + dy;
                     for (int dz = 0; dz < 16; ++dz) {
-                        BlockState blockState = chunk.getBlockState_(posX + dx, posY + dy, posZ + dz);
-                        if (blockState.isSolidRender(EvChunkRenderDispatcher.this.level, mutable.setZ(posZ + dz))) {
+                        int pz = posZ + dz;
+                        BlockState blockState = chunk.getBlockState_(px, py, pz);
+                        if (blockState.isSolidRender_(EvChunkRenderDispatcher.this.level, px, py, pz)) {
                             visgraph.setOpaque(dx, dy, dz);
                         }
                         if (blockState.hasBlockEntity()) {
-                            BlockEntity tile = chunk.getBlockEntity(mutable);
+                            BlockEntity tile = chunk.getBlockEntity_(px, py, pz);
                             if (tile != null) {
-                                BlockEntityRenderer<BlockEntity> renderer = Minecraft.getInstance()
-                                                                                     .getBlockEntityRenderDispatcher()
-                                                                                     .getRenderer(tile);
+                                BlockEntityRenderer<BlockEntity> renderer = Minecraft.getInstance().getBlockEntityRenderDispatcher().getRenderer(tile);
                                 if (renderer != null) {
                                     if (renderer.shouldRenderOffScreen(tile)) {
                                         if (blockEntities == null) {
@@ -437,8 +439,8 @@ public class EvChunkRenderDispatcher {
                                 }
                             }
                         }
-                        FluidState fluidState = blockState.getFluidState();
-                        IModelData modelData = modelDataCache.getOrDefault(mutable.asLong(), IModelData.EMPTY);
+                        FluidState fluidState = chunk.getFluidState_(px, py, pz);
+                        IModelData modelData = modelDataCache.getOrDefault(BlockPos.asLong(px, py, pz), IModelData.EMPTY);
                         for (int i = RenderLayer.SOLID, len = ChunkBuilderPack.RENDER_TYPES.length; i < len; i++) {
                             RenderType renderType = ChunkBuilderPack.RENDER_TYPES[i];
                             if (!fluidState.isEmpty() && ItemBlockRenderTypes.getRenderLayer(fluidState) == renderType) {
@@ -447,7 +449,7 @@ public class EvChunkRenderDispatcher {
                                     compiledChunk.hasLayer |= 1 << i;
                                     RenderChunk.this.beginLayer(builder);
                                 }
-                                if (dispatcher.renderLiquid(mutable, EvChunkRenderDispatcher.this.level, builder, blockState, fluidState)) {
+                                if (dispatcher.renderLiquid(px, py, pz, EvChunkRenderDispatcher.this.level, builder, blockState, fluidState)) {
                                     compiledChunk.hasBlocks |= 1 << i;
                                 }
                             }
@@ -460,8 +462,7 @@ public class EvChunkRenderDispatcher {
                                 }
                                 matrices.pushPose();
                                 matrices.translate(dx, dy, dz);
-                                if (dispatcher.renderBatched(blockState, mutable, EvChunkRenderDispatcher.this.level, matrices, builder, true, random,
-                                                             modelData)) {
+                                if (dispatcher.renderBatched(blockState, px, py, pz, EvChunkRenderDispatcher.this.level, matrices, builder, true, random, modelData)) {
                                     compiledChunk.hasBlocks |= 1 << i;
                                 }
                                 matrices.popPose();
@@ -473,9 +474,7 @@ public class EvChunkRenderDispatcher {
             compiledChunk.visibilitySet = visgraph.resolve();
             if ((compiledChunk.hasBlocks & 1 << RenderLayer.TRANSLUCENT) != 0) {
                 BufferBuilder builder = fixedBuffers.builder(RenderLayer.TRANSLUCENT);
-                builder.setQuadSortOrigin(EvChunkRenderDispatcher.this.camX - posX,
-                                          EvChunkRenderDispatcher.this.camY - posY,
-                                          EvChunkRenderDispatcher.this.camZ - posZ);
+                builder.setQuadSortOrigin(EvChunkRenderDispatcher.this.camX - posX, EvChunkRenderDispatcher.this.camY - posY, EvChunkRenderDispatcher.this.camZ - posZ);
                 compiledChunk.transparencyState = builder.getSortState();
             }
             for (int i = RenderLayer.SOLID, len = ChunkBuilderPack.RENDER_TYPES.length; i < len; i++) {
@@ -497,8 +496,7 @@ public class EvChunkRenderDispatcher {
         }
 
         private boolean doesChunkExistAt(int posX, int posZ) {
-            return EvChunkRenderDispatcher.this.level.getChunk(SectionPos.blockToSectionCoord(posX), SectionPos.blockToSectionCoord(posZ),
-                                                               ChunkStatus.FULL, false) != null;
+            return EvChunkRenderDispatcher.this.level.getChunk(SectionPos.blockToSectionCoord(posX), SectionPos.blockToSectionCoord(posZ), ChunkStatus.FULL, false) != null;
         }
 
         public VertexBuffer getBuffer(@RenderLayer int renderType) {
@@ -742,10 +740,9 @@ public class EvChunkRenderDispatcher {
 
         class RebuildTask extends ChunkCompileTask {
 
-            static final ThreadLocal<Random> RANDOM_CACHE = ThreadLocal.withInitial(Random::new);
+            static final ThreadLocal<IRandom> RANDOM_CACHE = ThreadLocal.withInitial(FastRandom::new);
             static final ThreadLocal<EvVisGraph> GRAPH_CACHE = ThreadLocal.withInitial(EvVisGraph::new);
             static final ThreadLocal<PoseStack> MATRICES_CACHE = ThreadLocal.withInitial(PoseStack::new);
-            static final ThreadLocal<BlockPos.MutableBlockPos> POS_CACHE = ThreadLocal.withInitial(BlockPos.MutableBlockPos::new);
             protected Long2ObjectMap<IModelData> modelData;
             protected @Nullable EvRenderChunkRegion region;
 
@@ -782,28 +779,22 @@ public class EvChunkRenderDispatcher {
                     PoseStack matrices = MATRICES_CACHE.get();
                     matrices.reset();
                     ModelBlockRenderer.enableCaching();
-                    Random random = RANDOM_CACHE.get();
+                    IRandom random = RANDOM_CACHE.get();
                     BlockRenderDispatcher dispatcher = Minecraft.getInstance().getBlockRenderer();
-                    BlockPos.MutableBlockPos mutable = POS_CACHE.get();
                     for (int dx = 0; dx < 16; ++dx) {
-                        int pX = posX + dx;
-                        mutable.setX(pX);
+                        int px = posX + dx;
                         for (int dy = 0; dy < 16; ++dy) {
-                            int pY = posY + dy;
-                            mutable.setY(pY);
+                            int py = posY + dy;
                             for (int dz = 0; dz < 16; ++dz) {
-                                int pZ = posZ + dz;
-                                mutable.setZ(pZ);
-                                BlockState blockState = region.getBlockState_(pX, pY, pZ);
-                                if (blockState.isSolidRender_(region, pX, pY, pZ)) {
+                                int pz = posZ + dz;
+                                BlockState blockState = region.getBlockState_(px, py, pz);
+                                if (blockState.isSolidRender_(region, px, py, pz)) {
                                     visgraph.setOpaque(dx, dy, dz);
                                 }
                                 if (blockState.hasBlockEntity()) {
-                                    BlockEntity tile = region.getBlockEntity_(pX, pY, pZ);
+                                    BlockEntity tile = region.getBlockEntity_(px, py, pz);
                                     if (tile != null) {
-                                        BlockEntityRenderer<BlockEntity> renderer = Minecraft.getInstance()
-                                                                                             .getBlockEntityRenderDispatcher()
-                                                                                             .getRenderer(tile);
+                                        BlockEntityRenderer<BlockEntity> renderer = Minecraft.getInstance().getBlockEntityRenderDispatcher().getRenderer(tile);
                                         if (renderer != null) {
                                             if (renderer.shouldRenderOffScreen(tile)) {
                                                 if (blockEntities == null) {
@@ -817,8 +808,8 @@ public class EvChunkRenderDispatcher {
                                         }
                                     }
                                 }
-                                FluidState fluidState = blockState.getFluidState();
-                                IModelData modelData = this.getModelData(BlockPos.asLong(pX, pY, pZ));
+                                FluidState fluidState = region.getFluidState_(px, py, pz);
+                                IModelData modelData = this.getModelData(BlockPos.asLong(px, py, pz));
                                 for (int i = RenderLayer.SOLID, len = ChunkBuilderPack.RENDER_TYPES.length; i < len; i++) {
                                     RenderType renderType = ChunkBuilderPack.RENDER_TYPES[i];
                                     if (!fluidState.isEmpty() && ItemBlockRenderTypes.getRenderLayer(fluidState) == renderType) {
@@ -827,7 +818,7 @@ public class EvChunkRenderDispatcher {
                                             compiledChunk.hasLayer |= 1 << i;
                                             RenderChunk.this.beginLayer(builder);
                                         }
-                                        if (dispatcher.renderLiquid(mutable, region, builder, blockState, fluidState)) {
+                                        if (dispatcher.renderLiquid(px, py, pz, region, builder, blockState, fluidState)) {
                                             compiledChunk.hasBlocks |= 1 << i;
                                         }
                                     }
@@ -840,7 +831,7 @@ public class EvChunkRenderDispatcher {
                                         }
                                         matrices.pushPose();
                                         matrices.translate(dx, dy, dz);
-                                        if (dispatcher.renderBatched(blockState, mutable, region, matrices, builder, true, random, modelData)) {
+                                        if (dispatcher.renderBatched(blockState, px, py, pz, region, matrices, builder, true, random, modelData)) {
                                             compiledChunk.hasBlocks |= 1 << i;
                                         }
                                         matrices.popPose();

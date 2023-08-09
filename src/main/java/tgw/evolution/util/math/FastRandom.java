@@ -1,12 +1,11 @@
 package tgw.evolution.util.math;
 
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.random.RandomGenerator;
 
 /**
  * A basic implementation of {@link java.util.Random} without any atomic, volatile or synchronized attributes. Only safe to use on a single thread. Performs faster than the default {@link java.util.Random}.
  */
-public class FastRandom implements RandomGenerator {
+public class FastRandom implements IRandom {
 
     private static final AtomicLong SEED_UNIQUIFIER = new AtomicLong(8_682_522_807_148_012L);
     private boolean haveNextNextGaussian;
@@ -112,16 +111,11 @@ public class FastRandom implements RandomGenerator {
     }
 
     @Override
-    public long nextLong(long bound) {
-        //TODO implementation
-        return RandomGenerator.super.nextLong(bound);
-    }
-
-    @Override
     public long nextLong() {
         return ((long) this.next(32) << 32) + this.next(32);
     }
 
+    @Override
     public void setSeed(long seed) {
         this.seed = initialScramble(seed);
         this.haveNextNextGaussian = false;

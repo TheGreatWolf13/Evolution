@@ -3,6 +3,7 @@ package tgw.evolution.mixin;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.util.Mth;
 import net.minecraft.util.Unit;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -56,6 +57,25 @@ public abstract class Mixin_M_BedBlock extends HorizontalDirectionalBlock implem
     @Shadow
     private static Direction getNeighbourDirection(BedPart bedPart, Direction direction) {
         throw new AbstractMethodError();
+    }
+
+    @Override
+    @Overwrite
+    @DeleteMethod
+    public long getSeed(BlockState blockState, BlockPos blockPos) {
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public long getSeed_(BlockState state, int x, int y, int z) {
+        int seedX = x;
+        int seedZ = z;
+        if (state.getValue(PART) != BedPart.HEAD) {
+            Direction facing = state.getValue(FACING);
+            seedX += facing.getStepX();
+            seedZ += facing.getStepZ();
+        }
+        return Mth.getSeed(seedX, y, seedZ);
     }
 
     @Override
