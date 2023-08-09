@@ -566,6 +566,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
         assert this.player != null;
         assert this.level != null;
         assert this.gameMode != null;
+        boolean destroying = false;
         if (this.missTime <= 0 && !this.player.isUsingItem()) {
             if (leftClick && this.hitResult != null && this.hitResult.getType() == HitResult.Type.BLOCK) {
                 BlockHitResult blockRayTrace = (BlockHitResult) this.hitResult;
@@ -575,14 +576,15 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
                 if (!this.level.isEmptyBlock_(x, y, z) && !this.player.shouldRenderSpecialAttack()) {
                     Direction face = blockRayTrace.getDirection();
                     if (this.gameMode.continueDestroyBlock_(x, y, z, face, blockRayTrace)) {
+                        destroying = true;
                         this.particleEngine.crack_(x, y, z, face);
                         this.player.swing(InteractionHand.MAIN_HAND);
                     }
                 }
             }
-            else {
-                this.gameMode.stopDestroyBlock();
-            }
+        }
+        if (!destroying) {
+            this.gameMode.stopDestroyBlock();
         }
     }
 
@@ -593,8 +595,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
     protected abstract String createTitle();
 
     @Shadow
-    protected abstract UserApiService createUserApiService(YggdrasilAuthenticationService yggdrasilAuthenticationService,
-                                                           GameConfig gameConfig);
+    protected abstract UserApiService createUserApiService(YggdrasilAuthenticationService yggdrasilAuthenticationService, GameConfig gameConfig);
 
     /**
      * @author TheGreatWolf

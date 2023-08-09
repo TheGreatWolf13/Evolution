@@ -106,13 +106,12 @@ public abstract class Mixin_CFM_MultiPlayerGameMode implements PatchMultiPlayerG
                 this.isDestroying = false;
                 return false;
             }
+            this.isDestroying = true;
             assert this.minecraft.player != null;
             this.destroyProgress += state.getDestroyProgress_(this.minecraft.player, this.minecraft.player.level, x, y, z);
             if (this.destroyTicks % 4.0F == 0.0F) {
                 SoundType soundtype = state.getSoundType();
-                this.minecraft.getSoundManager()
-                              .play(new SimpleSoundInstance(soundtype.getHitSound(), SoundSource.BLOCKS, (soundtype.getVolume() + 1.0F) / 8.0F,
-                                                            soundtype.getPitch() * 0.5F, x + 0.5, y + 0.5, z + 0.5));
+                this.minecraft.getSoundManager().play(new SimpleSoundInstance(soundtype.getHitSound(), SoundSource.BLOCKS, (soundtype.getVolume() + 1.0F) / 8.0F, soundtype.getPitch() * 0.5F, x + 0.5, y + 0.5, z + 0.5));
             }
             ++this.destroyTicks;
             if (this.destroyProgress >= 1.0F) {
