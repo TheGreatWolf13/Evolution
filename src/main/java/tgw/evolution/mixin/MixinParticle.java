@@ -23,16 +23,25 @@ public abstract class MixinParticle {
 
     @Shadow @Final private static AABB INITIAL_AABB;
     @Shadow @Final private static double MAXIMUM_COLLISION_VELOCITY_SQUARED;
+    @Shadow protected int age;
     @Shadow protected float bbHeight;
     @Shadow protected float bbWidth;
+    @Shadow protected float friction;
+    @Shadow protected float gravity;
     @Shadow protected boolean hasPhysics;
     @Shadow @Final protected ClientLevel level;
+    @Shadow protected int lifetime;
     @Shadow protected boolean onGround;
+    @Shadow protected boolean speedUpWhenYMotionIsBlocked;
     @Shadow protected double x;
     @Shadow protected double xd;
+    @Shadow protected double xo;
     @Shadow protected double y;
+    @Shadow protected double yd;
+    @Shadow protected double yo;
     @Shadow protected double z;
     @Shadow protected double zd;
+    @Shadow protected double zo;
     @Shadow private AABB bb;
     @Shadow private boolean stoppedByCollision;
 
@@ -92,6 +101,9 @@ public abstract class MixinParticle {
         this.bb = new AABBMutable(INITIAL_AABB);
     }
 
+    @Shadow
+    public abstract void remove();
+
     /**
      * @author TheGreatWolf
      * @reason Keep AABBMutable
@@ -131,6 +143,30 @@ public abstract class MixinParticle {
             double minX = (aabb.minX + aabb.maxX - width) / 2.0;
             double minZ = (aabb.minZ + aabb.maxZ - width) / 2.0;
             ((AABBMutable) aabb).setUnchecked(minX, aabb.minY, minZ, minX + this.bbWidth, aabb.minY + this.bbWidth, minZ + this.bbWidth);
+        }
+    }
+
+    @Overwrite
+    public void tick() {
+        this.xo = this.x;
+        this.yo = this.y;
+        this.zo = this.z;
+        if (this.age++ >= this.lifetime) {
+            this.remove();
+            return;
+        }
+        this.yd += this.gravity;
+        this.move(this.xd, this.yd, this.zd);
+        if (this.speedUpWhenYMotionIsBlocked && this.y == this.yo) {
+            this.xd *= 1.1;
+            this.zd *= 1.1;
+        }
+        this.xd *= this.friction;
+        this.yd *= this.friction;
+        this.zd *= this.friction;
+        if (this.onGround) {
+            this.xd *= 0.7;
+            this.zd *= 0.7;
         }
     }
 }

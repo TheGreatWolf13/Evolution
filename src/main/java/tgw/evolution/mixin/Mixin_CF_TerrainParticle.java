@@ -15,14 +15,15 @@ import tgw.evolution.hooks.asm.DeleteField;
 import tgw.evolution.hooks.asm.ModifyConstructor;
 import tgw.evolution.hooks.asm.RestoreFinal;
 import tgw.evolution.patches.PatchTerrainParticle;
+import tgw.evolution.util.physics.Physics;
 
 @Mixin(TerrainParticle.class)
 public abstract class Mixin_CF_TerrainParticle extends TextureSheetParticle implements PatchTerrainParticle {
 
     @Shadow @Final @DeleteField private BlockPos pos;
-    private int posX;
-    private int posY;
-    private int posZ;
+    @Unique private int posX;
+    @Unique private int posY;
+    @Unique private int posZ;
     @Mutable @Shadow @Final @RestoreFinal private float uo;
     @Mutable @Shadow @Final @RestoreFinal private float vo;
 
@@ -30,7 +31,7 @@ public abstract class Mixin_CF_TerrainParticle extends TextureSheetParticle impl
     public Mixin_CF_TerrainParticle(ClientLevel level, double x, double y, double z, double vx, double vy, double vz, BlockState state) {
         super(level, x, y, z, vx, vy, vz);
         this.setSprite(Minecraft.getInstance().getBlockRenderer().getBlockModelShaper().getParticleIcon(state));
-        this.gravity = 1.0F;
+        this.gravity = (float) Physics.getRestLocalGravity(level, y, z);
         this.rCol = 0.6F;
         this.gCol = 0.6F;
         this.bCol = 0.6F;
@@ -78,5 +79,25 @@ public abstract class Mixin_CF_TerrainParticle extends TextureSheetParticle impl
         this.posX = x;
         this.posY = y;
         this.posZ = z;
+    }
+
+    @Override
+    public void tick() {
+        this.xo = this.x;
+        this.yo = this.y;
+        this.zo = this.z;
+        if (this.age++ >= this.lifetime) {
+            this.remove();
+            return;
+        }
+        this.yd += this.gravity;
+        this.move(this.xd, this.yd, this.zd);
+        this.xd *= this.friction;
+        this.yd *= this.friction;
+        this.zd *= this.friction;
+        if (this.onGround) {
+            this.xd *= 0.7;
+            this.zd *= 0.7;
+        }
     }
 }

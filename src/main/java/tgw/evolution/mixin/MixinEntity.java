@@ -1310,6 +1310,9 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
         if (!this.isOnGround()) {
             return;
         }
+        if (!this.level.isClientSide) {
+            return;
+        }
         BlockPos landingPos = this.getOnPos();
         BlockState landingState = this.level.getBlockState_(landingPos.getX(), landingPos.getY(), landingPos.getZ());
         BlockState aboveState = this.level.getBlockState_(landingPos.getX(), landingPos.getY() + 1, landingPos.getZ());
@@ -1327,9 +1330,7 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
             if (pos.getZ() != landingPos.getZ()) {
                 z = MathHelper.clamp(z, landingPos.getZ(), landingPos.getZ() + 1.0);
             }
-            this.level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, landingState), x, this.getY() + 0.1, z,
-                                   velocity.x * -4.0, 1.5,
-                                   velocity.z * -4.0);
+            this.level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, landingState), x, this.getY() + 0.1, z, velocity.x * -2, 2 * SI.METER / SI.SECOND, velocity.z * -2);
         }
     }
 

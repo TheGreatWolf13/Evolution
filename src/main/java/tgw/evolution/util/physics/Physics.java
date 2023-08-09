@@ -101,6 +101,14 @@ public final class Physics implements ILocked {
         return getInstance(entity.level, entity.getX(), entity.getY(), entity.getZ(), vel.x, vel.y, vel.z, entity.getBbWidth(), entity.getBbHeight(), entity.getBbWidth(), fluid);
     }
 
+    public static double getRestLocalGravity(Level level, double y, double z) {
+        float cosLat = MathHelper.cosDeg(PlanetsHelper.calculateLatitude(level, z));
+        double radius = (EARTH_RADIUS_EQUATOR - EARTH_RADIUS_POLE) * cosLat * cosLat + EARTH_RADIUS_POLE + (y - level.getSeaLevel());
+        double gravity = -GRAVITATIONAL_CONSTANT * EARTH_MASS / (radius * radius);
+        double centrifugal = EARTH_ROTATION_RATE * EARTH_ROTATION_RATE * radius * cosLat * cosLat;
+        return gravity + centrifugal;
+    }
+
     /**
      * The actual equation is {@code sqrt((a^4*cos^2(lat)+b^4*sin^2(lat))/(a^2*cos^2(lat)+b^2*sin^2(lat)))} <br>
      * A very good approximation of this formula for values of {@code a} and {@code b} very close to one another is: {@code (a-b) * cos^2(lat) + b}
