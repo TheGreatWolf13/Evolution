@@ -205,6 +205,10 @@ public abstract class MixinLocalPlayer extends AbstractClientPlayer {
         else {
             this.jumpRidingScale = 0.0F;
         }
+        if (abilities.flying && this.onGround && this.input.shiftKeyDown) {
+            abilities.flying = false;
+            this.onUpdateAbilities();
+        }
         super.aiStep();
     }
 
