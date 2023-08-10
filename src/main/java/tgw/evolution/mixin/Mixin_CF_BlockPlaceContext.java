@@ -15,17 +15,17 @@ import tgw.evolution.hooks.asm.ModifyConstructor;
 import tgw.evolution.hooks.asm.RestoreFinal;
 
 @Mixin(BlockPlaceContext.class)
-public abstract class Mixin_C_BlockPlaceContext extends UseOnContext {
+public abstract class Mixin_CF_BlockPlaceContext extends UseOnContext {
 
     @Shadow protected boolean replaceClicked;
     @Mutable @Shadow @Final @RestoreFinal private BlockPos relativePos;
 
     @ModifyConstructor
-    protected Mixin_C_BlockPlaceContext(Level level,
-                                        @Nullable Player player,
-                                        InteractionHand hand,
-                                        ItemStack stack,
-                                        BlockHitResult hitResult) {
+    protected Mixin_CF_BlockPlaceContext(Level level,
+                                         @Nullable Player player,
+                                         InteractionHand hand,
+                                         ItemStack stack,
+                                         BlockHitResult hitResult) {
         super(level, player, hand, stack, hitResult);
         int x = hitResult.posX();
         int y = hitResult.posY();
