@@ -33,6 +33,12 @@ public class BArrayList extends ByteArrayList implements BList {
     }
 
     @Override
+    public Byte get(int index) {
+        Evolution.deprecatedMethod();
+        return super.get(index);
+    }
+
+    @Override
     public ByteListIterator listIterator() {
         if (CHECKS) {
             Evolution.info("Allocating memory for an iterator");

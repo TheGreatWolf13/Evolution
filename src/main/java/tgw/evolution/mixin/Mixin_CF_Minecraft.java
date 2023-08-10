@@ -1298,31 +1298,31 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
                 }
                 catch (OutOfMemoryError outOfMemory) {
                     this.emergencySave();
+                    LOGGER.error(LogUtils.FATAL_MARKER, "Out of memory", outOfMemory);
                     //noinspection ObjectAllocationInLoop
                     this.setScreen(new ScreenOutOfMemory(hasAlreadyBeenOutOfMemory));
                     System.gc();
-                    LOGGER.error(LogUtils.FATAL_MARKER, "Out of memory", outOfMemory);
                     hasAlreadyBeenOutOfMemory = true;
                 }
                 catch (ReportedException exception) {
                     this.fillReport(exception.getReport());
-                    this.emergencySave();
                     LOGGER.error(LogUtils.FATAL_MARKER, "Reported exception thrown!", exception);
+                    this.emergencySave();
                     this.displayCrashScreen(exception.getReport());
                 }
                 catch (Throwable t) {
                     //noinspection ObjectAllocationInLoop
                     CrashReport report = this.fillReport(new CrashReport("Unexpected error", t));
-                    this.emergencySave();
                     LOGGER.error(LogUtils.FATAL_MARKER, "Unreported exception thrown!", t);
+                    this.emergencySave();
                     this.displayCrashScreen(report);
                 }
             }
         }
         catch (ReportedException reportedException) {
             this.fillReport(reportedException.getReport());
-            this.emergencySave();
             LOGGER.error(LogUtils.FATAL_MARKER, "Reported exception thrown!", reportedException);
+            this.emergencySave();
             crash(reportedException.getReport());
         }
         catch (Throwable throwable) {

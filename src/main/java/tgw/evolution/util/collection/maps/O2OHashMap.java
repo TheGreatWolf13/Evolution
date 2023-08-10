@@ -1,8 +1,13 @@
 package tgw.evolution.util.collection.maps;
 
+import it.unimi.dsi.fastutil.HashCommon;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
+
+import java.util.Map;
+
+import static it.unimi.dsi.fastutil.HashCommon.arraySize;
 
 public class O2OHashMap<K, V> extends Object2ObjectOpenHashMap<K, V> implements O2OMap<K, V> {
 
@@ -19,6 +24,13 @@ public class O2OHashMap<K, V> extends Object2ObjectOpenHashMap<K, V> implements 
 
     public O2OHashMap(int expected) {
         super(expected);
+    }
+
+    private void ensureCapacity(final int capacity) {
+        final int needed = arraySize(capacity, this.f);
+        if (needed > this.n) {
+            this.rehash(needed);
+        }
     }
 
     @Override
@@ -67,6 +79,25 @@ public class O2OHashMap<K, V> extends Object2ObjectOpenHashMap<K, V> implements 
     }
 
     @Override
+    public void putAll(Map<? extends K, ? extends V> m) {
+        if (m instanceof O2OMap) {
+            if (this.f <= 0.5f) {
+                this.ensureCapacity(m.size());
+            }
+            else {
+                this.tryCapacity(this.size() + m.size());
+            }
+            O2OMap<? extends K, ? extends V> map = (O2OMap<? extends K, ? extends V>) m;
+            for (O2OMap.Entry<? extends K, ? extends V> e = map.fastEntries(); e != null; e = map.fastEntries()) {
+                this.put(e.k, e.v);
+            }
+        }
+        else {
+            super.putAll(m);
+        }
+    }
+
+    @Override
     protected void rehash(int newN) {
         if ((this.flags & 1) != 0) {
             super.rehash(newN);
@@ -79,5 +110,12 @@ public class O2OHashMap<K, V> extends Object2ObjectOpenHashMap<K, V> implements 
     @Override
     public void trimCollection() {
         this.trim();
+    }
+
+    private void tryCapacity(final long capacity) {
+        final int needed = (int) Math.min(1 << 30, Math.max(2, HashCommon.nextPowerOfTwo((long) Math.ceil(capacity / this.f))));
+        if (needed > this.n) {
+            this.rehash(needed);
+        }
     }
 }

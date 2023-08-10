@@ -6,6 +6,12 @@ import tgw.evolution.Evolution;
 public class R2BHashMap<K> extends Reference2ByteOpenHashMap<K> implements R2BMap<K> {
 
     @Override
+    public Byte get(Object key) {
+        Evolution.deprecatedMethod();
+        return super.get(key);
+    }
+
+    @Override
     public FastEntrySet<K> reference2ByteEntrySet() {
         if (CHECKS) {
             Evolution.info("Allocating entry set!");

@@ -34,19 +34,14 @@ public class ResourceManagerHelperImpl implements ResourceManagerHelper {
     }
 
     @SuppressWarnings("ObjectAllocationInLoop")
-    public static void registerBuiltinResourcePacks(PackType resourceType,
-                                                    Consumer<Pack> consumer,
-                                                    Pack.PackConstructor factory) {
+    public static void registerBuiltinResourcePacks(PackType resourceType, Consumer<Pack> consumer, Pack.PackConstructor factory) {
         // Loop through each registered built-in resource packs and add them if valid.
-        for (Pair<String, ModPackResources> entry : BUILTIN_RESOURCE_PACKS) {
-            ModPackResources pack = entry.getSecond();
+        for (Pair<String, ModPackResources> e = BUILTIN_RESOURCE_PACKS.fastEntries(); e != null; e = BUILTIN_RESOURCE_PACKS.fastEntries()) {
+            ModPackResources pack = e.getSecond();
             // Add the built-in pack only if namespaces for the specified resource type are present.
             if (!pack.getNamespaces(resourceType).isEmpty()) {
                 // Make the resource pack profile for built-in pack, should never be always enabled.
-                Pack profile = Pack.create(entry.getFirst(),
-                                           pack.getActivationType() == PackActivationType.ALWAYS_ENABLED,
-                                           entry::getSecond, factory, Pack.Position.TOP,
-                                           new BuiltinModResourcePackSource(pack.getModMetadata().getId()));
+                Pack profile = Pack.create(e.getFirst(), pack.getActivationType() == PackActivationType.ALWAYS_ENABLED, e::getSecond, factory, Pack.Position.TOP, new BuiltinModResourcePackSource(pack.getModMetadata().getId()));
                 if (profile != null) {
                     consumer.accept(profile);
                 }
@@ -54,11 +49,12 @@ public class ResourceManagerHelperImpl implements ResourceManagerHelper {
         }
     }
 
-    public static List<PreparableReloadListener> sort(@Nullable PackType type, List<PreparableReloadListener> listeners) {
+    public static OList<PreparableReloadListener> sort(@Nullable PackType type, List<PreparableReloadListener> listeners) {
         ResourceManagerHelperImpl instance = get(type);
         OList<PreparableReloadListener> mutable = new OArrayList<>(listeners);
         instance.sort(mutable);
-        return Collections.unmodifiableList(mutable);
+        mutable.trimCollection();
+        return mutable.view();
     }
 
     @Override
@@ -72,31 +68,30 @@ public class ResourceManagerHelperImpl implements ResourceManagerHelper {
         }
     }
 
-    protected void sort(List<PreparableReloadListener> listeners) {
+    protected void sort(OList<PreparableReloadListener> listeners) {
         listeners.removeAll(this.addedListeners);
         OList<IKeyedReloadListener> listenersToAdd = new OArrayList<>(this.addedListeners);
         OSet<ResourceLocation> resolvedIds = new OHashSet<>();
-        for (PreparableReloadListener listener : listeners) {
-            if (listener instanceof IKeyedReloadListener k) {
+        for (int i = 0, len = listeners.size(); i < len; ++i) {
+            if (listeners.get(i) instanceof IKeyedReloadListener k) {
                 resolvedIds.add(k.getKey());
             }
         }
         int lastSize = -1;
         while (listeners.size() != lastSize) {
             lastSize = listeners.size();
-            Iterator<IKeyedReloadListener> it = listenersToAdd.iterator();
-            while (it.hasNext()) {
-                IKeyedReloadListener listener = it.next();
+            for (int i = 0, len = listenersToAdd.size(); i < len; ++i) {
+                IKeyedReloadListener listener = listenersToAdd.get(i);
                 if (resolvedIds.containsAll(listener.getDependencies())) {
                     resolvedIds.add(listener.getKey());
                     listeners.add(listener);
-                    it.remove();
+                    listenersToAdd.remove(i--);
                 }
             }
         }
-        for (IKeyedReloadListener listener : listenersToAdd) {
+        for (int i = 0, len = listenersToAdd.size(); i < len; ++i) {
             //noinspection ObjectAllocationInLoop
-            LOGGER.warn("Could not resolve dependencies for listener: " + listener.getKey() + "!");
+            LOGGER.warn("Could not resolve dependencies for listener: " + listenersToAdd.get(i).getKey() + "!");
         }
     }
 }

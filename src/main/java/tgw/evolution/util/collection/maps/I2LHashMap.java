@@ -6,6 +6,12 @@ import tgw.evolution.Evolution;
 public class I2LHashMap extends Int2LongOpenHashMap implements I2LMap {
 
     @Override
+    public Long get(Object key) {
+        Evolution.deprecatedMethod();
+        return super.get(key);
+    }
+
+    @Override
     public FastEntrySet int2LongEntrySet() {
         if (CHECKS) {
             Evolution.info("Allocating entry set!");

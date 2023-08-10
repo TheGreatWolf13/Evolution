@@ -21,6 +21,12 @@ public class LArrayList extends LongArrayList implements LList {
     }
 
     @Override
+    public Long get(int index) {
+        Evolution.deprecatedMethod();
+        return super.get(index);
+    }
+
+    @Override
     public LongListIterator listIterator() {
         if (CHECKS) {
             Evolution.info("Allocating memory for an iterator");

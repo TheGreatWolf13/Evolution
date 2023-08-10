@@ -1087,8 +1087,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
         }
         ResourceLocation resourcelocation = new ResourceLocation("shaders/post/entity_outline.json");
         try {
-            this.entityEffect = new PostChain(this.mc.getTextureManager(), this.mc.getResourceManager(),
-                                              this.mc.getMainRenderTarget(), resourcelocation);
+            this.entityEffect = new PostChain(this.mc.getTextureManager(), this.mc.getResourceManager(), this.mc.getMainRenderTarget(), resourcelocation);
             this.entityEffect.resize(this.mc.getWindow().getWidth(), this.mc.getWindow().getHeight());
             this.entityTarget = this.entityEffect.getTempTarget("final");
         }

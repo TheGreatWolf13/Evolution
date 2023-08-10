@@ -3,6 +3,7 @@ package tgw.evolution.util.collection.maps;
 import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
+import tgw.evolution.Evolution;
 
 public class O2ZHashMap<K> extends Object2BooleanOpenHashMap<K> implements O2ZMap<K> {
 
@@ -16,8 +17,7 @@ public class O2ZHashMap<K> extends Object2BooleanOpenHashMap<K> implements O2ZMa
     protected @Nullable O2ZMap.View<K> view;
 
     @Override
-    public @Nullable
-    O2ZMap.Entry<K> fastEntries() {
+    public @Nullable O2ZMap.Entry<K> fastEntries() {
         if (this.isEmpty()) {
             this.lastPos = -1;
             this.handleRehash();
@@ -40,6 +40,12 @@ public class O2ZHashMap<K> extends Object2BooleanOpenHashMap<K> implements O2ZMa
         this.entry.set(null, false);
         this.handleRehash();
         return null;
+    }
+
+    @Override
+    public Boolean get(Object key) {
+        Evolution.deprecatedMethod();
+        return super.get(key);
     }
 
     protected void handleRehash() {

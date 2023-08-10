@@ -73,13 +73,13 @@ public class L2OHashMap<V> extends Long2ObjectOpenHashMap<V> implements L2OMap<V
 
     @Override
     public void putAll(Map<? extends Long, ? extends V> m) {
-        if (this.f <= 0.5f) {
-            this.ensureCapacity(m.size());
-        }
-        else {
-            this.tryCapacity(this.size() + m.size());
-        }
         if (m instanceof L2OMap) {
+            if (this.f <= 0.5f) {
+                this.ensureCapacity(m.size());
+            }
+            else {
+                this.tryCapacity(this.size() + m.size());
+            }
             L2OMap<? extends V> map = (L2OMap<? extends V>) m;
             for (L2OMap.Entry<? extends V> e = map.fastEntries(); e != null; e = map.fastEntries()) {
                 this.put(e.k, e.v);

@@ -13,6 +13,12 @@ public class R2IHashMap<K> extends Reference2IntOpenHashMap<K> implements R2IMap
     }
 
     @Override
+    public Integer get(Object key) {
+        Evolution.deprecatedMethod();
+        return super.get(key);
+    }
+
+    @Override
     public FastEntrySet<K> reference2IntEntrySet() {
         if (CHECKS) {
             Evolution.info("Allocating entry set");

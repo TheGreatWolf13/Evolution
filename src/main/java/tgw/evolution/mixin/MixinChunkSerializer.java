@@ -444,8 +444,7 @@ public abstract class MixinChunkSerializer {
             }
         }
         tag.put("Heightmaps", heightmaps);
-        tag.put("structures", packStructureData(StructurePieceSerializationContext.fromLevel(level), pos, chunk.getAllStarts(),
-                                                chunk.getAllReferences()));
+        tag.put("structures", packStructureData(StructurePieceSerializationContext.fromLevel(level), pos, chunk.getAllStarts(), chunk.getAllReferences()));
         return tag;
     }
 }

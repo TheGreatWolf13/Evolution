@@ -6,6 +6,12 @@ import tgw.evolution.Evolution;
 public class R2FHashMap<K> extends Reference2FloatOpenHashMap<K> implements R2FMap<K> {
 
     @Override
+    public Float get(Object key) {
+        Evolution.deprecatedMethod();
+        return super.get(key);
+    }
+
+    @Override
     public FastEntrySet<K> reference2FloatEntrySet() {
         if (CHECKS) {
             Evolution.info("Allocating entry set");

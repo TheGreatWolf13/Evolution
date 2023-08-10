@@ -41,16 +41,15 @@ public abstract class GroupResourcePack implements PackResources {
     }
 
     public void appendResources(FallbackResourceManager manager, ResourceLocation id, List<Resource> resources) throws IOException {
-        List<IModResourcePack> packs = this.namespacedPacks.get(id.getNamespace());
+        OList<IModResourcePack> packs = this.namespacedPacks.get(id.getNamespace());
         if (packs == null) {
             return;
         }
         ResourceLocation metadataId = FallbackResourceManager.getMetadataLocation(id);
-        for (IModResourcePack pack : packs) {
+        for (int i = 0, len = packs.size(); i < len; ++i) {
+            IModResourcePack pack = packs.get(i);
             if (pack.hasResource(manager.type, id)) {
-                InputStream metadataInputStream = pack.hasResource(manager.type, metadataId) ?
-                                                  manager.getWrappedResource(metadataId, pack) :
-                                                  null;
+                InputStream metadataInputStream = pack.hasResource(manager.type, metadataId) ? manager.getWrappedResource(metadataId, pack) : null;
                 //noinspection ObjectAllocationInLoop
                 SimpleResource resource = new SimpleResource(pack.getName(), id, manager.getWrappedResource(id, pack), metadataInputStream);
                 resource.setPackSource(ModdedPackSource.RESOURCE_PACK_SOURCE);

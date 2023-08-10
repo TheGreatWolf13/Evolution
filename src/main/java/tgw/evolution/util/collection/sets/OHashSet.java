@@ -7,6 +7,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 import tgw.evolution.Evolution;
 
+import java.util.Collection;
+
 public class OHashSet<K> extends ObjectOpenHashSet<K> implements OSet<K> {
 
     protected int lastPos = -1;
@@ -18,6 +20,10 @@ public class OHashSet<K> extends ObjectOpenHashSet<K> implements OSet<K> {
 
     public OHashSet(int expected) {
         super(expected);
+    }
+
+    public OHashSet(Collection<? extends K> c) {
+        super(c);
     }
 
     public OHashSet() {

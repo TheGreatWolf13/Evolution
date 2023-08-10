@@ -7,7 +7,6 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.internal.Streams;
 import com.google.gson.stream.JsonReader;
 import com.mojang.datafixers.DataFixer;
-import it.unimi.dsi.fastutil.objects.*;
 import net.minecraft.SharedConstants;
 import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
@@ -39,9 +38,8 @@ import java.util.Set;
 
 public class EvolutionServerStatsCounter extends ServerStatsCounter {
 
-    //TODO maybe synchronize here instead of by map
-    protected final Object2ShortMap<Stat<?>> partialData = Object2ShortMaps.synchronize(new O2SHashMap<>());
-    protected final Object2LongMap<Stat<?>> statsData = Object2LongMaps.synchronize(new O2LHashMap<>());
+    protected final O2SMap<Stat<?>> partialData = new O2SHashMap<>();
+    protected final O2LMap<Stat<?>> statsData = new O2LHashMap<>();
     private final OSet<Stat<?>> dirty = new OHashSet<>();
     private final MinecraftServer server;
     private final File statsFile;
@@ -123,7 +121,9 @@ public class EvolutionServerStatsCounter extends ServerStatsCounter {
     }
 
     public long getValueLong(Stat<?> stat) {
-        return this.statsData.getLong(stat);
+        synchronized (this.statsData) {
+            return this.statsData.getLong(stat);
+        }
     }
 
     @Override
@@ -150,101 +150,105 @@ public class EvolutionServerStatsCounter extends ServerStatsCounter {
             }
             return;
         }
-        long value = (long) amount;
-        amount -= value;
-        amount += HalfFloat.toFloat(this.partialData.getOrDefault(stat, (short) 0));
-        while (amount >= 1.0f) {
-            amount -= 1.0f;
-            value++;
-        }
-        this.partialData.put(stat, HalfFloat.toHalf(amount));
-        if (value > 0) {
-            this.incrementLong(stat, value);
+        synchronized (this.statsData) {
+            long value = (long) amount;
+            amount -= value;
+            amount += HalfFloat.toFloat(this.partialData.getOrDefault(stat, (short) 0));
+            while (amount >= 1.0f) {
+                amount -= 1.0f;
+                value++;
+            }
+            this.partialData.put(stat, HalfFloat.toHalf(amount));
+            if (value > 0) {
+                this.incrementLong(stat, value);
+            }
         }
     }
 
     @Override
     public void markAllDirty() {
-        this.dirty.addAll(this.statsData.keySet());
+        synchronized (this.statsData) {
+            this.dirty.addAll(this.statsData.keySet());
+        }
     }
 
     @Override
     public void parseLocal(DataFixer dataFixer, String path) {
-        try (JsonReader jsonReader = new JsonReader(new StringReader(path))) {
-            jsonReader.setLenient(false);
-            JsonElement jsonElement = Streams.parse(jsonReader);
-            if (jsonElement.isJsonNull()) {
-                Evolution.error("Unable to parse Stat data from {}", this.statsFile);
-                return;
-            }
-            CompoundTag tag = fromJson(jsonElement.getAsJsonObject());
-            if (!tag.contains("DataVersion", Tag.TAG_ANY_NUMERIC)) {
-                tag.putInt("DataVersion", 1_343);
-            }
-            tag = NbtUtils.update(dataFixer, DataFixTypes.STATS, tag, tag.getInt("DataVersion"));
-            if (tag.contains("stats", Tag.TAG_COMPOUND)) {
-                CompoundTag stats = tag.getCompound("stats");
-                for (String typeKey : stats.getAllKeys()) {
-                    if (stats.contains(typeKey, Tag.TAG_COMPOUND)) {
-                        //noinspection ObjectAllocationInLoop
-                        StatType<?> statType = Registry.STAT_TYPE.get(new ResourceLocation(typeKey));
-                        if (statType != null) {
-                            CompoundTag type = stats.getCompound(typeKey);
-                            for (String key : type.getAllKeys()) {
-                                if (type.contains(key, Tag.TAG_ANY_NUMERIC)) {
-                                    Stat<?> stat = getStat(statType, key);
-                                    if (stat != null) {
-                                        this.statsData.put(stat, type.getLong(key));
+        synchronized (this.statsData) {
+            try (JsonReader jsonReader = new JsonReader(new StringReader(path))) {
+                jsonReader.setLenient(false);
+                JsonElement jsonElement = Streams.parse(jsonReader);
+                if (jsonElement.isJsonNull()) {
+                    Evolution.error("Unable to parse Stat data from {}", this.statsFile);
+                    return;
+                }
+                CompoundTag tag = fromJson(jsonElement.getAsJsonObject());
+                if (!tag.contains("DataVersion", Tag.TAG_ANY_NUMERIC)) {
+                    tag.putInt("DataVersion", 1_343);
+                }
+                tag = NbtUtils.update(dataFixer, DataFixTypes.STATS, tag, tag.getInt("DataVersion"));
+                if (tag.contains("stats", Tag.TAG_COMPOUND)) {
+                    CompoundTag stats = tag.getCompound("stats");
+                    for (String typeKey : stats.getAllKeys()) {
+                        if (stats.contains(typeKey, Tag.TAG_COMPOUND)) {
+                            //noinspection ObjectAllocationInLoop
+                            StatType<?> statType = Registry.STAT_TYPE.get(new ResourceLocation(typeKey));
+                            if (statType != null) {
+                                CompoundTag type = stats.getCompound(typeKey);
+                                for (String key : type.getAllKeys()) {
+                                    if (type.contains(key, Tag.TAG_ANY_NUMERIC)) {
+                                        Stat<?> stat = getStat(statType, key);
+                                        if (stat != null) {
+                                            this.statsData.put(stat, type.getLong(key));
+                                        }
+                                        else {
+                                            Evolution.warn("Invalid statistic in {}: Don't know what {} is", this.statsFile, key);
+                                        }
                                     }
                                     else {
-                                        Evolution.warn("Invalid statistic in {}: Don't know what {} is", this.statsFile, key);
+                                        Evolution.warn("Invalid statistic value in {}: Don't know what {} is for key {}", this.statsFile, type.get(key), key);
                                     }
                                 }
-                                else {
-                                    Evolution.warn("Invalid statistic value in {}: Don't know what {} is for key {}", this.statsFile, type.get(key),
-                                                   key);
-                                }
+                            }
+                            else {
+                                Evolution.warn("Invalid statistic type in {}: Don't know what {} is", this.statsFile, typeKey);
                             }
                         }
-                        else {
-                            Evolution.warn("Invalid statistic type in {}: Don't know what {} is", this.statsFile, typeKey);
+                    }
+                }
+                if (tag.contains("partial", Tag.TAG_COMPOUND)) {
+                    CompoundTag partial = tag.getCompound("partial");
+                    for (String typeKey : partial.getAllKeys()) {
+                        if (partial.contains(typeKey, Tag.TAG_COMPOUND)) {
+                            //noinspection ObjectAllocationInLoop
+                            StatType<?> statType = Registry.STAT_TYPE.get(new ResourceLocation(typeKey));
+                            if (statType != null) {
+                                CompoundTag type = partial.getCompound(typeKey);
+                                for (String key : type.getAllKeys()) {
+                                    if (type.contains(key, Tag.TAG_ANY_NUMERIC)) {
+                                        Stat<?> stat = getStat(statType, key);
+                                        if (stat != null) {
+                                            this.partialData.put(stat, type.getShort(key));
+                                        }
+                                        else {
+                                            Evolution.warn("Invalid statistic in {}: Don't know what {} is", this.statsFile, key);
+                                        }
+                                    }
+                                    else {
+                                        Evolution.warn("Invalid statistic value in {}: Don't know what {} is for key {}", this.statsFile, type.get(key), key);
+                                    }
+                                }
+                            }
+                            else {
+                                Evolution.warn("Invalid statistic type in {}: Don't know what {} is", this.statsFile, typeKey);
+                            }
                         }
                     }
                 }
             }
-            if (tag.contains("partial", Tag.TAG_COMPOUND)) {
-                CompoundTag partial = tag.getCompound("partial");
-                for (String typeKey : partial.getAllKeys()) {
-                    if (partial.contains(typeKey, Tag.TAG_COMPOUND)) {
-                        //noinspection ObjectAllocationInLoop
-                        StatType<?> statType = Registry.STAT_TYPE.get(new ResourceLocation(typeKey));
-                        if (statType != null) {
-                            CompoundTag type = partial.getCompound(typeKey);
-                            for (String key : type.getAllKeys()) {
-                                if (type.contains(key, Tag.TAG_ANY_NUMERIC)) {
-                                    Stat<?> stat = getStat(statType, key);
-                                    if (stat != null) {
-                                        this.partialData.put(stat, type.getShort(key));
-                                    }
-                                    else {
-                                        Evolution.warn("Invalid statistic in {}: Don't know what {} is", this.statsFile, key);
-                                    }
-                                }
-                                else {
-                                    Evolution.warn("Invalid statistic value in {}: Don't know what {} is for key {}", this.statsFile, type.get(key),
-                                                   key);
-                                }
-                            }
-                        }
-                        else {
-                            Evolution.warn("Invalid statistic type in {}: Don't know what {} is", this.statsFile, typeKey);
-                        }
-                    }
-                }
+            catch (IOException | JsonParseException exception) {
+                Evolution.error("Unable to parse Stat data from {}", this.statsFile, exception);
             }
-        }
-        catch (IOException | JsonParseException exception) {
-            Evolution.error("Unable to parse Stat data from {}", this.statsFile, exception);
         }
     }
 
@@ -272,46 +276,50 @@ public class EvolutionServerStatsCounter extends ServerStatsCounter {
     }
 
     public void setValueLong(Stat<?> stat, long amount) {
-        this.statsData.put(stat, amount);
+        synchronized (this.statsData) {
+            this.statsData.put(stat, amount);
+        }
         this.dirty.add(stat);
     }
 
     @Override
     protected String toJson() {
-        R2OMap<StatType<?>, JsonObject> dataMap = new R2OHashMap<>();
-        for (Object2LongMap.Entry<Stat<?>> entry : this.statsData.object2LongEntrySet()) {
-            Stat<?> stat = entry.getKey();
-            JsonObject json = dataMap.get(stat.getType());
-            if (json == null) {
-                json = new JsonObject();
-                dataMap.put(stat.getType(), json);
+        synchronized (this.statsData) {
+            R2OMap<StatType<?>, JsonObject> dataMap = new R2OHashMap<>();
+            for (O2LMap.Entry<Stat<?>> e = this.statsData.fastEntries(); e != null; e = this.statsData.fastEntries()) {
+                Stat<?> stat = e.key();
+                JsonObject json = dataMap.get(stat.getType());
+                if (json == null) {
+                    json = new JsonObject();
+                    dataMap.put(stat.getType(), json);
+                }
+                json.addProperty(getKey(stat).toString(), e.value());
             }
-            json.addProperty(getKey(stat).toString(), entry.getLongValue());
-        }
-        JsonObject data = new JsonObject();
-        for (Reference2ObjectMap.Entry<StatType<?>, JsonObject> entry : dataMap.reference2ObjectEntrySet()) {
-            //noinspection ConstantConditions
-            data.add(Registry.STAT_TYPE.getKey(entry.getKey()).toString(), entry.getValue());
-        }
-        R2OMap<StatType<?>, JsonObject> partialDataMap = new R2OHashMap<>();
-        for (Object2ShortMap.Entry<Stat<?>> entry : this.partialData.object2ShortEntrySet()) {
-            Stat<?> stat = entry.getKey();
-            JsonObject json = partialDataMap.get(stat.getType());
-            if (json == null) {
-                json = new JsonObject();
-                partialDataMap.put(stat.getType(), json);
+            JsonObject data = new JsonObject();
+            for (R2OMap.Entry<StatType<?>, JsonObject> e = dataMap.fastEntries(); e != null; e = dataMap.fastEntries()) {
+                //noinspection ConstantConditions
+                data.add(Registry.STAT_TYPE.getKey(e.key()).toString(), e.value());
             }
-            json.addProperty(getKey(stat).toString(), entry.getShortValue());
+            R2OMap<StatType<?>, JsonObject> partialDataMap = new R2OHashMap<>();
+            for (O2SMap.Entry<Stat<?>> e = this.partialData.fastEntries(); e != null; e = this.partialData.fastEntries()) {
+                Stat<?> stat = e.key();
+                JsonObject json = partialDataMap.get(stat.getType());
+                if (json == null) {
+                    json = new JsonObject();
+                    partialDataMap.put(stat.getType(), json);
+                }
+                json.addProperty(getKey(stat).toString(), e.value());
+            }
+            JsonObject partialData = new JsonObject();
+            for (R2OMap.Entry<StatType<?>, JsonObject> e = partialDataMap.fastEntries(); e != null; e = partialDataMap.fastEntries()) {
+                //noinspection ConstantConditions
+                partialData.add(Registry.STAT_TYPE.getKey(e.key()).toString(), e.value());
+            }
+            JsonObject finalObj = new JsonObject();
+            finalObj.add("stats", data);
+            finalObj.add("partial", partialData);
+            finalObj.addProperty("DataVersion", SharedConstants.getCurrentVersion().getWorldVersion());
+            return finalObj.toString();
         }
-        JsonObject partialData = new JsonObject();
-        for (Reference2ObjectMap.Entry<StatType<?>, JsonObject> entry : partialDataMap.reference2ObjectEntrySet()) {
-            //noinspection ConstantConditions
-            partialData.add(Registry.STAT_TYPE.getKey(entry.getKey()).toString(), entry.getValue());
-        }
-        JsonObject finalObj = new JsonObject();
-        finalObj.add("stats", data);
-        finalObj.add("partial", partialData);
-        finalObj.addProperty("DataVersion", SharedConstants.getCurrentVersion().getWorldVersion());
-        return finalObj.toString();
     }
 }

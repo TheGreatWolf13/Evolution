@@ -16,6 +16,12 @@ public class FArrayList extends FloatArrayList implements FList {
     }
 
     @Override
+    public Float get(int index) {
+        Evolution.deprecatedMethod();
+        return super.get(index);
+    }
+
+    @Override
     public FloatListIterator listIterator() {
         if (CHECKS) {
             Evolution.info("Allocating memory for an iterator");

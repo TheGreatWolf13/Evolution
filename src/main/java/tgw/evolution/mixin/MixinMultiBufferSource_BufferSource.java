@@ -11,6 +11,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import tgw.evolution.client.renderer.ICrashReset;
 import tgw.evolution.util.collection.sets.OHashSet;
+import tgw.evolution.util.collection.sets.OSet;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -65,8 +66,9 @@ public abstract class MixinMultiBufferSource_BufferSource implements ICrashReset
     @Override
     public void resetAfterCrash() {
         ((ICrashReset) this.builder).resetAfterCrash();
-        for (BufferBuilder buffer : this.startedBuffers) {
-            ((ICrashReset) buffer).resetAfterCrash();
+        OSet<BufferBuilder> startedBuffers = (OSet<BufferBuilder>) this.startedBuffers;
+        for (BufferBuilder e = startedBuffers.fastEntries(); e != null; e = startedBuffers.fastEntries()) {
+            ((ICrashReset) e).resetAfterCrash();
         }
     }
 }

@@ -13,6 +13,10 @@ public class IArrayList extends IntArrayList implements IList {
         super();
     }
 
+    public IArrayList(int capacity) {
+        super(capacity);
+    }
+
     public IArrayList(Iterator<? extends Integer> i) {
         super(i);
     }
@@ -32,6 +36,12 @@ public class IArrayList extends IntArrayList implements IList {
             Arrays.fill(this.a, size, size + length, value);
         }
         this.size = end;
+    }
+
+    @Override
+    public Integer get(int index) {
+        Evolution.deprecatedMethod();
+        return super.get(index);
     }
 
     @Override
