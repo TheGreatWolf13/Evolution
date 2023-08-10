@@ -57,6 +57,7 @@ public abstract class MixinLocalPlayer extends AbstractClientPlayer {
     @Override
     @Overwrite
     public void aiStep() {
+        assert this.minecraft.gameMode != null;
         this.sprintTime++;
         if (this.sprintTriggerTime > 0) {
             this.sprintTriggerTime--;
@@ -66,10 +67,7 @@ public abstract class MixinLocalPlayer extends AbstractClientPlayer {
         boolean isSneaking = this.input.shiftKeyDown;
         boolean hadImpulseToStartSprint = this.hasEnoughImpulseToStartSprinting();
         Abilities abilities = this.getAbilities();
-        this.crouching = !abilities.flying &&
-                         !this.isSwimming() &&
-                         this.canEnterPose(Pose.CROUCHING) &&
-                         (this.isShiftKeyDown() || !this.isSleeping() && !this.canEnterPose(Pose.STANDING));
+        this.crouching = !abilities.flying && !this.isSwimming() && this.canEnterPose(Pose.CROUCHING) && (this.isShiftKeyDown() || !this.isSleeping() && !this.canEnterPose(Pose.STANDING));
         ((EvolutionInput) this.input).tick((LocalPlayer) (Object) this);
         if (!this.noPhysics) {
             this.moveTowardsClosestSpace(this.getX() - this.getBbWidth() * 0.35, this.getZ() + this.getBbWidth() * 0.35);
@@ -131,13 +129,9 @@ public abstract class MixinLocalPlayer extends AbstractClientPlayer {
                 this.setSprinting(false);
             }
         }
-        boolean isFlying = false;
         if (abilities.mayfly) {
-            assert this.minecraft.gameMode != null;
             if (this.minecraft.gameMode.isAlwaysFlying()) {
                 if (!abilities.flying) {
-                    abilities.flying = true;
-                    isFlying = true;
                     this.onUpdateAbilities();
                 }
             }
@@ -147,13 +141,12 @@ public abstract class MixinLocalPlayer extends AbstractClientPlayer {
                 }
                 else if (!this.isSwimming()) {
                     abilities.flying = !abilities.flying;
-                    isFlying = true;
                     this.onUpdateAbilities();
                     this.jumpTriggerTime = 0;
                 }
             }
         }
-        if (this.input.jumping && !isFlying && !isJumping && !abilities.flying && !this.isPassenger() && !this.onClimbable()) {
+        if (this.input.jumping && !abilities.flying && !isJumping && !this.isPassenger() && !this.onClimbable()) {
             ItemStack chestStack = this.getItemBySlot(EquipmentSlot.CHEST);
             if (chestStack.is(Items.ELYTRA) && ElytraItem.isFlyEnabled(chestStack) && this.tryToStartFallFlying()) {
                 this.connection.send(new ServerboundPlayerCommandPacket(this, ServerboundPlayerCommandPacket.Action.START_FALL_FLYING));
@@ -213,13 +206,6 @@ public abstract class MixinLocalPlayer extends AbstractClientPlayer {
             this.jumpRidingScale = 0.0F;
         }
         super.aiStep();
-        if (this.onGround && abilities.flying) {
-            assert this.minecraft.gameMode != null;
-            if (!this.minecraft.gameMode.isAlwaysFlying()) {
-                abilities.flying = false;
-                this.onUpdateAbilities();
-            }
-        }
     }
 
     @Shadow

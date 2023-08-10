@@ -567,6 +567,7 @@ public abstract class MixinPlayer extends LivingEntity implements PatchPlayer {
     @Shadow
     public abstract CompoundTag getShoulderEntityRight();
 
+    @Unique
     private float getStepHeightInternal() {
         AttributeInstance massAttribute = this.getAttribute(EvolutionAttributes.MASS);
         assert massAttribute != null;

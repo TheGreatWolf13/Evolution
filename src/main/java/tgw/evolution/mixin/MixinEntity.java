@@ -38,7 +38,6 @@ import net.minecraft.world.level.gameevent.GameEventListenerRegistrar;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -564,12 +563,12 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
     public abstract Pose getPose();
 
     @Unique
-    private BlockPos getStepSoundPos(BlockPos pos) {
-        BlockState state = this.level.getBlockState_(pos.getX(), pos.getY() + 1, pos.getZ());
+    private long getStepSoundPos(int x, int y, int z) {
+        BlockState state = this.level.getBlockState_(x, y + 1, z);
         if (state.is(BlockTags.INSIDE_STEP_SOUND_BLOCKS) || state.is(EvolutionBlockTags.BLOCKS_COMBINED_STEP_SOUND)) {
-            return pos.above();
+            return BlockPos.asLong(x, y + 1, z);
         }
-        return pos;
+        return BlockPos.asLong(x, y, z);
     }
 
     @Override
@@ -814,7 +813,7 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
     @Overwrite
     public void move(MoverType type, Vec3 deltaMovement) {
         if (this.noPhysics) {
-            this.setPos(this.getX() + deltaMovement.x, this.getY() + deltaMovement.y, this.getZ() + deltaMovement.z);
+            this.setPos(this.position.x + deltaMovement.x, this.position.y + deltaMovement.y, this.position.z + deltaMovement.z);
             return;
         }
         this.wasOnFire = this.isOnFire();
@@ -834,15 +833,7 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
         Vec3 allowedMovement = this.collide(deltaMovement);
         double d0 = allowedMovement.lengthSqr();
         if (d0 > 1.0E-7) {
-            if (this.fallDistance != 0.0F && d0 >= 1.0) {
-                BlockHitResult blockHitResult = this.level.clip(
-                        new ClipContext(this.position(), this.position().add(allowedMovement), ClipContext.Block.FALLDAMAGE_RESETTING,
-                                        ClipContext.Fluid.WATER, (Entity) (Object) this));
-                if (blockHitResult.getType() != HitResult.Type.MISS) {
-                    this.resetFallDistance();
-                }
-            }
-            this.setPos(this.getX() + allowedMovement.x, this.getY() + allowedMovement.y, this.getZ() + allowedMovement.z);
+            this.setPos(this.position.x + allowedMovement.x, this.position.y + allowedMovement.y, this.position.z + allowedMovement.z);
         }
         this.level.getProfiler().pop();
         this.hasCollidedOnX = !Mth.equal(deltaMovement.x, allowedMovement.x);
@@ -1095,15 +1086,21 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
 
     @Unique
     private void playStepSounds(BlockPos pos, BlockState state) {
-        BlockPos stepPos = this.getStepSoundPos(pos);
-        //noinspection ConstantConditions
-        if ((Object) this instanceof Player && !pos.equals(stepPos)) {
-            BlockState blockState = this.level.getBlockState_(stepPos.getX(), stepPos.getY(), stepPos.getZ());
-            if (blockState.is(EvolutionBlockTags.BLOCKS_COMBINED_STEP_SOUND)) {
+        int x = pos.getX();
+        int y = pos.getY();
+        int z = pos.getZ();
+        long stepPos = this.getStepSoundPos(x, y, z);
+        int stepX = BlockPos.getX(stepPos);
+        int stepY = BlockPos.getY(stepPos);
+        int stepZ = BlockPos.getZ(stepPos);
+        if (stepX != x || stepY != y || stepZ != z) {
+            BlockState blockState = this.level.getBlockState_(stepX, stepY, stepZ);
+            //noinspection ConstantConditions
+            if ((Object) this instanceof Player && blockState.is(EvolutionBlockTags.BLOCKS_COMBINED_STEP_SOUND)) {
                 this.playCombinationStepSounds(blockState, state);
             }
             else {
-                this.playStepSound(stepPos, blockState);
+                this.playStepSound(new BlockPos(stepX, stepY, stepZ), blockState);
             }
         }
         else {
@@ -1343,9 +1340,6 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
         if ((this.isOnGround() || climbable || this.isCrouching() && movement.y == 0) && !this.isSwimming()) {
             if (playSound) {
                 this.playStepSounds(pos, state);
-            }
-            if (emitEvent) {
-                this.level.gameEvent((Entity) (Object) this, GameEvent.STEP, this.blockPosition());
             }
             return true;
         }
