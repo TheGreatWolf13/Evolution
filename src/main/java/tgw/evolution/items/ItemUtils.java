@@ -14,17 +14,23 @@ public final class ItemUtils {
     private ItemUtils() {
     }
 
-    public static boolean canRepeatUse(ItemStack stack) {
-        Item item = stack.getItem();
-        return item instanceof ItemBlock || item instanceof BlockItem;
-    }
-
     public static double getDmgMultiplier(ItemStack stack, EvolutionDamage.Type type) {
         return stack.getItem() instanceof ItemModularTool mod ? mod.getDmgMultiplier(stack, type) : 1;
     }
 
     public static double getMass(ItemStack stack) {
         return stack.getItem() instanceof ItemModular mod ? mod.getMass(stack) : 0;
+    }
+
+    public static RepeatedUse getRepeatedUse(ItemStack stack) {
+        Item item = stack.getItem();
+        if (item instanceof ItemBlock b) {
+            return b.block.getRepeatedUse();
+        }
+        if (item instanceof BlockItem b) {
+            return b.getBlock().getRepeatedUse();
+        }
+        return RepeatedUse.NEVER;
     }
 
     public static boolean isAxe(ItemStack stack) {
@@ -64,5 +70,11 @@ public final class ItemUtils {
             return item.usesModularRendering();
         }
         return false;
+    }
+
+    public enum RepeatedUse {
+        ALWAYS,
+        NEVER,
+        NOT_ON_FIRST_TICK
     }
 }

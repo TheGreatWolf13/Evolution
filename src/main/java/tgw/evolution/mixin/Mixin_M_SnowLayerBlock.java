@@ -4,6 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
@@ -22,6 +23,7 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.hooks.asm.DeleteMethod;
+import tgw.evolution.items.ItemUtils;
 
 import java.util.Random;
 
@@ -80,6 +82,11 @@ public abstract class Mixin_M_SnowLayerBlock extends Block {
     }
 
     @Override
+    public ItemUtils.RepeatedUse getRepeatedUse() {
+        return ItemUtils.RepeatedUse.NOT_ON_FIRST_TICK;
+    }
+
+    @Override
     @Overwrite
     @DeleteMethod
     public VoxelShape getShape(BlockState blockState, BlockGetter blockGetter, BlockPos blockPos, CollisionContext collisionContext) {
@@ -89,6 +96,16 @@ public abstract class Mixin_M_SnowLayerBlock extends Block {
     @Override
     public VoxelShape getShape_(BlockState state, BlockGetter level, int x, int y, int z, @Nullable Entity entity) {
         return SHAPE_BY_LAYER[state.getValue(LAYERS)];
+    }
+
+    @Override
+    @Overwrite
+    public @Nullable BlockState getStateForPlacement(BlockPlaceContext context) {
+        BlockState stateAtPos = context.getLevel().getBlockState_(context.getClickedPos());
+        if (stateAtPos.is(this)) {
+            return stateAtPos.setValue(LAYERS, Math.min(8, stateAtPos.getValue(LAYERS) + 1));
+        }
+        return super.getStateForPlacement(context);
     }
 
     @Override

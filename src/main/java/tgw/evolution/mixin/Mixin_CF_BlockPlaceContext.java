@@ -21,17 +21,14 @@ public abstract class Mixin_CF_BlockPlaceContext extends UseOnContext {
     @Mutable @Shadow @Final @RestoreFinal private BlockPos relativePos;
 
     @ModifyConstructor
-    protected Mixin_CF_BlockPlaceContext(Level level,
-                                         @Nullable Player player,
-                                         InteractionHand hand,
-                                         ItemStack stack,
-                                         BlockHitResult hitResult) {
+    protected Mixin_CF_BlockPlaceContext(Level level, @Nullable Player player, InteractionHand hand, ItemStack stack, BlockHitResult hitResult) {
         super(level, player, hand, stack, hitResult);
         int x = hitResult.posX();
         int y = hitResult.posY();
         int z = hitResult.posZ();
         Direction dir = hitResult.getDirection();
         this.relativePos = new BlockPos(x + dir.getStepX(), y + dir.getStepY(), z + dir.getStepZ());
+        this.replaceClicked = true;
         this.replaceClicked = level.getBlockState_(x, y, z).canBeReplaced((BlockPlaceContext) (Object) this);
     }
 

@@ -16,6 +16,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import org.jetbrains.annotations.Nullable;
+import tgw.evolution.items.ItemUtils;
 import tgw.evolution.util.constants.HarvestLevel;
 
 import java.util.random.RandomGenerator;
@@ -52,6 +53,10 @@ public interface PatchBlock {
 
     default @HarvestLevel int getHarvestLevel(BlockState state, Level level, int x, int y, int z) {
         throw new AbstractMethodError();
+    }
+
+    default ItemUtils.RepeatedUse getRepeatedUse() {
+        return ItemUtils.RepeatedUse.ALWAYS;
     }
 
     default @Nullable BlockState getStateForPlacement_(Level level,

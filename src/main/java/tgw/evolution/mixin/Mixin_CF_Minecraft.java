@@ -227,6 +227,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
     @Mutable @Shadow @Final @RestoreFinal private PeriodicNotificationManager regionalCompliancies;
     @Mutable @Shadow @Final @RestoreFinal private ResourceLoadStateTracker reloadStateTracker;
     @Mutable @Shadow @Final @RestoreFinal private RenderBuffers renderBuffers;
+    @Unique private ItemUtils.RepeatedUse repeatedUse;
     @Mutable @Shadow @Final @RestoreFinal private ReloadableResourceManager resourceManager;
     @Mutable @Shadow @Final @RestoreFinal private File resourcePackDirectory;
     @Mutable @Shadow @Final @RestoreFinal private PackRepository resourcePackRepository;
@@ -905,7 +906,6 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
                     this.player.sendOpenInventory();
                 }
                 else {
-                    this.tutorial.onOpenInventory();
                     this.player.connection.send(new PacketCSSimpleMessage(Message.C2S.OPEN_INVENTORY));
                 }
             }
@@ -918,9 +918,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
                 this.useFlags = 0;
                 if (!this.player.isSpectator()) {
                     //noinspection ObjectAllocationInLoop
-                    this.getConnection()
-                        .send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.SWAP_ITEM_WITH_OFFHAND, BlockPos.ZERO,
-                                                                Direction.DOWN));
+                    this.getConnection().send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.SWAP_ITEM_WITH_OFFHAND, BlockPos.ZERO, Direction.DOWN));
                 }
             }
         }
@@ -940,6 +938,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
         }
         boolean shouldContinueAttacking = true;
         boolean isAttackKeyDown;
+        boolean startedThisTick = false;
         //Using item
         if (this.player.isUsingItem()) {
             if (!this.options.keyUse.isDown()) {
@@ -1045,6 +1044,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
                     this.lastHoldingPos.remove();
                     this.startUseItem();
                     this.useFlags &= ~2;
+                    startedThisTick = true;
                 }
             }
             if (this.options.keyPickItem.consumeAllClicks()) {
@@ -1056,7 +1056,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
         if (this.options.keyUse.isDown() && !this.player.isUsingItem()) {
             if (notPausedNorAttacking) {
                 boolean special = false;
-                if ((this.useFlags & 1) != 0) {
+                if ((this.useFlags & 1) != 0 && (this.repeatedUse != ItemUtils.RepeatedUse.NOT_ON_FIRST_TICK || !startedThisTick)) {
                     special = this.startUseItemSpecial();
                 }
                 if (!special && this.rightClickDelay == 0) {
@@ -1064,12 +1064,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
                 }
             }
         }
-        this.continueAttack(
-                this.screen == null &&
-                shouldContinueAttacking &&
-                isAttackKeyDown &&
-                this.mouseHandler.isMouseGrabbed() &&
-                !this.multiplayerPause);
+        this.continueAttack(this.screen == null && shouldContinueAttacking && isAttackKeyDown && this.mouseHandler.isMouseGrabbed() && !this.multiplayerPause);
     }
 
     @Shadow
@@ -1595,9 +1590,6 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
         assert this.gameMode != null;
         assert this.player != null;
         assert this.level != null;
-        if (this.gameMode.isDestroying()) {
-            return;
-        }
         this.rightClickDelay = 4;
         if (this.player.isHandsBusy()) {
             return;
@@ -1638,14 +1630,13 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
                     if (actResult.consumesAction()) {
                         if (actResult.shouldSwing()) {
                             this.player.swing(hand);
-                            if ((this.useFlags & 2) != 0 && ItemUtils.canRepeatUse(stack)) {
+                            if ((this.useFlags & 2) != 0 && (this.repeatedUse = ItemUtils.getRepeatedUse(stack)) != ItemUtils.RepeatedUse.NEVER) {
                                 this.useFlags |= 1;
                                 Direction direction = ClientEvents.getDirectionFromInput(this.player.getDirection(), this.player.input);
                                 if (direction != null) {
                                     this.useFlags |= direction.ordinal() + 1 << 2;
                                 }
-                                this.lastHoldingPos.setWithOffset(blockRayTrace.posX(), blockRayTrace.posY(), blockRayTrace.posZ(),
-                                                                  blockRayTrace.getDirection());
+                                this.lastHoldingPos.setWithOffset(blockRayTrace.posX(), blockRayTrace.posY(), blockRayTrace.posZ(), blockRayTrace.getDirection());
                             }
                         }
                         return;
@@ -1722,7 +1713,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
                 if (hand == InteractionHand.OFF_HAND && stack.isEmpty()) {
                     continue;
                 }
-                if (!ItemUtils.canRepeatUse(stack)) {
+                if (ItemUtils.getRepeatedUse(stack) == ItemUtils.RepeatedUse.NEVER) {
                     continue;
                 }
                 InteractionResult actResult = this.gameMode.useItemOn(this.player, this.level, hand, blockRayTrace);
@@ -1766,7 +1757,6 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
         this.profiler.popPush("gui");
         this.gui.tick(this.pause);
         this.profiler.pop();
-        this.tutorial.onLookAt(this.level, this.hitResult);
         this.profiler.push("gameMode");
         if ((!this.pause || this.multiplayerPause) && this.level != null) { //Added check for multiplayer pause
             assert this.gameMode != null;
@@ -1851,8 +1841,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
             if (!this.pause) {
                 if (!this.options.joinedFirstServer && this.isMultiplayerServer()) {
                     Component title = new TranslatableComponent("tutorial.socialInteractions.title");
-                    Component message = new TranslatableComponent("tutorial.socialInteractions.description",
-                                                                  Tutorial.key("socialInteractions"));
+                    Component message = new TranslatableComponent("tutorial.socialInteractions.description", Tutorial.key("socialInteractions"));
                     this.socialInteractionsToast = new TutorialToast(TutorialToast.Icons.SOCIAL_INTERACTIONS, title, message, true);
                     this.tutorial.addTimedToast(this.socialInteractionsToast, 160);
                     this.options.joinedFirstServer = true;

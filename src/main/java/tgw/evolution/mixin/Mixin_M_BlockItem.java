@@ -99,22 +99,14 @@ public abstract class Mixin_M_BlockItem extends Item {
     @Overwrite
     public boolean placeBlock(BlockPlaceContext context, BlockState state) {
         BlockPos pos = context.getClickedPos();
-        return context.getLevel().setBlock_(pos.getX(), pos.getY(), pos.getZ(), state,
-                                            BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE | BlockFlags.RENDER_MAINTHREAD);
+        return context.getLevel().setBlock_(pos.getX(), pos.getY(), pos.getZ(), state, BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE | BlockFlags.RENDER_MAINTHREAD);
     }
 
     @Shadow
-    protected abstract BlockState updateBlockStateFromTag(BlockPos blockPos,
-                                                          Level level,
-                                                          ItemStack itemStack,
-                                                          BlockState blockState);
+    protected abstract BlockState updateBlockStateFromTag(BlockPos blockPos, Level level, ItemStack itemStack, BlockState blockState);
 
     @Shadow
-    protected abstract boolean updateCustomBlockEntityTag(BlockPos blockPos,
-                                                          Level level,
-                                                          @Nullable Player player,
-                                                          ItemStack itemStack,
-                                                          BlockState blockState);
+    protected abstract boolean updateCustomBlockEntityTag(BlockPos blockPos, Level level, @Nullable Player player, ItemStack itemStack, BlockState blockState);
 
     @Shadow
     public abstract @Nullable BlockPlaceContext updatePlacementContext(BlockPlaceContext blockPlaceContext);

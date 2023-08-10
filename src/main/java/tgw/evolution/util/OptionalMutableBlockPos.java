@@ -21,43 +21,35 @@ public class OptionalMutableBlockPos {
     }
 
     public boolean isSame(int x, int y, int z, Direction offset, @Nullable Direction moving) {
+        if (moving == null) {
+            return false;
+        }
         if (!this.isPresent()) {
             return false;
         }
+        int ox = x;
+        int oy = y;
+        int oz = z;
         switch (offset) {
-            case UP -> ++y;
-            case DOWN -> --y;
-            case WEST -> --x;
-            case EAST -> ++x;
-            case NORTH -> --z;
-            case SOUTH -> ++z;
+            case UP -> ++oy;
+            case DOWN -> --oy;
+            case WEST -> --ox;
+            case EAST -> ++ox;
+            case NORTH -> --oz;
+            case SOUTH -> ++oz;
         }
         int px = this.pos.getX();
         int py = this.pos.getY();
         int pz = this.pos.getZ();
-        if (moving != null) {
-            switch (moving) {
-                case DOWN -> {
-                    --py;
-                }
-                case UP -> {
-                    ++py;
-                }
-                case WEST -> {
-                    --px;
-                }
-                case EAST -> {
-                    ++px;
-                }
-                case NORTH -> {
-                    --pz;
-                }
-                case SOUTH -> {
-                    ++pz;
-                }
-            }
+        switch (moving) {
+            case DOWN -> --py;
+            case UP -> ++py;
+            case WEST -> --px;
+            case EAST -> ++px;
+            case NORTH -> --pz;
+            case SOUTH -> ++pz;
         }
-        return px == x && py == y && pz == z;
+        return px == ox && py == oy && pz == oz || moving == offset && this.pos.getX() == ox && this.pos.getY() == oy && this.pos.getZ() == oz;
     }
 
     public void remove() {
