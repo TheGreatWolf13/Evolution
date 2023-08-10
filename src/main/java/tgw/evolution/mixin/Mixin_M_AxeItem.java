@@ -21,6 +21,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.hooks.asm.DeleteMethod;
+import tgw.evolution.util.constants.BlockFlags;
 
 import java.util.Optional;
 
@@ -79,7 +80,7 @@ public abstract class Mixin_M_AxeItem extends DiggerItem {
             if (player instanceof ServerPlayer p) {
                 CriteriaTriggers.ITEM_USED_ON_BLOCK.trigger_(p, x, y, z, stack);
             }
-            level.setBlock(new BlockPos(x, y, z), chosenState, 11);
+            level.setBlock_(x, y, z, chosenState, BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE | BlockFlags.RENDER_MAINTHREAD);
             stack.hurtAndBreak(1, player, p -> p.broadcastBreakEvent(hand));
             return InteractionResult.sidedSuccess(level.isClientSide);
         }
