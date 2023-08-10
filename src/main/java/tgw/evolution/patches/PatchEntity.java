@@ -1,6 +1,5 @@
 package tgw.evolution.patches;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -67,8 +66,8 @@ public interface PatchEntity {
         return 0;
     }
 
-    default BlockPos getSteppingPos() {
-        return BlockPos.ZERO;
+    default long getSteppingPos() {
+        return 0;
     }
 
     default double getVolume() {
@@ -119,6 +118,10 @@ public interface PatchEntity {
 
     default void onRemovedFromWorld() {
         //Is implemented on MixinEntity
+        throw new AbstractMethodError();
+    }
+
+    default void playStepSound(int x, int y, int z, BlockState state) {
         throw new AbstractMethodError();
     }
 }

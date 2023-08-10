@@ -85,7 +85,6 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
     @Unique private final Vec3d partialEyePosition = new Vec3d(Vec3d.NULL);
     @Unique private final OptionalMutableBlockPos supportingPos = new OptionalMutableBlockPos();
     @Unique private final Vec3d viewVector = new Vec3d();
-    @Shadow public float fallDistance;
     @Shadow public float flyDist;
     @Shadow public boolean horizontalCollision;
     @Shadow public boolean isInPowderSnow;
@@ -572,11 +571,11 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
     }
 
     @Override
-    public BlockPos getSteppingPos() {
+    public long getSteppingPos() {
         if (this.supportingPos.isPresent()) {
-            return this.supportingPos.get();
+            return this.supportingPos.get().asLong();
         }
-        return BlockPos.of(this.getPosWithYOffset(1e-5f));
+        return this.getPosWithYOffset(1e-5f);
     }
 
     @Shadow
@@ -850,7 +849,10 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
         }
         this.setOnGround(this.verticalCollisionBelow);
         BlockPos landingPos = this.getOnPos();
-        BlockState landingState = this.level.getBlockState_(landingPos.getX(), landingPos.getY(), landingPos.getZ());
+        int landX = landingPos.getX();
+        int landY = landingPos.getY();
+        int landZ = landingPos.getZ();
+        BlockState landingState = this.level.getBlockState_(landX, landY, landZ);
         this.checkFallDamage(allowedMovement.y, this.isOnGround(), landingState, landingPos);
         if (this.isRemoved()) {
             this.level.getProfiler().pop();
@@ -858,15 +860,14 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
         }
         if (this.horizontalCollision) {
             Vec3 updatedDeltaMovement = this.getDeltaMovement();
-            this.setDeltaMovement(this.hasCollidedOnX ? 0.0 : updatedDeltaMovement.x, updatedDeltaMovement.y,
-                                  this.hasCollidedOnZ ? 0.0 : updatedDeltaMovement.z);
+            this.setDeltaMovement(this.hasCollidedOnX ? 0.0 : updatedDeltaMovement.x, updatedDeltaMovement.y, this.hasCollidedOnZ ? 0.0 : updatedDeltaMovement.z);
         }
         Block block = landingState.getBlock();
         if (deltaMovement.y != allowedMovement.y) {
             block.updateEntityAfterFallOn(this.level, (Entity) (Object) this);
         }
         if (this.onGround && !this.isSteppingCarefully()) {
-            block.stepOn_(this.level, landingPos.getX(), landingPos.getY(), landingPos.getZ(), landingState, (Entity) (Object) this);
+            block.stepOn_(this.level, landX, landY, landZ, landingState, (Entity) (Object) this);
         }
         Entity.MovementEmission movementEmission = this.getMovementEmission();
         if (movementEmission.emitsAnything() && !this.isPassenger()) {
@@ -874,19 +875,22 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
             double dy = allowedMovement.y;
             double dz = allowedMovement.z;
             this.flyDist += allowedMovement.length() * 0.6;
-            BlockPos steppingPos = this.getSteppingPos();
-            BlockState steppingState = this.level.getBlockState_(steppingPos.getX(), steppingPos.getY(), steppingPos.getZ());
-            boolean canClimb = this.canClimb(steppingState, steppingPos.getX(), steppingPos.getY(), steppingPos.getZ());
+            long steppingPos = this.getSteppingPos();
+            int stepX = BlockPos.getX(steppingPos);
+            int stepY = BlockPos.getY(steppingPos);
+            int stepZ = BlockPos.getZ(steppingPos);
+            BlockState steppingState = this.level.getBlockState_(stepX, stepY, stepZ);
+            boolean canClimb = this.canClimb(steppingState, stepX, stepY, stepZ);
             if (!canClimb) {
                 dy = 0.0;
             }
             this.walkDist += allowedMovement.horizontalDistance() * 0.5;
             this.moveDist += Math.sqrt(dx * dx + dy * dy + dz * dz) * 0.5;
             if (this.moveDist > this.nextStep && !steppingState.isAir()) {
-                boolean landingIsStepping = landingPos.equals(steppingPos);
-                boolean stepOnBlock = this.stepOnBlock(landingPos, landingState, movementEmission.emitsSounds(), landingIsStepping, deltaMovement);
+                boolean landingIsStepping = landX == stepX && landY == stepY && landZ == stepZ;
+                boolean stepOnBlock = this.stepOnBlock(landX, landY, landZ, landingState, movementEmission.emitsSounds(), landingIsStepping, deltaMovement);
                 if (!landingIsStepping) {
-                    stepOnBlock |= this.stepOnBlock(steppingPos, steppingState, false, movementEmission.emitsEvents(), deltaMovement);
+                    stepOnBlock |= this.stepOnBlock(stepX, stepY, stepZ, steppingState, false, movementEmission.emitsEvents(), deltaMovement);
                 }
                 if (stepOnBlock) {
                     this.moveDist -= this.nextStep;
@@ -961,18 +965,21 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
         double dx = x - posX;
         double dy = y - posY;
         double dz = z - posZ;
-        BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
         Direction movingTo = Direction.UP;
         double minDist = Double.MAX_VALUE;
         for (Direction dir : DirectionUtil.NSWEU) {
-            if (!this.level.getBlockStateAtSide(posX, posY, posZ, dir)
-                           .isCollisionShapeFullBlock(this.level, mutable.set(posX, posY, posZ).move(dir))) {
-                double d = switch (dir) {
-                    case EAST, WEST -> dx;
-                    case UP, DOWN -> dy;
-                    case NORTH, SOUTH -> dz;
+            int offX = posX + dir.getStepX();
+            int offY = posY + dir.getStepY();
+            int offZ = posZ + dir.getStepZ();
+            if (!this.level.getBlockState_(offX, offY, offZ).isCollisionShapeFullBlock_(this.level, offX, offY, offZ)) {
+                double dist = switch (dir) {
+                    case WEST -> dx;
+                    case EAST -> 1 - dx;
+                    case DOWN -> dy;
+                    case UP -> 1 - dy;
+                    case NORTH -> dz;
+                    case SOUTH -> 1 - dz;
                 };
-                double dist = dir.getAxisDirection() == Direction.AxisDirection.POSITIVE ? 1.0 - d : d;
                 if (dist < minDist) {
                     minDist = dist;
                     movingTo = dir;
@@ -1077,18 +1084,21 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
      */
     @Overwrite
     public void playStepSound(BlockPos pos, BlockState state) {
+        Evolution.deprecatedMethod();
+        this.playStepSound(pos.getX(), pos.getY(), pos.getZ(), state);
+    }
+
+    @Override
+    public void playStepSound(int x, int y, int z, BlockState state) {
         if (!state.getMaterial().isLiquid()) {
-            BlockState stateAbove = this.level.getBlockState_(pos.getX(), pos.getY() + 1, pos.getZ());
+            BlockState stateAbove = this.level.getBlockState_(x, y + 1, z);
             SoundType soundType = stateAbove.is(BlockTags.INSIDE_STEP_SOUND_BLOCKS) ? stateAbove.getSoundType() : state.getSoundType();
             this.playSound(soundType.getStepSound(), soundType.getVolume() * 0.15F, soundType.getPitch());
         }
     }
 
     @Unique
-    private void playStepSounds(BlockPos pos, BlockState state) {
-        int x = pos.getX();
-        int y = pos.getY();
-        int z = pos.getZ();
+    private void playStepSounds(int x, int y, int z, BlockState state) {
         long stepPos = this.getStepSoundPos(x, y, z);
         int stepX = BlockPos.getX(stepPos);
         int stepY = BlockPos.getY(stepPos);
@@ -1100,11 +1110,11 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
                 this.playCombinationStepSounds(blockState, state);
             }
             else {
-                this.playStepSound(new BlockPos(stepX, stepY, stepZ), blockState);
+                this.playStepSound(stepX, stepY, stepZ, blockState);
             }
         }
         else {
-            this.playStepSound(pos, state);
+            this.playStepSound(x, y, z, state);
         }
         this.playAmethystStepSound(state);
     }
@@ -1332,14 +1342,14 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
     }
 
     @Unique
-    private boolean stepOnBlock(BlockPos pos, BlockState state, boolean playSound, boolean emitEvent, Vec3 movement) {
+    private boolean stepOnBlock(int x, int y, int z, BlockState state, boolean playSound, boolean emitEvent, Vec3 movement) {
         if (state.isAir()) {
             return false;
         }
-        boolean climbable = this.canClimb(state, pos.getX(), pos.getY(), pos.getZ());
+        boolean climbable = this.canClimb(state, x, y, z);
         if ((this.isOnGround() || climbable || this.isCrouching() && movement.y == 0) && !this.isSwimming()) {
             if (playSound) {
-                this.playStepSounds(pos, state);
+                this.playStepSounds(x, y, z, state);
             }
             return true;
         }
