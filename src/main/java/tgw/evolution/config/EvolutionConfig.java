@@ -6,43 +6,16 @@ import java.util.function.Supplier;
 
 public final class EvolutionConfig {
 
-    public static final Common COMMON;
     public static final Client CLIENT;
-    public static final Server SERVER;
-//    private static final ForgeConfigSpec COMMON_SPEC;
-//    private static final ForgeConfigSpec CLIENT_SPEC;
-//    private static final ForgeConfigSpec SERVER_SPEC;
 
     static {
-//        final Pair<Common, ForgeConfigSpec> commonSpecPair = new ForgeConfigSpec.Builder().configure(Common::new);
-//        assert commonSpecPair != null;
-//        COMMON_SPEC = commonSpecPair.getRight();
-        COMMON = /*commonSpecPair.getLeft();*/new Common();
 //        final Pair<Client, ForgeConfigSpec> clientSpecPair = new ForgeConfigSpec.Builder().configure(Client::new);
 //        assert clientSpecPair != null;
 //        CLIENT_SPEC = clientSpecPair.getRight();
         CLIENT = /*clientSpecPair.getLeft();*/new Client();
-//        final Pair<Server, ForgeConfigSpec> serverSpecPair = new ForgeConfigSpec.Builder().configure(Server::new);
-//        assert serverSpecPair != null;
-//        SERVER_SPEC = serverSpecPair.getRight();
-        SERVER = /*serverSpecPair.getLeft();*/new Server();
     }
 
     private EvolutionConfig() {
-    }
-
-//    public static void register(final ModLoadingContext context) {
-//        context.registerConfig(ModConfig.Type.COMMON, COMMON_SPEC);
-//        context.registerConfig(ModConfig.Type.CLIENT, CLIENT_SPEC);
-//        context.registerConfig(ModConfig.Type.SERVER, SERVER_SPEC);
-//    }
-
-    public static class Common {
-
-//        Common(final ForgeConfigSpec.Builder builder) {
-//            builder.push("Common");
-//            builder.pop();
-//        }
     }
 
     public static class Client {
@@ -103,18 +76,6 @@ public final class EvolutionConfig {
 //            this.planets = builder.translation("evolution.config.planets").define("planets", false);
 //            builder.pop();
 //            builder.pop();
-//            builder.pop();
-//        }
-    }
-
-    public static class Server {
-
-        public final Supplier<Integer> torchTime = () -> 10;
-
-//        Server(final ForgeConfigSpec.Builder builder) {
-//            builder.push("Server");
-//            this.torchTime = builder.translation("evolution.config.torchTime")
-//                                    .defineInRange("torchTime", 10, 0, Time.TICKS_PER_YEAR / Time.TICKS_PER_HOUR);
 //            builder.pop();
 //        }
     }

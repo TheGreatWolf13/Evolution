@@ -24,7 +24,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.tileentities.TETorch;
-import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.entities.projectiles.EntityGenericProjectile;
 import tgw.evolution.entities.projectiles.EntityTorch;
 import tgw.evolution.init.*;
@@ -58,8 +57,8 @@ public class ItemTorch extends ItemWallOrFloor implements IFireAspect, IThrowabl
         return createStack(tile.getTimePlaced(), 1);
     }
 
-    public static int getRemainingTime(long timeNow, long timePlaced) {
-        int torchTime = EvolutionConfig.SERVER.torchTime.get();
+    public static int getRemainingTime(Level level, long timeNow, long timePlaced) {
+        int torchTime = level.getGameRules().getInt(EvolutionGameRules.TORCH_DURATION);
         long timeNowRounded = Time.roundToLastFullHour(timeNow);
         long timeCreated = Time.roundToLastFullHour(timePlaced);
         int deltaTime = (int) (timeNowRounded - timeCreated) / 1_000;
@@ -68,12 +67,13 @@ public class ItemTorch extends ItemWallOrFloor implements IFireAspect, IThrowabl
 
     public static int getRemainingTime(Level level, ItemStack stack) {
         assert stack.getTag() != null;
-        return getRemainingTime(level.getDayTime(), stack.getTag().getLong("TimeCreated"));
+        return getRemainingTime(level, level.getDayTime(), stack.getTag().getLong("TimeCreated"));
     }
 
     public static int getRemainingTime(TETorch tile) {
-        assert tile.getLevel() != null;
-        return getRemainingTime(tile.getLevel().getDayTime(), tile.getTimePlaced());
+        Level level = tile.getLevel();
+        assert level != null;
+        return getRemainingTime(level, level.getDayTime(), tile.getTimePlaced());
     }
 
     @Override

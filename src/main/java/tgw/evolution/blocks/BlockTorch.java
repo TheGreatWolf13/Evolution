@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 import tgw.evolution.blocks.tileentities.TETorch;
 import tgw.evolution.blocks.util.BlockUtils;
-import tgw.evolution.config.EvolutionConfig;
+import tgw.evolution.init.EvolutionGameRules;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionShapes;
 import tgw.evolution.items.ItemTorch;
@@ -170,7 +170,7 @@ public class BlockTorch extends BlockPhysics implements IReplaceable, IFireSourc
         }
         BlockEntity tile = level.getBlockEntity_(x, y, z);
         if (tile instanceof TETorch teTorch) {
-            int torchTime = EvolutionConfig.SERVER.torchTime.get();
+            int torchTime = level.getGameRules().getInt(EvolutionGameRules.TORCH_DURATION);
             if (torchTime == 0) {
                 return;
             }
