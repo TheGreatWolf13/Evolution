@@ -1,13 +1,17 @@
 package tgw.evolution.mixin;
 
+import net.minecraft.ResourceLocationException;
+import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.*;
+import tgw.evolution.Evolution;
 import tgw.evolution.patches.PatchMobEffect;
 import tgw.evolution.patches.PatchMobEffectInstance;
 import tgw.evolution.util.math.MathHelper;
@@ -25,10 +29,19 @@ public abstract class MixinMobEffectInstance implements PatchMobEffectInstance {
     @Shadow private boolean showIcon;
     @Shadow private boolean visible;
 
-    /**
-     * @author TheGreatWolf
-     * @reason Overwrite to handle infinite effects.
-     */
+    @Overwrite
+    public static @Nullable MobEffectInstance load(CompoundTag compoundTag) {
+        String id = compoundTag.getString("Id");
+        try {
+            MobEffect mobEffect = Registry.MOB_EFFECT.get(new ResourceLocation(id));
+            return mobEffect == null ? null : loadSpecifiedEffect(mobEffect, compoundTag);
+        }
+        catch (ResourceLocationException e) {
+            Evolution.warn(" Refusing to load MobEffect. Invalid id: ", e);
+            return null;
+        }
+    }
+
     @Overwrite
     private static MobEffectInstance loadSpecifiedEffect(MobEffect effect, CompoundTag nbt) {
         int amplifier = Byte.toUnsignedInt(nbt.getByte("Amplifier"));
@@ -114,6 +127,14 @@ public abstract class MixinMobEffectInstance implements PatchMobEffectInstance {
 
     @Shadow
     public abstract boolean isVisible();
+
+    @Overwrite
+    public CompoundTag save(CompoundTag compoundTag) {
+        //noinspection ConstantConditions
+        compoundTag.putString("Id", Registry.MOB_EFFECT.getKey(this.effect).toString());
+        this.writeDetailsTo(compoundTag);
+        return compoundTag;
+    }
 
     /**
      * @author TheGreatWolf
