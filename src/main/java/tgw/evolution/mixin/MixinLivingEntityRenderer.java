@@ -92,9 +92,7 @@ public abstract class MixinLivingEntityRenderer<T extends LivingEntity, M extend
         }
         if (!entity.isSpectator()) {
             for (int i = 0, l = this.layers.size(); i < l; i++) {
-                this.layers.get(i)
-                           .render(matrices, buf, light, entity, this.limbSwing, this.limbSwingAmount, partialTicks, this.ageInTicks, this.netHeadYaw,
-                                   this.headPitch);
+                this.layers.get(i).render(matrices, buf, light, entity, this.limbSwing, this.limbSwingAmount, partialTicks, this.ageInTicks, this.netHeadYaw, this.headPitch);
             }
         }
         matrices.popPose();

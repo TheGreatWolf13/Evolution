@@ -12,7 +12,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.HumanoidArm;
-import net.minecraft.world.entity.player.PlayerModelPart;
 import net.minecraft.world.item.CrossbowItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -158,38 +157,6 @@ public class RendererPlayer extends LivingEntityRenderer<AbstractClientPlayer, M
     @Override
     protected void scale(AbstractClientPlayer entity, PoseStack matrices, float partialTicks) {
         matrices.scale(0.937_5F, 0.937_5F, 0.937_5F);
-    }
-
-    private void setModelProperties(AbstractClientPlayer player) {
-        ModelPlayer<AbstractClientPlayer> model = this.getModel();
-        if (player.isSpectator()) {
-            model.setAllVisible(false);
-            model.head.visible = true;
-            model.hat.visible = true;
-        }
-        else {
-            model.setAllVisible(true);
-            model.hat.visible = player.isModelPartShown(PlayerModelPart.HAT);
-            model.clothesBody.visible = player.isModelPartShown(PlayerModelPart.JACKET);
-            model.clothesLegL.visible = player.isModelPartShown(PlayerModelPart.LEFT_PANTS_LEG);
-            model.clothesLegR.visible = player.isModelPartShown(PlayerModelPart.RIGHT_PANTS_LEG);
-            model.clothesArmL.visible = player.isModelPartShown(PlayerModelPart.LEFT_SLEEVE);
-            model.clothesArmR.visible = player.isModelPartShown(PlayerModelPart.RIGHT_SLEEVE);
-            model.crouching = player.isCrouching();
-            ArmPose mainArmPose = getArmPose(player, InteractionHand.MAIN_HAND);
-            ArmPose offArmPose = getArmPose(player, InteractionHand.OFF_HAND);
-            if (mainArmPose.isTwoHanded()) {
-                offArmPose = player.getOffhandItem().isEmpty() ? ArmPose.EMPTY : ArmPose.ITEM;
-            }
-            if (player.getMainArm() == HumanoidArm.RIGHT) {
-                model.rightArmPose = mainArmPose;
-                model.leftArmPose = offArmPose;
-            }
-            else {
-                model.rightArmPose = offArmPose;
-                model.leftArmPose = mainArmPose;
-            }
-        }
     }
 
     @Override

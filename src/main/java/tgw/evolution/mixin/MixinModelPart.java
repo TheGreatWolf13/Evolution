@@ -5,10 +5,8 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Matrix3f;
 import com.mojang.math.Matrix4f;
 import net.minecraft.client.model.geom.ModelPart;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.*;
+import tgw.evolution.patches.PatchModelPart;
 import tgw.evolution.util.collection.maps.O2OMap;
 import tgw.evolution.util.hitbox.hms.HM;
 
@@ -16,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 @Mixin(ModelPart.class)
-public abstract class MixinModelPart implements HM {
+public abstract class MixinModelPart implements HM, PatchModelPart {
 
     @Shadow public boolean visible;
     @Shadow public float x;
@@ -27,6 +25,7 @@ public abstract class MixinModelPart implements HM {
     @Shadow public float zRot;
     @Shadow @Final private Map<String, ModelPart> children;
     @Shadow @Final private List<ModelPart.Cube> cubes;
+    @Unique private boolean renderChild;
 
     @Override
     public void addRotationX(float dx) {
@@ -44,14 +43,7 @@ public abstract class MixinModelPart implements HM {
     }
 
     @Overwrite
-    private void compile(PoseStack.Pose matrices,
-                         VertexConsumer vertexConsumer,
-                         int light,
-                         int overlay,
-                         float red,
-                         float green,
-                         float blue,
-                         float alpha) {
+    private void compile(PoseStack.Pose matrices, VertexConsumer vertexConsumer, int light, int overlay, float red, float green, float blue, float alpha) {
         Matrix4f poseMat = matrices.pose();
         Matrix3f normalMat = matrices.normal();
         List<ModelPart.Cube> cubes = this.cubes;
@@ -102,6 +94,15 @@ public abstract class MixinModelPart implements HM {
                 matrices.popPose();
             }
         }
+        else if (this.renderChild && !this.children.isEmpty()) {
+            matrices.pushPose();
+            this.translateAndRotate(matrices);
+            O2OMap<String, ModelPart> children = (O2OMap<String, ModelPart>) this.children;
+            for (O2OMap.Entry<String, ModelPart> e = children.fastEntries(); e != null; e = children.fastEntries()) {
+                e.value().render(matrices, builder, light, overlay, r, g, b, a);
+            }
+            matrices.popPose();
+        }
     }
 
     @Override
@@ -137,6 +138,11 @@ public abstract class MixinModelPart implements HM {
     @Override
     public void setVisible(boolean visible) {
         this.visible = visible;
+    }
+
+    @Override
+    public void shouldRenderChildrenEvenWhenNotVisible(boolean render) {
+        this.renderChild = render;
     }
 
     /**
