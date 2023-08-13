@@ -17,13 +17,13 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import tgw.evolution.client.models.data.IModelData;
-
-import java.util.Random;
+import tgw.evolution.util.math.FastRandom;
+import tgw.evolution.util.math.IRandom;
 
 @Mixin(FallingBlockRenderer.class)
 public abstract class MixinFallingBlockRenderer extends EntityRenderer<FallingBlockEntity> {
 
-    private static final Random RANDOM = new Random();
+    private static final IRandom RANDOM = new FastRandom();
 
     public MixinFallingBlockRenderer(EntityRendererProvider.Context context) {
         super(context);
@@ -37,19 +37,24 @@ public abstract class MixinFallingBlockRenderer extends EntityRenderer<FallingBl
             Level level = entity.getLevel();
             if (state != level.getBlockState(entity.blockPosition()) && state.getRenderShape() != RenderShape.INVISIBLE) {
                 matrices.pushPose();
+                int x = Mth.floor(entity.getX());
+                int y = Mth.floor(entity.getBoundingBox().maxY);
+                int z = Mth.floor(entity.getZ());
                 matrices.translate(-0.5, 0.0, -0.5);
                 BlockRenderDispatcher dispatcher = Minecraft.getInstance().getBlockRenderer();
                 dispatcher.getModelRenderer().tesselateBlock(level,
                                                              dispatcher.getBlockModel(state),
                                                              state,
-                                                             Mth.floor(entity.getX()),
-                                                             Mth.floor(entity.getBoundingBox().maxY),
-                                                             Mth.floor(entity.getZ()),
+                                                             x,
+                                                             y,
+                                                             z,
                                                              matrices,
                                                              buffer.getBuffer(ItemBlockRenderTypes.getMovingBlockRenderType(state)),
                                                              false,
                                                              RANDOM,
-                                                             state.getSeed(entity.getStartPos()), OverlayTexture.NO_OVERLAY, IModelData.EMPTY
+                                                             state.getSeed_(x, y, z),
+                                                             OverlayTexture.NO_OVERLAY,
+                                                             IModelData.EMPTY
                 );
                 matrices.popPose();
                 super.render(entity, yaw, partialTicks, matrices, buffer, packedLight);

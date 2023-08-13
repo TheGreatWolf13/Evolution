@@ -16,12 +16,12 @@ import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
 import tgw.evolution.client.models.data.IModelData;
 import tgw.evolution.entities.misc.EntityFallingWeight;
-
-import java.util.Random;
+import tgw.evolution.util.math.FastRandom;
+import tgw.evolution.util.math.IRandom;
 
 public class RenderFallingWeight extends EntityRenderer<EntityFallingWeight> {
 
-    private static final Random RANDOM = new Random();
+    private static final IRandom RANDOM = new FastRandom();
 
     public RenderFallingWeight(EntityRendererProvider.Context context) {
         super(context);
