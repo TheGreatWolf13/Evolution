@@ -44,7 +44,6 @@ public final class EvolutionDamage {
     public static final DamageSourceEv DEHYDRATION = createSrc(new DamageSourceEv("dehydration", Type.SICKNESS).bypassArmor().absolute());
     public static final DamageSourceEv DROWN = createSrc(new DamageSourceEv("drown", Type.DROWNING).bypassArmor());
     public static final DamageSourceEv DUMMY = new DamageSourceEv("dummy", Type.GENERIC);
-    public static final DamageSourceEv EFFICIENCY = createSrc(new DamageSourceEv("efficiency", Type.VOID).bypassArmor().bypassInvul().absolute());
     public static final DamageSourceEv FALL = new DamageSourceEv("fall_damage", Type.IMPACT).bypassArmor();
     public static final DamageSourceEv FALLING_METAL = createSrc(new DamageSourceEv("falling_metal", Type.CRUSHING).bypassArmor());
     public static final DamageSourceEv FALLING_ROCK = createSrc(new DamageSourceEv("falling_rock", Type.CRUSHING).bypassArmor());

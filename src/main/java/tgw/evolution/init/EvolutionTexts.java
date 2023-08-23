@@ -58,11 +58,7 @@ public final class EvolutionTexts {
     public static final MutableComponent GUI_GENERAL_ON = transl("evolution.gui.general.on");
     public static final MutableComponent GUI_GENERAL_REMOVE = transl("evolution.gui.general.remove");
     public static final MutableComponent GUI_GENERAL_SEARCH = transl("evolution.gui.general.search");
-    //    Config
-    public static final Component GUI_CONFIG_RESTORE_DEFAULTS = transl("evolution.gui.config.restoreDefaults");
-    public static final Component GUI_CONFIG_RESTORE_MESSAGE = transl("evolution.gui.config.restoreMessage");
     //    Menu
-    public static final Component GUI_MENU_MOD_OPTIONS = transl("evolution.gui.menu.modOptions");
     public static final Component GUI_MENU_QUIT = transl("evolution.gui.menu.quit");
     public static final Component GUI_MENU_REPORT_BUGS = transl("evolution.gui.menu.reportBugs");
     public static final Component GUI_MENU_TO_TITLE = transl("evolution.gui.menu.toTitle");
@@ -95,7 +91,6 @@ public final class EvolutionTexts {
     public static final Component TOOLTIP_TORCH_RELIT = transl("evolution.tooltip.torchRelit").setStyle(BLUE);
     public static final Component TOOLTIP_TWO_HANDED = transl("evolution.tooltip.twoHanded").setStyle(GOLD);
     public static final Component TOOLTIP_UNBREAKABLE = transl("evolution.tooltip.unbreakable").setStyle(BLUE);
-    public static final Component TOOLTIP_VERY_EFFICIENT = transl("evolution.tooltip.veryEfficient").setStyle(BLUE);
 
     private EvolutionTexts() {
     }

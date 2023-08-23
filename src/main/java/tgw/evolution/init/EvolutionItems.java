@@ -31,7 +31,6 @@ public final class EvolutionItems {
     public static final Item QUIVER;
     //Dev
     public static final Item CLOCK;
-    public static final Item CRICKET;
     public static final Item DEBUG_ITEM;
     public static final Item DESTROY_3;
     public static final Item DESTROY_6;
@@ -120,7 +119,6 @@ public final class EvolutionItems {
         QUIVER = register("temp_quiver", new ItemQuiver(propMisc()));
         //Dev
         CLOCK = register("clock", new ItemClock(propDev()));
-        CRICKET = register("cricket", new ItemCricket(propDev()));
         DEBUG_ITEM = register("debug_item", item(propDev()));
         DESTROY_3 = makeBlock(EvolutionBlocks.DESTROY_3, new ItemBlock(EvolutionBlocks.DESTROY_3, new Item.Properties()));
         DESTROY_6 = makeBlock(EvolutionBlocks.DESTROY_6, new ItemBlock(EvolutionBlocks.DESTROY_6, new Item.Properties()));
