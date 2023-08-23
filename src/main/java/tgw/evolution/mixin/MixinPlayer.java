@@ -502,7 +502,7 @@ public abstract class MixinPlayer extends LivingEntity implements PatchPlayer {
         if (this.isEyeInFluid(FluidTags.WATER) && !EnchantmentHelper.hasAquaAffinity(this)) {
             destroySpeed /= 5.0F;
         }
-        if (!this.onGround) {
+        if (!this.onGround || this.isCrawling) {
             destroySpeed /= 5.0F;
         }
         return destroySpeed;
