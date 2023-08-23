@@ -373,16 +373,6 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             }
         }
 
-        protected void drawName(PoseStack matrices, @Nullable Component text, int mouseX, int mouseY) {
-            if (text != null) {
-                int i = mouseX + 12;
-                int j = mouseY - 12;
-                int k = ScreenStats.this.font.width(text);
-                this.fillGradient(matrices, i - 3, j - 3, i + k + 3, j + 8 + 3, 0xc000_0000, 0xc000_0000);
-                ScreenStats.this.font.draw(matrices, text, i, j, -1);
-            }
-        }
-
         @Override
         public int getRowWidth() {
             return super.getRowWidth() + 4 * 18;
@@ -408,7 +398,7 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
                         return;
                     }
                     EvolutionDamage.Type type = this.damageList.get(this.children().indexOf(entryAtPos));
-                    this.drawName(matrices, type.getTextComponent(), mouseX, mouseY);
+                    ScreenStats.this.renderTooltip(matrices, type.getTextComponent(), mouseX, mouseY);
                 }
                 else {
                     Component tooltip = null;
@@ -426,7 +416,9 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
                             }
                         }
                     }
-                    this.drawName(matrices, tooltip, mouseX, mouseY);
+                    if (tooltip != null) {
+                        ScreenStats.this.renderTooltip(matrices, tooltip, mouseX, mouseY);
+                    }
                 }
             }
         }
@@ -965,16 +957,6 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             }
         }
 
-        protected void drawName(PoseStack matrices, @Nullable Component text, int mouseX, int mouseY) {
-            if (text != null) {
-                int i = mouseX + 12;
-                int j = mouseY - 12;
-                int k = ScreenStats.this.font.width(text);
-                this.fillGradient(matrices, i - 3, j - 3, i + k + 3, j + 8 + 3, 0xc000_0000, 0xc000_0000);
-                ScreenStats.this.font.draw(matrices, text, i, j, -1);
-            }
-        }
-
         @Override
         protected int getScrollbarPosition() {
             return this.width / 2 + 180;
@@ -1002,7 +984,9 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
                             }
                         }
                     }
-                    this.drawName(matrices, text, mouseX, mouseY);
+                    if (text != null) {
+                        ScreenStats.this.renderTooltip(matrices, text, mouseX, mouseY);
+                    }
                 }
             }
         }
@@ -1228,16 +1212,6 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             }
         }
 
-        protected void drawName(PoseStack matrices, @Nullable Component text, int mouseX, int mouseY) {
-            if (text != null) {
-                int k = ScreenStats.this.font.width(text);
-                int i = mouseX + 12;
-                int j = mouseY - 12;
-                this.fillGradient(matrices, i - 3, j - 3, i + k + 3, j + 8 + 3, 0xc000_0000, 0xc000_0000);
-                ScreenStats.this.font.draw(matrices, text, i, j, 0xffff_ffff);
-            }
-        }
-
         @Override
         public int getRowWidth() {
             return 375;
@@ -1274,21 +1248,23 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
                     Item item = this.itemList.get(this.children().indexOf(entryAtPos));
                     ItemStack stack = ScreenStats.this.cachedModularItems.get(item);
                     String descId = stack == null ? item.getDescriptionId() : item.getDescriptionId(stack);
-                    this.drawName(matrices, new TranslatableComponent(descId), mouseX, mouseY);
+                    ScreenStats.this.renderTooltip(matrices, new TranslatableComponent(descId), mouseX, mouseY);
                 }
                 else {
-                    Component itextcomponent = null;
+                    Component name = null;
                     if (mouseY < this.headerHeight + this.y0 + 3) {
                         int j = mouseX - i;
                         for (int k = 0; k < this.headerTexture.length; ++k) {
                             int l = getCategoryOffset(k);
                             if (j >= l - 18 && j <= l) {
-                                itextcomponent = new TranslatableComponent(this.byIndex(k).getTranslationKey());
+                                name = new TranslatableComponent(this.byIndex(k).getTranslationKey());
                                 break;
                             }
                         }
                     }
-                    this.drawName(matrices, itextcomponent, mouseX, mouseY);
+                    if (name != null) {
+                        ScreenStats.this.renderTooltip(matrices, name, mouseX, mouseY);
+                    }
                 }
             }
         }

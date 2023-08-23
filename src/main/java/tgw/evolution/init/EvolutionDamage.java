@@ -117,14 +117,13 @@ public final class EvolutionDamage {
         Type(String name, int texX, int texY, @Range(from = 0, to = 127) int immunity) {
             this.name = name;
             this.translationKey = "evolution.tooltip.damage." + name;
-            this.textComponent = new TranslatableComponent(this.translationKey);
+            this.textComponent = new TranslatableComponent(this.translationKey + ".name");
             this.texX = texX;
             this.texY = texY;
             this.immunity = MathHelper.toByteExact(immunity);
         }
 
-        @Nullable
-        public static Type byName(String type) {
+        public static @Nullable Type byName(String type) {
             for (Type value : VALUES) {
                 if (value.name.equals(type)) {
                     return value;
