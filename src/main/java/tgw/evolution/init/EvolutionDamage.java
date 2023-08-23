@@ -92,16 +92,16 @@ public final class EvolutionDamage {
     }
 
     public enum Type {
-        CRUSHING("crushing", 0, 0, 0),
+        CRUSHING("crushing", 0, 1, 0),
         DROWNING("drowning", 7, 0, DROWNING_IMMUNITY),
         FIRE("fire", 6, 0, 10),
         GENERIC("generic", 0, 0, 0),
         IMPACT("impact", 5, 0, 0),
-        MELEE("melee", 0, 0, 0),     //Used only for statistics
-        PIERCING("piercing", 0, 0, 0),
-        RANGED("ranged", 0, 0, 0),   //Used only for statistics
+        MELEE("melee", 4, 1, 0),     //Used only for statistics
+        PIERCING("piercing", 1, 1, 0),
+        RANGED("ranged", 3, 1, 0),   //Used only for statistics
         SICKNESS("sickness", 4, 0, 20),
-        SLASHING("slashing", 0, 0, 0),
+        SLASHING("slashing", 2, 1, 0),
         SUFFOCATION("suffocation", 2, 0, 5),
         TOTAL("total", 3, 0, 0),     //Used only for statistics
         VOID("void", 1, 0, 0);
