@@ -331,11 +331,12 @@ public interface HMHumanoid<T extends LivingEntity> extends HMAgeableList<T> {
                 else {
                     float t = AnimationUtils.normParameter(swimAmount, 0.5f, 1.0f);
                     float sineIn = AnimationUtils.easingSineIn(t);
+                    float offset1795 = -4 + (-17.95f + 4) * sineIn;
                     float offset18 = -4 + (-18 + 4) * sineIn;
                     float offset2 = 1.99f * sineIn;
                     float rot90 = 90 * Mth.DEG_TO_RAD * t;
                     float antiT = 1 - t;
-                    head.translateY(offset18 + headOffset * antiT);
+                    head.translateY(offset1795 + headOffset * antiT);
                     body.translateY(offset18 + bodyOffset * antiT);
                     body.setRotationX(bodyRot0 - (90 * Mth.DEG_TO_RAD + bodyRot0) * t);
                     armR.addRotationX(rot90);
@@ -355,7 +356,7 @@ public interface HMHumanoid<T extends LivingEntity> extends HMAgeableList<T> {
                 float sinLS = Mth.sin(limbSwing);
                 float rot90 = limbSwingAmount * sinLS;
                 float halfRot90 = 0.5f * limbSwingAmount * sinLS;
-                head.translateY(-18);
+                head.translateY(-17.95f);
                 body.translateY(-18);
                 body.addRotationX(-90 * Mth.DEG_TO_RAD);
                 armR.addRotationX(-rot90 + 90 * Mth.DEG_TO_RAD);

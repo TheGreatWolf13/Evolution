@@ -127,8 +127,7 @@ public abstract class MixinGameRenderer implements PatchGameRenderer {
             matrix.multiplyWithTranslation(this.zoomX, -this.zoomY, 0);
             matrix.scale(this.zoom, this.zoom, 1.0F);
         }
-        matrix.multiplyWithPerspective(fov, this.minecraft.getWindow().getWidth() / (float) this.minecraft.getWindow().getHeight(), 0.006_25f,
-                                       this.getDepthFar());
+        matrix.multiplyWithPerspective(fov, this.minecraft.getWindow().getWidth() / (float) this.minecraft.getWindow().getHeight(), 0.012_5f, this.getDepthFar());
         return matrix;
     }
 
