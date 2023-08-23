@@ -5,7 +5,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.client.renderer.DimensionOverworld;
-import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.math.Vec3f;
 import tgw.evolution.util.time.Time;
@@ -21,11 +20,8 @@ public final class EarthHelper {
     private static final Vec3f SUN = new Vec3f(0, 0, 0);
     private static final Vec3f MOON = new Vec3f(0, 0, 0);
     private static final Vec3f SKY_COLOR = new Vec3f(0, 0, 0);
-    private static final Vec3f NEXT_COLOR = new Vec3f(0, 0, 0);
-    private static final Vec3f CURRENT_COLOR = new Vec3f(0, 0, 0);
     public static float sunX;
     public static float sunZ;
-    private static int tick;
 
     private EarthHelper() {
     }
@@ -86,23 +82,6 @@ public final class EarthHelper {
     }
 
     public static Vec3f getSkyColor(ClientLevel level, BlockPos pos, float partialTick, @Nullable DimensionOverworld dimension) {
-        if (EvolutionConfig.CLIENT.crazyMode.get()) {
-            int partial = tick % 20;
-            if (partial == 0) {
-                CURRENT_COLOR.x = NEXT_COLOR.x;
-                CURRENT_COLOR.y = NEXT_COLOR.y;
-                CURRENT_COLOR.z = NEXT_COLOR.z;
-                NEXT_COLOR.x = MathHelper.RANDOM.nextFloat();
-                NEXT_COLOR.y = MathHelper.RANDOM.nextFloat();
-                NEXT_COLOR.z = MathHelper.RANDOM.nextFloat();
-            }
-            float interp = partial / 20.0f;
-            SKY_COLOR.x = Mth.lerp(interp, CURRENT_COLOR.x, NEXT_COLOR.x);
-            SKY_COLOR.y = Mth.lerp(interp, CURRENT_COLOR.y, NEXT_COLOR.y);
-            SKY_COLOR.z = Mth.lerp(interp, CURRENT_COLOR.z, NEXT_COLOR.z);
-            tick++;
-            return SKY_COLOR;
-        }
         float sunAngle = 1.0f;
         float elevationAngle = dimension == null ? 0 : dimension.getSunAltitude();
         if (elevationAngle > 80) {

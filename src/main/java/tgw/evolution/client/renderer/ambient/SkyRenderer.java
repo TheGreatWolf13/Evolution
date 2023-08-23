@@ -450,7 +450,7 @@ public class SkyRenderer {
             matrices.popPose();
             //Popped the matrix to draw the background stars
         }
-        if (EvolutionConfig.CLIENT.showPlanets.get()) {
+        if (EvolutionConfig.SHOW_PLANETS.get()) {
             //Render planets
             mc.getProfiler().popPush("planets");
             boolean transit = false;
@@ -664,12 +664,12 @@ public class SkyRenderer {
         }
         //Render debug
         mc.getProfiler().popPush("debug");
-        boolean forceAll = EvolutionConfig.CLIENT.celestialForceAll.get();
-        boolean equator = forceAll || EvolutionConfig.CLIENT.celestialEquator.get();
-        boolean poles = forceAll || EvolutionConfig.CLIENT.celestialPoles.get();
-        boolean ecliptic = forceAll || EvolutionConfig.CLIENT.ecliptic.get();
-        boolean sunPath = forceAll || EvolutionConfig.CLIENT.sunPath.get();
-        boolean planets = EvolutionConfig.CLIENT.showPlanets.get() && (forceAll || EvolutionConfig.CLIENT.planets.get());
+        boolean forceAll = EvolutionConfig.CELESTIAL_FORCE_ALL.get();
+        boolean equator = forceAll || EvolutionConfig.CELESTIAL_EQUATOR.get();
+        boolean poles = forceAll || EvolutionConfig.CELESTIAL_POLES.get();
+        boolean ecliptic = forceAll || EvolutionConfig.ECLIPTIC.get();
+        boolean sunPath = forceAll || EvolutionConfig.SUN_PATH.get();
+        boolean planets = EvolutionConfig.SHOW_PLANETS.get() && (forceAll || EvolutionConfig.PLANETS.get());
         if (equator || poles) {
             RenderSystem.disableTexture();
             this.fog(false);

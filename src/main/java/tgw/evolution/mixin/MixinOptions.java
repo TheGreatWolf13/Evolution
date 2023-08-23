@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import tgw.evolution.EvolutionClient;
+import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.resources.ModPackResources;
 import tgw.evolution.resources.ModdedPackSource;
 
@@ -40,6 +40,6 @@ public abstract class MixinOptions {
 
     @Inject(method = "processOptions", at = @At("TAIL"))
     private void onProcessOptions(Options.FieldAccess acc, CallbackInfo ci) {
-        EvolutionClient.toggleCrawl = acc.process("toggleCrawl", EvolutionClient.toggleCrawl);
+        EvolutionConfig.processOptions(acc);
     }
 }

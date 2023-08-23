@@ -1,4 +1,4 @@
-package tgw.evolution.client.gui.config;
+package tgw.evolution.client.gui;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import it.unimi.dsi.fastutil.booleans.Boolean2BooleanFunction;
@@ -34,11 +34,13 @@ public class ScreenConfirmation extends Screen {
         int messageOffset = lines.size() * (this.font.lineHeight + 2) / 2;
         this.addRenderableWidget(new Button(this.width / 2 - 105, this.height / 2 + messageOffset, 100, 20, this.positiveText, button -> {
             if (this.handler.get(true)) {
+                assert this.minecraft != null;
                 this.minecraft.setScreen(this.parent);
             }
         }));
         this.addRenderableWidget(new Button(this.width / 2 + 5, this.height / 2 + messageOffset, 100, 20, this.negativeText, button -> {
             if (this.handler.get(false)) {
+                assert this.minecraft != null;
                 this.minecraft.setScreen(this.parent);
             }
         }));
@@ -48,6 +50,7 @@ public class ScreenConfirmation extends Screen {
     public boolean keyPressed(@Key int key, int scanCode, @Modifiers int modifiers) {
         if (key == GLFW.GLFW_KEY_ESCAPE) {
             if (this.handler.get(false)) {
+                assert this.minecraft != null;
                 this.minecraft.setScreen(this.parent);
             }
             return true;
@@ -62,11 +65,7 @@ public class ScreenConfirmation extends Screen {
         List<FormattedCharSequence> lines = this.font.split(this.message, 300);
         for (int i = 0; i < lines.size(); i++) {
             int lineWidth = this.font.width(lines.get(i));
-            this.font.draw(poseStack,
-                           lines.get(i),
-                           this.width / 2.0f - lineWidth / 2.0f,
-                           this.height / 2.0f - 20 - lines.size() * (this.font.lineHeight + 2) / 2.0f + i * (this.font.lineHeight + 2),
-                           0xFF_FFFF);
+            this.font.draw(poseStack, lines.get(i), this.width / 2.0f - lineWidth / 2.0f, this.height / 2.0f - 20 - lines.size() * (this.font.lineHeight + 2) / 2.0f + i * (this.font.lineHeight + 2), 0xFF_FFFF);
         }
     }
 

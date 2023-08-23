@@ -4,11 +4,16 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.mojang.math.Matrix4f;
 import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.Widget;
 import net.minecraft.client.gui.components.events.AbstractContainerEventHandler;
+import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.ItemRenderer;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -17,17 +22,62 @@ import tgw.evolution.client.renderer.RenderHelper;
 import java.util.List;
 
 @Mixin(Screen.class)
-public abstract class MixinScreen extends AbstractContainerEventHandler {
+public abstract class MixinScreen extends AbstractContainerEventHandler implements Widget {
 
     @Shadow public int height;
+    @Shadow @Final public List<Widget> renderables;
     @Shadow public int width;
     @Shadow protected Font font;
     @Shadow protected ItemRenderer itemRenderer;
+    @Shadow @Final private List<GuiEventListener> children;
+    @Shadow @Final private List<NarratableEntry> narratables;
 
-    /**
-     * @author TheGreatWolf
-     * @reason Avoid allocations.
-     */
+    @Overwrite
+    public <T extends GuiEventListener & NarratableEntry> T addWidget(T widget) {
+        this.children.add(widget);
+        this.narratables.add(widget);
+        if (widget instanceof AbstractWidget w) {
+            w.setScreen((Screen) (Object) this);
+        }
+        return widget;
+    }
+
+    @Overwrite
+    public void clearWidgets() {
+        this.renderables.clear();
+        List<GuiEventListener> children = this.children;
+        for (int i = 0, len = children.size(); i < len; ++i) {
+            if (children.get(i) instanceof AbstractWidget w) {
+                w.setScreen(null);
+            }
+        }
+        children.clear();
+        this.narratables.clear();
+    }
+
+    @Overwrite
+    public void removeWidget(GuiEventListener widget) {
+        if (widget instanceof Widget) {
+            this.renderables.remove(widget);
+        }
+        if (widget instanceof NarratableEntry) {
+            this.narratables.remove(widget);
+        }
+        this.children.remove(widget);
+        if (widget instanceof AbstractWidget w) {
+            w.setScreen(null);
+        }
+    }
+
+    @Override
+    @Overwrite
+    public void render(PoseStack matrices, int mouseX, int mouseY, float partialTicks) {
+        List<Widget> renderables = this.renderables;
+        for (int i = 0, len = renderables.size(); i < len; ++i) {
+            renderables.get(i).render(matrices, mouseX, mouseY, partialTicks);
+        }
+    }
+
     @Overwrite
     private void renderTooltipInternal(PoseStack matrices, List<ClientTooltipComponent> tooltip, int mouseX, int mouseY) {
         if (!tooltip.isEmpty()) {

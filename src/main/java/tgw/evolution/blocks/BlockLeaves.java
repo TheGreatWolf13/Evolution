@@ -184,7 +184,7 @@ public class BlockLeaves extends BlockGeneric implements IReplaceable {
         if (!Minecraft.useFancyGraphics()) {
             return adjacentState.getBlock() == this;
         }
-        int leavesCulling = EvolutionConfig.CLIENT.leavesCulling.get();
+        int leavesCulling = EvolutionConfig.LEAVES_CULLING.get();
         if (leavesCulling == 0) {
             return false;
         }

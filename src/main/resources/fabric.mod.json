@@ -300,6 +300,9 @@
       ],
       "net/minecraft/client/model/geom/ModelPart": [
         "tgw/evolution/patches/PatchModelPart"
+      ],
+      "net/minecraft/client/gui/components/AbstractWidget": [
+        "tgw/evolution/patches/PatchAbstractWidget"
       ]
     }
   }

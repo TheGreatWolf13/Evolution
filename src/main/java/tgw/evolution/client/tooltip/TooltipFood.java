@@ -18,9 +18,9 @@ public final class TooltipFood implements ITooltip {
     }
 
     public static TooltipComponent hunger(int hunger) {
-        if (hunger != INSTANCE.oldHunger || INSTANCE.oldFormatter != EvolutionConfig.CLIENT.food.get()) {
+        if (hunger != INSTANCE.oldHunger || INSTANCE.oldFormatter != EvolutionConfig.FOOD.get()) {
             INSTANCE.oldHunger = hunger;
-            INSTANCE.oldFormatter = EvolutionConfig.CLIENT.food.get();
+            INSTANCE.oldFormatter = EvolutionConfig.FOOD.get();
             INSTANCE.text = EvolutionTexts.food(hunger);
         }
         return INSTANCE;

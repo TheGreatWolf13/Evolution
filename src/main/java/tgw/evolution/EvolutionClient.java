@@ -20,6 +20,7 @@ import tgw.evolution.client.gui.ScreenInventory;
 import tgw.evolution.client.gui.overlays.EvolutionOverlays;
 import tgw.evolution.client.gui.overlays.VanillaOverlays;
 import tgw.evolution.client.renderer.EvolutionRenderLayer;
+import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.init.EvolutionContainers;
 import tgw.evolution.init.EvolutionRenderer;
@@ -32,12 +33,11 @@ public final class EvolutionClient implements ClientModInitializer {
 
     public static final KeyMapping KEY_BUILDING_ASSIST;
     public static final KeyMapping KEY_CRAWL;
-    public static boolean toggleCrawl = true;
     private static Minecraft mc;
 
     static {
         KEY_BUILDING_ASSIST = new KeyMapping("key.build_assist", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_BACKSLASH, "key.categories.creative");
-        KEY_CRAWL = new ToggleKeyMapping("key.crawl", GLFW.GLFW_KEY_X, "key.categories.movement", () -> toggleCrawl);
+        KEY_CRAWL = new ToggleKeyMapping("key.crawl", GLFW.GLFW_KEY_X, "key.categories.movement", () -> EvolutionConfig.toggleCrawl);
     }
 
     //    private static void addOverrides() {

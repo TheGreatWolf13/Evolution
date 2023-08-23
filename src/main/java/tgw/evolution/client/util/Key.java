@@ -2,12 +2,15 @@ package tgw.evolution.client.util;
 
 import org.intellij.lang.annotations.MagicConstant;
 
+import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 import static org.lwjgl.glfw.GLFW.*;
 
 @Retention(RetentionPolicy.SOURCE)
+@Target(ElementType.TYPE_USE)
 @MagicConstant(intValues = {GLFW_KEY_SPACE,
                             GLFW_KEY_APOSTROPHE,
                             GLFW_KEY_COMMA,
@@ -57,7 +60,8 @@ import static org.lwjgl.glfw.GLFW.*;
                             GLFW_KEY_RIGHT_BRACKET,
                             GLFW_KEY_GRAVE_ACCENT,
                             GLFW_KEY_WORLD_1,
-                            GLFW_KEY_WORLD_2, GLFW_KEY_ESCAPE,
+                            GLFW_KEY_WORLD_2,
+                            GLFW_KEY_ESCAPE,
                             GLFW_KEY_ENTER,
                             GLFW_KEY_TAB,
                             GLFW_KEY_BACKSPACE,

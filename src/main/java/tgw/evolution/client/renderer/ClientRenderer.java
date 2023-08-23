@@ -403,7 +403,7 @@ public class ClientRenderer {
                 else {
                     boolean inverted = false;
                     //Hitmarker
-                    if (EvolutionConfig.CLIENT.hitmarkers.get()) {
+                    if (EvolutionConfig.HITMARKERS.get()) {
                         if (this.killmarkerTick >= 0) {
                             if (this.killmarkerTick >= 10) {
                                 blit(matrices, (width - 17) / 2, (height - 17) / 2, 2 * 17, EvolutionResources.ICON_17_17, 17, 17);
@@ -452,8 +452,7 @@ public class ClientRenderer {
                         boolean shouldRenderOff = offhandPerc < 1;
                         y += 17;
                         if (shouldRenderMain) {
-                            renderAttackIndicator(player.getMainArm(), matrix, x, y, mainhandPerc,
-                                                  shouldRenderOff || !player.getOffhandItem().isEmpty());
+                            renderAttackIndicator(player.getMainArm(), matrix, x, y, mainhandPerc, shouldRenderOff || !player.getOffhandItem().isEmpty());
                         }
                         if (shouldRenderOff) {
                             renderAttackIndicator(player.getMainArm().getOpposite(), matrix, x, y, offhandPerc, true);
@@ -461,15 +460,13 @@ public class ClientRenderer {
                     }
                     GUIUtils.endBlitBatch();
                     //FollowUp Indicator
-                    if (EvolutionConfig.CLIENT.followUps.get() && this.client.shouldRenderSpecialAttack()) {
+                    if (EvolutionConfig.FOLLOW_UPS.get() && this.client.shouldRenderSpecialAttack()) {
                         IMelee.IAttackType type = player.getSpecialAttackType();
                         if (type != null) {
                             if (type.getFollowUps() > 0) {
                                 String s = String.valueOf(player.isOnGracePeriod() ? player.getFollowUp() : player.getFollowUp() + 1);
                                 MultiBufferSource.BufferSource bufferSource = this.mc.renderBuffers().bufferSource();
-                                this.mc.font.drawInBatch8xOutline(new TextComponent(s).getVisualOrderText(), (width - this.mc.font.width(s)) / 2.0f,
-                                                                  height / 2.0f - 17, 0xffff_ffff, 0x0,
-                                                                  matrix, bufferSource, 0xff_00ff);
+                                this.mc.font.drawInBatch8xOutline(new TextComponent(s).getVisualOrderText(), (width - this.mc.font.width(s)) / 2.0f, height / 2.0f - 17, 0xffff_ffff, 0x0, matrix, bufferSource, 0xff_00ff);
                                 bufferSource.endBatch();
                             }
                         }

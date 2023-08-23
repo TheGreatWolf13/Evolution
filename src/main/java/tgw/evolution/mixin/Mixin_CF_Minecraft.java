@@ -39,7 +39,6 @@ import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
-import net.minecraft.client.multiplayer.resolver.ServerAddress;
 import net.minecraft.client.particle.ParticleEngine;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.*;
@@ -101,12 +100,14 @@ import org.spongepowered.asm.mixin.*;
 import tgw.evolution.EvolutionClient;
 import tgw.evolution.client.gui.EvolutionGui;
 import tgw.evolution.client.gui.ScreenCrash;
+import tgw.evolution.client.gui.ScreenEvolution;
 import tgw.evolution.client.gui.ScreenOutOfMemory;
 import tgw.evolution.client.gui.advancements.ScreenAdvancements;
 import tgw.evolution.client.renderer.ICrashReset;
 import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.client.renderer.chunk.EvClientMetricsSamplersProvider;
 import tgw.evolution.client.renderer.chunk.EvLevelRenderer;
+import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.hooks.ClientHooks;
 import tgw.evolution.hooks.asm.DeleteField;
@@ -283,8 +284,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
         this.versionType = gameConfig.game.versionType;
         this.profileProperties = gameConfig.user.profileProperties;
         this.clientPackSource = new ClientPackSource(new File(this.gameDirectory, "server-resource-packs"), gameConfig.location.getAssetIndex());
-        this.resourcePackRepository = new PackRepository(Mixin_CF_Minecraft::createClientPackAdapter, this.clientPackSource,
-                                                         new FolderRepositorySource(this.resourcePackDirectory, PackSource.DEFAULT));
+        this.resourcePackRepository = new PackRepository(Mixin_CF_Minecraft::createClientPackAdapter, this.clientPackSource, new FolderRepositorySource(this.resourcePackDirectory, PackSource.DEFAULT));
         this.proxy = gameConfig.user.proxy;
         YggdrasilAuthenticationService yggdrasilAuthenticationService = new YggdrasilAuthenticationService(this.proxy);
         this.minecraftSessionService = yggdrasilAuthenticationService.createMinecraftSessionService();
@@ -297,16 +297,6 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
         this.allowsChat = !gameConfig.game.disableChat;
         this.is64bit = checkIs64Bit();
         this.singleplayerServer = null;
-        String string;
-        int i;
-        if (this.allowsMultiplayer() && gameConfig.server.hostname != null) {
-            string = gameConfig.server.hostname;
-            i = gameConfig.server.port;
-        }
-        else {
-            string = null;
-            i = 0;
-        }
         KeybindComponent.setKeyResolver(KeyMapping::createNameSupplier);
         this.fixerUpper = DataFixers.getDataFixer();
         this.toast = new ToastComponent((Minecraft) (Object) this);
@@ -318,8 +308,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
         LOGGER.info("Backend library: {}", RenderSystem.getBackendDescription());
         DisplayData displayData;
         if (this.options.overrideHeight > 0 && this.options.overrideWidth > 0) {
-            displayData = new DisplayData(this.options.overrideWidth, this.options.overrideHeight, gameConfig.display.fullscreenWidth,
-                                          gameConfig.display.fullscreenHeight, gameConfig.display.isFullscreen);
+            displayData = new DisplayData(this.options.overrideWidth, this.options.overrideHeight, gameConfig.display.fullscreenWidth, gameConfig.display.fullscreenHeight, gameConfig.display.isFullscreen);
         }
         else {
             displayData = gameConfig.display;
@@ -330,12 +319,8 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
         this.setWindowActive(true);
         if (!ON_OSX) {
             try {
-                InputStream inputStream = this.getClientPackSource()
-                                              .getVanillaPack()
-                                              .getResource(PackType.CLIENT_RESOURCES, new ResourceLocation("icons/icon_16x16.png"));
-                InputStream inputStream2 = this.getClientPackSource()
-                                               .getVanillaPack()
-                                               .getResource(PackType.CLIENT_RESOURCES, new ResourceLocation("icons/icon_32x32.png"));
+                InputStream inputStream = this.getClientPackSource().getVanillaPack().getResource(PackType.CLIENT_RESOURCES, new ResourceLocation("icons/icon_16x16.png"));
+                InputStream inputStream2 = this.getClientPackSource().getVanillaPack().getResource(PackType.CLIENT_RESOURCES, new ResourceLocation("icons/icon_32x32.png"));
                 this.window.setIcon(inputStream, inputStream2);
             }
             catch (IOException var10) {
@@ -359,8 +344,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
         this.textureManager = new TextureManager(this.resourceManager);
         this.resourceManager.registerReloadListener(this.textureManager);
         this.skinManager = new SkinManager(this.textureManager, new File(file, "skins"), this.minecraftSessionService);
-        this.levelSource = new LevelStorageSource(this.gameDirectory.toPath().resolve("saves"), this.gameDirectory.toPath().resolve("backups"),
-                                                  this.fixerUpper);
+        this.levelSource = new LevelStorageSource(this.gameDirectory.toPath().resolve("saves"), this.gameDirectory.toPath().resolve("backups"), this.fixerUpper);
         this.soundManager = new SoundManager(this.resourceManager, this.options);
         this.resourceManager.registerReloadListener(this.soundManager);
         this.splashManager = new SplashManager(this.user);
@@ -383,8 +367,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
         this.resourceManager.registerReloadListener(this.entityModels);
         this.blockEntityRenderDispatcher = new BlockEntityRenderDispatcher(this.font, this.entityModels, this::getBlockRenderer);
         this.resourceManager.registerReloadListener(this.blockEntityRenderDispatcher);
-        BlockEntityWithoutLevelRenderer blockEntityWithoutLevelRenderer = new BlockEntityWithoutLevelRenderer(this.blockEntityRenderDispatcher,
-                                                                                                              this.entityModels);
+        BlockEntityWithoutLevelRenderer blockEntityWithoutLevelRenderer = new BlockEntityWithoutLevelRenderer(this.blockEntityRenderDispatcher, this.entityModels);
         this.resourceManager.registerReloadListener(blockEntityWithoutLevelRenderer);
         this.itemRenderer = new ItemRenderer(this.textureManager, this.modelManager, this.itemColors, blockEntityWithoutLevelRenderer);
         this.entityRenderDispatcher = new EntityRenderDispatcher(this.textureManager, this.itemRenderer, this.font, this.options, this.entityModels);
@@ -420,13 +403,8 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
             }
         }
         else {
-            int var10002 = this.window.getWidth();
-            StringBuilder stringBuilder = new StringBuilder("Recovering from unsupported resolution (" +
-                                                            var10002 +
-                                                            "x" +
-                                                            this.window.getHeight() +
-                                                            ").\nPlease make sure you have up-to-date drivers (see aka.ms/mcdriver for " +
-                                                            "instructions).");
+            int width = this.window.getWidth();
+            StringBuilder stringBuilder = new StringBuilder("Recovering from unsupported resolution (" + width + "x" + this.window.getHeight() + ").\nPlease make sure you have up-to-date drivers (see aka.ms/mcdriver for " + "instructions).");
             if (GlDebug.isDebugEnabled()) {
                 stringBuilder.append("\n\nReported GL debug messages:\n").append(String.join("\n", GlDebug.getLastOpenGlDebugMessages()));
             }
@@ -441,14 +419,14 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
         LoadingOverlay.registerTextures((Minecraft) (Object) this);
         List<PackResources> list = this.resourcePackRepository.openAllSelected();
         this.reloadStateTracker.startReload(ResourceLoadStateTracker.ReloadReason.INITIAL, list);
-        this.setOverlay(new LoadingOverlay((Minecraft) (Object) this,
-                                           this.resourceManager.createReload(Util.backgroundExecutor(), this, RESOURCE_RELOAD_INITIAL_TASK, list),
-                                           this::method_24040, false));
-        if (string != null) {
-            ConnectScreen.startConnecting(new TitleScreen(), (Minecraft) (Object) this, new ServerAddress(string, i), null);
+        this.setOverlay(new LoadingOverlay((Minecraft) (Object) this, this.resourceManager.createReload(Util.backgroundExecutor(), this, RESOURCE_RELOAD_INITIAL_TASK, list), this::method_24040, false));
+        TitleScreen titleScreen = new TitleScreen(true);
+        if (EvolutionConfig.needsWelcome()) {
+            this.setScreen(new ScreenEvolution(titleScreen, true));
+            EvolutionConfig.updateWelcome();
         }
         else {
-            this.setScreen(new TitleScreen(true));
+            this.setScreen(titleScreen);
         }
         EvolutionClient.init((Minecraft) (Object) this);
         this.lastHoldingPos = new OptionalMutableBlockPos();

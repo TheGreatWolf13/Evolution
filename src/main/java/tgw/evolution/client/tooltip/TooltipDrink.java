@@ -18,9 +18,9 @@ public final class TooltipDrink implements ITooltip {
     }
 
     public static TooltipComponent thirst(int thirst) {
-        if (INSTANCE.oldThirst != thirst || INSTANCE.oldFormat != EvolutionConfig.CLIENT.drink.get()) {
+        if (INSTANCE.oldThirst != thirst || INSTANCE.oldFormat != EvolutionConfig.DRINK.get()) {
             INSTANCE.oldThirst = thirst;
-            INSTANCE.oldFormat = EvolutionConfig.CLIENT.drink.get();
+            INSTANCE.oldFormat = EvolutionConfig.DRINK.get();
             INSTANCE.text = EvolutionTexts.drink(thirst);
         }
         return INSTANCE;

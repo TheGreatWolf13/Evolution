@@ -18,9 +18,9 @@ public final class TooltipThrowSpeed implements ITooltip {
     }
 
     public static TooltipComponent throwSpeed(double speed) {
-        if (INSTANCE.oldSpeed != speed || INSTANCE.oldFormatter != EvolutionConfig.CLIENT.speed.get()) {
+        if (INSTANCE.oldSpeed != speed || INSTANCE.oldFormatter != EvolutionConfig.SPEED.get()) {
             INSTANCE.oldSpeed = speed;
-            INSTANCE.oldFormatter = EvolutionConfig.CLIENT.speed.get();
+            INSTANCE.oldFormatter = EvolutionConfig.SPEED.get();
             INSTANCE.text = EvolutionTexts.throwSpeed(speed);
         }
         return INSTANCE;

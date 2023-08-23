@@ -455,14 +455,13 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
      * Loads all renderers and sets up the basic options usage.
      */
     public void allChanged() {
-        this.renderOnThread = EvolutionConfig.CLIENT.syncRendering.get();
+        this.renderOnThread = EvolutionConfig.SYNC_RENDERING.get();
         if (this.level != null) {
-            ((PatchDebugRenderer) this.mc.debugRenderer).setRenderHeightmap(EvolutionConfig.CLIENT.renderHeightmap.get());
+            ((PatchDebugRenderer) this.mc.debugRenderer).setRenderHeightmap(EvolutionConfig.RENDER_HEIGHTMAP.get());
             this.graphicsChanged();
             this.level.clearTintCaches();
             if (this.chunkRenderDispatcher == null) {
-                this.chunkRenderDispatcher = new EvChunkRenderDispatcher(this.level, this, Util.backgroundExecutor(), this.mc.is64Bit(),
-                                                                         this.bufferHolder.chunkBuilderPack());
+                this.chunkRenderDispatcher = new EvChunkRenderDispatcher(this.level, this, Util.backgroundExecutor(), this.mc.is64Bit(), this.bufferHolder.chunkBuilderPack());
             }
             else {
                 this.chunkRenderDispatcher.setLevel(this.level);

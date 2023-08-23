@@ -60,8 +60,7 @@ public final class EvolutionStats {
             double seconds = ticks / 20.0;
             double minutes = seconds / 60.0;
             double hours = minutes / 60.0;
-            boolean limitToHour = Boolean.TRUE == EvolutionConfig.CLIENT.limitTimeUnitsToHour.get();
-            if (!limitToHour) {
+            if (!EvolutionConfig.LIMIT_TIME_UNITS_TO_HOUR.get()) {
                 double days = hours / 24.0;
                 double years = days / 365.25;
                 if (years > 1) {

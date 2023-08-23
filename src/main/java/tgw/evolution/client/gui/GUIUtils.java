@@ -14,6 +14,7 @@ import net.minecraft.ReportedException;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiComponent;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
@@ -24,6 +25,7 @@ import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelBakery;
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
@@ -37,11 +39,14 @@ import net.minecraft.world.level.storage.LevelData;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL11;
 import tgw.evolution.client.renderer.RenderHelper;
+import tgw.evolution.mixin.AccessorRenderSystem;
+import tgw.evolution.util.math.MathHelper;
 
 public final class GUIUtils {
 
     public static final ResourceLocation UNDERWATER_LOCATION = new ResourceLocation("textures/misc/underwater.png");
     private static final PoseStack MATRICES = new PoseStack();
+    private static final ScissorStack SCISSOR = new ScissorStack();
     private static DifficultyInstance difficulty = new DifficultyInstance(Difficulty.NORMAL, 0, 0, 0);
     private static boolean inFillBatch;
     private static @Nullable BufferBuilder builder;
@@ -54,33 +59,14 @@ public final class GUIUtils {
     private GUIUtils() {
     }
 
-    public static void blitInBatch(Matrix4f matrix,
-                                   int x,
-                                   int y,
-                                   int blitOffset,
-                                   float uOffset,
-                                   float vOffset,
-                                   int uWidth,
-                                   int vHeight,
-                                   int texHeight,
-                                   int texWidth) {
+    public static void blitInBatch(Matrix4f matrix, int x, int y, int blitOffset, float uOffset, float vOffset, int uWidth, int vHeight, int texHeight, int texWidth) {
         if (!inBlitBatch) {
             throw new IllegalStateException("Not in blit batch!");
         }
         innerBlitInBatch(matrix, x, x + uWidth, y, y + vHeight, blitOffset, uWidth, vHeight, uOffset, vOffset, texHeight, texWidth);
     }
 
-    public static void blitInBatch(Matrix4f matrix,
-                                   int x,
-                                   int y,
-                                   int width,
-                                   int height,
-                                   float uOffset,
-                                   float vOffset,
-                                   int uWidth,
-                                   int vHeight,
-                                   int texWidth,
-                                   int texHeight) {
+    public static void blitInBatch(Matrix4f matrix, int x, int y, int width, int height, float uOffset, float vOffset, int uWidth, int vHeight, int texWidth, int texHeight) {
         if (!inBlitBatch) {
             throw new IllegalStateException("Not in blit batch!");
         }
@@ -88,7 +74,21 @@ public final class GUIUtils {
     }
 
     public static void disableScissor() {
+        ScissorStack.Area area = SCISSOR.pop();
+        if (area == ScissorStack.TOTAL_AREA) {
+            RenderSystem.disableScissor();
+        }
+        else {
+            enableScissorInternal(area.x0(), area.y0(), area.x1(), area.y1());
+        }
+    }
+
+    public static boolean disableScissorTemporarily() {
+        if (SCISSOR.getArea() == ScissorStack.TOTAL_AREA) {
+            return false;
+        }
         RenderSystem.disableScissor();
+        return true;
     }
 
     public static void drawCenteredStringNoShadow(PoseStack matrices, Font font, Component text, float xCentre, float y, int color) {
@@ -227,33 +227,103 @@ public final class GUIUtils {
         renderEntityInInventory(posX, posY, scale, posX - mouseX, posY - 30 - mouseY, entity);
     }
 
-    public static void drawRect(double x, double y, double x2, double y2, double width, int color) {
-        drawRect(x, y, x2, y2, width, color, false);
+    public static void drawEquilateralTriangle(double x, double y, double base, int color, Direction dir) {
+        Tesselator tessellator = Tesselator.getInstance();
+        BufferBuilder builder = tessellator.getBuilder();
+        RenderSystem.enableBlend();
+        RenderSystem.disableTexture();
+        RenderSystem.setShader(RenderHelper.SHADER_POSITION);
+        RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+        setColor(color);
+        builder.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION);
+        double height = base * MathHelper.SIN_60;
+        double offset = (base - height) * 0.5;
+        switch (dir) {
+            case EAST -> {
+                builder.vertex(x + offset, y, 0).endVertex();
+                builder.vertex(x + offset, y + base, 0).endVertex();
+                builder.vertex(x + height, y + base * 0.5, 0).endVertex();
+            }
+            case WEST -> {
+                builder.vertex(x + offset, y + base * 0.5, 0).endVertex();
+                builder.vertex(x + height, y + base, 0).endVertex();
+                builder.vertex(x + height, y, 0).endVertex();
+            }
+            case NORTH -> {
+                builder.vertex(x + base * 0.5, y + offset, 0).endVertex();
+                builder.vertex(x, y + height, 0).endVertex();
+                builder.vertex(x + base, y + height, 0).endVertex();
+            }
+            case SOUTH -> {
+                builder.vertex(x, y + offset, 0).endVertex();
+                builder.vertex(x + base * 0.5, y + height, 0).endVertex();
+                builder.vertex(x + base, y + offset, 0).endVertex();
+            }
+            default -> throw new IllegalStateException("Invalid direction: Use a horizontal direction!");
+        }
+        tessellator.end();
+        RenderSystem.enableTexture();
+        RenderSystem.disableBlend();
     }
 
-    public static void drawRect(double x, double y, double x2, double y2, double width, int color, boolean over) {
-        if (y > y2) {
-            double tempY = y;
-            double tempX = x;
-            y = y2;
-            x = x2;
-            y2 = tempY;
-            x2 = tempX;
+    public static void drawLine(double x0, double y0, double x1, double y1, int color) {
+        drawLine(x0, y0, x1, y1, 1, color);
+    }
+
+    public static void drawLine(double x0, double y0, double x1, double y1, int width, int color) {
+        if (x0 == x1) {
+            x1 += width;
+        }
+        if (y0 == y1) {
+            y1 += width;
         }
         Tesselator tessellator = Tesselator.getInstance();
         BufferBuilder builder = tessellator.getBuilder();
         RenderSystem.enableBlend();
         RenderSystem.disableTexture();
         RenderSystem.setShader(RenderHelper.SHADER_POSITION);
-        RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
-                                       GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+        RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
         setColor(color);
         builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION);
-        boolean xHigh = x < x2;
-        builder.vertex(x, xHigh ? y + width : y, over ? 1 : 0).endVertex();
-        builder.vertex(x2, xHigh ? y2 + width : y2, over ? 1 : 0).endVertex();
-        builder.vertex(x2 + width, xHigh ? y2 : y2 + width, over ? 1 : 0).endVertex();
-        builder.vertex(x + width, xHigh ? y : y + width, over ? 1 : 0).endVertex();
+        builder.vertex(x0, y0, 0).endVertex();
+        builder.vertex(x0, y1, 0).endVertex();
+        builder.vertex(x1, y1, 0).endVertex();
+        builder.vertex(x1, y0, 0).endVertex();
+        tessellator.end();
+        RenderSystem.enableTexture();
+        RenderSystem.disableBlend();
+    }
+
+    public static void drawRect(double x0, double y0, double x1, double y1, double width, int color) {
+        Tesselator tessellator = Tesselator.getInstance();
+        BufferBuilder builder = tessellator.getBuilder();
+        RenderSystem.enableBlend();
+        RenderSystem.disableTexture();
+        RenderSystem.setShader(RenderHelper.SHADER_POSITION);
+        RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+        setColor(color);
+        builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION);
+        //Left
+        builder.vertex(x0, y0, 0).endVertex();
+        builder.vertex(x0, y1, 0).endVertex();
+        builder.vertex(x0 + width, y1, 0).endVertex();
+        builder.vertex(x0 + width, y0, 0).endVertex();
+        //Right
+        builder.vertex(x1 - width, y0, 0).endVertex();
+        builder.vertex(x1 - width, y1, 0).endVertex();
+        builder.vertex(x1, y1, 0).endVertex();
+        builder.vertex(x1, y0, 0).endVertex();
+        //Top
+        builder.vertex(x0, y0, 0).endVertex();
+        builder.vertex(x0, y0 + width, 0).endVertex();
+        builder.vertex(x1, y0 + width, 0).endVertex();
+        builder.vertex(x1, y0, 0).endVertex();
+        //Bottom
+        builder.vertex(x0, y1 - width, 0).endVertex();
+        builder.vertex(x0, y1, 0).endVertex();
+        builder.vertex(x1, y1, 0).endVertex();
+        builder.vertex(x1, y1 - width, 0).endVertex();
+        //
         tessellator.end();
         RenderSystem.enableTexture();
         RenderSystem.disableBlend();
@@ -273,13 +343,20 @@ public final class GUIUtils {
         tessellator.end();
     }
 
-    public static void enableScissor(int x1, int y1, int x2, int y2) {
+    public static void enableScissor(int x0, int y0, int x1, int y1) {
+        if (SCISSOR.push(x0, y0, x1, y1)) {
+            ScissorStack.Area area = SCISSOR.getArea();
+            enableScissorInternal(area.x0(), area.y0(), area.x1(), area.y1());
+        }
+    }
+
+    private static void enableScissorInternal(int x0, int y0, int x1, int y1) {
         Window window = Minecraft.getInstance().getWindow();
         double scale = window.getGuiScale();
-        double x = x1 * scale;
-        double y = window.getScreenHeight() - y2 * scale;
-        double width = (x2 - x1) * scale;
-        double height = (y2 - y1) * scale;
+        double x = x0 * scale;
+        double y = window.getScreenHeight() - y1 * scale;
+        double width = (x1 - x0) * scale;
+        double height = (y1 - y0) * scale;
         RenderSystem.enableScissor((int) x, (int) y, Math.max(0, (int) width), Math.max(0, (int) height));
     }
 
@@ -480,8 +557,29 @@ public final class GUIUtils {
         BufferUploader.end(builder);
     }
 
+    public static void reenableScissor() {
+        ScissorStack.Area area = SCISSOR.getArea();
+        enableScissorInternal(area.x0(), area.y0(), area.x1(), area.y1());
+    }
+
     public static void renderAndDecorateFakeItemLighting(ItemRenderer renderer, ItemStack stack, int x, int y, int packedLight) {
         renderItemIntoGUI(renderer, null, stack, x, y, packedLight);
+    }
+
+    public static void renderDirtBackground(int x0, int y0, int x1, int y1, int brightness) {
+        Tesselator tesselator = Tesselator.getInstance();
+        BufferBuilder builder = tesselator.getBuilder();
+        AccessorRenderSystem.setShader(GameRenderer.getPositionTexColorShader());
+        RenderSystem.setShaderTexture(0, Screen.BACKGROUND_LOCATION);
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+        float dx = (x1 - x0) / 32.0f;
+        float dy = (y1 - y0) / 32.0f;
+        builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+        builder.vertex(x0, y1, 0).uv(0, dy).color(brightness, brightness, brightness, 255).endVertex();
+        builder.vertex(x1, y1, 0).uv(dx, dy).color(brightness, brightness, brightness, 255).endVertex();
+        builder.vertex(x1, y0, 0).uv(dx, 0).color(brightness, brightness, brightness, 255).endVertex();
+        builder.vertex(x0, y0, 0).uv(0, 0).color(brightness, brightness, brightness, 255).endVertex();
+        tesselator.end();
     }
 
     public static void renderEntityInInventory(int posX, int posY, float scale, float mouseX, float mouseY, LivingEntity entity) {

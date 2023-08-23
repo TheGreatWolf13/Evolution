@@ -18,9 +18,9 @@ public final class TooltipCold implements ITooltip {
     }
 
     public static TooltipComponent cold(double cold) {
-        if (INSTANCE.oldCold != cold || INSTANCE.oldFormatter != EvolutionConfig.CLIENT.bodyTemperature.get()) {
+        if (INSTANCE.oldCold != cold || INSTANCE.oldFormatter != EvolutionConfig.BODY_TEMPERATURE.get()) {
             INSTANCE.oldCold = cold;
-            INSTANCE.oldFormatter = EvolutionConfig.CLIENT.bodyTemperature.get();
+            INSTANCE.oldFormatter = EvolutionConfig.BODY_TEMPERATURE.get();
             INSTANCE.text = EvolutionTexts.coldResistance(cold);
         }
         return INSTANCE;

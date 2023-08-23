@@ -1,5 +1,6 @@
 package tgw.evolution.init;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.*;
 import net.minecraft.util.Mth;
@@ -125,12 +126,24 @@ public final class EvolutionTexts {
         return new TranslatableComponent("evolution.config.allowedValues", allowed).setStyle(LIGHT_GREY);
     }
 
-    public static Component configDefault(String def) {
+    public static Component configDefault(Component def) {
         return new TranslatableComponent("evolution.config.default", def).setStyle(LIGHT_GREY);
     }
 
-    public static Component configRange(String range) {
-        return new TranslatableComponent("evolution.config.range", range).setStyle(LIGHT_GREY);
+    public static Component configRange(int min, int max) {
+        return new TranslatableComponent("evolution.config.range", min, max).setStyle(LIGHT_GREY);
+    }
+
+    public static Component configRangeMax(int max) {
+        return new TranslatableComponent("evolution.config.range.max", max).setStyle(LIGHT_GREY);
+    }
+
+    public static Component configRangeMin(int min) {
+        return new TranslatableComponent("evolution.config.range.min", min).setStyle(LIGHT_GREY);
+    }
+
+    public static Component cooldown(double amount) {
+        return new TranslatableComponent("evolution.tooltip.cooldown", TWO_PLACES.format(amount / 20)).setStyle(GREEN);
     }
 
 //    public static Component container(IItemFluidContainer container, ItemStack stack) {
@@ -140,10 +153,6 @@ public final class EvolutionTexts {
 //                                         ((FluidGeneric) container.getFluid()).getTextComp() :
 //                                         "null").setStyle(BLUE);
 //    }
-
-    public static Component cooldown(double amount) {
-        return new TranslatableComponent("evolution.tooltip.cooldown", TWO_PLACES.format(amount / 20)).setStyle(GREEN);
-    }
 
     public static Component damage(String damage, double amount) {
         return new TranslatableComponent(damage, TWO_PLACES.format(amount)).setStyle(DARK_RED);
@@ -329,6 +338,14 @@ public final class EvolutionTexts {
 
     public static Component throwSpeed(double speed) {
         return new TranslatableComponent("evolution.tooltip.throwSpeed", SPEED.format(speed)).setStyle(GREEN);
+    }
+
+    public static Component toggle(Component comp, boolean isSelected) {
+        if (isSelected) {
+            return comp.copy().withStyle(ChatFormatting.UNDERLINE);
+        }
+        return comp;
+
     }
 
     public static Component torch(int timeRemaining) {

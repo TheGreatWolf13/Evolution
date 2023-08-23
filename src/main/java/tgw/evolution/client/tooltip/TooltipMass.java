@@ -41,9 +41,9 @@ public final class TooltipMass implements ITooltip {
     }
 
     private static void set(TooltipMass t, double mass) {
-        if (t.oldMass != mass || t.oldFormatter != EvolutionConfig.CLIENT.mass.get()) {
+        if (t.oldMass != mass || t.oldFormatter != EvolutionConfig.MASS.get()) {
             t.oldMass = mass;
-            t.oldFormatter = EvolutionConfig.CLIENT.mass.get();
+            t.oldFormatter = EvolutionConfig.MASS.get();
             t.text = EvolutionTexts.mass(mass);
         }
     }

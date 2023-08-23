@@ -281,7 +281,7 @@ public class DimensionOverworld {
         if (this.duskDawnColors != null) {
             this.sunAzimuth = (float) MathHelper.atan2Deg(EarthHelper.sunX, EarthHelper.sunZ) + 180;
         }
-        if (EvolutionConfig.CLIENT.showPlanets.get()) {
+        if (EvolutionConfig.SHOW_PLANETS.get()) {
             profiler.popPush("planets");
             PlanetsHelper.preCalculations(dayTime);
             PlanetsHelper.calculateOrbit1Mercury(dayTime);

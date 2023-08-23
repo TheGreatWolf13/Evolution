@@ -13,21 +13,15 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TranslatableComponent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
-import tgw.evolution.EvolutionClient;
 import tgw.evolution.client.gui.controls.ScreenKeyBinds;
+import tgw.evolution.config.EvolutionConfig;
 
 @Mixin(ControlsScreen.class)
 public abstract class MixinControlsScreen extends OptionsSubScreen {
 
-    private static final CycleOption<Boolean> TOGGLE_CRAWL = CycleOption.createBinaryOption("key.crawl",
-                                                                                            new TranslatableComponent("options.key.toggle"),
-                                                                                            new TranslatableComponent("options.key.hold"),
-                                                                                            op -> EvolutionClient.toggleCrawl,
-                                                                                            (op, op1, value) -> EvolutionClient.toggleCrawl = value);
+    private static final CycleOption<Boolean> TOGGLE_CRAWL = CycleOption.createBinaryOption("key.crawl", new TranslatableComponent("options.key.toggle"), new TranslatableComponent("options.key.hold"), op -> EvolutionConfig.toggleCrawl, (op, op1, value) -> EvolutionConfig.toggleCrawl = value);
 
-    public MixinControlsScreen(Screen pLastScreen,
-                               Options pOptions,
-                               Component pTitle) {
+    public MixinControlsScreen(Screen pLastScreen, Options pOptions, Component pTitle) {
         super(pLastScreen, pOptions, pTitle);
     }
 

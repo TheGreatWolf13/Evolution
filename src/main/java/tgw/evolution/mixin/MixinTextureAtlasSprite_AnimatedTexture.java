@@ -27,7 +27,7 @@ public abstract class MixinTextureAtlasSprite_AnimatedTexture {
     @Overwrite
     public void tick() {
         //Evolution start
-        if (!EvolutionConfig.CLIENT.animatedTextures.get() || Minecraft.getInstance().isPaused()) {
+        if (!EvolutionConfig.ANIMATED_TEXTURES.get() || Minecraft.getInstance().isPaused()) {
             return;
         }
         //Evolution end

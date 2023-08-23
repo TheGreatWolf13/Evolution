@@ -1,38 +1,33 @@
 package tgw.evolution.init;
 
 import tgw.evolution.config.EvolutionConfig;
-import tgw.evolution.util.UnregisteredFeatureException;
 import tgw.evolution.util.math.IFormatter;
 import tgw.evolution.util.math.Metric;
 
 public final class EvolutionFormatter {
 
-    public static final IFormatter DISTANCE = mm -> {
-        Distance distance = EvolutionConfig.CLIENT.distance.get();
-        switch (distance) {
-            case METRIC -> {
-                return Metric.format(Metric.fromMetric(mm, Metric.MILLI), 1, "m");
-            }
-            case IMPERIAL -> {
-                double inches = mm / 25.4;
-                if (inches < 12) {
-                    return Metric.ONE_PLACE.format(inches) + "in";
-                }
-                if (inches >= 5_280 * 12) {
-                    return Metric.ONE_PLACE.format(inches / (5_280 * 12)) + "mi";
-                }
-                double feet = inches / 12;
-                if (feet < 1_000) {
-                    return Metric.ONE_PLACE.format(feet) + "ft";
-                }
-                return Metric.ONE_PLACE.format(feet / 3) + "yd";
-            }
+    public static final IFormatter DISTANCE = mm -> switch (EvolutionConfig.DISTANCE.get()) {
+        case METRIC -> {
+            yield Metric.format(Metric.fromMetric(mm, Metric.MILLI), 1, "m");
         }
-        throw new UnregisteredFeatureException("Unknown distance system of unit: " + distance);
+        case IMPERIAL -> {
+            double inches = mm / 25.4;
+            if (inches < 12) {
+                yield Metric.ONE_PLACE.format(inches) + "in";
+            }
+            if (inches >= 5_280 * 12) {
+                yield Metric.ONE_PLACE.format(inches / (5_280 * 12)) + "mi";
+            }
+            double feet = inches / 12;
+            if (feet < 1_000) {
+                yield Metric.ONE_PLACE.format(feet) + "ft";
+            }
+            yield Metric.ONE_PLACE.format(feet / 3) + "yd";
+        }
     };
 
     public static final IFormatter TEMPERATURE_BODY_RELATIVE = value -> {
-        Temperature temperature = EvolutionConfig.CLIENT.bodyTemperature.get();
+        Temperature temperature = EvolutionConfig.BODY_TEMPERATURE.get();
         value = switch (temperature) {
             case CELSIUS, KELVIN -> value;
             case FAHRENHEIT -> tgw.evolution.util.Temperature.C2FRelative(value);
@@ -42,7 +37,7 @@ public final class EvolutionFormatter {
     };
 
     public static final IFormatter SPEED = value -> {
-        Speed speed = EvolutionConfig.CLIENT.speed.get();
+        Speed speed = EvolutionConfig.SPEED.get();
         value = switch (speed) {
             case KILOMETERS_PER_HOUR -> 3.6 * 20 * value;
             case METERS_PER_SECOND -> 20 * value;
@@ -52,7 +47,7 @@ public final class EvolutionFormatter {
     };
 
     public static final IFormatter FOOD = value -> {
-        Food food = EvolutionConfig.CLIENT.food.get();
+        Food food = EvolutionConfig.FOOD.get();
         value = switch (food) {
             case KILOCALORIE -> value;
             case KILOJOULE -> value * 4.184;
@@ -61,7 +56,7 @@ public final class EvolutionFormatter {
     };
 
     public static final IFormatter MASS = value -> {
-        Mass mass = EvolutionConfig.CLIENT.mass.get();
+        Mass mass = EvolutionConfig.MASS.get();
         value = switch (mass) {
             case KILOGRAM -> value;
             case POUND -> value * 2.204_622_621_85;
@@ -70,7 +65,7 @@ public final class EvolutionFormatter {
     };
 
     public static final IFormatter DRINK = value -> {
-        Drink drink = EvolutionConfig.CLIENT.drink.get();
+        Drink drink = EvolutionConfig.DRINK.get();
         value = switch (drink) {
             case FLUID_OUNCE -> value / 28.413_062_5;
             case MILLILITER -> value;
@@ -79,7 +74,7 @@ public final class EvolutionFormatter {
     };
 
     public static final IFormatter VOLUME = value -> {
-        Volume volume = EvolutionConfig.CLIENT.volume.get();
+        Volume volume = EvolutionConfig.VOLUME.get();
         value = switch (volume) {
             case CUBIC_CENTIMETER -> value * 1_000;
             case CUBIC_METER -> value / 1_000;
@@ -94,13 +89,16 @@ public final class EvolutionFormatter {
 
     public enum Distance {
         IMPERIAL,
-        METRIC
+        METRIC;
+
+        public static final Distance[] VALUES = values();
     }
 
     public enum Drink implements IUnit {
         FLUID_OUNCE("fl oz"),
         MILLILITER("mL");
 
+        public static final Drink[] VALUES = values();
         private final String name;
 
         Drink(String name) {
@@ -122,6 +120,7 @@ public final class EvolutionFormatter {
         KILOCALORIE("kcal"),
         KILOJOULE("kJ");
 
+        public static final Food[] VALUES = values();
         private final String name;
 
         Food(String name) {
@@ -143,6 +142,7 @@ public final class EvolutionFormatter {
         KILOGRAM("kg"),
         POUND("lb");
 
+        public static final Mass[] VALUES = values();
         private final String name;
 
         Mass(String name) {
@@ -165,6 +165,7 @@ public final class EvolutionFormatter {
         METERS_PER_SECOND("m/s"),
         MILES_PER_HOUR("mph");
 
+        public static final Speed[] VALUES = values();
         private final String name;
 
         Speed(String name) {
@@ -188,6 +189,7 @@ public final class EvolutionFormatter {
         KELVIN("K"),
         RANKINE("\u00B0R");
 
+        public static final Temperature[] VALUES = values();
         private final String name;
 
         Temperature(String name) {
@@ -211,6 +213,7 @@ public final class EvolutionFormatter {
         GALLON("gal"),
         LITER("L");
 
+        public static final Volume[] VALUES = values();
         private final String name;
 
         Volume(String name) {

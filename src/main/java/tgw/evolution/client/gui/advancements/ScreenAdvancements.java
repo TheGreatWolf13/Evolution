@@ -243,186 +243,91 @@ public class ScreenAdvancements extends Screen implements ClientAdvancements.Lis
                     if (advancementEntry.x == this.advConnectedToMouse.x) {
                         if (y1 > y2) {
                             //Draw right
-                            GUIUtils.drawRect(x1, y1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, x2, y2, 1, 0x00_FF00);
+                            GUIUtils.drawLine(x1, y1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, x2, y2, 0x00_FF00);
                             //Draw bottom for bottom
-                            GUIUtils.drawRect(x1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                              y1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                              x2,
-                                              y1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                              1,
-                                              0x00_FF00);
+                            GUIUtils.drawLine(x1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, y1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, x2, y1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, 0x00_FF00);
                             //Draw top for bottom
-                            GUIUtils.drawRect(x1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, y1, x2, y1, 1, 0x00_FF00);
+                            GUIUtils.drawLine(x1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, y1, x2, y1, 0x00_FF00);
                             //Draw bottom for top
-                            GUIUtils.drawRect(x1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                              y2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                              x2,
-                                              y2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                              1,
-                                              0x00_FF00);
+                            GUIUtils.drawLine(x1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, y2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, x2, y2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, 0x00_FF00);
                             //Draw top for top
-                            GUIUtils.drawRect(x1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, y2, x2, y2, 1, 0x00_FF00);
+                            GUIUtils.drawLine(x1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, y2, x2, y2, 0x00_FF00);
                             //Draw left
-                            GUIUtils.drawRect(x1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                              y1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                              x2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                              y2,
-                                              1,
-                                              0x00_FF00);
+                            GUIUtils.drawLine(x1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, y1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, x2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, y2, 0x00_FF00);
                         }
                         else {
                             //Draw right
-                            GUIUtils.drawRect(x1, y2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, x2, y1, 1, 0x00_FF00);
+                            GUIUtils.drawLine(x1, y2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, x2, y1, 0x00_FF00);
                             //Draw bottom for bottom
-                            GUIUtils.drawRect(x1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                              y2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                              x2,
-                                              y2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                              1,
-                                              0x00_FF00);
+                            GUIUtils.drawLine(x1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, y2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, x2, y2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, 0x00_FF00);
                             //Draw top for bottom
-                            GUIUtils.drawRect(x1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, y2, x2, y2, 1, 0x00_FF00);
+                            GUIUtils.drawLine(x1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, y2, x2, y2, 0x00_FF00);
                             //Draw bottom for top
-                            GUIUtils.drawRect(x1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                              y1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                              x2,
-                                              y1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                              1,
-                                              0x00_FF00);
+                            GUIUtils.drawLine(x1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, y1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, x2, y1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, 0x00_FF00);
                             //Draw top for top
-                            GUIUtils.drawRect(x1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, y1, x2, y1, 1, 0x00_FF00);
+                            GUIUtils.drawLine(x1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, y1, x2, y1, 0x00_FF00);
                             //Draw left
-                            GUIUtils.drawRect(x1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                              y2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                              x2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                              y1,
-                                              1,
-                                              0x00_FF00);
+                            GUIUtils.drawLine(x1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, y2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, x2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, y1, 0x00_FF00);
                         }
                     }
                     if (advancementEntry.y == this.advConnectedToMouse.y) {
                         if (x1 > x2) {
                             //Draw top
-                            GUIUtils.drawRect(x2, y1, x1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, y2, 1, 0x00_FF00);
+                            GUIUtils.drawLine(x2, y1, x1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, y2, 0x00_FF00);
                             //Draw left for right
-                            GUIUtils.drawRect(x1, y1, x1, y2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, 1, 0x00_FF00);
+                            GUIUtils.drawLine(x1, y1, x1, y2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, 0x00_FF00);
                             //Draw right for right
-                            GUIUtils.drawRect(x1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                              y1,
-                                              x1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                              y2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                              1,
-                                              0x00_FF00);
+                            GUIUtils.drawLine(x1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, y1, x1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, y2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, 0x00_FF00);
                             //Draw left for left
-                            GUIUtils.drawRect(x2, y1, x2, y2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, 1, 0x00_FF00);
+                            GUIUtils.drawLine(x2, y1, x2, y2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, 0x00_FF00);
                             //Draw right for left
-                            GUIUtils.drawRect(x2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                              y1,
-                                              x2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                              y2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                              1,
-                                              0x00_FF00);
+                            GUIUtils.drawLine(x2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, y1, x2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, y2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, 0x00_FF00);
                             //Draw bottom
-                            GUIUtils.drawRect(x2,
-                                              y1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                              x1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                              y2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                              1,
-                                              0x00_FF00);
+                            GUIUtils.drawLine(x2, y1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, x1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, y2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, 0x00_FF00);
                         }
                         else {
                             //Draw left
-                            GUIUtils.drawRect(x2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, y1, x1, y2, 1, 0x00_FF00);
+                            GUIUtils.drawLine(x2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, y1, x1, y2, 0x00_FF00);
                             //Draw left for right
-                            GUIUtils.drawRect(x2, y1, x2, y2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, 1, 0x00_FF00);
+                            GUIUtils.drawLine(x2, y1, x2, y2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, 0x00_FF00);
                             //Draw right for right
-                            GUIUtils.drawRect(x2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                              y1,
-                                              x2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                              y2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                              1,
-                                              0x00_FF00);
+                            GUIUtils.drawLine(x2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, y1, x2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, y2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, 0x00_FF00);
                             //Draw left for left
-                            GUIUtils.drawRect(x1, y1, x1, y2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, 1, 0x00_FF00);
+                            GUIUtils.drawLine(x1, y1, x1, y2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, 0x00_FF00);
                             //Draw right for left
-                            GUIUtils.drawRect(x1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                              y1,
-                                              x1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                              y2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                              1,
-                                              0x00_FF00);
+                            GUIUtils.drawLine(x1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, y1, x1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, y2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, 0x00_FF00);
                             //Draw right
-                            GUIUtils.drawRect(x2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                              y1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                              x1,
-                                              y2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                              1,
-                                              0x00_FF00);
+                            GUIUtils.drawLine(x2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, y1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, x1, y2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, 0x00_FF00);
                         }
                     }
                     if (degrees == 45 || degrees == 135 || degrees == 225 || degrees == 315) {
                         //Draw lines around each advancement
                         //First
                         //Top
-                        GUIUtils.drawRect(x1, y1, x1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, y1, 1, 0x00_FF00);
+                        GUIUtils.drawLine(x1, y1, x1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, y1, 0x00_FF00);
                         //Bottom
-                        GUIUtils.drawRect(x1,
-                                          y1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                          x1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                          y1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                          1,
-                                          0x00_FF00);
+                        GUIUtils.drawLine(x1, y1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, x1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, y1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, 0x00_FF00);
                         //Left
-                        GUIUtils.drawRect(x1, y1, x1, y1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, 1, 0x00_FF00);
+                        GUIUtils.drawLine(x1, y1, x1, y1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, 0x00_FF00);
                         //Right
-                        GUIUtils.drawRect(x1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                          y1,
-                                          x1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                          y1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                          1,
-                                          0x00_FF00);
+                        GUIUtils.drawLine(x1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, y1, x1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, y1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, 0x00_FF00);
                         //Second
                         //Top
-                        GUIUtils.drawRect(x2, y2, x2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, y2, 1, 0x00_FF00);
+                        GUIUtils.drawLine(x2, y2, x2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, y2, 0x00_FF00);
                         //Bottom
-                        GUIUtils.drawRect(x2,
-                                          y2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                          x2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                          y2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                          1,
-                                          0x00_FF00);
+                        GUIUtils.drawLine(x2, y2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, x2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, y2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, 0x00_FF00);
                         //Left
-                        GUIUtils.drawRect(x2, y2, x2, y2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, 1, 0x00_FF00);
+                        GUIUtils.drawLine(x2, y2, x2, y2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, 0x00_FF00);
                         //Right
-                        GUIUtils.drawRect(x2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                          y2,
-                                          x2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                          y2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                          1,
-                                          0x00_FF00);
+                        GUIUtils.drawLine(x2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, y2, x2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, y2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, 0x00_FF00);
 
                         if (degrees == 45 || degrees == 225) {
-                            GUIUtils.drawRect(x1,
-                                              y1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                              x2,
-                                              y2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                              1,
-                                              0x00_FF00);
-                            GUIUtils.drawRect(x1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                              y1,
-                                              x2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                              y2,
-                                              1,
-                                              0x00_FF00);
+                            GUIUtils.drawLine(x1, y1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, x2, y2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, 0x00_FF00);
+                            GUIUtils.drawLine(x1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, y1, x2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, y2, 0x00_FF00);
                         }
                         else {
-                            GUIUtils.drawRect(x1, y1, x2, y2, 1, 0x00_FF00);
-                            GUIUtils.drawRect(x1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                              y1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                              x2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                              y2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1,
-                                              1,
-                                              0x00_FF00);
+                            GUIUtils.drawLine(x1, y1, x2, y2, 0x00_FF00);
+                            GUIUtils.drawLine(x1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, y1 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, x2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, y2 + GuiAdvancementEntry.ADVANCEMENT_SIZE - 1, 0x00_FF00);
                         }
                     }
                 }

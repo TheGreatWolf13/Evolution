@@ -18,9 +18,9 @@ public final class TooltipHeat implements ITooltip {
     }
 
     public static TooltipComponent heat(double heat) {
-        if (INSTANCE.oldHeat != heat || INSTANCE.oldFormatter != EvolutionConfig.CLIENT.bodyTemperature.get()) {
+        if (INSTANCE.oldHeat != heat || INSTANCE.oldFormatter != EvolutionConfig.BODY_TEMPERATURE.get()) {
             INSTANCE.oldHeat = heat;
-            INSTANCE.oldFormatter = EvolutionConfig.CLIENT.bodyTemperature.get();
+            INSTANCE.oldFormatter = EvolutionConfig.BODY_TEMPERATURE.get();
             INSTANCE.text = EvolutionTexts.heatResistance(heat);
         }
         return INSTANCE;
