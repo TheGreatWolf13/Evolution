@@ -374,6 +374,7 @@
   "stat.evolution.time_since_last_rest": "Tempo desde o Último Descanço",
   "stat.evolution.time_sneaking": "Tempo Agachado",
   "stat.evolution.time_with_world_open": "Tempo com o Mundo Aberto",
+  "stat_type.evolution.block_placed": "Colocado",
   "stat_type.evolution.damage_dealt": "Você causou %1$s de dano em %2$s",
   "stat_type.evolution.damage_dealt.name": "Dano causado",
   "stat_type.evolution.damage_dealt.none": "Você nunca causou dano em %1$s",

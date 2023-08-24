@@ -114,7 +114,7 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         RenderSystem.setShader(RenderHelper.SHADER_POSITION_TEX);
         RenderSystem.setShaderTexture(0, this.resIcons);
-        blit(matrices, x, y, this.getBlitOffset(), u, v, 18, 18, 128, 128);
+        blit(matrices, x, y, this.getBlitOffset(), u, v, 18, 18, 256, 128);
     }
 
     public ObjectSelectionList<?> byId(int displayId) {
@@ -133,7 +133,7 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
     private void drawDamageSprite(PoseStack matrices, int x, int y, EvolutionDamage.Type type) {
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         RenderSystem.setShaderTexture(0, this.resIcons);
-        blit(matrices, x, y, this.getBlitOffset(), 0, 0, 18, 18, 128, 128);
+        blit(matrices, x, y, this.getBlitOffset(), 0, 0, 18, 18, 256, 128);
         RenderSystem.enableBlend();
         RenderSystem.setShaderTexture(0, this.resDamageIcons);
         blit(matrices, x + 1, y + 1, this.getBlitOffset(), type.getTexX() * 16, type.getTexY() * 16, 16, 16, 128, 128);
@@ -154,30 +154,10 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
     }
 
     public void initButtons() {
-        this.addRenderableWidget(new Button(this.width / 2 - 160,
-                                            this.height - 52,
-                                            80,
-                                            20,
-                                            this.textGeneralButton,
-                                            button -> this.setDisplaySlot(0)));
-        Button itemButton = this.addRenderableWidget(new Button(this.width / 2 - 80,
-                                                                this.height - 52,
-                                                                80,
-                                                                20,
-                                                                this.textItemsButton,
-                                                                button -> this.setDisplaySlot(1)));
-        Button mobButton = this.addRenderableWidget(new Button(this.width / 2,
-                                                               this.height - 52,
-                                                               80,
-                                                               20,
-                                                               this.textMobButton,
-                                                               button -> this.setDisplaySlot(2)));
-        this.addRenderableWidget(new Button(this.width / 2 + 80,
-                                            this.height - 52,
-                                            80,
-                                            20,
-                                            this.textDistanceButton,
-                                            button -> this.setDisplaySlot(3)));
+        this.addRenderableWidget(new Button(this.width / 2 - 160, this.height - 52, 80, 20, this.textGeneralButton, button -> this.setDisplaySlot(0)));
+        Button itemButton = this.addRenderableWidget(new Button(this.width / 2 - 80, this.height - 52, 80, 20, this.textItemsButton, button -> this.setDisplaySlot(1)));
+        Button mobButton = this.addRenderableWidget(new Button(this.width / 2, this.height - 52, 80, 20, this.textMobButton, button -> this.setDisplaySlot(2)));
+        this.addRenderableWidget(new Button(this.width / 2 + 80, this.height - 52, 80, 20, this.textDistanceButton, button -> this.setDisplaySlot(3)));
         this.addRenderableWidget(new Button(this.width / 2 - 120, this.height - 32, 80, 20, this.textTimeButton, button -> this.setDisplaySlot(4)));
         this.addRenderableWidget(new Button(this.width / 2 - 40, this.height - 32, 80, 20, this.textDeathButton, button -> this.setDisplaySlot(5)));
         this.addRenderableWidget(new Button(this.width / 2 + 40, this.height - 32, 80, 20, this.textDamageButton, button -> this.setDisplaySlot(6)));
@@ -295,6 +275,11 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
         }
 
         @Override
+        protected int getScrollbarPosition() {
+            return this.width - 6;
+        }
+
+        @Override
         protected void renderBackground(PoseStack matrices) {
             ScreenStats.this.renderBackground(matrices);
         }
@@ -380,7 +365,7 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
 
         @Override
         protected int getScrollbarPosition() {
-            return this.width / 2 + 140;
+            return this.width - 6;
         }
 
         @Override
@@ -537,7 +522,7 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
     class ListDeathStats extends ObjectSelectionList<ListDeathStats.Entry> {
         private final Comparator<Stat<ResourceLocation>> comparator = new ListDeathStats.ListComparator();
         private final OList<Stat<ResourceLocation>> deathList;
-        private final int[] headerTexture = {2};
+        private final int[] headerTexture = {1};
         protected int currentHeader = -1;
         protected int sortOrder;
 
@@ -582,7 +567,7 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
 
         @Override
         protected int getScrollbarPosition() {
-            return this.width / 2 + 144;
+            return this.width - 6;
         }
 
         @Override
@@ -591,7 +576,7 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
                 this.currentHeader = -1;
             }
             for (int i = 0; i < this.headerTexture.length; ++i) {
-                ScreenStats.this.blitSlotIcon(matrices, mouseX + getCategoryOffset(i), mouseY + 1, 0, this.currentHeader == i ? 0 : 36);
+                ScreenStats.this.blitSlotIcon(matrices, mouseX + getCategoryOffset(i), mouseY + 1, 0, this.currentHeader == i ? 0 : 6 * 18);
             }
             if (this.sortOrder != 0) {
                 int k = getCategoryOffset(0) - 18;
@@ -600,7 +585,7 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             }
             for (int l = 0; l < this.headerTexture.length; ++l) {
                 int i1 = this.currentHeader == l ? 1 : 0;
-                ScreenStats.this.blitSlotIcon(matrices, mouseX + getCategoryOffset(l) + i1, mouseY + 1 + i1, 18 * this.headerTexture[l], 36);
+                ScreenStats.this.blitSlotIcon(matrices, mouseX + getCategoryOffset(l) + i1, mouseY + 1 + i1, 18 * this.headerTexture[l], 6 * 18);
             }
         }
 
@@ -708,6 +693,11 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
 
         protected String getFormattedName(Stat<ResourceLocation> stat) {
             return I18n.get("stat." + stat.getValue().toString().replace(':', '.'));
+        }
+
+        @Override
+        protected int getScrollbarPosition() {
+            return this.width - 6;
         }
 
         @Override
@@ -829,6 +819,11 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
 
         protected String getFormattedName(Stat<ResourceLocation> stat) {
             return I18n.get("stat." + stat.getValue().toString().replace(':', '.'));
+        }
+
+        @Override
+        protected int getScrollbarPosition() {
+            return this.width - 6;
         }
 
         @Override
@@ -959,7 +954,7 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
 
         @Override
         protected int getScrollbarPosition() {
-            return this.width / 2 + 180;
+            return this.width - 6;
         }
 
         @Override
@@ -1144,7 +1139,7 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
         protected final Comparator<Item> comparator = new ListComparator();
         protected final OList<Item> itemList;
         protected final OList<StatType<Item>> itemStatList;
-        private final int[] headerTexture = {3, 4, 1, 2, 5, 6};
+        private final int[] headerTexture = {3, 7, 4, 1, 2, 5, 6};
         protected int currentHeader = -1;
         protected int sortOrder;
         protected @Nullable StatType<?> sorting;
@@ -1153,6 +1148,7 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             super(mc, ScreenStats.this.width, ScreenStats.this.height, 32, ScreenStats.this.height - 64, 20);
             this.blockStatList = new OArrayList<>();
             this.blockStatList.add(Stats.BLOCK_MINED);
+            this.blockStatList.add(EvolutionStats.BLOCK_PLACED);
             this.itemStatList = new OArrayList<>();
             this.itemStatList.add(Stats.ITEM_BROKEN);
             this.itemStatList.add(Stats.ITEM_CRAFTED);
@@ -1214,12 +1210,12 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
 
         @Override
         public int getRowWidth() {
-            return 375;
+            return 425;
         }
 
         @Override
         protected int getScrollbarPosition() {
-            return this.width / 2 + 140;
+            return this.width - 6;
         }
 
         private int indexOf(StatType<?> statType) {
@@ -1348,16 +1344,7 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             }
 
             @Override
-            public void render(PoseStack matrices,
-                               int index,
-                               int y,
-                               int x,
-                               int width,
-                               int height,
-                               int mouseX,
-                               int mouseY,
-                               boolean hovered,
-                               float partialTicks) {
+            public void render(PoseStack matrices, int index, int y, int x, int width, int height, int mouseX, int mouseY, boolean hovered, float partialTicks) {
                 Item item = ScreenStats.this.itemStats.itemList.get(index);
                 ScreenStats.this.blitSlot(matrices, x + 40, y, item);
                 for (int i = 0; i < ScreenStats.this.itemStats.blockStatList.size(); ++i) {
@@ -1371,11 +1358,7 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
                     this.drawStatCount(matrices, stat, x + getCategoryOffset(i), y, index % 2 == 0);
                 }
                 for (int j = 0; j < ScreenStats.this.itemStats.itemStatList.size(); ++j) {
-                    this.drawStatCount(matrices,
-                                       ScreenStats.this.itemStats.itemStatList.get(j).get(item),
-                                       x + getCategoryOffset(j + ScreenStats.this.itemStats.blockStatList.size()),
-                                       y,
-                                       index % 2 == 0);
+                    this.drawStatCount(matrices, ScreenStats.this.itemStats.itemStatList.get(j).get(item), x + getCategoryOffset(j + ScreenStats.this.itemStats.blockStatList.size()), y, index % 2 == 0);
                 }
             }
         }

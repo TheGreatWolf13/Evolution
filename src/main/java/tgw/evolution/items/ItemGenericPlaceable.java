@@ -17,6 +17,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import org.jetbrains.annotations.Nullable;
+import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.util.constants.BlockFlags;
 
 public abstract class ItemGenericPlaceable extends ItemEv {
@@ -84,16 +85,12 @@ public abstract class ItemGenericPlaceable extends ItemEv {
             if (blockInPos == stateForPlacement.getBlock()) {
                 blockInPos.setPlacedBy(level, pos, stateInPos, player, stack);
                 CriteriaTriggers.PLACED_BLOCK.trigger(player, pos, stack);
+                player.awardStat(EvolutionStats.BLOCK_PLACED.get(blockInPos));
             }
             this.sucessPlaceLogic(context);
             SoundType soundtype = stateInPos.getSoundType();
             player.swing(context.getHand());
-            level.playSound(null,
-                            pos,
-                            getPlaceSound(stateInPos),
-                            SoundSource.BLOCKS,
-                            (soundtype.getVolume() + 1.0F) / 2.0F,
-                            soundtype.getPitch() * 0.8F);
+            level.playSound(null, pos, getPlaceSound(stateInPos), SoundSource.BLOCKS, (soundtype.getVolume() + 1.0F) / 2.0F, soundtype.getPitch() * 0.8F);
             stack.shrink(1);
             return InteractionResult.SUCCESS;
         }

@@ -13,6 +13,7 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
+import tgw.evolution.init.EvolutionStats;
 
 public abstract class ItemGenericBlockPlaceable extends ItemBlock {
 
@@ -22,25 +23,12 @@ public abstract class ItemGenericBlockPlaceable extends ItemBlock {
 
     public abstract boolean customCondition(Block blockAtPlacing, Block blockClicking);
 
-    public abstract @Nullable BlockState getCustomState(Level level,
-                                                        int x,
-                                                        int y,
-                                                        int z,
-                                                        Player player,
-                                                        InteractionHand hand,
-                                                        BlockHitResult hitResult);
+    public abstract @Nullable BlockState getCustomState(Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult);
 
     public abstract BlockState getSneakingState(Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult);
 
     @Override
-    public InteractionResult place(Level level,
-                                   int x,
-                                   int y,
-                                   int z,
-                                   Player player,
-                                   InteractionHand hand,
-                                   BlockHitResult hitResult,
-                                   boolean canPlace) {
+    public InteractionResult place(Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult, boolean canPlace) {
         if (!canPlace) {
             return InteractionResult.FAIL;
         }
@@ -48,8 +36,7 @@ public abstract class ItemGenericBlockPlaceable extends ItemBlock {
         if (player.isSecondaryUseActive()) {
             stateForPlacement = this.getSneakingState(level, x, y, z, player, hand, hitResult);
         }
-        if (this.customCondition(level.getBlockState_(x, y, z).getBlock(),
-                                 level.getBlockStateAtSide(x, y, z, hitResult.getDirection().getOpposite()).getBlock())) {
+        if (this.customCondition(level.getBlockState_(x, y, z).getBlock(), level.getBlockStateAtSide(x, y, z, hitResult.getDirection().getOpposite()).getBlock())) {
             stateForPlacement = this.getCustomState(level, x, y, z, player, hand, hitResult);
         }
         if (stateForPlacement == null) {
@@ -67,17 +54,13 @@ public abstract class ItemGenericBlockPlaceable extends ItemBlock {
             Block blockAtPos = stateAtPos.getBlock();
             if (blockAtPos == stateForPlacement.getBlock()) {
                 CriteriaTriggers.PLACED_BLOCK.trigger_(p, x, y, z, stack);
+                p.awardStat(EvolutionStats.BLOCK_PLACED.get(blockAtPos));
             }
             if (p.isCrouching()) {
                 this.sneakingAction(level, x, y, z, player, hand, hitResult);
             }
             SoundType soundtype = stateAtPos.getSoundType();
-            level.playSound(null,
-                            x + 0.5, y + 0.5, z + 0.5,
-                            this.getPlaceSound(stateAtPos),
-                            SoundSource.BLOCKS,
-                            (soundtype.getVolume() + 1.0F) / 2.0F,
-                            soundtype.getPitch() * 0.8F);
+            level.playSound(null, x + 0.5, y + 0.5, z + 0.5, this.getPlaceSound(stateAtPos), SoundSource.BLOCKS, (soundtype.getVolume() + 1.0F) / 2.0F, soundtype.getPitch() * 0.8F);
             stack.shrink(1);
             return InteractionResult.SUCCESS;
         }

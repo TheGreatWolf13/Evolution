@@ -6,6 +6,7 @@ import net.minecraft.stats.StatFormatter;
 import net.minecraft.stats.StatType;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.level.block.Block;
 import tgw.evolution.Evolution;
 import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.stats.IEvoStatFormatter;
@@ -137,6 +138,8 @@ public final class EvolutionStats {
     //Entity
     public static final StatType<EntityType<?>> DAMAGE_DEALT;
     public static final StatType<EntityType<?>> DAMAGE_TAKEN;
+    //Blocks
+    public static final StatType<Block> BLOCK_PLACED;
 
     static {
         for (String e = EvolutionDamage.ALL_SOURCES.fastEntries(); e != null; e = EvolutionDamage.ALL_SOURCES.fastEntries()) {
@@ -146,6 +149,7 @@ public final class EvolutionStats {
         DEATH_SOURCE.trimCollection();
         DAMAGE_DEALT = Registry.register(Registry.STAT_TYPE, Evolution.getResource("damage_dealt"), new StatType<>(Registry.ENTITY_TYPE));
         DAMAGE_TAKEN = Registry.register(Registry.STAT_TYPE, Evolution.getResource("damage_taken"), new StatType<>(Registry.ENTITY_TYPE));
+        BLOCK_PLACED = Registry.register(Registry.STAT_TYPE, Evolution.getResource("block_placed"), new StatType<>(Registry.BLOCK));
     }
 
     private EvolutionStats() {

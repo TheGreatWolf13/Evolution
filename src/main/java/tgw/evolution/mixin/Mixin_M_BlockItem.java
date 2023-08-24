@@ -14,6 +14,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
@@ -23,6 +24,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.hooks.asm.DeleteMethod;
+import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.util.constants.BlockFlags;
 
 @Mixin(BlockItem.class)
@@ -81,14 +83,15 @@ public abstract class Mixin_M_BlockItem extends Item {
         if (stateAtPos.is(placementState.getBlock())) {
             stateAtPos = this.updateBlockStateFromTag(pos, level, stack, stateAtPos);
             this.updateCustomBlockEntityTag(pos, level, player, stack, stateAtPos);
-            stateAtPos.getBlock().setPlacedBy(level, pos, stateAtPos, player, stack);
+            Block blockPlaced = stateAtPos.getBlock();
+            blockPlaced.setPlacedBy(level, pos, stateAtPos, player, stack);
             if (player instanceof ServerPlayer p) {
                 CriteriaTriggers.PLACED_BLOCK.trigger_(p, x, y, z, stack);
+                p.awardStat(EvolutionStats.BLOCK_PLACED.get(blockPlaced));
             }
         }
         SoundType soundType = stateAtPos.getSoundType();
-        level.playSound(player, pos, this.getPlaceSound(stateAtPos), SoundSource.BLOCKS, (soundType.getVolume() + 1.0F) / 2.0F,
-                        soundType.getPitch() * 0.8F);
+        level.playSound(player, pos, this.getPlaceSound(stateAtPos), SoundSource.BLOCKS, (soundType.getVolume() + 1.0F) / 2.0F, soundType.getPitch() * 0.8F);
         level.gameEvent(player, GameEvent.BLOCK_PLACE, pos);
         if (player == null || !player.getAbilities().instabuild) {
             stack.shrink(1);

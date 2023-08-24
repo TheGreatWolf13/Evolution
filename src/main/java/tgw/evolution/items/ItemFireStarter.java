@@ -18,12 +18,12 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionCreativeTabs;
+import tgw.evolution.init.EvolutionStats;
 
 public class ItemFireStarter extends ItemEv implements IDurability {
 
@@ -50,15 +50,14 @@ public class ItemFireStarter extends ItemEv implements IDurability {
         int x = pos.getX() + dir.getStepX();
         int y = pos.getY() + dir.getStepY();
         int z = pos.getZ() + dir.getStepZ();
-        BlockPos facingPos = new BlockPos(x, y, z);
         if (hitResult.getType() == HitResult.Type.BLOCK && canSetFire(level, x, y, z)) {
             if (level.random.nextInt(3) == 0) {
-                level.playSound(null, facingPos, SoundEvents.FLINTANDSTEEL_USE, SoundSource.BLOCKS, 1.0F, level.random.nextFloat() * 0.4F + 0.8F);
-                BlockState state = EvolutionBlocks.FIRE.getStateWithAge(level, x, y, z);
-                level.setBlockAndUpdate(facingPos, state);
+                level.playSound(null, x + 0.5, y + 0.5, z + 0.5, SoundEvents.FLINTANDSTEEL_USE, SoundSource.BLOCKS, 1.0F, level.random.nextFloat() * 0.4F + 0.8F);
+                level.setBlockAndUpdate_(x, y, z, EvolutionBlocks.FIRE.getStateWithAge(level, x, y, z));
             }
-            if (living instanceof ServerPlayer serverPlayer) {
-                CriteriaTriggers.PLACED_BLOCK.trigger(serverPlayer, facingPos, stack);
+            if (living instanceof ServerPlayer player) {
+                CriteriaTriggers.PLACED_BLOCK.trigger_(player, x, y, z, stack);
+                player.awardStat(EvolutionStats.BLOCK_PLACED.get(EvolutionBlocks.FIRE));
                 stack.hurtAndBreak(1, living, entity -> entity.broadcastBreakEvent(entity.getUsedItemHand()));
             }
             return stack;

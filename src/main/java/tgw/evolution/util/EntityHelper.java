@@ -73,8 +73,7 @@ public final class EntityHelper {
                     victim.setDeltaMovement(targetMotion);
                 }
                 //Strong attack particles
-                attacker.level.playSound(null, attacker.getX(), attacker.getY(), attacker.getZ(), SoundEvents.PLAYER_ATTACK_STRONG,
-                                         attacker.getSoundSource(), 1.0F, 1.0F);
+                attacker.level.playSound(null, attacker.getX(), attacker.getY(), attacker.getZ(), SoundEvents.PLAYER_ATTACK_STRONG, attacker.getSoundSource(), 1.0F, 1.0F);
                 attacker.setLastHurtMob(victim);
                 //Item damage calculation
                 if (attacker instanceof Player player &&
@@ -87,23 +86,21 @@ public final class EntityHelper {
                 if (victim instanceof LivingEntity living) {
                     float damageDealt = oldHealth - living.getHealth();
                     if (attacker instanceof Player player) {
-                        PlayerHelper.applyDamage(player, damage, damageType, living);
+                        PlayerHelper.applyDamage(player, damageDealt, damageType, living);
                     }
                     if (fireAspectModifier > 0) {
                         living.setRemainingFireTicks(Math.max(fireAspectModifier * 4, living.getRemainingFireTicks()));
                     }
                     if (attacker.level instanceof ServerLevel serverLevel && damageDealt >= 10.0F) {
                         int heartsToSpawn = (int) (damageDealt * 0.1);
-                        serverLevel.sendParticles(ParticleTypes.DAMAGE_INDICATOR, living.getX(), living.getY() + living.getBbHeight() * 0.5F,
-                                                  living.getZ(), heartsToSpawn, 0.5, 0, 0.5, 0.1);
+                        serverLevel.sendParticles(ParticleTypes.DAMAGE_INDICATOR, living.getX(), living.getY() + living.getBbHeight() * 0.5F, living.getZ(), heartsToSpawn, 0.5, 0, 0.5, 0.1);
                     }
                 }
             }
             //Attack fail
             else {
                 if (attacker instanceof Player) {
-                    attacker.level.playSound(null, attacker.getX(), attacker.getY(), attacker.getZ(), SoundEvents.PLAYER_ATTACK_NODAMAGE,
-                                             attacker.getSoundSource(), 1.0F, 1.0F);
+                    attacker.level.playSound(null, attacker.getX(), attacker.getY(), attacker.getZ(), SoundEvents.PLAYER_ATTACK_NODAMAGE, attacker.getSoundSource(), 1.0F, 1.0F);
                 }
 //                if (fireAspect) {
 //                    victim.clearFire();

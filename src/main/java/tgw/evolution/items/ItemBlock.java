@@ -1,7 +1,6 @@
 package tgw.evolution.items;
 
 import net.minecraft.advancements.CriteriaTriggers;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
@@ -24,9 +23,9 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
+import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.util.constants.BlockFlags;
 
 import java.util.List;
@@ -94,13 +93,7 @@ public class ItemBlock extends Item implements IEvolutionItem {
         return state.getSoundType().getPlaceSound();
     }
 
-    protected @Nullable BlockState getPlacementState(Level level,
-                                                     int x,
-                                                     int y,
-                                                     int z,
-                                                     Player player,
-                                                     InteractionHand hand,
-                                                     BlockHitResult hitResult) {
+    protected @Nullable BlockState getPlacementState(Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult) {
         return this.block.getStateForPlacement_(level, x, y, z, player, hand, hitResult);
     }
 
@@ -113,14 +106,7 @@ public class ItemBlock extends Item implements IEvolutionItem {
         return true;
     }
 
-    public InteractionResult place(Level level,
-                                   int x,
-                                   int y,
-                                   int z,
-                                   Player player,
-                                   InteractionHand hand,
-                                   BlockHitResult hitResult,
-                                   boolean canPlace) {
+    public InteractionResult place(Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult, boolean canPlace) {
         if (!canPlace) {
             return InteractionResult.FAIL;
         }
@@ -138,15 +124,15 @@ public class ItemBlock extends Item implements IEvolutionItem {
         BlockState stateAtPos = level.getBlockState_(x, y, z);
         if (stateAtPos.is(state.getBlock())) {
             this.updateCustomBlockEntityTag(x, y, z, level, player, stack, stateAtPos);
-            stateAtPos.getBlock().setPlacedBy_(level, x, y, z, stateAtPos, player, stack);
+            Block blockPlaced = stateAtPos.getBlock();
+            blockPlaced.setPlacedBy_(level, x, y, z, stateAtPos, player, stack);
             if (player instanceof ServerPlayer p) {
                 CriteriaTriggers.PLACED_BLOCK.trigger_(p, x, y, z, stack);
+                player.awardStat(EvolutionStats.BLOCK_PLACED.get(blockPlaced));
             }
         }
         SoundType soundType = stateAtPos.getSoundType();
-        level.playSound(player, x + 0.5, y + 0.5, z + 0.5, this.getPlaceSound(stateAtPos), SoundSource.BLOCKS, (soundType.getVolume() + 1.0F) / 2.0F,
-                        soundType.getPitch() * 0.8F);
-        level.gameEvent(player, GameEvent.BLOCK_PLACE, new BlockPos(x, y, z));
+        level.playSound(player, x + 0.5, y + 0.5, z + 0.5, this.getPlaceSound(stateAtPos), SoundSource.BLOCKS, (soundType.getVolume() + 1.0F) / 2.0F, soundType.getPitch() * 0.8F);
         if (!player.getAbilities().instabuild) {
             stack.shrink(1);
         }
@@ -161,11 +147,7 @@ public class ItemBlock extends Item implements IEvolutionItem {
         map.put(this.block, item);
     }
 
-    protected void updateCustomBlockEntityTag(int x, int y, int z,
-                                              Level level,
-                                              Player player,
-                                              ItemStack stack,
-                                              BlockState state) {
+    protected void updateCustomBlockEntityTag(int x, int y, int z, Level level, Player player, ItemStack stack, BlockState state) {
         updateCustomBlockEntityTag(level, player, x, y, z, stack);
     }
 
@@ -180,8 +162,7 @@ public class ItemBlock extends Item implements IEvolutionItem {
             int offX = x + dir.getStepX();
             int offY = y + dir.getStepY();
             int offZ = z + dir.getStepZ();
-            placeResult = this.place(level, offX, offY, offZ, player, hand, hitResult,
-                                     level.getBlockState_(offX, offY, offZ).canBeReplaced_(level, offX, offY, offZ, player, hand, hitResult));
+            placeResult = this.place(level, offX, offY, offZ, player, hand, hitResult, level.getBlockState_(offX, offY, offZ).canBeReplaced_(level, offX, offY, offZ, player, hand, hitResult));
         }
         if (!placeResult.consumesAction() && this.isEdible()) {
             InteractionResult secondaryResult = this.use(level, player, hand).getResult();
