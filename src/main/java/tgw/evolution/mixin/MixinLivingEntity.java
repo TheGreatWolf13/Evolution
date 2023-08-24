@@ -7,6 +7,7 @@ import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.BlockParticleOption;
+import net.minecraft.core.particles.ItemParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -71,10 +72,8 @@ import tgw.evolution.inventory.AdditionalSlotType;
 import tgw.evolution.items.ICancelableUse;
 import tgw.evolution.items.IMelee;
 import tgw.evolution.network.*;
-import tgw.evolution.patches.PatchItemStack;
 import tgw.evolution.patches.PatchLivingEntity;
 import tgw.evolution.patches.PatchMobEffect;
-import tgw.evolution.patches.PatchMobEffectInstance;
 import tgw.evolution.util.collection.maps.R2OHashMap;
 import tgw.evolution.util.constants.EntityStates;
 import tgw.evolution.util.damage.DamageSourceEntity;
@@ -271,7 +270,7 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
             this.onEffectAdded(effectInstance, entity);
             return true;
         }
-        if (((PatchMobEffectInstance) oldInstance).updateWithEntity(effectInstance, (LivingEntity) (Object) this)) {
+        if (oldInstance.updateWithEntity(effectInstance, (LivingEntity) (Object) this)) {
             this.onEffectUpdated(oldInstance, false, entity);
             return true;
         }
@@ -1640,6 +1639,52 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
     @Shadow
     protected abstract boolean shouldTriggerItemUseEffects();
 
+    @Overwrite
+    private void spawnItemParticles(ItemStack stack, int amount) {
+        float xRot = -this.getXRot() * Mth.DEG_TO_RAD;
+        float cosX = Mth.cos(xRot);
+        float sinX = Mth.sin(xRot);
+        float yRot = -this.getYRot() * Mth.DEG_TO_RAD;
+        float cosY = Mth.cos(yRot);
+        float sinY = Mth.sin(yRot);
+        Vec3 eyePosition = this.getEyePosition();
+        for (int i = 0; i < amount; ++i) {
+            double velX = (this.random.nextFloat() - 0.5) * 0.05;
+            double velY = this.random.nextFloat() * 0.05;
+            double velZ = 0;
+            //xRot
+            double newY = velY * cosX;
+            double newZ = -velY * sinX;
+            velY = newY;
+            velZ = newZ;
+            //yRot
+            double newX = velX * cosY + velZ * sinY;
+            newZ = velZ * cosY - velX * sinY;
+            velX = newX;
+            velZ = newZ;
+            //
+            double x = (this.random.nextFloat() - 0.5) * 0.3;
+            double y = -this.random.nextFloat() * 0.5;
+            double z = 0.6;
+            //xRot
+            newY = y * cosX + z * sinX;
+            newZ = z * cosX - y * sinX;
+            y = newY;
+            z = newZ;
+            //yRot
+            newX = x * cosY + z * sinY;
+            newZ = z * cosY - x * sinY;
+            x = newX;
+            z = newZ;
+            //
+            x += eyePosition.x;
+            y += eyePosition.y;
+            z += eyePosition.z;
+            //noinspection ObjectAllocationInLoop
+            this.level.addParticle(new ItemParticleOption(ParticleTypes.ITEM, stack), x, y, z, velX, velY + 0.05, velZ);
+        }
+    }
+
     @Shadow
     protected abstract void spawnSoulSpeedParticle();
 
@@ -1914,8 +1959,7 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
                 double r = (color >> 16 & 255) / 255.0;
                 double g = (color >> 8 & 255) / 255.0;
                 double b = (color & 255) / 255.0;
-                this.level.addParticle(ambient ? ParticleTypes.AMBIENT_ENTITY_EFFECT : ParticleTypes.ENTITY_EFFECT, this.getRandomX(0.5),
-                                       this.getRandomY(), this.getRandomZ(0.5), r, g, b);
+                this.level.addParticle(ambient ? ParticleTypes.AMBIENT_ENTITY_EFFECT : ParticleTypes.ENTITY_EFFECT, this.getRandomX(0.5), this.getRandomY(), this.getRandomZ(0.5), r, g, b);
             }
         }
     }
@@ -2074,7 +2118,7 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
         if (this.shouldTriggerItemUseEffects()) {
             this.triggerItemUseEffects(stack, 5);
         }
-        ((PatchItemStack) (Object) this.useItem).onUsingTick((LivingEntity) (Object) this, this.useItemRemaining);
+        this.useItem.onUsingTick((LivingEntity) (Object) this, this.useItemRemaining);
         if (--this.useItemRemaining == 0 && !this.level.isClientSide && !stack.useOnRelease()) {
             this.completeUsingItem();
         }

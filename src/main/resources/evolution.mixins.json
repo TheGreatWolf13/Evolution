@@ -471,6 +471,7 @@
     "Mixin_C_PartDefinition",
     "Mixin_CF_BlockRenderDispatcher",
     "Mixin_CF_BlockTintCache",
+    "Mixin_CF_BreakingItemParticle",
     "Mixin_CF_EffectInstance",
     "Mixin_CF_Minecraft",
     "Mixin_CF_ModelResourceLocation",
