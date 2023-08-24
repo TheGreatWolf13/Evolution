@@ -24,6 +24,7 @@ import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.border.WorldBorder;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Contract;
@@ -33,6 +34,8 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.ICollisionBlock;
 import tgw.evolution.blocks.tileentities.TEKnapping;
@@ -124,6 +127,12 @@ public abstract class MixinServerGamePacketListenerImpl implements ServerGamePac
         }
     }
 
+    @Override
+    public void handleImpactDamage(PacketCSImpactDamage packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.player.getLevel());
+        this.player.hurt(EvolutionDamage.WALL_IMPACT, packet.damage);
+    }
+
 //    @Override
 //    public void handleChangeBlock(PacketCSChangeBlock packet) {
 //        PacketUtils.ensureRunningOnSameThread(packet, this, this.player.getLevel());
@@ -143,12 +152,6 @@ public abstract class MixinServerGamePacketListenerImpl implements ServerGamePac
 //            }
 //        }
 //    }
-
-    @Override
-    public void handleImpactDamage(PacketCSImpactDamage packet) {
-        PacketUtils.ensureRunningOnSameThread(packet, this, this.player.getLevel());
-        this.player.hurt(EvolutionDamage.WALL_IMPACT, packet.damage);
-    }
 
     @Override
     @Overwrite
@@ -415,6 +418,12 @@ public abstract class MixinServerGamePacketListenerImpl implements ServerGamePac
         else {
             LOGGER.warn("Ignoring UseItemOnPacket from {}: hit position [{}, {}, {}] too far away from player {}.", this.player.getGameProfile().getName(), x, y, z, this.player.blockPosition());
         }
+    }
+
+    @SuppressWarnings("MethodMayBeStatic")
+    @Redirect(method = "handleInteract", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/border/WorldBorder;isWithinBounds(Lnet/minecraft/core/BlockPos;)Z"))
+    private boolean onHandleInteract(WorldBorder border, BlockPos pos) {
+        return border.isWithinBounds_(pos.getX(), pos.getZ());
     }
 
     @Shadow
