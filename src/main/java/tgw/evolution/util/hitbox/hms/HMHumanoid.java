@@ -12,7 +12,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
 import tgw.evolution.EvolutionClient;
 import tgw.evolution.items.IMelee;
-import tgw.evolution.patches.PatchLivingEntity;
 import tgw.evolution.util.ArmPose;
 import tgw.evolution.util.math.MathHelper;
 
@@ -82,6 +81,7 @@ public interface HMHumanoid<T extends LivingEntity> extends HMAgeableList<T> {
 
     private void poseLeftArm(T entity) {
         HM armL = this.armL();
+        HM forearmL = this.forearmL();
         HM itemL = this.itemL();
         switch (this.leftArmPose()) {
             case EMPTY -> armL.setRotationY(0.0F);
@@ -96,10 +96,17 @@ public interface HMHumanoid<T extends LivingEntity> extends HMAgeableList<T> {
                         Item useItem = stack.getItem();
                         UseAnim action = useItem.getUseAnimation(stack);
                         if (action == UseAnim.EAT || action == UseAnim.DRINK) {
-                            armL.setRotationX((90 - entity.getXRot()) * Mth.DEG_TO_RAD - 10 * Mth.DEG_TO_RAD + Mth.sin(
-                                    (entity.tickCount + EvolutionClient.getPartialTicks()) * 1.5f) * 3 * Mth.DEG_TO_RAD);
-                            armL.setRotationY(-0.3f);
-                            armL.setRotationZ(-0.3f);
+                            float pitch = entity.getXRot();
+                            armL.setRotationX((70 - pitch) * Mth.DEG_TO_RAD - 10 * Mth.DEG_TO_RAD + Mth.sin((entity.tickCount + EvolutionClient.getPartialTicks()) * 1.5f) * 3 * Mth.DEG_TO_RAD);
+                            if (pitch > 0) {
+                                forearmL.setRotationX(80 * Mth.DEG_TO_RAD + pitch / 4 * Mth.DEG_TO_RAD);
+                            }
+                            else {
+                                forearmL.setRotationX(80 * Mth.DEG_TO_RAD + pitch / 10 * Mth.DEG_TO_RAD);
+                            }
+                            forearmL.setRotationY(-45 * Mth.DEG_TO_RAD);
+                            itemL.translateZ(-4);
+                            itemL.setRotationX(-75 * Mth.DEG_TO_RAD);
                             this.setShouldCancelLeft(true);
                             return;
                         }
@@ -137,6 +144,7 @@ public interface HMHumanoid<T extends LivingEntity> extends HMAgeableList<T> {
     private void poseRightArm(T entity) {
         HM armR = this.armR();
         HM itemR = this.itemR();
+        HM forearmR = this.forearmR();
         switch (this.rightArmPose()) {
             case EMPTY -> armR.setRotationY(0.0F);
             case BLOCK -> {
@@ -152,10 +160,17 @@ public interface HMHumanoid<T extends LivingEntity> extends HMAgeableList<T> {
                         Item useItem = stack.getItem();
                         UseAnim action = useItem.getUseAnimation(stack);
                         if (action == UseAnim.EAT || action == UseAnim.DRINK) {
-                            armR.setRotationX((90 - entity.getXRot()) * Mth.DEG_TO_RAD - 10 * Mth.DEG_TO_RAD + Mth.sin(
-                                    (entity.tickCount + EvolutionClient.getPartialTicks()) * 1.5f) * 3 * Mth.DEG_TO_RAD);
-                            armR.setRotationY(0.3f);
-                            armR.setRotationZ(0.3f);
+                            float pitch = entity.getXRot();
+                            armR.setRotationX((70 - pitch) * Mth.DEG_TO_RAD - 10 * Mth.DEG_TO_RAD + Mth.sin((entity.tickCount + EvolutionClient.getPartialTicks()) * 1.5f) * 3 * Mth.DEG_TO_RAD);
+                            if (pitch > 0) {
+                                forearmR.setRotationX(80 * Mth.DEG_TO_RAD + pitch / 4 * Mth.DEG_TO_RAD);
+                            }
+                            else {
+                                forearmR.setRotationX(80 * Mth.DEG_TO_RAD + pitch / 10 * Mth.DEG_TO_RAD);
+                            }
+                            forearmR.setRotationY(45 * Mth.DEG_TO_RAD);
+                            itemR.translateZ(-4);
+                            itemR.setRotationX(-75 * Mth.DEG_TO_RAD);
                             this.setShouldCancelRight(true);
                             return;
                         }
@@ -562,10 +577,8 @@ public interface HMHumanoid<T extends LivingEntity> extends HMAgeableList<T> {
             }
         }
         //Setup hand poses
-        AnimationUtils.setupItemPosition(itemR, HumanoidArm.RIGHT,
-                                         entity.getMainArm() == HumanoidArm.RIGHT ? entity.getMainHandItem() : entity.getOffhandItem());
-        AnimationUtils.setupItemPosition(itemL, HumanoidArm.LEFT,
-                                         entity.getMainArm() == HumanoidArm.LEFT ? entity.getMainHandItem() : entity.getOffhandItem());
+        AnimationUtils.setupItemPosition(itemR, HumanoidArm.RIGHT, entity.getMainArm() == HumanoidArm.RIGHT ? entity.getMainHandItem() : entity.getOffhandItem());
+        AnimationUtils.setupItemPosition(itemL, HumanoidArm.LEFT, entity.getMainArm() == HumanoidArm.LEFT ? entity.getMainHandItem() : entity.getOffhandItem());
         if (!crawling && !swimming) {
             boolean isRightHanded = entity.getMainArm() == HumanoidArm.RIGHT;
             boolean isPoseTwoHanded = isRightHanded ? this.leftArmPose().isTwoHanded() : this.rightArmPose().isTwoHanded();
@@ -591,7 +604,6 @@ public interface HMHumanoid<T extends LivingEntity> extends HMAgeableList<T> {
     }
 
     default void setupAttackAnim(T entity, float ageInTicks) {
-        PatchLivingEntity patch = (PatchLivingEntity) entity;
         HM body = this.body();
         HM armR = this.armR();
         HM armL = this.armL();
@@ -599,7 +611,7 @@ public interface HMHumanoid<T extends LivingEntity> extends HMAgeableList<T> {
         HM legR = this.legR();
         if (this.attackTime() > 0.0F) {
             HumanoidArm attackingSide = this.getSwingingArm(entity);
-            if (!(patch.shouldRenderSpecialAttack() && entity.getMainArm() == this.getSwingingArm(entity))) {
+            if (!(entity.shouldRenderSpecialAttack() && entity.getMainArm() == this.getSwingingArm(entity))) {
                 HM attackingArm = this.arm(attackingSide);
                 float attackTime = this.attackTime();
                 body.setRotationY(-Mth.sin(MathHelper.sqrt(attackTime) * Mth.TWO_PI) * 0.2F);
@@ -622,58 +634,101 @@ public interface HMHumanoid<T extends LivingEntity> extends HMAgeableList<T> {
             }
         }
         float partialTicks = EvolutionClient.getPartialTicks();
-        if (patch.shouldRenderSpecialAttack()) {
-            IMelee.IAttackType type = patch.getSpecialAttackType();
+        if (entity.shouldRenderSpecialAttack()) {
+            IMelee.IAttackType type = entity.getSpecialAttackType();
             if (type == IMelee.BARE_HAND_ATTACK) {
                 if (entity.getOffhandItem().isEmpty()) {
-                    int attackNumber = patch.getAttackNumber();
+                    int attackNumber = entity.getAttackNumber();
                     //First punch
                     if (attackNumber == 1) {
-                        AnimationUtils.animatePunch(entity, patch.getSpecialAttackProgress(partialTicks), entity.getMainArm(), this.head(),
-                                                    body, armR, armL, this.forearmR(), this.forearmL(), legR, legL,
-                                                    false, true);
+                        AnimationUtils.animatePunch(entity,
+                                                    entity.getSpecialAttackProgress(partialTicks),
+                                                    entity.getMainArm(),
+                                                    this.head(),
+                                                    body,
+                                                    armR,
+                                                    armL,
+                                                    this.forearmR(),
+                                                    this.forearmL(),
+                                                    legR,
+                                                    legL,
+                                                    false,
+                                                    true
+                        );
                     }
                     //Offhand punch
                     else if (attackNumber % 2 == 0) {
-                        AnimationUtils.animatePunch(entity, patch.getSpecialAttackProgress(partialTicks), entity.getMainArm().getOpposite(),
-                                                    this.head(), body, armR, armL, this.forearmR(), this.forearmL(), legR,
-                                                    legL, true, true);
+                        AnimationUtils.animatePunch(entity,
+                                                    entity.getSpecialAttackProgress(partialTicks),
+                                                    entity.getMainArm().getOpposite(),
+                                                    this.head(),
+                                                    body,
+                                                    armR,
+                                                    armL,
+                                                    this.forearmR(),
+                                                    this.forearmL(),
+                                                    legR,
+                                                    legL,
+                                                    true,
+                                                    true
+                        );
                     }
                     //Mainhand punch
                     else {
-                        AnimationUtils.animatePunch(entity, patch.getSpecialAttackProgress(partialTicks), entity.getMainArm(), this.head(),
-                                                    body, armR, armL, this.forearmR(), this.forearmL(), legR, legL,
-                                                    true, true);
+                        AnimationUtils.animatePunch(entity,
+                                                    entity.getSpecialAttackProgress(partialTicks),
+                                                    entity.getMainArm(),
+                                                    this.head(),
+                                                    body,
+                                                    armR,
+                                                    armL,
+                                                    this.forearmR(),
+                                                    this.forearmL(),
+                                                    legR,
+                                                    legL,
+                                                    true,
+                                                    true
+                        );
                     }
                 }
                 else {
-                    AnimationUtils.animatePunch(entity, patch.getSpecialAttackProgress(partialTicks), entity.getMainArm(), this.head(), body,
-                                                armR, armL, this.forearmR(), this.forearmL(), legR, legL, false, false);
+                    AnimationUtils.animatePunch(entity,
+                                                entity.getSpecialAttackProgress(partialTicks),
+                                                entity.getMainArm(),
+                                                this.head(),
+                                                body,
+                                                armR,
+                                                armL,
+                                                this.forearmR(),
+                                                this.forearmL(),
+                                                legR,
+                                                legL,
+                                                false,
+                                                false
+                    );
                 }
             }
             else if (type instanceof IMelee.BasicAttackType basic) {
                 HumanoidArm attackingSide = entity.getMainArm();
                 HM arm = this.arm(attackingSide);
                 HM forearm = this.forearm(attackingSide);
-                float progress = patch.getSpecialAttackProgress(partialTicks);
+                float progress = entity.getSpecialAttackProgress(partialTicks);
                 int mult = attackingSide == HumanoidArm.RIGHT ? 1 : -1;
                 switch (basic) {
                     case AXE_STRIKE_1 -> {
-                        switch (patch.getAttackNumber()) {
+                        switch (entity.getAttackNumber()) {
                             case 1 -> AnimationUtils.strikeDown(progress, mult, body, legR, legL, arm, forearm);
                             case 2 -> AnimationUtils.strikeFromFarSide(progress, mult, body, legR, legL, arm, forearm);
-                            case 3 -> AnimationUtils.strikeDown(progress, mult, body, legR, legL, arm, forearm, 40.804_9f * Mth.DEG_TO_RAD,
-                                                                mult * 14.666_2f * Mth.DEG_TO_RAD, mult * 43.341_7f * Mth.DEG_TO_RAD);
+                            case 3 -> AnimationUtils.strikeDown(progress, mult, body, legR, legL, arm, forearm, 40.804_9f * Mth.DEG_TO_RAD, mult * 14.666_2f * Mth.DEG_TO_RAD, mult * 43.341_7f * Mth.DEG_TO_RAD);
                         }
                     }
                     case HOE_STRIKE_1 -> {
-                        switch (patch.getAttackNumber()) {
+                        switch (entity.getAttackNumber()) {
                             case 1 -> AnimationUtils.strikeDown(progress, mult, body, legR, legL, arm, forearm);
                             case 2 -> AnimationUtils.strikeFromFarSide(progress, mult, body, legR, legL, arm, forearm);
                         }
                     }
-                    case JAVELIN_THRUST -> AnimationUtils.thrust(progress, mult, body, legR, legL, arm, forearm, this.item(attackingSide),
-                                                                 this.head().xRot());
+                    case JAVELIN_THRUST -> AnimationUtils.thrust(progress, mult, body, legR, legL, arm, forearm, this.item(attackingSide), this.head().xRot());
                     case PICKAXE_STRIKE_1, SHOVEL_STRIKE_1 -> AnimationUtils.strikeDown(progress, mult, body, legR, legL, arm, forearm);
                 }
             }
