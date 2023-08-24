@@ -259,7 +259,7 @@ public abstract class MixinServerPlayerGameMode implements PatchServerPlayerGame
                 float f = this.incrementDestroyProgress(state, this.delayedDestroyPos, this.delayedTickStart);
                 if (f >= 1.0F) {
                     this.hasDelayedDestroy = false;
-                    this.destroyBlock(this.delayedDestroyPos);
+                    this.destroyBlock_(this.delayedDestroyPos.getX(), this.delayedDestroyPos.getY(), this.delayedDestroyPos.getZ());
                 }
             }
         }
