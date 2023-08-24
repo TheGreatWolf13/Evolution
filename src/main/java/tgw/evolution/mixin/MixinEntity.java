@@ -246,6 +246,10 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
         this.level.getProfiler().pop();
     }
 
+    @Override
+    @Shadow
+    public abstract BlockPos blockPosition();
+
     /**
      * @author TheGreatWolf
      * @reason Avoid allocations
@@ -416,8 +420,8 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
 
     @Overwrite
     public float getBrightness() {
-        int x = this.getBlockX();
-        int z = this.getBlockZ();
+        int x = this.blockPosition.getX();
+        int z = this.blockPosition.getZ();
         return this.level.hasChunkAt(x, z) ? this.level.getBrightness_(x, Mth.floor(this.getEyeY()), z) : 0.0F;
     }
 
@@ -752,8 +756,7 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
                 for (int z = z0; z <= z1; z++) {
                     BlockState state = this.level.getBlockState_(x, y, z);
                     if (!state.isAir() && state.isSuffocating_(this.level, x, y, z)) {
-                        if (MathHelper.doesShapeIntersect(state.getCollisionShape_(this.level, x, y, z), minX - x, minY - y, minZ - z, maxX - x,
-                                                          maxY - y, maxZ - z)) {
+                        if (MathHelper.doesShapeIntersect(state.getCollisionShape_(this.level, x, y, z), minX - x, minY - y, minZ - z, maxX - x, maxY - y, maxZ - z)) {
                             return true;
                         }
                     }

@@ -390,6 +390,7 @@
     "MixinMatrix4f",
     "MixinMenuType",
     "MixinMinecraftServer",
+    "MixinMob",
     "MixinMobEffect",
     "MixinMobEffectInstance",
     "MixinMobEffects",
