@@ -71,12 +71,8 @@ public class ScreenKeyBinds extends KeyBindsScreen {
         StringBuilder builder = new StringBuilder();
         switch (this.searchType) {
             case NAME -> filters = filters.and(keyEntry -> MathHelper.contains(keyEntry.getName().getString(), this.lastSearch, builder));
-            case CATEGORY -> filters = filters.and(keyEntry -> MathHelper.contains(I18n.get(keyEntry.getKey().getCategory()),
-                                                                                   this.lastSearch,
-                                                                                   builder));
-            case KEY -> filters = filters.and(keyEntry -> MathHelper.contains(keyEntry.getKey().getTranslatedKeyMessage().getString(),
-                                                                              this.lastSearch,
-                                                                              builder));
+            case CATEGORY -> filters = filters.and(keyEntry -> MathHelper.contains(I18n.get(keyEntry.getKey().getCategory()), this.lastSearch, builder));
+            case KEY -> filters = filters.and(keyEntry -> MathHelper.contains(keyEntry.getKey().getTranslatedKeyMessage().getString(), this.lastSearch, builder));
         }
         for (ListKeyBinds.Entry entry : ((ListKeyBinds) keyBindingList).getAllEntries()) {
             if (entry instanceof ListKeyBinds.KeyEntry keyEntry) {
@@ -88,22 +84,13 @@ public class ScreenKeyBinds extends KeyBindsScreen {
         this.sortOrder.sort(keyBindingList.children());
     }
 
-    /**
-     * Adds the buttons (and other controls) to the screen in question. Called when the GUI is displayed and when the
-     * window resizes, the buttonList is cleared beforehand.
-     */
     @Override
     protected void init() {
         this.confirmingReset = false;
         assert this.minecraft != null;
         this.keyBindsList = new ListKeyBinds(this, this.minecraft);
         this.addWidget(this.keyBindsList);
-        this.addRenderableWidget(new Button(this.width / 2 - 155 + 160,
-                                            this.height - 29,
-                                            150,
-                                            20,
-                                            EvolutionTexts.GUI_GENERAL_DONE,
-                                            button -> ScreenKeyBinds.this.minecraft.setScreen(ScreenKeyBinds.this.lastScreen)));
+        this.addRenderableWidget(new Button(this.width / 2 - 155 + 160, this.height - 29, 150, 20, EvolutionTexts.GUI_GENERAL_DONE, button -> ScreenKeyBinds.this.minecraft.setScreen(ScreenKeyBinds.this.lastScreen)));
         this.buttonReset = this.addRenderableWidget(new Button(this.width / 2 - 155, this.height - 29, 150, 20, this.textResetAll, button -> {
             if (!this.confirmingReset) {
                 this.confirmingReset = true;
@@ -134,7 +121,8 @@ public class ScreenKeyBinds extends KeyBindsScreen {
                                                                          this.buttonConflicting.setMessage(this.textShowConflicts);
                                                                      }
                                                                      this.filterKeys();
-                                                                 }));
+                                                                 })
+        );
         this.buttonConflicting = this.addRenderableWidget(new Button(this.width / 2 - 155 + 160,
                                                                      this.height - 29 - 24,
                                                                      150,
@@ -154,7 +142,8 @@ public class ScreenKeyBinds extends KeyBindsScreen {
                                                                              this.buttonUnbound.setMessage(this.textShowUnbound);
                                                                          }
                                                                          this.filterKeys();
-                                                                     }));
+                                                                     })
+        );
         this.searchBox = new AdvEditBox(this.font, this.width / 2 - 154, this.height - 29 - 23, 148, 18, EvolutionTexts.EMPTY);
         this.searchBox.setValue(this.lastSearch);
         this.addWidget(this.searchBox);
@@ -169,7 +158,8 @@ public class ScreenKeyBinds extends KeyBindsScreen {
                                                                       this.isCategoryMarked = false;
                                                                       this.searchType = b.isChecked() ? SearchType.KEY : SearchType.NAME;
                                                                       this.filterKeys();
-                                                                  }));
+                                                                  })
+        );
         this.buttonCat = this.addRenderableWidget(new AdvCheckBox(this.width / 2 - 150,
                                                                   this.height - 29 - 37,
                                                                   this.textCategory,
@@ -181,8 +171,9 @@ public class ScreenKeyBinds extends KeyBindsScreen {
                                                                       this.isCategoryMarked = !this.isCategoryMarked;
                                                                       this.searchType = b.isChecked() ? SearchType.CATEGORY : SearchType.NAME;
                                                                       this.filterKeys();
-                                                                  }));
-        this.addRenderableWidget(new Button(this.width / 2 - 155 + 160,
+                                                                  })
+        );
+        this.addRenderableWidget(new Button(this.width / 2 - 75,
                                             18,
                                             150,
                                             20,
@@ -192,7 +183,8 @@ public class ScreenKeyBinds extends KeyBindsScreen {
                                                 this.sortOrder = this.sortOrder.cycle();
                                                 button.setMessage(new TranslatableComponent("evolution.gui.controls.sort", this.sortOrder.getName()));
                                                 this.filterKeys();
-                                            }));
+                                            })
+        );
         this.filterKeys();
     }
 
@@ -255,9 +247,6 @@ public class ScreenKeyBinds extends KeyBindsScreen {
         return false;
     }
 
-    /**
-     * Draws the screen and all the components in it.
-     */
     @Override
     public void render(PoseStack matrices, int mouseX, int mouseY, float partialTicks) {
         this.renderBackground(matrices);
@@ -279,11 +268,7 @@ public class ScreenKeyBinds extends KeyBindsScreen {
         for (Widget button : this.renderables) {
             button.render(matrices, mouseX, mouseY, partialTicks);
         }
-        this.font.draw(matrices,
-                       EvolutionTexts.GUI_GENERAL_SEARCH,
-                       (this.width - 155 - this.font.width(EvolutionTexts.GUI_GENERAL_SEARCH)) / 2.0f,
-                       this.height - 27 - 50,
-                       0xff_ffff);
+        this.font.draw(matrices, EvolutionTexts.GUI_GENERAL_SEARCH, (this.width - 155 - this.font.width(EvolutionTexts.GUI_GENERAL_SEARCH)) / 2.0f, this.height - 27 - 50, 0xff_ffff);
     }
 
     private void resetConfirmReset() {

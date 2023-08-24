@@ -25,12 +25,15 @@ import tgw.evolution.events.ClientEvents;
 import tgw.evolution.init.EvolutionContainers;
 import tgw.evolution.init.EvolutionRenderer;
 import tgw.evolution.mixin.AccessorInputConstants_Type;
+import tgw.evolution.util.collection.maps.O2OHashMap;
+import tgw.evolution.util.collection.maps.O2OMap;
 import tgw.evolution.util.constants.SkinType;
 
 import java.util.Locale;
 
 public final class EvolutionClient implements ClientModInitializer {
 
+    public static final O2OMap<String, KeyMapping> ALL_KEYMAPPING = new O2OHashMap<>();
     public static final KeyMapping KEY_BUILDING_ASSIST;
     public static final KeyMapping KEY_CRAWL;
     private static Minecraft mc;

@@ -59,6 +59,10 @@ accessible field net/minecraft/client/gui/Gui WIDGETS_LOCATION Lnet/minecraft/re
 accessible field net/minecraft/client/gui/screens/controls/KeyBindsScreen keyBindsList Lnet/minecraft/client/gui/screens/controls/KeyBindsList;
 accessible field net/minecraft/client/gui/screens/Screen renderables Ljava/util/List;
 accessible field net/minecraft/client/gui/screens/TitleScreen$Warning32Bit realmsSubscriptionFuture Ljava/util/concurrent/CompletableFuture;
+accessible field net/minecraft/client/KeyMapping category Ljava/lang/String;
+accessible field net/minecraft/client/KeyMapping clickCount I
+accessible field net/minecraft/client/KeyMapping key Lcom/mojang/blaze3d/platform/InputConstants$Key;
+accessible field net/minecraft/client/KeyMapping name Ljava/lang/String;
 accessible field net/minecraft/client/Minecraft missTime I
 accessible field net/minecraft/client/Minecraft pausePartialTick F
 accessible field net/minecraft/client/Minecraft timer Lnet/minecraft/client/Timer;

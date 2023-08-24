@@ -76,7 +76,7 @@ public class ListKeyBinds extends KeyBindsList {
 
     @Override
     protected int getScrollbarPosition() {
-        return super.getScrollbarPosition() + 25;
+        return this.width - 51;
     }
 
     public class CategoryEntry extends KeyBindsList.Entry {
