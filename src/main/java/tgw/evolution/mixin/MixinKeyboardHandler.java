@@ -7,11 +7,8 @@ import net.minecraft.CrashReportCategory;
 import net.minecraft.ReportedException;
 import net.minecraft.Util;
 import net.minecraft.client.*;
-import net.minecraft.client.gui.chat.NarratorChatListener;
 import net.minecraft.client.gui.components.ChatComponent;
-import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.screens.SimpleOptionsSubScreen;
 import net.minecraft.client.gui.screens.controls.KeyBindsScreen;
 import net.minecraft.client.gui.screens.debug.GameModeSwitcherScreen;
 import net.minecraft.network.chat.Component;
@@ -26,8 +23,6 @@ import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.client.util.Action;
 import tgw.evolution.client.util.Key;
 import tgw.evolution.client.util.Modifiers;
-import tgw.evolution.patches.PatchMinecraft;
-import tgw.evolution.patches.PatchNarratorChatListener;
 
 import java.util.Locale;
 
@@ -41,10 +36,6 @@ public abstract class MixinKeyboardHandler {
     @Shadow @Final private Minecraft minecraft;
     @Shadow private boolean sendRepeatsToGui;
 
-    /**
-     * @author TheGreatWolf
-     * @reason Avoid Allocations
-     */
     @Overwrite
     private void charTyped(long windowPointer, int codePoint, @Modifiers int mod) {
         if (windowPointer == this.minecraft.getWindow().getWindow()) {
@@ -88,10 +79,6 @@ public abstract class MixinKeyboardHandler {
     @Shadow
     protected abstract void debugFeedbackTranslated(String pMessage, Object... pArgs);
 
-    /**
-     * @author TheGreatWolf
-     * @reason Replace LevelRenderer
-     */
     @Overwrite
     private boolean handleDebugKeys(@Key int key) {
         if (this.debugCrashKeyTime > 0L && this.debugCrashKeyTime < Util.getMillis() - 100L) {
@@ -99,7 +86,7 @@ public abstract class MixinKeyboardHandler {
         }
         return switch (key) {
             case GLFW.GLFW_KEY_A -> {
-                ((PatchMinecraft) this.minecraft).lvlRenderer().allChanged();
+                this.minecraft.lvlRenderer().allChanged();
                 this.debugFeedbackTranslated("debug.reload_chunks.message");
                 yield true;
             }
@@ -115,10 +102,7 @@ public abstract class MixinKeyboardHandler {
                     yield false;
                 }
                 this.debugFeedbackTranslated("debug.copy_location.message");
-                this.setClipboard(String.format(Locale.ROOT, "/execute in %s run tp @s %.2f %.2f %.2f %.2f %.2f",
-                                                this.minecraft.player.level.dimension().location(), this.minecraft.player.getX(),
-                                                this.minecraft.player.getY(), this.minecraft.player.getZ(), this.minecraft.player.getYRot(),
-                                                this.minecraft.player.getXRot()));
+                this.setClipboard(String.format(Locale.ROOT, "/execute in %s run tp @s %.2f %.2f %.2f %.2f %.2f", this.minecraft.player.level.dimension().location(), this.minecraft.player.getX(), this.minecraft.player.getY(), this.minecraft.player.getZ(), this.minecraft.player.getYRot(), this.minecraft.player.getXRot()));
                 yield true;
             }
             case GLFW.GLFW_KEY_D -> {
@@ -126,21 +110,17 @@ public abstract class MixinKeyboardHandler {
                 yield true;
             }
             case GLFW.GLFW_KEY_F -> {
-                Option.RENDER_DISTANCE.set(this.minecraft.options, Mth.clamp(this.minecraft.options.renderDistance + (Screen.hasShiftDown() ? -1 : 1),
-                                                                             Option.RENDER_DISTANCE.getMinValue(),
-                                                                             Option.RENDER_DISTANCE.getMaxValue()));
+                Option.RENDER_DISTANCE.set(this.minecraft.options, Mth.clamp(this.minecraft.options.renderDistance + (Screen.hasShiftDown() ? -1 : 1), Option.RENDER_DISTANCE.getMinValue(), Option.RENDER_DISTANCE.getMaxValue()));
                 this.debugFeedbackTranslated("debug.cycle_renderdistance.message", this.minecraft.options.renderDistance);
                 yield true;
             }
             case GLFW.GLFW_KEY_G -> {
-                this.debugFeedbackTranslated(
-                        this.minecraft.debugRenderer.switchRenderChunkborder() ? "debug.chunk_boundaries.on" : "debug.chunk_boundaries.off");
+                this.debugFeedbackTranslated(this.minecraft.debugRenderer.switchRenderChunkborder() ? "debug.chunk_boundaries.on" : "debug.chunk_boundaries.off");
                 yield true;
             }
             case GLFW.GLFW_KEY_H -> {
                 this.minecraft.options.advancedItemTooltips = !this.minecraft.options.advancedItemTooltips;
-                this.debugFeedbackTranslated(
-                        this.minecraft.options.advancedItemTooltips ? "debug.advanced_tooltips.on" : "debug.advanced_tooltips.off");
+                this.debugFeedbackTranslated(this.minecraft.options.advancedItemTooltips ? "debug.advanced_tooltips.on" : "debug.advanced_tooltips.off");
                 this.minecraft.options.save();
                 yield true;
             }
@@ -167,8 +147,7 @@ public abstract class MixinKeyboardHandler {
                 }
                 else {
                     assert this.minecraft.gameMode != null;
-                    this.minecraft.player.chat(
-                            "/gamemode " + MoreObjects.firstNonNull(this.minecraft.gameMode.getPreviousPlayerMode(), GameType.CREATIVE).getName());
+                    this.minecraft.player.chat("/gamemode " + MoreObjects.firstNonNull(this.minecraft.gameMode.getPreviousPlayerMode(), GameType.CREATIVE).getName());
                 }
                 yield true;
             }
@@ -217,10 +196,6 @@ public abstract class MixinKeyboardHandler {
         };
     }
 
-    /**
-     * @author TheGreatWolf
-     * @reason Avoid allocations
-     */
     @Overwrite
     public void keyPress(long windowPointer, @Key int key, int scanCode, @Action int action, @Modifiers int mod) {
         long window = this.minecraft.getWindow().getWindow();
@@ -252,21 +227,7 @@ public abstract class MixinKeyboardHandler {
                     }
                 }
                 else if (action == GLFW.GLFW_RELEASE && screen instanceof KeyBindsScreen) {
-                    ((KeyBindsScreen) screen).selectedKey = null; //Forge: Unset pure modifiers.
-                }
-            }
-            if (((PatchNarratorChatListener) NarratorChatListener.INSTANCE).isAvailable()) {
-                boolean flag = screen == null || !(screen.getFocused() instanceof EditBox) || !((EditBox) screen.getFocused()).canConsumeInput();
-                if (action != GLFW.GLFW_RELEASE && key == GLFW.GLFW_KEY_B && Screen.hasControlDown() && flag) {
-                    boolean narratorWasOff = this.minecraft.options.narratorStatus == NarratorStatus.OFF;
-                    this.minecraft.options.narratorStatus = NarratorStatus.byId(this.minecraft.options.narratorStatus.getId() + 1);
-                    NarratorChatListener.INSTANCE.updateNarratorStatus(this.minecraft.options.narratorStatus);
-                    if (screen instanceof SimpleOptionsSubScreen) {
-                        ((SimpleOptionsSubScreen) screen).updateNarratorButton();
-                    }
-                    if (narratorWasOff && screen != null) {
-                        screen.narrationEnabled();
-                    }
+                    ((KeyBindsScreen) screen).selectedKey = null;
                 }
             }
             if (screen != null) {
