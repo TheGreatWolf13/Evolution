@@ -5,7 +5,6 @@
   "mixins": [
     "AccessorAABB",
     "AccessorChunkPos",
-    "AccessorCreativeModeTab",
     "AccessorVec3",
     "Mixin_C_EntityHitResult",
     "Mixin_CF_BaseComponent",
@@ -25,6 +24,7 @@
     "Mixin_CF_ResourceLocation",
     "Mixin_CFM_BlockBehaviourCache",
     "Mixin_CFM_ProtoChunk",
+    "Mixin_CFS_CreativeModeTab",
     "Mixin_CFS_GameRules",
     "Mixin_FMS_FlowingFluid",
     "Mixin_FS_Block",
