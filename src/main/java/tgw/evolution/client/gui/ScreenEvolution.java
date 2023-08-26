@@ -1,6 +1,7 @@
 package tgw.evolution.client.gui;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
@@ -15,6 +16,7 @@ import net.minecraft.network.chat.TranslatableComponent;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
+import tgw.evolution.Evolution;
 import tgw.evolution.EvolutionClient;
 import tgw.evolution.client.gui.config.BooleanChanger;
 import tgw.evolution.client.gui.config.ConfigPath;
@@ -86,6 +88,8 @@ public class ScreenEvolution extends Screen {
                 this.panels[i] = new ScrollableArea(0, 32, this.width, this.height, 15);
             }
         }
+        //noinspection OptionalGetWithoutIsPresent
+        this.panelArea.addBeginning(new TextArea(5, 0, 0, new TextComponent("Evolution " + FabricLoader.getInstance().getModContainer(Evolution.MODID).get().getMetadata().getVersion().getFriendlyString()), 0xff_ffff, true));
         this.groupButtons[0] = this.panelArea.addBeginning(new ButtonDirt(5, 5, 20, 20, this.getTitle(), b -> this.setSelected(0), this.group));
         this.groupButtons[1] = this.panelArea.addBeginning(new ButtonDirt(5, 30, 20, 20, this.textTipsAndTricks, b -> this.setSelected(1), this.group));
         this.groupButtons[2] = this.panelArea.addBeginning(new ButtonDirt(5, 55, 20, 20, this.textConfig, b -> this.setSelected(2), this.group));

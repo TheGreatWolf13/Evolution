@@ -36,29 +36,10 @@ public abstract class MixinFont implements PatchFont {
     public abstract String bidirectionalShaping(String pText);
 
     @Shadow
-    protected abstract int drawInternal(FormattedCharSequence pReorderingProcessor,
-                                        float pX,
-                                        float pY,
-                                        int pColor,
-                                        Matrix4f pMatrix,
-                                        boolean pDrawShadow);
+    protected abstract int drawInternal(FormattedCharSequence pReorderingProcessor, float pX, float pY, int pColor, Matrix4f pMatrix, boolean pDrawShadow);
 
-    /**
-     * @author TheGreatWolf
-     * @reason Avoid unnecessary allocations
-     */
     @Overwrite
-    private int drawInternal(String text,
-                             float x,
-                             float y,
-                             int color,
-                             boolean dropShadow,
-                             Matrix4f matrix,
-                             MultiBufferSource buffer,
-                             boolean transparent,
-                             int colorBackground,
-                             int packedLight,
-                             boolean bidiFlag) {
+    private int drawInternal(String text, float x, float y, int color, boolean dropShadow, Matrix4f matrix, MultiBufferSource buffer, boolean transparent, int colorBackground, int packedLight, boolean bidiFlag) {
         if (bidiFlag) {
             text = this.bidirectionalShaping(text);
         }
@@ -76,21 +57,8 @@ public abstract class MixinFont implements PatchFont {
         return (int) x + (dropShadow ? 1 : 0);
     }
 
-    /**
-     * @author TheGreatWolf
-     * @reason Avoid unnecessary allocations
-     */
     @Overwrite
-    private int drawInternal(FormattedCharSequence processor,
-                             float x,
-                             float y,
-                             int color,
-                             boolean drawShadow,
-                             Matrix4f matrix,
-                             MultiBufferSource buffer,
-                             boolean transparent,
-                             int colorBackground,
-                             int packedLight) {
+    private int drawInternal(FormattedCharSequence processor, float x, float y, int color, boolean drawShadow, Matrix4f matrix, MultiBufferSource buffer, boolean transparent, int colorBackground, int packedLight) {
         color = adjustColor(color);
         Matrix4f matForText;
         if (drawShadow) {
@@ -105,24 +73,33 @@ public abstract class MixinFont implements PatchFont {
         return (int) x + (drawShadow ? 1 : 0);
     }
 
-    /**
-     * @author TheGreatWolf
-     * @reason Make the lineHeight actually matter
-     */
     @Overwrite
-    public void drawWordWrap(FormattedText formattedText, int i, int j, int k, int l) {
-        Matrix4f matrix4f = Transformation.identity().getMatrix();
-        for (FormattedCharSequence formattedCharSequence : this.split(formattedText, k)) {
-            this.drawInternal(formattedCharSequence, i, j, l, matrix4f, false);
-            j += this.lineHeight;
+    public void drawWordWrap(FormattedText text, int x, int y, int maxWidth, int color) {
+        Matrix4f matrix = Transformation.identity().getMatrix();
+        List<FormattedCharSequence> split = this.split(text, maxWidth);
+        for (int i = 0, len = split.size(); i < len; ++i) {
+            this.drawInternal(split.get(i), x, y, color, matrix, false);
+            y += this.lineHeight;
         }
     }
 
     @Override
     public void drawWordWrap(PoseStack matrices, FormattedText text, float x, float y, int maxWidth, int color, boolean shadow) {
         Matrix4f mat = matrices.last().pose();
-        for (FormattedCharSequence charSequence : this.split(text, maxWidth)) {
-            this.drawInternal(charSequence, x, y, color, mat, shadow);
+        List<FormattedCharSequence> split = this.split(text, maxWidth);
+        for (int i = 0, len = split.size(); i < len; ++i) {
+            this.drawInternal(split.get(i), x, y, color, mat, shadow);
+            y += this.lineHeight;
+        }
+    }
+
+    @Override
+    public void drawWordWrapCenter(PoseStack matrices, FormattedText text, int x, int y, int maxWidth, int color, boolean shadow) {
+        Matrix4f mat = matrices.last().pose();
+        List<FormattedCharSequence> split = this.split(text, maxWidth);
+        for (int i = 0, len = split.size(); i < len; ++i) {
+            FormattedCharSequence sequence = split.get(i);
+            this.drawInternal(sequence, (int) (x + (maxWidth - this.width(sequence)) * 0.5f), y, color, mat, shadow);
             y += this.lineHeight;
         }
     }
@@ -132,21 +109,8 @@ public abstract class MixinFont implements PatchFont {
         this.lineHeight = 10;
     }
 
-    /**
-     * @author TheGreatWolf
-     * @reason Avoid allocations
-     */
     @Overwrite
-    private float renderText(String text,
-                             float x,
-                             float y,
-                             int color,
-                             boolean shadow,
-                             Matrix4f matrix,
-                             MultiBufferSource buffer,
-                             boolean transparent,
-                             int bgColor,
-                             int packedLight) {
+    private float renderText(String text, float x, float y, int color, boolean shadow, Matrix4f matrix, MultiBufferSource buffer, boolean transparent, int bgColor, int packedLight) {
         StringSink sink = StringSink.INSTANCE;
         sink.set((Font) (Object) this, buffer, x, y, color, shadow, matrix, transparent, packedLight);
         StringDecomposer.iterateFormatted(text, Style.EMPTY, sink);
@@ -154,19 +118,19 @@ public abstract class MixinFont implements PatchFont {
     }
 
     @Shadow
-    protected abstract float renderText(FormattedCharSequence p_92927_,
-                                        float p_92928_,
-                                        float p_92929_,
-                                        int p_92930_,
-                                        boolean p_92931_,
-                                        Matrix4f p_92932_,
-                                        MultiBufferSource p_92933_,
-                                        boolean p_92934_,
-                                        int p_92935_,
-                                        int p_92936_);
+    protected abstract float renderText(FormattedCharSequence p_92927_, float p_92928_, float p_92929_, int p_92930_, boolean p_92931_, Matrix4f p_92932_, MultiBufferSource p_92933_, boolean p_92934_, int p_92935_, int p_92936_);
 
     @Shadow
     public abstract List<FormattedCharSequence> split(FormattedText pText, int pMaxWidth);
+
+    @Shadow
+    public abstract int width(String string);
+
+    @Shadow
+    public abstract int width(FormattedText formattedText);
+
+    @Shadow
+    public abstract int width(FormattedCharSequence formattedCharSequence);
 
     /**
      * @author TheGreatWolf

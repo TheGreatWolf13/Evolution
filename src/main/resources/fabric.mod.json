@@ -303,6 +303,9 @@
       ],
       "net/minecraft/client/gui/components/AbstractWidget": [
         "tgw/evolution/patches/PatchAbstractWidget"
+      ],
+      "net/minecraft/client/gui/Font": [
+        "tgw/evolution/patches/PatchFont"
       ]
     }
   }

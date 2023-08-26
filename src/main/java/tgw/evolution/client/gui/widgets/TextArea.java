@@ -15,14 +15,20 @@ import java.util.List;
 
 public class TextArea extends AbstractWidget {
 
+    private final boolean center;
     private final int color;
     private final Component text;
 
     public TextArea(int x, int y, int width, Component text, int color) {
+        this(x, y, width, text, color, false);
+    }
+
+    public TextArea(int x, int y, int width, Component text, int color, boolean center) {
         super(x, y, width, 0, EvolutionTexts.EMPTY);
         this.text = text;
         this.height = Minecraft.getInstance().font.split(this.text, width).size() * 10;
         this.color = color;
+        this.center = center;
     }
 
     @Override
@@ -57,7 +63,12 @@ public class TextArea extends AbstractWidget {
         if (!this.visible) {
             return;
         }
-        Minecraft.getInstance().font.drawWordWrap(this.text, this.x, this.y, this.width, this.color);
+        if (this.center) {
+            Minecraft.getInstance().font.drawWordWrapCenter(matrices, this.text, this.x, this.y, this.width, this.color, false);
+        }
+        else {
+            Minecraft.getInstance().font.drawWordWrap(this.text, this.x, this.y, this.width, this.color);
+        }
     }
 
     @Override

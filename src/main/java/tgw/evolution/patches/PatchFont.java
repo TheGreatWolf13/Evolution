@@ -5,5 +5,11 @@ import net.minecraft.network.chat.FormattedText;
 
 public interface PatchFont {
 
-    void drawWordWrap(PoseStack matrices, FormattedText text, float x, float y, int maxWidth, int color, boolean shadow);
+    default void drawWordWrap(PoseStack matrices, FormattedText text, float x, float y, int maxWidth, int color, boolean shadow) {
+        throw new AbstractMethodError();
+    }
+
+    default void drawWordWrapCenter(PoseStack matrices, FormattedText formattedText, int x, int y, int maxWidth, int color, boolean shadow) {
+        throw new AbstractMethodError();
+    }
 }
