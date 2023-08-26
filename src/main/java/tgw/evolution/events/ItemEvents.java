@@ -3,13 +3,17 @@ package tgw.evolution.events;
 import com.google.gson.JsonParseException;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.core.Registry;
+import net.minecraft.locale.Language;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.*;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -29,12 +33,16 @@ import tgw.evolution.util.collection.lists.EitherList;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.constants.HarvestLevel;
+import tgw.evolution.util.constants.NBTType;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 public final class ItemEvents {
 
     private static final OList<Component> TEMP_TOOLTIP_HOLDER = new OArrayList<>();
+    private static final EitherList<FormattedText, TooltipComponent> EITHER_LIST = new EitherList<>();
 
     private ItemEvents() {
     }
@@ -116,6 +124,75 @@ public final class ItemEvents {
         }
     }
 
+    public static List<ClientTooltipComponent> gatherTooltipComponents(ItemStack stack, List<? extends FormattedText> textElements, Optional<TooltipComponent> itemComponent, int mouseX, int screenWidth, Font font) {
+        EitherList<FormattedText, TooltipComponent> elements = EITHER_LIST;
+        if (stack.getItem() instanceof IEvolutionItem) {
+            makeEvolutionTooltip(EvolutionClient.getClientPlayer(), stack, elements);
+        }
+        else {
+            for (int i = 0, len = textElements.size(); i < len; i++) {
+                elements.addLeft(textElements.get(i));
+            }
+            if (itemComponent.isPresent()) {
+                elements.addRight(1, itemComponent.get());
+            }
+        }
+        // text wrapping
+        int tooltipTextWidth = 0;
+        for (int i = 0, len = elements.size(); i < len; i++) {
+            FormattedText left = elements.getLeftOrNull(i);
+            int w = left != null ? font.width(left) : 0;
+            if (w > tooltipTextWidth) {
+                tooltipTextWidth = w;
+            }
+        }
+        boolean needsWrap = false;
+        int tooltipX = mouseX + 12;
+        if (tooltipX + tooltipTextWidth + 4 > screenWidth) {
+            tooltipX = mouseX - 16 - tooltipTextWidth;
+            if (tooltipX < 4) { // if the tooltip doesn't fit on the screen
+                if (mouseX > screenWidth / 2) {
+                    tooltipTextWidth = mouseX - 12 - 8;
+                }
+                else {
+                    tooltipTextWidth = screenWidth - 16 - mouseX;
+                }
+                needsWrap = true;
+            }
+        }
+        OList<ClientTooltipComponent> list = new OArrayList<>();
+        if (needsWrap) {
+            for (int i = 0, len = elements.size(); i < len; i++) {
+                if (elements.isLeft(i)) {
+                    List<FormattedCharSequence> split = font.split(elements.getLeft(i), tooltipTextWidth);
+                    for (int j = 0, len1 = split.size(); j < len1; j++) {
+                        //noinspection ObjectAllocationInLoop
+                        list.add(ClientTooltipComponent.create(split.get(j)));
+                    }
+                }
+                else {
+                    //noinspection ObjectAllocationInLoop
+                    list.add(ClientTooltipComponent.create(elements.getRight(i)));
+                }
+            }
+            elements.clear();
+            return list;
+        }
+        for (int i = 0, len = elements.size(); i < len; i++) {
+            if (elements.isLeft(i)) {
+                FormattedText text = elements.getLeft(i);
+                //noinspection ObjectAllocationInLoop
+                list.add(ClientTooltipComponent.create(text instanceof Component comp ? comp.getVisualOrderText() : Language.getInstance().getVisualOrder(text)));
+            }
+            else {
+                //noinspection ObjectAllocationInLoop
+                list.add(ClientTooltipComponent.create(elements.getRight(i)));
+            }
+        }
+        elements.clear();
+        return list;
+    }
+
     public static void makeEvolutionTooltip(Player player, ItemStack stack, EitherList<FormattedText, TooltipComponent> tooltip) {
         tooltip.clear();
         //Name
@@ -127,8 +204,7 @@ public final class ItemEvents {
         //Item specific information
         Item item = stack.getItem();
         boolean isAdvanced = Minecraft.getInstance().options.advancedItemTooltips;
-        item.appendHoverText(stack, EvolutionClient.getClientLevel(), TEMP_TOOLTIP_HOLDER,
-                             isAdvanced ? TooltipFlag.Default.ADVANCED : TooltipFlag.Default.NORMAL);
+        item.appendHoverText(stack, EvolutionClient.getClientLevel(), TEMP_TOOLTIP_HOLDER, isAdvanced ? TooltipFlag.Default.ADVANCED : TooltipFlag.Default.NORMAL);
         for (int i = 0, l = TEMP_TOOLTIP_HOLDER.size(); i < l; i++) {
             tooltip.addLeft(TEMP_TOOLTIP_HOLDER.get(i));
         }
@@ -152,13 +228,12 @@ public final class ItemEvents {
         if (stack.hasTag()) {
             CompoundTag tag = stack.getTag();
             assert tag != null;
-            if (tag.contains("display", Tag.TAG_COMPOUND)) {
+            if (tag.contains("display", NBTType.COMPOUND)) {
                 CompoundTag nbt = tag.getCompound("display");
                 //Color
-                if (nbt.contains("color", Tag.TAG_INT)) {
+                if (nbt.contains("color", NBTType.INT)) {
                     if (isAdvanced) {
-                        tooltip.addLeft(
-                                new TranslatableComponent("item.color", String.format("#%06X", nbt.getInt("color"))).withStyle(ChatFormatting.GRAY));
+                        tooltip.addLeft(new TranslatableComponent("item.color", String.format("#%06X", nbt.getInt("color"))).withStyle(ChatFormatting.GRAY));
                     }
                     else {
                         tooltip.addLeft(new TranslatableComponent("item.dyed").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
@@ -166,7 +241,7 @@ public final class ItemEvents {
                 }
                 //Lore
                 if (nbt.getTagType("Lore") == Tag.TAG_LIST) {
-                    ListTag lore = nbt.getList("Lore", Tag.TAG_STRING);
+                    ListTag lore = nbt.getList("Lore", NBTType.STRING);
                     for (int j = 0; j < lore.size(); j++) {
                         String s = lore.getString(j);
                         try {
@@ -233,9 +308,7 @@ public final class ItemEvents {
                     tooltip.addLeft(EvolutionTexts.EMPTY);
                     hasAddedLine = true;
                 }
-                tooltip.addLeft(
-                        new TranslatableComponent("evolution.tooltip.slot." + ((IAdditionalEquipment) item).getValidSlot().getName()).withStyle(
-                                ChatFormatting.GRAY));
+                tooltip.addLeft(new TranslatableComponent("evolution.tooltip.slot." + ((IAdditionalEquipment) item).getValidSlot().getName()).withStyle(ChatFormatting.GRAY));
                 hasAddedSlot = true;
                 tooltip.addRight(TooltipHeat.heat(heatResistant.getHeatResistance()));
             }
@@ -244,9 +317,7 @@ public final class ItemEvents {
                     tooltip.addLeft(EvolutionTexts.EMPTY);
                 }
                 if (!hasAddedSlot) {
-                    tooltip.addLeft(
-                            new TranslatableComponent("evolution.tooltip.slot." + ((IAdditionalEquipment) item).getValidSlot().getName()).withStyle(
-                                    ChatFormatting.GRAY));
+                    tooltip.addLeft(new TranslatableComponent("evolution.tooltip.slot." + ((IAdditionalEquipment) item).getValidSlot().getName()).withStyle(ChatFormatting.GRAY));
                 }
                 tooltip.addRight(TooltipCold.cold(coldResistant.getColdResistance()));
             }

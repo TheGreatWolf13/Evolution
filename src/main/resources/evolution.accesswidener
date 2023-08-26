@@ -149,6 +149,8 @@ accessible field net/minecraft/world/entity/Entity portalEntrancePos Lnet/minecr
 accessible field net/minecraft/world/entity/LivingEntity swimAmount F
 accessible field net/minecraft/world/entity/LivingEntity swimAmountO F
 accessible field net/minecraft/world/entity/player/Player DATA_PLAYER_MODE_CUSTOMISATION Lnet/minecraft/network/syncher/EntityDataAccessor;
+accessible field net/minecraft/world/item/Item BASE_ATTACK_DAMAGE_UUID Ljava/util/UUID;
+accessible field net/minecraft/world/item/Item BASE_ATTACK_SPEED_UUID Ljava/util/UUID;
 accessible field net/minecraft/world/level/block/entity/SkullBlockEntity profileCache Lnet/minecraft/server/players/GameProfileCache;
 accessible field net/minecraft/world/level/block/entity/SkullBlockEntity sessionService Lcom/mojang/authlib/minecraft/MinecraftSessionService;
 accessible field net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase$Cache collisionShape Lnet/minecraft/world/phys/shapes/VoxelShape;

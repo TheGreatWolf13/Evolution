@@ -20,6 +20,7 @@ import tgw.evolution.client.gui.ScreenInventory;
 import tgw.evolution.client.gui.overlays.EvolutionOverlays;
 import tgw.evolution.client.gui.overlays.VanillaOverlays;
 import tgw.evolution.client.renderer.EvolutionRenderLayer;
+import tgw.evolution.client.tooltip.*;
 import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.init.EvolutionContainers;
@@ -141,26 +142,26 @@ public final class EvolutionClient implements ClientModInitializer {
         Evolution.info("Client initialized");
     }
 
-//    private static void registerTooltips() {
-//        MinecraftForgeClient.registerTooltipComponentFactory(TooltipCold.class, EvolutionTooltipRenderer.COLD::setTooltip);
-//        MinecraftForgeClient.registerTooltipComponentFactory(TooltipCooldown.class, EvolutionTooltipRenderer.COOLDOWN::setTooltip);
-//        MinecraftForgeClient.registerTooltipComponentFactory(TooltipDamage.class, TooltipDamage::setup);
-//        MinecraftForgeClient.registerTooltipComponentFactory(TooltipDmgMultiplier.class, TooltipDmgMultiplier::setup);
-//        MinecraftForgeClient.registerTooltipComponentFactory(TooltipDrink.class, EvolutionTooltipRenderer.DRINK::setTooltip);
-//        MinecraftForgeClient.registerTooltipComponentFactory(TooltipDurability.class, TooltipDurability::setup);
-//        MinecraftForgeClient.registerTooltipComponentFactory(TooltipFollowUp.class, EvolutionTooltipRenderer.FOLLOW_UP::setTooltip);
-//        MinecraftForgeClient.registerTooltipComponentFactory(TooltipFood.class, EvolutionTooltipRenderer.FOOD::setTooltip);
-//        MinecraftForgeClient.registerTooltipComponentFactory(TooltipHeat.class, EvolutionTooltipRenderer.HEAT::setTooltip);
-//        MinecraftForgeClient.registerTooltipComponentFactory(TooltipInfo.class, EvolutionTooltipRenderer.INFO::setTooltip);
-//        MinecraftForgeClient.registerTooltipComponentFactory(TooltipMass.class, TooltipMass::setup);
-//        MinecraftForgeClient.registerTooltipComponentFactory(TooltipMining.class, EvolutionTooltipRenderer.MINING::setTooltip);
-//        MinecraftForgeClient.registerTooltipComponentFactory(TooltipPrecision.class, EvolutionTooltipRenderer.PRECISION::setTooltip);
-//        MinecraftForgeClient.registerTooltipComponentFactory(TooltipThrowSpeed.class, EvolutionTooltipRenderer.THROW_SPEED::setTooltip);
-//    }
-
     private static void registerScreens() {
         MenuScreens.register(EvolutionContainers.EXTENDED_INVENTORY, ScreenInventory::new);
         MenuScreens.register(EvolutionContainers.CORPSE, ScreenCorpse::new);
+    }
+
+    private static void registerTooltips() {
+        TooltipManager.registerTooltipFactory(TooltipCold.class, EvolutionTooltipRenderer.COLD::setTooltip);
+        TooltipManager.registerTooltipFactory(TooltipCooldown.class, EvolutionTooltipRenderer.COOLDOWN::setTooltip);
+        TooltipManager.registerTooltipFactory(TooltipDamage.class, TooltipDamage::setup);
+        TooltipManager.registerTooltipFactory(TooltipDmgMultiplier.class, TooltipDmgMultiplier::setup);
+        TooltipManager.registerTooltipFactory(TooltipDrink.class, EvolutionTooltipRenderer.DRINK::setTooltip);
+        TooltipManager.registerTooltipFactory(TooltipDurability.class, TooltipDurability::setup);
+        TooltipManager.registerTooltipFactory(TooltipFollowUp.class, EvolutionTooltipRenderer.FOLLOW_UP::setTooltip);
+        TooltipManager.registerTooltipFactory(TooltipFood.class, EvolutionTooltipRenderer.FOOD::setTooltip);
+        TooltipManager.registerTooltipFactory(TooltipHeat.class, EvolutionTooltipRenderer.HEAT::setTooltip);
+        TooltipManager.registerTooltipFactory(TooltipInfo.class, EvolutionTooltipRenderer.INFO::setTooltip);
+        TooltipManager.registerTooltipFactory(TooltipMass.class, TooltipMass::setup);
+        TooltipManager.registerTooltipFactory(TooltipMining.class, EvolutionTooltipRenderer.MINING::setTooltip);
+        TooltipManager.registerTooltipFactory(TooltipPrecision.class, EvolutionTooltipRenderer.PRECISION::setTooltip);
+        TooltipManager.registerTooltipFactory(TooltipThrowSpeed.class, EvolutionTooltipRenderer.THROW_SPEED::setTooltip);
     }
 
     public static void sendToServer(Packet<ServerGamePacketListener> packet) {
@@ -175,7 +176,7 @@ public final class EvolutionClient implements ClientModInitializer {
 //        addTextures(event);
         EvolutionRenderLayer.setup();
         fixInputMappings();
-//        registerTooltips();
+        registerTooltips();
         changeWorldOrders();
         VanillaOverlays.register();
         EvolutionOverlays.register();

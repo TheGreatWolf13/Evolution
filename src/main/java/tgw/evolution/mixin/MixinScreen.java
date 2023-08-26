@@ -13,13 +13,16 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.ItemRenderer;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.inventory.tooltip.TooltipComponent;
+import net.minecraft.world.item.ItemStack;
+import org.spongepowered.asm.mixin.*;
 import tgw.evolution.client.renderer.RenderHelper;
+import tgw.evolution.events.ItemEvents;
+import tgw.evolution.items.IEvolutionItem;
 
 import java.util.List;
+import java.util.Optional;
 
 @Mixin(Screen.class)
 public abstract class MixinScreen extends AbstractContainerEventHandler implements Widget {
@@ -31,6 +34,7 @@ public abstract class MixinScreen extends AbstractContainerEventHandler implemen
     @Shadow protected ItemRenderer itemRenderer;
     @Shadow @Final private List<GuiEventListener> children;
     @Shadow @Final private List<NarratableEntry> narratables;
+    @Unique private ItemStack tooltipStack = ItemStack.EMPTY;
 
     @Overwrite
     public <T extends GuiEventListener & NarratableEntry> T addWidget(T widget) {
@@ -55,6 +59,9 @@ public abstract class MixinScreen extends AbstractContainerEventHandler implemen
         this.narratables.clear();
     }
 
+    @Shadow
+    public abstract List<Component> getTooltipFromItem(ItemStack itemStack);
+
     @Overwrite
     public void removeWidget(GuiEventListener widget) {
         if (widget instanceof Widget) {
@@ -76,6 +83,18 @@ public abstract class MixinScreen extends AbstractContainerEventHandler implemen
         for (int i = 0, len = renderables.size(); i < len; ++i) {
             renderables.get(i).render(matrices, mouseX, mouseY, partialTicks);
         }
+    }
+
+    @Overwrite
+    public void renderTooltip(PoseStack matrices, ItemStack stack, int mouseX, int mouseY) {
+        this.tooltipStack = stack;
+        this.renderTooltip(matrices, stack.getItem() instanceof IEvolutionItem ? List.of() : this.getTooltipFromItem(stack), stack.getTooltipImage(), mouseX, mouseY);
+        this.tooltipStack = ItemStack.EMPTY;
+    }
+
+    @Overwrite
+    public void renderTooltip(PoseStack matrices, List<Component> tooltip, Optional<TooltipComponent> image, int mouseX, int mouseY) {
+        this.renderTooltipInternal(matrices, ItemEvents.gatherTooltipComponents(this.tooltipStack, tooltip, image, mouseX, this.width, this.font), mouseX, mouseY);
     }
 
     @Overwrite

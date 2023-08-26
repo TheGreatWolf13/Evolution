@@ -14,7 +14,6 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.FormattedText;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
@@ -24,7 +23,6 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.inventory.Slot;
-import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -55,13 +53,15 @@ import tgw.evolution.hooks.TickrateChanger;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.init.EvolutionSounds;
 import tgw.evolution.init.EvolutionTexts;
-import tgw.evolution.items.*;
+import tgw.evolution.items.IBackWeapon;
+import tgw.evolution.items.IBeltWeapon;
+import tgw.evolution.items.IMelee;
+import tgw.evolution.items.ITwoHanded;
 import tgw.evolution.network.*;
 import tgw.evolution.patches.PatchGameRenderer;
 import tgw.evolution.patches.PatchLivingEntity;
 import tgw.evolution.util.HitInformation;
 import tgw.evolution.util.PlayerHelper;
-import tgw.evolution.util.collection.lists.EitherList;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.collection.maps.I2OHashMap;
@@ -983,15 +983,6 @@ public class ClientEvents {
             this.wasSpecialAttacking = isSpecialAttacking;
             this.mc.getProfiler().pop();
         }
-    }
-
-    public void renderTooltip(ItemStack stack, EitherList<FormattedText, TooltipComponent> tooltip) {
-        Item item = stack.getItem();
-        if (!(item instanceof IEvolutionItem)) {
-            return;
-        }
-        assert this.mc.player != null;
-        ItemEvents.makeEvolutionTooltip(this.mc.player, stack, tooltip);
     }
 
     public void resetCooldown(InteractionHand hand) {
