@@ -1,10 +1,14 @@
 package tgw.evolution.mixin;
 
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.advancements.DisplayInfo;
 import net.minecraft.advancements.FrameType;
 import net.minecraft.core.Registry;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.TagParser;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -13,10 +17,7 @@ import net.minecraft.util.GsonHelper;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.*;
 import tgw.evolution.client.gui.advancements.TagDisplayInfo;
 
 @Mixin(DisplayInfo.class)
@@ -32,10 +33,6 @@ public abstract class MixinDisplayInfo {
     @Shadow private float x;
     @Shadow private float y;
 
-    /**
-     * @author TheGreatWolf
-     * @reason Add support for ForgeCaps and tags.
-     */
     @Overwrite
     public static DisplayInfo fromJson(JsonObject pJson) {
         Component title = Component.Serializer.fromJson(pJson.get("title"));
@@ -56,10 +53,6 @@ public abstract class MixinDisplayInfo {
         return new TagDisplayInfo(getTag(jsonIcon), title, description, background, frameType, showToast, announceToChat, hidden);
     }
 
-    /**
-     * @author TheGreatWolf
-     * @reason Add support for tags.
-     */
     @Overwrite
     public static DisplayInfo fromNetwork(FriendlyByteBuf buffer) {
         if (!buffer.readBoolean()) {
@@ -88,20 +81,37 @@ public abstract class MixinDisplayInfo {
         return displayInfo;
     }
 
-    @Shadow
-    private static ItemStack getIcon(JsonObject jsonObject) {
-        throw new AbstractMethodError();
+    @Overwrite
+    private static @Nullable ItemStack getIcon(JsonObject json) {
+        if (!json.has("item")) {
+            if (!json.has("tag")) {
+                throw new JsonSyntaxException("Unsupported icon type, currently only items and tags are supported (add 'item' or 'tag' key)");
+            }
+            return null;
+        }
+        Item item = GsonHelper.getAsItem(json, "item");
+        if (json.has("data")) {
+            throw new JsonParseException("Disallowed data tag found");
+        }
+        ItemStack stack = new ItemStack(item, 1);
+        if (json.has("nbt")) {
+            try {
+                CompoundTag nbt = TagParser.parseTag(GsonHelper.convertToString(json.get("nbt"), "nbt"));
+                stack.setTag(nbt);
+            }
+            catch (CommandSyntaxException e) {
+                throw new JsonSyntaxException("Invalid nbt tag: " + e.getMessage());
+            }
+        }
+        return stack;
     }
 
+    @Unique
     private static TagKey<Item> getTag(JsonObject json) {
         String name = GsonHelper.getAsString(json, "tag");
         return TagKey.create(Registry.ITEM_REGISTRY, new ResourceLocation(name));
     }
 
-    /**
-     * @author TheGreatWolf
-     * @reason Add support for tags.
-     */
     @Overwrite
     public void serializeToNetwork(FriendlyByteBuf buffer) {
         buffer.writeBoolean(false);
