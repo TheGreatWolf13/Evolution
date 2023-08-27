@@ -118,6 +118,9 @@ public abstract class MixinScreen extends AbstractContainerEventHandler implemen
             if (y + sizeHeight + 6 > this.height) {
                 y = this.height - sizeHeight - 6;
             }
+            if (y < 4) {
+                y = 4;
+            }
             matrices.pushPose();
             float oldBlitOffset = this.itemRenderer.blitOffset;
             this.itemRenderer.blitOffset = 400.0F;

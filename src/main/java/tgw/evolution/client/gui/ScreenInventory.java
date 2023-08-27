@@ -29,7 +29,7 @@ import tgw.evolution.util.math.MathHelper;
 public class ScreenInventory extends ScreenDisplayEffects<ContainerInventory> implements IRecipeBookUpdateListener {
 
     private static final int NUM_TABS = 2;
-    private final ComponentRecipeBook recipeBook = new ComponentRecipeBook();
+    private final ComponentRecipeBook recipeBook = new ComponentRecipeBook(this);
     private final ResourceLocation recipeBookIcon = Evolution.getResource("textures/gui/recipe_button.png");
     private final ResourceLocation resCrafting = Evolution.getResource("textures/gui/inventory_crafting.png");
     private final ItemStack[] tabStacks = {

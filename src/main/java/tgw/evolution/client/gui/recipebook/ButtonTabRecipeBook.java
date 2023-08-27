@@ -4,7 +4,6 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.ClientRecipeBook;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.RecipeBookCategories;
 import net.minecraft.client.gui.components.StateSwitchingButton;
 import net.minecraft.client.gui.screens.recipebook.RecipeCollection;
 import net.minecraft.client.renderer.entity.ItemRenderer;
@@ -15,24 +14,29 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
 import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.client.util.MouseButton;
+import tgw.evolution.inventory.RecipeCategory;
+import tgw.evolution.util.collection.lists.OList;
+import tgw.evolution.util.math.MathHelper;
 
 import java.util.List;
 
 public class ButtonTabRecipeBook extends StateSwitchingButton {
 
     private static final float ANIMATION_TIME = 15.0F;
-    private final RecipeBookCategories category;
+    private final RecipeCategory category;
+    private final ComponentRecipeBook recipeBook;
     private final boolean rightSide;
     private float animationTime;
 
-    public ButtonTabRecipeBook(RecipeBookCategories category, ResourceLocation resLoc, boolean rightSide) {
+    public ButtonTabRecipeBook(ComponentRecipeBook recipeBook, RecipeCategory category, ResourceLocation resLoc, boolean rightSide) {
         super(0, 0, 35, 27, false);
+        this.recipeBook = recipeBook;
         this.category = category;
         this.initTextureValues(153, 2, 35, 0, resLoc);
         this.rightSide = rightSide;
     }
 
-    public RecipeBookCategories getCategory() {
+    public RecipeCategory getCategory() {
         return this.category;
     }
 
@@ -82,10 +86,13 @@ public class ButtonTabRecipeBook extends StateSwitchingButton {
             matrices.popPose();
             this.animationTime -= partialTicks;
         }
+        if (MathHelper.isMouseInArea(mouseX, mouseY, this.x, this.y, this.width - 6, this.height - 2)) {
+            this.recipeBook.setFocused(this);
+        }
     }
 
     private void renderIcon(ItemRenderer itemRenderer) {
-        List<ItemStack> list = this.category.getIconItems();
+        OList<ItemStack> list = this.category.getIconItems();
         int dx;
         if (this.rightSide) {
             dx = this.isStateTriggered ? 0 : -2;
@@ -105,12 +112,12 @@ public class ButtonTabRecipeBook extends StateSwitchingButton {
     public void startAnimation(Minecraft mc) {
         assert mc.player != null;
         ClientRecipeBook recipeBook = mc.player.getRecipeBook();
-        List<RecipeCollection> list = recipeBook.getCollection(this.category);
+        OList<RecipeCollection> list = recipeBook.getCollection(this.category);
         if (mc.player.containerMenu instanceof RecipeBookMenu menu) {
-            for (RecipeCollection collection : list) {
-                List<Recipe<?>> recipes = collection.getRecipes(recipeBook.isFiltering(menu));
-                for (int i = 0, l = recipes.size(); i < l; i++) {
-                    if (recipeBook.willHighlight(recipes.get(i))) {
+            for (int i = 0, len = list.size(); i < len; ++i) {
+                List<Recipe<?>> recipes = list.get(i).getRecipes(recipeBook.isFiltering(menu));
+                for (int j = 0, l = recipes.size(); j < l; j++) {
+                    if (recipeBook.willHighlight(recipes.get(j))) {
                         this.animationTime = ANIMATION_TIME;
                         return;
                     }
@@ -120,10 +127,11 @@ public class ButtonTabRecipeBook extends StateSwitchingButton {
     }
 
     public boolean updateVisibility(ClientRecipeBook collection) {
-        List<RecipeCollection> list = collection.getCollection(this.category);
+        OList<RecipeCollection> list = collection.getCollection(this.category);
         this.visible = false;
-        for (RecipeCollection recipecollection : list) {
-            if (recipecollection.hasKnownRecipes() && recipecollection.hasFitting()) {
+        for (int i = 0, len = list.size(); i < len; ++i) {
+            RecipeCollection recipeCollection = list.get(i);
+            if (recipeCollection.hasKnownRecipes() && recipeCollection.hasFitting()) {
                 this.visible = true;
                 break;
             }

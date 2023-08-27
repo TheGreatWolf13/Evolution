@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.*;
 import tgw.evolution.Evolution;
+import tgw.evolution.hooks.asm.DeleteMethod;
 import tgw.evolution.patches.PatchRecipeManager;
 import tgw.evolution.resources.IKeyedReloadListener;
 import tgw.evolution.resources.ReloadListernerKeys;
@@ -62,7 +63,7 @@ public abstract class MixinRecipeManager extends SimpleJsonResourceReloadListene
                 continue;
             }
             if (location.getPath().startsWith("_")) {
-                continue; //Forge: filter anything beginning with "_" as it's used for metadata.
+                continue;
             }
             try {
                 Recipe<?> recipe = fromJson(location, GsonHelper.convertToJsonObject(entry.getValue(), "top element"));
@@ -118,5 +119,37 @@ public abstract class MixinRecipeManager extends SimpleJsonResourceReloadListene
     @Override
     public ResourceLocation getKey() {
         return ReloadListernerKeys.RECIPES;
+    }
+
+    @Override
+    public void replaceRecipes(List<Recipe<?>> list) {
+        this.hasErrors = false;
+        O2OMap<RecipeType<?>, O2OMap<ResourceLocation, Recipe<?>>> recipes = new O2OHashMap<>();
+        O2OMap<ResourceLocation, Recipe<?>> byName = new O2OHashMap<>();
+        for (int i = 0, len = list.size(); i < len; ++i) {
+            Recipe<?> recipe = list.get(i);
+            O2OMap<ResourceLocation, Recipe<?>> map = recipes.get(recipe.getType());
+            if (map == null) {
+                map = new O2OHashMap<>();
+                recipes.put(recipe.getType(), map);
+            }
+            ResourceLocation resourceLocation = recipe.getId();
+            Recipe<?> oldRecipe = map.put(resourceLocation, recipe);
+            byName.put(resourceLocation, recipe);
+            //noinspection VariableNotUsedInsideIf
+            if (oldRecipe != null) {
+                throw new IllegalStateException("Duplicate recipe ignored with ID " + resourceLocation);
+            }
+        }
+        recipes.trimCollection();
+        this.recipes = Object2ObjectMaps.unmodifiable(recipes);
+        byName.trimCollection();
+        this.byName = Object2ObjectMaps.unmodifiable(byName);
+    }
+
+    @Overwrite
+    @DeleteMethod
+    public void replaceRecipes(Iterable<Recipe<?>> iterable) {
+        throw new AbstractMethodError();
     }
 }

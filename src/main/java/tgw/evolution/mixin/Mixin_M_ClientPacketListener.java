@@ -13,6 +13,8 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.searchtree.MutableSearchTree;
+import net.minecraft.client.searchtree.SearchRegistry;
 import net.minecraft.core.*;
 import net.minecraft.network.Connection;
 import net.minecraft.network.FriendlyByteBuf;
@@ -55,11 +57,11 @@ import tgw.evolution.entities.IEntitySpawnData;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.hooks.asm.DeleteMethod;
 import tgw.evolution.init.EvolutionTexts;
-import tgw.evolution.inventory.extendedinventory.EvolutionRecipeBook;
 import tgw.evolution.network.*;
 import tgw.evolution.patches.PatchClientPacketListener;
 import tgw.evolution.patches.PatchLivingEntity;
 import tgw.evolution.stats.EvolutionStatsCounter;
+import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.constants.BlockFlags;
 import tgw.evolution.util.math.Vec3d;
 
@@ -111,10 +113,6 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
         ClientEvents.getInstance().onPotionAdded(packet.instance, packet.logic);
     }
 
-    /**
-     * @author TheGreatWolf
-     * @reason Modify the recipe book, avoid allocations
-     */
     @Override
     @Overwrite
     public void handleAddOrRemoveRecipes(ClientboundRecipePacket packet) {
@@ -159,9 +157,9 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
                 }
             }
         }
-        List<RecipeCollection> collections = recipeBook.getCollections();
-        for (int i = 0, l = collections.size(); i < l; i++) {
-            collections.get(i).updateKnownRecipes(recipeBook);
+        OList<RecipeCollection> allRecipes = recipeBook.getAllRecipes();
+        for (int i = 0, l = allRecipes.size(); i < l; i++) {
+            allRecipes.get(i).updateKnownRecipes(recipeBook);
         }
         if (this.minecraft.screen instanceof IRecipeBookUpdateListener recipeBookHolder) {
             recipeBookHolder.recipesUpdated();
@@ -270,7 +268,7 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
                                      this.serverSimulationDistance, this.minecraft::getProfiler, null, flag, packet.seed());
         this.minecraft.setLevel(this.level);
         if (this.minecraft.player == null) {
-            this.minecraft.player = this.minecraft.gameMode.createPlayer(this.level, new EvolutionStatsCounter(), new EvolutionRecipeBook());
+            this.minecraft.player = this.minecraft.gameMode.createPlayer(this.level, new EvolutionStatsCounter(), new ClientRecipeBook());
             this.minecraft.player.setYRot(-180.0F);
             if (this.minecraft.getSingleplayerServer() != null) {
                 this.minecraft.getSingleplayerServer().setUUID(this.minecraft.player.getUUID());
@@ -651,6 +649,23 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
     public void handleUpdateCameraViewCenter(PacketSCUpdateCameraViewCenter packet) {
         PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
         this.level.getChunkSource().updateCameraViewCenter(packet.camX, packet.camZ);
+    }
+
+    @Override
+    @Overwrite
+    public void handleUpdateRecipes(ClientboundUpdateRecipesPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        assert this.minecraft.player != null;
+        this.recipeManager.replaceRecipes(packet.getRecipes());
+        MutableSearchTree<RecipeCollection> searchTree = this.minecraft.getSearchTree(SearchRegistry.RECIPE_COLLECTIONS);
+        searchTree.clear();
+        ClientRecipeBook recipeBook = this.minecraft.player.getRecipeBook();
+        recipeBook.setupCollections(this.recipeManager.getRecipes());
+        OList<RecipeCollection> allRecipes = recipeBook.getAllRecipes();
+        for (int i = 0, len = allRecipes.size(); i < len; ++i) {
+            searchTree.add(allRecipes.get(i));
+        }
+        searchTree.refresh();
     }
 
     @Overwrite

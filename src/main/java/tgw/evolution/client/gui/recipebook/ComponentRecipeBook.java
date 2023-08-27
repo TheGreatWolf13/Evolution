@@ -6,7 +6,6 @@ import it.unimi.dsi.fastutil.objects.ReferenceLinkedOpenHashSet;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.ClientRecipeBook;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.RecipeBookCategories;
 import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.gui.components.StateSwitchingButton;
 import net.minecraft.client.gui.components.events.GuiEventListener;
@@ -36,9 +35,10 @@ import tgw.evolution.client.util.Key;
 import tgw.evolution.client.util.Modifiers;
 import tgw.evolution.client.util.MouseButton;
 import tgw.evolution.init.EvolutionTexts;
+import tgw.evolution.inventory.RecipeCategory;
 import tgw.evolution.inventory.StackedContentsEv;
-import tgw.evolution.patches.PatchMinecraft;
 import tgw.evolution.util.collection.lists.OArrayList;
+import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.math.MathHelper;
 
 import java.util.Iterator;
@@ -51,12 +51,12 @@ public class ComponentRecipeBook extends GuiComponent implements IRecipeBook, Gu
     protected final GhostRecipe ghostRecipe = new GhostRecipe();
     protected final ResourceLocation resBackground;
     private final PageRecipeBook recipeBookPage;
+    private final Screen screen;
     private final StackedContentsEv stackedContents = new StackedContentsEv();
     private final List<ButtonTabRecipeBook> tabButtons = new OArrayList<>();
     private final int texHeight;
     private final int texWidth;
-    private final Component textSearch = new TranslatableComponent("evolution.gui.recipebook.search").withStyle(ChatFormatting.ITALIC)
-                                                                                                     .withStyle(ChatFormatting.GRAY);
+    private final Component textSearch = new TranslatableComponent("evolution.gui.recipebook.search").withStyle(ChatFormatting.ITALIC).withStyle(ChatFormatting.GRAY);
     private final Component textToggleAll = new TranslatableComponent("evolution.gui.recipebook.showingAll");
     private final Component textToggleCraftable = new TranslatableComponent("evolution.gui.recipebook.showingCraftable");
     protected int cornerX;
@@ -66,6 +66,7 @@ public class ComponentRecipeBook extends GuiComponent implements IRecipeBook, Gu
     protected Minecraft minecraft;
     protected int xOffset;
     private ClientRecipeBook book;
+    private @Nullable ButtonTabRecipeBook focusedTab;
     private int height;
     private boolean ignoreTextInput;
     private String lastSearch = "";
@@ -76,11 +77,12 @@ public class ComponentRecipeBook extends GuiComponent implements IRecipeBook, Gu
     private int width;
     private boolean widthTooNarrow;
 
-    public ComponentRecipeBook() {
-        this(20, Evolution.getResource("textures/gui/recipe_book.png"), 147, 166);
+    public ComponentRecipeBook(Screen screen) {
+        this(screen, 20, Evolution.getResource("textures/gui/recipe_book.png"), 147, 166);
     }
 
-    public ComponentRecipeBook(int recipesPerPage, ResourceLocation loc, int texWidth, int texHeight) {
+    public ComponentRecipeBook(Screen screen, int recipesPerPage, ResourceLocation loc, int texWidth, int texHeight) {
+        this.screen = screen;
         this.recipeBookPage = new PageRecipeBook(recipesPerPage);
         this.resBackground = loc;
         this.texWidth = texWidth;
@@ -207,9 +209,12 @@ public class ComponentRecipeBook extends GuiComponent implements IRecipeBook, Gu
         this.filterButton = new StateSwitchingButton(this.cornerX + 110, this.cornerY + 12, 26, 16, this.book.isFiltering(this.menu));
         this.initFilterButtonTextures();
         this.tabButtons.clear();
-        for (RecipeBookCategories categories : /*this.menu.getRecipeBookCategories()*/RecipeBookCategories.values()) {
+        OList<RecipeCategory> categories = this.menu.recipeCategories();
+        for (int i = 0, len = categories.size(); i < len; ++i) {
             //noinspection ObjectAllocationInLoop
-            this.tabButtons.add(new ButtonTabRecipeBook(categories, this.resBackground, this.areTabsOnTheRight()));
+            ButtonTabRecipeBook tab = new ButtonTabRecipeBook(this, categories.get(i), this.resBackground, this.areTabsOnTheRight());
+            tab.setScreen(this.screen);
+            this.tabButtons.add(tab);
         }
         if (this.selectedTab != null) {
             ButtonTabRecipeBook r = null;
@@ -343,11 +348,10 @@ public class ComponentRecipeBook extends GuiComponent implements IRecipeBook, Gu
     }
 
     public void recipesUpdated() {
-        this.updateTabs();
         if (this.isVisible()) {
             this.updateCollections(false);
         }
-
+        this.updateTabs();
     }
 
     public void removed() {
@@ -356,6 +360,7 @@ public class ComponentRecipeBook extends GuiComponent implements IRecipeBook, Gu
 
     public void render(PoseStack matrices, int mouseX, int mouseY, float partialTicks) {
         if (this.isVisible()) {
+            this.focusedTab = null;
             matrices.pushPose();
             RenderSystem.setShader(RenderHelper.SHADER_POSITION_TEX);
             RenderSystem.setShaderTexture(0, this.resBackground);
@@ -399,10 +404,12 @@ public class ComponentRecipeBook extends GuiComponent implements IRecipeBook, Gu
     public void renderTooltip(PoseStack matrices, int renderX, int renderY, int mouseX, int mouseY) {
         if (this.isVisible()) {
             this.recipeBookPage.renderTooltip(matrices, mouseX, mouseY);
-            if (this.filterButton.isHoveredOrFocused()) {
-                Component component = this.getFilterButtonTooltip();
-                if (this.minecraft.screen != null) {
-                    this.minecraft.screen.renderTooltip(matrices, component, mouseX, mouseY);
+            if (this.minecraft.screen != null) {
+                if (this.filterButton.isHoveredOrFocused()) {
+                    this.minecraft.screen.renderTooltip(matrices, this.getFilterButtonTooltip(), mouseX, mouseY);
+                }
+                if (this.focusedTab != null) {
+                    this.minecraft.screen.renderTooltip(matrices, this.focusedTab.getCategory().getName(), mouseX, mouseY);
                 }
             }
             this.renderGhostRecipeTooltip(matrices, renderX, renderY, mouseX, mouseY);
@@ -416,6 +423,10 @@ public class ComponentRecipeBook extends GuiComponent implements IRecipeBook, Gu
             boolean isFiltering = this.book.getBookSettings().isFiltering(bookType);
             this.minecraft.getConnection().send(new ServerboundRecipeBookChangeSettingsPacket(bookType, isOpen, isFiltering));
         }
+    }
+
+    public void setFocused(@Nullable ButtonTabRecipeBook tab) {
+        this.focusedTab = tab;
     }
 
     protected void setVisible(boolean visible) {
@@ -435,8 +446,7 @@ public class ComponentRecipeBook extends GuiComponent implements IRecipeBook, Gu
         ItemStack result = recipe.getResultItem();
         this.ghostRecipe.setRecipe(recipe);
         this.ghostRecipe.addIngredient(Ingredient.of(result), slots.get(0).x, slots.get(0).y);
-        this.placeRecipe(this.menu.getGridWidth(), this.menu.getGridHeight(), this.menu.getResultSlotIndex(), recipe,
-                         recipe.getIngredients().iterator(), 0);
+        this.placeRecipe(this.menu.getGridWidth(), this.menu.getGridHeight(), this.menu.getResultSlotIndex(), recipe, recipe.getIngredients().iterator(), 0);
     }
 
     public void slotClicked(@Nullable Slot slot) {
@@ -449,7 +459,7 @@ public class ComponentRecipeBook extends GuiComponent implements IRecipeBook, Gu
     }
 
     public void tick() {
-        if (((PatchMinecraft) Minecraft.getInstance()).isMultiplayerPaused()) {
+        if (Minecraft.getInstance().isMultiplayerPaused()) {
             return;
         }
         boolean shouldBeVisible = this.isVisibleAccordingToBookData();
@@ -498,8 +508,7 @@ public class ComponentRecipeBook extends GuiComponent implements IRecipeBook, Gu
         assert this.searchBox != null;
         String s = this.searchBox.getValue();
         if (!s.isEmpty()) {
-            Set<RecipeCollection> set = new ReferenceLinkedOpenHashSet<>(
-                    this.minecraft.getSearchTree(SearchRegistry.RECIPE_COLLECTIONS).search(s.toLowerCase(Locale.ROOT)));
+            Set<RecipeCollection> set = new ReferenceLinkedOpenHashSet<>(this.minecraft.getSearchTree(SearchRegistry.RECIPE_COLLECTIONS).search(s.toLowerCase(Locale.ROOT)));
             for (int i = 0; i < newList.size(); i++) {
                 if (!set.contains(newList.get(i))) {
                     newList.remove(i--);
@@ -554,8 +563,8 @@ public class ComponentRecipeBook extends GuiComponent implements IRecipeBook, Gu
         int dy = 0;
         for (int i = 0, l = this.tabButtons.size(); i < l; i++) {
             ButtonTabRecipeBook tabButton = this.tabButtons.get(i);
-            RecipeBookCategories category = tabButton.getCategory();
-            if (category != RecipeBookCategories.CRAFTING_SEARCH && category != RecipeBookCategories.FURNACE_SEARCH) {
+            RecipeCategory category = tabButton.getCategory();
+            if (!category.isSearch()) {
                 if (tabButton.updateVisibility(this.book)) {
                     tabButton.setPosition(x, y + 27 * dy++);
                     tabButton.startAnimation(this.minecraft);

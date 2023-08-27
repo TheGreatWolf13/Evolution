@@ -12,6 +12,23 @@ public interface OList<K> extends ObjectList<K>, ICollectionExtension {
         return EmptyList.EMPTY_LIST.view();
     }
 
+    static @UnmodifiableView <K> OList<K> of(K k) {
+        return singleton(k);
+    }
+
+    @SafeVarargs
+    static @UnmodifiableView <K> OList<K> of(K... ks) {
+        return switch (ks.length) {
+            case 0 -> emptyList();
+            case 1 -> singleton(ks[0]);
+            default -> {
+                OList<K> list = new OArrayList<>(ks);
+                list.trimCollection();
+                yield list.view();
+            }
+        };
+    }
+
     static @UnmodifiableView <K> OList<K> singleton(K k) {
         return new Singleton<>(k).view();
     }

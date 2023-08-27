@@ -1,7 +1,5 @@
 package tgw.evolution.inventory.extendedinventory;
 
-import com.google.common.collect.Lists;
-import net.minecraft.client.RecipeBookCategories;
 import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
@@ -18,11 +16,12 @@ import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Range;
 import tgw.evolution.init.EvolutionContainers;
+import tgw.evolution.inventory.RecipeCategory;
 import tgw.evolution.inventory.ServerPlaceRecipeEv;
 import tgw.evolution.inventory.SlotArmor;
 import tgw.evolution.items.IAdditionalEquipment;
+import tgw.evolution.util.collection.lists.OList;
 
-import java.util.List;
 import java.util.Optional;
 
 public class ContainerInventory extends RecipeBookMenu<CraftingContainer> {
@@ -259,6 +258,14 @@ public class ContainerInventory extends RecipeBookMenu<CraftingContainer> {
     }
 
     @Override
+    public void addRecipeCategories(OList<RecipeCategory> list) {
+        list.add(RecipeCategory.CRAFTING_SEARCH);
+        list.add(RecipeCategory.CRAFTING_EQUIPMENT);
+        list.add(RecipeCategory.CRAFTING_BUILDING_BLOCKS);
+        list.add(RecipeCategory.CRAFTING_MISC);
+    }
+
+    @Override
     public boolean canTakeItemForPickAll(ItemStack stack, Slot slot) {
         return slot.container != this.resultContainer && super.canTakeItemForPickAll(stack, slot);
     }
@@ -282,14 +289,6 @@ public class ContainerInventory extends RecipeBookMenu<CraftingContainer> {
     @Override
     public int getGridWidth() {
         return this.craftingContainer.getWidth();
-    }
-
-    //TODO should hook here
-    public List<RecipeBookCategories> getRecipeBookCategories() {
-        return Lists.newArrayList(RecipeBookCategories.CRAFTING_SEARCH,
-                                  RecipeBookCategories.CRAFTING_EQUIPMENT,
-                                  RecipeBookCategories.CRAFTING_BUILDING_BLOCKS,
-                                  RecipeBookCategories.CRAFTING_MISC);
     }
 
     @Override

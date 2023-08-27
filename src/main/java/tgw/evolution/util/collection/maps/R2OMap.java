@@ -7,6 +7,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 import tgw.evolution.util.collection.ICollectionExtension;
 
+import java.util.Map;
+import java.util.Objects;
+
 public interface R2OMap<K, V> extends Reference2ObjectMap<K, V>, ICollectionExtension {
 
     R2OMap.EmptyMap EMPTY_MAP = new R2OMap.EmptyMap();
@@ -98,6 +101,60 @@ public interface R2OMap<K, V> extends Reference2ObjectMap<K, V>, ICollectionExte
         @Override
         public @UnmodifiableView R2OMap<K, V> view() {
             return this;
+        }
+    }
+
+    class BasicEntry<K, V> implements Reference2ObjectMap.Entry<K, V> {
+        protected K key;
+        protected V value;
+
+        protected BasicEntry() {
+        }
+
+        protected BasicEntry(final K key, final V value) {
+            this.key = key;
+            this.value = value;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (!(o instanceof Map.Entry)) {
+                return false;
+            }
+            if (o instanceof Reference2ObjectMap.Entry) {
+                final Reference2ObjectMap.Entry<K, V> e = (Reference2ObjectMap.Entry<K, V>) o;
+                return Objects.equals(this.key, e.getKey()) && Objects.equals(this.value, e.getValue());
+            }
+            final Map.Entry<?, ?> e = (Map.Entry<?, ?>) o;
+            final Object key = e.getKey();
+            final Object value = e.getValue();
+            return Objects.equals(this.key, key) && Objects.equals(this.value, value);
+        }
+
+        @Override
+        public K getKey() {
+            return this.key;
+        }
+
+        @Override
+        public V getValue() {
+            return this.value;
+        }
+
+        @Override
+        public int hashCode() {
+            //noinspection NonFinalFieldReferencedInHashCode
+            return (this.key == null ? 0 : this.key.hashCode()) ^ (this.value == null ? 0 : this.value.hashCode());
+        }
+
+        @Override
+        public V setValue(final V value) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public String toString() {
+            return this.key + "->" + this.value;
         }
     }
 }

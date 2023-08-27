@@ -321,6 +321,12 @@
       ],
       "net/minecraft/advancements/critereon/FluidPredicate": [
         "tgw/evolution/patches/PatchLocationPredicate"
+      ],
+      "net/minecraft/world/inventory/RecipeBookMenu": [
+        "tgw/evolution/patches/PatchRecipeBookMenu"
+      ],
+      "net/minecraft/client/ClientRecipeBook": [
+        "tgw/evolution/patches/PatchClientRecipeBook"
       ]
     }
   }
