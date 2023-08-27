@@ -4,9 +4,15 @@ import tgw.evolution.util.collection.maps.I2IMap;
 
 public interface PatchCraftingContainer {
 
-    void getRemoveCounter(I2IMap counter);
+    default void getRemoveCounter(I2IMap counter) {
+        throw new AbstractMethodError();
+    }
 
-    void put(int slot, int amount);
+    default void put(int slot, int amount) {
+        throw new AbstractMethodError();
+    }
 
-    void reset();
+    default void reset() {
+        throw new AbstractMethodError();
+    }
 }

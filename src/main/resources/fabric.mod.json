@@ -306,6 +306,21 @@
       ],
       "net/minecraft/client/gui/Font": [
         "tgw/evolution/patches/PatchFont"
+      ],
+      "net/minecraft/world/item/crafting/Ingredient": [
+        "tgw/evolution/patches/PatchIngredient"
+      ],
+      "net/minecraft/world/inventory/CraftingContainer": [
+        "tgw/evolution/patches/PatchCraftingContainer"
+      ],
+      "net/minecraft/advancements/critereon/LightPredicate": [
+        "tgw/evolution/patches/PatchLocationPredicate"
+      ],
+      "net/minecraft/advancements/critereon/BlockPredicate": [
+        "tgw/evolution/patches/PatchLocationPredicate"
+      ],
+      "net/minecraft/advancements/critereon/FluidPredicate": [
+        "tgw/evolution/patches/PatchLocationPredicate"
       ]
     }
   }

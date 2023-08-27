@@ -16,6 +16,7 @@ accessible class net/minecraft/server/level/DistanceManager$FixedPlayerDistanceC
 accessible class net/minecraft/server/level/DistanceManager$PlayerTicketTracker
 accessible class net/minecraft/server/level/ThreadedLevelLightEngine$TaskType
 accessible class net/minecraft/world/inventory/MenuType$MenuSupplier
+accessible class net/minecraft/world/item/crafting/Ingredient$Value
 accessible class net/minecraft/world/level/block/entity/BlockEntityType$BlockEntitySupplier
 accessible class net/minecraft/world/level/entity/PersistentEntitySectionManager$ChunkLoadStatus
 accessible class net/minecraft/world/level/levelgen/SurfaceRules$SurfaceRule
@@ -235,6 +236,8 @@ accessible method net/minecraft/world/entity/LivingEntity equipEventAndSound (Ln
 accessible method net/minecraft/world/entity/LivingEntity onEffectUpdated (Lnet/minecraft/world/effect/MobEffectInstance;ZLnet/minecraft/world/entity/Entity;)V
 accessible method net/minecraft/world/inventory/MenuType <init> (Lnet/minecraft/world/inventory/MenuType$MenuSupplier;)V
 accessible method net/minecraft/world/item/context/UseOnContext getHitResult ()Lnet/minecraft/world/phys/BlockHitResult;
+accessible method net/minecraft/world/item/crafting/Ingredient$ItemValue <init> (Lnet/minecraft/world/item/ItemStack;)V
+accessible method net/minecraft/world/item/crafting/Ingredient$TagValue <init> (Lnet/minecraft/tags/TagKey;)V
 accessible method net/minecraft/world/level/block/AirBlock <init> (Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
 accessible method net/minecraft/world/level/block/AttachedStemBlock <init> (Lnet/minecraft/world/level/block/StemGrownBlock;Ljava/util/function/Supplier;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
 accessible method net/minecraft/world/level/block/AzaleaBlock <init> (Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V

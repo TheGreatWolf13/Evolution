@@ -363,6 +363,7 @@
     "MixinHeightmap",
     "MixinHolder_Reference",
     "MixinImposterProtoChunk",
+    "MixinIngredient",
     "MixinInventory",
     "MixinInventoryChangeTrigger",
     "MixinInventoryMenu",

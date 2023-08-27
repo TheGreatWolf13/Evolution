@@ -8,7 +8,6 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import tgw.evolution.patches.PatchCraftingContainer;
 
 @Mixin(ShapedRecipe.class)
 public abstract class MixinShapedRecipe {
@@ -17,14 +16,9 @@ public abstract class MixinShapedRecipe {
     @Shadow @Final NonNullList<Ingredient> recipeItems;
     @Shadow @Final int width;
 
-    /**
-     * @author TheGreatWolf
-     * @reason Implement check for item count.
-     */
     @Overwrite
     private boolean matches(CraftingContainer container, int width, int height, boolean mirrored) {
-        PatchCraftingContainer patch = (PatchCraftingContainer) container;
-        patch.reset();
+        container.reset();
         for (int i = 0; i < container.getWidth(); ++i) {
             for (int j = 0; j < container.getHeight(); ++j) {
                 int k = i - width;
@@ -43,7 +37,7 @@ public abstract class MixinShapedRecipe {
                     return false;
                 }
                 if (!ingredient.isEmpty()) {
-                    patch.put(index, ingredient.getItems()[0].getCount());
+                    container.put(index, ingredient.getItems()[0].getCount());
                 }
             }
         }

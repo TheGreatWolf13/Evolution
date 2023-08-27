@@ -6,7 +6,6 @@
   ],
   "key": {
     "#": {
-      "type": "forge:nbt",
       "item": "evolution:clayball",
       "count": 2
     }
