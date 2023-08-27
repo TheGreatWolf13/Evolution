@@ -17,7 +17,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
@@ -84,7 +83,7 @@ public abstract class Mixin_M_BlockItem extends Item {
             stateAtPos = this.updateBlockStateFromTag(pos, level, stack, stateAtPos);
             this.updateCustomBlockEntityTag(pos, level, player, stack, stateAtPos);
             Block blockPlaced = stateAtPos.getBlock();
-            blockPlaced.setPlacedBy(level, pos, stateAtPos, player, stack);
+            blockPlaced.setPlacedBy_(level, x, y, z, stateAtPos, player, stack);
             if (player instanceof ServerPlayer p) {
                 CriteriaTriggers.PLACED_BLOCK.trigger_(p, x, y, z, stack);
                 p.awardStat(EvolutionStats.BLOCK_PLACED.get(blockPlaced));
@@ -92,11 +91,10 @@ public abstract class Mixin_M_BlockItem extends Item {
         }
         SoundType soundType = stateAtPos.getSoundType();
         level.playSound(player, pos, this.getPlaceSound(stateAtPos), SoundSource.BLOCKS, (soundType.getVolume() + 1.0F) / 2.0F, soundType.getPitch() * 0.8F);
-        level.gameEvent(player, GameEvent.BLOCK_PLACE, pos);
         if (player == null || !player.getAbilities().instabuild) {
             stack.shrink(1);
         }
-        return InteractionResult.sidedSuccess(level.isClientSide);
+        return level.isClientSide ? InteractionResult.SUCCESS : InteractionResult.CONSUME_PARTIAL;
     }
 
     @Overwrite

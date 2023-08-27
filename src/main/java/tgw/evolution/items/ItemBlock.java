@@ -84,6 +84,10 @@ public class ItemBlock extends Item implements IEvolutionItem {
         }
     }
 
+    public Block getBlock() {
+        return this.block;
+    }
+
     @Override
     public String getDescriptionId() {
         return this.block.getDescriptionId();
@@ -136,7 +140,7 @@ public class ItemBlock extends Item implements IEvolutionItem {
         if (!player.getAbilities().instabuild) {
             stack.shrink(1);
         }
-        return InteractionResult.sidedSuccess(level.isClientSide);
+        return level.isClientSide ? InteractionResult.SUCCESS : InteractionResult.CONSUME_PARTIAL;
     }
 
     protected boolean placeBlock(LevelWriter level, int x, int y, int z, BlockState state) {

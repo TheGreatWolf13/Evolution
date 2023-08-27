@@ -37,6 +37,7 @@ import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.init.EvolutionTexts;
+import tgw.evolution.items.ItemBlock;
 import tgw.evolution.stats.EvolutionStatsCounter;
 import tgw.evolution.stats.IEvoStatFormatter;
 import tgw.evolution.util.collection.lists.OArrayList;
@@ -1314,17 +1315,25 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
                 }
                 else if (ScreenStats.ListStats.this.blockStatList.contains(ScreenStats.ListStats.this.sorting)) {
                     StatType<Block> blockSorting = (StatType<Block>) ScreenStats.ListStats.this.sorting;
-                    i = a instanceof BlockItem blockA ? ScreenStats.this.stats.getValueLong(blockSorting, blockA.getBlock()) : -1;
-                    j = b instanceof BlockItem blockB ? ScreenStats.this.stats.getValueLong(blockSorting, blockB.getBlock()) : -1;
+                    i = this.getBlockStats(blockSorting, a);
+                    j = this.getBlockStats(blockSorting, b);
                 }
                 else {
                     StatType<Item> itemSorting = (StatType<Item>) ScreenStats.ListStats.this.sorting;
                     i = ScreenStats.this.stats.getValueLong(itemSorting, a);
                     j = ScreenStats.this.stats.getValueLong(itemSorting, b);
                 }
-                return i == j ?
-                       String.CASE_INSENSITIVE_ORDER.compare(a.getDescription().getString(), b.getDescription().getString()) :
-                       ListStats.this.sortOrder * Long.compare(i, j);
+                return i == j ? String.CASE_INSENSITIVE_ORDER.compare(a.getDescription().getString(), b.getDescription().getString()) : ListStats.this.sortOrder * Long.compare(i, j);
+            }
+
+            private long getBlockStats(StatType<Block> blockSorting, Item item) {
+                if (item instanceof ItemBlock b) {
+                    return ScreenStats.this.stats.getValueLong(blockSorting, b.getBlock());
+                }
+                if (item instanceof BlockItem b) {
+                    return ScreenStats.this.stats.getValueLong(blockSorting, b.getBlock());
+                }
+                return -1;
             }
         }
 
@@ -1349,8 +1358,11 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
                 ScreenStats.this.blitSlot(matrices, x + 40, y, item);
                 for (int i = 0; i < ScreenStats.this.itemStats.blockStatList.size(); ++i) {
                     Stat<Block> stat;
-                    if (item instanceof BlockItem blockItem) {
-                        stat = ScreenStats.this.itemStats.blockStatList.get(i).get(blockItem.getBlock());
+                    if (item instanceof ItemBlock b) {
+                        stat = ScreenStats.this.itemStats.blockStatList.get(i).get(b.getBlock());
+                    }
+                    else if (item instanceof BlockItem b) {
+                        stat = ScreenStats.this.itemStats.blockStatList.get(i).get(b.getBlock());
                     }
                     else {
                         stat = null;
