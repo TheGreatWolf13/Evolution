@@ -1,16 +1,12 @@
 package tgw.evolution.items;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.item.Item;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
-import tgw.evolution.blocks.BlockFirewoodPile;
 import tgw.evolution.blocks.tileentities.TEFirewoodPile;
 import tgw.evolution.init.EvolutionBStates;
 import tgw.evolution.init.EvolutionBlocks;
@@ -37,25 +33,22 @@ public class ItemFirewood extends ItemGenericPlaceable {
     }
 
     @Override
-    public boolean customCondition(Block block) {
-        return block instanceof BlockFirewoodPile;
+    public boolean customCondition(BlockState stateAtPos) {
+        return stateAtPos.getBlock() == EvolutionBlocks.FIREWOOD_PILE;
     }
 
     @Override
-    public @Nullable BlockState getCustomState(BlockPlaceContext context) {
-        Level level = context.getLevel();
-        BlockPos pos = context.getClickedPos();
-        BlockState state = level.getBlockState(pos);
-        int count = state.getValue(EvolutionBStates.FIREWOOD_COUNT);
+    public @Nullable BlockState getCustomState(BlockState stateAtPos) {
+        int count = stateAtPos.getValue(EvolutionBStates.FIREWOOD_COUNT);
         if (count < 16) {
-            return state.setValue(EvolutionBStates.FIREWOOD_COUNT, count + 1);
+            return stateAtPos.setValue(EvolutionBStates.FIREWOOD_COUNT, count + 1);
         }
         return null;
     }
 
     @Override
-    public @Nullable BlockState getSneakingState(BlockPlaceContext context) {
-        return EvolutionBlocks.FIREWOOD_PILE.defaultBlockState().setValue(DIRECTION_HORIZONTAL, context.getHorizontalDirection());
+    public @Nullable BlockState getSneakingState(Player player) {
+        return EvolutionBlocks.FIREWOOD_PILE.defaultBlockState().setValue(DIRECTION_HORIZONTAL, player.getDirection());
     }
 
     public WoodVariant getVariant() {
@@ -63,14 +56,11 @@ public class ItemFirewood extends ItemGenericPlaceable {
     }
 
     @Override
-    public void sucessPlaceLogic(BlockPlaceContext context) {
-        ItemStack stack = context.getItemInHand();
-        Item item = stack.getItem();
-        if (item instanceof ItemFirewood firewood) {
-            Level level = context.getLevel();
-            BlockPos pos = context.getClickedPos();
-            TEFirewoodPile tile = (TEFirewoodPile) level.getBlockEntity(pos);
-            tile.addFirewood(firewood);
+    public void successPlaceLogic(Level level, int x, int y, int z, Player player, ItemStack stack) {
+        if (stack.getItem() instanceof ItemFirewood firewood) {
+            if (level.getBlockEntity_(x, y, z) instanceof TEFirewoodPile tile) {
+                tile.addFirewood(firewood);
+            }
         }
     }
 }
