@@ -59,6 +59,9 @@ accessible field net/minecraft/client/gui/Gui VIGNETTE_LOCATION Lnet/minecraft/r
 accessible field net/minecraft/client/gui/Gui WIDGETS_LOCATION Lnet/minecraft/resources/ResourceLocation;
 accessible field net/minecraft/client/gui/screens/controls/KeyBindsScreen keyBindsList Lnet/minecraft/client/gui/screens/controls/KeyBindsList;
 accessible field net/minecraft/client/gui/screens/Screen renderables Ljava/util/List;
+accessible field net/minecraft/client/gui/screens/TitleScreen$Warning32Bit label Lnet/minecraft/client/gui/components/MultiLineLabel;
+accessible field net/minecraft/client/gui/screens/TitleScreen$Warning32Bit x I
+accessible field net/minecraft/client/gui/screens/TitleScreen$Warning32Bit y I
 accessible field net/minecraft/client/gui/screens/TitleScreen$Warning32Bit realmsSubscriptionFuture Ljava/util/concurrent/CompletableFuture;
 accessible field net/minecraft/client/KeyMapping category Ljava/lang/String;
 accessible field net/minecraft/client/KeyMapping clickCount I
