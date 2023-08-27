@@ -16,6 +16,7 @@ import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.CampfireBlock;
 import net.minecraft.world.level.block.SupportType;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -176,6 +177,21 @@ public final class BlockUtils {
      */
     public static boolean isReplaceable(BlockState state) {
         return state.getMaterial().isReplaceable() || state.getBlock() instanceof IReplaceable replaceable && replaceable.isReplaceable(state);
+    }
+
+    public static boolean isSmokeyPos(LevelAccessor level, int x, int y, int z) {
+        for (int i = 1; i <= 5; ++i) {
+            BlockState stateBelow = level.getBlockState_(x, y - i, z);
+            if (CampfireBlock.isLitCampfire(stateBelow)) {
+                return true;
+            }
+            boolean empty = Shapes.joinIsNotEmpty(CampfireBlock.VIRTUAL_FENCE_POST, stateBelow.getCollisionShape_(level, x, y, z), BooleanOp.AND);
+            if (empty) {
+                BlockState state = level.getBlockState_(x, y - i - 1, z);
+                return CampfireBlock.isLitCampfire(state);
+            }
+        }
+        return false;
     }
 
     private static int light1(BlockState state) {
