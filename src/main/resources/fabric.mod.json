@@ -327,6 +327,9 @@
       ],
       "net/minecraft/client/ClientRecipeBook": [
         "tgw/evolution/patches/PatchClientRecipeBook"
+      ],
+      "net/minecraft/client/gui/screens/recipebook/RecipeCollection": [
+        "tgw/evolution/patches/PatchRecipeCollection"
       ]
     }
   }

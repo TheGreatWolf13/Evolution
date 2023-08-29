@@ -10,6 +10,7 @@ import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import tgw.evolution.inventory.StackedContentsEv;
+import tgw.evolution.patches.PatchRecipeCollection;
 import tgw.evolution.util.collection.lists.BiIIArrayList;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
@@ -21,7 +22,7 @@ import java.util.Set;
 
 @SuppressWarnings("MethodMayBeStatic")
 @Mixin(RecipeCollection.class)
-public abstract class MixinRecipeCollection {
+public abstract class MixinRecipeCollection implements PatchRecipeCollection {
 
     @Mutable @Shadow @Final private Set<Recipe<?>> craftable;
     @Mutable @Shadow @Final private Set<Recipe<?>> fitsDimensions;
@@ -51,10 +52,6 @@ public abstract class MixinRecipeCollection {
         }
     }
 
-    /**
-     * @author TheGreatWolf
-     * @reason Use faster list
-     */
     @Overwrite
     public List<Recipe<?>> getDisplayRecipes(boolean onlyCraftable) {
         OList<Recipe<?>> list = new OArrayList<>();
@@ -66,6 +63,19 @@ public abstract class MixinRecipeCollection {
         return list;
     }
 
+    @Override
+    public int getRecipeAmount(boolean onlyCraftable) {
+        Set<Recipe<?>> set = onlyCraftable ? this.craftable : this.fitsDimensions;
+        List<Recipe<?>> recipes = this.recipes;
+        int count = 0;
+        for (int i = 0, len = recipes.size(); i < len; ++i) {
+            if (set.contains(recipes.get(i))) {
+                ++count;
+            }
+        }
+        return count;
+    }
+
     /**
      * @author TheGreatWolf
      * @reason Use faster list
@@ -74,7 +84,9 @@ public abstract class MixinRecipeCollection {
     public List<Recipe<?>> getRecipes(boolean onlyCraftable) {
         OList<Recipe<?>> list = new OArrayList<>();
         Set<Recipe<?>> set = onlyCraftable ? this.craftable : this.fitsDimensions;
-        for (Recipe<?> recipe : this.recipes) {
+        List<Recipe<?>> recipes = this.recipes;
+        for (int i = 0, len = recipes.size(); i < len; ++i) {
+            Recipe<?> recipe = recipes.get(i);
             if (set.contains(recipe)) {
                 list.add(recipe);
             }

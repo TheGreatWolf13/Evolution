@@ -117,8 +117,7 @@ public class PageRecipeBook {
                     this.lastClickedRecipeCollection = btn.getCollection();
                 }
                 else if (button == GLFW.GLFW_MOUSE_BUTTON_2 && !this.overlay.isVisible() && !btn.isOnlyOption()) {
-                    this.overlay.init(this.minecraft, btn.getCollection(), btn.x, btn.y, cornerX + width / 2, cornerY + 13 + height / 2,
-                                      btn.getWidth());
+                    this.overlay.init(this.minecraft, btn.getCollection(), btn.x, btn.y, cornerX + width / 2, cornerY + 13 + height / 2, btn.getWidth());
                 }
                 return true;
             }

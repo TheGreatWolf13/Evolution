@@ -8,6 +8,7 @@ import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.recipebook.RecipeCollection;
+import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.chat.TranslatableComponent;
@@ -19,8 +20,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
 import org.lwjgl.glfw.GLFW;
 import tgw.evolution.Evolution;
-import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.client.util.MouseButton;
+import tgw.evolution.mixin.AccessorRenderSystem;
 import tgw.evolution.util.collection.lists.OArrayList;
 
 import java.util.List;
@@ -60,10 +61,10 @@ public class ButtonRecipe extends AbstractWidget {
         return list.get(this.currentIndex);
     }
 
-    public List<Component> getTooltipText(Screen pScreen) {
+    public List<Component> getTooltipText(Screen screen) {
         ItemStack result = this.getOrderedRecipes().get(this.currentIndex).getResultItem();
-        List<Component> list = new OArrayList<>(pScreen.getTooltipFromItem(result));
-        if (this.collection.getRecipes(this.book.isFiltering(this.menu)).size() > 1) {
+        List<Component> list = new OArrayList<>(screen.getTooltipFromItem(result));
+        if (this.collection.getRecipeAmount(this.book.isFiltering(this.menu)) > 1) {
             list.add(this.textMoreRecipes);
         }
         return list;
@@ -104,14 +105,20 @@ public class ButtonRecipe extends AbstractWidget {
             this.time += partialTicks;
         }
         Minecraft mc = Minecraft.getInstance();
-        RenderSystem.setShader(RenderHelper.SHADER_POSITION_TEX);
+        AccessorRenderSystem.setShader(GameRenderer.getPositionTexShader());
         RenderSystem.setShaderTexture(0, this.resBackground);
+        List<Recipe<?>> list = this.getOrderedRecipes();
+        this.currentIndex = Mth.floor(this.time / TICKS_TO_SWAP) % list.size();
+        Recipe<?> recipe = list.get(this.currentIndex);
         int i = 29;
+        if (!this.collection.isCraftable(recipe)) {
+            i += BACKGROUND_SIZE;
+        }
         if (!this.collection.hasCraftable()) {
             i += BACKGROUND_SIZE;
         }
         int j = 206;
-        if (this.collection.getRecipes(this.book.isFiltering(this.menu)).size() > 1) {
+        if (this.collection.getRecipeAmount(this.book.isFiltering(this.menu)) > 1) {
             j += BACKGROUND_SIZE;
         }
         boolean isAnimating = this.animationTime > 0.0F;
@@ -126,9 +133,7 @@ public class ButtonRecipe extends AbstractWidget {
             this.animationTime -= partialTicks;
         }
         this.blit(matrices, this.x, this.y, i, j, this.width, this.height);
-        List<Recipe<?>> list = this.getOrderedRecipes();
-        this.currentIndex = Mth.floor(this.time / TICKS_TO_SWAP) % list.size();
-        ItemStack itemstack = list.get(this.currentIndex).getResultItem();
+        ItemStack itemstack = recipe.getResultItem();
         int k = 4;
         if (this.collection.hasSingleResultItem() && this.getOrderedRecipes().size() > 1) {
             mc.getItemRenderer().renderAndDecorateItem(itemstack, this.x + k + 1, this.y + k + 1, 0, 10);
@@ -150,9 +155,8 @@ public class ButtonRecipe extends AbstractWidget {
     public void updateNarration(NarrationElementOutput narrationElementOutput) {
         ItemStack result = this.getOrderedRecipes().get(this.currentIndex).getResultItem();
         narrationElementOutput.add(NarratedElementType.TITLE, new TranslatableComponent("narration.recipe", result.getHoverName()));
-        if (this.collection.getRecipes(this.book.isFiltering(this.menu)).size() > 1) {
-            narrationElementOutput.add(NarratedElementType.USAGE, new TranslatableComponent("narration.button.usage.hovered"),
-                                       new TranslatableComponent("narration.recipe.usage.more"));
+        if (this.collection.getRecipeAmount(this.book.isFiltering(this.menu)) > 1) {
+            narrationElementOutput.add(NarratedElementType.USAGE, new TranslatableComponent("narration.button.usage.hovered"), new TranslatableComponent("narration.recipe.usage.more"));
         }
         else {
             narrationElementOutput.add(NarratedElementType.USAGE, new TranslatableComponent("narration.button.usage.hovered"));

@@ -1,7 +1,5 @@
 package tgw.evolution.mixin;
 
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.Table;
 import net.minecraft.client.ClientRecipeBook;
 import net.minecraft.client.RecipeBookCategories;
 import net.minecraft.client.gui.screens.recipebook.RecipeCollection;
@@ -28,6 +26,7 @@ import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.collection.maps.R2OEnumMap;
 import tgw.evolution.util.collection.maps.R2OMap;
+import tgw.evolution.util.collection.maps.RecipeGrouper;
 
 import java.util.List;
 import java.util.Map;
@@ -56,7 +55,7 @@ public abstract class Mixin_CF_ClientRecipeBook extends RecipeBook implements Pa
     @Unique
     private static R2OMap<RecipeCategory, OList<OList<Recipe<?>>>> categorizeAndGroupRecipes_(Iterable<Recipe<?>> recipes) {
         R2OMap<RecipeCategory, OList<OList<Recipe<?>>>> recipeLists = new R2OEnumMap<>(RecipeCategory.VALUES);
-        Table<RecipeCategory, String, OList<Recipe<?>>> table = HashBasedTable.create();
+        RecipeGrouper table = new RecipeGrouper();
         for (Recipe<?> recipe : recipes) {
             if (!recipe.isSpecial()) {
                 RecipeCategory category = getCategory_(recipe);
