@@ -19,7 +19,7 @@ import tgw.evolution.client.gui.ScreenCorpse;
 import tgw.evolution.client.gui.ScreenInventory;
 import tgw.evolution.client.gui.overlays.EvolutionOverlays;
 import tgw.evolution.client.gui.overlays.VanillaOverlays;
-import tgw.evolution.client.renderer.EvolutionRenderLayer;
+import tgw.evolution.client.renderer.RenderLayer;
 import tgw.evolution.client.tooltip.*;
 import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.events.ClientEvents;
@@ -174,7 +174,7 @@ public final class EvolutionClient implements ClientModInitializer {
         registerScreens();
         EvolutionRenderer.registryEntityRenders();
 //        addTextures(event);
-        EvolutionRenderLayer.setup();
+        RenderLayer.setup();
         fixInputMappings();
         registerTooltips();
         changeWorldOrders();
