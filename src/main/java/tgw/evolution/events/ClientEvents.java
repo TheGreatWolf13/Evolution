@@ -11,7 +11,6 @@ import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.Input;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
@@ -227,24 +226,6 @@ public class ClientEvents {
         return instance;
     }
 
-    public static void onFinishLoading() {
-        Evolution.info("Creating config GUI factories...");
-//        ModList.get().forEachModContainer((modId, container) -> {
-//            if (container.getCustomExtension(ConfigGuiHandler.ConfigGuiFactory.class).isPresent()) {
-//                return;
-//            }
-//            Map<ModConfig.Type, Set<ModConfig>> modConfigMap = createConfigMap(container);
-//            if (!modConfigMap.isEmpty()) {
-//                Evolution.info("Registering config factory for mod {}. Found {} client config(s) and {} common config(s)", modId,
-//                               modConfigMap.getOrDefault(ModConfig.Type.CLIENT, Collections.emptySet()).size(),
-//                               modConfigMap.getOrDefault(ModConfig.Type.COMMON, Collections.emptySet()).size());
-//                String displayName = container.getModInfo().getDisplayName();
-//                container.registerExtensionPoint(ConfigGuiHandler.ConfigGuiFactory.class, () -> new ConfigGuiHandler.ConfigGuiFactory(
-//                        (mc, screen) -> new ScreenModConfigSelection(screen, displayName, modConfigMap)));
-//            }
-//        });
-    }
-
     public static void onGuiOpen(@Nullable Screen newScreen) {
         handler = null;
         oldSelectedSlot = null;
@@ -306,9 +287,11 @@ public class ClientEvents {
         if (this.mc.hitResult instanceof BlockHitResult blockHitResult) {
             assert this.mc.level != null;
             assert this.mc.player != null;
-            BlockPos pos = blockHitResult.getBlockPos();
-            BlockState state = this.mc.level.getBlockState(pos);
-            return !(state.getBlock() instanceof BlockGeneric block) || !block.preventsShortAttacking(this.mc.level, pos, state, this.mc.player);
+            int x = blockHitResult.posX();
+            int y = blockHitResult.posY();
+            int z = blockHitResult.posZ();
+            BlockState state = this.mc.level.getBlockState_(x, y, z);
+            return !(state.getBlock() instanceof BlockGeneric block) || !block.preventsShortAttacking(this.mc.level, x, y, z, state, this.mc.player);
         }
         return true;
     }

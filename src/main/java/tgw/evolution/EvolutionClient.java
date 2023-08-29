@@ -182,6 +182,5 @@ public final class EvolutionClient implements ClientModInitializer {
         EvolutionOverlays.register();
 //        registerModels(event);
 //        ModelRegistry.register(event);
-        ClientEvents.onFinishLoading();
     }
 }

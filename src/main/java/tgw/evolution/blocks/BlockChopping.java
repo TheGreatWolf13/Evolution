@@ -144,15 +144,15 @@ public class BlockChopping extends BlockPhysics implements IReplaceable, ISittab
     }
 
     @Override
-    public boolean preventsShortAttacking(Level level, BlockPos pos, BlockState state, Player player) {
-        BlockEntity tile = level.getBlockEntity(pos);
+    public boolean preventsShortAttacking(Level level, int x, int y, int z, BlockState state, Player player) {
+        BlockEntity tile = level.getBlockEntity_(x, y, z);
         if (!(tile instanceof TEChopping chopping)) {
-            return super.preventsShortAttacking(level, pos, state, player);
+            return super.preventsShortAttacking(level, x, y, z, state, player);
         }
         if (chopping.hasLog() && ItemUtils.isAxe(player.getMainHandItem())) {
             return true;
         }
-        return super.preventsShortAttacking(level, pos, state, player);
+        return super.preventsShortAttacking(level, x, y, z, state, player);
     }
 
     @Override

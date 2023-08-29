@@ -7,7 +7,6 @@
   ],
   "key": {
     "#": {
-      "type": "forge:nbt",
       "item": "evolution:rock_gabbro",
       "count": 2
     }

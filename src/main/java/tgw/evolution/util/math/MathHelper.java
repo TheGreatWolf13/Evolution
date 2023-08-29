@@ -900,7 +900,7 @@ public final class MathHelper {
                     return false;
                 }
             }
-            Set<Map.Entry<String, JsonElement>> bEntries = oa.entrySet();
+            Set<Map.Entry<String, JsonElement>> bEntries = ob.entrySet();
             for (Map.Entry<String, JsonElement> bEntry : bEntries) {
                 String key = bEntry.getKey();
                 if (!oa.has(key)) {

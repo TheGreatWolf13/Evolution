@@ -108,6 +108,7 @@ import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.client.renderer.chunk.EvClientMetricsSamplersProvider;
 import tgw.evolution.client.renderer.chunk.EvLevelRenderer;
 import tgw.evolution.config.EvolutionConfig;
+import tgw.evolution.datagen.DataGenerators;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.hooks.ClientHooks;
 import tgw.evolution.hooks.asm.DeleteField;
@@ -305,6 +306,10 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
         this.options = new Options((Minecraft) (Object) this, this.gameDirectory);
         this.tutorial = new Tutorial((Minecraft) (Object) this, this.options);
         this.hotbarManager = new HotbarManager(this.gameDirectory, this.fixerUpper);
+        if ("true".equals(System.clearProperty("evolution.datagen"))) {
+            DataGenerators.run();
+            System.exit(0);
+        }
         LOGGER.info("Backend library: {}", RenderSystem.getBackendDescription());
         DisplayData displayData;
         if (this.options.overrideHeight > 0 && this.options.overrideWidth > 0) {

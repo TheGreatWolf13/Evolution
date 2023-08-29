@@ -50,6 +50,11 @@ public final class Evolution implements ModInitializer {
         LOGGER.error("[{}]: {}", clazz, message);
     }
 
+    public static void error(String message, Throwable t) {
+        warn(message);
+        LOGGER.warn("Exception: ", t);
+    }
+
     @Contract("_ -> new")
     public static ResourceLocation getResource(String name) {
         return new ResourceLocation(MODID, name);

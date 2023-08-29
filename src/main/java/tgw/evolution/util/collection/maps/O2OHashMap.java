@@ -26,6 +26,10 @@ public class O2OHashMap<K, V> extends Object2ObjectOpenHashMap<K, V> implements 
         super(expected);
     }
 
+    public O2OHashMap(Map<? extends K, ? extends V> m) {
+        super(m);
+    }
+
     private void ensureCapacity(final int capacity) {
         final int needed = arraySize(capacity, this.f);
         if (needed > this.n) {

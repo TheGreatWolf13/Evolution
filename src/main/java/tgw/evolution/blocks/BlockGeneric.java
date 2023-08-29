@@ -1,6 +1,5 @@
 package tgw.evolution.blocks;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -25,7 +24,7 @@ public abstract class BlockGeneric extends Block {
         return this instanceof IClimbable climbable && climbable.isClimbable(state, level, x, y, z, entity);
     }
 
-    public boolean preventsShortAttacking(Level level, BlockPos pos, BlockState state, Player player) {
+    public boolean preventsShortAttacking(Level level, int x, int y, int z, BlockState state, Player player) {
         return false;
     }
 }

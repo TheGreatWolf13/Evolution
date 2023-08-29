@@ -364,6 +364,7 @@
     "MixinHolder_Reference",
     "MixinImposterProtoChunk",
     "MixinIngredient",
+    "MixinIngredient_ItemValue",
     "MixinInventory",
     "MixinInventoryChangeTrigger",
     "MixinInventoryMenu",
