@@ -188,10 +188,12 @@ public class BlockLeaves extends BlockGeneric implements IReplaceable {
         if (leavesCulling == 0) {
             return false;
         }
-        for (int i = 1; i <= leavesCulling; i++) {
-            BlockState s = level.getBlockStateAtSide(x, y, z, face, i);
-            if (!(s.getBlock() == this)) {
-                return false;
+        for (Direction direction : DirectionUtil.ALL) {
+            for (int i = 1; i <= leavesCulling; i++) {
+                BlockState s = level.getBlockStateAtSide(x, y, z, direction, i);
+                if (!(s.getBlock() == this)) {
+                    return false;
+                }
             }
         }
         return true;
