@@ -138,9 +138,10 @@ public abstract class Mixin_CF_ParticleEngine implements PreparableReloadListene
     @Override
     public void crack_(int x, int y, int z, Direction face) {
         assert this.level != null;
-        BlockState state = this.level.getBlockState_(x, y, z);
-        if (state.getRenderShape() != RenderShape.INVISIBLE) {
-            VoxelShape shape = state.getShape_(this.level, x, y, z);
+        BlockState stateAtPos = this.level.getBlockState_(x, y, z);
+        BlockState stateForParticles = stateAtPos.stateForParticles(this.level, x, y, z);
+        if (stateForParticles.getRenderShape() != RenderShape.INVISIBLE) {
+            VoxelShape shape = stateAtPos.getShape_(this.level, x, y, z);
             double minX = shape.min(Direction.Axis.X);
             double maxX = shape.max(Direction.Axis.X);
             double minY = shape.min(Direction.Axis.Y);
@@ -158,7 +159,7 @@ public abstract class Mixin_CF_ParticleEngine implements PreparableReloadListene
                 case WEST -> px = x + minX - 0.1;
                 case EAST -> px = x + maxX + 0.1;
             }
-            this.add(PatchTerrainParticle.create(this.level, px, py, pz, 0, 0, 0, state, x, y, z).setPower(0.2F).scale(0.6F));
+            this.add(PatchTerrainParticle.create(this.level, px, py, pz, 0, 0, 0, stateForParticles, x, y, z).setPower(0.2F).scale(0.6F));
         }
     }
 

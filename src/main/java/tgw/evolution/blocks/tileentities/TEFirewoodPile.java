@@ -67,6 +67,17 @@ public class TEFirewoodPile extends BlockEntity {
         return WoodVariant.byId(id).get(EvolutionItems.FIREWOODS);
     }
 
+    public @Nullable WoodVariant getLastVariant() {
+        if (this.currentIndex == 0) {
+            return null;
+        }
+        byte id = this.firewood[this.currentIndex - 1];
+        if (id == -1) {
+            return null;
+        }
+        return WoodVariant.byId(id);
+    }
+
     @Override
     public @Nullable ClientboundBlockEntityDataPacket getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);

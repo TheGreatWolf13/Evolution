@@ -485,6 +485,11 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
         this.getBlock().spawnAfterBreak_(this.asState(), level, x, y, z, stack);
     }
 
+    @Override
+    public BlockState stateForParticles(Level level, int x, int y, int z) {
+        return this.getBlock().stateForParticles(this.asState(), level, x, y, z);
+    }
+
     @Overwrite
     public void tick(ServerLevel level, BlockPos pos, Random random) {
         Evolution.deprecatedMethod();

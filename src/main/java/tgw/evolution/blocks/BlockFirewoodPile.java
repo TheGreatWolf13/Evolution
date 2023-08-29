@@ -23,9 +23,11 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.tileentities.TEFirewoodPile;
 import tgw.evolution.blocks.util.BlockUtils;
+import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionShapes;
 import tgw.evolution.items.ItemFirewood;
 import tgw.evolution.util.constants.HarvestLevel;
+import tgw.evolution.util.constants.WoodVariant;
 import tgw.evolution.util.math.MathHelper;
 
 import static tgw.evolution.init.EvolutionBStates.DIRECTION_HORIZONTAL;
@@ -155,8 +157,7 @@ public class BlockFirewoodPile extends BlockPhysics implements IReplaceable, Ent
         else if (logCount >= 4) {
             shape = EvolutionShapes.LOG_PILE[4 - 1];
         }
-        return MathHelper.union(shape, MathHelper.rotateShape(Direction.NORTH, state.getValue(DIRECTION_HORIZONTAL),
-                                                              EvolutionShapes.LOG_PILE[logCount - 1]));
+        return MathHelper.union(shape, MathHelper.rotateShape(Direction.NORTH, state.getValue(DIRECTION_HORIZONTAL), EvolutionShapes.LOG_PILE[logCount - 1]));
     }
 
     @Override
@@ -188,5 +189,16 @@ public class BlockFirewoodPile extends BlockPhysics implements IReplaceable, Ent
     @Override
     public BlockState rotate(BlockState state, Rotation rot) {
         return state.setValue(DIRECTION_HORIZONTAL, rot.rotate(state.getValue(DIRECTION_HORIZONTAL)));
+    }
+
+    @Override
+    public BlockState stateForParticles(BlockState state, Level level, int x, int y, int z) {
+        if (level.getBlockEntity_(x, y, z) instanceof TEFirewoodPile tile) {
+            WoodVariant variant = tile.getLastVariant();
+            if (variant != null) {
+                return EvolutionBlocks.LOGS.get(variant).defaultBlockState();
+            }
+        }
+        return super.stateForParticles(state, level, x, y, z);
     }
 }

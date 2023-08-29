@@ -538,10 +538,6 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
     @Shadow
     protected abstract ProfilerFiller constructProfiler(boolean p_167971_, @Nullable SingleTickProfiler p_167972_);
 
-    /**
-     * @author TheGreatWolf
-     * @reason Replace to handle Evolution's input.
-     */
     @Overwrite
     private void continueAttack(boolean leftClick) {
         if (!leftClick || ClientEvents.getInstance().shouldRenderSpecialAttack()) {

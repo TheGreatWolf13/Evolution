@@ -109,6 +109,10 @@ public interface PatchBlock {
         throw new AbstractMethodError();
     }
 
+    default BlockState stateForParticles(BlockState state, Level level, int x, int y, int z) {
+        throw new AbstractMethodError();
+    }
+
     default void stepOn_(Level level, int x, int y, int z, BlockState state, Entity entity) {
         throw new AbstractMethodError();
     }

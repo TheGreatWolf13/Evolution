@@ -168,6 +168,10 @@ public interface PatchBlockStateBase {
         throw new AbstractMethodError();
     }
 
+    default BlockState stateForParticles(Level level, int x, int y, int z) {
+        throw new AbstractMethodError();
+    }
+
     default void tick_(ServerLevel level, int x, int y, int z, Random random) {
         throw new AbstractMethodError();
     }

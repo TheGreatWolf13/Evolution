@@ -22,7 +22,6 @@ import net.minecraft.world.level.block.LevelEvent;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.storage.loot.BuiltInLootTables;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
@@ -286,11 +285,10 @@ public abstract class Mixin_FS_Block extends BlockBehaviour implements PatchBloc
 
     @Override
     public void playerWillDestroy_(Level level, int x, int y, int z, BlockState state, Player player) {
-        this.spawnDestroyParticles_(level, player, x, y, z, state);
+        this.spawnDestroyParticles_(level, player, x, y, z, state.stateForParticles(level, x, y, z));
         if (state.is(BlockTags.GUARDED_BY_PIGLINS)) {
             PiglinAi.angerNearbyPiglins(player, false);
         }
-        level.gameEvent(player, GameEvent.BLOCK_DESTROY, new BlockPos(x, y, z));
     }
 
     @Overwrite
@@ -313,6 +311,11 @@ public abstract class Mixin_FS_Block extends BlockBehaviour implements PatchBloc
     @Override
     public void spawnDestroyParticles_(Level level, Player player, int x, int y, int z, BlockState state) {
         level.levelEvent_(player, LevelEvent.PARTICLES_DESTROY_BLOCK, x, y, z, getId(state));
+    }
+
+    @Override
+    public BlockState stateForParticles(BlockState state, Level level, int x, int y, int z) {
+        return state;
     }
 
     @Overwrite
