@@ -5,7 +5,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +45,7 @@ public class TEFirewoodPile extends BlockEntity {
         return mass;
     }
 
-    public void dropAll(Level level, int x, int y, int z) {
+    public void dropAll(LevelAccessor level, int x, int y, int z) {
         while (this.currentIndex > 0) {
             Item item = this.removeLastFirewood();
             if (item != null) {

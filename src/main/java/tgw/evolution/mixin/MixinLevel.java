@@ -27,6 +27,7 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -56,6 +57,20 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
     public void addDestroyBlockEffect_(int x, int y, int z, BlockState state) {
     }
 
+    @Overwrite
+    public void blockEntityChanged(BlockPos pos) {
+        Evolution.deprecatedMethod();
+        this.blockEntityChanged_(pos.getX(), pos.getY(), pos.getZ());
+    }
+
+    @Override
+    public void blockEntityChanged_(int x, int y, int z) {
+        ChunkAccess chunk = this.getChunk(SectionPos.blockToSectionCoord(x), SectionPos.blockToSectionCoord(z), ChunkStatus.FULL, false);
+        if (chunk != null) {
+            chunk.setUnsaved(true);
+        }
+    }
+
     @Override
     @Overwrite
     public boolean destroyBlock(BlockPos pos, boolean drop, @Nullable Entity entity, int limit) {
@@ -75,7 +90,7 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
         }
         if (drop) {
             BlockEntity blockEntity = state.hasBlockEntity() ? this.getBlockEntity_(x, y, z) : null;
-            BlockUtils.dropResources(state, (Level) (Object) this, x, y, z, blockEntity, entity, ItemStack.EMPTY);
+            BlockUtils.dropResources(state, this, x, y, z, blockEntity, entity, ItemStack.EMPTY);
         }
         return this.setBlock_(x, y, z, fluidState.createLegacyBlock(), BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE, limit);
     }
@@ -84,6 +99,7 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
      * @author TheGreatWolf
      * @reason Use non-BlockPos version
      */
+    @SuppressWarnings("removal")
     @Overwrite
     @Override
     public @Nullable BlockEntity getBlockEntity(BlockPos pos) {
@@ -105,6 +121,7 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
      * @author TheGreatWolf
      * @reason Use non-BlockPos version
      */
+    @SuppressWarnings("removal")
     @Overwrite
     @Override
     public BlockState getBlockState(BlockPos pos) {
@@ -123,6 +140,11 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
     @Override
     @Shadow
     public abstract LevelChunk getChunk(int pChunkX, int pChunkZ);
+
+    @Override
+    @Shadow
+    @Contract("_, _, _, true -> !null")
+    public abstract @Nullable ChunkAccess getChunk(int i, int j, ChunkStatus chunkStatus, boolean bl);
 
     /**
      * @author TheGreatWolf
@@ -165,6 +187,7 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
      * @author TheGreatWolf
      * @reason Use non-BlockPos version
      */
+    @SuppressWarnings("removal")
     @Overwrite
     @Override
     public FluidState getFluidState(BlockPos pos) {

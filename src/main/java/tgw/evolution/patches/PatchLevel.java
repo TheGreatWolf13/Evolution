@@ -12,6 +12,10 @@ public interface PatchLevel extends PatchLevelWriter {
         throw new AbstractMethodError();
     }
 
+    default void blockEntityChanged_(int x, int y, int z) {
+        throw new AbstractMethodError();
+    }
+
     default void destroyBlockProgress(int breakerId, long pos, int progress) {
         throw new AbstractMethodError();
     }

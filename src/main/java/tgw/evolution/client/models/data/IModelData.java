@@ -21,7 +21,7 @@ public interface IModelData {
      */
     boolean hasProperty(ModelProperty<?> prop);
 
-    @Nullable <T> T setData(ModelProperty<T> prop, T data);
+    <T> void setData(ModelProperty<T> prop, T data);
 
     final class EmptyModelData implements IModelData {
 
@@ -39,8 +39,7 @@ public interface IModelData {
         }
 
         @Override
-        public @Nullable <T> T setData(ModelProperty<T> prop, T data) {
-            return null;
+        public <T> void setData(ModelProperty<T> prop, T data) {
         }
     }
 }

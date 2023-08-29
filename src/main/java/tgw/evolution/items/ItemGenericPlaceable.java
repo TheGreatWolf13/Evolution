@@ -47,16 +47,13 @@ public abstract class ItemGenericPlaceable extends ItemEv {
         if (!canPlace) {
             return InteractionResult.FAIL;
         }
-        if (level.isClientSide) {
-            return InteractionResult.FAIL;
-        }
         BlockState stateForPlacement = null;
         if (player.isSecondaryUseActive()) {
             stateForPlacement = this.getSneakingState(player);
         }
-        BlockState stateAtPos = level.getBlockState_(x, y, z);
-        if (this.customCondition(stateAtPos)) {
-            stateForPlacement = this.getCustomState(stateAtPos);
+        BlockState oldStateAtPos = level.getBlockState_(x, y, z);
+        if (this.customCondition(oldStateAtPos)) {
+            stateForPlacement = this.getCustomState(oldStateAtPos);
         }
         if (stateForPlacement == null) {
             return InteractionResult.FAIL;
@@ -70,22 +67,21 @@ public abstract class ItemGenericPlaceable extends ItemEv {
         if (!placeBlock(level, x, y, z, stateForPlacement)) {
             return InteractionResult.FAIL;
         }
+        ItemStack stack = player.getItemInHand(hand);
         if (player instanceof ServerPlayer p) {
-            ItemStack stack = player.getItemInHand(hand);
-            Block blockAtPos = stateAtPos.getBlock();
-            if (blockAtPos == stateForPlacement.getBlock()) {
-                blockAtPos.setPlacedBy_(level, x, y, z, stateAtPos, p, stack);
+            BlockState placedState = level.getBlockState_(x, y, z);
+            Block placedBlock = placedState.getBlock();
+            if (placedBlock == stateForPlacement.getBlock()) {
+                placedBlock.setPlacedBy_(level, x, y, z, placedState, p, stack);
                 CriteriaTriggers.PLACED_BLOCK.trigger_(p, x, y, z, stack);
-                p.awardStat(EvolutionStats.BLOCK_PLACED.get(blockAtPos));
+                p.awardStat(EvolutionStats.BLOCK_PLACED.get(placedBlock));
             }
-            this.successPlaceLogic(level, x, y, z, player, stack);
-            SoundType soundtype = stateAtPos.getSoundType();
-            p.swing(hand);
-            level.playSound(null, x + 0.5, y + 0.5, z + 0.5, getPlaceSound(stateAtPos), SoundSource.BLOCKS, (soundtype.getVolume() + 1.0F) / 2.0F, soundtype.getPitch() * 0.8F);
-            stack.shrink(1);
-            return InteractionResult.SUCCESS;
         }
-        return InteractionResult.PASS;
+        this.successPlaceLogic(level, x, y, z, player, stack);
+        stack.shrink(1);
+        SoundType soundType = stateForPlacement.getSoundType();
+        level.playSound(player, x + 0.5, y + 0.5, z + 0.5, getPlaceSound(stateForPlacement), SoundSource.BLOCKS, (soundType.getVolume() + 1.0F) / 2.0F, soundType.getPitch() * 0.8F);
+        return InteractionResult.sidedSuccess(level.isClientSide);
     }
 
     public abstract void successPlaceLogic(Level level, int x, int y, int z, Player player, ItemStack stack);

@@ -822,8 +822,7 @@ public class EvChunkRenderDispatcher {
                                             compiledChunk.hasBlocks |= 1 << i;
                                         }
                                     }
-                                    if (blockState.getRenderShape() != RenderShape.INVISIBLE &&
-                                        ItemBlockRenderTypes.getChunkRenderType(blockState) == renderType) {
+                                    if (blockState.getRenderShape() != RenderShape.INVISIBLE && ItemBlockRenderTypes.getChunkRenderType(blockState) == renderType) {
                                         BufferBuilder builder = builderPack.builder(i);
                                         if ((compiledChunk.hasLayer & 1 << i) == 0) {
                                             compiledChunk.hasLayer |= 1 << i;

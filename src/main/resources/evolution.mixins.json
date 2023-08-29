@@ -320,6 +320,7 @@
     "MixinChunkMap",
     "MixinChunkMap_TrackedEntity",
     "MixinChunkSerializer",
+    "Mixin_CF_ClientboundBlockEntityDataPacket",
     "MixinClientboundLoginPacket",
     "MixinClientboundUpdateMobEffectPacket",
     "MixinClipContext_Block",

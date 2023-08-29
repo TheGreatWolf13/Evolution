@@ -86,6 +86,7 @@ accessible field net/minecraft/client/multiplayer/ClientChunkCache$Storage chunk
 accessible field net/minecraft/client/multiplayer/ClientChunkCache$Storage chunks Ljava/util/concurrent/atomic/AtomicReferenceArray;
 accessible field net/minecraft/client/multiplayer/ClientChunkCache$Storage viewCenterX I
 accessible field net/minecraft/client/multiplayer/ClientChunkCache$Storage viewCenterZ I
+mutable field net/minecraft/client/renderer/block/model/BlockFaceUV rotation I
 accessible field net/minecraft/client/renderer/block/ModelBlockRenderer CACHE Ljava/lang/ThreadLocal;
 accessible field net/minecraft/client/renderer/block/ModelBlockRenderer$AdjacencyInfo corners [Lnet/minecraft/core/Direction;
 accessible field net/minecraft/client/renderer/block/ModelBlockRenderer$AdjacencyInfo doNonCubicWeight Z

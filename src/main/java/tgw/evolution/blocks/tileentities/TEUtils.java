@@ -57,8 +57,11 @@ public final class TEUtils {
         tile.setChanged();
         Level level = tile.getLevel();
         BlockPos pos = tile.getBlockPos();
+        int x = pos.getX();
+        int y = pos.getY();
+        int z = pos.getZ();
         assert level != null;
-        BlockState state = level.getBlockState(pos);
-        level.sendBlockUpdated(pos, state, state, BlockFlags.RENDER_MAINTHREAD);
+        BlockState state = level.getBlockState_(x, y, z);
+        level.sendBlockUpdated_(x, y, z, state, state, BlockFlags.RENDER_MAINTHREAD);
     }
 }

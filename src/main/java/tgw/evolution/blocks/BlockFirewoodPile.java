@@ -18,7 +18,6 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
@@ -52,14 +51,13 @@ public class BlockFirewoodPile extends BlockPhysics implements IReplaceable, Ent
                 BlockUtils.dropItemStack(level, x, y, z, stack);
             }
             else {
-                level.playSound(null, x + 0.5, y + 0.5, z + 0.5, SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, 0.2f,
-                                ((level.random.nextFloat() - level.random.nextFloat()) * 0.7f + 1) * 2);
+                level.playSound(null, x + 0.5, y + 0.5, z + 0.5, SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, 0.2f, ((level.random.nextFloat() - level.random.nextFloat()) * 0.7f + 1) * 2);
             }
             if (state.getValue(FIREWOOD_COUNT) == 1) {
-                level.removeBlock(new BlockPos(x, y, z), false);
+                level.removeBlock_(x, y, z, false);
                 return;
             }
-            level.setBlockAndUpdate(new BlockPos(x, y, z), state.setValue(FIREWOOD_COUNT, state.getValue(FIREWOOD_COUNT) - 1));
+            level.setBlockAndUpdate_(x, y, z, state.setValue(FIREWOOD_COUNT, state.getValue(FIREWOOD_COUNT) - 1));
         }
     }
 
@@ -74,14 +72,7 @@ public class BlockFirewoodPile extends BlockPhysics implements IReplaceable, Ent
     }
 
     @Override
-    public boolean canBeReplaced_(BlockState state,
-                                  Level level,
-                                  int x,
-                                  int y,
-                                  int z,
-                                  Player player,
-                                  InteractionHand hand,
-                                  BlockHitResult hitResult) {
+    public boolean canBeReplaced_(BlockState state, Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult) {
         if (state.getValue(FIREWOOD_COUNT) < 16) {
             if (player.getItemInHand(hand).getItem() instanceof ItemFirewood) {
                 return true;
@@ -92,8 +83,7 @@ public class BlockFirewoodPile extends BlockPhysics implements IReplaceable, Ent
 
     @Override
     public boolean canSurvive_(BlockState state, LevelReader level, int x, int y, int z) {
-        return (state.getValue(FIREWOOD_COUNT) == 16 || BlockUtils.isReplaceable(level.getBlockState_(x, y + 1, z))) &&
-               BlockUtils.hasSolidFace(level, x, y - 1, z, Direction.UP);
+        return (state.getValue(FIREWOOD_COUNT) == 16 || BlockUtils.isReplaceable(level.getBlockState_(x, y + 1, z))) && BlockUtils.hasSolidFace(level, x, y - 1, z, Direction.UP);
     }
 
     @Override
@@ -105,15 +95,14 @@ public class BlockFirewoodPile extends BlockPhysics implements IReplaceable, Ent
     public ItemStack getCloneItemStack(BlockState state, HitResult target, BlockGetter level, int x, int y, int z, Player player) {
         if (level.getBlockEntity_(x, y, z) instanceof TEFirewoodPile tile) {
             if (target instanceof BlockHitResult hit) {
-                Vec3 location = hit.getLocation();
-                int hitY = (int) ((location.y - y + 0.001) * 16) / 4;
+                int hitY = (int) ((hit.y() - y + 0.001) * 16) / 4;
                 Direction stateDirection = state.getValue(DIRECTION_HORIZONTAL);
                 int hitX;
                 if (stateDirection.getAxis() == Direction.Axis.Z) {
-                    hitX = (int) ((location.x - x + 0.001) * 16) / 4;
+                    hitX = (int) ((hit.x() - x + 0.001) * 16) / 4;
                 }
                 else {
-                    hitX = (int) ((location.z - z + 0.001) * 16) / 4;
+                    hitX = (int) ((hit.z() - z + 0.001) * 16) / 4;
                 }
                 Direction hitDirection = hit.getDirection();
                 if (hitDirection == Direction.UP) {

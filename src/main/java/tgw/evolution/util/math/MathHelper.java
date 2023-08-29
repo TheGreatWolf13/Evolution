@@ -47,6 +47,7 @@ import java.text.Normalizer;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
+import java.util.random.RandomGenerator;
 import java.util.regex.Pattern;
 
 public final class MathHelper {
@@ -1353,6 +1354,15 @@ public final class MathHelper {
         model.xRot = x;
         model.yRot = y;
         model.zRot = z;
+    }
+
+    public static void shuffle(byte[] a, RandomGenerator random) {
+        for (int i = a.length; i > 1; i--) {
+            int index = random.nextInt(i);
+            byte b = a[i - 1];
+            a[i - 1] = a[index];
+            a[index] = b;
+        }
     }
 
     /**

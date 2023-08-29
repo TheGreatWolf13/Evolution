@@ -2,6 +2,7 @@ package tgw.evolution.mixin;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
@@ -18,14 +19,21 @@ public abstract class MixinBlockEntity implements PatchBlockEntity {
 
     @Unique private static final AABBMutable TE_BOX = new AABBMutable();
 
-    /**
-     * @author TheGreatWolf
-     * @reason Use non-BlockPos version
-     */
     @Overwrite
     public static @Nullable BlockEntity loadStatic(BlockPos pos, BlockState state, CompoundTag tag) {
         Evolution.deprecatedMethod();
         return TEUtils.loadStatic(pos.getX(), pos.getY(), pos.getZ(), state, tag);
+    }
+
+    @Overwrite
+    public static void setChanged(Level level, BlockPos pos, BlockState state) {
+        int x = pos.getX();
+        int y = pos.getY();
+        int z = pos.getZ();
+        level.blockEntityChanged_(x, y, z);
+        if (!state.isAir()) {
+            level.updateNeighbourForOutputSignal_(x, y, z, state.getBlock());
+        }
     }
 
     @Override

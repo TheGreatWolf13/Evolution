@@ -8,6 +8,7 @@ import net.minecraft.client.gui.components.toasts.RecipeToast;
 import net.minecraft.client.gui.screens.DeathScreen;
 import net.minecraft.client.gui.screens.ReceivingLevelScreen;
 import net.minecraft.client.gui.screens.achievement.StatsUpdateListener;
+import net.minecraft.client.gui.screens.inventory.CommandBlockEditScreen;
 import net.minecraft.client.gui.screens.recipebook.RecipeCollection;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientPacketListener;
@@ -16,6 +17,7 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.searchtree.MutableSearchTree;
 import net.minecraft.client.searchtree.SearchRegistry;
 import net.minecraft.core.*;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.PacketUtils;
@@ -34,6 +36,8 @@ import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.CommandBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.DataLayer;
 import net.minecraft.world.level.chunk.LevelChunk;
@@ -177,6 +181,23 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
     public void handleBlockDestruction(PacketSCBlockDestruction packet) {
         PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
         this.level.destroyBlockProgress(packet.id, packet.pos, packet.progress);
+    }
+
+    @Override
+    @Overwrite
+    public void handleBlockEntityData(ClientboundBlockEntityDataPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        assert this.minecraft.level != null;
+        BlockEntity tile = this.minecraft.level.getBlockEntity_(packet.getX(), packet.getY(), packet.getZ());
+        if (tile != null && tile.getType() == packet.getType()) {
+            CompoundTag tag = packet.getTag();
+            if (tag != null) {
+                tile.load(tag);
+            }
+            if (tile instanceof CommandBlockEntity && this.minecraft.screen instanceof CommandBlockEditScreen screen) {
+                screen.updateGui();
+            }
+        }
     }
 
     @Override
