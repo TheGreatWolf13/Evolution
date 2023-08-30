@@ -1,15 +1,18 @@
 package tgw.evolution.client.renderer.chunk;
 
 import it.unimi.dsi.fastutil.ints.IntPriorityQueue;
-import net.minecraft.Util;
 import net.minecraft.core.Direction;
+import org.jetbrains.annotations.Contract;
 import tgw.evolution.util.collection.IArrayFIFOQueue;
 import tgw.evolution.util.math.DirectionUtil;
 
 import java.util.BitSet;
 
 public class EvVisGraph {
-    private static final int[] INDEX_OF_EDGES = Util.make(new int[1_352], a -> {
+    private static final int[] INDEX_OF_EDGES;
+
+    static {
+        int[] a = new int[1_352];
         int k = 0;
         for (int x = 0; x < 16; ++x) {
             for (int y = 0; y < 16; ++y) {
@@ -20,7 +23,9 @@ public class EvVisGraph {
                 }
             }
         }
-    });
+        INDEX_OF_EDGES = a;
+    }
+
     private final BitSet bitSet = new BitSet(4_096);
     private final IntPriorityQueue queue = new IArrayFIFOQueue();
     private int empty = 4_096;
@@ -50,10 +55,12 @@ public class EvVisGraph {
         return faces;
     }
 
+    @Contract(pure = true)
     private static int getIndex(int x, int y, int z) {
         return x | y << 8 | z << 4;
     }
 
+    @Contract(pure = true)
     private static int getNeighborIndexAtFace(int index, Direction face) {
         return switch (face) {
             case DOWN -> {
