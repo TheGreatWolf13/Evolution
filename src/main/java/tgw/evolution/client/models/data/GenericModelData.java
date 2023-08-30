@@ -2,12 +2,14 @@ package tgw.evolution.client.models.data;
 
 import org.jetbrains.annotations.Nullable;
 
-public class SimpleModelData<P> implements IModelData {
+import java.util.NoSuchElementException;
+
+public class GenericModelData<P> implements IModelData {
 
     private final ModelProperty<P> property;
     private P data;
 
-    public SimpleModelData(ModelProperty<P> property) {
+    public GenericModelData(ModelProperty<P> property) {
         this.property = property;
     }
 
@@ -16,7 +18,7 @@ public class SimpleModelData<P> implements IModelData {
         if (prop == this.property) {
             return (T) this.data;
         }
-        return null;
+        throw new NoSuchElementException();
     }
 
     @Override
@@ -28,6 +30,9 @@ public class SimpleModelData<P> implements IModelData {
     public <T> void setData(ModelProperty<T> prop, T data) {
         if (this.property == prop) {
             this.data = (P) data;
+        }
+        else {
+            throw new NoSuchElementException();
         }
     }
 }

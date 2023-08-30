@@ -1,6 +1,7 @@
 package tgw.evolution.client.models.data;
 
 import org.jetbrains.annotations.Nullable;
+import tgw.evolution.Evolution;
 
 import java.util.NoSuchElementException;
 
@@ -15,6 +16,7 @@ public class LongModelData implements IModelData {
 
     @Override
     public <T> @Nullable T getData(ModelProperty<T> prop) {
+        Evolution.deprecatedMethod();
         if (this.property == prop) {
             return (T) Long.valueOf(this.value);
         }
@@ -36,6 +38,7 @@ public class LongModelData implements IModelData {
 
     @Override
     public <T> void setData(ModelProperty<T> prop, T data) {
+        Evolution.deprecatedMethod();
         if (this.property == prop) {
             this.value = (long) data;
         }

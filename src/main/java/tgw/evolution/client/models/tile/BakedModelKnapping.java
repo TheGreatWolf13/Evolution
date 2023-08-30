@@ -21,8 +21,8 @@ import tgw.evolution.Evolution;
 import tgw.evolution.blocks.tileentities.Patterns;
 import tgw.evolution.blocks.tileentities.TEKnapping;
 import tgw.evolution.client.models.data.IModelData;
+import tgw.evolution.client.models.data.LongModelData;
 import tgw.evolution.client.models.data.ModelProperty;
-import tgw.evolution.client.models.data.SimpleModelData;
 import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.util.collection.lists.OList;
@@ -34,7 +34,7 @@ import java.util.Random;
 
 public class BakedModelKnapping implements BakedModel {
     public static final ModelProperty<Long> PARTS = new ModelProperty<>();
-    private static final ThreadLocal<SimpleModelData<Long>> MODEL_DATA = ThreadLocal.withInitial(() -> new SimpleModelData<>(PARTS));
+    private static final ThreadLocal<LongModelData> MODEL_DATA = ThreadLocal.withInitial(() -> new LongModelData(PARTS));
     private final BakedModel baseModel;
     private final RockVariant variant;
 
@@ -113,7 +113,7 @@ public class BakedModelKnapping implements BakedModel {
     @Override
     public IModelData getModelData(BlockAndTintGetter level, int x, int y, int z, BlockState state) {
         BlockEntity tile = level.getBlockEntity_(x, y, z);
-        SimpleModelData<Long> modelDataMap = MODEL_DATA.get();
+        LongModelData modelDataMap = MODEL_DATA.get();
         if (tile instanceof TEKnapping teKnapping) {
             modelDataMap.setData(PARTS, teKnapping.getParts());
         }

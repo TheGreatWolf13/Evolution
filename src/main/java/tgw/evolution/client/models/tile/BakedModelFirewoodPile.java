@@ -19,9 +19,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.tileentities.TEFirewoodPile;
+import tgw.evolution.client.models.data.GenericModelData;
 import tgw.evolution.client.models.data.IModelData;
 import tgw.evolution.client.models.data.ModelProperty;
-import tgw.evolution.client.models.data.SimpleModelData;
 import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.init.EvolutionBStates;
 import tgw.evolution.init.EvolutionResources;
@@ -39,7 +39,7 @@ public class BakedModelFirewoodPile implements BakedModel {
     public static final ModelProperty<byte[]> FIREWOOD = new ModelProperty<>();
     private static final byte[] LOG_ORDER;
     private static final byte[] EMPTY_FIREWOOD = new byte[16];
-    private static final ThreadLocal<SimpleModelData<byte[]>> MODEL_DATA = ThreadLocal.withInitial(() -> new SimpleModelData<>(FIREWOOD));
+    private static final ThreadLocal<GenericModelData<byte[]>> MODEL_DATA = ThreadLocal.withInitial(() -> new GenericModelData<>(FIREWOOD));
 
     static {
         Arrays.fill(EMPTY_FIREWOOD, (byte) -1);
@@ -670,7 +670,7 @@ public class BakedModelFirewoodPile implements BakedModel {
     @Override
     public @NotNull IModelData getModelData(BlockAndTintGetter level, int x, int y, int z, BlockState state) {
         BlockEntity tile = level.getBlockEntity_(x, y, z);
-        SimpleModelData<byte[]> modelDataMap = MODEL_DATA.get();
+        GenericModelData<byte[]> modelDataMap = MODEL_DATA.get();
         if (tile instanceof TEFirewoodPile teFirewoodPile) {
             modelDataMap.setData(FIREWOOD, teFirewoodPile.getFirewood());
         }
