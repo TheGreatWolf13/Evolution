@@ -10,7 +10,9 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import tgw.evolution.Evolution;
 import tgw.evolution.client.models.tile.BakedModelFirewoodPile;
+import tgw.evolution.client.models.tile.BakedModelKnapping;
 import tgw.evolution.init.EvolutionBlocks;
+import tgw.evolution.util.constants.RockVariant;
 
 import java.util.Map;
 import java.util.function.BiFunction;
@@ -22,10 +24,10 @@ public final class ModelRegistry {
     }
 
     public static void register(Map<ResourceLocation, BakedModel> models) {
-//        for (RockVariant variant : RockVariant.VALUES_STONE) {
-//            Block block = variant.get(EvolutionBlocks.KNAPPING_BLOCKS);
-//            registerModel(event, block, variant, BakedModelKnapping::new);
-//        }
+        for (RockVariant variant : RockVariant.VALUES_STONE) {
+            Block block = variant.get(EvolutionBlocks.KNAPPING_BLOCKS);
+            registerModel(models, block, variant, BakedModelKnapping::new);
+        }
         registerModel(models, EvolutionBlocks.FIREWOOD_PILE, BakedModelFirewoodPile::new);
 //        registerModel(event, EvolutionItems.MODULAR_TOOL, BakedModelModularTool::new);
 //        registerModel(event, EvolutionItems.PART_BLADE, BakedModelPartBlade::new);

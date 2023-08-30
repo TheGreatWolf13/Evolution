@@ -5,15 +5,14 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.IRockVariant;
+import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.init.EvolutionTEs;
-import tgw.evolution.util.constants.BlockFlags;
 import tgw.evolution.util.math.MathHelper;
 
 public class TEKnapping extends BlockEntity {
@@ -32,7 +31,7 @@ public class TEKnapping extends BlockEntity {
 
     public void checkParts(Player player) {
         if (this.level != null && !this.level.isClientSide) {
-            IRockVariant block = (IRockVariant) this.level.getBlockState(this.worldPosition).getBlock();
+            IRockVariant block = (IRockVariant) this.level.getBlockState_(this.worldPosition).getBlock();
             if (this.parts == this.type.getPattern()) {
                 this.spawnDrops(block.rockVariant().getKnappedStack(this.type));
                 player.awardStat(EvolutionStats.TIMES_KNAPPING);
@@ -87,13 +86,8 @@ public class TEKnapping extends BlockEntity {
     }
 
     public void sendRenderUpdate() {
-        this.setChanged();
         this.hitbox = null;
-        assert this.level != null;
-        this.level.sendBlockUpdated(this.worldPosition,
-                                    this.level.getBlockState(this.worldPosition),
-                                    this.level.getBlockState(this.worldPosition),
-                                    BlockFlags.RENDER_MAINTHREAD);
+        TEUtils.sendRenderUpdate(this);
     }
 
     public void setType(KnappingRecipe type) {
@@ -103,7 +97,10 @@ public class TEKnapping extends BlockEntity {
 
     private void spawnDrops(ItemStack stack) {
         assert this.level != null;
-        Block.popResource(this.level, this.worldPosition, stack);
-        this.level.removeBlock(this.worldPosition, true);
+        int x = this.worldPosition.getX();
+        int y = this.worldPosition.getY();
+        int z = this.worldPosition.getZ();
+        BlockUtils.popResource(this.level, x, y, z, stack);
+        this.level.removeBlock_(x, y, z, true);
     }
 }

@@ -48,23 +48,22 @@ public abstract class ItemGenericBlockPlaceable extends ItemBlock {
         if (!this.placeBlock(level, x, y, z, stateForPlacement)) {
             return InteractionResult.FAIL;
         }
+        ItemStack stack = player.getItemInHand(hand);
         if (player instanceof ServerPlayer p) {
-            ItemStack stack = player.getItemInHand(hand);
             BlockState stateAtPos = level.getBlockState_(x, y, z);
             Block blockAtPos = stateAtPos.getBlock();
             if (blockAtPos == stateForPlacement.getBlock()) {
                 CriteriaTriggers.PLACED_BLOCK.trigger_(p, x, y, z, stack);
                 p.awardStat(EvolutionStats.BLOCK_PLACED.get(blockAtPos));
             }
-            if (p.isCrouching()) {
-                this.sneakingAction(level, x, y, z, player, hand, hitResult);
-            }
-            SoundType soundtype = stateAtPos.getSoundType();
-            level.playSound(null, x + 0.5, y + 0.5, z + 0.5, this.getPlaceSound(stateAtPos), SoundSource.BLOCKS, (soundtype.getVolume() + 1.0F) / 2.0F, soundtype.getPitch() * 0.8F);
-            stack.shrink(1);
-            return InteractionResult.SUCCESS;
         }
-        return InteractionResult.PASS;
+        if (player.isSecondaryUseActive()) {
+            this.sneakingAction(level, x, y, z, player, hand, hitResult);
+        }
+        SoundType soundType = stateForPlacement.getSoundType();
+        level.playSound(player, x + 0.5, y + 0.5, z + 0.5, this.getPlaceSound(stateForPlacement), SoundSource.BLOCKS, (soundType.getVolume() + 1.0F) / 2.0F, soundType.getPitch() * 0.8F);
+        stack.shrink(1);
+        return InteractionResult.sidedSuccess(level.isClientSide);
     }
 
     public void sneakingAction(Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult) {

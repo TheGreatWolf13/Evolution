@@ -2,11 +2,18 @@ package tgw.evolution.client.models.data;
 
 import org.jetbrains.annotations.Nullable;
 
+import java.util.NoSuchElementException;
+
 public interface IModelData {
 
     IModelData EMPTY = new EmptyModelData();
 
     @Nullable <T> T getData(ModelProperty<T> prop);
+
+    default long getLongData(ModelProperty<Long> prop) {
+        Long data = this.getData(prop);
+        return data == null ? 0L : data;
+    }
 
     /**
      * Check if this data has a property, even if the value is {@code null}. Can be
@@ -23,6 +30,10 @@ public interface IModelData {
 
     <T> void setData(ModelProperty<T> prop, T data);
 
+    default void setData(ModelProperty<Long> prop, long data) {
+        this.setData(prop, Long.valueOf(data));
+    }
+
     final class EmptyModelData implements IModelData {
 
         private EmptyModelData() {
@@ -30,7 +41,7 @@ public interface IModelData {
 
         @Override
         public @Nullable <T> T getData(ModelProperty<T> prop) {
-            return null;
+            throw new NoSuchElementException();
         }
 
         @Override
@@ -40,6 +51,7 @@ public interface IModelData {
 
         @Override
         public <T> void setData(ModelProperty<T> prop, T data) {
+            throw new NoSuchElementException();
         }
     }
 }

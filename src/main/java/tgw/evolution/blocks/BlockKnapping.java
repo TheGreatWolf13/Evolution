@@ -112,8 +112,8 @@ public class BlockKnapping extends BlockPhysics implements IReplaceable, IRockVa
             return InteractionResult.PASS;
         }
         if (level.getBlockEntity_(x, y, z) instanceof TEKnapping tile) {
-            double hitX = (hit.getLocation().x - x) * 16;
-            double hitZ = (hit.getLocation().z - z) * 16;
+            double hitX = (hit.x() - x) * 16;
+            double hitZ = (hit.z() - z) * 16;
             int partX = MathHelper.getIndex(8, 0, 16, MathHelper.hitOffset(Direction.Axis.X, hitX, hit.getDirection()));
             int partZ = MathHelper.getIndex(8, 0, 16, MathHelper.hitOffset(Direction.Axis.Z, hitZ, hit.getDirection()));
             if (!tile.getPart(partX, partZ) || tile.type.getPatternPart(partX, partZ)) {
