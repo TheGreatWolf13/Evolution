@@ -1,11 +1,10 @@
 package tgw.evolution.blocks;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
+import tgw.evolution.blocks.util.BlockUtils;
 
 /**
  * Represents a block that must be supported, or else it pops as an item.
@@ -18,8 +17,7 @@ public interface IPoppable extends IPhysics {
     }
 
     default void popDrops(BlockState state, Level level, int x, int y, int z) {
-        //todo
-        Block.dropResources(state, level, new BlockPos(x, y, z));
+        BlockUtils.dropResources(state, level, x, y, z);
     }
 
     @Override
@@ -27,7 +25,7 @@ public interface IPoppable extends IPhysics {
         BlockState state = level.getBlockState_(x, y, z);
         if (!state.canSurvive_(level, x, y, z)) {
             this.popDrops(state, level, x, y, z);
-            level.removeBlock(new BlockPos(x, y, z), false);
+            level.removeBlock_(x, y, z, false);
             return true;
         }
         return false;
