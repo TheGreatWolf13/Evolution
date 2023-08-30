@@ -146,26 +146,19 @@ public class LevelEventListener {
         switch (type) {
             case SOUND_DISPENSER_DISPENSE -> this.playLocalSound(x, y, z, SoundEvents.DISPENSER_DISPENSE, SoundSource.BLOCKS, 1.0F, 1.0F);
             case SOUND_DISPENSER_FAIL -> this.playLocalSound(x, y, z, SoundEvents.DISPENSER_FAIL, SoundSource.BLOCKS, 1.0F, 1.2F);
-            case SOUND_DISPENSER_PROJECTILE_LAUNCH -> this.playLocalSound(x, y, z, SoundEvents.DISPENSER_LAUNCH, SoundSource.BLOCKS, 1.0F, 1.2F
-            );
+            case SOUND_DISPENSER_PROJECTILE_LAUNCH -> this.playLocalSound(x, y, z, SoundEvents.DISPENSER_LAUNCH, SoundSource.BLOCKS, 1.0F, 1.2F);
             case SOUND_ENDER_EYE_LAUNCH -> this.playLocalSound(x, y, z, SoundEvents.ENDER_EYE_LAUNCH, SoundSource.NEUTRAL, 1.0F, 1.2F);
             case SOUND_FIREWORK_SHOOT -> this.playLocalSound(x, y, z, SoundEvents.FIREWORK_ROCKET_SHOOT, SoundSource.NEUTRAL, 1.0F, 1.2F);
-            case SOUND_OPEN_IRON_DOOR -> this.playLocalSound(x, y, z, SoundEvents.IRON_DOOR_OPEN, SoundSource.BLOCKS, 1.0F,
-                                                             rnd.nextFloat() * 0.1F + 0.9F);
-            case SOUND_OPEN_WOODEN_DOOR -> this.playLocalSound(x, y, z, SoundEvents.WOODEN_DOOR_OPEN, SoundSource.BLOCKS, 1.0F,
-                                                               rnd.nextFloat() * 0.1F + 0.9F);
-            case SOUND_OPEN_WOODEN_TRAP_DOOR -> this.playLocalSound(x, y, z, SoundEvents.WOODEN_TRAPDOOR_OPEN, SoundSource.BLOCKS, 1.0F,
-                                                                    rnd.nextFloat() * 0.1F + 0.9F);
-            case SOUND_OPEN_FENCE_GATE -> this.playLocalSound(x, y, z, SoundEvents.FENCE_GATE_OPEN, SoundSource.BLOCKS, 1.0F,
-                                                              rnd.nextFloat() * 0.1F + 0.9F);
+            case SOUND_OPEN_IRON_DOOR -> this.playLocalSound(x, y, z, SoundEvents.IRON_DOOR_OPEN, SoundSource.BLOCKS, 1.0F, rnd.nextFloat() * 0.1F + 0.9F);
+            case SOUND_OPEN_WOODEN_DOOR -> this.playLocalSound(x, y, z, SoundEvents.WOODEN_DOOR_OPEN, SoundSource.BLOCKS, 1.0F, rnd.nextFloat() * 0.1F + 0.9F);
+            case SOUND_OPEN_WOODEN_TRAP_DOOR -> this.playLocalSound(x, y, z, SoundEvents.WOODEN_TRAPDOOR_OPEN, SoundSource.BLOCKS, 1.0F, rnd.nextFloat() * 0.1F + 0.9F);
+            case SOUND_OPEN_FENCE_GATE -> this.playLocalSound(x, y, z, SoundEvents.FENCE_GATE_OPEN, SoundSource.BLOCKS, 1.0F, rnd.nextFloat() * 0.1F + 0.9F);
             case SOUND_EXTINGUISH_FIRE -> {
                 if (data == 0) {
-                    this.playLocalSound(x, y, z, SoundEvents.FIRE_EXTINGUISH, SoundSource.BLOCKS, 0.5F,
-                                        2.6F + (rnd.nextFloat() - rnd.nextFloat()) * 0.8F);
+                    this.playLocalSound(x, y, z, SoundEvents.FIRE_EXTINGUISH, SoundSource.BLOCKS, 0.5F, 2.6F + (rnd.nextFloat() - rnd.nextFloat()) * 0.8F);
                 }
                 else if (data == 1) {
-                    this.playLocalSound(x, y, z, SoundEvents.GENERIC_EXTINGUISH_FIRE, SoundSource.BLOCKS, 0.7F,
-                                        1.6F + (rnd.nextFloat() - rnd.nextFloat()) * 0.4F);
+                    this.playLocalSound(x, y, z, SoundEvents.GENERIC_EXTINGUISH_FIRE, SoundSource.BLOCKS, 0.7F, 1.6F + (rnd.nextFloat() - rnd.nextFloat()) * 0.4F);
                 }
             }
             case SOUND_PLAY_RECORDING -> {
@@ -176,75 +169,41 @@ public class LevelEventListener {
                     this.playStreamingMusic(null, new BlockPos(x, y, z), null);
                 }
             }
-            case SOUND_CLOSE_IRON_DOOR -> this.playLocalSound(x, y, z, SoundEvents.IRON_DOOR_CLOSE, SoundSource.BLOCKS,
-                                                              1.0F, 0.1f * rnd.nextFloat() + 0.9f);
-            case SOUND_CLOSE_WOODEN_DOOR -> this.playLocalSound(x, y, z, SoundEvents.WOODEN_DOOR_CLOSE, SoundSource.BLOCKS,
-                                                                1.0F, 0.1f * rnd.nextFloat() + 0.9f);
-            case SOUND_CLOSE_WOODEN_TRAP_DOOR -> this.playLocalSound(x, y, z, SoundEvents.WOODEN_TRAPDOOR_CLOSE, SoundSource.BLOCKS,
-                                                                     1.0F, 0.1f * rnd.nextFloat() + 0.9f);
-            case SOUND_CLOSE_FENCE_GATE -> this.playLocalSound(x, y, z, SoundEvents.FENCE_GATE_CLOSE, SoundSource.BLOCKS,
-                                                               1.0F, 0.1f * rnd.nextFloat() + 0.9f);
-            case SOUND_GHAST_WARNING -> this.playLocalSound(x, y, z, SoundEvents.GHAST_WARN, SoundSource.HOSTILE,
-                                                            10.0F, 0.4f * rnd.nextFloat() + 0.8f);
-            case SOUND_GHAST_FIREBALL -> this.playLocalSound(x, y, z, SoundEvents.GHAST_SHOOT, SoundSource.HOSTILE,
-                                                             10.0F, 0.4f * rnd.nextFloat() + 0.8f);
-            case SOUND_DRAGON_FIREBALL -> this.playLocalSound(x, y, z, SoundEvents.ENDER_DRAGON_SHOOT, SoundSource.HOSTILE,
-                                                              10.0F, 0.4f * rnd.nextFloat() + 0.8f);
-            case SOUND_BLAZE_FIREBALL -> this.playLocalSound(x, y, z, SoundEvents.BLAZE_SHOOT, SoundSource.HOSTILE,
-                                                             2.0F, 0.4f * rnd.nextFloat() + 0.8f);
-            case SOUND_ZOMBIE_WOODEN_DOOR -> this.playLocalSound(x, y, z, SoundEvents.ZOMBIE_ATTACK_WOODEN_DOOR, SoundSource.HOSTILE,
-                                                                 2.0F, 0.4f * rnd.nextFloat() + 0.8f);
-            case SOUND_ZOMBIE_IRON_DOOR -> this.playLocalSound(x, y, z, SoundEvents.ZOMBIE_ATTACK_IRON_DOOR, SoundSource.HOSTILE,
-                                                               2.0F, 0.4f * rnd.nextFloat() + 0.8f);
-            case SOUND_ZOMBIE_DOOR_CRASH -> this.playLocalSound(x, y, z, SoundEvents.ZOMBIE_BREAK_WOODEN_DOOR, SoundSource.HOSTILE,
-                                                                2.0F, 0.4f * rnd.nextFloat() + 0.8f);
-            case SOUND_WITHER_BLOCK_BREAK -> this.playLocalSound(x, y, z, SoundEvents.WITHER_BREAK_BLOCK, SoundSource.HOSTILE,
-                                                                 2.0F, 0.4f * rnd.nextFloat() + 0.8f);
-            case SOUND_WITHER_BOSS_SHOOT -> this.playLocalSound(x, y, z, SoundEvents.WITHER_SHOOT, SoundSource.HOSTILE,
-                                                                2.0F, 0.4f * rnd.nextFloat() + 0.8f);
-            case SOUND_BAT_LIFTOFF -> this.playLocalSound(x, y, z, SoundEvents.BAT_TAKEOFF, SoundSource.NEUTRAL,
-                                                          0.05F, 0.4f * rnd.nextFloat() + 0.8f);
-            case SOUND_ZOMBIE_INFECTED -> this.playLocalSound(x, y, z, SoundEvents.ZOMBIE_INFECT, SoundSource.HOSTILE,
-                                                              2.0F, 0.4f * rnd.nextFloat() + 0.8f);
-            case SOUND_ZOMBIE_CONVERTED -> this.playLocalSound(x, y, z, SoundEvents.ZOMBIE_VILLAGER_CONVERTED, SoundSource.HOSTILE,
-                                                               2.0F, 0.4f * rnd.nextFloat() + 0.8f);
-            case SOUND_ANVIL_BROKEN -> this.playLocalSound(x, y, z, SoundEvents.ANVIL_DESTROY, SoundSource.BLOCKS,
-                                                           1.0F, 0.1f * rnd.nextFloat() + 0.9f);
-            case SOUND_ANVIL_USED -> this.playLocalSound(x, y, z, SoundEvents.ANVIL_USE, SoundSource.BLOCKS, 1.0F, 0.1f * rnd.nextFloat() + 0.9f
-            );
-            case SOUND_ANVIL_LAND -> this.playLocalSound(x, y, z, SoundEvents.ANVIL_LAND, SoundSource.BLOCKS,
-                                                         0.3F, 0.1f * rnd.nextFloat() + 0.9f);
-            case SOUND_PORTAL_TRAVEL -> this.mc.getSoundManager()
-                                               .play(SimpleSoundInstance.forLocalAmbience(SoundEvents.PORTAL_TRAVEL,
-                                                                                          0.4f * rnd.nextFloat() + 0.8f, 0.25F));
+            case SOUND_CLOSE_IRON_DOOR -> this.playLocalSound(x, y, z, SoundEvents.IRON_DOOR_CLOSE, SoundSource.BLOCKS, 1.0F, 0.1f * rnd.nextFloat() + 0.9f);
+            case SOUND_CLOSE_WOODEN_DOOR -> this.playLocalSound(x, y, z, SoundEvents.WOODEN_DOOR_CLOSE, SoundSource.BLOCKS, 1.0F, 0.1f * rnd.nextFloat() + 0.9f);
+            case SOUND_CLOSE_WOODEN_TRAP_DOOR -> this.playLocalSound(x, y, z, SoundEvents.WOODEN_TRAPDOOR_CLOSE, SoundSource.BLOCKS, 1.0F, 0.1f * rnd.nextFloat() + 0.9f);
+            case SOUND_CLOSE_FENCE_GATE -> this.playLocalSound(x, y, z, SoundEvents.FENCE_GATE_CLOSE, SoundSource.BLOCKS, 1.0F, 0.1f * rnd.nextFloat() + 0.9f);
+            case SOUND_GHAST_WARNING -> this.playLocalSound(x, y, z, SoundEvents.GHAST_WARN, SoundSource.HOSTILE, 10.0F, 0.4f * rnd.nextFloat() + 0.8f);
+            case SOUND_GHAST_FIREBALL -> this.playLocalSound(x, y, z, SoundEvents.GHAST_SHOOT, SoundSource.HOSTILE, 10.0F, 0.4f * rnd.nextFloat() + 0.8f);
+            case SOUND_DRAGON_FIREBALL -> this.playLocalSound(x, y, z, SoundEvents.ENDER_DRAGON_SHOOT, SoundSource.HOSTILE, 10.0F, 0.4f * rnd.nextFloat() + 0.8f);
+            case SOUND_BLAZE_FIREBALL -> this.playLocalSound(x, y, z, SoundEvents.BLAZE_SHOOT, SoundSource.HOSTILE, 2.0F, 0.4f * rnd.nextFloat() + 0.8f);
+            case SOUND_ZOMBIE_WOODEN_DOOR -> this.playLocalSound(x, y, z, SoundEvents.ZOMBIE_ATTACK_WOODEN_DOOR, SoundSource.HOSTILE, 2.0F, 0.4f * rnd.nextFloat() + 0.8f);
+            case SOUND_ZOMBIE_IRON_DOOR -> this.playLocalSound(x, y, z, SoundEvents.ZOMBIE_ATTACK_IRON_DOOR, SoundSource.HOSTILE, 2.0F, 0.4f * rnd.nextFloat() + 0.8f);
+            case SOUND_ZOMBIE_DOOR_CRASH -> this.playLocalSound(x, y, z, SoundEvents.ZOMBIE_BREAK_WOODEN_DOOR, SoundSource.HOSTILE, 2.0F, 0.4f * rnd.nextFloat() + 0.8f);
+            case SOUND_WITHER_BLOCK_BREAK -> this.playLocalSound(x, y, z, SoundEvents.WITHER_BREAK_BLOCK, SoundSource.HOSTILE, 2.0F, 0.4f * rnd.nextFloat() + 0.8f);
+            case SOUND_WITHER_BOSS_SHOOT -> this.playLocalSound(x, y, z, SoundEvents.WITHER_SHOOT, SoundSource.HOSTILE, 2.0F, 0.4f * rnd.nextFloat() + 0.8f);
+            case SOUND_BAT_LIFTOFF -> this.playLocalSound(x, y, z, SoundEvents.BAT_TAKEOFF, SoundSource.NEUTRAL, 0.05F, 0.4f * rnd.nextFloat() + 0.8f);
+            case SOUND_ZOMBIE_INFECTED -> this.playLocalSound(x, y, z, SoundEvents.ZOMBIE_INFECT, SoundSource.HOSTILE, 2.0F, 0.4f * rnd.nextFloat() + 0.8f);
+            case SOUND_ZOMBIE_CONVERTED -> this.playLocalSound(x, y, z, SoundEvents.ZOMBIE_VILLAGER_CONVERTED, SoundSource.HOSTILE, 2.0F, 0.4f * rnd.nextFloat() + 0.8f);
+            case SOUND_ANVIL_BROKEN -> this.playLocalSound(x, y, z, SoundEvents.ANVIL_DESTROY, SoundSource.BLOCKS, 1.0F, 0.1f * rnd.nextFloat() + 0.9f);
+            case SOUND_ANVIL_USED -> this.playLocalSound(x, y, z, SoundEvents.ANVIL_USE, SoundSource.BLOCKS, 1.0F, 0.1f * rnd.nextFloat() + 0.9f);
+            case SOUND_ANVIL_LAND -> this.playLocalSound(x, y, z, SoundEvents.ANVIL_LAND, SoundSource.BLOCKS, 0.3F, 0.1f * rnd.nextFloat() + 0.9f);
+            case SOUND_PORTAL_TRAVEL -> this.mc.getSoundManager().play(SimpleSoundInstance.forLocalAmbience(SoundEvents.PORTAL_TRAVEL, 0.4f * rnd.nextFloat() + 0.8f, 0.25F));
             case SOUND_CHORUS_GROW -> this.playLocalSound(x, y, z, SoundEvents.CHORUS_FLOWER_GROW, SoundSource.BLOCKS, 1.0F, 1.0F);
             case SOUND_CHORUS_DEATH -> this.playLocalSound(x, y, z, SoundEvents.CHORUS_FLOWER_DEATH, SoundSource.BLOCKS, 1.0F, 1.0F);
             case SOUND_BREWING_STAND_BREW -> this.playLocalSound(x, y, z, SoundEvents.BREWING_STAND_BREW, SoundSource.BLOCKS, 1.0F, 1.0F);
-            case SOUND_CLOSE_IRON_TRAP_DOOR -> this.playLocalSound(x, y, z, SoundEvents.IRON_TRAPDOOR_CLOSE, SoundSource.BLOCKS,
-                                                                   1.0F, rnd.nextFloat() * 0.1F + 0.9F);
-            case SOUND_OPEN_IRON_TRAP_DOOR -> this.playLocalSound(x, y, z, SoundEvents.IRON_TRAPDOOR_OPEN, SoundSource.BLOCKS,
-                                                                  1.0F, rnd.nextFloat() * 0.1F + 0.9F);
-            case SOUND_PHANTOM_BITE -> this.playLocalSound(x, y, z, SoundEvents.PHANTOM_BITE, SoundSource.HOSTILE,
-                                                           0.3F, level.random.nextFloat() * 0.1F + 0.9F);
-            case SOUND_ZOMBIE_TO_DROWNED -> this.playLocalSound(x, y, z, SoundEvents.ZOMBIE_CONVERTED_TO_DROWNED, SoundSource.HOSTILE,
-                                                                2.0F, 0.4f * rnd.nextFloat() + 0.8f);
-            case SOUND_HUSK_TO_ZOMBIE -> this.playLocalSound(x, y, z, SoundEvents.HUSK_CONVERTED_TO_ZOMBIE, SoundSource.HOSTILE,
-                                                             2.0F, 0.4f * rnd.nextFloat() + 0.8f);
-            case SOUND_GRINDSTONE_USED -> this.playLocalSound(x, y, z, SoundEvents.GRINDSTONE_USE, SoundSource.BLOCKS,
-                                                              1.0F, rnd.nextFloat() * 0.1F + 0.9F);
-            case SOUND_PAGE_TURN -> this.playLocalSound(x, y, z, SoundEvents.BOOK_PAGE_TURN, SoundSource.BLOCKS,
-                                                        1.0F, rnd.nextFloat() * 0.1F + 0.9F);
-            case SOUND_SMITHING_TABLE_USED -> this.playLocalSound(x, y, z, SoundEvents.SMITHING_TABLE_USE, SoundSource.BLOCKS,
-                                                                  1.0F, rnd.nextFloat() * 0.1F + 0.9F);
-            case SOUND_POINTED_DRIPSTONE_LAND -> this.playLocalSound(x, y, z, SoundEvents.POINTED_DRIPSTONE_LAND, SoundSource.BLOCKS,
-                                                                     2.0F, rnd.nextFloat() * 0.1F + 0.9F);
-            case SOUND_DRIP_LAVA_INTO_CAULDRON -> this.playLocalSound(x, y, z, SoundEvents.POINTED_DRIPSTONE_DRIP_LAVA_INTO_CAULDRON,
-                                                                      SoundSource.BLOCKS,
-                                                                      2.0F, rnd.nextFloat() * 0.1F + 0.9F);
-            case SOUND_DRIP_WATER_INTO_CAULDRON -> this.playLocalSound(x, y, z, SoundEvents.POINTED_DRIPSTONE_DRIP_WATER_INTO_CAULDRON,
-                                                                       SoundSource.BLOCKS, 2.0F, level.random.nextFloat() * 0.1F + 0.9F);
-            case SOUND_SKELETON_TO_STRAY -> this.playLocalSound(x, y, z, SoundEvents.SKELETON_CONVERTED_TO_STRAY, SoundSource.HOSTILE,
-                                                                2.0F, 0.4f * rnd.nextFloat() + 0.8f);
+            case SOUND_CLOSE_IRON_TRAP_DOOR -> this.playLocalSound(x, y, z, SoundEvents.IRON_TRAPDOOR_CLOSE, SoundSource.BLOCKS, 1.0F, rnd.nextFloat() * 0.1F + 0.9F);
+            case SOUND_OPEN_IRON_TRAP_DOOR -> this.playLocalSound(x, y, z, SoundEvents.IRON_TRAPDOOR_OPEN, SoundSource.BLOCKS, 1.0F, rnd.nextFloat() * 0.1F + 0.9F);
+            case SOUND_PHANTOM_BITE -> this.playLocalSound(x, y, z, SoundEvents.PHANTOM_BITE, SoundSource.HOSTILE, 0.3F, level.random.nextFloat() * 0.1F + 0.9F);
+            case SOUND_ZOMBIE_TO_DROWNED -> this.playLocalSound(x, y, z, SoundEvents.ZOMBIE_CONVERTED_TO_DROWNED, SoundSource.HOSTILE, 2.0F, 0.4f * rnd.nextFloat() + 0.8f);
+            case SOUND_HUSK_TO_ZOMBIE -> this.playLocalSound(x, y, z, SoundEvents.HUSK_CONVERTED_TO_ZOMBIE, SoundSource.HOSTILE, 2.0F, 0.4f * rnd.nextFloat() + 0.8f);
+            case SOUND_GRINDSTONE_USED -> this.playLocalSound(x, y, z, SoundEvents.GRINDSTONE_USE, SoundSource.BLOCKS, 1.0F, rnd.nextFloat() * 0.1F + 0.9F);
+            case SOUND_PAGE_TURN -> this.playLocalSound(x, y, z, SoundEvents.BOOK_PAGE_TURN, SoundSource.BLOCKS, 1.0F, rnd.nextFloat() * 0.1F + 0.9F);
+            case SOUND_SMITHING_TABLE_USED -> this.playLocalSound(x, y, z, SoundEvents.SMITHING_TABLE_USE, SoundSource.BLOCKS, 1.0F, rnd.nextFloat() * 0.1F + 0.9F);
+            case SOUND_POINTED_DRIPSTONE_LAND -> this.playLocalSound(x, y, z, SoundEvents.POINTED_DRIPSTONE_LAND, SoundSource.BLOCKS, 2.0F, rnd.nextFloat() * 0.1F + 0.9F);
+            case SOUND_DRIP_LAVA_INTO_CAULDRON -> this.playLocalSound(x, y, z, SoundEvents.POINTED_DRIPSTONE_DRIP_LAVA_INTO_CAULDRON, SoundSource.BLOCKS, 2.0F, rnd.nextFloat() * 0.1F + 0.9F);
+            case SOUND_DRIP_WATER_INTO_CAULDRON -> this.playLocalSound(x, y, z, SoundEvents.POINTED_DRIPSTONE_DRIP_WATER_INTO_CAULDRON, SoundSource.BLOCKS, 2.0F, level.random.nextFloat() * 0.1F + 0.9F);
+            case SOUND_SKELETON_TO_STRAY -> this.playLocalSound(x, y, z, SoundEvents.SKELETON_CONVERTED_TO_STRAY, SoundSource.HOSTILE, 2.0F, 0.4f * rnd.nextFloat() + 0.8f);
             case COMPOSTER_FILL -> ComposterBlock.handleFill(level, new BlockPos(x, y, z), data > 0);
             case LAVA_FIZZ -> {
                 this.playLocalSound(x, y, z, SoundEvents.LAVA_EXTINGUISH, SoundSource.BLOCKS, 0.5F, 1.8F + 1.6f * rnd.nextFloat());
@@ -302,9 +261,7 @@ public class LevelEventListener {
                 BlockState state = Block.stateById(data);
                 if (!state.isAir()) {
                     SoundType sound = state.getSoundType();
-                    this.playLocalSound(x, y, z, sound.getBreakSound(), SoundSource.BLOCKS, (sound.getVolume() + 1.0F) / 2.0F,
-                                        sound.getPitch() * 0.8F
-                    );
+                    this.playLocalSound(x, y, z, sound.getBreakSound(), SoundSource.BLOCKS, (sound.getVolume() + 1.0F) / 2.0F, sound.getPitch() * 0.8F);
                 }
                 level.addDestroyBlockEffect_(x, y, z, state);
             }
@@ -366,15 +323,13 @@ public class LevelEventListener {
                     double dx = Mth.cos(theta) * power;
                     double dy = 0.01 + rnd.nextDouble() * 0.5;
                     double dz = Mth.sin(theta) * power;
-                    Particle particle = this.addParticleInternal(ParticleTypes.DRAGON_BREATH, false, false,
-                                                                 x + dx * 0.1, y + 0.3, z + dz * 0.1, dx, dy, dz);
+                    Particle particle = this.addParticleInternal(ParticleTypes.DRAGON_BREATH, false, false, x + dx * 0.1, y + 0.3, z + dz * 0.1, dx, dy, dz);
                     if (particle != null) {
                         particle.setPower(power);
                     }
                 }
                 if (data == 1) {
-                    this.playLocalSound(x, y, z, SoundEvents.DRAGON_FIREBALL_EXPLODE, SoundSource.HOSTILE, 1.0F, rnd.nextFloat() * 0.1F + 0.9F
-                    );
+                    this.playLocalSound(x, y, z, SoundEvents.DRAGON_FIREBALL_EXPLODE, SoundSource.HOSTILE, 1.0F, rnd.nextFloat() * 0.1F + 0.9F);
                 }
             }
             case PARTICLES_DRAGON_BLOCK_BREAK -> level.addParticle(ParticleTypes.EXPLOSION, x + 0.5, y + 0.5, z + 0.5, 0, 0, 0);
@@ -391,8 +346,7 @@ public class LevelEventListener {
                                                                      64.0F, 0.8F + rnd.nextFloat() * 0.3F);
             case PARTICLES_ELECTRIC_SPARK -> {
                 if (data >= 0 && data < Direction.Axis.VALUES.length) {
-                    ParticleUtils.spawnParticlesAlongAxis(Direction.Axis.VALUES[data], level, new BlockPos(x, y, z), 0.125,
-                                                          ParticleTypes.ELECTRIC_SPARK, UniformInt.of(10, 19));
+                    ParticleUtils.spawnParticlesAlongAxis(Direction.Axis.VALUES[data], level, new BlockPos(x, y, z), 0.125, ParticleTypes.ELECTRIC_SPARK, UniformInt.of(10, 19));
                 }
                 else {
                     ParticleUtils.spawnParticlesOnBlockFaces(level, new BlockPos(x, y, z), ParticleTypes.ELECTRIC_SPARK, UniformInt.of(3, 5));
@@ -402,10 +356,8 @@ public class LevelEventListener {
                 ParticleUtils.spawnParticlesOnBlockFaces(level, new BlockPos(x, y, z), ParticleTypes.WAX_ON, UniformInt.of(3, 5));
                 this.playLocalSound(x, y, z, SoundEvents.HONEYCOMB_WAX_ON, SoundSource.BLOCKS, 1.0F, 1.0F);
             }
-            case PARTICLES_WAX_OFF -> ParticleUtils.spawnParticlesOnBlockFaces(level, new BlockPos(x, y, z), ParticleTypes.WAX_OFF,
-                                                                               UniformInt.of(3, 5));
-            case PARTICLES_SCRAPE -> ParticleUtils.spawnParticlesOnBlockFaces(level, new BlockPos(x, y, z), ParticleTypes.SCRAPE,
-                                                                              UniformInt.of(3, 5));
+            case PARTICLES_WAX_OFF -> ParticleUtils.spawnParticlesOnBlockFaces(level, new BlockPos(x, y, z), ParticleTypes.WAX_OFF, UniformInt.of(3, 5));
+            case PARTICLES_SCRAPE -> ParticleUtils.spawnParticlesOnBlockFaces(level, new BlockPos(x, y, z), ParticleTypes.SCRAPE, UniformInt.of(3, 5));
         }
     }
 
