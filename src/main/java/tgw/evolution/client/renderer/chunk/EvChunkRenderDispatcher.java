@@ -2,8 +2,6 @@ package tgw.evolution.client.renderer.chunk;
 
 import com.google.common.primitives.Doubles;
 import com.mojang.blaze3d.vertex.*;
-import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
-import it.unimi.dsi.fastutil.longs.Long2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.ReferenceSet;
 import it.unimi.dsi.fastutil.objects.ReferenceSets;
 import net.minecraft.CrashReport;
@@ -16,7 +14,6 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.block.ModelBlockRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
 import net.minecraft.util.thread.ProcessorMailbox;
@@ -28,9 +25,9 @@ import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
-import tgw.evolution.client.models.data.IModelData;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.collection.sets.RHashSet;
@@ -72,12 +69,7 @@ public class EvChunkRenderDispatcher {
         this(level, renderer, executor, is64Bit, builderPack, -1);
     }
 
-    public EvChunkRenderDispatcher(ClientLevel level,
-                                   EvLevelRenderer renderer,
-                                   Executor executor,
-                                   boolean is64Bit,
-                                   ChunkBuilderPack builderPack,
-                                   int countRenderBuilders) {
+    public EvChunkRenderDispatcher(ClientLevel level, EvLevelRenderer renderer, Executor executor, boolean is64Bit, ChunkBuilderPack builderPack, int countRenderBuilders) {
         this.level = level;
         this.renderer = renderer;
         int sizeNeeded = 0;
@@ -111,6 +103,7 @@ public class EvChunkRenderDispatcher {
         this.mailbox.tell(this::runTask);
     }
 
+    @Contract(pure = true)
     public static long chunkPos(int x, int z) {
         return ChunkPos.asLong(SectionPos.blockToSectionCoord(x), SectionPos.blockToSectionCoord(z));
     }
@@ -411,7 +404,6 @@ public class EvChunkRenderDispatcher {
             ModelBlockRenderer.enableCaching();
             IRandom random = EvChunkRenderDispatcher.this.random;
             BlockRenderDispatcher dispatcher = Minecraft.getInstance().getBlockRenderer();
-            Long2ObjectMap<IModelData> modelDataCache = EvModelDataManager.getModelData(EvChunkRenderDispatcher.this.level, chunkPos(this.x, this.z));
             for (int dx = 0; dx < 16; ++dx) {
                 int px = posX + dx;
                 for (int dy = 0; dy < 16; ++dy) {
@@ -440,7 +432,6 @@ public class EvChunkRenderDispatcher {
                             }
                         }
                         FluidState fluidState = chunk.getFluidState_(px, py, pz);
-                        IModelData modelData = modelDataCache.getOrDefault(BlockPos.asLong(px, py, pz), IModelData.EMPTY);
                         for (int i = RenderLayer.SOLID, len = ChunkBuilderPack.RENDER_TYPES.length; i < len; i++) {
                             RenderType renderType = ChunkBuilderPack.RENDER_TYPES[i];
                             if (!fluidState.isEmpty() && ItemBlockRenderTypes.getRenderLayer(fluidState) == renderType) {
@@ -462,7 +453,7 @@ public class EvChunkRenderDispatcher {
                                 }
                                 matrices.pushPose();
                                 matrices.translate(dx, dy, dz);
-                                if (dispatcher.renderBatched(blockState, px, py, pz, EvChunkRenderDispatcher.this.level, matrices, builder, true, random, modelData)) {
+                                if (dispatcher.renderBatched(blockState, px, py, pz, EvChunkRenderDispatcher.this.level, matrices, builder, true, random)) {
                                     compiledChunk.hasBlocks |= 1 << i;
                                 }
                                 matrices.popPose();
@@ -587,8 +578,7 @@ public class EvChunkRenderDispatcher {
          */
         public void rebuildChunkAsync(EvChunkRenderDispatcher dispatcher, EvRenderRegionCache cache) {
             boolean canceled = this.cancelTasks();
-            EvRenderChunkRegion region = cache.createRegion(EvChunkRenderDispatcher.this.level,
-                                                            this.x - 1, this.y - 1, this.z - 1, this.x + 16, this.y + 16, this.z + 16, 1);
+            EvRenderChunkRegion region = cache.createRegion(EvChunkRenderDispatcher.this.level, this.x - 1, this.y - 1, this.z - 1, this.x + 16, this.y + 16, this.z + 16, 1);
             if (region == null) {
                 RenderChunk.this.updateGlobalBlockEntities(ReferenceSets.emptySet());
                 RenderChunk.this.cachedFlags = 0;
@@ -596,8 +586,7 @@ public class EvChunkRenderDispatcher {
                 EvChunkRenderDispatcher.this.renderer.addRecentlyCompiledChunk(RenderChunk.this);
                 return;
             }
-            this.lastRebuildTask = new RenderChunk.RebuildTask(chunkPos(this.x, this.z), this.getDistToCameraSqr(), region,
-                                                               canceled || this.compiled != CompiledChunk.UNCOMPILED);
+            this.lastRebuildTask = new RenderChunk.RebuildTask(this.getDistToCameraSqr(), region, canceled || this.compiled != CompiledChunk.UNCOMPILED);
             dispatcher.schedule(this.lastRebuildTask);
         }
 
@@ -743,19 +732,11 @@ public class EvChunkRenderDispatcher {
             static final ThreadLocal<IRandom> RANDOM_CACHE = ThreadLocal.withInitial(FastRandom::new);
             static final ThreadLocal<EvVisGraph> GRAPH_CACHE = ThreadLocal.withInitial(EvVisGraph::new);
             static final ThreadLocal<PoseStack> MATRICES_CACHE = ThreadLocal.withInitial(PoseStack::new);
-            protected Long2ObjectMap<IModelData> modelData;
             protected @Nullable EvRenderChunkRegion region;
 
-            public RebuildTask(long chunkPos, double distAtCreation, @Nullable EvRenderChunkRegion region, boolean isHighPriority) {
+            public RebuildTask(double distAtCreation, @Nullable EvRenderChunkRegion region, boolean isHighPriority) {
                 super(distAtCreation, isHighPriority);
                 this.region = region;
-                if (chunkPos == Long.MIN_VALUE) {
-                    this.modelData = Long2ObjectMaps.emptyMap();
-                }
-                else {
-                    assert Minecraft.getInstance().level != null;
-                    this.modelData = EvModelDataManager.getModelData(Minecraft.getInstance().level, chunkPos);
-                }
             }
 
             @Override
@@ -809,7 +790,6 @@ public class EvChunkRenderDispatcher {
                                     }
                                 }
                                 FluidState fluidState = region.getFluidState_(px, py, pz);
-                                IModelData modelData = this.getModelData(BlockPos.asLong(px, py, pz));
                                 for (int i = RenderLayer.SOLID, len = ChunkBuilderPack.RENDER_TYPES.length; i < len; i++) {
                                     RenderType renderType = ChunkBuilderPack.RENDER_TYPES[i];
                                     if (!fluidState.isEmpty() && ItemBlockRenderTypes.getRenderLayer(fluidState) == renderType) {
@@ -830,7 +810,7 @@ public class EvChunkRenderDispatcher {
                                         }
                                         matrices.pushPose();
                                         matrices.translate(dx, dy, dz);
-                                        if (dispatcher.renderBatched(blockState, px, py, pz, region, matrices, builder, true, random, modelData)) {
+                                        if (dispatcher.renderBatched(blockState, px, py, pz, region, matrices, builder, true, random)) {
                                             compiledChunk.hasBlocks |= 1 << i;
                                         }
                                         matrices.popPose();
@@ -899,10 +879,6 @@ public class EvChunkRenderDispatcher {
                     EvChunkRenderDispatcher.this.renderer.addRecentlyCompiledChunk(RenderChunk.this);
                     return ChunkTaskResult.SUCCESSFUL;
                 });
-            }
-
-            public IModelData getModelData(long blockPos) {
-                return this.modelData.getOrDefault(blockPos, IModelData.EMPTY);
             }
 
             @Override

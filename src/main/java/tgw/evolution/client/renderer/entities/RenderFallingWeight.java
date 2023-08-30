@@ -14,7 +14,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
-import tgw.evolution.client.models.data.IModelData;
 import tgw.evolution.entities.misc.EntityFallingWeight;
 import tgw.evolution.util.math.FastRandom;
 import tgw.evolution.util.math.IRandom;
@@ -55,8 +54,7 @@ public class RenderFallingWeight extends EntityRenderer<EntityFallingWeight> {
                                                          false,
                                                          RANDOM,
                                                          state.getSeed_(x, y, z),
-                                                         OverlayTexture.NO_OVERLAY,
-                                                         IModelData.EMPTY
+                                                         OverlayTexture.NO_OVERLAY
             );
             matrices.popPose();
             super.render(entity, yaw, partialTicks, matrices, buffer, packedLight);

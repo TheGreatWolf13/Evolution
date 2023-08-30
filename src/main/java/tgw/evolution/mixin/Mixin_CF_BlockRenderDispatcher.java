@@ -21,7 +21,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import org.spongepowered.asm.mixin.*;
 import tgw.evolution.Evolution;
-import tgw.evolution.client.models.data.IModelData;
 import tgw.evolution.hooks.asm.DeleteField;
 import tgw.evolution.hooks.asm.ModifyConstructor;
 import tgw.evolution.hooks.asm.RestoreFinal;
@@ -87,9 +86,9 @@ public abstract class Mixin_CF_BlockRenderDispatcher implements PatchBlockRender
     }
 
     @Override
-    public boolean renderBatched(BlockState state, int x, int y, int z, BlockAndTintGetter level, PoseStack matrices, VertexConsumer builder, boolean checkSides, IRandom random, IModelData modelData) {
+    public boolean renderBatched(BlockState state, int x, int y, int z, BlockAndTintGetter level, PoseStack matrices, VertexConsumer builder, boolean checkSides, IRandom random) {
         try {
-            return state.getRenderShape() == RenderShape.MODEL && this.modelRenderer.tesselateBlock(level, this.getBlockModel(state), state, x, y, z, matrices, builder, checkSides, random, state.getSeed_(x, y, z), OverlayTexture.NO_OVERLAY, modelData);
+            return state.getRenderShape() == RenderShape.MODEL && this.modelRenderer.tesselateBlock(level, this.getBlockModel(state), state, x, y, z, matrices, builder, checkSides, random, state.getSeed_(x, y, z), OverlayTexture.NO_OVERLAY);
         }
         catch (Throwable t) {
             CrashReport crash = CrashReport.forThrowable(t, "Tessellating block in world");
@@ -109,7 +108,7 @@ public abstract class Mixin_CF_BlockRenderDispatcher implements PatchBlockRender
     @Override
     public void renderBreakingTexture(BlockState state, int x, int y, int z, BlockAndTintGetter level, PoseStack matrices, VertexConsumer builder) {
         if (state.getRenderShape() == RenderShape.MODEL) {
-            this.modelRenderer.tesselateBlock(level, this.blockModelShaper.getBlockModel(state), state, x, y, z, matrices, builder, true, this.random_, state.getSeed_(x, y, z), OverlayTexture.NO_OVERLAY, IModelData.EMPTY);
+            this.modelRenderer.tesselateBlock(level, this.blockModelShaper.getBlockModel(state), state, x, y, z, matrices, builder, true, this.random_, state.getSeed_(x, y, z), OverlayTexture.NO_OVERLAY);
         }
     }
 

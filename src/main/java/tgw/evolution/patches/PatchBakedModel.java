@@ -13,7 +13,7 @@ import javax.annotation.Nullable;
 
 public interface PatchBakedModel {
 
-    default IModelData getModelData(BlockAndTintGetter level, int x, int y, int z, BlockState state, IModelData modelData) {
+    default IModelData getModelData(BlockAndTintGetter level, int x, int y, int z, BlockState state) {
         throw new AbstractMethodError();
     }
 

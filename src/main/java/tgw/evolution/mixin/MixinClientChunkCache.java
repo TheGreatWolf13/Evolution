@@ -18,7 +18,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.Evolution;
-import tgw.evolution.client.renderer.chunk.EvModelDataManager;
 import tgw.evolution.patches.PatchClientChunkCache;
 import tgw.evolution.patches.obj.IBlockEntityTagOutput;
 
@@ -56,7 +55,7 @@ public abstract class MixinClientChunkCache extends ChunkSource implements Patch
             int index = storage.getIndex(x, z);
             LevelChunk chunk = storage.getChunk(index);
             if (isValidChunk(chunk, x, z)) {
-                EvModelDataManager.onChunkUnload(chunk);
+                //Unload event
                 storage.replace(index, chunk, null);
             }
         }
@@ -64,28 +63,18 @@ public abstract class MixinClientChunkCache extends ChunkSource implements Patch
             int index = storage.getCameraIndex(x, z);
             LevelChunk chunk = storage.getCameraChunk(index);
             if (isValidChunk(chunk, x, z)) {
-                EvModelDataManager.onChunkUnload(chunk);
+                //Unload event
                 storage.cameraReplace(index, chunk, null);
             }
         }
     }
 
-    /**
-     * @author TheGreatWolf
-     * @reason Handle when the camera is not the player
-     */
     @Override
     @Overwrite
     public String gatherStats() {
-        return (this.storage.chunks.length() + this.storage.getCameraChunksLength()) +
-               ", " +
-               this.getLoadedChunksCount();
+        return (this.storage.chunks.length() + this.storage.getCameraChunksLength()) + ", " + this.getLoadedChunksCount();
     }
 
-    /**
-     * @author TheGreatWolf
-     * @reason Handle when camera is not the player
-     */
     @Override
     @Overwrite
     public @Nullable LevelChunk getChunk(int x, int z, ChunkStatus status, boolean load) {
@@ -108,20 +97,12 @@ public abstract class MixinClientChunkCache extends ChunkSource implements Patch
         return load ? this.emptyChunk : null;
     }
 
-    /**
-     * @author TheGreatWolf
-     * @reason Replace LevelRenderer
-     */
     @Override
     @Overwrite
     public void onLightUpdate(LightLayer type, SectionPos pos) {
         Minecraft.getInstance().lvlRenderer().setSectionDirty(pos.x(), pos.y(), pos.z());
     }
 
-    /**
-     * @author TheGreatWolf
-     * @reason Handle when camera is not the player
-     */
     @Overwrite
     public @Nullable LevelChunk replaceWithPacketData(int x,
                                                       int z,

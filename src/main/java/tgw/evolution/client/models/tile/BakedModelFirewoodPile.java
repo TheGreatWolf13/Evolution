@@ -668,7 +668,7 @@ public class BakedModelFirewoodPile implements BakedModel {
     }
 
     @Override
-    public @NotNull IModelData getModelData(BlockAndTintGetter level, int x, int y, int z, BlockState state, IModelData tileData) {
+    public @NotNull IModelData getModelData(BlockAndTintGetter level, int x, int y, int z, BlockState state) {
         BlockEntity tile = level.getBlockEntity_(x, y, z);
         SimpleModelData<byte[]> modelDataMap = MODEL_DATA.get();
         if (tile instanceof TEFirewoodPile teFirewoodPile) {

@@ -19,8 +19,8 @@ import java.util.Random;
 public interface MixinBakedModel extends PatchBakedModel {
 
     @Override
-    default IModelData getModelData(BlockAndTintGetter level, int x, int y, int z, BlockState state, IModelData modelData) {
-        return modelData;
+    default IModelData getModelData(BlockAndTintGetter level, int x, int y, int z, BlockState state) {
+        return IModelData.EMPTY;
     }
 
     @Override

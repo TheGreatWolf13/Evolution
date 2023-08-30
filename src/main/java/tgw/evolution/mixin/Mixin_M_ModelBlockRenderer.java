@@ -307,10 +307,10 @@ public abstract class Mixin_M_ModelBlockRenderer implements PatchModelBlockRende
     }
 
     @Override
-    public boolean tesselateBlock(BlockAndTintGetter level, BakedModel model, BlockState state, int x, int y, int z, PoseStack matrices, VertexConsumer builder, boolean checkSides, IRandom random, long seed, int packedOverlay, IModelData modelData) {
+    public boolean tesselateBlock(BlockAndTintGetter level, BakedModel model, BlockState state, int x, int y, int z, PoseStack matrices, VertexConsumer builder, boolean checkSides, IRandom random, long seed, int packedOverlay) {
         boolean ao = Minecraft.useAmbientOcclusion() && state.getLightEmission() < 15 && model.useAmbientOcclusion();
         state.getBlock().translateByOffset(matrices, x, z);
-        modelData = model.getModelData(level, x, y, z, state, modelData);
+        IModelData modelData = model.getModelData(level, x, y, z, state);
         try {
             return ao ?
                    this.tesselateWithAO(level, model, state, x, y, z, matrices, builder, checkSides, random, seed, packedOverlay, modelData) :

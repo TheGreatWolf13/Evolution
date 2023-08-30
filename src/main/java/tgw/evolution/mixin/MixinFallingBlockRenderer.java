@@ -16,7 +16,6 @@ import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
-import tgw.evolution.client.models.data.IModelData;
 import tgw.evolution.util.math.FastRandom;
 import tgw.evolution.util.math.IRandom;
 
@@ -53,8 +52,7 @@ public abstract class MixinFallingBlockRenderer extends EntityRenderer<FallingBl
                                                              false,
                                                              RANDOM,
                                                              state.getSeed_(x, y, z),
-                                                             OverlayTexture.NO_OVERLAY,
-                                                             IModelData.EMPTY
+                                                             OverlayTexture.NO_OVERLAY
                 );
                 matrices.popPose();
                 super.render(entity, yaw, partialTicks, matrices, buffer, packedLight);
