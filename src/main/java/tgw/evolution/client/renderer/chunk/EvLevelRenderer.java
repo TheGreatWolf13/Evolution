@@ -26,7 +26,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Registry;
 import net.minecraft.core.SectionPos;
-import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
@@ -59,8 +58,6 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.shapes.CollisionContext;
-import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL11C;
@@ -97,6 +94,7 @@ import tgw.evolution.util.constants.LvlEvent;
 import tgw.evolution.util.constants.RenderLayer;
 import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 import tgw.evolution.util.math.DirectionUtil;
+import tgw.evolution.util.math.FastRandom;
 import tgw.evolution.util.math.VectorUtil;
 import tgw.evolution.world.EvBlockDestructionProgress;
 
@@ -105,7 +103,6 @@ import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.random.RandomGenerator;
 
 @Environment(EnvType.CLIENT)
 public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerReloadListener, AutoCloseable {
@@ -134,7 +131,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
     private final Minecraft mc;
     private final AtomicBoolean needsFrustumUpdate = new AtomicBoolean(false);
     private final AtomicLong nextFullUpdateMillis = new AtomicLong(0L);
-    private final Random rainRandom = new Random();
+    private final FastRandom rainRandom = new FastRandom();
     private final float[] rainSizeX = new float[1_024];
     private final float[] rainSizeZ = new float[1_024];
     private final OList<EvChunkRenderDispatcher.RenderChunk> recentlyCompiledChunks = new OArrayList<>();
@@ -416,30 +413,6 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
         });
     }
 
-    public static void renderVoxelShape(PoseStack matrices,
-                                        VertexConsumer builder,
-                                        VoxelShape shape,
-                                        double x,
-                                        double y,
-                                        double z,
-                                        float r,
-                                        float g,
-                                        float b,
-                                        float a) {
-        List<AABB> list = shape.toAabbs();
-        int i = Mth.ceil(list.size() / 3.0);
-        for (int j = 0; j < list.size(); ++j) {
-            AABB aabb = list.get(j);
-            float f = (j % (float) i + 1.0F) / i;
-            //TODO see if this is right, it should be
-            float f1 = j / i;
-            float f2 = f * (f1 == 0.0F ? 1 : 0);
-            float f3 = f * (f1 == 1.0F ? 1 : 0);
-            float f4 = f * (f1 == 2.0F ? 1 : 0);
-            renderShape(matrices, builder, Shapes.create(aabb), x, y, z, f2, f3, f4, 1.0F);
-        }
-    }
-
     public void addRecentlyCompiledChunk(EvChunkRenderDispatcher.RenderChunk chunk) {
         if (this.renderOnThread) {
             this.recentlyCompiledChunks.add(chunk);
@@ -495,6 +468,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
             Vec3 camPos = this.mc.gameRenderer.getMainCamera().getPosition();
             this.viewArea.repositionCamera(camPos.x, camPos.z);
             this.renderCache.clear();
+            ClientEvents.getInstance().allChanged();
         }
     }
 
@@ -1435,19 +1409,6 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
         }
     }
 
-    private void renderHitOutline(PoseStack matrices,
-                                  VertexConsumer builder,
-                                  Entity entity,
-                                  double camX,
-                                  double camY,
-                                  double camZ,
-                                  BlockPos pos,
-                                  BlockState state) {
-        assert this.level != null;
-        renderShape(matrices, builder, state.getShape(this.level, pos, CollisionContext.of(entity)),
-                    pos.getX() - camX, pos.getY() - camY, pos.getZ() - camZ, 0.0F, 0.0F, 0.0F, 0.4F);
-    }
-
     public void renderLevel(PoseStack matrices, float partialTicks, long endTickTime, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightTexture lightTexture, Matrix4f projectionMatrix) {
         assert this.level != null;
         assert this.mc.hitResult != null;
@@ -1580,7 +1541,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
             if (!blockEntities.isEmpty()) {
                 for (int j = 0, len = blockEntities.size(); j < len; j++) {
                     BlockEntity blockEntity = blockEntities.get(j);
-                    //noinspection ObjectAllocationInLoop
+                    //noinspection ObjectAllocationInLoop,ConstantConditions
                     profiler.push(() -> Registry.BLOCK_ENTITY_TYPE.getKey(blockEntity.getType()).toString());
                     if (renderChunk.visibility != Visibility.INSIDE && !frustum.isVisible(blockEntity.getRenderBoundingBox())) {
                         profiler.pop();
@@ -1648,7 +1609,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
             double deltaZ = z - camZ;
             if (!(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ > 1_024.0)) {
                 SortedSet<EvBlockDestructionProgress> destructionProgresses = e.value();
-                if (destructionProgresses != null && !destructionProgresses.isEmpty()) {
+                if (!destructionProgresses.isEmpty()) {
                     int progress = destructionProgresses.last().getProgress();
                     matrices.pushPose();
                     matrices.translate(deltaX, deltaY, deltaZ);
@@ -2279,54 +2240,60 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
 
     public void tickRain(Camera camera) {
         assert this.level != null;
-        float f = this.level.getRainLevel(1.0F) / (Minecraft.useFancyGraphics() ? 1.0F : 2.0F);
-        if (!(f <= 0.0F)) {
-            RandomGenerator random = new Random(this.ticks * 312_987_231L);
-            BlockPos blockpos = new BlockPos(camera.getPosition());
-            BlockPos blockpos1 = null;
-            int i = (int) (100.0F * f * f) / (this.mc.options.particles == ParticleStatus.DECREASED ? 2 : 1);
-            for (int j = 0; j < i; ++j) {
-                int k = random.nextInt(21) - 10;
-                int l = random.nextInt(21) - 10;
-                BlockPos blockpos2 = this.level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, blockpos.offset(k, 0, l));
-                Biome biome = this.level.getBiome(blockpos2).value();
-                if (blockpos2.getY() > this.level.getMinBuildHeight() &&
-                    blockpos2.getY() <= blockpos.getY() + 10 &&
-                    blockpos2.getY() >= blockpos.getY() - 10 &&
-                    biome.getPrecipitation() == Biome.Precipitation.RAIN &&
-                    biome.warmEnoughToRain(blockpos2)) {
-                    blockpos1 = blockpos2.below();
-                    if (this.mc.options.particles == ParticleStatus.MINIMAL) {
-                        break;
+        float rainAmount = this.level.getRainLevel(1.0F) / (Minecraft.useFancyGraphics() ? 1.0F : 2.0F);
+        if (rainAmount > 0.0F) {
+            FastRandom random = this.rainRandom.setSeedAndReturn(this.ticks * 312_987_231L);
+            BlockPos cameraPos = camera.getBlockPosition();
+            int camX = cameraPos.getX();
+            int camY = cameraPos.getY();
+            int camZ = cameraPos.getZ();
+            int rainX = Integer.MIN_VALUE;
+            int rainY = 0;
+            int rainZ = 0;
+            int total = (int) (100.0F * rainAmount * rainAmount) / (this.mc.options.particles == ParticleStatus.DECREASED ? 2 : 1);
+            BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
+            for (int i = 0; i < total; ++i) {
+                int offX = random.nextInt(21) - 10;
+                int offZ = random.nextInt(21) - 10;
+                int topX = camX + offX;
+                int topZ = camZ + offZ;
+                int topY = this.level.getHeight(Heightmap.Types.MOTION_BLOCKING, topX, topZ);
+                if (topY > this.level.getMinBuildHeight() && topY <= camY + 10 && topY >= camY - 10) {
+                    Biome biome = this.level.getBiome_(topX, topY, topZ).value();
+                    if (biome.getPrecipitation() == Biome.Precipitation.RAIN && biome.warmEnoughToRain(mutable.set(topX, topY, topZ))) {
+                        rainX = topX;
+                        rainY = topY - 1;
+                        rainZ = topZ;
+                        if (this.mc.options.particles == ParticleStatus.MINIMAL) {
+                            break;
+                        }
+                        double dx = random.nextDouble();
+                        double dz = random.nextDouble();
+                        BlockState state = this.level.getBlockState_(rainX, rainY, rainZ);
+                        FluidState fluid = this.level.getFluidState_(rainX, rainY, rainZ);
+                        VoxelShape shape = state.getCollisionShape_(this.level, rainX, rainY, rainZ);
+                        this.level.addParticle(fluid.is(FluidTags.LAVA) || state.is(Blocks.MAGMA_BLOCK) || CampfireBlock.isLitCampfire(state) ? ParticleTypes.RAIN : ParticleTypes.SMOKE,
+                                               rainX + dx,
+                                               rainY + Math.max(shape.max(Direction.Axis.Y, dx, dz), fluid.getHeight_(this.level, rainX, rainY, rainZ)),
+                                               rainZ + dz,
+                                               0, 0, 0
+                        );
                     }
-                    double d0 = random.nextDouble();
-                    double d1 = random.nextDouble();
-                    BlockState blockstate = this.level.getBlockState(blockpos1);
-                    FluidState fluidstate = this.level.getFluidState(blockpos1);
-                    VoxelShape voxelshape = blockstate.getCollisionShape(this.level, blockpos1);
-                    double d2 = voxelshape.max(Direction.Axis.Y, d0, d1);
-                    double d3 = fluidstate.getHeight(this.level, blockpos1);
-                    double d4 = Math.max(d2, d3);
-                    ParticleOptions particleoptions = !fluidstate.is(FluidTags.LAVA) &&
-                                                      !blockstate.is(Blocks.MAGMA_BLOCK) &&
-                                                      !CampfireBlock.isLitCampfire(blockstate) ? ParticleTypes.RAIN : ParticleTypes.SMOKE;
-                    this.level.addParticle(particleoptions, blockpos1.getX() + d0, blockpos1.getY() + d4, blockpos1.getZ() + d1, 0, 0, 0);
                 }
             }
-            if (blockpos1 != null && random.nextInt(3) < this.rainSoundTime++) {
+            if (rainX != Integer.MIN_VALUE && random.nextInt(3) < this.rainSoundTime++) {
                 this.rainSoundTime = 0;
-                if (blockpos1.getY() > blockpos.getY() + 1 &&
-                    this.level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, blockpos).getY() > Mth.floor(blockpos.getY())) {
-                    this.level.playLocalSound(blockpos1, SoundEvents.WEATHER_RAIN_ABOVE, SoundSource.WEATHER, 0.1F, 0.5F, false);
+                if (rainY > camY + 1 && this.level.getHeight(Heightmap.Types.MOTION_BLOCKING, camX, camZ) > camY) {
+                    this.level.playLocalSound(rainX + 0.5, rainY + 0.5, rainZ + 0.5, SoundEvents.WEATHER_RAIN_ABOVE, SoundSource.WEATHER, 0.1F, 0.5F, false);
                 }
                 else {
-                    this.level.playLocalSound(blockpos1, SoundEvents.WEATHER_RAIN, SoundSource.WEATHER, 0.2F, 1.0F, false);
+                    this.level.playLocalSound(rainX + 0.5, rainY + 0.5, rainZ + 0.5, SoundEvents.WEATHER_RAIN, SoundSource.WEATHER, 0.2F, 1.0F, false);
                 }
             }
         }
     }
 
-    public void updateGlobalBlockEntities(Collection<BlockEntity> toRemove, Collection<BlockEntity> toAdd) {
+    public void updateGlobalBlockEntities(RSet<BlockEntity> toRemove, RSet<BlockEntity> toAdd) {
         if (this.renderOnThread) {
             this.globalBlockEntities.removeAll(toRemove);
             this.globalBlockEntities.addAll(toAdd);

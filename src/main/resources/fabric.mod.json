@@ -333,6 +333,9 @@
       ],
       "net/minecraft/network/protocol/game/ClientboundBlockEntityDataPacket": [
         "tgw/evolution/patches/PatchClientboundBlockEntityDataPacket"
+      ],
+      "net/minecraft/client/renderer/GameRenderer": [
+        "tgw/evolution/patches/PatchGameRenderer"
       ]
     }
   }

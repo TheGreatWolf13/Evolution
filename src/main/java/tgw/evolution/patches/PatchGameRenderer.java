@@ -1,12 +1,19 @@
 package tgw.evolution.patches;
 
 import net.minecraft.resources.ResourceLocation;
+import tgw.evolution.client.util.Shader;
 
 public interface PatchGameRenderer {
 
-    void loadShader(int shaderId, ResourceLocation resLoc);
+    default void loadShader(@Shader int shaderId, ResourceLocation resLoc) {
+        throw new AbstractMethodError();
+    }
 
-    void shutdownAllShaders();
+    default void shutdownAllShaders() {
+        throw new AbstractMethodError();
+    }
 
-    void shutdownShader(int shaderId);
+    default void shutdownShader(@Shader int shaderId) {
+        throw new AbstractMethodError();
+    }
 }

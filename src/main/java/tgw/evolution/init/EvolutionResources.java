@@ -47,6 +47,7 @@ public final class EvolutionResources {
     public static final ResourceLocation GUI_INVENTORY = Evolution.getResource("textures/gui/inventory.png");
     public static final ResourceLocation GUI_TABS = Evolution.getResource("textures/gui/tabs.png");
     //      Shaders
+    public static final ResourceLocation SHADER_TEST = Evolution.getResource("shaders/post/test.json");
     public static final ResourceLocation SHADER_DESATURATE_25 = Evolution.getResource("shaders/post/saturation25.json");
     public static final ResourceLocation SHADER_DESATURATE_50 = Evolution.getResource("shaders/post/saturation50.json");
     public static final ResourceLocation SHADER_DESATURATE_75 = Evolution.getResource("shaders/post/saturation75.json");

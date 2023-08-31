@@ -29,6 +29,7 @@ import tgw.evolution.util.collection.maps.O2OMap;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.InvalidClassException;
 import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.List;
@@ -181,9 +182,30 @@ public abstract class Mixin_CF_EffectInstance implements Effect, AutoCloseable {
         this.markDirty();
     }
 
-    @Shadow
-    public static EffectProgram getOrCreate(ResourceManager resourceManager, Program.Type type, String string) {
-        throw new AbstractMethodError();
+    @Overwrite
+    public static EffectProgram getOrCreate(ResourceManager resourceManager, Program.Type type, String string) throws IOException {
+        Program program = type.getPrograms().get(string);
+        if (program != null && !(program instanceof EffectProgram)) {
+            throw new InvalidClassException("Program is not of type EffectProgram");
+        }
+        if (program == null) {
+            int index = string.indexOf(':');
+            String namespace = "minecraft";
+            String path = string;
+            if (index != -1) {
+                namespace = string.substring(0, index);
+                path = string.substring(index + 1);
+            }
+            ResourceLocation resourceLocation = new ResourceLocation(namespace, "shaders/program/" + path + type.getExtension());
+            Resource resource = resourceManager.getResource(resourceLocation);
+            try {
+                return EffectProgram.compileShader(type, string, resource.getInputStream(), resource.getSourceName());
+            }
+            finally {
+                IOUtils.closeQuietly(resource);
+            }
+        }
+        return (EffectProgram) program;
     }
 
     @Shadow

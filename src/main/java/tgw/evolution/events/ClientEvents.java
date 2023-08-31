@@ -1,7 +1,6 @@
 package tgw.evolution.events;
 
 import com.mojang.authlib.minecraft.MinecraftSessionService;
-import it.unimi.dsi.fastutil.ints.IntIterator;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
@@ -47,6 +46,7 @@ import tgw.evolution.client.renderer.DimensionOverworld;
 import tgw.evolution.client.renderer.ambient.SkyRenderer;
 import tgw.evolution.client.util.ClientEffectInstance;
 import tgw.evolution.client.util.MouseButton;
+import tgw.evolution.client.util.Shader;
 import tgw.evolution.entities.misc.EntityPlayerCorpse;
 import tgw.evolution.hooks.TickrateChanger;
 import tgw.evolution.init.EvolutionResources;
@@ -57,7 +57,6 @@ import tgw.evolution.items.IBeltWeapon;
 import tgw.evolution.items.IMelee;
 import tgw.evolution.items.ITwoHanded;
 import tgw.evolution.network.*;
-import tgw.evolution.patches.PatchGameRenderer;
 import tgw.evolution.patches.PatchLivingEntity;
 import tgw.evolution.util.HitInformation;
 import tgw.evolution.util.PlayerHelper;
@@ -279,6 +278,11 @@ public class ClientEvents {
         }
     }
 
+    public void allChanged() {
+        this.currentShaders.clear();
+        this.mc.gameRenderer.shutdownAllShaders();
+    }
+
     /**
      * @return Whether the current hit result situation allows for short attacking, i.e. if the player is holding an axe while looking at a
      * chopping block that has a log, the player won't short attack, so return false.
@@ -436,12 +440,13 @@ public class ClientEvents {
         return this.renderer;
     }
 
-    public @Nullable ResourceLocation getShader(int shaderId) {
+    public @Nullable ResourceLocation getShader(@Shader int shaderId) {
         return switch (shaderId) {
-            case 1 -> EvolutionResources.SHADER_MOTION_BLUR;
-            case 25 -> EvolutionResources.SHADER_DESATURATE_25;
-            case 50 -> EvolutionResources.SHADER_DESATURATE_50;
-            case 75 -> EvolutionResources.SHADER_DESATURATE_75;
+            case Shader.MOTION_BLUR -> EvolutionResources.SHADER_MOTION_BLUR;
+            case Shader.DESATURATE_25 -> EvolutionResources.SHADER_DESATURATE_25;
+            case Shader.DESATURATE_50 -> EvolutionResources.SHADER_DESATURATE_50;
+            case Shader.DESATURATE_75 -> EvolutionResources.SHADER_DESATURATE_75;
+            case Shader.TEST -> EvolutionResources.SHADER_TEST;
             default -> null;
         };
     }
@@ -454,7 +459,7 @@ public class ClientEvents {
         return this.ticks;
     }
 
-    public void handleShaderPacket(int shaderId) {
+    public void handleShaderPacket(@Shader int shaderId) {
         assert this.mc.player != null;
         switch (shaderId) {
             case PacketSCShader.QUERY -> {
@@ -463,9 +468,8 @@ public class ClientEvents {
                                     new TranslatableComponent("command.evolution.shader.query", this.currentShaders.stream()
                                                                                                                    .sorted(Integer::compareTo)
                                                                                                                    .map(String::valueOf)
-                                                                                                                   .collect(
-                                                                                                                           Collectors.joining(
-                                                                                                                                   ", ")));
+                                                                                                                   .collect(Collectors.joining(", "))
+                                    );
                 this.mc.player.displayClientMessage(message, false);
                 return;
             }
@@ -494,12 +498,11 @@ public class ClientEvents {
             this.forcedShaders.add(shaderId);
         }
         else {
-            this.mc.player.displayClientMessage(new TranslatableComponent("command.evolution.shader.fail", shaderId).withStyle(ChatFormatting.RED),
-                                                false);
+            this.mc.player.displayClientMessage(new TranslatableComponent("command.evolution.shader.fail", shaderId).withStyle(ChatFormatting.RED), false);
         }
     }
 
-    public boolean hasShader(int shaderId) {
+    public boolean hasShader(@Shader int shaderId) {
         return this.getShader(shaderId) != null;
     }
 
@@ -884,46 +887,48 @@ public class ClientEvents {
         }
         //Apply shaders
         this.mc.getProfiler().popPush("shaders");
-        this.desiredShaders.clear();
+        ISet desiredShaders = this.desiredShaders;
+        desiredShaders.clear();
         if (this.mc.options.getCameraType() == CameraType.FIRST_PERSON &&
             !this.mc.player.isCreative() &&
             !this.mc.player.isSpectator() &&
             this.mc.player.equals(this.mc.getCameraEntity())) {
             float health = this.mc.player.getHealth();
             if (health <= 12.5f) {
-                this.desiredShaders.add(25);
+                desiredShaders.add(Shader.DESATURATE_25);
             }
             else if (health <= 25) {
-                this.desiredShaders.add(50);
+                desiredShaders.add(Shader.DESATURATE_50);
             }
             else if (health <= 50) {
-                this.desiredShaders.add(75);
+                desiredShaders.add(Shader.DESATURATE_75);
             }
         }
-        this.desiredShaders.addAll(this.forcedShaders);
-        if (this.desiredShaders.isEmpty()) {
-            if (!this.currentShaders.isEmpty()) {
-                this.currentShaders.clear();
-                ((PatchGameRenderer) this.mc.gameRenderer).shutdownAllShaders();
+        desiredShaders.addAll(this.forcedShaders);
+        ISet currentShaders = this.currentShaders;
+        if (desiredShaders.isEmpty()) {
+            if (!currentShaders.isEmpty()) {
+                currentShaders.clear();
+                this.mc.gameRenderer.shutdownAllShaders();
             }
         }
         else {
-            if (!this.desiredShaders.containsAll(this.currentShaders)) {
-                for (IntIterator it = this.currentShaders.intIterator(); it.hasNext(); ) {
-                    int shader = it.nextInt();
-                    if (!this.desiredShaders.contains(shader)) {
-                        it.remove();
-                        ((PatchGameRenderer) this.mc.gameRenderer).shutdownShader(shader);
+            if (!desiredShaders.containsAll(currentShaders)) {
+                for (ISet.Entry e = currentShaders.fastEntries(); e != null; e = currentShaders.fastEntries()) {
+                    @Shader int shader = e.get();
+                    if (!desiredShaders.contains(shader)) {
+                        currentShaders.remove(shader);
+                        this.mc.gameRenderer.shutdownShader(shader);
                     }
                 }
             }
-            if (!this.currentShaders.containsAll(this.desiredShaders)) {
-                for (IntIterator it = this.desiredShaders.intIterator(); it.hasNext(); ) {
-                    int shader = it.nextInt();
-                    if (this.currentShaders.add(shader)) {
+            if (!currentShaders.containsAll(desiredShaders)) {
+                for (ISet.Entry e = desiredShaders.fastEntries(); e != null; e = desiredShaders.fastEntries()) {
+                    @Shader int shader = e.get();
+                    if (currentShaders.add(shader)) {
                         ResourceLocation shaderLoc = this.getShader(shader);
                         if (shaderLoc != null) {
-                            ((PatchGameRenderer) this.mc.gameRenderer).loadShader(shader, shaderLoc);
+                            this.mc.gameRenderer.loadShader(shader, shaderLoc);
                         }
                         else {
                             Evolution.warn("Unregistered shader id: {}", shader);

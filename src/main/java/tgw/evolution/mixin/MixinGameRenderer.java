@@ -48,6 +48,7 @@ import tgw.evolution.client.gui.EvolutionGui;
 import tgw.evolution.client.gui.overlays.Overlays;
 import tgw.evolution.client.renderer.ambient.LightTextureEv;
 import tgw.evolution.client.renderer.chunk.EvLevelRenderer;
+import tgw.evolution.client.util.Shader;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.patches.PatchGameRenderer;
@@ -156,11 +157,10 @@ public abstract class MixinGameRenderer implements PatchGameRenderer {
     }
 
     @Override
-    public void loadShader(int shaderId, ResourceLocation resLoc) {
+    public void loadShader(@Shader int shaderId, ResourceLocation resLoc) {
         if (!this.postEffects.containsKey(shaderId)) {
             try {
-                PostChain shader = new PostChain(this.minecraft.getTextureManager(), this.resourceManager, this.minecraft.getMainRenderTarget(),
-                                                 resLoc);
+                PostChain shader = new PostChain(this.minecraft.getTextureManager(), this.resourceManager, this.minecraft.getMainRenderTarget(), resLoc);
                 shader.resize(this.minecraft.getWindow().getWidth(), this.minecraft.getWindow().getHeight());
                 this.effectActive = true;
                 this.postEffects.put(shaderId, shader);
@@ -175,8 +175,7 @@ public abstract class MixinGameRenderer implements PatchGameRenderer {
     }
 
     @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/GameRenderer;" +
-                                                                    "lightTexture:Lnet/minecraft/client/renderer/LightTexture;", opcode =
-            Opcodes.PUTFIELD))
+                                                                    "lightTexture:Lnet/minecraft/client/renderer/LightTexture;", opcode = Opcodes.PUTFIELD))
     private void onConstructor(GameRenderer instance, LightTexture value) {
         this.lightTexture = new LightTextureEv((GameRenderer) (Object) this, this.minecraft);
     }
@@ -271,19 +270,16 @@ public abstract class MixinGameRenderer implements PatchGameRenderer {
                 Overlays.renderAllGame(this.minecraft, (EvolutionGui) this.minecraft.gui, this.matrices, partialTicks, guiScaledWidth,
                                        guiScaledHeight);
                 if (this.effectActive) {
+                    RenderSystem.disableBlend();
+                    RenderSystem.disableDepthTest();
+                    RenderSystem.enableTexture();
+                    RenderSystem.resetTextureMatrix();
                     if (this.postEffect != null) {
-                        RenderSystem.disableBlend();
-                        RenderSystem.disableDepthTest();
-                        RenderSystem.enableTexture();
-                        RenderSystem.resetTextureMatrix();
                         this.postEffect.process(partialTicks);
                     }
-                    for (PostChain effect : this.postEffects.values()) {
-                        RenderSystem.disableBlend();
-                        RenderSystem.disableDepthTest();
-                        RenderSystem.enableTexture();
-                        RenderSystem.resetTextureMatrix();
-                        effect.process(partialTicks);
+                    I2OMap<PostChain> postEffects = this.postEffects;
+                    for (I2OMap.Entry<PostChain> e = postEffects.fastEntries(); e != null; e = postEffects.fastEntries()) {
+                        e.value().process(partialTicks);
                     }
                 }
                 this.minecraft.getMainRenderTarget().bindWrite(true);
@@ -429,8 +425,9 @@ public abstract class MixinGameRenderer implements PatchGameRenderer {
         if (this.postEffect != null) {
             this.postEffect.resize(width, height);
         }
-        for (PostChain shader : this.postEffects.values()) {
-            shader.resize(width, height);
+        I2OMap<PostChain> postEffects = this.postEffects;
+        for (I2OMap.Entry<PostChain> e = postEffects.fastEntries(); e != null; e = postEffects.fastEntries()) {
+            e.value().resize(width, height);
         }
         this.minecraft.lvlRenderer().resize(width, height);
     }
@@ -471,14 +468,15 @@ public abstract class MixinGameRenderer implements PatchGameRenderer {
 
     @Override
     public void shutdownAllShaders() {
-        for (PostChain effect : this.postEffects.values()) {
-            effect.close();
+        I2OMap<PostChain> postEffects = this.postEffects;
+        for (I2OMap.Entry<PostChain> e = postEffects.fastEntries(); e != null; e = postEffects.fastEntries()) {
+            e.value().close();
         }
-        this.postEffects.clear();
+        postEffects.clear();
     }
 
     @Override
-    public void shutdownShader(int shaderId) {
+    public void shutdownShader(@Shader int shaderId) {
         PostChain shader = this.postEffects.remove(shaderId);
         if (shader != null) {
             shader.close();

@@ -120,5 +120,11 @@ public class FastRandom implements IRandom {
         this.seed = initialScramble(seed);
         this.haveNextNextGaussian = false;
     }
+
+    @Override
+    public FastRandom setSeedAndReturn(long seed) {
+        this.setSeed(seed);
+        return this;
+    }
 }
 

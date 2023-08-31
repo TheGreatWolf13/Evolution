@@ -2,8 +2,6 @@ package tgw.evolution.client.renderer.chunk;
 
 import com.google.common.primitives.Doubles;
 import com.mojang.blaze3d.vertex.*;
-import it.unimi.dsi.fastutil.objects.ReferenceSet;
-import it.unimi.dsi.fastutil.objects.ReferenceSets;
 import net.minecraft.CrashReport;
 import net.minecraft.Util;
 import net.minecraft.client.Camera;
@@ -39,7 +37,6 @@ import tgw.evolution.util.math.IRandom;
 import java.util.ArrayDeque;
 import java.util.List;
 import java.util.Queue;
-import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
@@ -373,7 +370,7 @@ public class EvChunkRenderDispatcher {
             int chunkZ = SectionPos.blockToSectionCoord(this.z);
             LevelChunk chunk = EvChunkRenderDispatcher.this.level.getChunk(chunkX, chunkZ);
             if (chunk.isYSpaceEmpty(this.y, this.y + 15)) {
-                RenderChunk.this.updateGlobalBlockEntities(ReferenceSets.emptySet());
+                RenderChunk.this.updateGlobalBlockEntities(RSet.emptySet());
                 RenderChunk.this.compiled = CompiledChunk.EMPTY;
                 RenderChunk.this.cachedFlags = 0;
                 EvChunkRenderDispatcher.this.renderer.addRecentlyCompiledChunk(RenderChunk.this);
@@ -393,7 +390,7 @@ public class EvChunkRenderDispatcher {
                 compiledChunk.transparencyState = null;
             }
             ChunkBuilderPack fixedBuffers = EvChunkRenderDispatcher.this.fixedBuffers;
-            ReferenceSet<BlockEntity> blockEntities = null;
+            RSet<BlockEntity> blockEntities = null;
             int posX = this.x;
             int posY = this.y;
             int posZ = this.z;
@@ -474,7 +471,7 @@ public class EvChunkRenderDispatcher {
                 }
             }
             ModelBlockRenderer.clearCache();
-            blockEntities = blockEntities == null ? ReferenceSets.emptySet() : blockEntities;
+            blockEntities = blockEntities == null ? RSet.emptySet() : blockEntities;
             RenderChunk.this.updateGlobalBlockEntities(blockEntities);
             for (int i = RenderLayer.SOLID, len = ChunkBuilderPack.RENDER_TYPES.length; i < len; i++) {
                 if ((compiledChunk.hasLayer & 1 << i) != 0) {
@@ -580,7 +577,7 @@ public class EvChunkRenderDispatcher {
             boolean canceled = this.cancelTasks();
             EvRenderChunkRegion region = cache.createRegion(EvChunkRenderDispatcher.this.level, this.x - 1, this.y - 1, this.z - 1, this.x + 16, this.y + 16, this.z + 16, 1);
             if (region == null) {
-                RenderChunk.this.updateGlobalBlockEntities(ReferenceSets.emptySet());
+                RenderChunk.this.updateGlobalBlockEntities(RSet.emptySet());
                 RenderChunk.this.cachedFlags = 0;
                 RenderChunk.this.compiled = CompiledChunk.EMPTY;
                 EvChunkRenderDispatcher.this.renderer.addRecentlyCompiledChunk(RenderChunk.this);
@@ -687,10 +684,10 @@ public class EvChunkRenderDispatcher {
             }
         }
 
-        void updateGlobalBlockEntities(ReferenceSet<BlockEntity> blockEntities) {
+        void updateGlobalBlockEntities(RSet<BlockEntity> blockEntities) {
             if (!blockEntities.isEmpty()) {
-                Set<BlockEntity> toAdd = new RHashSet<>(blockEntities);
-                Set<BlockEntity> toRemove;
+                RSet<BlockEntity> toAdd = new RHashSet<>(blockEntities);
+                RSet<BlockEntity> toRemove;
                 synchronized (this.globalBlockEntities) {
                     toRemove = new RHashSet<>(this.globalBlockEntities);
                     toAdd.removeAll(this.globalBlockEntities);
@@ -747,7 +744,7 @@ public class EvChunkRenderDispatcher {
                 }
             }
 
-            private ReferenceSet<BlockEntity> compile(float camX, float camY, float camZ, CompiledChunk compiledChunk, ChunkBuilderPack builderPack) {
+            private RSet<BlockEntity> compile(float camX, float camY, float camZ, CompiledChunk compiledChunk, ChunkBuilderPack builderPack) {
                 RSet<BlockEntity> blockEntities = null;
                 EvRenderChunkRegion region = this.region;
                 this.region = null;
@@ -835,7 +832,7 @@ public class EvChunkRenderDispatcher {
                 else {
                     compiledChunk.visibilitySet = 0b111111_111111_111111_111111_111111_111111L;
                 }
-                return blockEntities == null ? ReferenceSets.emptySet() : blockEntities;
+                return blockEntities == null ? RSet.emptySet() : blockEntities;
             }
 
             @Override

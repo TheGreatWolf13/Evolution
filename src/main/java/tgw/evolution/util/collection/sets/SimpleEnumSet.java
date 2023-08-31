@@ -133,6 +133,19 @@ public class SimpleEnumSet<E extends Enum<E>> extends AbstractSet<E> implements 
     }
 
     @Override
+    public boolean removeAll(RSet<?> set) {
+        if (!(set instanceof SimpleEnumSet<?> es)) {
+            return RSet.super.removeAll(set);
+        }
+        if (es.clazz != this.clazz) {
+            return false;
+        }
+        long oldData = this.data;
+        this.data &= ~es.data;
+        return this.data != oldData;
+    }
+
+    @Override
     public boolean removeAll(Collection<?> c) {
         if (!(c instanceof SimpleEnumSet<?> es)) {
             return super.removeAll(c);
@@ -143,6 +156,11 @@ public class SimpleEnumSet<E extends Enum<E>> extends AbstractSet<E> implements 
         long oldData = this.data;
         this.data &= ~es.data;
         return this.data != oldData;
+    }
+
+    @Override
+    public void resetIteration() {
+        this.lastPos = -1;
     }
 
     @Override

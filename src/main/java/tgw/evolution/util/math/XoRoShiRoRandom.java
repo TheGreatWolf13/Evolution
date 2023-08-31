@@ -129,6 +129,7 @@ public class XoRoShiRoRandom extends Random implements IRandom {
         }
     }
 
+    @Override
     public XoRoShiRoRandom setSeedAndReturn(final long seed) {
         this.setSeed(seed);
         return this;
