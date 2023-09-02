@@ -11,6 +11,7 @@ public final class ConfigBoolean implements IConfigItem {
     private final Component name;
     private final ConfigFolder parent;
     private boolean dirtyValue;
+    private Priority priority = Priority.NORMAL;
     private boolean value;
 
     public ConfigBoolean(ConfigFolder parent, String name, boolean defaultValue) {
@@ -66,6 +67,11 @@ public final class ConfigBoolean implements IConfigItem {
     }
 
     @Override
+    public Priority priority() {
+        return this.priority;
+    }
+
+    @Override
     public void restore() {
         this.set(this.defaultValue);
     }
@@ -84,6 +90,10 @@ public final class ConfigBoolean implements IConfigItem {
         this.dirtyValue = value;
         this.save();
         EvolutionConfig.handle(this);
+    }
+
+    public void setPriority(Priority priority) {
+        this.priority = priority;
     }
 
     @Override

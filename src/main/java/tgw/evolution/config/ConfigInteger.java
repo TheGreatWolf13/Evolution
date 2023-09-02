@@ -16,6 +16,7 @@ public final class ConfigInteger implements IConfigItem {
     private final Component name;
     private final ConfigFolder parent;
     private int dirtyValue;
+    private Priority priority = Priority.NORMAL;
     private int value;
 
     public ConfigInteger(ConfigFolder parent, String name, int defaultValue) {
@@ -105,6 +106,11 @@ public final class ConfigInteger implements IConfigItem {
     }
 
     @Override
+    public Priority priority() {
+        return this.priority;
+    }
+
+    @Override
     public void restore() {
         this.set(this.defaultValue);
     }
@@ -123,6 +129,10 @@ public final class ConfigInteger implements IConfigItem {
         this.dirtyValue = Mth.clamp(value, this.minValue, this.maxValue);
         this.save();
         EvolutionConfig.handle(this);
+    }
+
+    public void setPriority(Priority priority) {
+        this.priority = priority;
     }
 
     @Override

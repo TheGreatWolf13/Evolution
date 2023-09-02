@@ -17,6 +17,7 @@ public final class ConfigEnum<E extends Enum<E>> implements IConfigItem {
     private final ConfigFolder parent;
     private final E[] values;
     private E dirtyValue;
+    private Priority priority = Priority.NORMAL;
     private E value;
 
     public ConfigEnum(ConfigFolder parent, String name, E[] values, E defaultValue) {
@@ -99,6 +100,11 @@ public final class ConfigEnum<E extends Enum<E>> implements IConfigItem {
     }
 
     @Override
+    public Priority priority() {
+        return this.priority;
+    }
+
+    @Override
     public void restore() {
         this.set(this.defaultValue);
     }
@@ -117,6 +123,10 @@ public final class ConfigEnum<E extends Enum<E>> implements IConfigItem {
         this.dirtyValue = value;
         this.save();
         EvolutionConfig.handle(this);
+    }
+
+    public void setPriority(Priority priority) {
+        this.priority = priority;
     }
 
     @Override

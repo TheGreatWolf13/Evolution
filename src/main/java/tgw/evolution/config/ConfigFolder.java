@@ -22,7 +22,11 @@ public final class ConfigFolder implements IConfigItem {
         if (o2.type() == Type.FOLDER) {
             return 1;
         }
-        return MathHelper.compare(o1.name().getString(), o2.name().getString());
+        int priority = o1.priority().compareTo(o2.priority());
+        if (priority == 0) {
+            return MathHelper.compare(o1.name().getString(), o2.name().getString());
+        }
+        return priority;
     };
     private final TranslatableComponent desc;
     private final OList<IConfigItem> list = new OArrayList<>();
@@ -104,6 +108,11 @@ public final class ConfigFolder implements IConfigItem {
     @Override
     public @Nullable ConfigFolder parent() {
         return this.parent;
+    }
+
+    @Override
+    public Priority priority() {
+        return Priority.NORMAL;
     }
 
     @Override

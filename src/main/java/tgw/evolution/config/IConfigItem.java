@@ -17,11 +17,19 @@ public interface IConfigItem {
 
     @Nullable ConfigFolder parent();
 
+    Priority priority();
+
     void restore();
 
     void save();
 
     Type type();
+
+    enum Priority {
+        HIGH,
+        NORMAL,
+        LOW
+    }
 
     enum Type {
         FOLDER,

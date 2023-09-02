@@ -49,6 +49,11 @@ public final class EvolutionConfig {
     private static boolean isDirty;
     private static byte needsRestoration = -1;
 
+    static {
+        CELESTIAL_FORCE_ALL.setPriority(IConfigItem.Priority.HIGH);
+        LIMIT_TIME_UNITS_TO_HOUR.setPriority(IConfigItem.Priority.HIGH);
+    }
+
     private EvolutionConfig() {
     }
 
