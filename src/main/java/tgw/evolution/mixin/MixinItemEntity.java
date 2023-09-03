@@ -1,5 +1,6 @@
 package tgw.evolution.mixin;
 
+import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -8,6 +9,8 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Range;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -18,6 +21,7 @@ import tgw.evolution.util.time.RealTime;
 @Mixin(ItemEntity.class)
 public abstract class MixinItemEntity extends Entity {
 
+    @Shadow @Final private static EntityDataAccessor<ItemStack> DATA_ITEM;
     @Shadow private int age;
     @Shadow private int pickupDelay;
 
@@ -32,6 +36,12 @@ public abstract class MixinItemEntity extends Entity {
 
     @Shadow
     public abstract ItemStack getItem();
+
+    @Override
+    public @Range(from = 0, to = 15) byte getLightEmission() {
+        ItemStack stack = this.getEntityData().get(DATA_ITEM);
+        return stack.getLightEmission();
+    }
 
     @Override
     public double getVolume() {

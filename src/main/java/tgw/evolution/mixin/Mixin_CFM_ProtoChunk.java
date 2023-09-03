@@ -27,7 +27,7 @@ import tgw.evolution.hooks.asm.DeleteField;
 import tgw.evolution.hooks.asm.DeleteMethod;
 import tgw.evolution.hooks.asm.ModifyConstructor;
 import tgw.evolution.hooks.asm.RestoreFinal;
-import tgw.evolution.util.collection.ArrayUtils;
+import tgw.evolution.util.collection.ArrayHelper;
 import tgw.evolution.util.collection.lists.LArrayList;
 import tgw.evolution.util.collection.lists.LList;
 import tgw.evolution.util.collection.lists.OArrayList;
@@ -269,12 +269,12 @@ public abstract class Mixin_CFM_ProtoChunk extends ChunkAccess {
             }
             EnumSet<Heightmap.Types> heightmaps = this.getStatus().heightmapsAfter();
             RSet<Heightmap.Types> toPrime = null;
-            for (Heightmap.Types type : ArrayUtils.HEIGHTMAP) {
+            for (Heightmap.Types type : ArrayHelper.HEIGHTMAP) {
                 if (heightmaps.contains(type)) {
                     Heightmap heightmap = this.heightmaps.get(type);
                     if (heightmap == null) {
                         if (toPrime == null) {
-                            toPrime = new SimpleEnumSet<>(Heightmap.Types.class, ArrayUtils.HEIGHTMAP);
+                            toPrime = new SimpleEnumSet<>(Heightmap.Types.class, ArrayHelper.HEIGHTMAP);
                         }
                         toPrime.add(type);
                     }
@@ -283,7 +283,7 @@ public abstract class Mixin_CFM_ProtoChunk extends ChunkAccess {
             if (toPrime != null) {
                 Heightmap.primeHeightmaps(this, toPrime);
             }
-            for (Heightmap.Types type : ArrayUtils.HEIGHTMAP) {
+            for (Heightmap.Types type : ArrayHelper.HEIGHTMAP) {
                 if (heightmaps.contains(type)) {
                     this.heightmaps.get(type).update(x & 15, y, z & 15, state);
                 }

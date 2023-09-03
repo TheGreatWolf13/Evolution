@@ -9,6 +9,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Range;
 import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 import tgw.evolution.util.physics.SI;
 
@@ -56,6 +57,14 @@ public interface PatchEntity {
      */
     default double getLegSlowdown() {
         return 0;
+    }
+
+    default @Range(from = 0, to = 15) byte getLightEmission() {
+        return 0;
+    }
+
+    default long getLightEmissionPos() {
+        return 0L;
     }
 
     default double getLungCapacity() {

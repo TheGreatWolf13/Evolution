@@ -103,10 +103,6 @@ public abstract class MixinPlayer extends LivingEntity implements PatchPlayer {
         super(type, level);
     }
 
-    /**
-     * @author TheGreatWolf
-     * @reason Add attributes
-     */
     @Overwrite
     public static AttributeSupplier.Builder createAttributes() {
         return LivingEntity.createLivingAttributes()
@@ -536,6 +532,11 @@ public abstract class MixinPlayer extends LivingEntity implements PatchPlayer {
         return EntityEvents.SKIN_TYPE.getOrDefault(this.getUUID(), SkinType.STEVE) == SkinType.STEVE ?
                EvolutionEntityHitboxes.PLAYER_STEVE.get((Player) (Object) this) :
                EvolutionEntityHitboxes.PLAYER_ALEX.get((Player) (Object) this);
+    }
+
+    @Override
+    public long getLightEmissionPos() {
+        return this.eyeBlockPosition().asLong();
     }
 
     @Override

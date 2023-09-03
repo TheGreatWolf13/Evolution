@@ -10,6 +10,10 @@ import net.minecraft.world.phys.BlockHitResult;
 
 public interface PatchItemStack {
 
+    default byte getLightEmission() {
+        throw new AbstractMethodError();
+    }
+
     default void mineBlock_(Level level, BlockState state, int x, int y, int z, LivingEntity entity) {
         throw new AbstractMethodError();
     }

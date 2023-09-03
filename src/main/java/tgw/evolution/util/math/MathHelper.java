@@ -55,8 +55,6 @@ public final class MathHelper {
     public static final Random RANDOM = new Random();
     public static final DirectionDiagonal[][] DIAGONALS = {{DirectionDiagonal.NORTH_WEST, DirectionDiagonal.NORTH_EAST},
                                                            {DirectionDiagonal.SOUTH_WEST, DirectionDiagonal.SOUTH_EAST}};
-    public static final InteractionHand[] HANDS_MAIN_PRIORITY = {InteractionHand.MAIN_HAND, InteractionHand.OFF_HAND};
-    public static final InteractionHand[] HANDS_OFF_PRIORITY = {InteractionHand.OFF_HAND, InteractionHand.MAIN_HAND};
     public static final double SIN_60 = Math.sin(Math.toRadians(60));
     private static final Predicate<Entity> PICKABLE_ENTITIES = e -> e != null && !e.isSpectator() && e.isPickable();
     private static final Predicate<Entity> ALIVE_ENTITIES = e -> e != null && !e.isSpectator() && e.isPickable() && e.isAlive();

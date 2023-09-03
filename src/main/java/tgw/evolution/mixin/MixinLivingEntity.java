@@ -49,6 +49,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.PlayerTeam;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Range;
 import org.objectweb.asm.Opcodes;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.*;
@@ -76,6 +77,7 @@ import tgw.evolution.patches.PatchLivingEntity;
 import tgw.evolution.patches.PatchMobEffect;
 import tgw.evolution.util.collection.maps.R2OHashMap;
 import tgw.evolution.util.constants.EntityStates;
+import tgw.evolution.util.constants.NBTType;
 import tgw.evolution.util.damage.DamageSourceEntity;
 import tgw.evolution.util.damage.DamageSourceEv;
 import tgw.evolution.util.damage.EvolutionCombatTracker;
@@ -179,10 +181,6 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
                                 .add(EvolutionAttributes.SWIM_SPEED);
     }
 
-    /**
-     * @author TheGreatWolf
-     * @reason Handle Evolution damage
-     */
     @Overwrite
     public void actuallyHurt(DamageSource source, float amount) {
         if (!this.isInvulnerableTo(source)) {
@@ -850,6 +848,15 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
         return this.getAttributeBaseValue(Attributes.MOVEMENT_SPEED) * 0.065;
     }
 
+    @Override
+    public @Range(from = 0, to = 15) byte getLightEmission() {
+        byte lightM = this.getItemInHand(InteractionHand.MAIN_HAND).getLightEmission();
+        if (lightM == 15) {
+            return 15;
+        }
+        return (byte) Math.max(lightM, this.getItemInHand(InteractionHand.OFF_HAND).getLightEmission());
+    }
+
     @Shadow
     public abstract ItemStack getMainHandItem();
 
@@ -1513,19 +1520,15 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
         }
     }
 
-    /**
-     * @author TheGreatWolf
-     * @reason Add Evolution Hooks
-     */
     @Override
     @Overwrite
     public void readAdditionalSaveData(CompoundTag tag) {
         this.setAbsorptionAmount(tag.getFloat("AbsorptionAmount"));
-        if (tag.contains("Attributes", 9) && !this.level.isClientSide) {
-            this.getAttributes().load(tag.getList("Attributes", 10));
+        if (tag.contains("Attributes", NBTType.LIST) && !this.level.isClientSide) {
+            this.getAttributes().load(tag.getList("Attributes", NBTType.COMPOUND));
         }
-        if (tag.contains("ActiveEffects", 9)) {
-            ListTag effects = tag.getList("ActiveEffects", 10);
+        if (tag.contains("ActiveEffects", NBTType.LIST)) {
+            ListTag effects = tag.getList("ActiveEffects", NBTType.COMPOUND);
             for (int i = 0; i < effects.size(); ++i) {
                 CompoundTag compound = effects.getCompound(i);
                 MobEffectInstance effect = MobEffectInstance.load(compound);
@@ -1534,13 +1537,13 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
                 }
             }
         }
-        if (tag.contains("Health", 99)) {
+        if (tag.contains("Health", NBTType.ANY_NUMERIC)) {
             this.setHealth(tag.getFloat("Health"));
         }
         this.hurtTime = tag.getShort("HurtTime");
         this.deathTime = tag.getShort("DeathTime");
         this.lastHurtByMobTimestamp = tag.getInt("HurtByTimestamp");
-        if (tag.contains("Team", 8)) {
+        if (tag.contains("Team", NBTType.STRING)) {
             String teamName = tag.getString("Team");
             PlayerTeam team = this.level.getScoreboard().getPlayerTeam(teamName);
             boolean teamExists = team != null && this.level.getScoreboard().addPlayerToTeam(this.getStringUUID(), team);
@@ -1551,7 +1554,7 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
         if (tag.getBoolean("FallFlying")) {
             this.setSharedFlag(7, true);
         }
-        if (tag.contains("SleepingX", 99) && tag.contains("SleepingY", 99) && tag.contains("SleepingZ", 99)) {
+        if (tag.contains("SleepingX", NBTType.ANY_NUMERIC) && tag.contains("SleepingY", NBTType.ANY_NUMERIC) && tag.contains("SleepingZ", NBTType.ANY_NUMERIC)) {
             BlockPos blockpos = new BlockPos(tag.getInt("SleepingX"), tag.getInt("SleepingY"), tag.getInt("SleepingZ"));
             this.setSleepingPos(blockpos);
             this.entityData.set(DATA_POSE, Pose.SLEEPING);
@@ -1559,7 +1562,7 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
                 this.setPosToBed(blockpos);
             }
         }
-        if (tag.contains("Brain", 10)) {
+        if (tag.contains("Brain", NBTType.COMPOUND)) {
             this.brain = this.makeBrain(new Dynamic<>(NbtOps.INSTANCE, tag.get("Brain")));
         }
         this.effectHelper.fromNBT(tag.getCompound("EffectHelper"));
@@ -1582,10 +1585,6 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
         return AdditionalSlotType.SLOTS;
     }
 
-    /**
-     * @author TheGreatWolf
-     * @reason Send to client
-     */
     @Overwrite
     public boolean removeEffect(MobEffect mobEffect) {
         //noinspection ConstantConditions

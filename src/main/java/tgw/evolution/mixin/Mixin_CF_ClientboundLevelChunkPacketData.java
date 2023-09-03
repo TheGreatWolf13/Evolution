@@ -15,7 +15,7 @@ import tgw.evolution.hooks.asm.ModifyConstructor;
 import tgw.evolution.hooks.asm.RestoreFinal;
 import tgw.evolution.patches.PatchClientboundLevelChunkPacketData;
 import tgw.evolution.patches.obj.IBlockEntityTagOutput;
-import tgw.evolution.util.collection.ArrayUtils;
+import tgw.evolution.util.collection.ArrayHelper;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.maps.L2OMap;
 
@@ -39,7 +39,7 @@ public abstract class Mixin_CF_ClientboundLevelChunkPacketData implements PatchC
     public Mixin_CF_ClientboundLevelChunkPacketData(LevelChunk chunk) {
         this.heightmaps = new CompoundTag();
         Map<Heightmap.Types, Heightmap> hm = chunk.heightmaps_();
-        for (Heightmap.Types types : ArrayUtils.HEIGHTMAP) {
+        for (Heightmap.Types types : ArrayHelper.HEIGHTMAP) {
             if (types.sendToClient()) {
                 Heightmap heightmap = hm.get(types);
                 if (heightmap != null) {

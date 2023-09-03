@@ -526,6 +526,11 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
     }
 
     @Override
+    public long getLightEmissionPos() {
+        return this.blockPosition.asLong();
+    }
+
+    @Override
     public double getLungCapacity() {
         return 0;
     }

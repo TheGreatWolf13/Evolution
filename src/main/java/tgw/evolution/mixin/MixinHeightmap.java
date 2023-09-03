@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import tgw.evolution.util.collection.ArrayUtils;
+import tgw.evolution.util.collection.ArrayHelper;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.collection.sets.SimpleEnumSet;
@@ -37,7 +37,7 @@ public abstract class MixinHeightmap {
         int y0 = chunk.getMinBuildHeight();
         for (int x = 0; x < 16; ++x) {
             for (int z = 0; z < 16; ++z) {
-                for (Heightmap.Types type : ArrayUtils.HEIGHTMAP) {
+                for (Heightmap.Types type : ArrayHelper.HEIGHTMAP) {
                     if (set.contains(type)) {
                         list.add(chunk.getOrCreateHeightmapUnprimed(type));
                     }
@@ -84,7 +84,7 @@ public abstract class MixinHeightmap {
                         ms.length +
                         ", got: " +
                         ls.length);
-            primeHeightmaps(chunkAccess, SimpleEnumSet.of(ArrayUtils.HEIGHTMAP, types));
+            primeHeightmaps(chunkAccess, SimpleEnumSet.of(ArrayHelper.HEIGHTMAP, types));
         }
     }
 

@@ -39,7 +39,7 @@ import tgw.evolution.blocks.tileentities.TEUtils;
 import tgw.evolution.capabilities.chunk.AtmStorage;
 import tgw.evolution.hooks.ChunkHooks;
 import tgw.evolution.patches.PatchLevelChunk;
-import tgw.evolution.util.collection.ArrayUtils;
+import tgw.evolution.util.collection.ArrayHelper;
 import tgw.evolution.util.collection.maps.L2OMap;
 import tgw.evolution.util.collection.sets.RSet;
 import tgw.evolution.util.collection.sets.SimpleEnumSet;
@@ -258,7 +258,7 @@ public abstract class MixinChunkSerializer {
         }
         chunkAccess.setLightCorrect(isLightOn);
         CompoundTag heightmaps = tag.getCompound("Heightmaps");
-        RSet<Heightmap.Types> types = new SimpleEnumSet<>(Heightmap.Types.class, ArrayUtils.HEIGHTMAP);
+        RSet<Heightmap.Types> types = new SimpleEnumSet<>(Heightmap.Types.class, ArrayHelper.HEIGHTMAP);
         for (Heightmap.Types type : chunkAccess.getStatus().heightmapsAfter()) {
             String s = type.getSerializationKey();
             if (heightmaps.contains(s, Tag.TAG_LONG_ARRAY)) {

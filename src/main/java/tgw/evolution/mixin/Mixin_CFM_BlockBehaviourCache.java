@@ -16,7 +16,7 @@ import tgw.evolution.hooks.asm.DeleteMethod;
 import tgw.evolution.hooks.asm.ModifyConstructor;
 import tgw.evolution.hooks.asm.RestoreFinal;
 import tgw.evolution.patches.PatchBlockStateCache;
-import tgw.evolution.util.collection.ArrayUtils;
+import tgw.evolution.util.collection.ArrayHelper;
 import tgw.evolution.util.math.DirectionUtil;
 
 @Mixin(BlockBehaviour.BlockStateBase.Cache.class)
@@ -73,7 +73,7 @@ public abstract class Mixin_CFM_BlockBehaviourCache implements PatchBlockStateCa
             f |= 8;
         }
         for (Direction direction : DirectionUtil.ALL) {
-            for (SupportType supportType : ArrayUtils.SUPPORT_TYPE) {
+            for (SupportType supportType : ArrayHelper.SUPPORT_TYPE) {
                 if (supportType.isSupporting_(state, EmptyBlockGetter.INSTANCE, 0, 0, 0, direction)) {
                     f |= 1 << direction.ordinal() * 3 + supportType.ordinal() + 4;
                 }

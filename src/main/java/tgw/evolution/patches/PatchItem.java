@@ -28,6 +28,10 @@ public interface PatchItem {
         return 0;
     }
 
+    default byte getLightEmission(ItemStack stack) {
+        return 0;
+    }
+
     default int getMaxDamage(ItemStack stack) {
         return 0;
     }

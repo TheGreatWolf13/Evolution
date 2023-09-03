@@ -13,6 +13,12 @@ public final class EvolutionConfig {
     public static final ConfigFolder ROOT = new ConfigFolder(null, "root");
     public static final ConfigBoolean FOLLOW_UPS = new ConfigBoolean(ROOT, "followUps", true);
     public static final ConfigBoolean HITMARKERS = new ConfigBoolean(ROOT, "hitmarkers", true);
+    //Dynamic Lighting
+    public static final ConfigFolder DYNAMIC_LIGHTING = new ConfigFolder(ROOT, "dynamicLighting");
+    public static final ConfigBoolean DL_ENABLED = new ConfigBoolean(DYNAMIC_LIGHTING, "enabled", true);
+    public static final ConfigInteger DL_TICKRATE = new ConfigInteger(DYNAMIC_LIGHTING, "tickrate", 1, 20, 4);
+    public static final ConfigBoolean DL_ITEMS = new ConfigBoolean(DYNAMIC_LIGHTING, "items", true);
+    public static final ConfigBoolean DL_ENTITIES = new ConfigBoolean(DYNAMIC_LIGHTING, "entities", true);
     //Performance
     public static final ConfigFolder PERFORMANCE = new ConfigFolder(ROOT, "performance");
     public static final ConfigBoolean ANIMATED_TEXTURES = new ConfigBoolean(PERFORMANCE, "animatedTextures", true);
@@ -52,6 +58,7 @@ public final class EvolutionConfig {
     static {
         CELESTIAL_FORCE_ALL.setPriority(IConfigItem.Priority.HIGH);
         LIMIT_TIME_UNITS_TO_HOUR.setPriority(IConfigItem.Priority.HIGH);
+        DL_ENABLED.setPriority(IConfigItem.Priority.HIGH);
     }
 
     private EvolutionConfig() {

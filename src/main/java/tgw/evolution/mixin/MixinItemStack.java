@@ -116,6 +116,14 @@ public abstract class MixinItemStack implements PatchItemStack {
     @Shadow
     public abstract Item getItem();
 
+    @Override
+    public byte getLightEmission() {
+        if (this.isEmpty()) {
+            return 0;
+        }
+        return this.item.getLightEmission((ItemStack) (Object) this);
+    }
+
     @Shadow
     public abstract int getMaxDamage();
 
@@ -284,10 +292,6 @@ public abstract class MixinItemStack implements PatchItemStack {
     @Shadow
     public abstract boolean isDamaged();
 
-    /**
-     * @author TheGreatWolf
-     * @reason Use cached state
-     */
     @Overwrite
     public boolean isEmpty() {
         return this.emptyCacheFlag;

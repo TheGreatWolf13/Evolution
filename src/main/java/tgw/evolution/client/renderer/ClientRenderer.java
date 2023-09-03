@@ -698,7 +698,7 @@ public class ClientRenderer {
         int holdingLevel = CapabilityHunger.hungerLevel(Math.min(value + extraValue + holdingValue, CapabilityHunger.HUNGER_CAPACITY));
         int extraLevel = CapabilityHunger.saturationLevel(extraValue);
         int extraHoldingLevel = CapabilityHunger.saturationLevel(Math.min(extraValue + holdingValue, CapabilityHunger.SATURATION_CAPACITY));
-        boolean shake = this.client.getTickCount() % Math.max(level * level, 1) == 0;
+        boolean shake = this.client.getTicks() % Math.max(level * level, 1) == 0;
         //Flash
         if (level > this.lastDisplayedHunger) {
             this.hungerFlashTicks = 11; //Two flashes that start immediately
@@ -830,7 +830,7 @@ public class ClientRenderer {
         holdingLevel = CapabilityThirst.thirstLevel(Math.min(value + extraValue + holdingValue, CapabilityThirst.THIRST_CAPACITY));
         extraLevel = CapabilityThirst.hydrationLevel(extraValue);
         extraHoldingLevel = CapabilityThirst.hydrationLevel(Math.min(extraValue + holdingValue, CapabilityThirst.HYDRATION_CAPACITY));
-        shake = this.client.getTickCount() % Math.max(level * level, 1) == 0;
+        shake = this.client.getTicks() % Math.max(level * level, 1) == 0;
         //Flash
         if (level > this.lastDisplayedThirst) {
             this.thirstFlashTicks = 11; //Two flashes that start immediately
@@ -972,7 +972,7 @@ public class ClientRenderer {
         int top = height - gui.getLeftHeightAndIncrease(rowHeight * heartRows + 10 - rowHeight);
         int regen = -1;
         if (player.hasEffect(MobEffects.REGENERATION)) {
-            regen = this.client.getTickCount() % Math.max(normalHearts + absorbHearts, 25);
+            regen = this.client.getTicks() % Math.max(normalHearts + absorbHearts, 25);
         }
         assert this.mc.level != null;
         boolean hardcore = this.mc.level.getLevelData().isHardcore();
@@ -987,7 +987,7 @@ public class ClientRenderer {
             icon = 9 * 18;
         }
         int absorbRemaining = roundToHearts(absorb);
-        this.rand.setSeed(312_871L * this.client.getTickCount());
+        this.rand.setSeed(312_871L * this.client.getTicks());
         int left = width / 2 - 91;
         GUIUtils.startBlitBatch(Tesselator.getInstance().getBuilder());
         Matrix4f matrix = matrices.last().pose();
@@ -1121,7 +1121,7 @@ public class ClientRenderer {
         }
         else {
             GUIUtils.endBlitBatch();
-            RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, MathHelper.sinDeg(this.client.getTickCount() * 9));
+            RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, MathHelper.sinDeg(this.client.getTicks() * 9));
             RenderSystem.enableBlend();
             if (currentTemp < 0) {
                 //Draw too cold indicator

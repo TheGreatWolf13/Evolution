@@ -17,9 +17,12 @@ import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.players.GameProfileCache;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -43,10 +46,12 @@ import tgw.evolution.client.gui.IGuiScreenHandler;
 import tgw.evolution.client.gui.toast.ToastCustomRecipe;
 import tgw.evolution.client.renderer.ClientRenderer;
 import tgw.evolution.client.renderer.DimensionOverworld;
+import tgw.evolution.client.renderer.ambient.DynamicLights;
 import tgw.evolution.client.renderer.ambient.SkyRenderer;
 import tgw.evolution.client.util.ClientEffectInstance;
 import tgw.evolution.client.util.MouseButton;
 import tgw.evolution.client.util.Shader;
+import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.entities.misc.EntityPlayerCorpse;
 import tgw.evolution.hooks.TickrateChanger;
 import tgw.evolution.init.EvolutionResources;
@@ -102,6 +107,7 @@ public class ClientEvents {
     private @Nullable IMelee.IAttackType cachedAttackType;
     private int cameraId = -1;
     private @Nullable DimensionOverworld dimension;
+    private @Nullable DynamicLights dynamicLights;
     private boolean initialized;
     private @Range(from = 0, to = 1) int lastInventoryTab;
     private int mainhandCooldownTime;
@@ -109,7 +115,6 @@ public class ClientEvents {
     private @Nullable SkyRenderer skyRenderer;
     private int ticks;
     private float tps = 20.0f;
-    private int warmUpTicks;
     private boolean wasSpecialAttacking;
 
     public ClientEvents(Minecraft mc) {
@@ -272,6 +277,16 @@ public class ClientEvents {
         handler.clickSlot(selectedSlot, GLFW.GLFW_MOUSE_BUTTON_2, false);
     }
 
+    private static boolean updateDynamicLight(Entity entity, boolean items, boolean entities) {
+        if (entity instanceof Player) {
+            return true;
+        }
+        if (entity instanceof ItemEntity) {
+            return items;
+        }
+        return entities;
+    }
+
     public void addCustomRecipeToast(int id) {
         for (ToastHolderRecipe toast : Toasts.getHolderForId(id)) {
             ToastCustomRecipe.addOrUpdate(this.mc.getToasts(), toast);
@@ -279,6 +294,9 @@ public class ClientEvents {
     }
 
     public void allChanged() {
+        if (this.dynamicLights != null) {
+            this.dynamicLights.clear();
+        }
         this.currentShaders.clear();
         this.mc.gameRenderer.shutdownAllShaders();
     }
@@ -315,15 +333,15 @@ public class ClientEvents {
                 Evolution.info("Resuming client");
                 this.mc.setMultiplayerPaused(false);
             }
-            this.warmUpTicks = 0;
+            this.ticks = 0;
         }
+        this.dynamicLights = null;
         if (this.dimension != null || this.skyRenderer != null) {
             if (this.skyRenderer != null) {
                 this.skyRenderer.clearMemory();
                 this.skyRenderer = null;
             }
             this.dimension = null;
-            System.gc();
         }
     }
 
@@ -403,6 +421,11 @@ public class ClientEvents {
         return this.dimension;
     }
 
+    public DynamicLights getDynamicLights() {
+        assert this.dynamicLights != null;
+        return this.dynamicLights;
+    }
+
     public float getItemCooldown(InteractionHand hand) {
         assert this.mc.player != null;
         ItemStack stack = this.mc.player.getItemInHand(hand);
@@ -455,7 +478,7 @@ public class ClientEvents {
         return this.skyRenderer;
     }
 
-    public int getTickCount() {
+    public int getTicks() {
         return this.ticks;
     }
 
@@ -463,13 +486,11 @@ public class ClientEvents {
         assert this.mc.player != null;
         switch (shaderId) {
             case PacketSCShader.QUERY -> {
-                Component message = this.currentShaders.isEmpty() ?
-                                    EvolutionTexts.COMMAND_SHADER_NO_SHADER :
-                                    new TranslatableComponent("command.evolution.shader.query", this.currentShaders.stream()
-                                                                                                                   .sorted(Integer::compareTo)
-                                                                                                                   .map(String::valueOf)
-                                                                                                                   .collect(Collectors.joining(", "))
-                                    );
+                Component message = this.currentShaders.isEmpty() ? EvolutionTexts.COMMAND_SHADER_NO_SHADER : new TranslatableComponent("command.evolution.shader.query", this.currentShaders.stream()
+                                                                                                                                                                                             .sorted(Integer::compareTo)
+                                                                                                                                                                                             .map(String::valueOf)
+                                                                                                                                                                                             .collect(Collectors.joining(", "))
+                );
                 this.mc.player.displayClientMessage(message, false);
                 return;
             }
@@ -516,6 +537,7 @@ public class ClientEvents {
     }
 
     public void init() {
+        assert this.mc.level != null;
         //Bind Sky Renderer
         this.dimension = new DimensionOverworld();
         this.skyRenderer = new SkyRenderer(this.dimension);
@@ -527,7 +549,7 @@ public class ClientEvents {
             EntityPlayerCorpse.setSessionService(session);
         }
         this.mc.options.autoJump = false;
-        System.gc();
+        this.dynamicLights = new DynamicLights(this.mc.level);
     }
 
     /**
@@ -792,7 +814,6 @@ public class ClientEvents {
         assert level != null;
         assert player != null;
         if (!this.mc.isPaused()) {
-            this.warmUpTicks++;
             //Remove inactive effects
             this.mc.getProfiler().push("effects");
             if (!EFFECTS.isEmpty()) {
@@ -800,7 +821,7 @@ public class ClientEvents {
                 for (int i = 0, l = EFFECTS.size(); i < l; i++) {
                     ClientEffectInstance instance = EFFECTS.get(i);
                     MobEffect effect = instance.getEffect();
-                    if (instance.getDuration() == 0 || !player.hasEffect(effect) && this.warmUpTicks >= 100) {
+                    if (instance.getDuration() == 0 || !player.hasEffect(effect) && this.ticks >= 100) {
                         needsRemoving = true;
                     }
                     else {
@@ -839,7 +860,6 @@ public class ClientEvents {
             }
             //Handle swing
             this.mc.getProfiler().popPush("swing");
-            this.ticks++;
             assert this.mc.gameMode != null;
             if (player.isSpecialAttacking()) {
                 this.cachedAttackType = player.getSpecialAttackType();
@@ -876,8 +896,10 @@ public class ClientEvents {
         }
         assert this.mc.level != null;
         assert this.mc.player != null;
+        assert this.dynamicLights != null;
+        ProfilerFiller profiler = this.mc.getProfiler();
         //Camera
-        this.mc.getProfiler().push("camera");
+        profiler.push("camera");
         if (this.cameraId != -1) {
             Entity entity = this.mc.level.getEntity(this.cameraId);
             if (entity != null) {
@@ -886,7 +908,7 @@ public class ClientEvents {
             }
         }
         //Apply shaders
-        this.mc.getProfiler().popPush("shaders");
+        profiler.popPush("shaders");
         ISet desiredShaders = this.desiredShaders;
         desiredShaders.clear();
         if (this.mc.options.getCameraType() == CameraType.FIRST_PERSON &&
@@ -937,18 +959,19 @@ public class ClientEvents {
                 }
             }
         }
-        this.mc.getProfiler().pop();
+        profiler.pop();
         if (!this.mc.isPaused()) {
-            this.mc.getProfiler().push("dimension");
+            ++this.ticks;
+            profiler.push("dimension");
             assert this.dimension != null;
             this.dimension.tick();
-            this.mc.getProfiler().popPush("renderer");
+            profiler.popPush("renderer");
             this.renderer.startTick();
-            this.mc.getProfiler().popPush("updateHeld");
+            profiler.popPush("updateHeld");
             this.updateBeltItem();
             this.updateBackItem();
             //Handle two-handed items
-            this.mc.getProfiler().popPush("twoHanded");
+            profiler.popPush("twoHanded");
             ItemStack mainHandStack = this.mc.player.getMainHandItem();
             if (mainHandStack.getItem() instanceof ITwoHanded twoHanded &&
                 twoHanded.isTwoHanded(mainHandStack) &&
@@ -958,7 +981,7 @@ public class ClientEvents {
                 this.mc.player.displayClientMessage(EvolutionTexts.ACTION_TWO_HANDED, true);
             }
             //Prevents the player from attacking if on cooldown
-            this.mc.getProfiler().popPush("cooldown");
+            profiler.popPush("cooldown");
             boolean isSpecialAttacking = this.mc.player.shouldRenderSpecialAttack();
             if (this.wasSpecialAttacking && !isSpecialAttacking) {
                 this.resetCooldown(InteractionHand.MAIN_HAND);
@@ -969,7 +992,22 @@ public class ClientEvents {
                 this.mc.missTime = Integer.MAX_VALUE;
             }
             this.wasSpecialAttacking = isSpecialAttacking;
-            this.mc.getProfiler().pop();
+            if (EvolutionConfig.DL_ENABLED.get() && this.ticks > 20) {
+                profiler.popPush("dynamicLight");
+                int tickrate = EvolutionConfig.DL_TICKRATE.get();
+                if (tickrate == 1 || this.ticks % tickrate == 0) {
+                    this.dynamicLights.tickStart();
+                    boolean items = EvolutionConfig.DL_ITEMS.get();
+                    boolean entities = EvolutionConfig.DL_ENTITIES.get();
+                    for (Entity entity : this.mc.level.entitiesForRendering()) {
+                        if (updateDynamicLight(entity, items, entities)) {
+                            this.dynamicLights.update(entity);
+                        }
+                    }
+                    this.dynamicLights.tickEnd();
+                }
+                profiler.pop();
+            }
         }
     }
 

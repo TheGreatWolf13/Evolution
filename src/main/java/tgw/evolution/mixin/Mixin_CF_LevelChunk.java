@@ -45,7 +45,7 @@ import tgw.evolution.hooks.asm.RestoreFinal;
 import tgw.evolution.patches.PatchLevelChunk;
 import tgw.evolution.patches.obj.IBlockEntityTagOutput;
 import tgw.evolution.util.ChunkHolder;
-import tgw.evolution.util.collection.ArrayUtils;
+import tgw.evolution.util.collection.ArrayHelper;
 import tgw.evolution.util.collection.lists.IArrayList;
 import tgw.evolution.util.collection.lists.IList;
 import tgw.evolution.util.collection.lists.LArrayList;
@@ -92,7 +92,7 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
         this.level = level;
         this.chunkStorage = level.isClientSide ? CapabilityChunkStorage.CLIENT : new CapabilityChunkStorage();
         this.gameEventDispatcherSections = new Int2ObjectOpenHashMap();
-        for (Heightmap.Types types : ArrayUtils.HEIGHTMAP) {
+        for (Heightmap.Types types : ArrayHelper.HEIGHTMAP) {
             if (ChunkStatus.FULL.heightmapsAfter().contains(types)) {
                 //noinspection ObjectAllocationInLoop
                 this.heightmaps.put(types, new Heightmap(this, types));
@@ -581,7 +581,7 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
         for (LevelChunkSection section : this.sections) {
             section.read(buf);
         }
-        for (Heightmap.Types types : ArrayUtils.HEIGHTMAP) {
+        for (Heightmap.Types types : ArrayHelper.HEIGHTMAP) {
             String string = types.getSerializationKey();
             if (tag.contains(string, Tag.TAG_LONG_ARRAY)) {
                 this.setHeightmap(types, tag.getLongArray(string));

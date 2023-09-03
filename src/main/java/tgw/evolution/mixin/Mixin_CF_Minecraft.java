@@ -121,8 +121,8 @@ import tgw.evolution.network.Message;
 import tgw.evolution.network.PacketCSSimpleMessage;
 import tgw.evolution.patches.PatchMinecraft;
 import tgw.evolution.util.OptionalMutableBlockPos;
+import tgw.evolution.util.collection.ArrayHelper;
 import tgw.evolution.util.math.DirectionUtil;
-import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.math.Metric;
 
 import java.io.File;
@@ -495,18 +495,11 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
     }
 
     @Shadow
-    public abstract boolean allowsMultiplayer();
-
-    @Shadow
     protected abstract Path archiveProfilingReport(SystemReport p_167857_, List<Path> p_167858_);
 
     @Shadow
     public abstract void clearLevel(Screen p_213231_1_);
 
-    /**
-     * @author TheGreatWolf
-     * @reason Replace LevelRenderer
-     */
     @Override
     @Overwrite
     public void close() {
@@ -577,10 +570,6 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
     @Shadow
     protected abstract UserApiService createUserApiService(YggdrasilAuthenticationService yggdrasilAuthenticationService, GameConfig gameConfig);
 
-    /**
-     * @author TheGreatWolf
-     * @reason Replace LevelRenderer
-     */
     @Overwrite
     public boolean debugClientMetricsStart(Consumer<TranslatableComponent> c) {
         if (this.metricsRecorder.isRecording()) {
@@ -648,10 +637,6 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
         }
     }
 
-    /**
-     * @author TheGreatWolf
-     * @reason Replaces freeMemory to better recovery from crashes.
-     */
     @Overwrite
     public void emergencySave() {
         try {
@@ -827,10 +812,6 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
         }
     }
 
-    /**
-     * @author TheGreatWolf
-     * @reason Replace to handle Evolution's input.
-     */
     @Overwrite
     private void handleKeybinds() {
         assert this.player != null;
@@ -1580,7 +1561,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
         if (this.cancelUseCooldown > 0) {
             return;
         }
-        for (InteractionHand hand : MathHelper.HANDS_OFF_PRIORITY) {
+        for (InteractionHand hand : ArrayHelper.HANDS_OFF_PRIORITY) {
             ItemStack stack = this.player.getItemInHand(hand);
             if (hand == InteractionHand.OFF_HAND && stack.isEmpty()) {
                 continue;
@@ -1626,7 +1607,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
                 }
             }
         }
-        for (InteractionHand hand : MathHelper.HANDS_OFF_PRIORITY) {
+        for (InteractionHand hand : ArrayHelper.HANDS_OFF_PRIORITY) {
             if (hand == InteractionHand.MAIN_HAND) {
                 if (ClientEvents.getInstance().getMainhandIndicatorPercentage(0) < 1) {
                     return;
@@ -1687,7 +1668,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
             if (!this.lastHoldingPos.isSame(x, y, z, blockRayTrace.getDirection(), direction)) {
                 return true;
             }
-            for (InteractionHand hand : MathHelper.HANDS_OFF_PRIORITY) {
+            for (InteractionHand hand : ArrayHelper.HANDS_OFF_PRIORITY) {
                 ItemStack stack = this.player.getItemInHand(hand);
                 if (hand == InteractionHand.OFF_HAND && stack.isEmpty()) {
                     continue;

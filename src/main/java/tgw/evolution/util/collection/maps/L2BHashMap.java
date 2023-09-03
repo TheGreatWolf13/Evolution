@@ -1,14 +1,11 @@
-package tgw.evolution.util.collection.sets;
+package tgw.evolution.util.collection.maps;
 
-import it.unimi.dsi.fastutil.longs.LongCollection;
-import it.unimi.dsi.fastutil.longs.LongIterator;
-import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.longs.Long2ByteOpenHashMap;
 import org.jetbrains.annotations.Nullable;
-import tgw.evolution.Evolution;
 
-public class LHashSet extends LongOpenHashSet implements LSet {
+public class L2BHashMap extends Long2ByteOpenHashMap implements L2BMap {
 
-    protected final LSet.Entry fast = new LSet.Entry();
+    protected final L2BMap.Entry entry = new L2BMap.Entry();
     /**
      * Bit 0: shouldRehash; <br>
      * Bit 1: askedToRehash; <br>
@@ -17,8 +14,9 @@ public class LHashSet extends LongOpenHashSet implements LSet {
     protected int lastPos = -1;
 
     @Override
-    public @Nullable Entry fastEntries() {
+    public @Nullable L2BMap.Entry fastEntries() {
         if (this.isEmpty()) {
+            this.lastPos = -1;
             this.handleRehash();
             return null;
         }
@@ -26,8 +24,8 @@ public class LHashSet extends LongOpenHashSet implements LSet {
             //Begin iteration
             this.lastPos = this.n;
             this.flags &= ~1;
-            if (this.containsNull) {
-                return this.fast.set(0L);
+            if (this.containsNullKey) {
+                return this.entry.set(0L, this.value[this.n]);
             }
         }
         for (int pos = this.lastPos; pos-- != 0; ) {
@@ -35,10 +33,11 @@ public class LHashSet extends LongOpenHashSet implements LSet {
             if (k != 0) {
                 //Remember last pos
                 this.lastPos = pos;
-                return this.fast.set(k);
+                return this.entry.set(k, this.value[pos]);
             }
         }
         this.lastPos = -1;
+        this.entry.set(0L, (byte) 0);
         this.handleRehash();
         return null;
     }
@@ -52,14 +51,6 @@ public class LHashSet extends LongOpenHashSet implements LSet {
     }
 
     @Override
-    public LongIterator longIterator() {
-        if (CHECKS) {
-            Evolution.info("Allocating memory for an iterator!");
-        }
-        return super.longIterator();
-    }
-
-    @Override
     protected void rehash(int newN) {
         if ((this.flags & 1) != 0) {
             super.rehash(newN);
@@ -67,15 +58,6 @@ public class LHashSet extends LongOpenHashSet implements LSet {
         else {
             this.flags |= 2;
         }
-    }
-
-    @Override
-    public boolean removeAll(LongCollection c) {
-        if (c instanceof LSet set) {
-            return this.removeAll(set);
-        }
-        Evolution.warn("Default removeAll");
-        return super.removeAll(c);
     }
 
     @Override
