@@ -30,6 +30,7 @@ accessible field com/mojang/blaze3d/vertex/BufferBuilder$SortState sortX F
 accessible field com/mojang/blaze3d/vertex/BufferBuilder$SortState sortY F
 accessible field com/mojang/blaze3d/vertex/BufferBuilder$SortState sortZ F
 accessible field com/mojang/blaze3d/vertex/BufferBuilder$SortState vertices I
+accessible field net/minecraft/ChatFormatting code C
 accessible field net/minecraft/client/color/block/BlockTintCache$LatestCacheInfo cache Lnet/minecraft/client/color/block/BlockTintCache$CacheData;
 accessible field net/minecraft/client/gui/components/DebugScreenOverlay block Lnet/minecraft/world/phys/HitResult;
 accessible field net/minecraft/client/gui/components/DebugScreenOverlay liquid Lnet/minecraft/world/phys/HitResult;
