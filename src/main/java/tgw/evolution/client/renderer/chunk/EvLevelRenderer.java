@@ -258,7 +258,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
 
     public static int getLightColor(BlockAndTintGetter level, BlockState state, int x, int y, int z) {
         if (state.emissiveRendering_(level, x, y, z)) {
-            return 15_728_880;
+            return 0xf0_00f0;
         }
         long packed = BlockPos.asLong(x, y, z);
         int skyLight = level.getBrightness_(LightLayer.SKY, packed);

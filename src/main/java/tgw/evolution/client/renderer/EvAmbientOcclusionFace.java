@@ -246,14 +246,14 @@ public class EvAmbientOcclusionFace {
             this.setBrightness(remap.vert1, f29 * f17 + f31 * f18 + f32 * f19 + f33 * f20);
             this.setBrightness(remap.vert2, f29 * f21 + f31 * f22 + f32 * f23 + f33 * f24);
             this.setBrightness(remap.vert3, f29 * f25 + f31 * f26 + f32 * f27 + f33 * f28);
-            int i2 = blend(colorS, colorE, colorSE, color);
-            int j2 = blend(colorN, colorE, colorNE, color);
-            int k2 = blend(colorN, colorW, colorNW, color);
-            int l2 = blend(colorS, colorW, colorSW, color);
-            this.setLightmap(remap.vert0, blend(i2, j2, k2, l2, f13, f14, f15, f16));
-            this.setLightmap(remap.vert1, blend(i2, j2, k2, l2, f17, f18, f19, f20));
-            this.setLightmap(remap.vert2, blend(i2, j2, k2, l2, f21, f22, f23, f24));
-            this.setLightmap(remap.vert3, blend(i2, j2, k2, l2, f25, f26, f27, f28));
+            int blendColorSE = blend(colorS, colorE, colorSE, color);
+            int blendColorNE = blend(colorN, colorE, colorNE, color);
+            int blendColorNW = blend(colorN, colorW, colorNW, color);
+            int blendColorSW = blend(colorS, colorW, colorSW, color);
+            this.setLightmap(remap.vert0, blend(blendColorSE, blendColorNE, blendColorNW, blendColorSW, f13, f14, f15, f16));
+            this.setLightmap(remap.vert1, blend(blendColorSE, blendColorNE, blendColorNW, blendColorSW, f17, f18, f19, f20));
+            this.setLightmap(remap.vert2, blend(blendColorSE, blendColorNE, blendColorNW, blendColorSW, f21, f22, f23, f24));
+            this.setLightmap(remap.vert3, blend(blendColorSE, blendColorNE, blendColorNW, blendColorSW, f25, f26, f27, f28));
         }
         else {
             float combBrightSE = (brightS + brightE + brightSE + bright) * 0.25F;
