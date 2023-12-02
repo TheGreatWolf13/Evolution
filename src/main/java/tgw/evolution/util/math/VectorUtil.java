@@ -36,6 +36,11 @@ public final class VectorUtil {
         return x * x + y * y + z * z;
     }
 
+    public static float norm(float x, float y, float z) {
+        float norm = Mth.fastInvSqrt(x * x + y * y + z * z);
+        return norm > 1e5 ? 0 : norm;
+    }
+
     public static double norm(double x, double y, double z) {
         double norm = Mth.fastInvSqrt(x * x + y * y + z * z);
         return norm > 1e4 ? 0 : norm;

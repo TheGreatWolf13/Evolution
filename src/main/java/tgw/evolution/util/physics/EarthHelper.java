@@ -81,6 +81,10 @@ public final class EarthHelper {
         return MathHelper.arcCosDeg(MOON.dotProduct(ZENITH) * MOON.inverseLength() * ZENITH.inverseLength());
     }
 
+    public static Vec3f getMoonDir() {
+        return MOON;
+    }
+
     public static Vec3f getSkyColor(ClientLevel level, BlockPos pos, float partialTick, @Nullable DimensionOverworld dimension) {
         float sunAngle = 1.0f;
         float elevationAngle = dimension == null ? 0 : dimension.getSunAltitude();
@@ -145,6 +149,10 @@ public final class EarthHelper {
         sunZ = declination * cosLatitude - celestialRadius * sinRightAsc * sinLatitude;
         SUN.z = sunZ;
         return MathHelper.arcCosDeg(SUN.dotProduct(ZENITH) * SUN.inverseLength() * ZENITH.inverseLength());
+    }
+
+    public static Vec3f getSunDir() {
+        return SUN;
     }
 
     /**

@@ -1,6 +1,7 @@
 package tgw.evolution.events;
 
 import com.mojang.authlib.minecraft.MinecraftSessionService;
+import com.mojang.math.Matrix4f;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
@@ -88,12 +89,15 @@ public class ClientEvents {
     public static final I2OMap<ItemStack> BACK_ITEMS = new I2OHashMap<>();
     private static final HitInformation MAINHAND_HITS = new HitInformation();
     private static final BlockHitResult[] MAINHAND_HIT_RESULT = new BlockHitResult[1];
+    private static final Matrix4f PROJ_MATRIX = new Matrix4f();
+    private static final Matrix4f MODEL_VIEW_MATRIX = new Matrix4f();
     private static @Nullable ClientEvents instance;
     private static @Nullable IGuiScreenHandler handler;
     private static @Nullable Slot oldSelectedSlot;
     private static double accumulatedScrollDelta;
     private static boolean canDoLMBDrag;
     private static boolean canDoRMBDrag;
+    private static float fov;
     private final ISet currentShaders = new IHashSet();
     private final ISet desiredShaders = new IHashSet();
     private final ISet forcedShaders = new IHashSet();
@@ -259,6 +263,18 @@ public class ClientEvents {
         }
     }
 
+    public static float retrieveFov() {
+        return fov;
+    }
+
+    public static Matrix4f retrieveModelViewMatrix() {
+        return MODEL_VIEW_MATRIX;
+    }
+
+    public static Matrix4f retrieveProjMatrix() {
+        return PROJ_MATRIX;
+    }
+
     private static void rmbTweakNewSlot(Slot selectedSlot, ItemStack stackOnMouse) {
         assert handler != null;
         if (handler.isIgnored(selectedSlot)) {
@@ -275,6 +291,18 @@ public class ClientEvents {
             return;
         }
         handler.clickSlot(selectedSlot, GLFW.GLFW_MOUSE_BUTTON_2, false);
+    }
+
+    public static void storeFov(float fov) {
+        ClientEvents.fov = fov;
+    }
+
+    public static void storeModelViewMatrix(Matrix4f modelViewMatrix) {
+        MODEL_VIEW_MATRIX.load(modelViewMatrix);
+    }
+
+    public static void storeProjMatrix(Matrix4f projectionMatrix) {
+        PROJ_MATRIX.load(projectionMatrix);
     }
 
     private static boolean updateDynamicLight(Entity entity, boolean items, boolean entities) {

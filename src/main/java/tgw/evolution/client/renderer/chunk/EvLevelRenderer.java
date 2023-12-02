@@ -1413,6 +1413,8 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
         assert this.level != null;
         assert this.mc.hitResult != null;
         assert this.mc.player != null;
+        ClientEvents.storeProjMatrix(projectionMatrix);
+        ClientEvents.storeModelViewMatrix(matrices.last().pose());
         RenderSystem.setShaderGameTime(this.level.getGameTime(), partialTicks);
         this.blockEntityRenderDispatcher.prepare(this.level, camera, this.mc.hitResult);
         //noinspection ConstantConditions

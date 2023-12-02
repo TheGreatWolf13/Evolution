@@ -379,6 +379,7 @@ public abstract class MixinGameRenderer implements PatchGameRenderer {
         Camera camera = this.mainCamera;
         this.renderDistance = this.minecraft.options.getEffectiveRenderDistance() * 16;
         double fov = this.getFov(camera, partialTicks, true);
+        ClientEvents.storeFov((float) fov);
         PoseStack projMatrices = this.projectionMatrices;
         projMatrices.reset();
         projMatrices.last().pose().multiply(this.getProjectionMatrix(fov));
