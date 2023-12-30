@@ -449,10 +449,7 @@ public final class Temperature implements ILocked {
             Evolution.info("Sunrise is at {}", Time.fromTicks(sunrise - 6L * Time.TICKS_PER_HOUR));
             Evolution.info("Afternoon is at {}", Time.fromTicks(afternoon - 6L * Time.TICKS_PER_HOUR));
         }
-        if (timeInDay == afternoon) {
-            return 1.0f;
-        }
-        if (sunrise < timeInDay && timeInDay < afternoon) {
+        if (sunrise <= timeInDay && timeInDay <= afternoon) {
             return MathHelper.relativize(timeInDay, sunrise, afternoon);
         }
         if (timeInDay < sunrise) {
