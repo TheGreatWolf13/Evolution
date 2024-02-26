@@ -7,11 +7,14 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 import tgw.evolution.Evolution;
 
+import java.util.Arrays;
+
 public class AtmStorage {
 
     private final ThreadingDetector threadingDetector = new ThreadingDetector("AtmStorage");
     private long @Nullable [] data;
     private short nonEmptyCount;
+    private short totallyFullCount;
 
     @Contract("_ -> new")
     public static AtmStorage read(CompoundTag atm) {
@@ -22,6 +25,12 @@ public class AtmStorage {
         AtmStorage a = new AtmStorage();
         a.nonEmptyCount = nonEmptyCount;
         a.data = new long[5 * 4_096 / 64];
+        short totallyFullCount = atm.getShort("TotallyFullCount");
+        a.totallyFullCount = totallyFullCount;
+        if (totallyFullCount == 4_096) {
+            Arrays.fill(a.data, -1L);
+            return a;
+        }
         long[] data = atm.getLongArray("Data");
         System.arraycopy(data, 0, a.data, 0, Math.min(5 * 4_096 / 64, data.length));
         return a;
@@ -36,6 +45,9 @@ public class AtmStorage {
         try {
             if (this.nonEmptyCount == 0) {
                 return 0;
+            }
+            if (this.totallyFullCount == 4_096) {
+                return 31;
             }
             return this.get(16 * (x & 0b11) + z, 20 * y + 5 * (x >> 2));
         }
@@ -104,6 +116,20 @@ public class AtmStorage {
         this.threadingDetector.checkAndUnlock();
     }
 
+    public void reset() {
+        this.acquire();
+        try {
+            if (this.data != null) {
+                Arrays.fill(this.data, 0);
+            }
+            this.nonEmptyCount = 0;
+            this.totallyFullCount = 0;
+        }
+        finally {
+            this.release();
+        }
+    }
+
     @Contract("-> new")
     public CompoundTag serialize() {
         CompoundTag tag = new CompoundTag();
@@ -111,8 +137,11 @@ public class AtmStorage {
         try {
             tag.putShort("NonEmptyCount", this.nonEmptyCount);
             if (this.nonEmptyCount != 0) {
-                assert this.data != null;
-                tag.putLongArray("Data", this.data);
+                tag.putShort("TotallyFullCount", this.totallyFullCount);
+                if (this.totallyFullCount != 4_096) {
+                    assert this.data != null;
+                    tag.putLongArray("Data", this.data);
+                }
             }
             return tag;
         }
@@ -144,6 +173,12 @@ public class AtmStorage {
             if (this.nonEmptyCount == 0) {
                 return;
             }
+            if (this.totallyFullCount == 4_096) {
+                if (this.data == null) {
+                    this.data = new long[5 * 4_096 / 64];
+                }
+                Arrays.fill(this.data, -1L);
+            }
             assert this.data != null;
         }
         else {
@@ -151,6 +186,15 @@ public class AtmStorage {
                 if (this.data == null) {
                     this.data = new long[5 * 4_096 / 64];
                 }
+            }
+            else if (this.totallyFullCount == 4_096) {
+                if (value == 31) {
+                    return;
+                }
+                if (this.data == null) {
+                    this.data = new long[5 * 4_096 / 64];
+                }
+                Arrays.fill(this.data, -1L);
             }
             else {
                 assert this.data != null;
@@ -249,15 +293,32 @@ public class AtmStorage {
         }
         if (old == 0) {
             if (value != 0) {
+                if (value == 31) {
+                    ++this.totallyFullCount;
+                }
                 ++this.nonEmptyCount;
             }
         }
         else {
             if (value == 0) {
                 --this.nonEmptyCount;
+                if (old == 31) {
+                    --this.totallyFullCount;
+                }
+            }
+            else if (value != 31) {
+                if (old == 31) {
+                    --this.totallyFullCount;
+                }
+            }
+            else {
+                if (old != 31) {
+                    ++this.totallyFullCount;
+                }
             }
         }
         assert 0 <= this.nonEmptyCount && this.nonEmptyCount <= 4_096;
+        assert 0 <= this.totallyFullCount && this.totallyFullCount <= 4_096;
     }
 }
 

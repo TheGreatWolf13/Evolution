@@ -91,7 +91,7 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
         this.clientLightReady = false;
         this.level = level;
         this.chunkStorage = level.isClientSide ? CapabilityChunkStorage.CLIENT : new CapabilityChunkStorage();
-        this.gameEventDispatcherSections = new Int2ObjectOpenHashMap();
+        this.gameEventDispatcherSections = new Int2ObjectOpenHashMap<>();
         for (Heightmap.Types types : ArrayHelper.HEIGHTMAP) {
             if (ChunkStatus.FULL.heightmapsAfter().contains(types)) {
                 //noinspection ObjectAllocationInLoop
@@ -124,7 +124,7 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
         }
         this.setLightCorrect(protoChunk.isLightCorrect());
         this.unsaved = true;
-        this.primeAtm();
+        this.primeAtm(false);
     }
 
     @Shadow
@@ -440,8 +440,15 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
      * value set to 31. Air blocks that are not connected to other air blocks above will also be set to 31, but will request an update. We also
      * record the deepest we could reach with atm value 0.
      */
+    @Override
     @Unique
-    private void primeAtm() {
+    public void primeAtm(boolean needsResetting) {
+        LevelChunkSection[] sections = this.sections;
+        if (needsResetting) {
+            for (LevelChunkSection section : sections) {
+                section.getAtmStorage().reset();
+            }
+        }
         Heightmap heightmap = this.heightmaps.get(Heightmap.Types.WORLD_SURFACE);
         IList toUpdate = TO_UPDATE.get();
         toUpdate.clear();
@@ -455,11 +462,11 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
                 int atm = 0;
                 for (int y = maxY; y >= this.getMinBuildHeight(); y--) {
                     int index = this.getSectionIndex(y);
-                    if (index < 0 || index >= this.sections.length) {
+                    if (index < 0 || index >= sections.length) {
                         break;
                     }
                     int localY = y & 15;
-                    LevelChunkSection section = this.sections[index];
+                    LevelChunkSection section = sections[index];
                     BlockState state = section.hasOnlyAir() ? Blocks.AIR.defaultBlockState() : section.getBlockState(x, localY, z);
                     if (state.isAir()) {
                         if (atm != 0) {
@@ -791,7 +798,7 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
     }
 
     /**
-     * Here, we iterate over the list of positions that requested an update on {@link Mixin_CF_LevelChunk#primeAtm()}. Positions that are internal to
+     * Here, we iterate over the list of positions that requested an update on {@link PatchLevelChunk#primeAtm(boolean)}. Positions that are internal to
      * the chunk, that is, that are deeper than the deepest we could reach with atm 0 and are not at the boundaries of the chunk, will be discarded.
      * Air blocks on updating positions will verify all their 6 neighbours looking for the lowest atm possible, given incrementation and allowing
      * rules. If they manage to find a lower atm value, they will update to that value and request that their neighbouring air blocks schedule an

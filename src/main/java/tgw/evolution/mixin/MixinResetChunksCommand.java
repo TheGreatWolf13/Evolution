@@ -106,25 +106,30 @@ public abstract class MixinResetChunksCommand {
                                 }
                             }
                         }
-                        future = future.thenComposeAsync(unit -> {
-                            return status.generate(processorMailbox::tell,
-                                                   level,
-                                                   chunkSource.getGenerator(),
-                                                   level.getStructureManager(),
-                                                   chunkSource.getLightEngine(),
-                                                   chunkAccess -> {
-                                                       throw new UnsupportedOperationException("Not creating full chunks here");
-                                                   }, list, true)
-                                         .thenApply(either -> {
-                                             if (status == ChunkStatus.NOISE) {
-                                                 PatchEither<ChunkAccess, ChunkHolder.ChunkLoadingFailure> e = (PatchEither) either;
-                                                 if (e.isLeft()) {
-                                                     Heightmap.primeHeightmaps(e.getLeft(), ChunkStatus.POST_FEATURES);
-                                                 }
-                                             }
-                                             return Unit.INSTANCE;
-                                         });
-                        }, processorMailbox::tell);
+                        future = future.thenComposeAsync(unit -> status.generate(processorMailbox::tell,
+                                                                                 level,
+                                                                                 chunkSource.getGenerator(),
+                                                                                 level.getStructureManager(),
+                                                                                 chunkSource.getLightEngine(),
+                                                                                 chunkAccess -> {
+                                                                                     throw new UnsupportedOperationException("Not creating full chunks here");
+                                                                                 }, list, true)
+                                                                       .thenApply(either -> {
+                                                                           if (status == ChunkStatus.NOISE) {
+                                                                               PatchEither<ChunkAccess, ChunkHolder.ChunkLoadingFailure> e = (PatchEither) either;
+                                                                               if (e.isLeft()) {
+                                                                                   ChunkAccess left = e.getLeft();
+                                                                                   Heightmap.primeHeightmaps(left, ChunkStatus.POST_FEATURES);
+                                                                                   if (left instanceof LevelChunk c) {
+                                                                                       c.primeAtm(true);
+                                                                                   }
+                                                                                   else if (left instanceof ImposterProtoChunk proto) {
+                                                                                       proto.getWrapped().primeAtm(true);
+                                                                                   }
+                                                                               }
+                                                                           }
+                                                                           return Unit.INSTANCE;
+                                                                       }), processorMailbox::tell);
                     }
                 }
             }

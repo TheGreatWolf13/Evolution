@@ -20,6 +20,10 @@ public interface PatchLevelChunk {
         throw new AbstractMethodError();
     }
 
+    default void primeAtm(boolean needsResetting) {
+        throw new AbstractMethodError();
+    }
+
     default void replaceWithPacketData_(FriendlyByteBuf buf, CompoundTag tag, Consumer<IBlockEntityTagOutput> consumer) {
         throw new AbstractMethodError();
     }

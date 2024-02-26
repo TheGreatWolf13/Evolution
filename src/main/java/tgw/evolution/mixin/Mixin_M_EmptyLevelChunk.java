@@ -88,6 +88,11 @@ public abstract class Mixin_M_EmptyLevelChunk extends LevelChunk {
     }
 
     @Override
+    public void primeAtm(boolean needsResetting) {
+        //Do nothing
+    }
+
+    @Override
     @Overwrite
     @DeleteMethod
     public void removeBlockEntity(BlockPos pos) {
