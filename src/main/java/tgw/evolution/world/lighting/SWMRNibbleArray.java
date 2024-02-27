@@ -1,6 +1,5 @@
 package tgw.evolution.world.lighting;
 
-import net.minecraft.world.level.chunk.DataLayer;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayDeque;
@@ -24,6 +23,7 @@ public final class SWMRNibbleArray {
      * this allows us to maintain only 1 byte array when we're not updating
      */
     static final ThreadLocal<ArrayDeque<byte[]>> WORKING_BYTES_POOL = ThreadLocal.withInitial(ArrayDeque::new);
+    private static final byte[] EMPTY = new byte[0];
     private static final int INIT_STATE_NULL = 0; // null
     private static final int INIT_STATE_UNINIT = 1; // uninitialised
     private static final int INIT_STATE_INIT = 2; // initialised
@@ -74,14 +74,11 @@ public final class SWMRNibbleArray {
         WORKING_BYTES_POOL.get().addFirst(bytes);
     }
 
-    public static SWMRNibbleArray fromVanilla(DataLayer nibble) {
+    public static SWMRNibbleArray fromVanilla(byte @Nullable [] nibble) {
         if (nibble == null) {
-            return new SWMRNibbleArray(null, true);
-        }
-        if (nibble.isEmpty()) {
             return new SWMRNibbleArray();
         }
-        return new SWMRNibbleArray(nibble.getData().clone()); // make sure we don't write to the parameter later
+        return new SWMRNibbleArray(nibble.clone()); // make sure we don't write to the parameter later
     }
 
     private static boolean isAllZero(byte[] data) {
@@ -156,7 +153,7 @@ public final class SWMRNibbleArray {
      * operation type: updating
      */
     public int getUpdating(int index) {
-        // indices range from 0 -> 4096
+        assert 0 <= index && index < 4_096;
         byte[] bytes = this.storageUpdating;
         if (bytes == null) {
             return 0;
@@ -178,7 +175,7 @@ public final class SWMRNibbleArray {
      * operation type: visible
      */
     public int getVisible(int index) {
-        // indices range from 0 -> 4096
+        assert 0 <= index && index < 4_096;
         byte[] visibleBytes = this.storageVisible;
         if (visibleBytes == null) {
             return 0;
@@ -339,17 +336,6 @@ public final class SWMRNibbleArray {
     /**
      * operation type: updating
      */
-    public void setZero() {
-        if (this.stateUpdating != INIT_STATE_HIDDEN) {
-            this.stateUpdating = INIT_STATE_INIT;
-        }
-        Arrays.fill(this.storageUpdating == null || !this.updatingDirty ? this.storageUpdating = allocateBytes() : this.storageUpdating, (byte) 0);
-        this.updatingDirty = true;
-    }
-
-    /**
-     * operation type: updating
-     */
     private void swapUpdatingAndMarkDirty() {
         if (this.updatingDirty) {
             return;
@@ -394,6 +380,7 @@ public final class SWMRNibbleArray {
             for (int i = 0; i < 4_096; ++i) {
                 // Copied from NibbleArray#toString
                 int level = data[i >>> 1] >>> ((i & 1) << 2) & 0xF;
+                //noinspection ObjectAllocationInLoop
                 stringBuilder.append(Integer.toHexString(level));
                 if ((i & 15) == 15) {
                     stringBuilder.append("\n");
@@ -412,13 +399,16 @@ public final class SWMRNibbleArray {
     /**
      * operation type: visible
      */
-    public @Nullable DataLayer toVanillaNibble() {
+    public byte @Nullable [] toVanillaNibble() {
         synchronized (this) {
             return switch (this.stateVisible) {
                 case INIT_STATE_HIDDEN, INIT_STATE_NULL -> null;
-                case INIT_STATE_UNINIT -> new DataLayer();
-                case INIT_STATE_INIT -> //noinspection DataFlowIssue
-                        new DataLayer(this.storageVisible.clone());
+                case INIT_STATE_UNINIT -> EMPTY;
+                case INIT_STATE_INIT -> {
+                    assert this.storageVisible != null;
+                    //noinspection DataFlowIssue
+                    yield this.storageVisible.clone();
+                }
                 default -> throw new IllegalStateException();
             };
         }
@@ -441,12 +431,15 @@ public final class SWMRNibbleArray {
                     this.storageVisible = this.storageUpdating.clone();
                 }
                 else {
+                    //noinspection ArrayEquality
                     if (this.storageUpdating != this.storageVisible) {
                         assert this.storageUpdating != null;
                         assert this.storageVisible != null;
+                        //noinspection DataFlowIssue
                         System.arraycopy(this.storageUpdating, 0, this.storageVisible, 0, ARRAY_SIZE);
                     }
                 }
+                //noinspection ArrayEquality
                 if (this.storageUpdating != this.storageVisible) {
                     assert this.storageUpdating != null;
                     freeBytes(this.storageUpdating);

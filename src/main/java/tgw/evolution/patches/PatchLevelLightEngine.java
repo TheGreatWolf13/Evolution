@@ -2,8 +2,8 @@ package tgw.evolution.patches;
 
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LightLayer;
-import net.minecraft.world.level.chunk.DataLayer;
 import net.minecraft.world.level.chunk.LevelChunk;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.util.constants.Lightlayer;
 import tgw.evolution.world.lighting.StarLightInterface;
 
@@ -17,7 +17,7 @@ public interface PatchLevelLightEngine {
         throw new AbstractMethodError();
     }
 
-    default void clientUpdateLight(LightLayer lightType, int secX, int secY, int secZ, DataLayer nibble, boolean trustEdges) {
+    default void clientUpdateLight(LightLayer lightType, int secX, int secY, int secZ, byte @Nullable [] nibble, boolean trustEdges) {
         throw new AbstractMethodError();
     }
 

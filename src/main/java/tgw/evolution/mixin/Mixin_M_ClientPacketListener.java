@@ -40,7 +40,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.CommandBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkStatus;
-import net.minecraft.world.level.chunk.DataLayer;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.dimension.DimensionType;
@@ -762,8 +761,7 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
             int secY = lightEngine.getMinLightSection() + k;
             boolean bl2 = bitSet.get(k);
             if (bl2 || bitSet2.get(k)) {
-                //noinspection ObjectAllocationInLoop
-                this.level.getChunkSource().getLightEngine().clientUpdateLight(layer, secX, secY, secZ, bl2 ? new DataLayer(list.get(c++).clone()) : new DataLayer(), trustEdges);
+                this.level.getChunkSource().getLightEngine().clientUpdateLight(layer, secX, secY, secZ, bl2 ? list.get(c++).clone() : null, trustEdges);
                 this.level.setSectionDirtyWithNeighbors(secX, secY, secZ);
             }
         }

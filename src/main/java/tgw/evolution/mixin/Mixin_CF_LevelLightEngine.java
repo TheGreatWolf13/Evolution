@@ -99,7 +99,7 @@ public abstract class Mixin_CF_LevelLightEngine implements PatchLevelLightEngine
     }
 
     @Override
-    public void clientUpdateLight(LightLayer lightType, int secX, int secY, int secZ, DataLayer nibble, boolean trustEdges) {
+    public void clientUpdateLight(LightLayer lightType, int secX, int secY, int secZ, byte @Nullable [] nibble, boolean trustEdges) {
         if (((Object) this).getClass() != LevelLightEngine.class) {
             throw new IllegalStateException("This hook is for the CLIENT ONLY");
         }

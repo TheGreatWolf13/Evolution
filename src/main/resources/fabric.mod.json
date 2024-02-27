@@ -345,6 +345,9 @@
       ],
       "net/minecraft/world/level/chunk/LightChunkGetter": [
         "tgw/evolution/patches/PatchLightChunkGetter"
+      ],
+      "net/minecraft/network/protocol/game/ClientboundLightUpdatePacketData": [
+        "tgw/evolution/patches/PatchClientboundLightUpdatePacketData"
       ]
     }
   }

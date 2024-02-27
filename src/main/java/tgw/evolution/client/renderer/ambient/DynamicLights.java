@@ -26,30 +26,42 @@ public class DynamicLights {
     }
 
     private static boolean atLeastOneMatches(short l1, short l2) {
-        if ((l1 & 0xF) == (l2 & 0xF)) {
+        if ((l1 & 0b1111) == (l2 & 0b1111)) {
             return true;
         }
-        if ((l1 & 0xF0) == (l2 & 0xF0)) {
+        if ((l1 & 0b1111_0_0000) == (l2 & 0b1111_0_0000)) {
             return true;
         }
-        return (l1 & 0xF00) == (l2 & 0xF00);
+        return (l1 & 0b1111_0_0000_0_0000) == (l2 & 0b1111_0_0000_0_0000);
     }
 
     public static short combine(int l1, int l2) {
-        int r = Math.max(l1 & 0xF, l2 & 0xF);
-        int g = Math.max(l1 & 0xF0, l2 & 0xF0);
-        int b = Math.max(l1 & 0xF00, l2 & 0xF00);
-        return (short) (r | g | b);
+        int rr = Math.max(l1 & 0b1111, l2 & 0b1111);
+        int rs = Math.max(l1 & 0b1_0000, l2 & 0b1_0000);
+        int gr = Math.max(l1 & 0b1111_0_0000, l2 & 0b1111_0_0000);
+        int gs = Math.max(l1 & 0b1_0000_0_0000, l2 & 0b1_0000_0_0000);
+        int br = Math.max(l1 & 0b1111_0_0000_0_0000, l2 & 0b1111_0_0000_0_0000);
+        int bs = Math.max(l1 & 0b1_0000_0_0000_0_0000, l2 & 0b1_0000_0_0000_0_0000);
+        return (short) (rr | rs | gr | gs | br | bs);
     }
 
     private static boolean isLightGreater(short l1, short l2) {
-        if ((l1 & 0xF) > (l2 & 0xF)) {
+        if ((l1 & 0b1111) > (l2 & 0b1111)) {
             return true;
         }
-        if ((l1 & 0xF0) > (l2 & 0xF0)) {
+        if ((l1 & 0b1_0000) > (l2 & 0b1_0000)) {
             return true;
         }
-        return (l1 & 0xF00) > (l2 & 0xF00);
+        if ((l1 & 0b1111_0_0000) > (l2 & 0b1111_0_0000)) {
+            return true;
+        }
+        if ((l1 & 0b1_0000_0_0000) > (l2 & 0b1_0000_0_0000)) {
+            return true;
+        }
+        if ((l1 & 0b1111_0_0000_0_0000) > (l2 & 0b1111_0_0000_0_0000)) {
+            return true;
+        }
+        return (l1 & 0b1_0000_0_0000_0_0000) > (l2 & 0b1_0000_0_0000_0_0000);
     }
 
     public void clear() {
@@ -68,16 +80,16 @@ public class DynamicLights {
         removed.clear();
     }
 
-    public int getBlue(long pos) {
-        return this.lights.get(pos) >> 8 & 0xF;
+    public int getBlueRange(long pos) {
+        return this.lights.get(pos) >> 10 & 0b1111;
     }
 
-    public int getGreen(long pos) {
-        return this.lights.get(pos) >> 4 & 0xF;
+    public int getGreenRange(long pos) {
+        return this.lights.get(pos) >> 5 & 0b1111;
     }
 
-    public int getRed(long pos) {
-        return this.lights.get(pos) & 0xF;
+    public int getRedRange(long pos) {
+        return this.lights.get(pos) & 0b1111;
     }
 
     private void handleAdd(long pos, short light) {

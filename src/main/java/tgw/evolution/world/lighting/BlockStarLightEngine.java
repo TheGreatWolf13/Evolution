@@ -122,9 +122,9 @@ public final class BlockStarLightEngine extends StarLightEngine {
         if (this.level.isClientSide) {
             DynamicLights dynamicLights = ClientEvents.getInstance().getDynamicLights();
             long pos = BlockPos.asLong(x, y, z);
-            int r = dynamicLights.getRed(pos);
-            int g = dynamicLights.getGreen(pos);
-            int b = dynamicLights.getBlue(pos);
+            int r = dynamicLights.getRedRange(pos);
+            int g = dynamicLights.getGreenRange(pos);
+            int b = dynamicLights.getBlueRange(pos);
             dynamicLight = Math.max(r, Math.max(g, b));
             if (dynamicLight == 15) {
                 return 15;

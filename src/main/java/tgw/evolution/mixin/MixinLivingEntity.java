@@ -868,15 +868,15 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
         if (lightM == 0) {
             return this.getItemInHand(InteractionHand.OFF_HAND).getLightEmission();
         }
-        if (lightM == 0xFFF) {
-            return 0xFFF;
+        if (lightM == 0b1_1111_1_1111_1_1111) {
+            return 0b1_1111_1_1111_1_1111;
         }
         short lightO = this.getItemInHand(InteractionHand.OFF_HAND).getLightEmission();
         if (lightO == 0) {
             return lightM;
         }
-        if (lightO == 0xFFF) {
-            return 0xFFF;
+        if (lightO == 0b1_1111_1_1111_1_1111) {
+            return 0b1_1111_1_1111_1_1111;
         }
         return DynamicLights.combine(lightM, lightO);
     }

@@ -67,9 +67,9 @@ public abstract class Mixin_CF_BlockLightEngine extends LayerLightEngine<BlockLi
     private int getLightEmission(long pos) {
         int dynamicLight = 0;
         if (this.isClientSide) {
-            int r = ClientEvents.getInstance().getDynamicLights().getRed(pos);
-            int g = ClientEvents.getInstance().getDynamicLights().getGreen(pos);
-            int b = ClientEvents.getInstance().getDynamicLights().getBlue(pos);
+            int r = ClientEvents.getInstance().getDynamicLights().getRedRange(pos);
+            int g = ClientEvents.getInstance().getDynamicLights().getGreenRange(pos);
+            int b = ClientEvents.getInstance().getDynamicLights().getBlueRange(pos);
             dynamicLight = Math.max(r, Math.max(g, b));
             if (dynamicLight == 15) {
                 return 15;

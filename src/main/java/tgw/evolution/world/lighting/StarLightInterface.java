@@ -94,19 +94,24 @@ public final class StarLightInterface {
             }
 
             @Override
-            public DataLayer getDataLayerData(SectionPos pos) {
-                ChunkAccess chunk = StarLightInterface.this.getAnyChunkNow(pos.getX(), pos.getZ());
+            public @Nullable DataLayer getDataLayerData(SectionPos pos) {
+                Evolution.deprecatedMethod();
+                return null;
+            }
+
+            @Override
+            public byte @Nullable [] getDataLayerData_(int secX, int secY, int secZ) {
+                ChunkAccess chunk = StarLightInterface.this.getAnyChunkNow(secX, secZ);
                 if (chunk == null || !StarLightInterface.this.isClientSide && !chunk.isLightCorrect() || !chunk.getStatus().isOrAfter(ChunkStatus.LIGHT)) {
                     return null;
                 }
-                int sectionY = pos.getY();
-                if (sectionY > StarLightInterface.this.maxLightSection || sectionY < StarLightInterface.this.minLightSection) {
+                if (secY > StarLightInterface.this.maxLightSection || secY < StarLightInterface.this.minLightSection) {
                     return null;
                 }
                 if (chunk.getSkyEmptinessMap() == null) {
                     return null;
                 }
-                return chunk.getSkyNibbles()[sectionY - StarLightInterface.this.minLightSection].toVanillaNibble();
+                return chunk.getSkyNibbles()[secY - StarLightInterface.this.minLightSection].toVanillaNibble();
             }
 
             @Override
@@ -182,11 +187,17 @@ public final class StarLightInterface {
 
             @Override
             public @Nullable DataLayer getDataLayerData(SectionPos pos) {
-                final ChunkAccess chunk = StarLightInterface.this.getAnyChunkNow(pos.getX(), pos.getZ());
-                if (chunk == null || pos.getY() < StarLightInterface.this.minLightSection || pos.getY() > StarLightInterface.this.maxLightSection) {
+                Evolution.deprecatedMethod();
+                return null;
+            }
+
+            @Override
+            public byte @Nullable [] getDataLayerData_(int secX, int secY, int secZ) {
+                ChunkAccess chunk = StarLightInterface.this.getAnyChunkNow(secX, secZ);
+                if (chunk == null || secY < StarLightInterface.this.minLightSection || secY > StarLightInterface.this.maxLightSection) {
                     return null;
                 }
-                return chunk.getBlockNibbles()[pos.getY() - StarLightInterface.this.minLightSection].toVanillaNibble();
+                return chunk.getBlockNibbles()[secY - StarLightInterface.this.minLightSection].toVanillaNibble();
             }
 
             @Override
@@ -201,9 +212,9 @@ public final class StarLightInterface {
                 if (StarLightInterface.this.level != null && StarLightInterface.this.level.isClientSide) {
                     ClientEvents instance = ClientEvents.getInstance();
                     if (instance.isInitialized()) {
-                        int r = instance.getDynamicLights().getRed(pos);
-                        int g = instance.getDynamicLights().getGreen(pos);
-                        int b = instance.getDynamicLights().getBlue(pos);
+                        int r = instance.getDynamicLights().getRedRange(pos);
+                        int g = instance.getDynamicLights().getGreenRange(pos);
+                        int b = instance.getDynamicLights().getBlueRange(pos);
                         dynamicLight = Math.max(r, Math.max(g, b));
                         if (dynamicLight == 15) {
                             return 15;

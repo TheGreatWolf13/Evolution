@@ -139,7 +139,7 @@ public class ItemTorch extends ItemWallOrFloor implements IFireAspect, IThrowabl
 
     @Override
     public short getLightEmission(ItemStack stack) {
-        return 0x8E;
+        return 0b1110_1_1110;
     }
 
     @Override
