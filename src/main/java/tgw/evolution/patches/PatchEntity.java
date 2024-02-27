@@ -61,15 +61,15 @@ public interface PatchEntity {
     /**
      * Colored light in the following format: <br>
      * <br>
-     * Bit 0 ~ 3: Red component intensity; <br>
-     * Bit 4: Red component value; <br>
-     * Bit 5 ~ 8: Green component intensity; <br>
-     * Bit 9: Green component value; <br>
-     * Bit 10 ~ 13: Blue component intensity; <br>
-     * Bit 14: Blue component value; <br>
+     * Bit 0 ~ 3: Red light range; <br>
+     * Bit 4: Red light strength; <br>
+     * Bit 5 ~ 8: Green light range; <br>
+     * Bit 9: Green light strength; <br>
+     * Bit 10 ~ 13: Blue light range; <br>
+     * Bit 14: Blue light strength; <br>
      * <br>
-     * Each individual component intensity must be in the range 0 ~ 15.
-     * Each individual component value must be in the range 0 ~ 1.
+     * Each individual component intensity must be in the range 0 ~ 15. <br>
+     * Each individual component value must be in the range 0 ~ 1. <br>
      */
     default short getLightEmission() {
         return 0;

@@ -181,6 +181,20 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
                                 .add(EvolutionAttributes.SWIM_SPEED);
     }
 
+    @Unique
+    private static byte getState(DamageSource source) {
+        if (source == EvolutionDamage.DROWN) {
+            return EntityStates.DROWN_HIT_SOUND;
+        }
+        if (source.isFire()) {
+            return EntityStates.FIRE_HIT_SOUND;
+        }
+        if (source == DamageSource.SWEET_BERRY_BUSH) {
+            return EntityStates.SWEET_BERRY_BUSH_HIT_SOUND;
+        }
+        return EntityStates.GENERIC_HIT_SOUND;
+    }
+
     @Overwrite
     public void actuallyHurt(DamageSource source, float amount) {
         if (!this.isInvulnerableTo(source)) {
@@ -543,7 +557,7 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
             }
         }
         else {
-            entity.animationSpeed *= 0.9;
+            entity.animationSpeed *= 0.9F;
         }
         entity.animationPosition += entity.animationSpeed;
         if (entity.animationPosition >= 4 * Mth.PI) {
@@ -1164,19 +1178,7 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
             this.level.broadcastEntityEvent(this, EntityStates.THORNS_HIT_SOUND);
         }
         else {
-            byte state;
-            if (source == EvolutionDamage.DROWN) { //Replace with Evolution Damage
-                state = EntityStates.DROWN_HIT_SOUND;
-            }
-            else if (source.isFire()) {
-                state = EntityStates.FIRE_HIT_SOUND;
-            }
-            else if (source == DamageSource.SWEET_BERRY_BUSH) {
-                state = EntityStates.SWEET_BERRY_BUSH_HIT_SOUND;
-            }
-            else {
-                state = EntityStates.GENERIC_HIT_SOUND;
-            }
+            byte state = getState(source);
             this.level.broadcastEntityEvent(this, state);
         }
         if (source instanceof DamageSourceEntity) { //Replace for Evolution Damage
