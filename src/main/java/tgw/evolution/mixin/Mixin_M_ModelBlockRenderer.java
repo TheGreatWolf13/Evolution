@@ -276,10 +276,10 @@ public abstract class Mixin_M_ModelBlockRenderer implements PatchModelBlockRende
             if (repackLight) {
                 Direction dir = quad.getDirection();
                 if (calculateShape(level, state, x, y, z, quad.getVertices(), dir)) {
-                    light = EvLevelRenderer.getLightColor(level, state, x + dir.getStepX(), y + dir.getStepY(), z + dir.getStepZ());
+                    light = EvLevelRenderer.getLightColor(level, state, x + dir.getStepX(), y + dir.getStepY(), z + dir.getStepZ(), false);
                 }
                 else {
-                    light = EvLevelRenderer.getLightColor(level, state, x, y, z);
+                    light = EvLevelRenderer.getLightColor(level, state, x, y, z, false);
                 }
             }
             float bright = level.getShade(quad.getDirection(), quad.isShade());
@@ -399,7 +399,7 @@ public abstract class Mixin_M_ModelBlockRenderer implements PatchModelBlockRende
                 int offY = y + dir.getStepY();
                 int offZ = z + dir.getStepZ();
                 if (!checkSides || BlockUtils.shouldRenderFace(state, level, x, y, z, dir, offX, offY, offZ)) {
-                    int light = EvLevelRenderer.getLightColor(level, state, offX, offY, offZ);
+                    int light = EvLevelRenderer.getLightColor(level, state, offX, offY, offZ, false);
                     this.renderModelFaceFlat(level, state, x, y, z, light, packedOverlay, false, matrices, builder, quads);
                     hasAnything = true;
                 }
@@ -408,7 +408,7 @@ public abstract class Mixin_M_ModelBlockRenderer implements PatchModelBlockRende
         random.setSeed(seed);
         List<BakedQuad> quads = model.getQuads(state, null, random, modelData);
         if (!quads.isEmpty()) {
-            this.renderModelFaceFlat(level, state, x, y, z, 0xffff_ffff, packedOverlay, true, matrices, builder, quads);
+            this.renderModelFaceFlat(level, state, x, y, z, 0, packedOverlay, true, matrices, builder, quads);
             return true;
         }
         return hasAnything;

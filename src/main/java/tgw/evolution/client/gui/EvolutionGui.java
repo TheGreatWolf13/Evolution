@@ -181,7 +181,7 @@ public class EvolutionGui extends Gui {
             for (int i = 0, len = left.size(); i < len; i++) {
                 String msg = left.get(i);
                 if (!StringUtil.isNullOrEmpty(msg)) {
-                    font.drawInBatch(msg, 2, top, 0xe0_e0e0, false, matrix, this.buffer, false, 0, 0xf0_00f0, false);
+                    font.drawInBatch(msg, 2, top, 0xe0_e0e0, false, matrix, this.buffer, false, 0, 0xff_00ff, false);
                 }
                 top += font.lineHeight;
             }
@@ -191,7 +191,7 @@ public class EvolutionGui extends Gui {
                 if (!StringUtil.isNullOrEmpty(msg)) {
                     int w = this.rightWidthCache.getInt(i);
                     int x = this.screenWidth - 2 - w;
-                    font.drawInBatch(msg, x, top, 0xe0_e0e0, false, matrix, this.buffer, false, 0, 0xf0_00f0, false);
+                    font.drawInBatch(msg, x, top, 0xe0_e0e0, false, matrix, this.buffer, false, 0, 0xff_00ff, false);
                 }
                 top += font.lineHeight;
             }

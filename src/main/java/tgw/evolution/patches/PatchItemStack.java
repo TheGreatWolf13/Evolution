@@ -10,7 +10,7 @@ import net.minecraft.world.phys.BlockHitResult;
 
 public interface PatchItemStack {
 
-    default byte getLightEmission() {
+    default short getLightEmission() {
         throw new AbstractMethodError();
     }
 

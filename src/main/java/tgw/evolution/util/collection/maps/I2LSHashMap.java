@@ -8,7 +8,7 @@ import java.util.Arrays;
 import static it.unimi.dsi.fastutil.HashCommon.arraySize;
 import static it.unimi.dsi.fastutil.HashCommon.maxFill;
 
-public class I2LBHashMap {
+public class I2LSHashMap {
 
     protected final float f;
     protected final int minN;
@@ -19,13 +19,13 @@ public class I2LBHashMap {
     protected int n;
     protected int size;
     protected long[] value1;
-    protected byte[] value2;
+    protected short[] value2;
 
-    public I2LBHashMap() {
+    public I2LSHashMap() {
         this(16, 0.75f);
     }
 
-    public I2LBHashMap(final int expected, final float f) {
+    public I2LSHashMap(final int expected, final float f) {
         if (f <= 0 || f >= 1) {
             throw new IllegalArgumentException("Load factor must be greater than 0 and smaller than 1");
         }
@@ -38,7 +38,7 @@ public class I2LBHashMap {
         this.maxFill = maxFill(this.n, f);
         this.key = new int[this.n + 1];
         this.value1 = new long[this.n + 1];
-        this.value2 = new byte[this.n + 1];
+        this.value2 = new short[this.n + 1];
     }
 
     public void clear() {
@@ -63,13 +63,6 @@ public class I2LBHashMap {
                 all.add(k);
             }
         }
-    }
-
-    public byte getByteByIndex(int index) {
-        if (index >= 0) {
-            return this.value2[index];
-        }
-        return 0;
     }
 
     public int getIndexFor(int k) {
@@ -104,7 +97,14 @@ public class I2LBHashMap {
         return 0L;
     }
 
-    private void insert(final int pos, final int k, final long v1, final byte v2) {
+    public short getShortByIndex(int index) {
+        if (index >= 0) {
+            return this.value2[index];
+        }
+        return 0;
+    }
+
+    private void insert(final int pos, final int k, final long v1, final short v2) {
         if (pos == this.n) {
             this.containsNullKey = true;
         }
@@ -116,7 +116,7 @@ public class I2LBHashMap {
         }
     }
 
-    public void put(final int k, final long v1, final byte v2) {
+    public void put(final int k, final long v1, final short v2) {
         final int pos = this.getIndexFor(k);
         if (pos < 0) {
             this.insert(-pos - 1, k, v1, v2);
@@ -133,11 +133,11 @@ public class I2LBHashMap {
     protected void rehash(final int newN) {
         final int[] key = this.key;
         final long[] value1 = this.value1;
-        final byte[] value2 = this.value2;
+        final short[] value2 = this.value2;
         final int mask = newN - 1; // Note that this is used by the hashing macro
         final int[] newKey = new int[newN + 1];
         final long[] newValue1 = new long[newN + 1];
-        final byte[] newValue2 = new byte[newN + 1];
+        final short[] newValue2 = new short[newN + 1];
         int i = this.n;
         for (int j = this.realSize(); j-- != 0; ) {
             while (key[--i] == 0) {

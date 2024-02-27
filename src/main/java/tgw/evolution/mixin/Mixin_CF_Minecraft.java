@@ -1187,9 +1187,9 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
         }
         MultiBufferSource.BufferSource buffer = MultiBufferSource.immediate(builder);
         Matrix4f matrix = matrices.last().pose();
-        this.font.drawInBatch(s1, x - 160, y - 80 - 16, 16_777_215, true, matrix, buffer, false, 0, 15_728_880, false);
+        this.font.drawInBatch(s1, x - 160, y - 80 - 16, 0xff_ffff, true, matrix, buffer, false, 0, 0xFF_00FF, false);
         s1 = format.format(result.globalPercentage * (1 / 100.0));
-        this.font.drawInBatch(s1, x + 160 - this.font.width(s1), y - 80 - 16, 16_777_215, true, matrix, buffer, false, 0, 15_728_880, false);
+        this.font.drawInBatch(s1, x + 160 - this.font.width(s1), y - 80 - 16, 0xFF_FFFF, true, matrix, buffer, false, 0, 0xff_00ff, false);
         StringBuilder stringBuilder = new StringBuilder();
         for (int i = 0, len = list.size(); i < len; i++) {
             stringBuilder.setLength(0);
@@ -1203,11 +1203,11 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
             String s2 = stringBuilder.append(resultField.name).toString();
             int y1 = y + 80 + i * 8 + 20;
             int color = resultField.getColor();
-            this.font.drawInBatch(s2, x - 160, y1, color, true, matrix, buffer, false, 0, 15_728_880, false);
+            this.font.drawInBatch(s2, x - 160, y1, color, true, matrix, buffer, false, 0, 0xff_00ff, false);
             s2 = format.format(resultField.percentage * (1 / 100.0));
-            this.font.drawInBatch(s2, x + 160 - 50 - this.font.width(s2), y1, color, true, matrix, buffer, false, 0, 15_728_880, false);
+            this.font.drawInBatch(s2, x + 160 - 50 - this.font.width(s2), y1, color, true, matrix, buffer, false, 0, 0xff_00ff, false);
             s2 = format.format(resultField.globalPercentage * (1 / 100.0));
-            this.font.drawInBatch(s2, x + 160 - this.font.width(s2), y1, color, true, matrix, buffer, false, 0, 15_728_880, false);
+            this.font.drawInBatch(s2, x + 160 - this.font.width(s2), y1, color, true, matrix, buffer, false, 0, 0xff_00ff, false);
         }
         buffer.endBatch();
     }

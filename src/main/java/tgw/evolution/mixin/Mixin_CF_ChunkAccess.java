@@ -32,6 +32,7 @@ import tgw.evolution.util.collection.maps.L2OMap;
 import tgw.evolution.util.collection.maps.O2OHashMap;
 import tgw.evolution.util.collection.sets.OHashSet;
 import tgw.evolution.util.collection.sets.OSet;
+import tgw.evolution.world.lighting.SWMRNibbleArray;
 
 import java.util.Map;
 import java.util.Set;
@@ -51,7 +52,13 @@ public abstract class Mixin_CF_ChunkAccess implements PatchChunkAccess {
     @Mutable @Shadow @Final @RestoreFinal protected ShortList[] postProcessing;
     @Mutable @Shadow @Final @RestoreFinal protected LevelChunkSection[] sections;
     @Mutable @Shadow @Final @RestoreFinal protected UpgradeData upgradeData;
+    //TODO very inefficient
+    @Unique private volatile boolean @Nullable [] blockEmptinessMap;
+    @Unique private volatile SWMRNibbleArray[] blockNibbles;
     @Shadow private long inhabitedTime;
+    //TODO very inefficient
+    @Unique private volatile boolean @Nullable [] skyEmptinessMap;
+    @Unique private volatile SWMRNibbleArray[] skyNibbles;
     @Mutable @Shadow @Final @RestoreFinal private Map<ConfiguredStructureFeature<?, ?>, StructureStart> structureStarts;
     @Mutable @Shadow @Final @RestoreFinal private Map<ConfiguredStructureFeature<?, ?>, LongSet> structuresRefences;
 
@@ -97,6 +104,11 @@ public abstract class Mixin_CF_ChunkAccess implements PatchChunkAccess {
         return this.blockEntities_;
     }
 
+    @Override
+    public boolean @Nullable [] getBlockEmptinessMap() {
+        return this.blockEmptinessMap;
+    }
+
     /**
      * @author TheGreatWolf
      * @reason Do not use, iterate over the maps instead
@@ -133,6 +145,11 @@ public abstract class Mixin_CF_ChunkAccess implements PatchChunkAccess {
         return this.pendingBlockEntities_.get(BlockPos.asLong(x, y, z));
     }
 
+    @Override
+    public SWMRNibbleArray[] getBlockNibbles() {
+        return this.blockNibbles;
+    }
+
     /**
      * @author TheGreatWolf
      * @reason Remove computeIfAbsent
@@ -148,14 +165,20 @@ public abstract class Mixin_CF_ChunkAccess implements PatchChunkAccess {
     }
 
     @Override
+    public boolean @Nullable [] getSkyEmptinessMap() {
+        return this.skyEmptinessMap;
+    }
+
+    @Override
+    public SWMRNibbleArray[] getSkyNibbles() {
+        return this.skyNibbles;
+    }
+
+    @Override
     public Map<Heightmap.Types, Heightmap> heightmaps_() {
         return this.heightmaps;
     }
 
-    /**
-     * @author TheGreatWolf
-     * @reason Use non-BlockPos version
-     */
     @Overwrite
     public void markPosForPostprocessing(BlockPos pos) {
         Evolution.warn("markPosForPostprocessing(BlockPos) should not be called!");
@@ -172,6 +195,11 @@ public abstract class Mixin_CF_ChunkAccess implements PatchChunkAccess {
         return this.pendingBlockEntities_;
     }
 
+    @Override
+    public void setBlockEmptinessMap(final boolean @Nullable [] emptinessMap) {
+        this.blockEmptinessMap = emptinessMap;
+    }
+
     /**
      * @author TheGreatWolf
      * @reason Replace maps
@@ -179,5 +207,20 @@ public abstract class Mixin_CF_ChunkAccess implements PatchChunkAccess {
     @Overwrite
     public void setBlockEntityNbt(CompoundTag tag) {
         this.pendingBlockEntities_.put(TEUtils.getPosFromTag(tag), tag);
+    }
+
+    @Override
+    public void setBlockNibbles(final SWMRNibbleArray[] nibbles) {
+        this.blockNibbles = nibbles;
+    }
+
+    @Override
+    public void setSkyEmptinessMap(boolean @Nullable [] emptinessMap) {
+        this.skyEmptinessMap = emptinessMap;
+    }
+
+    @Override
+    public void setSkyNibbles(final SWMRNibbleArray[] nibbles) {
+        this.skyNibbles = nibbles;
     }
 }

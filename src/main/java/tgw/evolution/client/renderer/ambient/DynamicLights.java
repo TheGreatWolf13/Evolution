@@ -3,9 +3,9 @@ package tgw.evolution.client.renderer.ambient;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.lighting.LevelLightEngine;
-import tgw.evolution.util.collection.maps.I2LBHashMap;
-import tgw.evolution.util.collection.maps.L2BHashMap;
-import tgw.evolution.util.collection.maps.L2BMap;
+import tgw.evolution.util.collection.maps.I2LSHashMap;
+import tgw.evolution.util.collection.maps.L2SHashMap;
+import tgw.evolution.util.collection.maps.L2SMap;
 import tgw.evolution.util.collection.sets.IHashSet;
 import tgw.evolution.util.collection.sets.ISet;
 import tgw.evolution.util.collection.sets.LHashSet;
@@ -13,10 +13,10 @@ import tgw.evolution.util.collection.sets.LSet;
 
 public class DynamicLights {
 
-    private final L2BMap added = new L2BHashMap();
-    private final I2LBHashMap entityEmission = new I2LBHashMap();
+    private final L2SMap added = new L2SHashMap();
+    private final I2LSHashMap entityEmission = new I2LSHashMap();
     private final ClientLevel level;
-    private final L2BMap lights = new L2BHashMap();
+    private final L2SMap lights = new L2SHashMap();
     private final LSet modified = new LHashSet();
     private final ISet notTicked = new IHashSet();
     private final LSet removed = new LHashSet();
@@ -25,12 +25,39 @@ public class DynamicLights {
         this.level = level;
     }
 
+    private static boolean atLeastOneMatches(short l1, short l2) {
+        if ((l1 & 0xF) == (l2 & 0xF)) {
+            return true;
+        }
+        if ((l1 & 0xF0) == (l2 & 0xF0)) {
+            return true;
+        }
+        return (l1 & 0xF00) == (l2 & 0xF00);
+    }
+
+    public static short combine(int l1, int l2) {
+        int r = Math.max(l1 & 0xF, l2 & 0xF);
+        int g = Math.max(l1 & 0xF0, l2 & 0xF0);
+        int b = Math.max(l1 & 0xF00, l2 & 0xF00);
+        return (short) (r | g | b);
+    }
+
+    private static boolean isLightGreater(short l1, short l2) {
+        if ((l1 & 0xF) > (l2 & 0xF)) {
+            return true;
+        }
+        if ((l1 & 0xF0) > (l2 & 0xF0)) {
+            return true;
+        }
+        return (l1 & 0xF00) > (l2 & 0xF00);
+    }
+
     public void clear() {
         this.entityEmission.clear();
-        L2BMap lights = this.lights;
+        L2SMap lights = this.lights;
         LSet removed = this.removed;
         removed.clear();
-        for (L2BMap.Entry e = lights.fastEntries(); e != null; e = lights.fastEntries()) {
+        for (L2SMap.Entry e = lights.fastEntries(); e != null; e = lights.fastEntries()) {
             removed.add(e.key());
         }
         lights.clear();
@@ -41,41 +68,50 @@ public class DynamicLights {
         removed.clear();
     }
 
-    public int get(long pos) {
-        return this.lights.get(pos);
+    public int getBlue(long pos) {
+        return this.lights.get(pos) >> 8 & 0xF;
     }
 
-    private void handleAdd(long pos, byte light) {
-        byte currLight = this.lights.get(pos);
-        if (light > currLight) {
-            this.lights.put(pos, light);
+    public int getGreen(long pos) {
+        return this.lights.get(pos) >> 4 & 0xF;
+    }
+
+    public int getRed(long pos) {
+        return this.lights.get(pos) & 0xF;
+    }
+
+    private void handleAdd(long pos, short light) {
+        short currLight = this.lights.get(pos);
+        if (isLightGreater(light, currLight)) {
+            this.lights.put(pos, combine(light, currLight));
             this.modified.add(pos);
         }
         else {
-            byte maxAdded = this.added.get(pos);
-            if (light > maxAdded) {
-                this.added.put(pos, light);
+            short maxAdded = this.added.get(pos);
+            if (isLightGreater(light, maxAdded)) {
+                this.added.put(pos, combine(light, maxAdded));
             }
         }
     }
 
-    private void handleRemove(long pos, byte light) {
-        byte currLight = this.lights.get(pos);
-        if (currLight == light) {
+    private void handleRemove(long pos, short light) {
+        short currLight = this.lights.get(pos);
+        if (atLeastOneMatches(currLight, light)) {
             this.removed.add(pos);
         }
     }
 
-    private void handleReplace(long pos, byte oldLight, byte light) {
-        byte currLight = this.lights.get(pos);
-        if (light > currLight) {
+    private void handleReplace(long pos, short oldLight, short light) {
+        short currLight = this.lights.get(pos);
+        if (isLightGreater(light, currLight)) {
             this.lights.put(pos, light);
             this.modified.add(pos);
         }
-        else if (oldLight == currLight) {
-            byte maxAdded = this.added.get(pos);
-            if (light > maxAdded) {
-                this.added.put(pos, light);
+        else if (atLeastOneMatches(oldLight, currLight)) {
+            this.handleRemove(pos, oldLight);
+            short maxAdded = this.added.get(pos);
+            if (isLightGreater(light, maxAdded)) {
+                this.added.put(pos, combine(light, maxAdded));
             }
         }
     }
@@ -86,16 +122,16 @@ public class DynamicLights {
         for (ISet.Entry e = notTicked.fastEntries(); e != null; e = notTicked.fastEntries()) {
             int index = this.entityEmission.getIndexFor(e.get());
             long oldPos = this.entityEmission.getLongByIndex(index);
-            byte oldLight = this.entityEmission.getByteByIndex(index);
+            short oldLight = this.entityEmission.getShortByIndex(index);
             this.entityEmission.remove(e.get());
             this.handleRemove(oldPos, oldLight);
         }
         notTicked.clear();
-        L2BMap added = this.added;
+        L2SMap added = this.added;
         LSet modified = this.modified;
         for (LSet.Entry e = removed.fastEntries(); e != null; e = removed.fastEntries()) {
             long pos = e.get();
-            byte maxAdded = added.get(pos);
+            short maxAdded = added.get(pos);
             if (maxAdded == 0) {
                 this.lights.remove(pos);
             }
@@ -119,7 +155,7 @@ public class DynamicLights {
 
     public void update(Entity entity) {
         this.notTicked.remove(entity.getId());
-        byte light = entity.getLightEmission();
+        short light = entity.getLightEmission();
         long pos = entity.getLightEmissionPos();
         int index = this.entityEmission.getIndexFor(entity.getId());
         if (index < 0) {
@@ -132,7 +168,7 @@ public class DynamicLights {
         }
         //This entity already had light
         long oldPos = this.entityEmission.getLongByIndex(index);
-        byte oldLight = this.entityEmission.getByteByIndex(index);
+        short oldLight = this.entityEmission.getShortByIndex(index);
         if (oldPos != pos) {
             //Moved
             if (light == 0) {
@@ -158,9 +194,9 @@ public class DynamicLights {
             }
             return;
         }
-        byte maxAdded = this.added.get(pos);
-        if (light > maxAdded) {
-            this.added.put(pos, light);
+        short maxAdded = this.added.get(pos);
+        if (isLightGreater(light, maxAdded)) {
+            this.added.put(pos, combine(light, maxAdded));
         }
     }
 }

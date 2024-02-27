@@ -49,7 +49,6 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.PlayerTeam;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Range;
 import org.objectweb.asm.Opcodes;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.*;
@@ -61,6 +60,7 @@ import tgw.evolution.blocks.IClimbable;
 import tgw.evolution.blocks.ICollisionBlock;
 import tgw.evolution.blocks.IFallSufixBlock;
 import tgw.evolution.blocks.util.BlockUtils;
+import tgw.evolution.client.renderer.ambient.DynamicLights;
 import tgw.evolution.entities.EffectHelper;
 import tgw.evolution.entities.EntityUtils;
 import tgw.evolution.events.EntityEvents;
@@ -849,12 +849,22 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
     }
 
     @Override
-    public @Range(from = 0, to = 15) byte getLightEmission() {
-        byte lightM = this.getItemInHand(InteractionHand.MAIN_HAND).getLightEmission();
-        if (lightM == 15) {
-            return 15;
+    public short getLightEmission() {
+        short lightM = this.getItemInHand(InteractionHand.MAIN_HAND).getLightEmission();
+        if (lightM == 0) {
+            return this.getItemInHand(InteractionHand.OFF_HAND).getLightEmission();
         }
-        return (byte) Math.max(lightM, this.getItemInHand(InteractionHand.OFF_HAND).getLightEmission());
+        if (lightM == 0xFFF) {
+            return 0xFFF;
+        }
+        short lightO = this.getItemInHand(InteractionHand.OFF_HAND).getLightEmission();
+        if (lightO == 0) {
+            return lightM;
+        }
+        if (lightO == 0xFFF) {
+            return 0xFFF;
+        }
+        return DynamicLights.combine(lightM, lightO);
     }
 
     @Shadow

@@ -7,10 +7,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.*;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SupportType;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -72,6 +69,10 @@ public interface PatchBlockStateBase {
         throw new AbstractMethodError();
     }
 
+    default int getEmissiveLightColor(BlockAndTintGetter level, int x, int y, int z) {
+        throw new AbstractMethodError();
+    }
+
     default VoxelShape getFaceOcclusionShape_(BlockGetter level, int x, int y, int z, Direction face) {
         throw new AbstractMethodError();
     }
@@ -85,6 +86,10 @@ public interface PatchBlockStateBase {
     }
 
     default VoxelShape getOcclusionShape_(BlockGetter level, int x, int y, int z) {
+        throw new AbstractMethodError();
+    }
+
+    default int getOpacityIfCached() {
         throw new AbstractMethodError();
     }
 
@@ -113,6 +118,10 @@ public interface PatchBlockStateBase {
     }
 
     default boolean isCollisionShapeFullBlock_(BlockGetter level, int x, int y, int z) {
+        throw new AbstractMethodError();
+    }
+
+    default boolean isConditionallyFullOpaque() {
         throw new AbstractMethodError();
     }
 

@@ -36,7 +36,7 @@ public abstract class MixinModelBlockRenderer_Cache implements PatchModelBlockRe
                 return color;
             }
         }
-        int color = EvLevelRenderer.getLightColor(level, state, x, y, z);
+        int color = EvLevelRenderer.getLightColor(level, state, x, y, z, true);
         if (this.enabled) {
             if (this.colorCache.size() == 100) {
                 this.colorCache.removeFirstInt();

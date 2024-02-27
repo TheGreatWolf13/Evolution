@@ -6,10 +6,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.server.level.*;
 import net.minecraft.util.profiling.ProfilerFiller;
-import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.GameRules;
-import net.minecraft.world.level.LocalMobCapCalculator;
-import net.minecraft.world.level.NaturalSpawner;
+import net.minecraft.world.level.*;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkSource;
 import net.minecraft.world.level.chunk.ChunkStatus;
@@ -24,17 +21,19 @@ import tgw.evolution.util.math.FastRandom;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
+import java.util.random.RandomGenerator;
 
 @Mixin(ServerChunkCache.class)
 public abstract class MixinServerChunkCache extends ChunkSource implements PatchServerChunkCache {
 
     @Unique private static final ThreadLocal<BiArrayList<LevelChunk, ChunkHolder>> BILIST = ThreadLocal.withInitial(BiArrayList::new);
-    @Unique private final FastRandom randomForTicking = new FastRandom();
+    @Unique private final RandomGenerator randomForTicking = new FastRandom();
     @Shadow @Final public ChunkMap chunkMap;
     @Shadow @Final ServerLevel level;
     @Shadow @Final private DistanceManager distanceManager;
     @Shadow private long lastInhabitedUpdate;
     @Shadow private @Nullable NaturalSpawner.SpawnState lastSpawnState;
+    @Shadow @Final private ServerChunkCache.MainThreadExecutor mainThreadProcessor;
     @Shadow private boolean spawnEnemies;
     @Shadow private boolean spawnFriendlies;
 
@@ -107,8 +106,28 @@ public abstract class MixinServerChunkCache extends ChunkSource implements Patch
         return !this.chunkAbsent(holder, ticket);
     }
 
+    @Override
+    @Overwrite
+    public void onLightUpdate(LightLayer lightLayer, SectionPos pos) {
+        Evolution.deprecatedMethod();
+        this.onLightUpdate_(lightLayer, pos.x(), pos.y(), pos.z());
+    }
+
+    @Override
+    public void onLightUpdate_(LightLayer lightLayer, int secX, int secY, int secZ) {
+        this.mainThreadProcessor.execute(() -> {
+            ChunkHolder chunkHolder = this.getVisibleChunkIfPresent(ChunkPos.asLong(secX, secZ));
+            if (chunkHolder != null) {
+                chunkHolder.sectionLightChanged(lightLayer, secY);
+            }
+        });
+    }
+
     @Shadow
     abstract boolean runDistanceManagerUpdates();
+
+    @Shadow
+    public abstract void setSimulationDistance(int i);
 
     /**
      * @author TheGreatWolf

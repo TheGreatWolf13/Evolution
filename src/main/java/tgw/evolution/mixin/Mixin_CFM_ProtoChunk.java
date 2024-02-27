@@ -23,16 +23,14 @@ import net.minecraft.world.ticks.ProtoChunkTicks;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.*;
 import tgw.evolution.Evolution;
-import tgw.evolution.hooks.asm.DeleteField;
-import tgw.evolution.hooks.asm.DeleteMethod;
-import tgw.evolution.hooks.asm.ModifyConstructor;
-import tgw.evolution.hooks.asm.RestoreFinal;
+import tgw.evolution.hooks.asm.*;
 import tgw.evolution.util.collection.ArrayHelper;
 import tgw.evolution.util.collection.lists.LArrayList;
 import tgw.evolution.util.collection.lists.LList;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.sets.RSet;
 import tgw.evolution.util.collection.sets.SimpleEnumSet;
+import tgw.evolution.world.lighting.StarLightEngine;
 
 import java.util.EnumMap;
 import java.util.EnumSet;
@@ -52,6 +50,12 @@ public abstract class Mixin_CFM_ProtoChunk extends ChunkAccess {
     @Shadow @Final @DeleteField private List<BlockPos> lights;
     @Shadow private volatile ChunkStatus status;
 
+    @DummyConstructor
+    public Mixin_CFM_ProtoChunk(ChunkPos chunkPos, UpgradeData upgradeData, LevelHeightAccessor levelHeightAccessor, Registry<Biome> registry, long l, @Nullable LevelChunkSection[] levelChunkSections, @Nullable BlendingData blendingData, LList lights_) {
+        super(chunkPos, upgradeData, levelHeightAccessor, registry, l, levelChunkSections, blendingData);
+        this.lights_ = lights_;
+    }
+
     @ModifyConstructor
     public Mixin_CFM_ProtoChunk(ChunkPos chunkPos,
                                 UpgradeData upgradeData,
@@ -68,6 +72,11 @@ public abstract class Mixin_CFM_ProtoChunk extends ChunkAccess {
         this.carvingMasks = new EnumMap<>(GenerationStep.Carving.class);
         this.blockTicks = protoChunkTicks;
         this.fluidTicks = protoChunkTicks2;
+        //noinspection ConstantValue
+        if (!((Object) this instanceof ImposterProtoChunk)) {
+            this.setBlockNibbles(StarLightEngine.getFilledEmptyLight(levelHeightAccessor));
+            this.setSkyNibbles(StarLightEngine.getFilledEmptyLight(levelHeightAccessor));
+        }
     }
 
     @Unique

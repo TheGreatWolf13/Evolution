@@ -9,7 +9,6 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.CreativeInventoryListener;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.client.gui.screens.inventory.EffectRenderingInventoryScreen;
-import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
@@ -25,6 +24,7 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.*;
+import tgw.evolution.client.gui.GUIUtils;
 import tgw.evolution.client.util.CreativeTabs;
 import tgw.evolution.client.util.MouseButton;
 import tgw.evolution.network.Message;
@@ -239,7 +239,7 @@ public abstract class MixinCreativeModeInventoryScreen extends EffectRenderingIn
         }
         this.renderTabButton(matrices, selected);
         if (selected == CreativeModeTab.TAB_INVENTORY) {
-            InventoryScreen.renderEntityInInventory(this.leftPos + 88, this.topPos + 45, 20, this.leftPos + 88 - mouseX, this.topPos + 45 - 30 - mouseY, this.minecraft.player);
+            GUIUtils.renderEntityInInventory(this.leftPos + 88, this.topPos + 45, 20, this.leftPos + 88 - mouseX, this.topPos + 45 - 30 - mouseY, this.minecraft.player);
         }
     }
 

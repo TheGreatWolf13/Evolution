@@ -117,7 +117,7 @@ public abstract class MixinItemStack implements PatchItemStack {
     public abstract Item getItem();
 
     @Override
-    public byte getLightEmission() {
+    public short getLightEmission() {
         if (this.isEmpty()) {
             return 0;
         }

@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 public class BlockPlaceholder extends BlockPhysics {
 
     public BlockPlaceholder() {
-        super(Properties.of(Material.METAL).strength(2.0f, 3.0f).noDrops().sound(SoundType.METAL));
+        super(Properties.of(Material.METAL).strength(2.0f, 3.0f).noDrops().sound(SoundType.METAL).lightLevel(s -> 0xFF0));
     }
 
     @Override

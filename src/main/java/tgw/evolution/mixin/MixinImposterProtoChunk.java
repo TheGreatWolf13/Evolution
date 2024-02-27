@@ -21,6 +21,7 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.Evolution;
 import tgw.evolution.util.collection.lists.LList;
+import tgw.evolution.world.lighting.SWMRNibbleArray;
 
 import java.util.stream.Stream;
 
@@ -30,21 +31,15 @@ public abstract class MixinImposterProtoChunk extends ProtoChunk {
     @Shadow @Final private boolean allowWrites;
     @Shadow @Final private LevelChunk wrapped;
 
-    public MixinImposterProtoChunk(ChunkPos chunkPos,
-                                   UpgradeData upgradeData,
-                                   @Nullable LevelChunkSection[] levelChunkSections,
-                                   ProtoChunkTicks<Block> protoChunkTicks,
-                                   ProtoChunkTicks<Fluid> protoChunkTicks2,
-                                   LevelHeightAccessor levelHeightAccessor,
-                                   Registry<Biome> registry,
-                                   @Nullable BlendingData blendingData) {
+    public MixinImposterProtoChunk(ChunkPos chunkPos, UpgradeData upgradeData, @Nullable LevelChunkSection[] levelChunkSections, ProtoChunkTicks<Block> protoChunkTicks, ProtoChunkTicks<Fluid> protoChunkTicks2, LevelHeightAccessor levelHeightAccessor, Registry<Biome> registry, @Nullable BlendingData blendingData) {
         super(chunkPos, upgradeData, levelChunkSections, protoChunkTicks, protoChunkTicks2, levelHeightAccessor, registry, blendingData);
     }
 
-    /**
-     * @author TheGreatWolf
-     * @reason Use non-BlockPos implementation
-     */
+    @Override
+    public boolean @Nullable [] getBlockEmptinessMap() {
+        return this.wrapped.getBlockEmptinessMap();
+    }
+
     @Overwrite
     @Override
     public @Nullable BlockEntity getBlockEntity(BlockPos pos) {
@@ -52,10 +47,6 @@ public abstract class MixinImposterProtoChunk extends ProtoChunk {
         return this.getBlockEntity_(pos.getX(), pos.getY(), pos.getZ());
     }
 
-    /**
-     * @author TheGreatWolf
-     * @reason Use non-BlockPos version
-     */
     @Overwrite
     @Override
     public @Nullable CompoundTag getBlockEntityNbt(BlockPos pos) {
@@ -63,10 +54,6 @@ public abstract class MixinImposterProtoChunk extends ProtoChunk {
         return this.getBlockEntityNbt_(pos.getX(), pos.getY(), pos.getZ());
     }
 
-    /**
-     * @author TheGreatWolf
-     * @reason Use non-BlockPos version
-     */
     @Overwrite
     @Override
     public @Nullable CompoundTag getBlockEntityNbtForSaving(BlockPos pos) {
@@ -89,10 +76,11 @@ public abstract class MixinImposterProtoChunk extends ProtoChunk {
         return this.wrapped.getBlockEntity_(x, y, z);
     }
 
-    /**
-     * @author TheGreatWolf
-     * @reason Use non-BlockPos implementation
-     */
+    @Override
+    public SWMRNibbleArray[] getBlockNibbles() {
+        return this.wrapped.getBlockNibbles();
+    }
+
     @Override
     @Overwrite
     public BlockState getBlockState(BlockPos pos) {
@@ -105,10 +93,6 @@ public abstract class MixinImposterProtoChunk extends ProtoChunk {
         return this.wrapped.getBlockState_(x, y, z);
     }
 
-    /**
-     * @author TheGreatWolf
-     * @reason Use non-BlockPos implementation
-     */
     @Override
     @Overwrite
     public FluidState getFluidState(BlockPos pos) {
@@ -133,10 +117,16 @@ public abstract class MixinImposterProtoChunk extends ProtoChunk {
         return this.wrapped.getLights_();
     }
 
-    /**
-     * @author TheGreatWolf
-     * @reason Use non-BlockPos version
-     */
+    @Override
+    public boolean @Nullable [] getSkyEmptinessMap() {
+        return this.wrapped.getSkyEmptinessMap();
+    }
+
+    @Override
+    public SWMRNibbleArray[] getSkyNibbles() {
+        return this.wrapped.getSkyNibbles();
+    }
+
     @Override
     @Overwrite
     public void markPosForPostprocessing(BlockPos pos) {
@@ -158,6 +148,16 @@ public abstract class MixinImposterProtoChunk extends ProtoChunk {
     }
 
     @Override
+    public void setBlockEmptinessMap(boolean[] emptinessMap) {
+        this.wrapped.setBlockEmptinessMap(emptinessMap);
+    }
+
+    @Override
+    public void setBlockNibbles(SWMRNibbleArray[] nibbles) {
+        this.wrapped.setBlockNibbles(nibbles);
+    }
+
+    @Override
     @Overwrite
     public @Nullable BlockState setBlockState(BlockPos pos, BlockState state, boolean isMoving) {
         Evolution.deprecatedMethod();
@@ -167,5 +167,15 @@ public abstract class MixinImposterProtoChunk extends ProtoChunk {
     @Override
     public @Nullable BlockState setBlockState_(int x, int y, int z, BlockState state, boolean isMoving) {
         return this.allowWrites ? this.wrapped.setBlockState_(x, y, z, state, isMoving) : null;
+    }
+
+    @Override
+    public void setSkyEmptinessMap(boolean[] emptinessMap) {
+        this.wrapped.setSkyEmptinessMap(emptinessMap);
+    }
+
+    @Override
+    public void setSkyNibbles(SWMRNibbleArray[] nibbles) {
+        this.wrapped.setSkyNibbles(nibbles);
     }
 }

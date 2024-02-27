@@ -5,7 +5,6 @@ import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Range;
 import org.spongepowered.asm.mixin.Mixin;
 import tgw.evolution.util.hitbox.LegacyEntityHitboxes;
 import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
@@ -23,7 +22,7 @@ public abstract class MixinCreeper extends Monster {
     }
 
     @Override
-    public @Range(from = 0, to = 15) byte getLightEmission() {
-        return 15;
+    public short getLightEmission() {
+        return 0b1_1111_1_1111_1_1111;
     }
 }

@@ -12,10 +12,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.*;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SupportType;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -57,12 +54,14 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
     @Shadow @Final @DeleteField private BlockBehaviour.StatePredicate emissiveRendering;
     @Shadow @Final @DeleteField private BlockBehaviour.StatePredicate hasPostProcess;
     @Mutable @Shadow @Final @RestoreFinal private boolean isAir;
+    @Unique private boolean isConditionallyFullOpaque;
     @Shadow @Final @DeleteField private BlockBehaviour.StatePredicate isRedstoneConductor;
     @Shadow @Final @DeleteField private BlockBehaviour.StatePredicate isSuffocating;
     @Shadow @Final @DeleteField private BlockBehaviour.StatePredicate isViewBlocking;
     @Mutable @Shadow @Final @RestoreFinal private int lightEmission;
     @Mutable @Shadow @Final @RestoreFinal private Material material;
     @Mutable @Shadow @Final @RestoreFinal private MaterialColor materialColor;
+    @Unique private int opacityIfCached;
     @Mutable @Shadow @Final @RestoreFinal private boolean requiresCorrectToolForDrops;
     @Mutable @Shadow @Final @RestoreFinal private boolean useShapeForLightOcclusion;
 
@@ -205,6 +204,11 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
         return this.getBlock().getDrops(this.asState(), level, x, y, z, tool, tile, entity, random);
     }
 
+    @Override
+    public int getEmissiveLightColor(BlockAndTintGetter level, int x, int y, int z) {
+        return this.getBlock().getEmissiveLightColor(this.asState(), level, x, y, z);
+    }
+
     @Overwrite
     public VoxelShape getFaceOcclusionShape(BlockGetter level, BlockPos pos, Direction face) {
         Evolution.deprecatedMethod();
@@ -249,6 +253,11 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
     @Override
     public VoxelShape getOcclusionShape_(BlockGetter level, int x, int y, int z) {
         return this.getBlock().getOcclusionShape_(this.asState(), level, x, y, z);
+    }
+
+    @Override
+    public final int getOpacityIfCached() {
+        return this.opacityIfCached;
     }
 
     @Overwrite
@@ -327,6 +336,15 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
     }
 
     @Overwrite
+    public void initCache() {
+        if (!this.getBlock().hasDynamicShape()) {
+            this.cache = new BlockBehaviour.BlockStateBase.Cache(this.asState());
+        }
+        this.isConditionallyFullOpaque = this.canOcclude & this.useShapeForLightOcclusion;
+        this.opacityIfCached = this.cache == null || this.isConditionallyFullOpaque ? -1 : this.cache.lightBlock;
+    }
+
+    @Overwrite
     public boolean isCollisionShapeFullBlock(BlockGetter level, BlockPos pos) {
         return this.isCollisionShapeFullBlock_(level, pos.getX(), pos.getY(), pos.getZ());
     }
@@ -336,6 +354,11 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
         return this.cache != null ?
                this.cache.isCollisionShapeFullBlock() :
                this.getBlock().isCollisionShapeFullBlock_(this.asState(), level, x, y, z);
+    }
+
+    @Override
+    public final boolean isConditionallyFullOpaque() {
+        return this.isConditionallyFullOpaque;
     }
 
     @Overwrite

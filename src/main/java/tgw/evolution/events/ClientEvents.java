@@ -127,6 +127,10 @@ public class ClientEvents {
         this.renderer = new ClientRenderer(mc, this);
     }
 
+    private static boolean areStacksCompatible(ItemStack a, ItemStack b) {
+        return a.isEmpty() || b.isEmpty() || a.sameItem(b) && ItemStack.tagMatches(a, b);
+    }
+
 //    @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
 //    private static void addConfigSetToMap(ModContainer container, ModConfig.Type type, Map<ModConfig.Type, Set<ModConfig>> configMap) {
 //        if (type == ModConfig.Type.CLIENT && OptiFineHelper.isLoaded() && "forge".equals(container.getModId())) {
@@ -148,10 +152,6 @@ public class ClientEvents {
 //        }
 //    }
 
-    private static boolean areStacksCompatible(ItemStack a, ItemStack b) {
-        return a.isEmpty() || b.isEmpty() || a.sameItem(b) && ItemStack.tagMatches(a, b);
-    }
-
     public static boolean containsEffect(OList<ClientEffectInstance> list, MobEffect effect) {
         for (int i = 0, l = list.size(); i < l; i++) {
             if (list.get(i).getEffect() == effect) {
@@ -160,14 +160,6 @@ public class ClientEvents {
         }
         return false;
     }
-
-//    private static Map<ModConfig.Type, Set<ModConfig>> createConfigMap(ModContainer container) {
-//        Map<ModConfig.Type, Set<ModConfig>> modConfigMap = new EnumMap<>(ModConfig.Type.class);
-//        addConfigSetToMap(container, ModConfig.Type.CLIENT, modConfigMap);
-//        addConfigSetToMap(container, ModConfig.Type.COMMON, modConfigMap);
-//        addConfigSetToMap(container, ModConfig.Type.SERVER, modConfigMap);
-//        return modConfigMap;
-//    }
 
     private static @Nullable IGuiScreenHandler findHandler(Screen currentScreen) {
         if (currentScreen instanceof CreativeModeInventoryScreen creativeScreen) {
@@ -178,6 +170,14 @@ public class ClientEvents {
         }
         return null;
     }
+
+//    private static Map<ModConfig.Type, Set<ModConfig>> createConfigMap(ModContainer container) {
+//        Map<ModConfig.Type, Set<ModConfig>> modConfigMap = new EnumMap<>(ModConfig.Type.class);
+//        addConfigSetToMap(container, ModConfig.Type.CLIENT, modConfigMap);
+//        addConfigSetToMap(container, ModConfig.Type.COMMON, modConfigMap);
+//        addConfigSetToMap(container, ModConfig.Type.SERVER, modConfigMap);
+//        return modConfigMap;
+//    }
 
     public static @Nullable Direction getDirectionFromInput(Direction facing, Input input) {
         Direction movement = null;
@@ -578,6 +578,10 @@ public class ClientEvents {
         }
         this.mc.options.autoJump = false;
         this.dynamicLights = new DynamicLights(this.mc.level);
+    }
+
+    public boolean isInitialized() {
+        return this.initialized;
     }
 
     /**

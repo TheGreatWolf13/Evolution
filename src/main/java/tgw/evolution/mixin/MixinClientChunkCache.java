@@ -100,15 +100,17 @@ public abstract class MixinClientChunkCache extends ChunkSource implements Patch
     @Override
     @Overwrite
     public void onLightUpdate(LightLayer type, SectionPos pos) {
-        Minecraft.getInstance().lvlRenderer().setSectionDirty(pos.x(), pos.y(), pos.z());
+        Evolution.deprecatedMethod();
+        this.onLightUpdate_(type, pos.x(), pos.y(), pos.z());
+    }
+
+    @Override
+    public void onLightUpdate_(LightLayer lightLayer, int secX, int secY, int secZ) {
+        Minecraft.getInstance().lvlRenderer().setSectionDirty(secX, secY, secZ);
     }
 
     @Overwrite
-    public @Nullable LevelChunk replaceWithPacketData(int x,
-                                                      int z,
-                                                      FriendlyByteBuf buf,
-                                                      CompoundTag tag,
-                                                      Consumer<ClientboundLevelChunkPacketData.BlockEntityTagOutput> consumer) {
+    public @Nullable LevelChunk replaceWithPacketData(int x, int z, FriendlyByteBuf buf, CompoundTag tag, Consumer<ClientboundLevelChunkPacketData.BlockEntityTagOutput> consumer) {
         Evolution.deprecatedMethod();
         return null;
     }

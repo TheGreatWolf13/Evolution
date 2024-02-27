@@ -41,7 +41,7 @@ public abstract class MixinBlockEntityRenderDispatcher {
             light = EvLevelRenderer.getLightColor(level, pos.getX(), pos.getY(), pos.getZ());
         }
         else {
-            light = 0xf0_00f0;
+            light = 0xff_00ff;
         }
         renderer.render(tile, partialTick, matrices, bufferSource, light, OverlayTexture.NO_OVERLAY);
     }

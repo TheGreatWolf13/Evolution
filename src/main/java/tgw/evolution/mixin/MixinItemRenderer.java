@@ -3,13 +3,17 @@ package tgw.evolution.mixin;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Matrix3f;
 import com.mojang.math.Matrix4f;
 import com.mojang.math.Vector3f;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.color.item.ItemColors;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
@@ -22,12 +26,14 @@ import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HalfTransparentBlock;
 import net.minecraft.world.level.block.StainedGlassPaneBlock;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.*;
 import tgw.evolution.client.models.data.IModelData;
 import tgw.evolution.items.IItemTemperature;
@@ -45,6 +51,8 @@ import java.util.List;
 public abstract class MixinItemRenderer implements IKeyedReloadListener {
 
     private static final List<ResourceLocation> DEPENDENCY = List.of(ReloadListernerKeys.MODELS);
+    @Unique private final MultiBufferSource.BufferSource bufferForCount = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
+    @Unique private final PoseStack matricesForCount = new PoseStack();
     @Unique private final PoseStack matricesForGuiItems = new PoseStack();
     @Unique private final XoRoShiRoRandom random = new XoRoShiRoRandom();
     @Shadow public float blitOffset;
@@ -89,7 +97,7 @@ public abstract class MixinItemRenderer implements IKeyedReloadListener {
             float u = Float.intBitsToFloat(vertices[offset + 4]);
             float v = Float.intBitsToFloat(vertices[offset + 5]);
             //Light : 2 short
-            int l = quad.getTintIndex() == 0 ? packedLight : 0xf0_00f0;
+            int l = quad.getTintIndex() == 0 ? packedLight : 0xff_00ff;
             int bl = l & 0xFFFF;
             int sl = l >> 16 & 0xFFFF;
             int light = vertices[offset + 6];
@@ -124,9 +132,7 @@ public abstract class MixinItemRenderer implements IKeyedReloadListener {
     }
 
     @Shadow
-    public static VertexConsumer getCompassFoilBufferDirect(MultiBufferSource pBuffer,
-                                                            RenderType pRenderType,
-                                                            PoseStack.Pose pMatrixEntry) {
+    public static VertexConsumer getCompassFoilBufferDirect(MultiBufferSource pBuffer, RenderType pRenderType, PoseStack.Pose pMatrixEntry) {
         throw new AbstractMethodError();
     }
 
@@ -136,12 +142,12 @@ public abstract class MixinItemRenderer implements IKeyedReloadListener {
     }
 
     @Shadow
-    public static VertexConsumer getFoilBufferDirect(MultiBufferSource pBuffer,
-                                                     RenderType pRenderType,
-                                                     boolean pNoEntity,
-                                                     boolean pWithGlint) {
+    public static VertexConsumer getFoilBufferDirect(MultiBufferSource pBuffer, RenderType pRenderType, boolean pNoEntity, boolean pWithGlint) {
         throw new AbstractMethodError();
     }
+
+    @Shadow
+    protected abstract void fillRect(BufferBuilder bufferBuilder, int i, int j, int k, int l, int m, int n, int o, int p);
 
     @Override
     public Collection<ResourceLocation> getDependencies() {
@@ -251,9 +257,7 @@ public abstract class MixinItemRenderer implements IKeyedReloadListener {
         if (flatLight) {
             Lighting.setupForFlatItems();
         }
-        this.matricesForGuiItems.reset();
-        this.render(itemStack, ItemTransforms.TransformType.GUI, false, this.matricesForGuiItems, builder, 0xf0_00f0, OverlayTexture.NO_OVERLAY,
-                    bakedModel);
+        this.render(itemStack, ItemTransforms.TransformType.GUI, false, this.matricesForGuiItems.reset(), builder, 0xff_00ff, OverlayTexture.NO_OVERLAY, bakedModel);
         builder.endBatch();
         RenderSystem.enableDepthTest();
         if (flatLight) {
@@ -261,6 +265,44 @@ public abstract class MixinItemRenderer implements IKeyedReloadListener {
         }
         internalMat.popPose();
         RenderSystem.applyModelViewMatrix();
+    }
+
+    @Overwrite
+    public void renderGuiItemDecorations(Font font, ItemStack stack, int x, int y, @Nullable String countText) {
+        if (!stack.isEmpty()) {
+            if (stack.getCount() != 1 || countText != null) {
+                PoseStack matrices = this.matricesForCount.reset();
+                String count = countText == null ? String.valueOf(stack.getCount()) : countText;
+                matrices.translate(0, 0, this.blitOffset + 200);
+                MultiBufferSource.BufferSource bufferSource = this.bufferForCount;
+                font.drawInBatch(count, x + 17 - font.width(count), y + 9, 0xff_ffff, true, matrices.last().pose(), bufferSource, false, 0, 0xff_00ff);
+                bufferSource.endBatch();
+            }
+            if (stack.isBarVisible()) {
+                RenderSystem.disableDepthTest();
+                RenderSystem.disableTexture();
+                RenderSystem.disableBlend();
+                BufferBuilder bufferBuilder = Tesselator.getInstance().getBuilder();
+                int barWidth = stack.getBarWidth();
+                int barColor = stack.getBarColor();
+                this.fillRect(bufferBuilder, x + 2, y + 13, 13, 2, 0, 0, 0, 255);
+                this.fillRect(bufferBuilder, x + 2, y + 13, barWidth, 1, barColor >> 16 & 255, barColor >> 8 & 255, barColor & 255, 255);
+                RenderSystem.enableBlend();
+                RenderSystem.enableTexture();
+                RenderSystem.enableDepthTest();
+            }
+            LocalPlayer player = Minecraft.getInstance().player;
+            float cooldown = player == null ? 0.0F : player.getCooldowns().getCooldownPercent(stack.getItem(), Minecraft.getInstance().getFrameTime());
+            if (cooldown > 0.0F) {
+                RenderSystem.disableDepthTest();
+                RenderSystem.disableTexture();
+                RenderSystem.enableBlend();
+                RenderSystem.defaultBlendFunc();
+                this.fillRect(Tesselator.getInstance().getBuilder(), x, y + Mth.floor(16.0F * (1.0F - cooldown)), 16, Mth.ceil(16.0F * cooldown), 255, 255, 255, 127);
+                RenderSystem.enableTexture();
+                RenderSystem.enableDepthTest();
+            }
+        }
     }
 
     /**

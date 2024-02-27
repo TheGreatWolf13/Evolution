@@ -8,10 +8,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.*;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -66,6 +63,10 @@ public interface PatchBlockBehaviour {
                                       @Nullable Entity entity,
                                       Random random) {
         return OList.emptyList();
+    }
+
+    default int getEmissiveLightColor(BlockState state, BlockAndTintGetter level, int x, int y, int z) {
+        throw new AbstractMethodError();
     }
 
     default VoxelShape getInteractionShape_(BlockState state, BlockGetter level, int x, int y, int z) {

@@ -253,8 +253,7 @@ public abstract class MixinGameRenderer implements PatchGameRenderer {
             boolean setupHud = false;
             if (renderLevel && this.minecraft.level != null) {
                 this.minecraft.getProfiler().push("level");
-                this.matrices.reset();
-                this.renderLevel(partialTicks, startTime, this.matrices);
+                this.renderLevel(partialTicks, startTime, this.matrices.reset());
                 this.tryTakeScreenshotIfNeeded();
                 this.minecraft.lvlRenderer().doEntityOutline();
                 RenderSystem.clear(GL11C.GL_DEPTH_BUFFER_BIT, Minecraft.ON_OSX);
@@ -266,9 +265,7 @@ public abstract class MixinGameRenderer implements PatchGameRenderer {
                 RenderSystem.applyModelViewMatrix();
                 Lighting.setupFor3DItems();
                 setupHud = true;
-                this.matrices.reset();
-                Overlays.renderAllGame(this.minecraft, (EvolutionGui) this.minecraft.gui, this.matrices, partialTicks, guiScaledWidth,
-                                       guiScaledHeight);
+                Overlays.renderAllGame(this.minecraft, (EvolutionGui) this.minecraft.gui, this.matrices.reset(), partialTicks, guiScaledWidth, guiScaledHeight);
                 if (this.effectActive) {
                     RenderSystem.disableBlend();
                     RenderSystem.disableDepthTest();
@@ -380,8 +377,7 @@ public abstract class MixinGameRenderer implements PatchGameRenderer {
         this.renderDistance = this.minecraft.options.getEffectiveRenderDistance() * 16;
         double fov = this.getFov(camera, partialTicks, true);
         ClientEvents.storeFov((float) fov);
-        PoseStack projMatrices = this.projectionMatrices;
-        projMatrices.reset();
+        PoseStack projMatrices = this.projectionMatrices.reset();
         projMatrices.last().pose().multiply(this.getProjectionMatrix(fov));
         this.bobHurt(projMatrices, partialTicks);
         float portalWarp = Mth.lerp(partialTicks, this.minecraft.player.oPortalTime, this.minecraft.player.portalTime) *

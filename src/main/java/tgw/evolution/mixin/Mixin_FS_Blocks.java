@@ -1383,7 +1383,7 @@ public abstract class Mixin_FS_Blocks {
         FURNACE = register("furnace", new FurnaceBlock(of(Material.STONE)
                                                                .requiresCorrectToolForDrops()
                                                                .strength(3.5F)
-                                                               .lightLevel(litBlockEmission(13))));
+                                                               .lightLevel(litBlockEmission(0xDD))));
         OAK_SIGN = register("oak_sign",
                             new StandingSignBlock(of(Material.WOOD).noCollission().strength(1.0F).sound(SoundType.WOOD), WoodType.OAK));
         SPRUCE_SIGN = register("spruce_sign", new StandingSignBlock(of(Material.WOOD, SPRUCE_LOG.defaultMaterialColor())
@@ -1486,7 +1486,7 @@ public abstract class Mixin_FS_Blocks {
         REDSTONE_ORE = register("redstone_ore", new RedStoneOreBlock(of(Material.STONE)
                                                                              .requiresCorrectToolForDrops()
                                                                              .randomTicks()
-                                                                             .lightLevel(litBlockEmission(9))
+                                                                             .lightLevel(litBlockEmission(0x009))
                                                                              .strength(3.0F, 3.0F)));
         DEEPSLATE_REDSTONE_ORE = register("deepslate_redstone_ore", new RedStoneOreBlock(BlockBehaviour.Properties.copy(REDSTONE_ORE)
                                                                                                                   .color(MaterialColor.DEEPSLATE)
@@ -1495,12 +1495,12 @@ public abstract class Mixin_FS_Blocks {
         REDSTONE_TORCH = register("redstone_torch", new RedstoneTorchBlock(of(Material.DECORATION)
                                                                                    .noCollission()
                                                                                    .instabreak()
-                                                                                   .lightLevel(litBlockEmission(7))
+                                                                                   .lightLevel(litBlockEmission(0x007))
                                                                                    .sound(SoundType.WOOD)));
         REDSTONE_WALL_TORCH = register("redstone_wall_torch", new RedstoneWallTorchBlock(of(Material.DECORATION)
                                                                                                  .noCollission()
                                                                                                  .instabreak()
-                                                                                                 .lightLevel(litBlockEmission(7))
+                                                                                                 .lightLevel(litBlockEmission(0x007))
                                                                                                  .sound(SoundType.WOOD)
                                                                                                  .dropsLike(REDSTONE_TORCH)));
         STONE_BUTTON = register("stone_button", new StoneButtonBlock(of(Material.DECORATION).noCollission().strength(0.5F)));
@@ -1735,7 +1735,7 @@ public abstract class Mixin_FS_Blocks {
                                                                        .lightLevel(BlockUtils.LIGHT_1)
                                                                        .noOcclusion()));
         REDSTONE_LAMP = register("redstone_lamp", new RedstoneLampBlock(of(Material.BUILDABLE_GLASS)
-                                                                                .lightLevel(litBlockEmission(15))
+                                                                                .lightLevel(litBlockEmission(0xFF))
                                                                                 .strength(0.3F)
                                                                                 .sound(SoundType.GLASS)
                                                                                 .isValidSpawn_(BlockUtils.ALWAYS_SPAWN)));
@@ -2901,9 +2901,9 @@ public abstract class Mixin_FS_Blocks {
         LOOM = register("loom", new LoomBlock(of(Material.WOOD).strength(2.5F).sound(SoundType.WOOD)));
         BARREL = register("barrel", new BarrelBlock(of(Material.WOOD).strength(2.5F).sound(SoundType.WOOD)));
         SMOKER = register("smoker", new SmokerBlock(
-                of(Material.STONE).requiresCorrectToolForDrops().strength(3.5F).lightLevel(litBlockEmission(13))));
+                of(Material.STONE).requiresCorrectToolForDrops().strength(3.5F).lightLevel(litBlockEmission(0xDD))));
         BLAST_FURNACE = register("blast_furnace", new BlastFurnaceBlock(
-                of(Material.STONE).requiresCorrectToolForDrops().strength(3.5F).lightLevel(litBlockEmission(13))));
+                of(Material.STONE).requiresCorrectToolForDrops().strength(3.5F).lightLevel(litBlockEmission(0xDD))));
         CARTOGRAPHY_TABLE = register("cartography_table",
                                      new CartographyTableBlock(of(Material.WOOD).strength(2.5F).sound(SoundType.WOOD)));
         FLETCHING_TABLE = register("fletching_table",
@@ -2936,12 +2936,12 @@ public abstract class Mixin_FS_Blocks {
         CAMPFIRE = register("campfire", new CampfireBlock(true, 1, of(Material.WOOD, MaterialColor.PODZOL)
                 .strength(2.0F)
                 .sound(SoundType.WOOD)
-                .lightLevel(litBlockEmission(15))
+                .lightLevel(litBlockEmission(0x8F))
                 .noOcclusion()));
         SOUL_CAMPFIRE = register("soul_campfire", new CampfireBlock(false, 2, of(Material.WOOD, MaterialColor.PODZOL)
                 .strength(2.0F)
                 .sound(SoundType.WOOD)
-                .lightLevel(litBlockEmission(10))
+                .lightLevel(litBlockEmission(0xaa0))
                 .noOcclusion()));
         SWEET_BERRY_BUSH = register("sweet_berry_bush", new SweetBerryBushBlock(
                 of(Material.PLANT).randomTicks().noCollission().sound(SoundType.SWEET_BERRY_BUSH)));
@@ -3269,7 +3269,7 @@ public abstract class Mixin_FS_Blocks {
                                                                         .strength(0.1F)
                                                                         .sound(SoundType.CANDLE)
                                                                         .lightLevel(CandleBlock.LIGHT_EMISSION)));
-        CANDLE_CAKE = register("candle_cake", new CandleCakeBlock(CANDLE, BlockBehaviour.Properties.copy(CAKE).lightLevel(litBlockEmission(3))));
+        CANDLE_CAKE = register("candle_cake", new CandleCakeBlock(CANDLE, BlockBehaviour.Properties.copy(CAKE).lightLevel(litBlockEmission(0x33))));
         WHITE_CANDLE_CAKE = register("white_candle_cake", new CandleCakeBlock(WHITE_CANDLE, BlockBehaviour.Properties.copy(CANDLE_CAKE)));
         ORANGE_CANDLE_CAKE = register("orange_candle_cake", new CandleCakeBlock(ORANGE_CANDLE, BlockBehaviour.Properties.copy(CANDLE_CAKE)));
         MAGENTA_CANDLE_CAKE = register("magenta_candle_cake", new CandleCakeBlock(MAGENTA_CANDLE, BlockBehaviour.Properties.copy(CANDLE_CAKE)));

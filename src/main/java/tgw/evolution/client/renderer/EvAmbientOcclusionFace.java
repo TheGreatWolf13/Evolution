@@ -18,28 +18,31 @@ public class EvAmbientOcclusionFace {
     public int lightmap3;
 
     private static int blend(int lightColor0, int lightColor1, int lightColor2, int lightColor3) {
-        if (lightColor0 == 0) {
-            if (lightColor1 == 0) {
-                if (lightColor2 == 0) {
+        if (lightColor0 == -1) {
+            if (lightColor1 == -1) {
+                if (lightColor2 == -1) {
                     return lightColor3;
                 }
                 return blend2(lightColor2, lightColor3);
             }
-            if (lightColor2 == 0) {
+            if (lightColor2 == -1) {
                 return blend2(lightColor1, lightColor3);
             }
             return blend3(lightColor1, lightColor2, lightColor3);
         }
-        if (lightColor1 == 0) {
-            if (lightColor2 == 0) {
+        if (lightColor1 == -1) {
+            if (lightColor2 == -1) {
                 return blend2(lightColor0, lightColor3);
             }
             return blend3(lightColor0, lightColor2, lightColor3);
         }
-        if (lightColor2 == 0) {
+        if (lightColor2 == -1) {
             return blend3(lightColor0, lightColor1, lightColor3);
         }
-        return lightColor0 + lightColor1 + lightColor2 + lightColor3 >> 2 & 0xff_00ff;
+        return (lightColor0 & 0xf) + (lightColor1 & 0xf) + (lightColor2 & 0xf) + (lightColor3 & 0xf) >> 2 & 0xf |
+               (lightColor0 & 0xf0) + (lightColor1 & 0xf0) + (lightColor2 & 0xf0) + (lightColor3 & 0xf0) >> 2 & 0xf0 |
+               (lightColor0 & 0xf_0000) + (lightColor1 & 0xf_0000) + (lightColor2 & 0xf_0000) + (lightColor3 & 0xf_0000) >> 2 & 0xf_0000 |
+               (lightColor0 & 0xf0_0000) + (lightColor1 & 0xf0_0000) + (lightColor2 & 0xf0_0000) + (lightColor3 & 0xf0_0000) >> 2 & 0xf0_0000;
     }
 
     private static int blend(int brightness0,
@@ -62,11 +65,17 @@ public class EvAmbientOcclusionFace {
     }
 
     private static int blend2(int lightColor0, int lightColor1) {
-        return lightColor0 + lightColor1 >> 1 & 0xff_00ff;
+        return (lightColor0 & 0xf) + (lightColor1 & 0xf) >> 1 & 0xf |
+               (lightColor0 & 0xf0) + (lightColor1 & 0xf0) >> 1 & 0xf0 |
+               (lightColor0 & 0xf_0000) + (lightColor1 & 0xf_0000) >> 1 & 0xf_0000 |
+               (lightColor0 & 0xf0_0000) + (lightColor1 & 0xf0_0000) >> 1 & 0xf0_0000;
     }
 
     private static int blend3(int lightColor0, int lightColor1, int lightColor2) {
-        return ((lightColor0 & 0xff) + (lightColor1 & 0xff) + (lightColor2 & 0xff)) / 3 & 0xff | ((lightColor0 & 0xff_0000) + (lightColor1 & 0xff_0000) + (lightColor2 & 0xff_0000)) / 3 & 0xff_0000;
+        return ((lightColor0 & 0xf) + (lightColor1 & 0xf) + (lightColor2 & 0xf)) / 3 & 0xf |
+               ((lightColor0 & 0xf0) + (lightColor1 & 0xf0) + (lightColor2 & 0xf0)) / 3 & 0xf0 |
+               ((lightColor0 & 0xf_0000) + (lightColor1 & 0xf_0000) + (lightColor2 & 0xf_0000)) / 3 & 0xf_0000 |
+               ((lightColor0 & 0xf0_0000) + (lightColor1 & 0xf0_0000) + (lightColor2 & 0xf0_0000)) / 3 & 0xf0_0000;
     }
 
     /**
@@ -208,13 +217,16 @@ public class EvAmbientOcclusionFace {
             brightSW = cache.getShadeBrightness_(stateSW, level, xSW, ySW, zSW);
             colorSW = cache.getLightColor_(stateSW, level, xSW, ySW, zSW);
         }
-        int color = cache.getLightColor_(state, level, px, py, pz);
-        int xU = px + direction.getStepX();
-        int yU = py + direction.getStepY();
-        int zU = pz + direction.getStepZ();
-        BlockState stateU = level.getBlockState_(xU, yU, zU);
-        if (offset || !stateU.isSolidRender_(level, xU, yU, zU)) {
+        int color;
+        if (offset /*|| !stateU.isSolidRender_(level, xU, yU, zU)*/) { //Disable second condition to fix wrong lighting on carpets, but maybe it's necessary for some other blocks?
+            int xU = px + direction.getStepX();
+            int yU = py + direction.getStepY();
+            int zU = pz + direction.getStepZ();
+            BlockState stateU = level.getBlockState_(xU, yU, zU);
             color = cache.getLightColor_(stateU, level, xU, yU, zU);
+        }
+        else {
+            color = cache.getLightColor_(state, level, px, py, pz);
         }
         float bright = offset ?
                        cache.getShadeBrightness_(level.getBlockState_(x, y, z), level, x, y, z) :

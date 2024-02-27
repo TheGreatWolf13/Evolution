@@ -4,7 +4,6 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.gui.components.ImageButton;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
-import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TranslatableComponent;
@@ -221,7 +220,7 @@ public class ScreenInventory extends ScreenDisplayEffects<ContainerInventory> im
             this.blit(matrices, x, y, 0, 0, 256, this.imageHeight);
             assert this.minecraft != null;
             assert this.minecraft.player != null;
-            InventoryScreen.renderEntityInInventory(x + 88, y + 80, 30, x + 88 - this.oldMouseX, y + 80 - 50 - this.oldMouseY, this.minecraft.player);
+            GUIUtils.renderEntityInInventory(x + 88, y + 80, 30, x + 88 - this.oldMouseX, y + 80 - 50 - this.oldMouseY, this.minecraft.player);
         }
         else {
             RenderSystem.setShaderTexture(0, this.resCrafting);

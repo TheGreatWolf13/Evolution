@@ -16,12 +16,11 @@ public interface PatchLightEventListener {
         throw new AbstractMethodError();
     }
 
-    default void updateSectionStatus_block(int x, int y, int z, boolean hasOnlyAir) {
-        this.updateSectionStatus_sec(SectionPos.blockToSectionCoord(x), SectionPos.blockToSectionCoord(y), SectionPos.blockToSectionCoord(z),
-                                     hasOnlyAir);
+    default void updateSectionStatus_block(int x, int y, int z, boolean notReady) {
+        this.updateSectionStatus_sec(SectionPos.blockToSectionCoord(x), SectionPos.blockToSectionCoord(y), SectionPos.blockToSectionCoord(z), notReady);
     }
 
-    default void updateSectionStatus_sec(int secX, int secY, int secZ, boolean hasOnlyAir) {
+    default void updateSectionStatus_sec(int secX, int secY, int secZ, boolean notReady) {
         throw new AbstractMethodError();
     }
 }

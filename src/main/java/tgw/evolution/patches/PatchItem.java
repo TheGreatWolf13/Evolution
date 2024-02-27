@@ -28,7 +28,7 @@ public interface PatchItem {
         return 0;
     }
 
-    default byte getLightEmission(ItemStack stack) {
+    default short getLightEmission(ItemStack stack) {
         return 0;
     }
 

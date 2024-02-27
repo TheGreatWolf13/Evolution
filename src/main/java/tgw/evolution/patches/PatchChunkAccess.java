@@ -7,12 +7,17 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.util.collection.lists.LList;
 import tgw.evolution.util.collection.maps.L2OMap;
+import tgw.evolution.world.lighting.SWMRNibbleArray;
 
 import java.util.Map;
 
 public interface PatchChunkAccess {
 
     default L2OMap<BlockEntity> blockEntities_() {
+        throw new AbstractMethodError();
+    }
+
+    default boolean @Nullable [] getBlockEmptinessMap() {
         throw new AbstractMethodError();
     }
 
@@ -24,7 +29,19 @@ public interface PatchChunkAccess {
         throw new AbstractMethodError();
     }
 
+    default SWMRNibbleArray[] getBlockNibbles() {
+        throw new AbstractMethodError();
+    }
+
     default LList getLights_() {
+        throw new AbstractMethodError();
+    }
+
+    default boolean @Nullable [] getSkyEmptinessMap() {
+        throw new AbstractMethodError();
+    }
+
+    default SWMRNibbleArray[] getSkyNibbles() {
         throw new AbstractMethodError();
     }
 
@@ -44,7 +61,23 @@ public interface PatchChunkAccess {
         throw new AbstractMethodError();
     }
 
+    default void setBlockEmptinessMap(boolean @Nullable [] emptinessMap) {
+        throw new AbstractMethodError();
+    }
+
+    default void setBlockNibbles(SWMRNibbleArray[] nibbles) {
+        throw new AbstractMethodError();
+    }
+
     default @Nullable BlockState setBlockState_(int x, int y, int z, BlockState state, boolean isMoving) {
+        throw new AbstractMethodError();
+    }
+
+    default void setSkyEmptinessMap(boolean @Nullable [] emptinessMap) {
+        throw new AbstractMethodError();
+    }
+
+    default void setSkyNibbles(SWMRNibbleArray[] nibbles) {
         throw new AbstractMethodError();
     }
 }

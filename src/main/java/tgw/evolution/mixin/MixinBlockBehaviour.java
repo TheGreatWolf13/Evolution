@@ -11,10 +11,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.*;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
@@ -119,6 +116,11 @@ public abstract class MixinBlockBehaviour implements PatchBlockBehaviour {
         }
         int mult = player.hasCorrectToolForDrops(state) ? 30 : 100;
         return player.getDestroySpeed(state, x, y, z) / speed / mult;
+    }
+
+    @Override
+    public int getEmissiveLightColor(BlockState state, BlockAndTintGetter level, int x, int y, int z) {
+        return 0xff_00ff;
     }
 
     @Deprecated

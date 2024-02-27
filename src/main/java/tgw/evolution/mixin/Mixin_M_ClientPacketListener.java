@@ -39,6 +39,7 @@ import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.CommandBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.DataLayer;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
@@ -101,7 +102,6 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
         LevelLightEngine lightEngine = this.level.getChunkSource().getLightEngine();
         LevelChunkSection[] sections = levelChunk.getSections();
         ChunkPos chunkPos = levelChunk.getPos();
-        lightEngine.enableLightSources_(chunkPos.x, chunkPos.z, true);
         for (int index = 0, len = sections.length; index < len; ++index) {
             LevelChunkSection section = sections[index];
             int secY = this.level.getSectionYFromSectionIndex(index);
@@ -238,11 +238,40 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
     }
 
     @Override
+    @Overwrite
+    public void handleForgetLevelChunk(ClientboundForgetLevelChunkPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        int chunkX = packet.getX();
+        int chunkZ = packet.getZ();
+        this.level.getChunkSource().drop(chunkX, chunkZ);
+        this.level.getChunkSource().getLightEngine().clientRemoveLightData(chunkX, chunkZ);
+    }
+
+    @Override
     public void handleHungerData(PacketSCHungerData packet) {
         PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
         CapabilityHunger hunger = CapabilityHunger.CLIENT_INSTANCE;
         hunger.setHungerLevel(packet.hungerLevel);
         hunger.setSaturationLevel(packet.saturationLevel);
+    }
+
+    @Override
+    @Overwrite
+    public void handleLevelChunkWithLight(ClientboundLevelChunkWithLightPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        int chunkX = packet.getX();
+        int chunkZ = packet.getZ();
+        this.updateLevelChunk(chunkX, chunkZ, packet.getChunkData());
+        LevelChunk chunk = (LevelChunk) this.level.getChunk(chunkX, chunkZ, ChunkStatus.FULL, false);
+        if (chunk == null) {
+            // failed to load
+            return;
+        }
+        // load in light data from packet immediately
+        this.applyLightData(chunkX, chunkZ, packet.getLightData());
+        this.level.getChunkSource().getLightEngine().clientChunkLoad(new ChunkPos(chunkX, chunkZ), chunk);
+        // we need this for the update chunk status call, so that it can tell starlight what sections are empty and such
+        this.enableChunkLight(chunk, chunkX, chunkZ);
     }
 
     @Override
@@ -259,6 +288,13 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
         else {
             this.minecraft.level.levelEvent_(packet.event, x, y, z, packet.data);
         }
+    }
+
+    @Override
+    @Overwrite
+    public void handleLightUpdatePacket(ClientboundLightUpdatePacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        this.applyLightData(packet.getX(), packet.getZ(), packet.getLightData());
     }
 
     /**
@@ -690,35 +726,45 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
     }
 
     @Overwrite
-    public void method_38546(ClientboundForgetLevelChunkPacket packet) {
-        LevelLightEngine lightEngine = this.level.getLightEngine();
-        int secX = packet.getX();
-        int secZ = packet.getZ();
-        for (int secY = this.level.getMinSection(); secY < this.level.getMaxSection(); ++secY) {
-            lightEngine.updateSectionStatus_sec(secX, secY, secZ, true);
-        }
-        lightEngine.enableLightSources_(secX, secZ, false);
-        this.level.setLightReady(secX, secZ);
+    @DeleteMethod
+    private void method_38545(int par1, int par2, ClientboundLightUpdatePacketData par3) {
+        throw new AbstractMethodError();
+    }
+
+    @Overwrite
+    @DeleteMethod
+    private void method_38546(ClientboundForgetLevelChunkPacket par1) {
+        throw new AbstractMethodError();
+    }
+
+    @Overwrite
+    @DeleteMethod
+    private void method_38547(int par1, int par2, ClientboundLightUpdatePacketData par3) {
+        throw new AbstractMethodError();
+    }
+
+    @Overwrite
+    @DeleteMethod
+    private void queueLightUpdate(int i, int j, ClientboundLightUpdatePacketData clientboundLightUpdatePacketData) {
+        throw new AbstractMethodError();
+    }
+
+    @Overwrite
+    @DeleteMethod
+    private void queueLightUpdate(ClientboundForgetLevelChunkPacket clientboundForgetLevelChunkPacket) {
+        throw new AbstractMethodError();
     }
 
     @Unique
-    private void readSectionList(int i,
-                                 int j,
-                                 LevelLightEngine lightEngine,
-                                 LightLayer layer,
-                                 BitSet bitSet,
-                                 BitSet bitSet2,
-                                 List<byte[]> list,
-                                 boolean bl) {
+    private void readSectionList(int secX, int secZ, LevelLightEngine lightEngine, LightLayer layer, BitSet bitSet, BitSet bitSet2, List<byte[]> list, boolean trustEdges) {
         int c = 0;
         for (int k = 0; k < lightEngine.getLightSectionCount(); ++k) {
-            int l = lightEngine.getMinLightSection() + k;
+            int secY = lightEngine.getMinLightSection() + k;
             boolean bl2 = bitSet.get(k);
-            boolean bl3 = bitSet2.get(k);
-            if (bl2 || bl3) {
+            if (bl2 || bitSet2.get(k)) {
                 //noinspection ObjectAllocationInLoop
-                lightEngine.queueSectionData_(layer, i, l, j, bl2 ? new DataLayer(list.get(c++).clone()) : new DataLayer(), bl);
-                this.level.setSectionDirtyWithNeighbors(i, l, j);
+                this.level.getChunkSource().getLightEngine().clientUpdateLight(layer, secX, secY, secZ, bl2 ? new DataLayer(list.get(c++).clone()) : new DataLayer(), trustEdges);
+                this.level.setSectionDirtyWithNeighbors(secX, secY, secZ);
             }
         }
     }
@@ -738,7 +784,6 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
 
     @Overwrite
     private void updateLevelChunk(int i, int j, ClientboundLevelChunkPacketData packet) {
-        this.level.getChunkSource()
-                  .replaceWithPacketData_(i, j, packet.getReadBuffer(), packet.getHeightmaps(), packet.getBlockEntitiesTagsConsumer_(i, j));
+        this.level.getChunkSource().replaceWithPacketData_(i, j, packet.getReadBuffer(), packet.getHeightmaps(), packet.getBlockEntitiesTagsConsumer_(i, j));
     }
 }

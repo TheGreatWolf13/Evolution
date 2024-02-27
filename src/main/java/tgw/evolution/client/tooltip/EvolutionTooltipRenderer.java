@@ -93,7 +93,7 @@ public final class EvolutionTooltipRenderer implements ClientTooltipComponent {
     @Override
     public void renderText(Font font, int x, int y, Matrix4f matrix, MultiBufferSource.BufferSource buffer) {
         if (this.tooltip != null) {
-            font.drawInBatch(this.tooltip.getText(), x + this.tooltip.getOffsetX(), y, 0xffff_ffff, true, matrix, buffer, false, 0x0, 0xf0_00f0);
+            font.drawInBatch(this.tooltip.getText(), x + this.tooltip.getOffsetX(), y, 0xffff_ffff, true, matrix, buffer, false, 0x0, 0xff_00ff);
         }
     }
 

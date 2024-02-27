@@ -336,6 +336,15 @@
       ],
       "net/minecraft/client/renderer/GameRenderer": [
         "tgw/evolution/patches/PatchGameRenderer"
+      ],
+      "net/minecraft/client/renderer/entity/EntityRenderer": [
+        "tgw/evolution/patches/PatchEntityRenderer"
+      ],
+      "net/minecraft/world/level/lighting/BlockLightEngine": [
+        "tgw/evolution/patches/PatchBlockLightEngine"
+      ],
+      "net/minecraft/world/level/chunk/LightChunkGetter": [
+        "tgw/evolution/patches/PatchLightChunkGetter"
       ]
     }
   }

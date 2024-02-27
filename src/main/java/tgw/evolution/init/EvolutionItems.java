@@ -29,6 +29,8 @@ public final class EvolutionItems {
     public static final Item SOCKS;
     public static final Item MASK;
     public static final Item QUIVER;
+    public static final Item LANTERN;
+    public static final Item SOUL_LANTERN;
     //Dev
     public static final Item CLOCK;
     public static final Item DEBUG_ITEM;
@@ -117,6 +119,8 @@ public final class EvolutionItems {
         SOCKS = register("temp_socks", new ItemSocks(propMisc()));
         MASK = register("temp_mask", new ItemMask(propMisc()));
         QUIVER = register("temp_quiver", new ItemQuiver(propMisc()));
+        LANTERN = register("lantern", new ItemLantern(0xEEE, propMisc()));
+        SOUL_LANTERN = register("soul_lantern", new ItemLantern(0xEE0, propMisc()));
         //Dev
         CLOCK = register("clock", new ItemClock(propDev()));
         DEBUG_ITEM = register("debug_item", item(propDev()));

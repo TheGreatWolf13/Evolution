@@ -21,13 +21,13 @@ import net.minecraft.util.Mth;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.ColorResolver;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.AmbientParticleSettings;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.border.WorldBorder;
+import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.entity.TransientEntitySectionManager;
@@ -257,6 +257,11 @@ public abstract class Mixin_M_ClientLevel extends Level implements PatchClientLe
     }
 
     @Override
+    public final @Nullable ChunkAccess getAnyChunkImmediately(int chunkX, int chunkZ) {
+        return this.getChunkSource().getChunk(chunkX, chunkZ, false);
+    }
+
+    @Override
     @Overwrite
     public int getBlockTint(BlockPos pos, ColorResolver colorResolver) {
         Evolution.deprecatedMethod();
@@ -267,6 +272,11 @@ public abstract class Mixin_M_ClientLevel extends Level implements PatchClientLe
     public int getBlockTint_(int x, int y, int z, ColorResolver colorResolver) {
         BlockTintCache tintCache = this.tintCaches.get(colorResolver);
         return tintCache.getColor_(x, y, z);
+    }
+
+    @Override
+    public final @Nullable LevelChunk getChunkAtImmediately(int chunkX, int chunkZ) {
+        return this.getChunkSource().getChunk(chunkX, chunkZ, false);
     }
 
     @Shadow
@@ -453,8 +463,6 @@ public abstract class Mixin_M_ClientLevel extends Level implements PatchClientLe
     @Overwrite
     public void unload(LevelChunk chunk) {
         chunk.clearAllBlockEntities();
-        ChunkPos chunkPos = chunk.getPos();
-        this.chunkSource.getLightEngine().enableLightSources_(chunkPos.x, chunkPos.z, false);
-        this.entityStorage.stopTicking(chunkPos);
+        this.entityStorage.stopTicking(chunk.getPos());
     }
 }

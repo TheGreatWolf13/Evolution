@@ -22,6 +22,22 @@ public abstract class MixinEnchantmentTableParticle extends TextureSheetParticle
 
     @Override
     @Overwrite
+    public int getLightColor(float partialTicks) {
+        int color = super.getLightColor(partialTicks);
+        float life = this.age / (float) this.lifetime;
+        life *= life;
+        life *= life;
+        int bl = color & 0xF0_00FF;
+        int sl = color >> 16 & 0xF;
+        sl += (int) (life * 15);
+        if (sl > 15) {
+            sl = 15;
+        }
+        return bl | sl << 16;
+    }
+
+    @Override
+    @Overwrite
     public void move(double dx, double dy, double dz) {
         ((AABBMutable) this.getBoundingBox()).moveMutable(dx, dy, dz);
         this.setLocationFromBoundingbox();

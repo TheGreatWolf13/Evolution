@@ -7,9 +7,7 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerChunkCache;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.*;
 import net.minecraft.util.Mth;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.entity.Entity;
@@ -25,6 +23,8 @@ import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.border.WorldBorder;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.dimension.DimensionType;
@@ -47,6 +47,7 @@ import tgw.evolution.Evolution;
 import tgw.evolution.hooks.asm.DeleteMethod;
 import tgw.evolution.network.PacketSCBlockDestruction;
 import tgw.evolution.network.PacketSCLevelEvent;
+import tgw.evolution.patches.PatchEither;
 import tgw.evolution.patches.PatchServerLevel;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
@@ -64,13 +65,11 @@ public abstract class Mixin_M_ServerLevel extends Level implements WorldGenLevel
     @Shadow @Final private static Logger LOGGER;
     @Shadow public volatile boolean isUpdatingNavigations;
     @Mutable @Shadow @Final public Set<Mob> navigatingMobs;
+    @Shadow @Final private ServerChunkCache chunkSource;
     @Shadow @Final private PersistentEntitySectionManager<Entity> entityManager;
     @Shadow @Final private MinecraftServer server;
 
-    public Mixin_M_ServerLevel(WritableLevelData pLevelData,
-                               ResourceKey<Level> pDimension,
-                               Holder<DimensionType> pDimensionTypeRegistration,
-                               Supplier<ProfilerFiller> pProfiler, boolean pIsClientSide, boolean pIsDebug, long pBiomeZoomSeed) {
+    public Mixin_M_ServerLevel(WritableLevelData pLevelData, ResourceKey<Level> pDimension, Holder<DimensionType> pDimensionTypeRegistration, Supplier<ProfilerFiller> pProfiler, boolean pIsClientSide, boolean pIsDebug, long pBiomeZoomSeed) {
         super(pLevelData, pDimension, pDimensionTypeRegistration, pProfiler, pIsClientSide, pIsDebug, pBiomeZoomSeed);
     }
 
@@ -140,8 +139,42 @@ public abstract class Mixin_M_ServerLevel extends Level implements WorldGenLevel
     }
 
     @Override
+    public final @Nullable ChunkAccess getAnyChunkImmediately(int chunkX, int chunkZ) {
+        ChunkMap storage = this.chunkSource.chunkMap;
+        ChunkHolder holder = storage.getVisibleChunkIfPresent(ChunkPos.asLong(chunkX, chunkZ));
+        return holder == null ? null : holder.getLastAvailable();
+    }
+
+    @Override
+    public final @Nullable LevelChunk getChunkAtImmediately(int chunkX, int chunkZ) {
+        ChunkMap storage = this.chunkSource.chunkMap;
+        ChunkHolder holder = storage.getVisibleChunkIfPresent(ChunkPos.asLong(chunkX, chunkZ));
+        if (holder == null) {
+            return null;
+        }
+        PatchEither<ChunkAccess, ChunkHolder.ChunkLoadingFailure> either = (PatchEither<ChunkAccess, ChunkHolder.ChunkLoadingFailure>) holder.getFutureIfPresentUnchecked(ChunkStatus.FULL).getNow(null);
+        return either == null ? null : (LevelChunk) either.leftOrNull();
+    }
+
+    @Override
     @Shadow
     public abstract ServerChunkCache getChunkSource();
+
+    @Unique
+    private @Nullable OList<PathNavigation> getPathNavigations(int x, int y, int z) {
+        OList<PathNavigation> list = null;
+        OSet<Mob> navigatingMobs = (OSet<Mob>) this.navigatingMobs;
+        for (Mob e = navigatingMobs.fastEntries(); e != null; e = navigatingMobs.fastEntries()) {
+            PathNavigation pathNavigation = e.getNavigation();
+            if (pathNavigation.shouldRecomputePath_(x, y, z)) {
+                if (list == null) {
+                    list = new OArrayList<>();
+                }
+                list.add(pathNavigation);
+            }
+        }
+        return list;
+    }
 
     @Shadow
     public abstract PoiManager getPoiManager();
@@ -248,17 +281,7 @@ public abstract class Mixin_M_ServerLevel extends Level implements WorldGenLevel
         VoxelShape oldShape = oldState.getCollisionShape_(this, x, y, z);
         VoxelShape newShape = newState.getCollisionShape_(this, x, y, z);
         if (oldShape != newShape && Shapes.joinIsNotEmpty(oldShape, newShape, BooleanOp.NOT_SAME)) {
-            OList<PathNavigation> list = null;
-            OSet<Mob> navigatingMobs = (OSet<Mob>) this.navigatingMobs;
-            for (Mob e = navigatingMobs.fastEntries(); e != null; e = navigatingMobs.fastEntries()) {
-                PathNavigation pathNavigation = e.getNavigation();
-                if (pathNavigation.shouldRecomputePath_(x, y, z)) {
-                    if (list == null) {
-                        list = new OArrayList<>();
-                    }
-                    list.add(pathNavigation);
-                }
-            }
+            OList<PathNavigation> list = this.getPathNavigations(x, y, z);
             try {
                 this.isUpdatingNavigations = true;
                 if (list != null) {

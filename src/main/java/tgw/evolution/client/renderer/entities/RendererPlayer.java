@@ -28,8 +28,7 @@ import tgw.evolution.util.ArmPose;
 import tgw.evolution.util.hitbox.hms.HMPlayer;
 import tgw.evolution.util.hitbox.hrs.HRPlayer;
 
-public class RendererPlayer extends LivingEntityRenderer<AbstractClientPlayer, ModelPlayer<AbstractClientPlayer>>
-        implements HRPlayer<AbstractClientPlayer> {
+public class RendererPlayer extends LivingEntityRenderer<AbstractClientPlayer, ModelPlayer<AbstractClientPlayer>> implements HRPlayer<AbstractClientPlayer> {
 
     public RendererPlayer(EntityRendererProvider.Context context, boolean slim) {
         super(context, new ModelPlayer<>(context.bakeLayer(slim ? ModelLayers.PLAYER_SLIM : ModelLayers.PLAYER), slim), 0.5F);
@@ -145,8 +144,7 @@ public class RendererPlayer extends LivingEntityRenderer<AbstractClientPlayer, M
             Objective objective = scoreboard.getDisplayObjective(2);
             if (objective != null) {
                 Score score = scoreboard.getOrCreatePlayerScore(entity.getScoreboardName(), objective);
-                super.renderNameTag(entity, new TextComponent(Integer.toString(score.getScore())).append(" ").append(objective.getDisplayName()),
-                                    matrices, buffer, light);
+                super.renderNameTag(entity, new TextComponent(Integer.toString(score.getScore())).append(" ").append(objective.getDisplayName()), matrices, buffer, light);
                 matrices.translate(0, 9.0F * 1.15F * 0.025F, 0);
             }
         }

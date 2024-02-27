@@ -134,7 +134,7 @@ public class BlockGrass extends BlockGenericSnowable implements IRockVariant {
 //                                                      this.variant.get(EvolutionBlocks.DIRTS).defaultBlockState());
 //                }
 //                else {
-//                    if (level.getBrightness_(LightLayer.SKY, BlockPos.asLong(x, y + 1, z)) >= 9) {
+//                    if (level.getBrightness_(Lightlayer.SKY, BlockPos.asLong(x, y + 1, z)) >= 9) {
 //                        BlockState placeState = this.defaultBlockState();
 //                        for (int i = 0; i < 4; ++i) {
 //                            BlockPos randomPos = pos.offset(random.nextInt(3) - 1, random.nextInt(5) - 3, random.nextInt(3) - 1);

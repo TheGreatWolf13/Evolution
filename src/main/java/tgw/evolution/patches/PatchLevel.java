@@ -2,7 +2,9 @@ package tgw.evolution.patches;
 
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.util.constants.BlockFlags;
 import tgw.evolution.util.constants.LvlEvent;
 
@@ -17,6 +19,20 @@ public interface PatchLevel extends PatchLevelWriter {
     }
 
     default void destroyBlockProgress(int breakerId, long pos, int progress) {
+        throw new AbstractMethodError();
+    }
+
+    /**
+     * Returns the chunk at any stage, if it exists, immediately.
+     */
+    default @Nullable ChunkAccess getAnyChunkImmediately(int chunkX, int chunkZ) {
+        throw new AbstractMethodError();
+    }
+
+    /**
+     * Returns the full chunk without blocking.
+     */
+    default @Nullable LevelChunk getChunkAtImmediately(int chunkX, int chunkZ) {
         throw new AbstractMethodError();
     }
 

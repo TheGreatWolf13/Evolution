@@ -1,5 +1,7 @@
 package tgw.evolution.patches;
 
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.util.Mth;
 
 public interface PatchPoseStack {
@@ -28,7 +30,8 @@ public interface PatchPoseStack {
         throw new AbstractMethodError();
     }
 
-    default void reset() {
+    @CanIgnoreReturnValue
+    default PoseStack reset() {
         throw new AbstractMethodError();
     }
 

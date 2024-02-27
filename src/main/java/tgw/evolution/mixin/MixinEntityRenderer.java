@@ -3,6 +3,8 @@ package tgw.evolution.mixin;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -11,13 +13,31 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
+import tgw.evolution.Evolution;
+import tgw.evolution.patches.PatchEntityRenderer;
 import tgw.evolution.util.hitbox.hrs.HREntity;
 
 @SuppressWarnings("MethodMayBeStatic")
 @Mixin(EntityRenderer.class)
-public abstract class MixinEntityRenderer<T extends Entity> implements HREntity<T> {
+public abstract class MixinEntityRenderer<T extends Entity> implements HREntity<T>, PatchEntityRenderer<T> {
 
     @Shadow public float shadowRadius;
+
+    @Overwrite
+    public int getBlockLightLevel(T entity, BlockPos pos) {
+        Evolution.deprecatedMethod();
+        return 0;
+    }
+
+    @Overwrite
+    public final int getPackedLightCoords(T entity, float partialTicks) {
+        Vec3 lightProbePosition = entity.getLightProbePosition(partialTicks);
+        int x = Mth.floor(lightProbePosition.x);
+        int y = Mth.floor(lightProbePosition.y);
+        int z = Mth.floor(lightProbePosition.z);
+        int blockLight = this.getBlockLightLevel_(entity, x, y, z);
+        return blockLight | this.getSkyLightLevel_(entity, x, y, z) << 16;
+    }
 
     /**
      * @author TheGreatWolf
@@ -28,14 +48,19 @@ public abstract class MixinEntityRenderer<T extends Entity> implements HREntity<
         return this.renderOffset(entity, partialTicks);
     }
 
+    @Overwrite
+    public int getSkyLightLevel(T entity, BlockPos pos) {
+        Evolution.deprecatedMethod();
+        return 0;
+    }
+
     /**
      * Prevents name tags from being visible though walls.
      */
     @ModifyArg(method = "renderNameTag", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/Font;drawInBatch" +
                                                                              "(Lnet/minecraft/network/chat/Component;" +
                                                                              "FFIZLcom/mojang/math/Matrix4f;" +
-                                                                             "Lnet/minecraft/client/renderer/MultiBufferSource;ZII)I", ordinal = 0)
-            , index = 7)
+                                                                             "Lnet/minecraft/client/renderer/MultiBufferSource;ZII)I", ordinal = 0), index = 7)
     private boolean modifyRenderName(boolean renderThroughWalls) {
         return false;
     }

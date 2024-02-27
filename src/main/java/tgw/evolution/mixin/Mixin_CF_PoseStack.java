@@ -1,5 +1,6 @@
 package tgw.evolution.mixin;
 
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Matrix3f;
 import com.mojang.math.Matrix4f;
@@ -129,9 +130,11 @@ public abstract class Mixin_CF_PoseStack implements PatchPoseStack, HR {
     }
 
     @Override
-    public void reset() {
+    @CanIgnoreReturnValue
+    public PoseStack reset() {
         this.size = 1;
         this.setIdentity();
+        return (PoseStack) (Object) this;
     }
 
     @Override

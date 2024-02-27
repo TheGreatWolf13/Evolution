@@ -9,6 +9,7 @@ import net.minecraft.core.Vec3i;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import tgw.evolution.Evolution;
 import tgw.evolution.patches.PatchVertexConsumer;
 
 @Mixin(VertexConsumer.class)
@@ -58,6 +59,9 @@ public interface MixinVertexConsumer extends PatchVertexConsumer {
             float v = Float.intBitsToFloat(vertices[offset + 5]);
             //Light : 2 short
             int light = vertices[offset + 6];
+            if (light != 0) {
+                Evolution.info("Hey");
+            }
             int blBaked = light & 0xffff;
             int slBaked = light >> 16 & 0xffff;
             bl = Math.max(bl, blBaked);

@@ -5,14 +5,16 @@ import com.mojang.serialization.Dynamic;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import it.unimi.dsi.fastutil.shorts.ShortList;
 import net.minecraft.SharedConstants;
-import net.minecraft.core.*;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.village.poi.PoiManager;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.block.Block;
@@ -34,7 +36,10 @@ import net.minecraft.world.ticks.LevelChunkTicks;
 import net.minecraft.world.ticks.ProtoChunkTicks;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
-import org.spongepowered.asm.mixin.*;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Overwrite;
+import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.blocks.tileentities.TEUtils;
 import tgw.evolution.capabilities.chunk.AtmStorage;
 import tgw.evolution.hooks.ChunkHooks;
@@ -43,13 +48,14 @@ import tgw.evolution.util.collection.ArrayHelper;
 import tgw.evolution.util.collection.maps.L2OMap;
 import tgw.evolution.util.collection.sets.RSet;
 import tgw.evolution.util.collection.sets.SimpleEnumSet;
+import tgw.evolution.world.lighting.SWMRNibbleArray;
+import tgw.evolution.world.lighting.StarLightEngine;
 
 import java.util.Map;
 
 @Mixin(ChunkSerializer.class)
 public abstract class MixinChunkSerializer {
 
-    @Unique private static final GenerationStep.Carving[] CARVINGS = GenerationStep.Carving.values();
     @Shadow @Final private static Logger LOGGER;
     @Shadow @Final private static Codec<PalettedContainer<BlockState>> BLOCK_STATE_CODEC;
 
@@ -143,11 +149,11 @@ public abstract class MixinChunkSerializer {
         boolean hasSkyLight = level.dimensionType().hasSkyLight();
         ChunkSource chunkSource = level.getChunkSource();
         LevelLightEngine lightEngine = chunkSource.getLightEngine();
-        if (isLightOn) {
-            lightEngine.retainData(pos, true);
-        }
         Registry<Biome> registry = level.registryAccess().registryOrThrow(Registry.BIOME_REGISTRY);
         Codec<PalettedContainer<Holder<Biome>>> codec = makeBiomeCodec(registry);
+        final int minLightSection = lightEngine.getMinLightSection();
+        SWMRNibbleArray[] blockNibbles = StarLightEngine.getFilledEmptyLight(level);
+        SWMRNibbleArray[] skyNibbles = StarLightEngine.getFilledEmptyLight(level);
         for (int i = 0; i < sections.size(); i++) {
             CompoundTag compound = sections.getCompound(i);
             int y = compound.getByte("Y");
@@ -195,11 +201,21 @@ public abstract class MixinChunkSerializer {
             if (isLightOn) {
                 if (compound.contains("BlockLight", Tag.TAG_BYTE_ARRAY)) {
                     //noinspection ObjectAllocationInLoop
-                    lightEngine.queueSectionData_(LightLayer.BLOCK, pos.x, y, pos.z, new DataLayer(compound.getByteArray("BlockLight")), true);
+                    blockNibbles[y - minLightSection] = new SWMRNibbleArray(compound.getByteArray("BlockLight"), compound.getInt("BlockLightState"));
                 }
-                if (hasSkyLight && compound.contains("SkyLight", Tag.TAG_BYTE_ARRAY)) {
+                else {
                     //noinspection ObjectAllocationInLoop
-                    lightEngine.queueSectionData_(LightLayer.SKY, pos.x, y, pos.z, new DataLayer(compound.getByteArray("SkyLight")), true);
+                    blockNibbles[y - minLightSection] = new SWMRNibbleArray(null, compound.getInt("BlockLightState"));
+                }
+                if (hasSkyLight) {
+                    if (compound.contains("SkyLight", Tag.TAG_BYTE_ARRAY)) {
+                        //noinspection ObjectAllocationInLoop
+                        skyNibbles[y - minLightSection] = new SWMRNibbleArray(compound.getByteArray("SkyLight"), compound.getInt("SkyLightState"));
+                    }
+                    else {
+                        //noinspection ObjectAllocationInLoop
+                        skyNibbles[y - minLightSection] = new SWMRNibbleArray(null, compound.getInt("SkyLightState"));
+                    }
                 }
             }
         }
@@ -216,21 +232,16 @@ public abstract class MixinChunkSerializer {
         }
         ChunkAccess chunkAccess;
         if (chunkType == ChunkStatus.ChunkType.LEVELCHUNK) {
-            LevelChunkTicks<Block> blockTicks = LevelChunkTicks.load(tag.getList("block_ticks", Tag.TAG_COMPOUND),
-                                                                     s -> Registry.BLOCK.getOptional(ResourceLocation.tryParse(s)), pos);
-            LevelChunkTicks<Fluid> fluidTicks = LevelChunkTicks.load(tag.getList("fluid_ticks", Tag.TAG_COMPOUND),
-                                                                     s -> Registry.FLUID.getOptional(ResourceLocation.tryParse(s)), pos);
-            chunkAccess = new LevelChunk(level.getLevel(), pos, upgradeData, blockTicks, fluidTicks, inhabitedTime, levelChunkSections,
-                                         postLoadChunk(level, tag), blendingData);
+            LevelChunkTicks<Block> blockTicks = LevelChunkTicks.load(tag.getList("block_ticks", Tag.TAG_COMPOUND), s -> Registry.BLOCK.getOptional(ResourceLocation.tryParse(s)), pos);
+            LevelChunkTicks<Fluid> fluidTicks = LevelChunkTicks.load(tag.getList("fluid_ticks", Tag.TAG_COMPOUND), s -> Registry.FLUID.getOptional(ResourceLocation.tryParse(s)), pos);
+            chunkAccess = new LevelChunk(level.getLevel(), pos, upgradeData, blockTicks, fluidTicks, inhabitedTime, levelChunkSections, postLoadChunk(level, tag), blendingData);
             if (tag.contains("Storage")) {
                 ((PatchLevelChunk) chunkAccess).getChunkStorage().deserializeNBT(tag.getCompound("Storage"));
             }
         }
         else {
-            ProtoChunkTicks<Block> blockTicks = ProtoChunkTicks.load(tag.getList("block_ticks", Tag.TAG_COMPOUND),
-                                                                     s -> Registry.BLOCK.getOptional(ResourceLocation.tryParse(s)), pos);
-            ProtoChunkTicks<Fluid> fluidTicks = ProtoChunkTicks.load(tag.getList("fluid_ticks", Tag.TAG_COMPOUND),
-                                                                     s -> Registry.FLUID.getOptional(ResourceLocation.tryParse(s)), pos);
+            ProtoChunkTicks<Block> blockTicks = ProtoChunkTicks.load(tag.getList("block_ticks", Tag.TAG_COMPOUND), s -> Registry.BLOCK.getOptional(ResourceLocation.tryParse(s)), pos);
+            ProtoChunkTicks<Fluid> fluidTicks = ProtoChunkTicks.load(tag.getList("fluid_ticks", Tag.TAG_COMPOUND), s -> Registry.FLUID.getOptional(ResourceLocation.tryParse(s)), pos);
             ProtoChunk protoChunk = new ProtoChunk(pos, upgradeData, levelChunkSections, blockTicks, fluidTicks, level, registry, blendingData);
             chunkAccess = protoChunk;
             protoChunk.setInhabitedTime(inhabitedTime);
@@ -245,11 +256,9 @@ public abstract class MixinChunkSerializer {
                 protoChunk.setLightEngine(lightEngine);
             }
             BelowZeroRetrogen belowZeroRetrogen = protoChunk.getBelowZeroRetrogen();
-            boolean lightDone = chunkStatus.isOrAfter(ChunkStatus.LIGHT) ||
-                                belowZeroRetrogen != null && belowZeroRetrogen.targetStatus().isOrAfter(ChunkStatus.LIGHT);
+            boolean lightDone = chunkStatus.isOrAfter(ChunkStatus.LIGHT) || belowZeroRetrogen != null && belowZeroRetrogen.targetStatus().isOrAfter(ChunkStatus.LIGHT);
             if (!isLightOn && lightDone) {
-                for (BlockPos p : BlockPos.betweenClosed(pos.getMinBlockX(), level.getMinBuildHeight(), pos.getMinBlockZ(), pos.getMaxBlockX(),
-                                                         level.getMaxBuildHeight() - 1, pos.getMaxBlockZ())) {
+                for (BlockPos p : BlockPos.betweenClosed(pos.getMinBlockX(), level.getMinBuildHeight(), pos.getMinBlockZ(), pos.getMaxBlockX(), level.getMaxBuildHeight() - 1, pos.getMaxBlockZ())) {
                     if (chunkAccess.getBlockState(p).getLightEmission() != 0) {
                         protoChunk.addLight(p);
                     }
@@ -283,6 +292,8 @@ public abstract class MixinChunkSerializer {
             }
         }
         if (chunkType == ChunkStatus.ChunkType.LEVELCHUNK) {
+            chunkAccess.setBlockNibbles(blockNibbles);
+            chunkAccess.setSkyNibbles(skyNibbles);
             //Load event
             return new ImposterProtoChunk((LevelChunk) chunkAccess, false);
         }
@@ -309,6 +320,8 @@ public abstract class MixinChunkSerializer {
             //noinspection ObjectAllocationInLoop
             protoChunk.setCarvingMask(carving, new CarvingMask(carvingMasks.getLongArray(s), chunkAccess.getMinBuildHeight()));
         }
+        protoChunk.setBlockNibbles(blockNibbles);
+        protoChunk.setSkyNibbles(skyNibbles);
         //Load event
         return protoChunk;
     }
@@ -319,9 +332,7 @@ public abstract class MixinChunkSerializer {
     }
 
     @Shadow
-    private static Map<ConfiguredStructureFeature<?, ?>, LongSet> unpackStructureReferences(RegistryAccess pReigstryAccess,
-                                                                                            ChunkPos pPos,
-                                                                                            CompoundTag pTag) {
+    private static Map<ConfiguredStructureFeature<?, ?>, LongSet> unpackStructureReferences(RegistryAccess pReigstryAccess, ChunkPos pPos, CompoundTag pTag) {
         throw new AbstractMethodError();
     }
 
@@ -331,10 +342,6 @@ public abstract class MixinChunkSerializer {
         throw new AbstractMethodError();
     }
 
-    /**
-     * @author TheGreatWolf
-     * @reason Add AtmStorage to ChunkSections.
-     */
     @Overwrite
     public static CompoundTag write(ServerLevel level, ChunkAccess chunk) {
         ChunkPos pos = chunk.getPos();
@@ -362,31 +369,37 @@ public abstract class MixinChunkSerializer {
         Registry<Biome> registry = level.registryAccess().registryOrThrow(Registry.BIOME_REGISTRY);
         Codec<PalettedContainer<Holder<Biome>>> codec = makeBiomeCodec(registry);
         boolean lightCorrect = chunk.isLightCorrect();
-        for (int i = lightEngine.getMinLightSection(); i < lightEngine.getMaxLightSection(); ++i) {
+        SWMRNibbleArray[] blockNibbles = chunk.getBlockNibbles();
+        SWMRNibbleArray[] skyNibbles = chunk.getSkyNibbles();
+        int minLightSection = lightEngine.getMinLightSection();
+        for (int i = minLightSection; i < lightEngine.getMaxLightSection(); ++i) {
             int index = chunk.getSectionIndexFromSectionY(i);
             boolean validIndex = index >= 0 && index < sections.length;
-            //noinspection ObjectAllocationInLoop
-            DataLayer blockLight = lightEngine.getLayerListener(LightLayer.BLOCK).getDataLayerData(SectionPos.of(pos, i));
-            //noinspection ObjectAllocationInLoop
-            DataLayer skyLight = lightEngine.getLayerListener(LightLayer.SKY).getDataLayerData(SectionPos.of(pos, i));
-            if (validIndex || blockLight != null || skyLight != null) {
+            SWMRNibbleArray.SaveState blockNibble = blockNibbles[i - minLightSection].getSaveState();
+            SWMRNibbleArray.SaveState skyNibble = skyNibbles[i - minLightSection].getSaveState();
+            if (validIndex || blockNibble != null || skyNibble != null) {
                 //noinspection ObjectAllocationInLoop
                 CompoundTag sectionTag = new CompoundTag();
                 if (validIndex) {
                     LevelChunkSection section = sections[index];
                     //noinspection ObjectAllocationInLoop
-                    sectionTag.put("block_states",
-                                   BLOCK_STATE_CODEC.encodeStart(NbtOps.INSTANCE, section.getStates()).getOrThrow(false, LOGGER::error));
+                    sectionTag.put("block_states", BLOCK_STATE_CODEC.encodeStart(NbtOps.INSTANCE, section.getStates()).getOrThrow(false, LOGGER::error));
                     //noinspection ObjectAllocationInLoop
                     sectionTag.put("biomes", codec.encodeStart(NbtOps.INSTANCE, section.getBiomes()).getOrThrow(false, LOGGER::error));
                     //noinspection ObjectAllocationInLoop
                     sectionTag.put("atm", section.getAtmStorage().serialize());
                 }
-                if (blockLight != null && !blockLight.isEmpty()) {
-                    sectionTag.putByteArray("BlockLight", blockLight.getData());
+                if (blockNibble != null) {
+                    if (blockNibble.data != null) {
+                        sectionTag.putByteArray("BlockLight", blockNibble.data);
+                    }
+                    sectionTag.putInt("BlockLightState", blockNibble.state);
                 }
-                if (skyLight != null && !skyLight.isEmpty()) {
-                    sectionTag.putByteArray("SkyLight", skyLight.getData());
+                if (skyNibble != null) {
+                    if (skyNibble.data != null) {
+                        sectionTag.putByteArray("SkyLight", skyNibble.data);
+                    }
+                    sectionTag.putInt("SkyLightState", skyNibble.state);
                 }
                 if (!sectionTag.isEmpty()) {
                     sectionTag.putByte("Y", (byte) i);
@@ -423,7 +436,7 @@ public abstract class MixinChunkSerializer {
             tag.put("entities", entitiesList);
             tag.put("Lights", packOffsets(protoChunk.getPackedLights()));
             CompoundTag carvingMasks = new CompoundTag();
-            for (GenerationStep.Carving carving : CARVINGS) {
+            for (GenerationStep.Carving carving : ArrayHelper.CARVINGS) {
                 CarvingMask carvingmask = protoChunk.getCarvingMask(carving);
                 if (carvingmask != null) {
                     carvingMasks.putLongArray(carving.toString(), carvingmask.toArray());

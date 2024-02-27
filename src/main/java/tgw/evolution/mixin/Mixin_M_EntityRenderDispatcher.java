@@ -29,18 +29,16 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.*;
 import tgw.evolution.client.renderer.ambient.LightTextureEv;
 import tgw.evolution.client.renderer.chunk.EvLevelRenderer;
 import tgw.evolution.events.ClientEvents;
+import tgw.evolution.hooks.asm.DeleteMethod;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.math.Vec3d;
 
 @Mixin(EntityRenderDispatcher.class)
-public abstract class MixinEntityRenderDispatcher {
+public abstract class Mixin_M_EntityRenderDispatcher {
 
     @Shadow @Final private static RenderType SHADOW_RENDER_TYPE;
     @Shadow public Camera camera;
@@ -49,23 +47,19 @@ public abstract class MixinEntityRenderDispatcher {
     @Shadow private boolean renderHitBoxes;
     @Shadow private boolean shouldRenderShadow;
 
-    /**
-     * @author TheGreatWolf
-     * @reason Avoid allocations when possible
-     */
     @Overwrite
-    private static void renderBlockShadow(PoseStack.Pose pose,
-                                          VertexConsumer buffer,
-                                          LevelReader level,
-                                          BlockPos pos,
-                                          double x,
-                                          double y,
-                                          double z,
-                                          float size,
-                                          float weight) {
-        int posX = pos.getX();
-        int posY = pos.getY();
-        int posZ = pos.getZ();
+    private static void fireVertex(PoseStack.Pose pose, VertexConsumer consumer, float x, float y, float z, float u, float v) {
+        consumer.vertex(pose.pose(), x, y, z).color(255, 255, 255, 255).uv(u, v).overlayCoords(0, 10).uv2(0xf0_00ff).normal(pose.normal(), 0.0F, 1.0F, 0.0F).endVertex();
+    }
+
+    @Overwrite
+    @DeleteMethod
+    private static void renderBlockShadow(PoseStack.Pose pose, VertexConsumer buffer, LevelReader level, BlockPos pos, double x, double y, double z, float size, float weight) {
+        throw new AbstractMethodError();
+    }
+
+    @Unique
+    private static void renderBlockShadow(PoseStack.Pose pose, VertexConsumer buffer, LevelReader level, int posX, int posY, int posZ, double x, double y, double z, float size, float weight) {
         BlockState stateBelow = level.getBlockState_(posX, posY - 1, posZ);
         int brightness = level.getMaxLocalRawBrightness_(posX, posY, posZ);
         if (stateBelow.getRenderShape() == RenderShape.INVISIBLE || brightness <= 3) {
@@ -111,20 +105,38 @@ public abstract class MixinEntityRenderDispatcher {
      */
     @Overwrite
     private static void renderHitbox(PoseStack matrices, VertexConsumer buffer, Entity entity, float partialTicks) {
-        AABB box = entity.getBoundingBox().move(-entity.getX(), -entity.getY(), -entity.getZ());
-        EvLevelRenderer.renderLineBox(matrices, buffer, box, 1.0F, 1.0F, 1.0F, 1.0F);
+        AABB bb = entity.getBoundingBox();
+        double px = entity.getX();
+        double py = entity.getY();
+        double pz = entity.getZ();
+        double minX = bb.minX - px;
+        double minY = bb.minY - py;
+        double minZ = bb.minZ - pz;
+        double maxX = bb.maxX - px;
+        double maxY = bb.maxY - py;
+        double maxZ = bb.maxZ - pz;
+        EvLevelRenderer.renderLineBox(matrices, buffer, minX, minY, minZ, maxX, maxY, maxZ, 1.0F, 1.0F, 1.0F, 1.0F);
         if (entity instanceof EnderDragon dragon) {
-            double x = -Mth.lerp(partialTicks, entity.xOld, entity.getX());
-            double y = -Mth.lerp(partialTicks, entity.yOld, entity.getY());
-            double z = -Mth.lerp(partialTicks, entity.zOld, entity.getZ());
+            double x = -Mth.lerp(partialTicks, entity.xOld, px);
+            double y = -Mth.lerp(partialTicks, entity.yOld, py);
+            double z = -Mth.lerp(partialTicks, entity.zOld, pz);
             for (EnderDragonPart part : dragon.getSubEntities()) {
+                double partX = part.getX();
+                double partY = part.getY();
+                double partZ = part.getZ();
                 matrices.pushPose();
-                double xp = x + Mth.lerp(partialTicks, part.xOld, part.getX());
-                double yp = y + Mth.lerp(partialTicks, part.yOld, part.getY());
-                double zp = z + Mth.lerp(partialTicks, part.zOld, part.getZ());
+                double xp = x + Mth.lerp(partialTicks, part.xOld, partX);
+                double yp = y + Mth.lerp(partialTicks, part.yOld, partY);
+                double zp = z + Mth.lerp(partialTicks, part.zOld, partZ);
                 matrices.translate(xp, yp, zp);
-                EvLevelRenderer.renderLineBox(matrices, buffer, part.getBoundingBox()
-                                                                    .move(-part.getX(), -part.getY(), -part.getZ()), 0.25F, 1.0F, 0.0F, 1.0F);
+                AABB partBB = part.getBoundingBox();
+                double partMinX = partBB.minX - partX;
+                double partMinY = partBB.minY - partY;
+                double partMinZ = partBB.minZ - partZ;
+                double partMaxX = partBB.maxX - partX;
+                double partMaxY = partBB.maxY - partY;
+                double partMaxZ = partBB.maxZ - partZ;
+                EvLevelRenderer.renderLineBox(matrices, buffer, partMinX, partMinY, partMinZ, partMaxX, partMaxY, partMaxZ, 0.25F, 1.0F, 0.0F, 1.0F);
                 matrices.popPose();
             }
         }
@@ -133,8 +145,7 @@ public abstract class MixinEntityRenderDispatcher {
             float eyeX = (float) cameraPosition.x;
             double eyeHeight = cameraPosition.y;
             float eyeZ = (float) cameraPosition.z;
-            EvLevelRenderer.renderLineBox(matrices, buffer, box.minX, eyeHeight - 0.01, box.minZ, box.maxX, eyeHeight + 0.01, box.maxZ,
-                                          1.0F, 0.0F, 0.0F, 1.0F);
+            EvLevelRenderer.renderLineBox(matrices, buffer, minX, eyeHeight - 0.01, minZ, maxX, eyeHeight + 0.01, maxZ, 1.0F, 0.0F, 0.0F, 1.0F);
             Vec3 view = entity.getViewVector(partialTicks);
             Matrix4f pose = matrices.last().pose();
             Matrix3f normal = matrices.last().normal();
@@ -149,18 +160,8 @@ public abstract class MixinEntityRenderDispatcher {
         }
     }
 
-    /**
-     * @author TheGreatWolf
-     * @reason Improve performance
-     */
     @Overwrite
-    private static void renderShadow(PoseStack matrices,
-                                     MultiBufferSource buffer,
-                                     Entity entity,
-                                     float weight,
-                                     float partialTicks,
-                                     LevelReader level,
-                                     float size) {
+    private static void renderShadow(PoseStack matrices, MultiBufferSource buffer, Entity entity, float weight, float partialTicks, LevelReader level, float size) {
         float actualSize = size;
         if (entity instanceof Mob mob && mob.isBaby()) {
             actualSize = size * 0.5F;
@@ -176,28 +177,18 @@ public abstract class MixinEntityRenderDispatcher {
         int maxZ = Mth.floor(entityZ + actualSize);
         PoseStack.Pose pose = matrices.last();
         VertexConsumer consumer = buffer.getBuffer(SHADOW_RENDER_TYPE);
-        BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
         for (int z = minZ; z <= maxZ; ++z) {
             for (int x = minX; x <= maxX; ++x) {
-                mutable.set(x, 0, z);
                 for (int y = minY; y <= maxY; ++y) {
-                    mutable.setY(y);
-                    float r = weight - (float) (entityY - mutable.getY()) * 0.5f;
-                    renderBlockShadow(pose, consumer, level, mutable, entityX, entityY, entityZ, actualSize, r);
+                    float r = weight - (float) (entityY - y) * 0.5f;
+                    renderBlockShadow(pose, consumer, level, x, y, z, entityX, entityY, entityZ, actualSize, r);
                 }
             }
         }
     }
 
     @Shadow
-    private static void shadowVertex(PoseStack.Pose pMatrixEntry,
-                                     VertexConsumer pBuffer,
-                                     float pAlpha,
-                                     float pX,
-                                     float pY,
-                                     float pZ,
-                                     float pTexU,
-                                     float pTexV) {
+    private static void shadowVertex(PoseStack.Pose pose, VertexConsumer buffer, float alpha, float x, float y, float z, float u, float v) {
         throw new AbstractMethodError();
     }
 
@@ -207,20 +198,8 @@ public abstract class MixinEntityRenderDispatcher {
     @Shadow
     public abstract <T extends Entity> EntityRenderer<? super T> getRenderer(T pEntity);
 
-    /**
-     * @author TheGreatWolf
-     * @reason Make flame not render whilst rendering player
-     */
     @Overwrite
-    public <E extends Entity> void render(E entity,
-                                          double x,
-                                          double y,
-                                          double z,
-                                          float rotYaw,
-                                          float partialTicks,
-                                          PoseStack matrices,
-                                          MultiBufferSource buffer,
-                                          int light) {
+    public <E extends Entity> void render(E entity, double x, double y, double z, float rotYaw, float partialTicks, PoseStack matrices, MultiBufferSource buffer, int light) {
         EntityRenderer<? super E> renderer = this.getRenderer(entity);
         try {
             Vec3 vec3 = renderer.getRenderOffset(entity, partialTicks);

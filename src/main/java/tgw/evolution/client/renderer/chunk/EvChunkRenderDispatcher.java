@@ -396,8 +396,7 @@ public class EvChunkRenderDispatcher {
             int posZ = this.z;
             EvVisGraph visgraph = EvChunkRenderDispatcher.this.graph;
             visgraph.reset();
-            PoseStack matrices = EvChunkRenderDispatcher.this.matrices;
-            matrices.reset();
+            PoseStack matrices = EvChunkRenderDispatcher.this.matrices.reset();
             ModelBlockRenderer.enableCaching();
             IRandom random = EvChunkRenderDispatcher.this.random;
             BlockRenderDispatcher dispatcher = Minecraft.getInstance().getBlockRenderer();
@@ -754,8 +753,7 @@ public class EvChunkRenderDispatcher {
                 if (region != null && !region.isSectionEmpty(posX, posY, posZ)) {
                     EvVisGraph visgraph = GRAPH_CACHE.get();
                     visgraph.reset();
-                    PoseStack matrices = MATRICES_CACHE.get();
-                    matrices.reset();
+                    PoseStack matrices = MATRICES_CACHE.get().reset();
                     ModelBlockRenderer.enableCaching();
                     IRandom random = RANDOM_CACHE.get();
                     BlockRenderDispatcher dispatcher = Minecraft.getInstance().getBlockRenderer();

@@ -2,12 +2,14 @@ package tgw.evolution.mixin;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.shorts.ShortList;
 import net.minecraft.CrashReport;
 import net.minecraft.CrashReportCategory;
 import net.minecraft.ReportedException;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Registry;
+import net.minecraft.core.SectionPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
@@ -38,6 +40,7 @@ import tgw.evolution.Evolution;
 import tgw.evolution.blocks.BlockAtm;
 import tgw.evolution.blocks.IAir;
 import tgw.evolution.blocks.tileentities.TEUtils;
+import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.capabilities.chunk.CapabilityChunkStorage;
 import tgw.evolution.hooks.asm.DeleteField;
 import tgw.evolution.hooks.asm.ModifyConstructor;
@@ -52,8 +55,10 @@ import tgw.evolution.util.collection.lists.LArrayList;
 import tgw.evolution.util.collection.lists.LList;
 import tgw.evolution.util.collection.maps.L2OHashMap;
 import tgw.evolution.util.collection.maps.L2OMap;
+import tgw.evolution.util.constants.BlockFlags;
 import tgw.evolution.util.math.DirectionList;
 import tgw.evolution.util.math.DirectionUtil;
+import tgw.evolution.world.lighting.StarLightEngine;
 
 import java.util.Map;
 import java.util.function.Consumer;
@@ -101,6 +106,8 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
         this.postLoad = processor;
         this.blockTicks = blockTicks;
         this.fluidTicks = fluidTicks;
+        this.setBlockNibbles(StarLightEngine.getFilledEmptyLight(level));
+        this.setSkyNibbles(StarLightEngine.getFilledEmptyLight(level));
     }
 
     @ModifyConstructor
@@ -124,6 +131,10 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
         }
         this.setLightCorrect(protoChunk.isLightCorrect());
         this.unsaved = true;
+        this.setBlockNibbles(protoChunk.getBlockNibbles());
+        this.setSkyNibbles(protoChunk.getSkyNibbles());
+        this.setSkyEmptinessMap(protoChunk.getSkyEmptinessMap());
+        this.setBlockEmptinessMap(protoChunk.getBlockEmptinessMap());
         this.primeAtm(false);
     }
 
@@ -401,29 +412,30 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
         return this.getFullStatus().isOrAfter(net.minecraft.server.level.ChunkHolder.FullChunkStatus.TICKING) &&
                level.areEntitiesLoaded(ChunkPos.asLong(pos));
     }
-
-    /**
-     * @author TheGreatWolf
-     * @reason Replace maps
-     */
+    
     @Overwrite
     public void postProcessGeneration() {
         ChunkPos chunkPos = this.getPos();
-        for (int i = 0; i < this.postProcessing.length; ++i) {
-            if (this.postProcessing[i] != null) {
-                for (Short short_ : this.postProcessing[i]) {
-                    BlockPos blockPos = ProtoChunk.unpackOffsetCoordinates(short_, this.getSectionYFromSectionIndex(i), chunkPos);
-                    BlockState blockState = this.getBlockState_(blockPos.getX(), blockPos.getY(), blockPos.getZ());
+        ShortList[] postProcessing = this.postProcessing;
+        for (int i = 0; i < postProcessing.length; ++i) {
+            ShortList shorts = postProcessing[i];
+            if (shorts != null) {
+                for (int j = 0, len2 = shorts.size(); j < len2; ++j) {
+                    short s = shorts.getShort(j);
+                    int x = SectionPos.sectionToBlockCoord(chunkPos.x, s & 15);
+                    int y = SectionPos.sectionToBlockCoord(this.getSectionYFromSectionIndex(i), s >>> 4 & 15);
+                    int z = SectionPos.sectionToBlockCoord(chunkPos.z, s >>> 8 & 15);
+                    BlockState blockState = this.getBlockState_(x, y, z);
                     FluidState fluidState = blockState.getFluidState();
                     if (!fluidState.isEmpty()) {
-                        fluidState.tick(this.level, blockPos);
+                        fluidState.tick_(this.level, x, y, z);
                     }
                     if (!(blockState.getBlock() instanceof LiquidBlock)) {
-                        BlockState blockState2 = Block.updateFromNeighbourShapes(blockState, this.level, blockPos);
-                        this.level.setBlock(blockPos, blockState2, 20);
+                        BlockState blockState2 = BlockUtils.updateFromNeighbourShapes(blockState, this.level, x, y, z);
+                        this.level.setBlock_(x, y, z, blockState2, BlockFlags.NO_RERENDER | BlockFlags.UPDATE_NEIGHBORS);
                     }
                 }
-                this.postProcessing[i].clear();
+                shorts.clear();
             }
         }
         L2OMap<CompoundTag> pendingBlockEntities = this.pendingBlockEntities_();
@@ -658,7 +670,7 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
             this.removeBlockEntity_(BlockPos.asLong(x, y, z));
         }
         if (!section.getBlockState(localX, localY, localZ).is(newBlock)) {
-            //Idk when this could happen
+            //IDK when this could happen
             return null;
         }
         if (!this.level.isClientSide) {
@@ -684,6 +696,9 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
         this.unsaved = true;
         return oldState;
     }
+
+    @Shadow
+    public abstract void setClientLightReady(boolean bl);
 
     /**
      * The last part of the Atm Priming. Here, we will propagate all the pending updates within this chunk.

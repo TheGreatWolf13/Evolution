@@ -9,7 +9,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Range;
 import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 import tgw.evolution.util.physics.SI;
 
@@ -59,7 +58,20 @@ public interface PatchEntity {
         return 0;
     }
 
-    default @Range(from = 0, to = 15) byte getLightEmission() {
+    /**
+     * Colored light in the following format: <br>
+     * <br>
+     * Bit 0 ~ 3: Red component intensity; <br>
+     * Bit 4: Red component value; <br>
+     * Bit 5 ~ 8: Green component intensity; <br>
+     * Bit 9: Green component value; <br>
+     * Bit 10 ~ 13: Blue component intensity; <br>
+     * Bit 14: Blue component value; <br>
+     * <br>
+     * Each individual component intensity must be in the range 0 ~ 15.
+     * Each individual component value must be in the range 0 ~ 1.
+     */
+    default short getLightEmission() {
         return 0;
     }
 

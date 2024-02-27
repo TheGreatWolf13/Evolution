@@ -1,6 +1,7 @@
 package tgw.evolution.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.math.Matrix4f;
 import com.mojang.math.Transformation;
 import com.mojang.math.Vector3f;
@@ -36,7 +37,7 @@ public abstract class MixinFont implements PatchFont {
     public abstract String bidirectionalShaping(String pText);
 
     @Shadow
-    protected abstract int drawInternal(FormattedCharSequence pReorderingProcessor, float pX, float pY, int pColor, Matrix4f pMatrix, boolean pDrawShadow);
+    public abstract int drawInBatch(String string, float f, float g, int i, boolean bl, Matrix4f matrix4f, MultiBufferSource multiBufferSource, boolean bl2, int j, int k, boolean bl3);
 
     @Overwrite
     private int drawInternal(String text, float x, float y, int color, boolean dropShadow, Matrix4f matrix, MultiBufferSource buffer, boolean transparent, int colorBackground, int packedLight, boolean bidiFlag) {
@@ -71,6 +72,22 @@ public abstract class MixinFont implements PatchFont {
         }
         x = this.renderText(processor, x, y, color, false, matForText, buffer, transparent, colorBackground, packedLight);
         return (int) x + (drawShadow ? 1 : 0);
+    }
+
+    @Overwrite
+    private int drawInternal(String string, float x, float y, int color, Matrix4f matrix, boolean shadow, boolean bidi) {
+        MultiBufferSource.BufferSource bufferSource = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
+        int dy = this.drawInBatch(string, x, y, color, shadow, matrix, bufferSource, false, 0, 0xff_00ff, bidi);
+        bufferSource.endBatch();
+        return dy;
+    }
+
+    @Overwrite
+    private int drawInternal(FormattedCharSequence charSequence, float x, float y, int color, Matrix4f matrix, boolean shadow) {
+        MultiBufferSource.BufferSource bufferSource = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
+        int j = this.drawInternal(charSequence, x, y, color, shadow, matrix, bufferSource, false, 0, 0xff_00ff);
+        bufferSource.endBatch();
+        return j;
     }
 
     @Overwrite

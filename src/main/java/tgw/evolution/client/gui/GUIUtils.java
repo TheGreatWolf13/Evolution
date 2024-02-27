@@ -590,8 +590,7 @@ public final class GUIUtils {
         internalMat.translate(posX, posY, 1_050);
         internalMat.scale(1.0F, 1.0F, -1.0F);
         RenderSystem.applyModelViewMatrix();
-        PoseStack matrices = MATRICES;
-        matrices.reset();
+        PoseStack matrices = MATRICES.reset();
         matrices.translate(0, 0, 1_000);
         matrices.scale(scale, scale, scale);
         Quaternion zRot = Vector3f.ZP.rotationDegrees(180.0F);
@@ -614,7 +613,7 @@ public final class GUIUtils {
         dispatcher.overrideCameraOrientation(xRot);
         dispatcher.setRenderShadow(false);
         MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
-        RenderSystem.runAsFancy(() -> dispatcher.render(entity, 0, 0, 0, 0.0F, 1.0F, matrices, bufferSource, 0xf0_00f0));
+        RenderSystem.runAsFancy(() -> dispatcher.render(entity, 0, 0, 0, 0.0F, 1.0F, matrices, bufferSource, 0xff_00ff));
         bufferSource.endBatch();
         dispatcher.setRenderShadow(true);
         entity.yBodyRot = bodyYaw;
@@ -687,8 +686,7 @@ public final class GUIUtils {
         internalMat.scale(1.0F, -1.0F, 1.0F);
         internalMat.scale(16.0F, 16.0F, 16.0F);
         RenderSystem.applyModelViewMatrix();
-        PoseStack matrices = MATRICES;
-        matrices.reset();
+        PoseStack matrices = MATRICES.reset();
         MultiBufferSource.BufferSource buffer = Minecraft.getInstance().renderBuffers().bufferSource();
         boolean notBlockLight = !model.usesBlockLight();
         if (notBlockLight) {

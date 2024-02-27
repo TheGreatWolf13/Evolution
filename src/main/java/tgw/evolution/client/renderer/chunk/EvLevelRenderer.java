@@ -52,6 +52,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.border.WorldBorder;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.lighting.LevelLightEngine;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.FogType;
 import net.minecraft.world.phys.AABB;
@@ -253,21 +254,38 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
     }
 
     public static int getLightColor(BlockAndTintGetter level, int x, int y, int z) {
-        return getLightColor(level, level.getBlockState_(x, y, z), x, y, z);
+        return getLightColor(level, level.getBlockState_(x, y, z), x, y, z, false);
     }
 
-    public static int getLightColor(BlockAndTintGetter level, BlockState state, int x, int y, int z) {
+    /**
+     * Returns the light color in the specified block in the following format:<br>
+     * <br>
+     * Bit 0 ~ 3: red component, from 0 to 15; <br>
+     * Bit 4 ~ 7: green component, from 0 to 15; <br>
+     * Bit 16 ~ 19: skylight component, from 0 to 15; <br>
+     * Bit 20 ~ 23: blue component, from 0 to 15; <br>
+     * <br>
+     * Special case: -1 if the block is opaque and needsToCheckForOpaqueness is true.
+     */
+    public static int getLightColor(BlockAndTintGetter level, BlockState state, int x, int y, int z, boolean needsToCheckForOpaqueness) {
         if (state.emissiveRendering_(level, x, y, z)) {
-            return 0xf0_00f0;
+            return state.getEmissiveLightColor(level, x, y, z);
+        }
+        if (needsToCheckForOpaqueness && level.getBlockState_(x, y, z).getLightBlock_(level, x, y, z) == level.getMaxLightLevel()) {
+            return -1;
         }
         long packed = BlockPos.asLong(x, y, z);
-        int skyLight = level.getBrightness_(LightLayer.SKY, packed);
-        int blockLight = level.getBrightness_(LightLayer.BLOCK, packed);
-        int emission = state.getLightEmission();
-        if (blockLight < emission) {
-            blockLight = emission;
-        }
-        return skyLight << 20 | blockLight << 4;
+        LevelLightEngine lightEngine = level.getLightEngine();
+        int sl = lightEngine.getLayerListener(LightLayer.SKY).getLightValue_(packed);
+        int bl = lightEngine.getLayerListener(LightLayer.BLOCK).getLightValue_(packed);
+        int rbl = bl;
+        int gbl = bl;
+        int bbl = bl;
+        assert 0 <= sl && sl <= 15;
+        assert 0 <= rbl && rbl <= 15;
+        assert 0 <= gbl && gbl <= 15;
+        assert 0 <= bbl && bbl <= 15;
+        return rbl | gbl << 4 | bbl << 20 | sl << 16;
     }
 
     private static void renderEndSky(PoseStack matrices) {
@@ -313,10 +331,6 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
                                      float b,
                                      float a) {
         renderLineBox(new PoseStack(), builder, minX, minY, minZ, maxX, maxY, maxZ, r, g, b, a, r, g, b);
-    }
-
-    public static void renderLineBox(PoseStack matrices, VertexConsumer builder, AABB box, float r, float g, float b, float a) {
-        renderLineBox(matrices, builder, box.minX, box.minY, box.minZ, box.maxX, box.maxY, box.maxZ, r, g, b, a, r, g, b);
     }
 
     public static void renderLineBox(PoseStack matrices,
@@ -1386,8 +1400,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
         double y = Mth.lerp(partialTick, entity.yOld, entity.getY());
         double z = Mth.lerp(partialTick, entity.zOld, entity.getZ());
         float yRot = Mth.lerp(partialTick, entity.yRotO, entity.getYRot());
-        this.entityRenderDispatcher.render(entity, x - camX, y - camY, z - camZ, yRot, partialTick, matrices, bufferSource,
-                                           this.entityRenderDispatcher.getPackedLightCoords(entity, partialTick));
+        this.entityRenderDispatcher.render(entity, x - camX, y - camY, z - camZ, yRot, partialTick, matrices, bufferSource, this.entityRenderDispatcher.getPackedLightCoords(entity, partialTick));
     }
 
     private void renderGlobalTileEntities(Frustum frustum,
