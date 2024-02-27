@@ -12,6 +12,10 @@ import java.lang.annotation.Target;
 @MagicConstant(valuesFromClass = Shader.class)
 public @interface Shader {
 
+    int CYCLE = -3;
+    int QUERY = -2;
+    int TOGGLE = -1;
+    int CLEAR = 0;
     int MOTION_BLUR = 1;
     int DESATURATE_25 = 25;
     int DESATURATE_50 = 50;

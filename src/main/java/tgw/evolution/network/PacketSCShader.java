@@ -6,10 +6,7 @@ import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import tgw.evolution.patches.PatchClientPacketListener;
 
 public class PacketSCShader implements Packet<ClientGamePacketListener> {
-
-    public static final int TOGGLE = -1;
-    public static final int QUERY = -2;
-    public static final int CYCLE = -3;
+    
     public final int shaderId;
 
     public PacketSCShader(int shaderId) {

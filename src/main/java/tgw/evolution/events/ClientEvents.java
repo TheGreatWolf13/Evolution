@@ -131,27 +131,6 @@ public class ClientEvents {
         return a.isEmpty() || b.isEmpty() || a.sameItem(b) && ItemStack.tagMatches(a, b);
     }
 
-//    @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
-//    private static void addConfigSetToMap(ModContainer container, ModConfig.Type type, Map<ModConfig.Type, Set<ModConfig>> configMap) {
-//        if (type == ModConfig.Type.CLIENT && OptiFineHelper.isLoaded() && "forge".equals(container.getModId())) {
-//            Evolution.info("Ignoring Forge's client config since OptiFine was detected");
-//            return;
-//        }
-//        Map<ModConfig.Type, Set<ModConfig>> configSets = ObfuscationReflectionHelper.getPrivateValue(ConfigTracker.class, ConfigTracker.INSTANCE,
-//                                                                                                     "configSets");
-//        if (configSets != null) {
-//            Set<ModConfig> configSet = configSets.get(type);
-//            synchronized (configSet) {
-//                Set<ModConfig> filteredConfigSets = configSet.stream()
-//                                                             .filter(config -> config.getModId().equals(container.getModId()))
-//                                                             .collect(Collectors.toSet());
-//                if (!filteredConfigSets.isEmpty()) {
-//                    configMap.put(type, filteredConfigSets);
-//                }
-//            }
-//        }
-//    }
-
     public static boolean containsEffect(OList<ClientEffectInstance> list, MobEffect effect) {
         for (int i = 0, l = list.size(); i < l; i++) {
             if (list.get(i).getEffect() == effect) {
@@ -170,14 +149,6 @@ public class ClientEvents {
         }
         return null;
     }
-
-//    private static Map<ModConfig.Type, Set<ModConfig>> createConfigMap(ModContainer container) {
-//        Map<ModConfig.Type, Set<ModConfig>> modConfigMap = new EnumMap<>(ModConfig.Type.class);
-//        addConfigSetToMap(container, ModConfig.Type.CLIENT, modConfigMap);
-//        addConfigSetToMap(container, ModConfig.Type.COMMON, modConfigMap);
-//        addConfigSetToMap(container, ModConfig.Type.SERVER, modConfigMap);
-//        return modConfigMap;
-//    }
 
     public static @Nullable Direction getDirectionFromInput(Direction facing, Input input) {
         Direction movement = null;
@@ -445,6 +416,52 @@ public class ClientEvents {
         return rv;
     }
 
+    private ItemStack getBeltStack() {
+        assert this.mc.player != null;
+        ItemStack beltStack = ItemStack.EMPTY;
+        int priority = Integer.MAX_VALUE;
+        int chosen = -1;
+        for (int i = 0; i < 9; i++) {
+            ItemStack stack = this.mc.player.getInventory().items.get(i);
+            if (stack.getItem() instanceof IBeltWeapon beltWeapon) {
+                int stackPriority = beltWeapon.getPriority();
+                if (priority > stackPriority) {
+                    beltStack = stack;
+                    priority = stackPriority;
+                    chosen = i;
+                    if (priority == 0) {
+                        break;
+                    }
+                }
+            }
+        }
+        if (chosen == this.mc.player.getInventory().selected) {
+            return ItemStack.EMPTY;
+        }
+        return beltStack;
+    }
+
+    private ISet getDesiredShaders() {
+        assert this.mc.player != null;
+        ISet desiredShaders = this.desiredShaders;
+        desiredShaders.clear();
+        if (this.mc.options.getCameraType() == CameraType.FIRST_PERSON) {
+            if (!this.mc.player.isCreative() && !this.mc.player.isSpectator() && this.mc.player.equals(this.mc.getCameraEntity())) {
+                float health = this.mc.player.getHealth();
+                if (health <= 12.5f) {
+                    desiredShaders.add(Shader.DESATURATE_25);
+                }
+                else if (health <= 25) {
+                    desiredShaders.add(Shader.DESATURATE_50);
+                }
+                else if (health <= 50) {
+                    desiredShaders.add(Shader.DESATURATE_75);
+                }
+            }
+        }
+        return desiredShaders;
+    }
+
     public @Nullable DimensionOverworld getDimension() {
         return this.dimension;
     }
@@ -513,7 +530,7 @@ public class ClientEvents {
     public void handleShaderPacket(@Shader int shaderId) {
         assert this.mc.player != null;
         switch (shaderId) {
-            case PacketSCShader.QUERY -> {
+            case Shader.QUERY -> {
                 Component message = this.currentShaders.isEmpty() ? EvolutionTexts.COMMAND_SHADER_NO_SHADER : new TranslatableComponent("command.evolution.shader.query", this.currentShaders.stream()
                                                                                                                                                                                              .sorted(Integer::compareTo)
                                                                                                                                                                                              .map(String::valueOf)
@@ -522,7 +539,7 @@ public class ClientEvents {
                 this.mc.player.displayClientMessage(message, false);
                 return;
             }
-            case PacketSCShader.TOGGLE -> {
+            case Shader.TOGGLE -> {
                 this.mc.gameRenderer.togglePostEffect();
                 if (this.mc.gameRenderer.effectActive) {
                     this.mc.player.displayClientMessage(EvolutionTexts.COMMAND_SHADER_TOGGLE_ON, false);
@@ -532,11 +549,11 @@ public class ClientEvents {
                 }
                 return;
             }
-            case PacketSCShader.CYCLE -> {
+            case Shader.CYCLE -> {
                 this.mc.gameRenderer.cycleEffect();
                 return;
             }
-            case 0 -> {
+            case Shader.CLEAR -> {
                 this.mc.player.displayClientMessage(EvolutionTexts.COMMAND_SHADER_RESET, false);
                 this.forcedShaders.clear();
                 return;
@@ -941,23 +958,7 @@ public class ClientEvents {
         }
         //Apply shaders
         profiler.popPush("shaders");
-        ISet desiredShaders = this.desiredShaders;
-        desiredShaders.clear();
-        if (this.mc.options.getCameraType() == CameraType.FIRST_PERSON &&
-            !this.mc.player.isCreative() &&
-            !this.mc.player.isSpectator() &&
-            this.mc.player.equals(this.mc.getCameraEntity())) {
-            float health = this.mc.player.getHealth();
-            if (health <= 12.5f) {
-                desiredShaders.add(Shader.DESATURATE_25);
-            }
-            else if (health <= 25) {
-                desiredShaders.add(Shader.DESATURATE_50);
-            }
-            else if (health <= 50) {
-                desiredShaders.add(Shader.DESATURATE_75);
-            }
-        }
+        ISet desiredShaders = this.getDesiredShaders();
         desiredShaders.addAll(this.forcedShaders);
         ISet currentShaders = this.currentShaders;
         if (desiredShaders.isEmpty()) {
@@ -969,6 +970,7 @@ public class ClientEvents {
         else {
             if (!desiredShaders.containsAll(currentShaders)) {
                 for (ISet.Entry e = currentShaders.fastEntries(); e != null; e = currentShaders.fastEntries()) {
+                    //noinspection MagicConstant
                     @Shader int shader = e.get();
                     if (!desiredShaders.contains(shader)) {
                         currentShaders.remove(shader);
@@ -978,6 +980,7 @@ public class ClientEvents {
             }
             if (!currentShaders.containsAll(desiredShaders)) {
                 for (ISet.Entry e = desiredShaders.fastEntries(); e != null; e = desiredShaders.fastEntries()) {
+                    //noinspection MagicConstant
                     @Shader int shader = e.get();
                     if (currentShaders.add(shader)) {
                         ResourceLocation shaderLoc = this.getShader(shader);
@@ -1197,30 +1200,10 @@ public class ClientEvents {
     private void updateBeltItem() {
         assert this.mc.player != null;
         ItemStack oldStack = BELT_ITEMS.getOrDefault(this.mc.player.getId(), ItemStack.EMPTY);
-        ItemStack beltStack = ItemStack.EMPTY;
-        int priority = Integer.MAX_VALUE;
-        int chosen = -1;
-        for (int i = 0; i < 9; i++) {
-            ItemStack stack = this.mc.player.getInventory().items.get(i);
-            if (stack.getItem() instanceof IBeltWeapon beltWeapon) {
-                int stackPriority = beltWeapon.getPriority();
-                if (priority > stackPriority) {
-                    beltStack = stack;
-                    priority = stackPriority;
-                    chosen = i;
-                    if (priority == 0) {
-                        break;
-                    }
-                }
-            }
-        }
-        if (chosen == this.mc.player.getInventory().selected) {
-            beltStack = ItemStack.EMPTY;
-        }
+        ItemStack beltStack = this.getBeltStack();
         if (!ItemStack.isSame(beltStack, oldStack)) {
             if (beltStack.getItem() instanceof IMelee melee && melee.shouldPlaySheatheSound(beltStack)) {
-                this.mc.getSoundManager()
-                       .play(new SoundEntityEmitted(this.mc.player, EvolutionSounds.SWORD_SHEATHE, SoundSource.PLAYERS, 0.8f, 1.0f));
+                this.mc.getSoundManager().play(new SoundEntityEmitted(this.mc.player, EvolutionSounds.SWORD_SHEATHE, SoundSource.PLAYERS, 0.8f, 1.0f));
                 this.mc.player.connection.send(new PacketCSPlaySoundEntityEmitted(EvolutionSounds.SWORD_SHEATHE, SoundSource.PLAYERS, 0.8f, 1.0f));
             }
             BELT_ITEMS.put(this.mc.player.getId(), beltStack);

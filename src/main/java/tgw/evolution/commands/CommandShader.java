@@ -6,6 +6,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
+import tgw.evolution.client.util.Shader;
 import tgw.evolution.network.PacketSCShader;
 
 public final class CommandShader {
@@ -18,12 +19,12 @@ public final class CommandShader {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("shader")
                                     .requires(cs -> cs.getEntity() instanceof Player && cs.hasPermission(2))
-                                    .executes(c -> run(c.getSource().getPlayerOrException(), PacketSCShader.QUERY))
+                                    .executes(c -> run(c.getSource().getPlayerOrException(), Shader.QUERY))
                                     .then(Commands.literal("toggle")
-                                                  .executes(c -> run(c.getSource().getPlayerOrException(), PacketSCShader.TOGGLE))
+                                                  .executes(c -> run(c.getSource().getPlayerOrException(), Shader.TOGGLE))
                                     )
                                     .then(Commands.literal("cycle")
-                                                  .executes(c -> run(c.getSource().getPlayerOrException(), PacketSCShader.CYCLE))
+                                                  .executes(c -> run(c.getSource().getPlayerOrException(), Shader.CYCLE))
                                     )
                                     .then(Commands.argument("shaderId", SHADER)
                                                   .executes(c -> run(c.getSource().getPlayerOrException(), IntegerArgumentType.getInteger(c, "shaderId")))
