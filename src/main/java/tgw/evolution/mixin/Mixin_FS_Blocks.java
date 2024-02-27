@@ -1561,7 +1561,7 @@ public abstract class Mixin_FS_Blocks {
         GLOWSTONE = register("glowstone", new Block(of(Material.GLASS, MaterialColor.SAND)
                                                             .strength(0.3F)
                                                             .sound(SoundType.GLASS)
-                                                            .lightLevel(BlockUtils.LIGHT_15)));
+                                                            .lightLevel(BlockUtils.LIGHT_YELLOW_15)));
         NETHER_PORTAL = register("nether_portal", new NetherPortalBlock(of(Material.PORTAL)
                                                                                 .noCollission()
                                                                                 .randomTicks()
@@ -2396,8 +2396,7 @@ public abstract class Mixin_FS_Blocks {
                 of(Material.WOOD, DARK_OAK_PLANKS.defaultMaterialColor()).strength(2.0F, 3.0F).sound(SoundType.WOOD)));
         SPRUCE_DOOR = register("spruce_door", new DoorBlock(of(Material.WOOD, SPRUCE_PLANKS.defaultMaterialColor())
                                                                     .strength(3.0F)
-                                                                    .sound(SoundType.WOOD)
-                                                                    .noOcclusion()));
+                                                                    .sound(SoundType.WOOD)));
         BIRCH_DOOR = register("birch_door", new DoorBlock(
                 of(Material.WOOD, BIRCH_PLANKS.defaultMaterialColor()).strength(3.0F).sound(SoundType.WOOD).noOcclusion()));
         JUNGLE_DOOR = register("jungle_door", new DoorBlock(of(Material.WOOD, JUNGLE_PLANKS.defaultMaterialColor())

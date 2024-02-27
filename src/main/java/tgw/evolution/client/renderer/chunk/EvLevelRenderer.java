@@ -278,13 +278,10 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
         LevelLightEngine lightEngine = level.getLightEngine();
         int sl = lightEngine.getLayerListener(LightLayer.SKY).getLightValue_(packed);
         int bl = lightEngine.getLayerListener(LightLayer.BLOCK).getLightValue_(packed);
-        int rbl = bl;
-        int gbl = bl;
-        int bbl = bl;
+        int rbl = bl & 0xF;
+        int gbl = bl >>> 5 & 0xF;
+        int bbl = bl >>> 10 & 0xF;
         assert 0 <= sl && sl <= 15;
-        assert 0 <= rbl && rbl <= 15;
-        assert 0 <= gbl && gbl <= 15;
-        assert 0 <= bbl && bbl <= 15;
         return rbl | gbl << 4 | bbl << 20 | sl << 16;
     }
 

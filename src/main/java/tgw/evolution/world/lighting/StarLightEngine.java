@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public abstract class StarLightEngine {
+public abstract class StarLightEngine<T extends SWMRArray> {
 
     protected static final BlockState AIR_BLOCK_STATE = Blocks.AIR.defaultBlockState();
 
@@ -58,10 +58,10 @@ public abstract class StarLightEngine {
     protected final int maxSection;
     protected final int minLightSection;
     protected final int minSection;
-    protected final SWMRNibbleArray[] nibbleCache;
     protected final boolean[] notifyUpdateCache;
     protected final LevelChunkSection[] sectionCache;
     protected final boolean skylightPropagator;
+    private final T[] nibbleCache;
     protected int chunkIndexOffset;
     protected int chunkOffsetX;
     protected int chunkOffsetY;
@@ -78,7 +78,7 @@ public abstract class StarLightEngine {
 
     protected StarLightEngine(boolean skylightPropagator, Level level) {
         this.skylightPropagator = skylightPropagator;
-        this.emittedLightMask = skylightPropagator ? 0 : 0xF;
+        this.emittedLightMask = skylightPropagator ? 0 : 0x7FFF;
         this.isClientSide = level.isClientSide;
         this.level = level;
         this.minLightSection = WorldUtil.getMinLightSection(level);
@@ -86,7 +86,7 @@ public abstract class StarLightEngine {
         this.minSection = WorldUtil.getMinSection(level);
         this.maxSection = WorldUtil.getMaxSection(level);
         this.sectionCache = new LevelChunkSection[5 * 5 * (this.maxLightSection - this.minLightSection + 1 + 2)]; // add two extra sections for buffer
-        this.nibbleCache = new SWMRNibbleArray[5 * 5 * (this.maxLightSection - this.minLightSection + 1 + 2)]; // add two extra sections for buffer
+        this.nibbleCache = (T[]) new SWMRArray[5 * 5 * (this.maxLightSection - this.minLightSection + 1 + 2)]; // add two extra sections for buffer
         this.notifyUpdateCache = new boolean[5 * 5 * (this.maxLightSection - this.minLightSection + 1 + 2)]; // add two extra sections for buffer
     }
 
@@ -110,11 +110,11 @@ public abstract class StarLightEngine {
         return ret;
     }
 
-    public static SWMRNibbleArray[] getFilledEmptyLight(final LevelHeightAccessor world) {
-        return getFilledEmptyLight(WorldUtil.getTotalLightSections(world));
+    public static SWMRNibbleArray[] getFilledEmptyLightNibble(LevelHeightAccessor world) {
+        return getFilledEmptyLightNibble(WorldUtil.getTotalLightSections(world));
     }
 
-    private static SWMRNibbleArray[] getFilledEmptyLight(final int totalLightSections) {
+    protected static SWMRNibbleArray[] getFilledEmptyLightNibble(int totalLightSections) {
         SWMRNibbleArray[] ret = new SWMRNibbleArray[totalLightSections];
         for (int i = 0, len = ret.length; i < len; ++i) {
             //noinspection ObjectAllocationInLoop
@@ -123,7 +123,20 @@ public abstract class StarLightEngine {
         return ret;
     }
 
-    protected final void appendToDecreaseQueue(final long value) {
+    protected static SWMRShortArray[] getFilledEmptyLightShort(int totalLightSections) {
+        SWMRShortArray[] ret = new SWMRShortArray[totalLightSections];
+        for (int i = 0, len = ret.length; i < len; ++i) {
+            //noinspection ObjectAllocationInLoop
+            ret[i] = new SWMRShortArray(null, true);
+        }
+        return ret;
+    }
+
+    public static SWMRShortArray[] getFilledEmptyLightShort(LevelHeightAccessor world) {
+        return getFilledEmptyLightShort(WorldUtil.getTotalLightSections(world));
+    }
+
+    protected final void appendToDecreaseQueue(long value) {
         int idx = this.decreaseQueueInitialLength++;
         long[] queue = this.decreaseQueue;
         if (idx >= queue.length) {
@@ -139,6 +152,10 @@ public abstract class StarLightEngine {
             queue = this.resizeIncreaseQueue();
         }
         queue[idx] = value;
+    }
+
+    protected final int arrayLength() {
+        return this.nibbleCache.length;
     }
 
     public final void blocksChangedInChunk(LightChunkGetter lightAccess, int chunkX, int chunkZ, LSet positions, Boolean @Nullable [] changedSections) {
@@ -176,14 +193,14 @@ public abstract class StarLightEngine {
     protected abstract void checkBlock(LightChunkGetter lightAccess, int worldX, int worldY, int worldZ);
 
     protected void checkChunkEdge(LightChunkGetter lightAccess, int chunkX, int chunkY, int chunkZ) {
-        SWMRNibbleArray currNibble = this.getNibbleFromCache(chunkX, chunkY, chunkZ);
+        T currNibble = this.getNibbleFromCache(chunkX, chunkY, chunkZ);
         if (currNibble == null) {
             return;
         }
         for (AxisDirection direction : ONLY_HORIZONTAL_DIRECTIONS) {
             int neighbourOffX = direction.x;
             int neighbourOffZ = direction.z;
-            SWMRNibbleArray neighbourNibble = this.getNibbleFromCache(chunkX + neighbourOffX, chunkY, chunkZ + neighbourOffZ);
+            T neighbourNibble = this.getNibbleFromCache(chunkX + neighbourOffX, chunkY, chunkZ + neighbourOffZ);
             if (neighbourNibble == null) {
                 continue;
             }
@@ -253,11 +270,11 @@ public abstract class StarLightEngine {
                 // index = x | (z << 4) | (y << 8)
                 if (i < centerDelayedChecks) {
                     int value = this.chunkCheckDelayedUpdatesCenter[i];
-                    this.checkBlock(lightAccess, currentChunkOffX | value & 15, chunkOffY | value >>> 8, currentChunkOffZ | value >>> 4 & 0xF);
+                    this.checkBlock(lightAccess, currentChunkOffX | value & 15, chunkOffY | value >>> 8, currentChunkOffZ | value >>> 4 & 15);
                 }
                 if (i < neighbourDelayedChecks) {
                     int value = this.chunkCheckDelayedUpdatesNeighbour[i];
-                    this.checkBlock(lightAccess, neighbourChunkOffX | value & 15, chunkOffY | value >>> 8, neighbourChunkOffZ | value >>> 4 & 0xF);
+                    this.checkBlock(lightAccess, neighbourChunkOffX | value & 15, chunkOffY | value >>> 8, neighbourChunkOffZ | value >>> 4 & 15);
                 }
             }
         }
@@ -351,6 +368,10 @@ public abstract class StarLightEngine {
         }
     }
 
+    protected final @Nullable T get(int index) {
+        return this.nibbleCache[index];
+    }
+
     protected final BlockState getBlockState(int worldX, int worldY, int worldZ) {
         final LevelChunkSection section = this.sectionCache[(worldX >> 4) + 5 * (worldZ >> 4) + 5 * 5 * (worldY >> 4) + this.chunkSectionIndexOffset];
         if (section != null) {
@@ -381,21 +402,23 @@ public abstract class StarLightEngine {
 
     protected abstract boolean @Nullable [] getEmptinessMap(ChunkAccess chunk);
 
+    protected abstract T[] getFilledEmptyDataStructure(int totalLightSections);
+
     protected final int getLightLevel(int worldX, int worldY, int worldZ) {
-        SWMRNibbleArray nibble = this.nibbleCache[(worldX >> 4) + 5 * (worldZ >> 4) + 5 * 5 * (worldY >> 4) + this.chunkSectionIndexOffset];
+        T nibble = this.nibbleCache[(worldX >> 4) + 5 * (worldZ >> 4) + 5 * 5 * (worldY >> 4) + this.chunkSectionIndexOffset];
         return nibble == null ? 0 : nibble.getUpdating(worldX & 15 | (worldZ & 15) << 4 | (worldY & 15) << 8);
     }
 
     protected final int getLightLevel(int sectionIndex, int localIndex) {
-        SWMRNibbleArray nibble = this.nibbleCache[sectionIndex];
+        T nibble = this.nibbleCache[sectionIndex];
         return nibble == null ? 0 : nibble.getUpdating(localIndex);
     }
 
-    protected final @Nullable SWMRNibbleArray getNibbleFromCache(int chunkX, int chunkY, int chunkZ) {
+    protected final @Nullable T getNibbleFromCache(int chunkX, int chunkY, int chunkZ) {
         return this.nibbleCache[chunkX + 5 * chunkZ + 5 * 5 * chunkY + this.chunkSectionIndexOffset];
     }
 
-    protected abstract SWMRNibbleArray[] getNibblesOnChunk(ChunkAccess chunk);
+    protected abstract T[] getNibblesOnChunk(ChunkAccess chunk);
 
     /**
      * subclasses should not initialise caches, as this will always be done by the super call
@@ -518,7 +541,7 @@ public abstract class StarLightEngine {
         int chunkZ = chunk.getPos().z;
         this.setupCaches(lightAccess, chunkX * 16 + 7, chunkZ * 16 + 7, true, true);
         try {
-            SWMRNibbleArray[] nibbles = getFilledEmptyLight(this.maxLightSection - this.minLightSection + 1);
+            T[] nibbles = this.getFilledEmptyDataStructure(this.maxLightSection - this.minLightSection + 1);
             // force current chunk into cache
             this.setChunkInCache(chunkX, chunkZ, chunk);
             this.setBlocksForChunkInCache(chunkX, chunkZ, chunk.getSections());
@@ -568,9 +591,9 @@ public abstract class StarLightEngine {
             long queueValue = queue[queueReadIndex++];
             int posX = ((int) queueValue & 63) + decodeOffsetX;
             int posZ = ((int) queueValue >>> 6 & 63) + decodeOffsetZ;
-            int posY = ((int) queueValue >>> 12 & (1 << 16) - 1) + decodeOffsetY;
-            int propagatedLightLevel = (int) (queueValue >>> 6 + 6 + 16 & 0xF);
-            AxisDirection[] checkDirections = OLD_CHECK_DIRECTIONS[(int) (queueValue >>> 6 + 6 + 16 + 4 & 63)];
+            int posY = ((int) queueValue >>> 12 & 65_535) + decodeOffsetY;
+            int propagatedLightLevel = (int) (queueValue >>> 28 & 0x7FFF);
+            AxisDirection[] checkDirections = OLD_CHECK_DIRECTIONS[(int) (queueValue >>> 43 & 63)];
             if ((queueValue & FLAG_HAS_SIDED_TRANSPARENT_BLOCKS) == 0L) {
                 // we don't need to worry about our state here.
                 for (AxisDirection propagate : checkDirections) {
@@ -579,7 +602,7 @@ public abstract class StarLightEngine {
                     int offZ = posZ + propagate.z;
                     int sectionIndex = (offX >> 4) + 5 * (offZ >> 4) + 5 * 5 * (offY >> 4) + sectionOffset;
                     int localIndex = offX & 15 | (offZ & 15) << 4 | (offY & 15) << 8;
-                    SWMRNibbleArray currentNibble = this.nibbleCache[sectionIndex];
+                    T currentNibble = this.nibbleCache[sectionIndex];
                     int lightLevel;
                     if (currentNibble == null || (lightLevel = currentNibble.getUpdating(localIndex)) == 0) {
                         // already at lowest (or unloaded), nothing we can do
@@ -594,9 +617,9 @@ public abstract class StarLightEngine {
                             if (increaseQueueLength >= increaseQueue.length) {
                                 increaseQueue = this.resizeIncreaseQueue();
                             }
-                            increaseQueue[increaseQueueLength++] = offX + ((long) offZ << 6) + ((long) offY << 12) + encodeOffset & (1L << 6 + 6 + 16) - 1
-                                                                   | (lightLevel & 0xFL) << 6 + 6 + 16
-                                                                   | (long) ALL_DIRECTIONS_BITSET << 6 + 6 + 16 + 4
+                            increaseQueue[increaseQueueLength++] = offX + ((long) offZ << 6) + ((long) offY << 12) + encodeOffset & (1L << 28) - 1
+                                                                   | (lightLevel & 0x7FFFL) << 28
+                                                                   | (long) ALL_DIRECTIONS_BITSET << 43
                                                                    | FLAG_RECHECK_LEVEL;
                             continue;
                         }
@@ -607,9 +630,9 @@ public abstract class StarLightEngine {
                             if (increaseQueueLength >= increaseQueue.length) {
                                 increaseQueue = this.resizeIncreaseQueue();
                             }
-                            increaseQueue[increaseQueueLength++] = offX + ((long) offZ << 6) + ((long) offY << 12) + encodeOffset & (1L << 6 + 6 + 16) - 1
-                                                                   | (emittedLight & 0xFL) << 6 + 6 + 16
-                                                                   | (long) ALL_DIRECTIONS_BITSET << 6 + 6 + 16 + 4
+                            increaseQueue[increaseQueueLength++] = offX + ((long) offZ << 6) + ((long) offY << 12) + encodeOffset & (1L << 28) - 1
+                                                                   | (emittedLight & 0x7FFFL) << 28
+                                                                   | (long) ALL_DIRECTIONS_BITSET << 43
                                                                    | (blockState.isConditionallyFullOpaque() ? FLAG_WRITE_LEVEL | FLAG_HAS_SIDED_TRANSPARENT_BLOCKS : FLAG_WRITE_LEVEL);
                         }
                         currentNibble.set(localIndex, 0);
@@ -619,9 +642,9 @@ public abstract class StarLightEngine {
                                 queue = this.resizeDecreaseQueue();
                             }
                             queue[queueLength++] =
-                                    offX + ((long) offZ << 6) + ((long) offY << 12) + encodeOffset & (1L << 6 + 6 + 16) - 1
-                                    | (targetLevel & 0xFL) << 6 + 6 + 16
-                                    | propagate.everythingButTheOppositeDirection << 6 + 6 + 16 + 4;
+                                    offX + ((long) offZ << 6) + ((long) offY << 12) + encodeOffset & (1L << 28) - 1
+                                    | (targetLevel & 0x7FFFL) << 28
+                                    | propagate.everythingButTheOppositeDirection << 43;
                             continue;
                         }
                         continue;
@@ -636,7 +659,7 @@ public abstract class StarLightEngine {
                     }
                     int opacity = blockState.getLightBlock_(level, offX, offY, offZ);
                     int targetLevel = Math.max(0, propagatedLightLevel - Math.max(1, opacity));
-                    long l = offX + ((long) offZ << 6) + ((long) offY << 12) + encodeOffset & (1L << 6 + 6 + 16) - 1;
+                    long l = offX + ((long) offZ << 6) + ((long) offY << 12) + encodeOffset & (1L << 28) - 1;
                     if (lightLevel > targetLevel) {
                         // it looks like another source propagated here, so re-propagate it
                         if (increaseQueueLength >= increaseQueue.length) {
@@ -644,8 +667,8 @@ public abstract class StarLightEngine {
                         }
                         increaseQueue[increaseQueueLength++] =
                                 l
-                                | (lightLevel & 0xFL) << 6 + 6 + 16
-                                | (long) ALL_DIRECTIONS_BITSET << 6 + 6 + 16 + 4
+                                | (lightLevel & 0x7FFFL) << 28
+                                | (long) ALL_DIRECTIONS_BITSET << 43
                                 | FLAG_RECHECK_LEVEL | flags;
                         continue;
                     }
@@ -658,8 +681,8 @@ public abstract class StarLightEngine {
                         }
                         increaseQueue[increaseQueueLength++] =
                                 l
-                                | (emittedLight & 0xFL) << 6 + 6 + 16
-                                | (long) ALL_DIRECTIONS_BITSET << 6 + 6 + 16 + 4
+                                | (emittedLight & 0x7FFFL) << 28
+                                | (long) ALL_DIRECTIONS_BITSET << 43
                                 | flags | FLAG_WRITE_LEVEL;
                     }
                     currentNibble.set(localIndex, 0);
@@ -669,9 +692,9 @@ public abstract class StarLightEngine {
                             queue = this.resizeDecreaseQueue();
                         }
                         queue[queueLength++] =
-                                offX + ((long) offZ << 6) + ((long) offY << 12) + encodeOffset & (1L << 6 + 6 + 16) - 1
-                                | (targetLevel & 0xFL) << 6 + 6 + 16
-                                | propagate.everythingButTheOppositeDirection << 6 + 6 + 16 + 4
+                                offX + ((long) offZ << 6) + ((long) offY << 12) + encodeOffset & (1L << 28) - 1
+                                | (targetLevel & 0x7FFFL) << 28
+                                | propagate.everythingButTheOppositeDirection << 43
                                 | flags;
                     }
                 }
@@ -689,7 +712,7 @@ public abstract class StarLightEngine {
                     if (fromShape != Shapes.empty() && Shapes.faceShapeOccludes(Shapes.empty(), fromShape)) {
                         continue;
                     }
-                    SWMRNibbleArray currentNibble = this.nibbleCache[sectionIndex];
+                    T currentNibble = this.nibbleCache[sectionIndex];
                     int lightLevel;
                     if (currentNibble == null || (lightLevel = currentNibble.getUpdating(localIndex)) == 0) {
                         // already at lowest (or unloaded), nothing we can do
@@ -705,9 +728,9 @@ public abstract class StarLightEngine {
                                 increaseQueue = this.resizeIncreaseQueue();
                             }
                             increaseQueue[increaseQueueLength++] =
-                                    offX + ((long) offZ << 6) + ((long) offY << 12) + encodeOffset & (1L << 6 + 6 + 16) - 1
-                                    | (lightLevel & 0xFL) << 6 + 6 + 16
-                                    | (long) ALL_DIRECTIONS_BITSET << 6 + 6 + 16 + 4
+                                    offX + ((long) offZ << 6) + ((long) offY << 12) + encodeOffset & (1L << 28) - 1
+                                    | (lightLevel & 0x7FFFL) << 28
+                                    | (long) ALL_DIRECTIONS_BITSET << 43
                                     | FLAG_RECHECK_LEVEL;
                             continue;
                         }
@@ -719,9 +742,9 @@ public abstract class StarLightEngine {
                                 increaseQueue = this.resizeIncreaseQueue();
                             }
                             increaseQueue[increaseQueueLength++] =
-                                    offX + ((long) offZ << 6) + ((long) offY << 12) + encodeOffset & (1L << 6 + 6 + 16) - 1
-                                    | (emittedLight & 0xFL) << 6 + 6 + 16
-                                    | (long) ALL_DIRECTIONS_BITSET << 6 + 6 + 16 + 4
+                                    offX + ((long) offZ << 6) + ((long) offY << 12) + encodeOffset & (1L << 28) - 1
+                                    | (emittedLight & 0x7FFFL) << 28
+                                    | (long) ALL_DIRECTIONS_BITSET << 43
                                     | (blockState.isConditionallyFullOpaque() ? FLAG_WRITE_LEVEL | FLAG_HAS_SIDED_TRANSPARENT_BLOCKS : FLAG_WRITE_LEVEL);
                         }
                         currentNibble.set(localIndex, 0);
@@ -731,9 +754,9 @@ public abstract class StarLightEngine {
                                 queue = this.resizeDecreaseQueue();
                             }
                             queue[queueLength++] =
-                                    offX + ((long) offZ << 6) + ((long) offY << 12) + encodeOffset & (1L << 6 + 6 + 16) - 1
-                                    | (targetLevel & 0xFL) << 6 + 6 + 16
-                                    | propagate.everythingButTheOppositeDirection << 6 + 6 + 16 + 4;
+                                    offX + ((long) offZ << 6) + ((long) offY << 12) + encodeOffset & (1L << 28) - 1
+                                    | (targetLevel & 0x7FFFL) << 28
+                                    | propagate.everythingButTheOppositeDirection << 43;
                             continue;
                         }
                         continue;
@@ -754,9 +777,9 @@ public abstract class StarLightEngine {
                             increaseQueue = this.resizeIncreaseQueue();
                         }
                         increaseQueue[increaseQueueLength++] =
-                                offX + ((long) offZ << 6) + ((long) offY << 12) + encodeOffset & (1L << 6 + 6 + 16) - 1
-                                | (lightLevel & 0xFL) << 6 + 6 + 16
-                                | (long) ALL_DIRECTIONS_BITSET << 6 + 6 + 16 + 4
+                                offX + ((long) offZ << 6) + ((long) offY << 12) + encodeOffset & (1L << 28) - 1
+                                | (lightLevel & 0x7FFFL) << 28
+                                | (long) ALL_DIRECTIONS_BITSET << 43
                                 | FLAG_RECHECK_LEVEL | flags;
                         continue;
                     }
@@ -768,9 +791,9 @@ public abstract class StarLightEngine {
                             increaseQueue = this.resizeIncreaseQueue();
                         }
                         increaseQueue[increaseQueueLength++] =
-                                offX + ((long) offZ << 6) + ((long) offY << 12) + encodeOffset & (1L << 6 + 6 + 16) - 1
-                                | (emittedLight & 0xFL) << 6 + 6 + 16
-                                | (long) ALL_DIRECTIONS_BITSET << 6 + 6 + 16 + 4
+                                offX + ((long) offZ << 6) + ((long) offY << 12) + encodeOffset & (1L << 28) - 1
+                                | (emittedLight & 0x7FFFL) << 28
+                                | (long) ALL_DIRECTIONS_BITSET << 43
                                 | flags | FLAG_WRITE_LEVEL;
                     }
                     currentNibble.set(localIndex, 0);
@@ -780,9 +803,9 @@ public abstract class StarLightEngine {
                             queue = this.resizeDecreaseQueue();
                         }
                         queue[queueLength++] =
-                                offX + ((long) offZ << 6) + ((long) offY << 12) + encodeOffset & (1L << 6 + 6 + 16) - 1
-                                | (targetLevel & 0xFL) << 6 + 6 + 16
-                                | propagate.everythingButTheOppositeDirection << 6 + 6 + 16 + 4
+                                offX + ((long) offZ << 6) + ((long) offY << 12) + encodeOffset & (1L << 28) - 1
+                                | (targetLevel & 0x7FFFL) << 28
+                                | propagate.everythingButTheOppositeDirection << 43
                                 | flags;
                     }
                 }
@@ -808,9 +831,9 @@ public abstract class StarLightEngine {
             long queueValue = queue[queueReadIndex++];
             int posX = ((int) queueValue & 63) + decodeOffsetX;
             int posZ = ((int) queueValue >>> 6 & 63) + decodeOffsetZ;
-            int posY = ((int) queueValue >>> 12 & (1 << 16) - 1) + decodeOffsetY;
-            int propagatedLightLevel = (int) (queueValue >>> 6 + 6 + 16 & 0xFL);
-            AxisDirection[] checkDirections = OLD_CHECK_DIRECTIONS[(int) (queueValue >>> 6 + 6 + 16 + 4 & 63L)];
+            int posY = ((int) queueValue >>> 12 & 65_535) + decodeOffsetY;
+            int propagatedLightLevel = (int) (queueValue >>> 28 & 0x7FFFL);
+            AxisDirection[] checkDirections = OLD_CHECK_DIRECTIONS[(int) (queueValue >>> 43 & 63L)];
             if ((queueValue & FLAG_RECHECK_LEVEL) != 0L) {
                 if (this.getLightLevel(posX, posY, posZ) != propagatedLightLevel) {
                     // not at the level we expect, so something changed.
@@ -829,7 +852,7 @@ public abstract class StarLightEngine {
                     int offZ = posZ + propagate.z;
                     int sectionIndex = (offX >> 4) + 5 * (offZ >> 4) + 5 * 5 * (offY >> 4) + sectionOffset;
                     int localIndex = offX & 15 | (offZ & 15) << 4 | (offY & 15) << 8;
-                    SWMRNibbleArray currentNibble = this.nibbleCache[sectionIndex];
+                    T currentNibble = this.nibbleCache[sectionIndex];
                     int currentLevel;
                     if (currentNibble == null || (currentLevel = currentNibble.getUpdating(localIndex)) >= propagatedLightLevel - 1) {
                         continue; // already at the level we want or unloaded
@@ -846,9 +869,9 @@ public abstract class StarLightEngine {
                                     queue = this.resizeIncreaseQueue();
                                 }
                                 queue[queueLength++] =
-                                        offX + ((long) offZ << 6) + ((long) offY << 12) + encodeOffset & (1L << 6 + 6 + 16) - 1
-                                        | (targetLevel & 0xFL) << 6 + 6 + 16
-                                        | propagate.everythingButTheOppositeDirection << 6 + 6 + 16 + 4;
+                                        offX + ((long) offZ << 6) + ((long) offY << 12) + encodeOffset & (1L << 28) - 1
+                                        | (targetLevel & 0x7FFFL) << 28
+                                        | propagate.everythingButTheOppositeDirection << 43;
                                 continue;
                             }
                         }
@@ -874,9 +897,9 @@ public abstract class StarLightEngine {
                             queue = this.resizeIncreaseQueue();
                         }
                         queue[queueLength++] =
-                                offX + ((long) offZ << 6) + ((long) offY << 12) + encodeOffset & (1L << 6 + 6 + 16) - 1
-                                | (targetLevel & 0xFL) << 6 + 6 + 16
-                                | propagate.everythingButTheOppositeDirection << 6 + 6 + 16 + 4
+                                offX + ((long) offZ << 6) + ((long) offY << 12) + encodeOffset & (1L << 28) - 1
+                                | (targetLevel & 0x7FFFL) << 28
+                                | propagate.everythingButTheOppositeDirection << 43
                                 | flags;
                     }
                 }
@@ -894,7 +917,7 @@ public abstract class StarLightEngine {
                     }
                     int sectionIndex = (offX >> 4) + 5 * (offZ >> 4) + 5 * 5 * (offY >> 4) + sectionOffset;
                     int localIndex = offX & 15 | (offZ & 15) << 4 | (offY & 15) << 8;
-                    SWMRNibbleArray currentNibble = this.nibbleCache[sectionIndex];
+                    T currentNibble = this.nibbleCache[sectionIndex];
                     int currentLevel;
                     if (currentNibble == null || (currentLevel = currentNibble.getUpdating(localIndex)) >= propagatedLightLevel - 1) {
                         continue; // already at the level we want
@@ -911,9 +934,9 @@ public abstract class StarLightEngine {
                                     queue = this.resizeIncreaseQueue();
                                 }
                                 queue[queueLength++] =
-                                        offX + ((long) offZ << 6) + ((long) offY << 12) + encodeOffset & (1L << 6 + 6 + 16) - 1
-                                        | (targetLevel & 0xFL) << 6 + 6 + 16
-                                        | propagate.everythingButTheOppositeDirection << 6 + 6 + 16 + 4;
+                                        offX + ((long) offZ << 6) + ((long) offY << 12) + encodeOffset & (1L << 28) - 1
+                                        | (targetLevel & 0x7FFFL) << 28
+                                        | propagate.everythingButTheOppositeDirection << 43;
                                 continue;
                             }
                         }
@@ -939,9 +962,9 @@ public abstract class StarLightEngine {
                             queue = this.resizeIncreaseQueue();
                         }
                         queue[queueLength++] =
-                                offX + ((long) offZ << 6) + ((long) offY << 12) + encodeOffset & (1L << 6 + 6 + 16) - 1
-                                | (targetLevel & 0xFL) << 6 + 6 + 16
-                                | propagate.everythingButTheOppositeDirection << 6 + 6 + 16 + 4
+                                offX + ((long) offZ << 6) + ((long) offY << 12) + encodeOffset & (1L << 28) - 1
+                                | (targetLevel & 0x7FFFL) << 28
+                                | propagate.everythingButTheOppositeDirection << 43
                                 | flags;
                     }
                 }
@@ -981,14 +1004,14 @@ public abstract class StarLightEngine {
         int chunkX = chunkPos.x;
         int chunkZ = chunkPos.z;
         for (int currSectionY = toSection; currSectionY >= fromSection; --currSectionY) {
-            SWMRNibbleArray currNibble = this.getNibbleFromCache(chunkX, currSectionY, chunkZ);
+            T currNibble = this.getNibbleFromCache(chunkX, currSectionY, chunkZ);
             if (currNibble == null) {
                 continue;
             }
             for (AxisDirection direction : ONLY_HORIZONTAL_DIRECTIONS) {
                 int neighbourOffX = direction.x;
                 int neighbourOffZ = direction.z;
-                SWMRNibbleArray neighbourNibble = this.getNibbleFromCache(chunkX + neighbourOffX, currSectionY, chunkZ + neighbourOffZ);
+                T neighbourNibble = this.getNibbleFromCache(chunkX + neighbourOffX, currSectionY, chunkZ + neighbourOffZ);
                 if (neighbourNibble == null || !neighbourNibble.isInitialisedUpdating()) {
                     // can't pull from 0
                     continue;
@@ -1034,9 +1057,9 @@ public abstract class StarLightEngine {
                             continue;
                         }
                         this.appendToIncreaseQueue(
-                                currX + ((long) currZ << 6) + ((long) currY << 6 + 6) + encodeOffset & (1L << 6 + 6 + 16) - 1
-                                | (level & 0xFL) << 6 + 6 + 16
-                                | propagateDirection << 6 + 6 + 16 + 4
+                                currX + ((long) currZ << 6) + ((long) currY << 12) + encodeOffset & (1L << 28) - 1
+                                | (level & 0x7FFFL) << 28
+                                | propagateDirection << 43
                                 | FLAG_HAS_SIDED_TRANSPARENT_BLOCKS // don't know if the current block is transparent, must check.
                         );
                     }
@@ -1051,6 +1074,10 @@ public abstract class StarLightEngine {
 
     protected final long[] resizeIncreaseQueue() {
         return this.increaseQueue = Arrays.copyOf(this.increaseQueue, this.increaseQueue.length * 2);
+    }
+
+    protected final void set(int index, @Nullable T data) {
+        this.nibbleCache[index] = data;
     }
 
     protected final void setBlocksForChunkInCache(int chunkX, int chunkZ, LevelChunkSection[] sections) {
@@ -1075,7 +1102,7 @@ public abstract class StarLightEngine {
 
     protected final void setLightLevel(int worldX, int worldY, int worldZ, int level) {
         int sectionIndex = (worldX >> 4) + 5 * (worldZ >> 4) + 5 * 5 * (worldY >> 4) + this.chunkSectionIndexOffset;
-        SWMRNibbleArray nibble = this.nibbleCache[sectionIndex];
+        T nibble = this.nibbleCache[sectionIndex];
         if (nibble != null) {
             nibble.set(worldX & 15 | (worldZ & 15) << 4 | (worldY & 15) << 8, level);
             if (this.isClientSide) {
@@ -1096,15 +1123,15 @@ public abstract class StarLightEngine {
         }
     }
 
-    protected final void setNibbleInCache(int chunkX, int chunkY, int chunkZ, SWMRNibbleArray nibble) {
+    protected final void setNibbleInCache(int chunkX, int chunkY, int chunkZ, T nibble) {
         this.nibbleCache[chunkX + 5 * chunkZ + 5 * 5 * chunkY + this.chunkSectionIndexOffset] = nibble;
     }
 
     protected abstract void setNibbleNull(int chunkX, int chunkY, int chunkZ);
 
-    protected abstract void setNibbles(ChunkAccess chunk, SWMRNibbleArray[] to);
+    protected abstract void setNibbles(ChunkAccess chunk, T[] to);
 
-    protected final void setNibblesForChunkInCache(int chunkX, int chunkZ, SWMRNibbleArray[] nibbles) {
+    protected final void setNibblesForChunkInCache(int chunkX, int chunkZ, T[] nibbles) {
         for (int cy = this.minLightSection; cy <= this.maxLightSection; ++cy) {
             this.setNibbleInCache(chunkX, cy, chunkZ, nibbles[cy - this.minLightSection]);
         }
@@ -1159,7 +1186,7 @@ public abstract class StarLightEngine {
 
     protected final void updateVisible(LightChunkGetter lightAccess) {
         for (int index = 0, max = this.nibbleCache.length; index < max; ++index) {
-            SWMRNibbleArray nibble = this.nibbleCache[index];
+            T nibble = this.nibbleCache[index];
             if (!this.notifyUpdateCache[index] && (nibble == null || !nibble.isDirty())) {
                 continue;
             }

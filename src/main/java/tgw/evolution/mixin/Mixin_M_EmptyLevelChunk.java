@@ -17,6 +17,7 @@ import org.spongepowered.asm.mixin.Overwrite;
 import tgw.evolution.Evolution;
 import tgw.evolution.hooks.asm.DeleteMethod;
 import tgw.evolution.world.lighting.SWMRNibbleArray;
+import tgw.evolution.world.lighting.SWMRShortArray;
 import tgw.evolution.world.lighting.StarLightEngine;
 
 @Mixin(EmptyLevelChunk.class)
@@ -42,8 +43,8 @@ public abstract class Mixin_M_EmptyLevelChunk extends LevelChunk {
     }
 
     @Override
-    public SWMRNibbleArray[] getBlockNibbles() {
-        return StarLightEngine.getFilledEmptyLight(this.getLevel());
+    public SWMRShortArray[] getBlockShorts() {
+        return StarLightEngine.getFilledEmptyLightShort(this.getLevel());
     }
 
     /**
@@ -106,7 +107,7 @@ public abstract class Mixin_M_EmptyLevelChunk extends LevelChunk {
 
     @Override
     public SWMRNibbleArray[] getSkyNibbles() {
-        return StarLightEngine.getFilledEmptyLight(this.getLevel());
+        return StarLightEngine.getFilledEmptyLightNibble(this.getLevel());
     }
 
     @Override
@@ -132,7 +133,7 @@ public abstract class Mixin_M_EmptyLevelChunk extends LevelChunk {
     }
 
     @Override
-    public void setBlockNibbles(SWMRNibbleArray[] nibbles) {
+    public void setBlockShorts(SWMRShortArray[] nibbles) {
         //Do nothing
     }
 

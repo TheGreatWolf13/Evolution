@@ -6,7 +6,10 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
@@ -28,6 +31,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.hooks.asm.DeleteMethod;
+import tgw.evolution.util.constants.BlockFlags;
+import tgw.evolution.util.constants.LvlEvent;
 
 @Mixin(DoorBlock.class)
 public abstract class Mixin_M_DoorBlock extends Block {
@@ -62,10 +67,45 @@ public abstract class Mixin_M_DoorBlock extends Block {
     }
 
     @Shadow
-    protected abstract int getCloseSound();
+    protected abstract @LvlEvent int getCloseSound();
+
+    @Overwrite
+    private DoorHingeSide getHinge(BlockPlaceContext context) {
+        BlockGetter level = context.getLevel();
+        BlockPos pos = context.getClickedPos();
+        int x = pos.getX();
+        int y = pos.getY();
+        int z = pos.getZ();
+        Direction horizDir = context.getHorizontalDirection();
+        Direction nextHorizDir = horizDir.getCounterClockWise();
+        int nextX = x + nextHorizDir.getStepX();
+        int nextZ = z + nextHorizDir.getStepZ();
+        BlockState stateAtNext = level.getBlockState_(nextX, y, nextZ);
+        BlockState stateAtNextUp = level.getBlockState_(nextX, y + 1, nextZ);
+        Direction prevHorizDir = horizDir.getClockWise();
+        int prevX = x + prevHorizDir.getStepX();
+        int prevZ = z + prevHorizDir.getStepZ();
+        BlockState stateAtPrev = level.getBlockState_(prevX, y, prevZ);
+        BlockState stateAtPrevUp = level.getBlockState_(prevX, y + 1, prevZ);
+        int i = (stateAtNext.isCollisionShapeFullBlock_(level, nextX, y, nextZ) ? -1 : 0) + (stateAtNextUp.isCollisionShapeFullBlock_(level, nextX, y + 1, nextZ) ? -1 : 0) + (stateAtPrev.isCollisionShapeFullBlock_(level, prevX, y, prevZ) ? 1 : 0) + (stateAtPrevUp.isCollisionShapeFullBlock_(level, prevX, y + 1, prevZ) ? 1 : 0);
+        boolean bl = stateAtNext.is(this) && stateAtNext.getValue(HALF) == DoubleBlockHalf.LOWER;
+        boolean bl2 = stateAtPrev.is(this) && stateAtPrev.getValue(HALF) == DoubleBlockHalf.LOWER;
+        if ((!bl || bl2) && i <= 0) {
+            if ((!bl2 || bl) && i == 0) {
+                int j = horizDir.getStepX();
+                int k = horizDir.getStepZ();
+                BlockHitResult hitResult = context.getHitResult();
+                double d = hitResult.x() - pos.getX();
+                double e = hitResult.z() - pos.getZ();
+                return (j >= 0 || !(e < 0.5)) && (j <= 0 || !(e > 0.5)) && (k >= 0 || !(d > 0.5)) && (k <= 0 || !(d < 0.5)) ? DoorHingeSide.LEFT : DoorHingeSide.RIGHT;
+            }
+            return DoorHingeSide.LEFT;
+        }
+        return DoorHingeSide.RIGHT;
+    }
 
     @Shadow
-    protected abstract int getOpenSound();
+    protected abstract @LvlEvent int getOpenSound();
 
     @Override
     @Overwrite
@@ -97,6 +137,21 @@ public abstract class Mixin_M_DoorBlock extends Block {
             case NORTH -> open ? NORTH_AABB : rightHinge ? WEST_AABB : EAST_AABB;
             default -> open ? EAST_AABB : rightHinge ? NORTH_AABB : SOUTH_AABB;
         };
+    }
+
+    @Overwrite
+    @Override
+    public @Nullable BlockState getStateForPlacement(BlockPlaceContext context) {
+        BlockPos pos = context.getClickedPos();
+        Level level = context.getLevel();
+        int x = pos.getX();
+        int y = pos.getY();
+        int z = pos.getZ();
+        if (y < level.getMaxBuildHeight() - 1 && level.getBlockState_(x, y + 1, z).canBeReplaced_(level, x, y, z, context.getPlayer(), context.getHand(), context.getHitResult())) {
+            boolean bl = level.hasNeighborSignal(pos) || level.hasNeighborSignal(pos.above());
+            return this.defaultBlockState().setValue(FACING, context.getHorizontalDirection()).setValue(HINGE, this.getHinge(context)).setValue(POWERED, bl).setValue(OPEN, bl).setValue(HALF, DoubleBlockHalf.LOWER);
+        }
+        return null;
     }
 
     @Shadow
@@ -153,6 +208,18 @@ public abstract class Mixin_M_DoorBlock extends Block {
     @Override
     @Overwrite
     @DeleteMethod
+    public void setPlacedBy(Level level, BlockPos blockPos, BlockState blockState, @Nullable LivingEntity livingEntity, ItemStack itemStack) {
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public void setPlacedBy_(Level level, int x, int y, int z, BlockState stateAtPos, Player player, ItemStack stack) {
+        level.setBlock_(x, y + 1, z, stateAtPos.setValue(HALF, DoubleBlockHalf.UPPER), BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE);
+    }
+
+    @Override
+    @Overwrite
+    @DeleteMethod
     public BlockState updateShape(BlockState blockState,
                                   Direction direction,
                                   BlockState blockState2,
@@ -200,16 +267,20 @@ public abstract class Mixin_M_DoorBlock extends Block {
     }
 
     @Override
+    public boolean useShapeForLightOcclusion(BlockState blockState) {
+        return true;
+    }
+
+    @Override
     public InteractionResult use_(BlockState state, Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult) {
         if (this.material == Material.METAL) {
             return InteractionResult.PASS;
         }
         state = state.cycle(OPEN);
-        BlockPos pos = new BlockPos(x, y, z);
-        level.setBlock(pos, state, 10);
+        level.setBlock_(x, y, z, state, BlockFlags.BLOCK_UPDATE | BlockFlags.RENDER_MAINTHREAD);
         boolean isOpen = this.isOpen(state);
-        level.levelEvent(player, isOpen ? this.getOpenSound() : this.getCloseSound(), pos, 0);
-        level.gameEvent(player, isOpen ? GameEvent.BLOCK_OPEN : GameEvent.BLOCK_CLOSE, pos);
+        level.levelEvent_(player, isOpen ? this.getOpenSound() : this.getCloseSound(), x, y, z, 0);
+        level.gameEvent(player, isOpen ? GameEvent.BLOCK_OPEN : GameEvent.BLOCK_CLOSE, new BlockPos(x, y, z));
         return InteractionResult.sidedSuccess(level.isClientSide);
     }
 }

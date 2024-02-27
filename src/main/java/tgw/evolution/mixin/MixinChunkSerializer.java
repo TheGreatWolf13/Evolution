@@ -49,6 +49,7 @@ import tgw.evolution.util.collection.maps.L2OMap;
 import tgw.evolution.util.collection.sets.RSet;
 import tgw.evolution.util.collection.sets.SimpleEnumSet;
 import tgw.evolution.world.lighting.SWMRNibbleArray;
+import tgw.evolution.world.lighting.SWMRShortArray;
 import tgw.evolution.world.lighting.StarLightEngine;
 
 import java.util.Map;
@@ -152,8 +153,8 @@ public abstract class MixinChunkSerializer {
         Registry<Biome> registry = level.registryAccess().registryOrThrow(Registry.BIOME_REGISTRY);
         Codec<PalettedContainer<Holder<Biome>>> codec = makeBiomeCodec(registry);
         final int minLightSection = lightEngine.getMinLightSection();
-        SWMRNibbleArray[] blockNibbles = StarLightEngine.getFilledEmptyLight(level);
-        SWMRNibbleArray[] skyNibbles = StarLightEngine.getFilledEmptyLight(level);
+        SWMRShortArray[] blockNibbles = StarLightEngine.getFilledEmptyLightShort(level);
+        SWMRNibbleArray[] skyNibbles = StarLightEngine.getFilledEmptyLightNibble(level);
         for (int i = 0; i < sections.size(); i++) {
             CompoundTag compound = sections.getCompound(i);
             int y = compound.getByte("Y");
@@ -201,11 +202,11 @@ public abstract class MixinChunkSerializer {
             if (isLightOn) {
                 if (compound.contains("BlockLight", Tag.TAG_BYTE_ARRAY)) {
                     //noinspection ObjectAllocationInLoop
-                    blockNibbles[y - minLightSection] = new SWMRNibbleArray(compound.getByteArray("BlockLight"), compound.getInt("BlockLightState"));
+                    blockNibbles[y - minLightSection] = new SWMRShortArray(compound.getByteArray("BlockLight"), compound.getInt("BlockLightState"));
                 }
                 else {
                     //noinspection ObjectAllocationInLoop
-                    blockNibbles[y - minLightSection] = new SWMRNibbleArray(null, compound.getInt("BlockLightState"));
+                    blockNibbles[y - minLightSection] = new SWMRShortArray(null, compound.getInt("BlockLightState"));
                 }
                 if (hasSkyLight) {
                     if (compound.contains("SkyLight", Tag.TAG_BYTE_ARRAY)) {
@@ -292,7 +293,7 @@ public abstract class MixinChunkSerializer {
             }
         }
         if (chunkType == ChunkStatus.ChunkType.LEVELCHUNK) {
-            chunkAccess.setBlockNibbles(blockNibbles);
+            chunkAccess.setBlockShorts(blockNibbles);
             chunkAccess.setSkyNibbles(skyNibbles);
             //Load event
             return new ImposterProtoChunk((LevelChunk) chunkAccess, false);
@@ -320,7 +321,7 @@ public abstract class MixinChunkSerializer {
             //noinspection ObjectAllocationInLoop
             protoChunk.setCarvingMask(carving, new CarvingMask(carvingMasks.getLongArray(s), chunkAccess.getMinBuildHeight()));
         }
-        protoChunk.setBlockNibbles(blockNibbles);
+        protoChunk.setBlockShorts(blockNibbles);
         protoChunk.setSkyNibbles(skyNibbles);
         //Load event
         return protoChunk;
@@ -369,13 +370,13 @@ public abstract class MixinChunkSerializer {
         Registry<Biome> registry = level.registryAccess().registryOrThrow(Registry.BIOME_REGISTRY);
         Codec<PalettedContainer<Holder<Biome>>> codec = makeBiomeCodec(registry);
         boolean lightCorrect = chunk.isLightCorrect();
-        SWMRNibbleArray[] blockNibbles = chunk.getBlockNibbles();
+        SWMRShortArray[] blockNibbles = chunk.getBlockShorts();
         SWMRNibbleArray[] skyNibbles = chunk.getSkyNibbles();
         int minLightSection = lightEngine.getMinLightSection();
         for (int i = minLightSection; i < lightEngine.getMaxLightSection(); ++i) {
             int index = chunk.getSectionIndexFromSectionY(i);
             boolean validIndex = index >= 0 && index < sections.length;
-            SWMRNibbleArray.SaveState blockNibble = blockNibbles[i - minLightSection].getSaveState();
+            SWMRShortArray.SaveState blockNibble = blockNibbles[i - minLightSection].getSaveState();
             SWMRNibbleArray.SaveState skyNibble = skyNibbles[i - minLightSection].getSaveState();
             if (validIndex || blockNibble != null || skyNibble != null) {
                 //noinspection ObjectAllocationInLoop

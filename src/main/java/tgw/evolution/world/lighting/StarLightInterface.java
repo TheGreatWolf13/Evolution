@@ -16,6 +16,7 @@ import net.minecraft.world.level.lighting.LayerLightEventListener;
 import net.minecraft.world.level.lighting.LevelLightEngine;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
+import tgw.evolution.client.renderer.ambient.DynamicLights;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
@@ -197,7 +198,7 @@ public final class StarLightInterface {
                 if (chunk == null || secY < StarLightInterface.this.minLightSection || secY > StarLightInterface.this.maxLightSection) {
                     return null;
                 }
-                return chunk.getBlockNibbles()[secY - StarLightInterface.this.minLightSection].toVanillaNibble();
+                return chunk.getBlockShorts()[secY - StarLightInterface.this.minLightSection].toVanillaShort();
             }
 
             @Override
@@ -208,15 +209,12 @@ public final class StarLightInterface {
 
             @Override
             public int getLightValue_(long pos) {
-                int dynamicLight = 0;
+                int dl = 0;
                 if (StarLightInterface.this.level != null && StarLightInterface.this.level.isClientSide) {
                     ClientEvents instance = ClientEvents.getInstance();
                     if (instance.isInitialized()) {
-                        int r = instance.getDynamicLights().getRedRange(pos);
-                        int g = instance.getDynamicLights().getGreenRange(pos);
-                        int b = instance.getDynamicLights().getBlueRange(pos);
-                        dynamicLight = Math.max(r, Math.max(g, b));
-                        if (dynamicLight == 15) {
+                        dl = instance.getDynamicLights().getLight(pos);
+                        if (dl == 0b1_1111_1_1111_1_1111) {
                             return 15;
                         }
                     }
@@ -225,7 +223,10 @@ public final class StarLightInterface {
                 int y = BlockPos.getY(pos);
                 int z = BlockPos.getZ(pos);
                 int bl = StarLightInterface.this.getBlockLightValue(x, y, z, StarLightInterface.this.getAnyChunkNow(SectionPos.blockToSectionCoord(x), SectionPos.blockToSectionCoord(z)));
-                return Math.max(bl, dynamicLight);
+                if (dl == 0) {
+                    return bl;
+                }
+                return DynamicLights.combine(bl, dl);
             }
 
             @Override
@@ -367,12 +368,20 @@ public final class StarLightInterface {
         if (chunk == null) {
             return 0;
         }
-        SWMRNibbleArray nibble = chunk.getBlockNibbles()[secY - minLightSection];
+        SWMRShortArray nibble = chunk.getBlockShorts()[secY - minLightSection];
         return nibble.getVisible(x, y, z);
     }
 
     public LayerLightEventListener getBlockReader() {
         return this.blockReader;
+    }
+
+    private int getClampedBlockLightValue(int x, int y, int z, @Nullable ChunkAccess chunk) {
+        int value = this.getBlockLightValue(x, y, z, chunk);
+        int r = value & 0xF;
+        int g = value >>> 5 & 0xF;
+        int b = value >>> 10 & 0xF;
+        return Math.max(r, Math.max(g, b));
     }
 
     public @Nullable Level getLevel() {
@@ -393,7 +402,7 @@ public final class StarLightInterface {
         if (sky == 15) {
             return 15;
         }
-        int block = this.getBlockLightValue(x, y, z, chunk);
+        int block = this.getClampedBlockLightValue(x, y, z, chunk);
         return Math.max(sky, block);
     }
 

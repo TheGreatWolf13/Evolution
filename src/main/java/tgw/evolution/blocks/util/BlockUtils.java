@@ -60,6 +60,7 @@ public final class BlockUtils {
     public static final ToIntFunction<BlockState> LIGHT_11 = BlockUtils::light11;
     public static final ToIntFunction<BlockState> LIGHT_14 = BlockUtils::light14;
     public static final ToIntFunction<BlockState> LIGHT_15 = BlockUtils::light15;
+    public static final ToIntFunction<BlockState> LIGHT_YELLOW_15 = BlockUtils::lightYellow15;
     private static final ThreadLocal<TriKey2BLinkedHashCache<BlockState, BlockState, Direction>> OCCLUSION_CACHE = ThreadLocal.withInitial(
             () -> new TriKey2BLinkedHashCache<>(2_048, (byte) 127));
 
@@ -232,6 +233,10 @@ public final class BlockUtils {
 
     private static int light7(BlockState state) {
         return 7;
+    }
+
+    private static int lightYellow15(BlockState state) {
+        return 0b1_1111_1_1111;
     }
 
     private static boolean never(BlockState state, BlockGetter level, int x, int y, int z) {

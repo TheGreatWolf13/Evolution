@@ -8,13 +8,18 @@ import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.biome.AmbientAdditionsSettings;
 import net.minecraft.world.level.biome.AmbientMoodSettings;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeManager;
-import org.spongepowered.asm.mixin.*;
+import net.minecraft.world.level.lighting.LevelLightEngine;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Overwrite;
+import org.spongepowered.asm.mixin.Shadow;
 
 import javax.annotation.Nullable;
 import java.util.Optional;
@@ -23,7 +28,6 @@ import java.util.Random;
 @Mixin(BiomeAmbientSoundsHandler.class)
 public abstract class MixinBiomeAmbientSoundsHandler {
 
-    @Unique private final BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
     @Shadow private Optional<AmbientAdditionsSettings> additionsSettings;
     @Shadow @Final private BiomeManager biomeManager;
     @Shadow @Final private Object2ObjectArrayMap<Biome, BiomeAmbientSoundsHandler.LoopSoundInstance> loopSounds;
@@ -33,11 +37,7 @@ public abstract class MixinBiomeAmbientSoundsHandler {
     @Shadow @Nullable private Biome previousBiome;
     @Shadow @Final private Random random;
     @Shadow @Final private SoundManager soundManager;
-
-    /**
-     * @author TheGreatWolf
-     * @reason Avoid allocations when possible
-     */
+    
     @Overwrite
     public void tick() {
         this.loopSounds.values().removeIf(AbstractTickableSoundInstance::isStopped);
@@ -72,20 +72,22 @@ public abstract class MixinBiomeAmbientSoundsHandler {
             AmbientMoodSettings settings = this.moodSettings.get();
             Level level = this.player.level;
             int i = settings.getBlockSearchExtent() * 2 + 1;
-            this.mutablePos.set(this.player.getX() + this.random.nextInt(i) - settings.getBlockSearchExtent(),
-                                this.player.getEyeY() + this.random.nextInt(i) - settings.getBlockSearchExtent(),
-                                this.player.getZ() + this.random.nextInt(i) - settings.getBlockSearchExtent());
-            int j = level.getBrightness(LightLayer.SKY, this.mutablePos);
+            int px = Mth.floor(this.player.getX() + this.random.nextInt(i) - settings.getBlockSearchExtent());
+            int py = Mth.floor(this.player.getEyeY() + this.random.nextInt(i) - settings.getBlockSearchExtent());
+            int pz = Mth.floor(this.player.getZ() + this.random.nextInt(i) - settings.getBlockSearchExtent());
+            long pos = BlockPos.asLong(px, py, pz);
+            LevelLightEngine lightEngine = level.getLightEngine();
+            int j = lightEngine.getLayerListener(LightLayer.SKY).getLightValue_(pos);
             if (j > 0) {
                 this.moodiness -= j / (float) level.getMaxLightLevel() * 0.001F;
             }
             else {
-                this.moodiness -= (level.getBrightness(LightLayer.BLOCK, this.mutablePos) - 1) / (float) settings.getTickDelay();
+                this.moodiness -= (lightEngine.getLayerListener(LightLayer.BLOCK).getClampledLightValue(pos) - 1) / (float) settings.getTickDelay();
             }
             if (this.moodiness >= 1.0F) {
-                double x = this.mutablePos.getX() + 0.5;
-                double y = this.mutablePos.getY() + 0.5;
-                double z = this.mutablePos.getZ() + 0.5;
+                double x = px + 0.5;
+                double y = py + 0.5;
+                double z = pz + 0.5;
                 double dx = x - this.player.getX();
                 double dy = y - this.player.getEyeY();
                 double dz = z - this.player.getZ();

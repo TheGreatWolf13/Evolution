@@ -80,16 +80,8 @@ public class DynamicLights {
         removed.clear();
     }
 
-    public int getBlueRange(long pos) {
-        return this.lights.get(pos) >> 10 & 0b1111;
-    }
-
-    public int getGreenRange(long pos) {
-        return this.lights.get(pos) >> 5 & 0b1111;
-    }
-
-    public int getRedRange(long pos) {
-        return this.lights.get(pos) & 0b1111;
+    public short getLight(long pos) {
+        return this.lights.get(pos);
     }
 
     private void handleAdd(long pos, short light) {

@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import tgw.evolution.util.collection.lists.LList;
 import tgw.evolution.util.collection.maps.L2OMap;
 import tgw.evolution.world.lighting.SWMRNibbleArray;
+import tgw.evolution.world.lighting.SWMRShortArray;
 
 import java.util.Map;
 
@@ -29,7 +30,7 @@ public interface PatchChunkAccess {
         throw new AbstractMethodError();
     }
 
-    default SWMRNibbleArray[] getBlockNibbles() {
+    default SWMRShortArray[] getBlockShorts() {
         throw new AbstractMethodError();
     }
 
@@ -65,7 +66,7 @@ public interface PatchChunkAccess {
         throw new AbstractMethodError();
     }
 
-    default void setBlockNibbles(SWMRNibbleArray[] nibbles) {
+    default void setBlockShorts(SWMRShortArray[] shorts) {
         throw new AbstractMethodError();
     }
 

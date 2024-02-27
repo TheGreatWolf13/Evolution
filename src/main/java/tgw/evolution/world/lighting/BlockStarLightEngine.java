@@ -14,7 +14,7 @@ import tgw.evolution.util.collection.lists.LArrayList;
 import tgw.evolution.util.collection.lists.LList;
 import tgw.evolution.util.collection.sets.LSet;
 
-public final class BlockStarLightEngine extends StarLightEngine {
+public final class BlockStarLightEngine extends StarLightEngine<SWMRShortArray> {
 
     public BlockStarLightEngine(Level level) {
         super(false, level);
@@ -23,7 +23,7 @@ public final class BlockStarLightEngine extends StarLightEngine {
     @Override
     protected int calculateLightValue(LightChunkGetter lightAccess, int worldX, int worldY, int worldZ, int expect) {
         BlockState centerState = this.getBlockState(worldX, worldY, worldZ);
-        int level = centerState.getLightEmission() & 0xF;
+        int level = centerState.getLightEmission() & 0x7FFF;
         if (level >= 15 - 1 || level > expect) {
             return level;
         }
@@ -96,9 +96,9 @@ public final class BlockStarLightEngine extends StarLightEngine {
         // this accounts for change in emitted light that would cause an increase
         if (emittedLevel != 0) {
             this.appendToIncreaseQueue(
-                    worldX + ((long) worldZ << 6) + ((long) worldY << 6 + 6) + encodeOffset & (1L << 6 + 6 + 16) - 1
-                    | (emittedLevel & 0xFL) << 6 + 6 + 16
-                    | (long) ALL_DIRECTIONS_BITSET << 6 + 6 + 16 + 4
+                    worldX + ((long) worldZ << 6) + ((long) worldY << 12) + encodeOffset & (1L << 28) - 1
+                    | (emittedLevel & 0x7FFFL) << 28
+                    | (long) ALL_DIRECTIONS_BITSET << 43
                     | (state.isConditionallyFullOpaque() ? FLAG_HAS_SIDED_TRANSPARENT_BLOCKS : 0)
             );
         }
@@ -106,9 +106,9 @@ public final class BlockStarLightEngine extends StarLightEngine {
         // this also accounts for the change of direction of propagation (i.e. old block was full transparent, new block is full opaque or vice versa)
         // as it checks all neighbours (even if current level is 0)
         this.appendToDecreaseQueue(
-                worldX + ((long) worldZ << 6) + ((long) worldY << 6 + 6) + encodeOffset & (1L << 6 + 6 + 16) - 1
-                | (currentLevel & 0xFL) << 6 + 6 + 16
-                | (long) ALL_DIRECTIONS_BITSET << 6 + 6 + 16 + 4
+                worldX + ((long) worldZ << 6) + ((long) worldY << 12) + encodeOffset & (1L << 28) - 1
+                | (currentLevel & 0x7FFFL) << 28
+                | (long) ALL_DIRECTIONS_BITSET << 43
                 // always keep sided transparent false here, new block might be conditionally transparent which would
                 // prevent us from decreasing sources in the directions where the new block is opaque
                 // if it turns out we were wrong to de-propagate the source, the re-propagate logic WILL always
@@ -118,19 +118,17 @@ public final class BlockStarLightEngine extends StarLightEngine {
     }
 
     private int getEmittedLight(int x, int y, int z, BlockState state) {
-        int dynamicLight = 0;
+        int dl = 0;
         if (this.level.isClientSide) {
-            DynamicLights dynamicLights = ClientEvents.getInstance().getDynamicLights();
-            long pos = BlockPos.asLong(x, y, z);
-            int r = dynamicLights.getRedRange(pos);
-            int g = dynamicLights.getGreenRange(pos);
-            int b = dynamicLights.getBlueRange(pos);
-            dynamicLight = Math.max(r, Math.max(g, b));
-            if (dynamicLight == 15) {
-                return 15;
+            dl = ClientEvents.getInstance().getDynamicLights().getLight(BlockPos.asLong(x, y, z));
+            if (dl == 0b1_1111_1_1111_1_1111) {
+                return 0b1_1111_1_1111_1_1111;
             }
         }
-        return Math.max(state.getLightEmission(), dynamicLight) & this.emittedLightMask;
+        if (dl == 0) {
+            return state.getLightEmission() & this.emittedLightMask;
+        }
+        return DynamicLights.combine(state.getLightEmission() & this.emittedLightMask, dl & this.emittedLightMask);
     }
 
     @Override
@@ -139,8 +137,13 @@ public final class BlockStarLightEngine extends StarLightEngine {
     }
 
     @Override
-    protected SWMRNibbleArray[] getNibblesOnChunk(ChunkAccess chunk) {
-        return chunk.getBlockNibbles();
+    protected SWMRShortArray[] getFilledEmptyDataStructure(int totalLightSections) {
+        return getFilledEmptyLightShort(totalLightSections);
+    }
+
+    @Override
+    protected SWMRShortArray[] getNibblesOnChunk(ChunkAccess chunk) {
+        return chunk.getBlockShorts();
     }
 
     @Override
@@ -148,12 +151,12 @@ public final class BlockStarLightEngine extends StarLightEngine {
         if (chunkY < this.minLightSection || chunkY > this.maxLightSection || this.getChunkInCache(chunkX, chunkZ) == null) {
             return;
         }
-        final SWMRNibbleArray nibble = this.getNibbleFromCache(chunkX, chunkY, chunkZ);
+        SWMRShortArray nibble = this.getNibbleFromCache(chunkX, chunkY, chunkZ);
         if (nibble == null) {
             if (!initRemovedNibbles) {
                 throw new IllegalStateException();
             }
-            this.setNibbleInCache(chunkX, chunkY, chunkZ, new SWMRNibbleArray());
+            this.setNibbleInCache(chunkX, chunkY, chunkZ, new SWMRShortArray());
         }
         else {
             nibble.setNonNull();
@@ -218,9 +221,9 @@ public final class BlockStarLightEngine extends StarLightEngine {
                     continue;
                 }
                 this.appendToIncreaseQueue(
-                        x + ((long) z << 6) + ((long) y << 6 + 6) + this.coordinateOffset & (1L << 6 + 6 + 16) - 1
-                        | (emittedLight & 0xFL) << 6 + 6 + 16
-                        | (long) ALL_DIRECTIONS_BITSET << 6 + 6 + 16 + 4
+                        x + ((long) z << 6) + ((long) y << 12) + this.coordinateOffset & (1L << 28) - 1
+                        | (emittedLight & 0x7FFFL) << 28
+                        | (long) ALL_DIRECTIONS_BITSET << 43
                         | (blockState.isConditionallyFullOpaque() ? FLAG_HAS_SIDED_TRANSPARENT_BLOCKS : 0)
                 );
                 // propagation won't set this for us
@@ -255,7 +258,7 @@ public final class BlockStarLightEngine extends StarLightEngine {
 
     @Override
     protected void setNibbleNull(int chunkX, int chunkY, int chunkZ) {
-        SWMRNibbleArray nibble = this.getNibbleFromCache(chunkX, chunkY, chunkZ);
+        SWMRShortArray nibble = this.getNibbleFromCache(chunkX, chunkY, chunkZ);
         if (nibble != null) {
             // de-initialisation is not as straightforward as with sky data, since deinit of block light is typically
             // because a block was removed - which can decrease light. with sky data, block breaking can only result
@@ -269,7 +272,7 @@ public final class BlockStarLightEngine extends StarLightEngine {
     }
 
     @Override
-    protected void setNibbles(ChunkAccess chunk, SWMRNibbleArray[] to) {
-        chunk.setBlockNibbles(to);
+    protected void setNibbles(ChunkAccess chunk, SWMRShortArray[] to) {
+        chunk.setBlockShorts(to);
     }
 }

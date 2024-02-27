@@ -164,7 +164,7 @@ public abstract class Mixin_CF_PostPass implements AutoCloseable {
         }
         Uniform CAVE = this.effect.getUniform("Cave");
         if (CAVE != null) {
-            CAVE.set(1 - mc.level.getBrightness_(LightLayer.SKY, mc.gameRenderer.getMainCamera().getBlockPosition().asLong()) / 15.0f);
+            CAVE.set(1 - mc.level.getLightEngine().getLayerListener(LightLayer.SKY).getLightValue_(mc.gameRenderer.getMainCamera().getBlockPosition().asLong()) / 15.0f);
         }
         Uniform SCREEN_SIZE = this.effect.getUniform("ScreenSize");
         if (SCREEN_SIZE != null) {

@@ -35,6 +35,7 @@ import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.lighting.LevelLightEngine;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -210,9 +211,10 @@ public abstract class MixinDebugScreenOverlay extends GuiComponent {
         }
         else {
             long packedPos = pos.asLong();
-            int light = this.minecraft.level.getChunkSource().getLightEngine().getRawBrightness_(packedPos, 0);
-            int skyLight = this.minecraft.level.getBrightness_(LightLayer.SKY, packedPos);
-            int blockLight = this.minecraft.level.getBrightness_(LightLayer.BLOCK, packedPos);
+            LevelLightEngine lightEngine = this.minecraft.level.getChunkSource().getLightEngine();
+            int light = lightEngine.getRawBrightness_(packedPos, 0);
+            int skyLight = lightEngine.getLayerListener(LightLayer.SKY).getLightValue_(packedPos);
+            int blockLight = lightEngine.getLayerListener(LightLayer.BLOCK).getClampledLightValue(packedPos);
             this.gameInfo.add("Client Light: " + light + " (" + skyLight + " sky, " + blockLight + " block)");
             if (pos.getY() >= this.minecraft.level.getMinBuildHeight() && pos.getY() < this.minecraft.level.getMaxBuildHeight()) {
                 this.gameInfo.add("Biome: " + this.minecraft.level.registryAccess().registryOrThrow(Registry.BIOME_REGISTRY).getKey(this.minecraft.level.getBiome_(pos).value()));

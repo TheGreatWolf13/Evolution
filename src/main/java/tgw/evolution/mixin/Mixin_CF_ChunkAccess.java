@@ -33,6 +33,7 @@ import tgw.evolution.util.collection.maps.O2OHashMap;
 import tgw.evolution.util.collection.sets.OHashSet;
 import tgw.evolution.util.collection.sets.OSet;
 import tgw.evolution.world.lighting.SWMRNibbleArray;
+import tgw.evolution.world.lighting.SWMRShortArray;
 
 import java.util.Map;
 import java.util.Set;
@@ -54,7 +55,7 @@ public abstract class Mixin_CF_ChunkAccess implements PatchChunkAccess {
     @Mutable @Shadow @Final @RestoreFinal protected UpgradeData upgradeData;
     //TODO very inefficient
     @Unique private volatile boolean @Nullable [] blockEmptinessMap;
-    @Unique private volatile SWMRNibbleArray[] blockNibbles;
+    @Unique private volatile SWMRShortArray[] blockShorts;
     @Shadow private long inhabitedTime;
     //TODO very inefficient
     @Unique private volatile boolean @Nullable [] skyEmptinessMap;
@@ -146,8 +147,8 @@ public abstract class Mixin_CF_ChunkAccess implements PatchChunkAccess {
     }
 
     @Override
-    public SWMRNibbleArray[] getBlockNibbles() {
-        return this.blockNibbles;
+    public SWMRShortArray[] getBlockShorts() {
+        return this.blockShorts;
     }
 
     /**
@@ -210,8 +211,8 @@ public abstract class Mixin_CF_ChunkAccess implements PatchChunkAccess {
     }
 
     @Override
-    public void setBlockNibbles(final SWMRNibbleArray[] nibbles) {
-        this.blockNibbles = nibbles;
+    public void setBlockShorts(SWMRShortArray[] shorts) {
+        this.blockShorts = shorts;
     }
 
     @Override
@@ -220,7 +221,7 @@ public abstract class Mixin_CF_ChunkAccess implements PatchChunkAccess {
     }
 
     @Override
-    public void setSkyNibbles(final SWMRNibbleArray[] nibbles) {
+    public void setSkyNibbles(SWMRNibbleArray[] nibbles) {
         this.skyNibbles = nibbles;
     }
 }

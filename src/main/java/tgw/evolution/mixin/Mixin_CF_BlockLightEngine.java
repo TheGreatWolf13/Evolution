@@ -16,6 +16,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.spongepowered.asm.mixin.*;
 import tgw.evolution.Evolution;
+import tgw.evolution.client.renderer.ambient.DynamicLights;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.hooks.asm.DeleteField;
 import tgw.evolution.hooks.asm.ModifyConstructor;
@@ -65,21 +66,25 @@ public abstract class Mixin_CF_BlockLightEngine extends LayerLightEngine<BlockLi
 
     @Overwrite
     private int getLightEmission(long pos) {
-        int dynamicLight = 0;
+        int dl = 0;
         if (this.isClientSide) {
-            int r = ClientEvents.getInstance().getDynamicLights().getRedRange(pos);
-            int g = ClientEvents.getInstance().getDynamicLights().getGreenRange(pos);
-            int b = ClientEvents.getInstance().getDynamicLights().getBlueRange(pos);
-            dynamicLight = Math.max(r, Math.max(g, b));
-            if (dynamicLight == 15) {
-                return 15;
+            dl = ClientEvents.getInstance().getDynamicLights().getLight(pos);
+            if (dl == 0b1_1111_1_1111_1_1111) {
+                return 0b1_1111_1_1111_1_1111;
             }
         }
         int x = BlockPos.getX(pos);
         int y = BlockPos.getY(pos);
         int z = BlockPos.getZ(pos);
         BlockGetter blockGetter = this.chunkSource.getChunkForLighting(SectionPos.blockToSectionCoord(x), SectionPos.blockToSectionCoord(z));
-        return blockGetter != null ? Math.max(blockGetter.getLightEmission_(x, y, z), dynamicLight) : dynamicLight;
+        int bl = blockGetter != null ? blockGetter.getLightEmission_(x, y, z) : 0;
+        if (bl == 0) {
+            return dl;
+        }
+        if (dl == 0) {
+            return bl;
+        }
+        return DynamicLights.combine(bl, dl);
     }
 
     @Override

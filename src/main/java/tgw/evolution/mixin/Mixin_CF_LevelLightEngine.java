@@ -23,16 +23,12 @@ import tgw.evolution.hooks.asm.DummyConstructor;
 import tgw.evolution.hooks.asm.ModifyConstructor;
 import tgw.evolution.hooks.asm.RestoreFinal;
 import tgw.evolution.patches.PatchLevelLightEngine;
-import tgw.evolution.util.constants.Lightlayer;
-import tgw.evolution.world.lighting.SWMRNibbleArray;
-import tgw.evolution.world.lighting.StarLightEngine;
-import tgw.evolution.world.lighting.StarLightInterface;
-import tgw.evolution.world.lighting.WorldUtil;
+import tgw.evolution.world.lighting.*;
 
 @Mixin(LevelLightEngine.class)
 public abstract class Mixin_CF_LevelLightEngine implements PatchLevelLightEngine, LightEventListener {
 
-    @Unique protected final Long2ObjectOpenHashMap<SWMRNibbleArray[]> blockLightMap;
+    @Unique protected final Long2ObjectOpenHashMap<SWMRShortArray[]> blockLightMap;
     @Unique protected final Long2ObjectOpenHashMap<SWMRNibbleArray[]> skyLightMap;
     @Unique private final StarLightInterface lightEngine;
     @Mutable @Shadow @Final @RestoreFinal protected LevelHeightAccessor levelHeightAccessor;
@@ -78,10 +74,10 @@ public abstract class Mixin_CF_LevelLightEngine implements PatchLevelLightEngine
             throw new IllegalStateException("This hook is for the CLIENT ONLY");
         }
         long key = pos.toLong();
-        SWMRNibbleArray[] blockNibbles = this.blockLightMap.get(key);
+        SWMRShortArray[] blockNibbles = this.blockLightMap.get(key);
         SWMRNibbleArray[] skyNibbles = this.skyLightMap.get(key);
         if (blockNibbles != null) {
-            chunk.setBlockNibbles(blockNibbles);
+            chunk.setBlockShorts(blockNibbles);
         }
         if (skyNibbles != null) {
             chunk.setSkyNibbles(skyNibbles);
@@ -110,14 +106,14 @@ public abstract class Mixin_CF_LevelLightEngine implements PatchLevelLightEngine
         switch (lightType) {
             case BLOCK: {
                 long key = ChunkPos.asLong(secX, secZ);
-                SWMRNibbleArray[] blockNibbles = this.blockLightMap.get(key);
-                if (blockNibbles == null) {
-                    blockNibbles = StarLightEngine.getFilledEmptyLight(level);
-                    this.blockLightMap.put(key, blockNibbles);
+                SWMRShortArray[] blockShorts = this.blockLightMap.get(key);
+                if (blockShorts == null) {
+                    blockShorts = StarLightEngine.getFilledEmptyLightShort(level);
+                    this.blockLightMap.put(key, blockShorts);
                 }
-                blockNibbles[secY - WorldUtil.getMinLightSection(level)] = SWMRNibbleArray.fromVanilla(nibble);
+                blockShorts[secY - WorldUtil.getMinLightSection(level)] = SWMRShortArray.fromVanilla(nibble);
                 if (chunk != null) {
-                    chunk.setBlockNibbles(blockNibbles);
+                    chunk.setBlockShorts(blockShorts);
                     assert this.lightEngine.getLightAccess() != null;
                     this.lightEngine.getLightAccess().onLightUpdate_(LightLayer.BLOCK, secX, secY, secZ);
                 }
@@ -127,7 +123,7 @@ public abstract class Mixin_CF_LevelLightEngine implements PatchLevelLightEngine
                 long key = ChunkPos.asLong(secX, secZ);
                 SWMRNibbleArray[] skyNibbles = this.skyLightMap.get(key);
                 if (skyNibbles == null) {
-                    skyNibbles = StarLightEngine.getFilledEmptyLight(level);
+                    skyNibbles = StarLightEngine.getFilledEmptyLightNibble(level);
                     this.skyLightMap.put(key, skyNibbles);
                 }
                 skyNibbles[secY - WorldUtil.getMinLightSection(level)] = SWMRNibbleArray.fromVanilla(nibble);
@@ -146,16 +142,6 @@ public abstract class Mixin_CF_LevelLightEngine implements PatchLevelLightEngine
     public void enableLightSources(ChunkPos chunkPos, boolean bl) {
         Evolution.deprecatedMethod();
         //Do nothing
-    }
-
-    @Override
-    public int getColoredBrightness(@Lightlayer int layer, long pos) {
-//        return switch (layer) {
-//            case Lightlayer.SKY -> this.skyEngine != null ? this.skyEngine.getLightValue_(pos) : 0;
-//            case Lightlayer.RED -> this.blockEngine != null ? this.blockEngine.getLightValue_(pos) : 0;
-//            default -> throw new IllegalArgumentException("Unknown layer");
-//        };
-        return 0;
     }
 
     @Overwrite

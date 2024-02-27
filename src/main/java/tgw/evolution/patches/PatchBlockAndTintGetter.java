@@ -1,7 +1,6 @@
 package tgw.evolution.patches;
 
 import net.minecraft.world.level.ColorResolver;
-import net.minecraft.world.level.LightLayer;
 
 public interface PatchBlockAndTintGetter {
 
@@ -10,10 +9,6 @@ public interface PatchBlockAndTintGetter {
     }
 
     default int getBlockTint_(int x, int y, int z, ColorResolver colorResolver) {
-        throw new AbstractMethodError();
-    }
-
-    default int getBrightness_(LightLayer lightLayer, long pos) {
         throw new AbstractMethodError();
     }
 

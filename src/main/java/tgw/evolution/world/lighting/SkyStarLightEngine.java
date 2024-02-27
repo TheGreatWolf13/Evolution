@@ -42,7 +42,7 @@ import java.util.Arrays;
  * Unlike vanilla, we store whether nibbles are uninitialised on disk - so we don't need any dumb hacking
  * around those.
  */
-public final class SkyStarLightEngine extends StarLightEngine {
+public final class SkyStarLightEngine extends StarLightEngine<SWMRNibbleArray> {
 
     private final int[] heightMapBlockChange = new int[16 * 16];
     private final boolean[] nullPropagationCheckCache;
@@ -123,9 +123,9 @@ public final class SkyStarLightEngine extends StarLightEngine {
         if (currentLevel == 15) {
             // must re-propagate clobbered source
             this.appendToIncreaseQueue(
-                    worldX + ((long) worldZ << 6) + ((long) worldY << 6 + 6) + encodeOffset & (1L << 6 + 6 + 16) - 1
-                    | (currentLevel & 0xFL) << 6 + 6 + 16
-                    | (long) ALL_DIRECTIONS_BITSET << 6 + 6 + 16 + 4
+                    worldX + ((long) worldZ << 6) + ((long) worldY << 12) + encodeOffset & (1L << 28) - 1
+                    | (currentLevel & 0xFL) << 28
+                    | (long) ALL_DIRECTIONS_BITSET << 43
                     | FLAG_HAS_SIDED_TRANSPARENT_BLOCKS // don't know if the block is conditionally transparent
             );
         }
@@ -133,9 +133,9 @@ public final class SkyStarLightEngine extends StarLightEngine {
             this.setLightLevel(worldX, worldY, worldZ, 0);
         }
         this.appendToDecreaseQueue(
-                worldX + ((long) worldZ << 6) + ((long) worldY << 6 + 6) + encodeOffset & (1L << 6 + 6 + 16) - 1
-                | (currentLevel & 0xFL) << 6 + 6 + 16
-                | (long) ALL_DIRECTIONS_BITSET << 6 + 6 + 16 + 4
+                worldX + ((long) worldZ << 6) + ((long) worldY << 12) + encodeOffset & (1L << 28) - 1
+                | (currentLevel & 0xFL) << 28
+                | (long) ALL_DIRECTIONS_BITSET << 43
         );
     }
 
@@ -199,6 +199,11 @@ public final class SkyStarLightEngine extends StarLightEngine {
     @Override
     protected boolean @Nullable [] getEmptinessMap(ChunkAccess chunk) {
         return chunk.getSkyEmptinessMap();
+    }
+
+    @Override
+    protected SWMRNibbleArray[] getFilledEmptyDataStructure(int totalLightSections) {
+        return getFilledEmptyLightNibble(totalLightSections);
     }
 
     private int getLightLevelExtruded(int worldX, int worldY, int worldZ) {
@@ -417,8 +422,8 @@ public final class SkyStarLightEngine extends StarLightEngine {
             long queueValue = queue[i];
             int posX = ((int) queueValue & 63) + decodeOffsetX;
             int posZ = ((int) queueValue >>> 6 & 63) + decodeOffsetZ;
-            int posY = ((int) queueValue >>> 12 & (1 << 16) - 1) + decodeOffsetY;
-            int propagatedLightLevel = (int) (queueValue >>> 6 + 6 + 16 & 0xF);
+            int posY = ((int) queueValue >>> 12 & 65_535) + decodeOffsetY;
+            int propagatedLightLevel = (int) (queueValue >>> 28 & 0xF);
             this.setLightLevel(posX, posY, posZ, propagatedLightLevel);
         }
     }
@@ -506,11 +511,11 @@ public final class SkyStarLightEngine extends StarLightEngine {
     }
 
     private void rewriteNibbleCacheForSkylight() {
-        for (int index = 0, max = this.nibbleCache.length; index < max; ++index) {
-            SWMRNibbleArray nibble = this.nibbleCache[index];
+        for (int index = 0, max = this.arrayLength(); index < max; ++index) {
+            SWMRNibbleArray nibble = this.get(index);
             if (nibble != null && nibble.isNullNibbleUpdating()) {
                 // stop propagation in these areas
-                this.nibbleCache[index] = null;
+                this.set(index, null);
                 nibble.updateVisible();
             }
         }

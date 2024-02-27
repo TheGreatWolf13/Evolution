@@ -22,17 +22,13 @@ public interface MixinBlockAndTintGetter extends BlockGetter, PatchBlockAndTintG
 
     @Override
     default boolean canSeeSky_(long pos) {
-        return this.getBrightness_(LightLayer.SKY, pos) >= this.getMaxLightLevel();
+        return this.getLightEngine().getLayerListener(LightLayer.SKY).getLightValue_(pos) >= this.getMaxLightLevel();
     }
 
     @Overwrite
     default int getBrightness(LightLayer lightLayer, BlockPos pos) {
-        return this.getBrightness_(lightLayer, pos.asLong());
-    }
-
-    @Override
-    default int getBrightness_(LightLayer lightLayer, long pos) {
-        return this.getLightEngine().getLayerListener(lightLayer).getLightValue_(pos);
+        Evolution.deprecatedMethod();
+        return this.getLightEngine().getLayerListener(lightLayer).getLightValue_(pos.asLong());
     }
 
     @Shadow

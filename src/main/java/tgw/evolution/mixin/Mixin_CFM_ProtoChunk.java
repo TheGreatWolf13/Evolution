@@ -74,8 +74,8 @@ public abstract class Mixin_CFM_ProtoChunk extends ChunkAccess {
         this.fluidTicks = protoChunkTicks2;
         //noinspection ConstantValue
         if (!((Object) this instanceof ImposterProtoChunk)) {
-            this.setBlockNibbles(StarLightEngine.getFilledEmptyLight(levelHeightAccessor));
-            this.setSkyNibbles(StarLightEngine.getFilledEmptyLight(levelHeightAccessor));
+            this.setBlockShorts(StarLightEngine.getFilledEmptyLightShort(levelHeightAccessor));
+            this.setSkyNibbles(StarLightEngine.getFilledEmptyLightNibble(levelHeightAccessor));
         }
     }
 

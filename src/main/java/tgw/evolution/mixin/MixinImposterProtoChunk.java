@@ -22,6 +22,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.Evolution;
 import tgw.evolution.util.collection.lists.LList;
 import tgw.evolution.world.lighting.SWMRNibbleArray;
+import tgw.evolution.world.lighting.SWMRShortArray;
 
 import java.util.stream.Stream;
 
@@ -77,8 +78,8 @@ public abstract class MixinImposterProtoChunk extends ProtoChunk {
     }
 
     @Override
-    public SWMRNibbleArray[] getBlockNibbles() {
-        return this.wrapped.getBlockNibbles();
+    public SWMRShortArray[] getBlockShorts() {
+        return this.wrapped.getBlockShorts();
     }
 
     @Override
@@ -153,8 +154,8 @@ public abstract class MixinImposterProtoChunk extends ProtoChunk {
     }
 
     @Override
-    public void setBlockNibbles(SWMRNibbleArray[] nibbles) {
-        this.wrapped.setBlockNibbles(nibbles);
+    public void setBlockShorts(SWMRShortArray[] nibbles) {
+        this.wrapped.setBlockShorts(nibbles);
     }
 
     @Override

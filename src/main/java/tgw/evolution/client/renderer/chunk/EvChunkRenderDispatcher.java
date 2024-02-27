@@ -806,7 +806,7 @@ public class EvChunkRenderDispatcher {
                                         matrices.pushPose();
                                         matrices.translate(dx, dy, dz);
                                         if (dispatcher.renderBatched(blockState, px, py, pz, region, matrices, builder, true, random)) {
-                                            compiledChunk.hasBlocks |= 1 << i;
+                                            compiledChunk.hasBlocks |= (byte) (1 << i);
                                         }
                                         matrices.popPose();
                                     }

@@ -106,8 +106,8 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
         this.postLoad = processor;
         this.blockTicks = blockTicks;
         this.fluidTicks = fluidTicks;
-        this.setBlockNibbles(StarLightEngine.getFilledEmptyLight(level));
-        this.setSkyNibbles(StarLightEngine.getFilledEmptyLight(level));
+        this.setBlockShorts(StarLightEngine.getFilledEmptyLightShort(level));
+        this.setSkyNibbles(StarLightEngine.getFilledEmptyLightNibble(level));
     }
 
     @ModifyConstructor
@@ -131,7 +131,7 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
         }
         this.setLightCorrect(protoChunk.isLightCorrect());
         this.unsaved = true;
-        this.setBlockNibbles(protoChunk.getBlockNibbles());
+        this.setBlockShorts(protoChunk.getBlockShorts());
         this.setSkyNibbles(protoChunk.getSkyNibbles());
         this.setSkyEmptinessMap(protoChunk.getSkyEmptinessMap());
         this.setBlockEmptinessMap(protoChunk.getBlockEmptinessMap());
@@ -412,7 +412,7 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
         return this.getFullStatus().isOrAfter(net.minecraft.server.level.ChunkHolder.FullChunkStatus.TICKING) &&
                level.areEntitiesLoaded(ChunkPos.asLong(pos));
     }
-    
+
     @Overwrite
     public void postProcessGeneration() {
         ChunkPos chunkPos = this.getPos();
