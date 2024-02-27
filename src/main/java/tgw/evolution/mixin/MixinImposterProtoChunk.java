@@ -148,7 +148,7 @@ public abstract class MixinImposterProtoChunk extends ProtoChunk {
     }
 
     @Override
-    public void setBlockEmptinessMap(boolean[] emptinessMap) {
+    public void setBlockEmptinessMap(boolean @Nullable [] emptinessMap) {
         this.wrapped.setBlockEmptinessMap(emptinessMap);
     }
 
@@ -170,7 +170,7 @@ public abstract class MixinImposterProtoChunk extends ProtoChunk {
     }
 
     @Override
-    public void setSkyEmptinessMap(boolean[] emptinessMap) {
+    public void setSkyEmptinessMap(boolean @Nullable [] emptinessMap) {
         this.wrapped.setSkyEmptinessMap(emptinessMap);
     }
 

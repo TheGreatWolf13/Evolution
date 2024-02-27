@@ -234,7 +234,7 @@ public final class BlockStarLightEngine extends StarLightEngine {
             this.checkChunkEdges(lightAccess, chunk, this.minLightSection, this.maxLightSection);
         }
         else {
-            this.propagateNeighbourLevels(lightAccess, chunk, this.minLightSection, this.maxLightSection);
+            this.propagateNeighbourLevels(chunk, this.minLightSection, this.maxLightSection);
             this.performLightIncrease(lightAccess);
         }
     }

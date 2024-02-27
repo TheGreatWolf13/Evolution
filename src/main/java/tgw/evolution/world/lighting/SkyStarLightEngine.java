@@ -83,12 +83,12 @@ public final class SkyStarLightEngine extends StarLightEngine {
             int sectionIndex = (offX >> 4) + 5 * (offZ >> 4) + 5 * 5 * (offY >> 4) + sectionOffset;
             int neighbourLevel = this.getLightLevel(sectionIndex, offX & 15 | (offZ & 15) << 4 | (offY & 15) << 8);
             if (neighbourLevel - 1 <= level) {
-                // don't need to test transparency, we know it wont affect the result.
+                // don't need to test transparency, we know it won't affect the result.
                 continue;
             }
             BlockState neighbourState = this.getBlockState(offX, offY, offZ);
             if (neighbourState.isConditionallyFullOpaque()) {
-                // here the block can be conditionally opaque (i.e light cannot propagate from it), so we need to test that
+                // here the block can be conditionally opaque (i.e. light cannot propagate from it), so we need to test that
                 // we don't read the blockstate because most of the time this is false, so using the faster
                 // known transparency lookup results in a net win
                 VoxelShape neighbourFace = neighbourState.getFaceOcclusionShape_(lightAccess.getLevel(), offX, offY, offZ, direction.getOpposite().nms);
@@ -142,7 +142,7 @@ public final class SkyStarLightEngine extends StarLightEngine {
     @Override
     protected void checkChunkEdges(LightChunkGetter lightAccess, ChunkAccess chunk, int fromSection, int toSection) {
         Arrays.fill(this.nullPropagationCheckCache, false);
-        this.rewriteNibbleCacheForSkylight(chunk);
+        this.rewriteNibbleCacheForSkylight();
         int chunkX = chunk.getPos().x;
         int chunkZ = chunk.getPos().z;
         for (int y = toSection; y >= fromSection; --y) {
@@ -154,7 +154,7 @@ public final class SkyStarLightEngine extends StarLightEngine {
     @Override
     protected void checkChunkEdges(LightChunkGetter lightAccess, ChunkAccess chunk, ShortCollection sections) {
         Arrays.fill(this.nullPropagationCheckCache, false);
-        this.rewriteNibbleCacheForSkylight(chunk);
+        this.rewriteNibbleCacheForSkylight();
         int chunkX = chunk.getPos().x;
         int chunkZ = chunk.getPos().z;
         for (ShortIterator iterator = sections.iterator(); iterator.hasNext(); ) {
@@ -164,7 +164,7 @@ public final class SkyStarLightEngine extends StarLightEngine {
         super.checkChunkEdges(lightAccess, chunk, sections);
     }
 
-    private boolean checkNullSection(int chunkX, int chunkY, int chunkZ, boolean extrudeInitialised) {
+    private void checkNullSection(int chunkX, int chunkY, int chunkZ, boolean extrudeInitialised) {
         // null chunk sections may have nibble neighbours in the horizontal 1 radius that are
         // non-null. Propagation to these neighbours is necessary.
         // What makes this easy is we know none of these neighbours are non-empty (otherwise
@@ -172,7 +172,7 @@ public final class SkyStarLightEngine extends StarLightEngine {
         // the neighbours in the full 1 radius, because there's no worry that any "paths"
         // to the neighbours on this horizontal plane are blocked.
         if (chunkY < this.minLightSection || chunkY > this.maxLightSection || this.nullPropagationCheckCache[chunkY - this.minLightSection]) {
-            return false;
+            return;
         }
         this.nullPropagationCheckCache[chunkY - this.minLightSection] = true;
         // check horizontal neighbours
@@ -194,7 +194,6 @@ public final class SkyStarLightEngine extends StarLightEngine {
                 }
             }
         }
-        return needInitNeighbours;
     }
 
     @Override
@@ -269,6 +268,7 @@ public final class SkyStarLightEngine extends StarLightEngine {
         if (chunkY > lowestY) {
             // we need to set this one to full
             SWMRNibbleArray nibble = this.getNibbleFromCache(chunkX, chunkY, chunkZ);
+            assert nibble != null;
             nibble.setNonNull();
             nibble.setFull();
             return;
@@ -292,7 +292,7 @@ public final class SkyStarLightEngine extends StarLightEngine {
 
     @Override
     protected void lightChunk(LightChunkGetter lightAccess, ChunkAccess chunk, boolean needsEdgeChecks) {
-        this.rewriteNibbleCacheForSkylight(chunk);
+        this.rewriteNibbleCacheForSkylight();
         Arrays.fill(this.nullPropagationCheckCache, false);
         BlockGetter world = lightAccess.getLevel();
         ChunkPos chunkPos = chunk.getPos();
@@ -387,7 +387,7 @@ public final class SkyStarLightEngine extends StarLightEngine {
             for (int y = highestNonEmptySection; y >= this.minLightSection; --y) {
                 this.checkNullSection(chunkX, y, chunkZ, false);
             }
-            this.propagateNeighbourLevels(lightAccess, chunk, this.minLightSection, highestNonEmptySection);
+            this.propagateNeighbourLevels(chunk, this.minLightSection, highestNonEmptySection);
             this.performLightIncrease(lightAccess);
         }
     }
@@ -425,7 +425,7 @@ public final class SkyStarLightEngine extends StarLightEngine {
 
     @Override
     protected void propagateBlockChanges(LightChunkGetter lightAccess, ChunkAccess atChunk, LSet positions) {
-        this.rewriteNibbleCacheForSkylight(atChunk);
+        this.rewriteNibbleCacheForSkylight();
         Arrays.fill(this.nullPropagationCheckCache, false);
         BlockGetter world = lightAccess.getLevel();
         int chunkX = atChunk.getPos().x;
@@ -457,7 +457,7 @@ public final class SkyStarLightEngine extends StarLightEngine {
             int columnX = index & 15 | chunkX << 4;
             int columnZ = index >>> 4 | chunkZ << 4;
             // try and propagate from the above y
-            // delay light set until after processing all sources to setup
+            // delay light set until after processing all sources to set up
             int maxPropagationY = this.tryPropagateSkylight(world, columnX, maxY, columnZ, true, true);
             // maxPropagationY is now the highest block that could not be propagated to
             // remove all sources below that are 15
@@ -474,16 +474,16 @@ public final class SkyStarLightEngine extends StarLightEngine {
                     // ensure section below is always checked
                     SWMRNibbleArray nibble = this.getNibbleFromCache(columnX >> 4, currY >> 4, columnZ >> 4);
                     if (nibble == null) {
-                        // advance currY to the the top of the section below
+                        // advance currY to the top of the section below
                         currY &= ~15;
-                        // note: this value ^ is actually 1 above the top, but the loop decrements by 1 so we actually
+                        // note: this value ^ is actually 1 above the top, but the loop decrements by 1, so we actually
                         // end up there
                         continue;
                     }
                     if (nibble.getUpdating(columnX, currY, columnZ) != 15) {
                         break;
                     }
-                    // delay light set until after processing all sources to setup
+                    // delay light set until after processing all sources to set up
                     this.appendToDecreaseQueue(
                             columnX + ((long) columnZ << 6) + ((long) currY << 6 + 6) + encodeOffset & (1L << 6 + 6 + 16) - 1
                             | 15L << 6 + 6 + 16
@@ -505,7 +505,7 @@ public final class SkyStarLightEngine extends StarLightEngine {
         this.performLightDecrease(lightAccess);
     }
 
-    private void rewriteNibbleCacheForSkylight(ChunkAccess chunk) {
+    private void rewriteNibbleCacheForSkylight() {
         for (int index = 0, max = this.nibbleCache.length; index < max; ++index) {
             SWMRNibbleArray nibble = this.nibbleCache[index];
             if (nibble != null && nibble.isNullNibbleUpdating()) {
@@ -604,9 +604,9 @@ public final class SkyStarLightEngine extends StarLightEngine {
                 // can propagate through air.
                 // nothing can propagate in null sections, remove the queue entry for it
                 --this.increaseQueueInitialLength;
-                // advance currY to the the top of the section below
+                // advance currY to the top of the section below
                 startY &= ~15;
-                // note: this value ^ is actually 1 above the top, but the loop decrements by 1 so we actually
+                // note: this value ^ is actually 1 above the top, but the loop decrements by 1, so we actually
                 // end up there
                 // make sure this is marked as AIR
                 above = AIR_BLOCK_STATE;
