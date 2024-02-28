@@ -7,6 +7,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
@@ -15,10 +16,8 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SimpleWaterloggedBlock;
 import net.minecraft.world.level.block.StairBlock;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.block.state.properties.EnumProperty;
-import net.minecraft.world.level.block.state.properties.Half;
-import net.minecraft.world.level.block.state.properties.StairsShape;
+import net.minecraft.world.level.block.state.properties.*;
+import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -39,6 +38,7 @@ public abstract class Mixin_M_StairBlock extends Block implements SimpleWaterlog
     @Shadow @Final public static EnumProperty<Half> HALF;
     @Shadow @Final public static BooleanProperty WATERLOGGED;
     @Shadow @Final public static EnumProperty<StairsShape> SHAPE;
+    @Shadow @Final public static DirectionProperty FACING;
     @Shadow @Final protected static VoxelShape[] TOP_SHAPES;
     @Shadow @Final protected static VoxelShape[] BOTTOM_SHAPES;
     @Shadow @Final private static int[] SHAPE_BY_STATE;
@@ -103,6 +103,16 @@ public abstract class Mixin_M_StairBlock extends Block implements SimpleWaterlog
     @Override
     public VoxelShape getShape_(BlockState state, BlockGetter level, int x, int y, int z, @Nullable Entity entity) {
         return (state.getValue(HALF) == Half.TOP ? TOP_SHAPES : BOTTOM_SHAPES)[SHAPE_BY_STATE[this.getShapeIndex(state)]];
+    }
+
+    @Override
+    @Overwrite
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        Direction direction = context.getClickedFace();
+        BlockPos pos = context.getClickedPos();
+        FluidState fluidState = context.getLevel().getFluidState(pos);
+        BlockState state = this.defaultBlockState().setValue(FACING, context.getHorizontalDirection()).setValue(HALF, direction != Direction.DOWN && (direction == Direction.UP || !(context.getHitResult().y() - pos.getY() > 0.5)) ? Half.BOTTOM : Half.TOP).setValue(WATERLOGGED, fluidState.getType() == Fluids.WATER);
+        return state.setValue(SHAPE, getStairsShape(state, context.getLevel(), pos));
     }
 
     @Override
