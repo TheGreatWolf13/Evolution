@@ -329,6 +329,8 @@
     "MixinClipContext_Block",
     "MixinCollisionContext",
     "MixinCollisionGetter",
+    "MixinCommandBlockEntity",
+    "MixinCommandBlockEntity_1",
     "MixinCommands",
     "MixinComponent",
     "MixinComponent_Serializer",

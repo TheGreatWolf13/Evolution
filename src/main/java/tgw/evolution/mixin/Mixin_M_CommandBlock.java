@@ -1,6 +1,7 @@
 package tgw.evolution.mixin;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.StringUtil;
 import net.minecraft.world.InteractionHand;
@@ -12,18 +13,14 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BaseCommandBlock;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.BaseEntityBlock;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.CommandBlock;
-import net.minecraft.world.level.block.GameMasterBlock;
+import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.CommandBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
+import org.slf4j.Logger;
+import org.spongepowered.asm.mixin.*;
 import tgw.evolution.hooks.asm.DeleteMethod;
 
 import java.util.Random;
@@ -31,14 +28,77 @@ import java.util.Random;
 @Mixin(CommandBlock.class)
 public abstract class Mixin_M_CommandBlock extends BaseEntityBlock implements GameMasterBlock {
 
+    @Shadow @Final public static DirectionProperty FACING;
+    @Shadow @Final private static Logger LOGGER;
     @Shadow @Final private boolean automatic;
 
     public Mixin_M_CommandBlock(Properties properties) {
         super(properties);
     }
 
-    @Shadow
-    protected abstract void execute(BlockState blockState, Level level, BlockPos blockPos, BaseCommandBlock baseCommandBlock, boolean bl);
+    @Unique
+    private static void execute(BlockState blockState, Level level, int x, int y, int z, BaseCommandBlock baseCommandBlock, boolean bl) {
+        if (bl) {
+            baseCommandBlock.performCommand(level);
+        }
+        else {
+            baseCommandBlock.setSuccessCount(0);
+        }
+        executeChain(level, x, y, z, blockState.getValue(FACING));
+    }
+
+    @Unique
+    private static void executeChain(Level level, int x, int y, int z, Direction direction) {
+        GameRules gameRules = level.getGameRules();
+        int max = gameRules.getInt(GameRules.RULE_MAX_COMMAND_CHAIN_LENGTH);
+        int num;
+        BlockState stateAtPos;
+        int x0 = x;
+        int y0 = y;
+        int z0 = z;
+        for (num = max; num-- > 0; direction = stateAtPos.getValue(FACING)) {
+            x0 += direction.getStepX();
+            y0 += direction.getStepY();
+            z0 += direction.getStepZ();
+            stateAtPos = level.getBlockState_(x0, y0, z0);
+            if (!stateAtPos.is(Blocks.CHAIN_COMMAND_BLOCK)) {
+                break;
+            }
+            if (!(level.getBlockEntity_(x0, y0, z0) instanceof CommandBlockEntity te)) {
+                break;
+            }
+            if (te.getMode() != CommandBlockEntity.Mode.SEQUENCE) {
+                break;
+            }
+            if (te.isPowered() || te.isAutomatic()) {
+                BaseCommandBlock commandBlock = te.getCommandBlock();
+                if (te.markConditionMet()) {
+                    if (!commandBlock.performCommand(level)) {
+                        break;
+                    }
+                    level.updateNeighbourForOutputSignal_(x0, y0, z0, stateAtPos.getBlock());
+                }
+                else if (te.isConditional()) {
+                    commandBlock.setSuccessCount(0);
+                }
+            }
+        }
+        if (num <= 0) {
+            LOGGER.warn("Command Block chain tried to execute more than {} steps!", Math.max(max, 0));
+        }
+    }
+
+    @Overwrite
+    @DeleteMethod
+    private static void executeChain(Level level, BlockPos blockPos, Direction direction) {
+        throw new AbstractMethodError();
+    }
+
+    @Overwrite
+    @DeleteMethod
+    private void execute(BlockState blockState, Level level, BlockPos blockPos, BaseCommandBlock baseCommandBlock, boolean bl) {
+        throw new AbstractMethodError();
+    }
 
     @Override
     @Overwrite
@@ -112,7 +172,7 @@ public abstract class Mixin_M_CommandBlock extends BaseEntityBlock implements Ga
             if (mode == CommandBlockEntity.Mode.AUTO) {
                 tile.markConditionMet();
                 if (conditionMet) {
-                    this.execute(state, level, new BlockPos(x, y, z), commandBlock, notEmpty);
+                    execute(state, level, x, y, z, commandBlock, notEmpty);
                 }
                 else if (tile.isConditional()) {
                     commandBlock.setSuccessCount(0);
@@ -123,7 +183,7 @@ public abstract class Mixin_M_CommandBlock extends BaseEntityBlock implements Ga
             }
             else if (mode == CommandBlockEntity.Mode.REDSTONE) {
                 if (conditionMet) {
-                    this.execute(state, level, new BlockPos(x, y, z), commandBlock, notEmpty);
+                    execute(state, level, x, y, z, commandBlock, notEmpty);
                 }
                 else if (tile.isConditional()) {
                     commandBlock.setSuccessCount(0);
