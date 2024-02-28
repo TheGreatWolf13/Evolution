@@ -12,6 +12,7 @@ import net.minecraft.world.level.chunk.LightChunkGetter;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
+import tgw.evolution.Evolution;
 import tgw.evolution.util.collection.sets.LSet;
 
 import java.util.ArrayList;
@@ -110,10 +111,6 @@ public abstract class StarLightEngine<T extends SWMRArray> {
         return ret;
     }
 
-    public static SWMRNibbleArray[] getFilledEmptyLightNibble(LevelHeightAccessor world) {
-        return getFilledEmptyLightNibble(WorldUtil.getTotalLightSections(world));
-    }
-
     protected static SWMRNibbleArray[] getFilledEmptyLightNibble(int totalLightSections) {
         SWMRNibbleArray[] ret = new SWMRNibbleArray[totalLightSections];
         for (int i = 0, len = ret.length; i < len; ++i) {
@@ -123,6 +120,14 @@ public abstract class StarLightEngine<T extends SWMRArray> {
         return ret;
     }
 
+    public static SWMRNibbleArray[] getFilledEmptyLightNibble(LevelHeightAccessor world) {
+        return getFilledEmptyLightNibble(WorldUtil.getTotalLightSections(world));
+    }
+
+    public static SWMRShortArray[] getFilledEmptyLightShort(LevelHeightAccessor world) {
+        return getFilledEmptyLightShort(WorldUtil.getTotalLightSections(world));
+    }
+
     protected static SWMRShortArray[] getFilledEmptyLightShort(int totalLightSections) {
         SWMRShortArray[] ret = new SWMRShortArray[totalLightSections];
         for (int i = 0, len = ret.length; i < len; ++i) {
@@ -130,10 +135,6 @@ public abstract class StarLightEngine<T extends SWMRArray> {
             ret[i] = new SWMRShortArray(null, true);
         }
         return ret;
-    }
-
-    public static SWMRShortArray[] getFilledEmptyLightShort(LevelHeightAccessor world) {
-        return getFilledEmptyLightShort(WorldUtil.getTotalLightSections(world));
     }
 
     protected final void appendToDecreaseQueue(long value) {
@@ -573,7 +574,7 @@ public abstract class StarLightEngine<T extends SWMRArray> {
      */
     protected abstract void lightChunk(LightChunkGetter lightAccess, ChunkAccess chunk, boolean needsEdgeChecks);
 
-    protected final void performLightDecrease(LightChunkGetter lightAccess) {
+    protected void performLightDecrease(LightChunkGetter lightAccess) {
         BlockGetter level = lightAccess.getLevel();
         long[] queue = this.decreaseQueue;
         long[] increaseQueue = this.increaseQueue;
@@ -587,7 +588,13 @@ public abstract class StarLightEngine<T extends SWMRArray> {
         int encodeOffset = this.coordinateOffset;
         int sectionOffset = this.chunkSectionIndexOffset;
         int emittedMask = this.emittedLightMask;
+        int printed = queueLength;
+        Evolution.info("sky decrease queueLength = {}", printed);
         while (queueReadIndex < queueLength) {
+            if (queueLength > printed) {
+                printed = queueLength;
+                Evolution.info("    I lied, it's actually = {}", printed);
+            }
             long queueValue = queue[queueReadIndex++];
             int posX = ((int) queueValue & 63) + decodeOffsetX;
             int posZ = ((int) queueValue >>> 6 & 63) + decodeOffsetZ;
@@ -603,27 +610,31 @@ public abstract class StarLightEngine<T extends SWMRArray> {
                     int sectionIndex = (offX >> 4) + 5 * (offZ >> 4) + 5 * 5 * (offY >> 4) + sectionOffset;
                     int localIndex = offX & 15 | (offZ & 15) << 4 | (offY & 15) << 8;
                     T currentNibble = this.nibbleCache[sectionIndex];
-                    int lightLevel;
-                    if (currentNibble == null || (lightLevel = currentNibble.getUpdating(localIndex)) == 0) {
-                        // already at lowest (or unloaded), nothing we can do
+                    if (currentNibble == null) {
+                        //Unloaded, nothing we can do
                         continue;
                     }
-                    BlockState blockState = this.getBlockState(sectionIndex, localIndex);
-                    int opacityCached = blockState.getOpacityIfCached();
+                    int currentLevel = currentNibble.getUpdating(localIndex);
+                    if (currentLevel == 0) {
+                        //Already at lowest, nothing to do
+                        continue;
+                    }
+                    BlockState stateAt = this.getBlockState(sectionIndex, localIndex);
+                    int opacityCached = stateAt.getOpacityIfCached();
                     if (opacityCached != -1) {
                         int targetLevel = Math.max(0, propagatedLightLevel - Math.max(1, opacityCached));
-                        if (lightLevel > targetLevel) {
+                        if (currentLevel > targetLevel) {
                             // it looks like another source propagated here, so re-propagate it
                             if (increaseQueueLength >= increaseQueue.length) {
                                 increaseQueue = this.resizeIncreaseQueue();
                             }
                             increaseQueue[increaseQueueLength++] = offX + ((long) offZ << 6) + ((long) offY << 12) + encodeOffset & (1L << 28) - 1
-                                                                   | (lightLevel & 0x7FFFL) << 28
+                                                                   | (currentLevel & 0x7FFFL) << 28
                                                                    | (long) ALL_DIRECTIONS_BITSET << 43
                                                                    | FLAG_RECHECK_LEVEL;
                             continue;
                         }
-                        int emittedLight = blockState.getLightEmission() & emittedMask;
+                        int emittedLight = stateAt.getLightEmission() & emittedMask;
                         if (emittedLight != 0) {
                             // re-propagate source
                             // note: do not set recheck level, or else the propagation will fail
@@ -633,7 +644,7 @@ public abstract class StarLightEngine<T extends SWMRArray> {
                             increaseQueue[increaseQueueLength++] = offX + ((long) offZ << 6) + ((long) offY << 12) + encodeOffset & (1L << 28) - 1
                                                                    | (emittedLight & 0x7FFFL) << 28
                                                                    | (long) ALL_DIRECTIONS_BITSET << 43
-                                                                   | (blockState.isConditionallyFullOpaque() ? FLAG_WRITE_LEVEL | FLAG_HAS_SIDED_TRANSPARENT_BLOCKS : FLAG_WRITE_LEVEL);
+                                                                   | (stateAt.isConditionallyFullOpaque() ? FLAG_WRITE_LEVEL | FLAG_HAS_SIDED_TRANSPARENT_BLOCKS : FLAG_WRITE_LEVEL);
                         }
                         currentNibble.set(localIndex, 0);
                         this.postLightUpdate(offX, offY, offZ);
@@ -649,30 +660,31 @@ public abstract class StarLightEngine<T extends SWMRArray> {
                         }
                         continue;
                     }
+                    //Not cached
                     long flags = 0;
-                    if (blockState.isConditionallyFullOpaque()) {
-                        VoxelShape cullingFace = blockState.getFaceOcclusionShape_(level, offX, offY, offZ, propagate.getOpposite().nms);
+                    if (stateAt.isConditionallyFullOpaque()) {
+                        VoxelShape cullingFace = stateAt.getFaceOcclusionShape_(level, offX, offY, offZ, propagate.getOpposite().nms);
                         if (Shapes.faceShapeOccludes(Shapes.empty(), cullingFace)) {
                             continue;
                         }
                         flags |= FLAG_HAS_SIDED_TRANSPARENT_BLOCKS;
                     }
-                    int opacity = blockState.getLightBlock_(level, offX, offY, offZ);
+                    int opacity = stateAt.getLightBlock_(level, offX, offY, offZ);
                     int targetLevel = Math.max(0, propagatedLightLevel - Math.max(1, opacity));
                     long l = offX + ((long) offZ << 6) + ((long) offY << 12) + encodeOffset & (1L << 28) - 1;
-                    if (lightLevel > targetLevel) {
+                    if (currentLevel > targetLevel) {
                         // it looks like another source propagated here, so re-propagate it
                         if (increaseQueueLength >= increaseQueue.length) {
                             increaseQueue = this.resizeIncreaseQueue();
                         }
                         increaseQueue[increaseQueueLength++] =
                                 l
-                                | (lightLevel & 0x7FFFL) << 28
+                                | (currentLevel & 0x7FFFL) << 28
                                 | (long) ALL_DIRECTIONS_BITSET << 43
                                 | FLAG_RECHECK_LEVEL | flags;
                         continue;
                     }
-                    int emittedLight = blockState.getLightEmission() & emittedMask;
+                    int emittedLight = stateAt.getLightEmission() & emittedMask;
                     if (emittedLight != 0) {
                         // re-propagate source
                         // note: do not set recheck level, or else the propagation will fail
@@ -713,28 +725,32 @@ public abstract class StarLightEngine<T extends SWMRArray> {
                         continue;
                     }
                     T currentNibble = this.nibbleCache[sectionIndex];
-                    int lightLevel;
-                    if (currentNibble == null || (lightLevel = currentNibble.getUpdating(localIndex)) == 0) {
-                        // already at lowest (or unloaded), nothing we can do
+                    if (currentNibble == null) {
+                        //Unloaded, nothing we can do
                         continue;
                     }
-                    BlockState blockState = this.getBlockState(sectionIndex, localIndex);
-                    int opacityCached = blockState.getOpacityIfCached();
+                    int currentLevel = currentNibble.getUpdating(localIndex);
+                    if (currentLevel == 0) {
+                        // already at lowest, nothing to do
+                        continue;
+                    }
+                    BlockState stateAt = this.getBlockState(sectionIndex, localIndex);
+                    int opacityCached = stateAt.getOpacityIfCached();
                     if (opacityCached != -1) {
                         int targetLevel = Math.max(0, propagatedLightLevel - Math.max(1, opacityCached));
-                        if (lightLevel > targetLevel) {
+                        if (currentLevel > targetLevel) {
                             // it looks like another source propagated here, so re-propagate it
                             if (increaseQueueLength >= increaseQueue.length) {
                                 increaseQueue = this.resizeIncreaseQueue();
                             }
                             increaseQueue[increaseQueueLength++] =
                                     offX + ((long) offZ << 6) + ((long) offY << 12) + encodeOffset & (1L << 28) - 1
-                                    | (lightLevel & 0x7FFFL) << 28
+                                    | (currentLevel & 0x7FFFL) << 28
                                     | (long) ALL_DIRECTIONS_BITSET << 43
                                     | FLAG_RECHECK_LEVEL;
                             continue;
                         }
-                        int emittedLight = blockState.getLightEmission() & emittedMask;
+                        int emittedLight = stateAt.getLightEmission() & emittedMask;
                         if (emittedLight != 0) {
                             // re-propagate source
                             // note: do not set recheck level, or else the propagation will fail
@@ -745,7 +761,7 @@ public abstract class StarLightEngine<T extends SWMRArray> {
                                     offX + ((long) offZ << 6) + ((long) offY << 12) + encodeOffset & (1L << 28) - 1
                                     | (emittedLight & 0x7FFFL) << 28
                                     | (long) ALL_DIRECTIONS_BITSET << 43
-                                    | (blockState.isConditionallyFullOpaque() ? FLAG_WRITE_LEVEL | FLAG_HAS_SIDED_TRANSPARENT_BLOCKS : FLAG_WRITE_LEVEL);
+                                    | (stateAt.isConditionallyFullOpaque() ? FLAG_WRITE_LEVEL | FLAG_HAS_SIDED_TRANSPARENT_BLOCKS : FLAG_WRITE_LEVEL);
                         }
                         currentNibble.set(localIndex, 0);
                         this.postLightUpdate(offX, offY, offZ);
@@ -761,29 +777,30 @@ public abstract class StarLightEngine<T extends SWMRArray> {
                         }
                         continue;
                     }
+                    //Not cached
                     long flags = 0;
-                    if (blockState.isConditionallyFullOpaque()) {
-                        VoxelShape cullingFace = blockState.getFaceOcclusionShape_(level, offX, offY, offZ, propagate.getOpposite().nms);
+                    if (stateAt.isConditionallyFullOpaque()) {
+                        VoxelShape cullingFace = stateAt.getFaceOcclusionShape_(level, offX, offY, offZ, propagate.getOpposite().nms);
                         if (Shapes.faceShapeOccludes(fromShape, cullingFace)) {
                             continue;
                         }
                         flags |= FLAG_HAS_SIDED_TRANSPARENT_BLOCKS;
                     }
-                    int opacity = blockState.getLightBlock_(level, offX, offY, offZ);
+                    int opacity = stateAt.getLightBlock_(level, offX, offY, offZ);
                     int targetLevel = Math.max(0, propagatedLightLevel - Math.max(1, opacity));
-                    if (lightLevel > targetLevel) {
+                    if (currentLevel > targetLevel) {
                         // it looks like another source propagated here, so re-propagate it
                         if (increaseQueueLength >= increaseQueue.length) {
                             increaseQueue = this.resizeIncreaseQueue();
                         }
                         increaseQueue[increaseQueueLength++] =
                                 offX + ((long) offZ << 6) + ((long) offY << 12) + encodeOffset & (1L << 28) - 1
-                                | (lightLevel & 0x7FFFL) << 28
+                                | (currentLevel & 0x7FFFL) << 28
                                 | (long) ALL_DIRECTIONS_BITSET << 43
                                 | FLAG_RECHECK_LEVEL | flags;
                         continue;
                     }
-                    int emittedLight = blockState.getLightEmission() & emittedMask;
+                    int emittedLight = stateAt.getLightEmission() & emittedMask;
                     if (emittedLight != 0) {
                         // re-propagate source
                         // note: do not set recheck level, or else the propagation will fail
@@ -816,7 +833,7 @@ public abstract class StarLightEngine<T extends SWMRArray> {
         this.performLightIncrease(lightAccess);
     }
 
-    protected final void performLightIncrease(LightChunkGetter lightAccess) {
+    protected void performLightIncrease(LightChunkGetter lightAccess) {
         BlockGetter world = lightAccess.getLevel();
         long[] queue = this.increaseQueue;
         int queueReadIndex = 0;
@@ -827,7 +844,13 @@ public abstract class StarLightEngine<T extends SWMRArray> {
         int decodeOffsetZ = -this.encodeOffsetZ;
         int encodeOffset = this.coordinateOffset;
         int sectionOffset = this.chunkSectionIndexOffset;
+        int printed = queueLength;
+        Evolution.info("sky increase queueLength = {}", printed);
         while (queueReadIndex < queueLength) {
+            if (queueLength > printed) {
+                printed = queueLength;
+                Evolution.info("    I lied, it's actually = {}", printed);
+            }
             long queueValue = queue[queueReadIndex++];
             int posX = ((int) queueValue & 63) + decodeOffsetX;
             int posZ = ((int) queueValue >>> 6 & 63) + decodeOffsetZ;
@@ -853,13 +876,19 @@ public abstract class StarLightEngine<T extends SWMRArray> {
                     int sectionIndex = (offX >> 4) + 5 * (offZ >> 4) + 5 * 5 * (offY >> 4) + sectionOffset;
                     int localIndex = offX & 15 | (offZ & 15) << 4 | (offY & 15) << 8;
                     T currentNibble = this.nibbleCache[sectionIndex];
-                    int currentLevel;
-                    if (currentNibble == null || (currentLevel = currentNibble.getUpdating(localIndex)) >= propagatedLightLevel - 1) {
-                        continue; // already at the level we want or unloaded
+                    if (currentNibble == null) {
+                        //Unloaded
+                        continue;
                     }
-                    BlockState blockState = this.getBlockState(sectionIndex, localIndex);
-                    int opacityCached = blockState.getOpacityIfCached();
+                    int currentLevel = currentNibble.getUpdating(localIndex);
+                    if (currentLevel >= propagatedLightLevel - 1) {
+                        //Already at the level we want or more
+                        continue;
+                    }
+                    BlockState stateAt = this.getBlockState(sectionIndex, localIndex);
+                    int opacityCached = stateAt.getOpacityIfCached();
                     if (opacityCached != -1) {
+                        //Cached
                         int targetLevel = propagatedLightLevel - Math.max(1, opacityCached);
                         if (targetLevel > currentLevel) {
                             currentNibble.set(localIndex, targetLevel);
@@ -877,15 +906,16 @@ public abstract class StarLightEngine<T extends SWMRArray> {
                         }
                         continue;
                     }
+                    //Not cached
                     long flags = 0;
-                    if (blockState.isConditionallyFullOpaque()) {
-                        VoxelShape cullingFace = blockState.getFaceOcclusionShape_(world, offX, offY, offZ, propagate.getOpposite().nms);
+                    if (stateAt.isConditionallyFullOpaque()) {
+                        VoxelShape cullingFace = stateAt.getFaceOcclusionShape_(world, offX, offY, offZ, propagate.getOpposite().nms);
                         if (Shapes.faceShapeOccludes(Shapes.empty(), cullingFace)) {
                             continue;
                         }
                         flags |= FLAG_HAS_SIDED_TRANSPARENT_BLOCKS;
                     }
-                    int opacity = blockState.getLightBlock_(world, offX, offY, offZ);
+                    int opacity = stateAt.getLightBlock_(world, offX, offY, offZ);
                     int targetLevel = propagatedLightLevel - Math.max(1, opacity);
                     if (targetLevel <= currentLevel) {
                         continue;
@@ -918,13 +948,19 @@ public abstract class StarLightEngine<T extends SWMRArray> {
                     int sectionIndex = (offX >> 4) + 5 * (offZ >> 4) + 5 * 5 * (offY >> 4) + sectionOffset;
                     int localIndex = offX & 15 | (offZ & 15) << 4 | (offY & 15) << 8;
                     T currentNibble = this.nibbleCache[sectionIndex];
-                    int currentLevel;
-                    if (currentNibble == null || (currentLevel = currentNibble.getUpdating(localIndex)) >= propagatedLightLevel - 1) {
-                        continue; // already at the level we want
+                    if (currentNibble == null) {
+                        //Unloaded
+                        continue;
                     }
-                    BlockState blockState = this.getBlockState(sectionIndex, localIndex);
-                    int opacityCached = blockState.getOpacityIfCached();
+                    int currentLevel = currentNibble.getUpdating(localIndex);
+                    if (currentLevel >= propagatedLightLevel - 1) {
+                        //Already at the level we want or more
+                        continue;
+                    }
+                    BlockState stateAt = this.getBlockState(sectionIndex, localIndex);
+                    int opacityCached = stateAt.getOpacityIfCached();
                     if (opacityCached != -1) {
+                        //Cached
                         final int targetLevel = propagatedLightLevel - Math.max(1, opacityCached);
                         if (targetLevel > currentLevel) {
                             currentNibble.set(localIndex, targetLevel);
@@ -942,15 +978,16 @@ public abstract class StarLightEngine<T extends SWMRArray> {
                         }
                         continue;
                     }
+                    //Not cached
                     long flags = 0;
-                    if (blockState.isConditionallyFullOpaque()) {
-                        VoxelShape cullingFace = blockState.getFaceOcclusionShape_(world, offX, offY, offZ, propagate.getOpposite().nms);
+                    if (stateAt.isConditionallyFullOpaque()) {
+                        VoxelShape cullingFace = stateAt.getFaceOcclusionShape_(world, offX, offY, offZ, propagate.getOpposite().nms);
                         if (Shapes.faceShapeOccludes(fromShape, cullingFace)) {
                             continue;
                         }
                         flags |= FLAG_HAS_SIDED_TRANSPARENT_BLOCKS;
                     }
-                    int opacity = blockState.getLightBlock_(world, offX, offY, offZ);
+                    int opacity = stateAt.getLightBlock_(world, offX, offY, offZ);
                     int targetLevel = propagatedLightLevel - Math.max(1, opacity);
                     if (targetLevel <= currentLevel) {
                         continue;

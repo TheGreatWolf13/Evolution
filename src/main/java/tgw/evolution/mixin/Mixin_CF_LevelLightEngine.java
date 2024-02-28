@@ -197,7 +197,7 @@ public abstract class Mixin_CF_LevelLightEngine implements PatchLevelLightEngine
     @Override
     @Overwrite
     public int runUpdates(int limit, boolean bl, boolean bl2) {
-        final boolean hadUpdates = this.hasLightWork();
+        boolean hadUpdates = this.hasLightWork();
         this.lightEngine.propagateChanges();
         return hadUpdates ? 1 : 0;
     }

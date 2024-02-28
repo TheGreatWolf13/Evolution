@@ -1178,7 +1178,7 @@ public abstract class Mixin_FS_Blocks {
                                                                                                     .strength(4.5F, 3.0F)
                                                                                                     .sound(SoundType.DEEPSLATE),
                                                                            UniformInt.of(2, 5)));
-        LAPIS_BLOCK = register("lapis_block", new Block(of(Material.METAL, MaterialColor.LAPIS).requiresCorrectToolForDrops().strength(3.0F, 3.0F)));
+        LAPIS_BLOCK = register("lapis_block", new Block(of(Material.METAL, MaterialColor.LAPIS).requiresCorrectToolForDrops().strength(3.0F, 3.0F).lightLevel(s -> 0b1_1111_0_0000_0_0000)));
         DISPENSER = register("dispenser", new DispenserBlock(of(Material.STONE).requiresCorrectToolForDrops().strength(3.5F)));
         SANDSTONE = register("sandstone", new Block(of(Material.STONE, MaterialColor.SAND).requiresCorrectToolForDrops().strength(0.8F)));
         CHISELED_SANDSTONE = register("chiseled_sandstone", new Block(of(Material.STONE, MaterialColor.SAND)
@@ -1324,7 +1324,7 @@ public abstract class Mixin_FS_Blocks {
         IRON_BLOCK = register("iron_block", new Block(of(Material.METAL, MaterialColor.METAL)
                                                               .requiresCorrectToolForDrops()
                                                               .strength(5.0F, 6.0F)
-                                                              .sound(SoundType.METAL)));
+                                                              .sound(SoundType.METAL).lightLevel(s -> 0b1_1111_1_1111_1_1111)));
         BRICKS = register("bricks", new Block(of(Material.STONE, MaterialColor.COLOR_RED).requiresCorrectToolForDrops().strength(2.0F, 6.0F)));
         TNT = register("tnt", new TntBlock(of(Material.EXPLOSIVE).instabreak().sound(SoundType.GRASS)));
         BOOKSHELF = register("bookshelf", new Block(of(Material.WOOD).strength(1.5F).sound(SoundType.WOOD)));
@@ -1529,7 +1529,7 @@ public abstract class Mixin_FS_Blocks {
         NETHERRACK = register("netherrack", new NetherrackBlock(of(Material.STONE, MaterialColor.NETHER)
                                                                         .requiresCorrectToolForDrops()
                                                                         .strength(0.4F)
-                                                                        .sound(SoundType.NETHERRACK)));
+                                                                        .sound(SoundType.NETHERRACK).lightLevel(s -> 0b1_1111)));
         SOUL_SAND = register("soul_sand", new SoulSandBlock(of(Material.SAND, MaterialColor.COLOR_BROWN)
                                                                     .strength(0.5F)
                                                                     .speedFactor(0.4F)
@@ -1756,7 +1756,7 @@ public abstract class Mixin_FS_Blocks {
         EMERALD_BLOCK = register("emerald_block", new Block(of(Material.METAL, MaterialColor.EMERALD)
                                                                     .requiresCorrectToolForDrops()
                                                                     .strength(5.0F, 6.0F)
-                                                                    .sound(SoundType.METAL)));
+                                                                    .sound(SoundType.METAL).lightLevel(s -> 0b1_1111_0_0000)));
         SPRUCE_STAIRS = register("spruce_stairs", new StairBlock(SPRUCE_PLANKS.defaultBlockState(), BlockBehaviour.Properties.copy(SPRUCE_PLANKS)));
         BIRCH_STAIRS = register("birch_stairs", new StairBlock(BIRCH_PLANKS.defaultBlockState(), BlockBehaviour.Properties.copy(BIRCH_PLANKS)));
         JUNGLE_STAIRS = register("jungle_stairs", new StairBlock(JUNGLE_PLANKS.defaultBlockState(), BlockBehaviour.Properties.copy(JUNGLE_PLANKS)));
@@ -2084,7 +2084,7 @@ public abstract class Mixin_FS_Blocks {
         SEA_LANTERN = register("sea_lantern", new Block(of(Material.GLASS, MaterialColor.QUARTZ)
                                                                 .strength(0.3F)
                                                                 .sound(SoundType.GLASS)
-                                                                .lightLevel(BlockUtils.LIGHT_15)));
+                                                                .lightLevel(s -> 0b1_1111_1_1111_0_0000)));
         HAY_BLOCK = register("hay_block", new HayBlock(
                 of(Material.GRASS, MaterialColor.COLOR_YELLOW).strength(0.5F).sound(SoundType.GRASS)));
         WHITE_CARPET = register("white_carpet", new WoolCarpetBlock(DyeColor.WHITE,

@@ -514,11 +514,12 @@ public final class StarLightInterface {
         }
         SkyStarLightEngine skyEngine = this.getSkyLightEngine();
         BlockStarLightEngine blockEngine = this.getBlockLightEngine();
+        assert this.lightAccess != null;
         try {
             LightQueue.ChunkTasks task;
             while ((task = this.lightQueue.removeFirstTask()) != null) {
                 if (task.lightTasks != null) {
-                    for (final Runnable run : task.lightTasks) {
+                    for (Runnable run : task.lightTasks) {
                         run.run();
                     }
                 }
@@ -527,7 +528,6 @@ public final class StarLightInterface {
                 int chunkZ = ChunkPos.getZ(coordinate);
                 LSet positions = task.changedPositions;
                 Boolean[] sectionChanges = task.changedSectionSet;
-                assert this.lightAccess != null;
                 if (skyEngine != null && (!positions.isEmpty() || sectionChanges != null)) {
                     skyEngine.blocksChangedInChunk(this.lightAccess, chunkX, chunkZ, positions, sectionChanges);
                 }

@@ -145,9 +145,9 @@ public final class SWMRShortArray extends SWMRArray {
         if (updating == null) {
             return 0;
         }
-        int mostSig = updating[index << 1];
-        int leastSig = updating[(index << 1) + 1];
-        return (mostSig << 8 | leastSig) & 0b1_1111_1_1111_1_1111;
+        int mostSig = updating[index << 1] & 0x7F;
+        int leastSig = updating[(index << 1) + 1] & 0xFF;
+        return mostSig << 8 | leastSig;
     }
 
     /**
@@ -166,9 +166,9 @@ public final class SWMRShortArray extends SWMRArray {
         if (visible == null) {
             return 0;
         }
-        int mostSig = visible[index << 1];
-        int leastSig = visible[(index << 1) + 1];
-        return (mostSig << 8 | leastSig) & 0b1_1111_1_1111_1_1111;
+        int mostSig = visible[index << 1] & 0x7F;
+        int leastSig = visible[(index << 1) + 1] & 0xFF;
+        return mostSig << 8 | leastSig;
     }
 
     /**

@@ -354,9 +354,9 @@ public final class SkyStarLightEngine extends StarLightEngine<SWMRNibbleArray> {
                 for (int currY = highestNonEmptySection << 4, maxY = currY | 15; currY <= maxY; ++currY) {
                     for (int i = 0, currX = startX, currZ = startZ; i < 16; ++i, currX += incX, currZ += incZ) {
                         this.appendToIncreaseQueue(
-                                currX + ((long) currZ << 6) + ((long) currY << 6 + 6) + encodeOffset & (1L << 6 + 6 + 16) - 1
-                                | 15L << 6 + 6 + 16 // we know we're at full lit here
-                                | propagateDirection << 6 + 6 + 16 + 4
+                                currX + ((long) currZ << 6) + ((long) currY << 12) + encodeOffset & (1L << 28) - 1
+                                | 0xFL << 28 // we know we're at full lit here
+                                | propagateDirection << 43
                                 // no transparent flag, we know for a fact there are no blocks here that could be directionally transparent (as the section is EMPTY)
                         );
                     }
@@ -490,9 +490,9 @@ public final class SkyStarLightEngine extends StarLightEngine<SWMRNibbleArray> {
                     }
                     // delay light set until after processing all sources to set up
                     this.appendToDecreaseQueue(
-                            columnX + ((long) columnZ << 6) + ((long) currY << 6 + 6) + encodeOffset & (1L << 6 + 6 + 16) - 1
-                            | 15L << 6 + 6 + 16
-                            | propagateDirection << 6 + 6 + 16 + 4
+                            columnX + ((long) columnZ << 6) + ((long) currY << 12) + encodeOffset & (1L << 28) - 1
+                            | 0xFL << 28
+                            | propagateDirection << 43
                             // do not set transparent blocks for the same reason we don't in the checkBlock method
                     );
                 }
@@ -575,9 +575,9 @@ public final class SkyStarLightEngine extends StarLightEngine<SWMRNibbleArray> {
                 // add to propagate
                 // light set delayed until we determine if this nibble section is null
                 this.appendToIncreaseQueue(
-                        worldX + ((long) worldZ << 6) + ((long) startY << 6 + 6) + encodeOffset & (1L << 6 + 6 + 16) - 1
-                        | 15L << 6 + 6 + 16 // we know we're at full lit here
-                        | propagateDirection << 6 + 6 + 16 + 4
+                        worldX + ((long) worldZ << 6) + ((long) startY << 12) + encodeOffset & (1L << 28) - 1
+                        | 0xFL << 28 // we know we're at full lit here
+                        | propagateDirection << 43
                 );
             }
             else {
@@ -597,9 +597,9 @@ public final class SkyStarLightEngine extends StarLightEngine<SWMRNibbleArray> {
                 }
                 // light set delayed until we determine if this nibble section is null
                 this.appendToIncreaseQueue(
-                        worldX + ((long) worldZ << 6) + ((long) startY << 6 + 6) + encodeOffset & (1L << 6 + 6 + 16) - 1
-                        | 15L << 6 + 6 + 16 // we know we're at full lit here
-                        | propagateDirection << 6 + 6 + 16 + 4
+                        worldX + ((long) worldZ << 6) + ((long) startY << 12) + encodeOffset & (1L << 28) - 1
+                        | 0xFL << 28 // we know we're at full lit here
+                        | propagateDirection << 43
                         | flags
                 );
             }

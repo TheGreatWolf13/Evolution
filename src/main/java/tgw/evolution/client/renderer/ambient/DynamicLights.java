@@ -35,6 +35,16 @@ public class DynamicLights {
         return (l1 & 0b1111_0_0000_0_0000) == (l2 & 0b1111_0_0000_0_0000);
     }
 
+    public static boolean canSpread(int light) {
+        if ((light & 0xF) > 1) {
+            return true;
+        }
+        if ((light >>> 5 & 0xF) > 1) {
+            return true;
+        }
+        return (light >>> 10 & 0xF) > 1;
+    }
+
     public static short combine(int l1, int l2) {
         int rr = Math.max(l1 & 0b1111, l2 & 0b1111);
         int rs = Math.max(l1 & 0b1_0000, l2 & 0b1_0000);
@@ -45,7 +55,36 @@ public class DynamicLights {
         return (short) (rr | rs | gr | gs | br | bs);
     }
 
-    private static boolean isLightGreater(short l1, short l2) {
+    public static int decreaseLightComponents(int original, int decreaseAmount) {
+        int rr = Math.max(0, (original & 0xF) - decreaseAmount);
+        int rs = rr == 0 ? 0 : original & 16;
+        int gr = Math.max(0, (original >>> 5 & 0xF) - decreaseAmount);
+        int gs = gr == 0 ? 0 : original & 512;
+        int br = Math.max(0, (original >>> 10 & 0xF) - decreaseAmount);
+        int bs = br == 0 ? 0 : original & 16_384;
+        return rr | rs | gr << 5 | gs | br << 10 | bs;
+    }
+
+    public static boolean isLightAtLeastAsGreatAs(int l1, int l2) {
+        if ((l1 & 0b1111) < (l2 & 0b1111)) {
+            return false;
+        }
+        if ((l1 & 0b1_0000) < (l2 & 0b1_0000)) {
+            return false;
+        }
+        if ((l1 & 0b1111_0_0000) < (l2 & 0b1111_0_0000)) {
+            return false;
+        }
+        if ((l1 & 0b1_0000_0_0000) < (l2 & 0b1_0000_0_0000)) {
+            return false;
+        }
+        if ((l1 & 0b1111_0_0000_0_0000) < (l2 & 0b1111_0_0000_0_0000)) {
+            return false;
+        }
+        return (l1 & 0b1_0000_0_0000_0_0000) >= (l2 & 0b1_0000_0_0000_0_0000);
+    }
+
+    public static boolean isLightGreater(int l1, int l2) {
         if ((l1 & 0b1111) > (l2 & 0b1111)) {
             return true;
         }
@@ -62,6 +101,16 @@ public class DynamicLights {
             return true;
         }
         return (l1 & 0b1_0000_0_0000_0_0000) > (l2 & 0b1_0000_0_0000_0_0000);
+    }
+
+    public static int subtract(int l1, int l2) {
+        int rr = Math.max(0, (l1 & 0xF) - (l2 & 0xF));
+        int rs = rr == 0 ? 0 : Math.max(0, (l1 & 16) - (l2 & 16));
+        int gr = Math.max(0, (l1 >>> 5 & 0xF) - (l2 >>> 5 & 0xF));
+        int gs = gr == 0 ? 0 : Math.max(0, (l1 & 512) - (l2 & 512));
+        int br = Math.max(0, (l1 >>> 10 & 0xF) - (l2 >>> 10 & 0xF));
+        int bs = br == 0 ? 0 : Math.max(0, (l1 & 16_384) - (l2 & 16_384));
+        return rr | rs | gr << 5 | gs | br << 10 | bs;
     }
 
     public void clear() {
