@@ -99,7 +99,6 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
      * @author TheGreatWolf
      * @reason Use non-BlockPos version
      */
-    @SuppressWarnings("removal")
     @Overwrite
     @Override
     public @Nullable BlockEntity getBlockEntity(BlockPos pos) {
@@ -121,7 +120,6 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
      * @author TheGreatWolf
      * @reason Use non-BlockPos version
      */
-    @SuppressWarnings("removal")
     @Overwrite
     @Override
     public BlockState getBlockState(BlockPos pos) {
@@ -183,11 +181,13 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
     @Shadow
     public abstract long getDayTime();
 
+    @Shadow
+    public abstract int getDirectSignalTo(BlockPos blockPos);
+
     /**
      * @author TheGreatWolf
      * @reason Use non-BlockPos version
      */
-    @SuppressWarnings("removal")
     @Overwrite
     @Override
     public FluidState getFluidState(BlockPos pos) {
@@ -209,6 +209,13 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
 
     @Shadow
     public abstract ProfilerFiller getProfiler();
+
+    @Overwrite
+    public int getSignal(BlockPos pos, Direction dir) {
+        BlockState blockState = this.getBlockState_(pos);
+        int signal = blockState.getSignal(this, pos, dir);
+        return blockState.isRedstoneConductor(this, pos) ? Math.max(signal, this.getDirectSignalTo(pos)) : signal;
+    }
 
     @Overwrite
     public void globalLevelEvent(@LvlEvent int event, BlockPos pos, int data) {
