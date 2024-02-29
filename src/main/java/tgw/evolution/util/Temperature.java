@@ -337,6 +337,12 @@ public final class Temperature implements ILocked {
         }
         int y = Mth.floor(this.y);
         int index = chunk.getSectionIndex(y);
+        if (index < 0) {
+            return 0.5f;
+        }
+        if (index >= chunk.getSectionsCount()) {
+            return this.getSolarHighLowFactor();
+        }
         LevelChunkSection section = chunk.getSection(index);
         int atm = section.getAtmStorage().get(x & 15, y & 15, z & 15);
         if (atm == 31) {
