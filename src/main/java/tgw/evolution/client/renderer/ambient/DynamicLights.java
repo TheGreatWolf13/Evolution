@@ -50,6 +50,12 @@ public class DynamicLights {
         return (short) (rr | rs | gr | gs | br | bs);
     }
 
+    public static int combineComponent(int l1, int l2) {
+        int range = Math.max(l1 & 0b1111, l2 & 0b1111);
+        int strength = Math.max(l1 & 0b1_0000, l2 & 0b1_0000);
+        return range | strength;
+    }
+
     public static int decreaseComponent(int lightColour, int decreaseAmount) {
         int range = Math.max(0, (lightColour & 15) - decreaseAmount);
         if (range == 0) {
@@ -101,6 +107,15 @@ public class DynamicLights {
             return true;
         }
         return (l1 & 0b1_0000_0_0000_0_0000) > (l2 & 0b1_0000_0_0000_0_0000);
+    }
+
+    public static int recombine(int original, int lightColour, @RGB int colour) {
+        return switch (colour) {
+            case RGB.RED -> original & -32 | lightColour;
+            case RGB.GREEN -> original & -993 | lightColour << 5;
+            case RGB.BLUE -> original & -31_745 | lightColour << 10;
+            default -> throw new IllegalArgumentException("Unknown colour!");
+        };
     }
 
     public static int removeComponent(int light, @RGB int colour) {

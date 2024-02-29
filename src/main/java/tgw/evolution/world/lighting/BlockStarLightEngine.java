@@ -561,8 +561,8 @@ public final class BlockStarLightEngine extends StarLightEngine<SWMRShortArray> 
                         int targetLight = DynamicLights.decreaseLight(propagatedLight, Math.max(1, opacityCached));
                         int targetColour = DynamicLights.getComponent(targetLight, colour);
                         if (DynamicLights.isComponentGreater(targetColour, currentColour)) {
-                            targetLight = DynamicLights.combine(targetLight, currentLight);
-                            targetColour = DynamicLights.getComponent(targetLight, colour);
+                            targetColour = DynamicLights.combineComponent(targetColour, currentColour);
+                            targetLight = DynamicLights.recombine(currentLight, targetColour, colour);
                             currentNibble.set(localIndex, targetLight);
                             this.postLightUpdate(offX, offY, offZ);
                             if (DynamicLights.canSpread(targetColour)) {
@@ -590,8 +590,8 @@ public final class BlockStarLightEngine extends StarLightEngine<SWMRShortArray> 
                     if (targetColour == currentColour || DynamicLights.isComponentGreater(currentColour, targetColour)) {
                         continue;
                     }
-                    targetLight = DynamicLights.combine(targetLight, currentLight);
-                    targetColour = DynamicLights.getComponent(targetLight, colour);
+                    targetColour = DynamicLights.combineComponent(targetColour, currentColour);
+                    targetLight = DynamicLights.recombine(currentLight, targetColour, colour);
                     currentNibble.set(localIndex, targetLight);
                     this.postLightUpdate(offX, offY, offZ);
                     if (DynamicLights.canSpread(targetColour)) {
@@ -634,8 +634,8 @@ public final class BlockStarLightEngine extends StarLightEngine<SWMRShortArray> 
                         int targetLight = DynamicLights.decreaseLight(propagatedLight, Math.max(1, opacityCached));
                         int targetColour = DynamicLights.getComponent(targetLight, colour);
                         if (DynamicLights.isComponentGreater(targetColour, currentColour)) {
-                            targetLight = DynamicLights.combine(targetLight, currentLight);
-                            targetColour = DynamicLights.getComponent(targetLight, colour);
+                            targetColour = DynamicLights.combineComponent(targetColour, currentColour);
+                            targetLight = DynamicLights.recombine(currentLight, targetColour, colour);
                             currentNibble.set(localIndex, targetLight);
                             this.postLightUpdate(offX, offY, offZ);
                             if (DynamicLights.canSpread(targetColour)) {
@@ -663,8 +663,8 @@ public final class BlockStarLightEngine extends StarLightEngine<SWMRShortArray> 
                     if (targetColour == currentColour || DynamicLights.isComponentGreater(currentColour, targetColour)) {
                         continue;
                     }
-                    targetLight = DynamicLights.combine(targetLight, currentLight);
-                    targetColour = DynamicLights.getComponent(targetLight, colour);
+                    targetColour = DynamicLights.combineComponent(targetColour, currentColour);
+                    targetLight = DynamicLights.recombine(currentLight, targetColour, colour);
                     currentNibble.set(localIndex, targetLight);
                     this.postLightUpdate(offX, offY, offZ);
                     if (DynamicLights.canSpread(targetColour)) {
