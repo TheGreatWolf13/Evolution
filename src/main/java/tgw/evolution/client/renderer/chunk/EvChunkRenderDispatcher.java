@@ -52,7 +52,7 @@ public class EvChunkRenderDispatcher {
     private final PoseStack matrices = new PoseStack();
     private final IRandom random = new FastRandom();
     private final PriorityBlockingQueue<RenderChunk.ChunkCompileTask> toBatchHighPriority = new PriorityBlockingQueue<>();
-    private final Queue<RenderChunk.ChunkCompileTask> toBatchLowPriority = new LinkedBlockingDeque();
+    private final Queue<RenderChunk.ChunkCompileTask> toBatchLowPriority = new LinkedBlockingDeque<>();
     private final Queue<Runnable> toUpload = new ConcurrentLinkedQueue<>();
     ClientLevel level;
     private float camX;
@@ -244,7 +244,7 @@ public class EvChunkRenderDispatcher {
         return CompletableFuture.runAsync(() -> {}, this.toUpload::add).thenCompose(v -> doUploadChunkLayer(builder, buffer));
     }
 
-    enum ChunkTaskResult {
+    public enum ChunkTaskResult {
         SUCCESSFUL,
         CANCELLED
     }
@@ -433,24 +433,24 @@ public class EvChunkRenderDispatcher {
                             if (!fluidState.isEmpty() && ItemBlockRenderTypes.getRenderLayer(fluidState) == renderType) {
                                 BufferBuilder builder = fixedBuffers.builder(i);
                                 if ((compiledChunk.hasLayer & 1 << i) == 0) {
-                                    compiledChunk.hasLayer |= 1 << i;
+                                    compiledChunk.hasLayer |= (byte) (1 << i);
                                     RenderChunk.this.beginLayer(builder);
                                 }
                                 if (dispatcher.renderLiquid(px, py, pz, EvChunkRenderDispatcher.this.level, builder, blockState, fluidState)) {
-                                    compiledChunk.hasBlocks |= 1 << i;
+                                    compiledChunk.hasBlocks |= (byte) (1 << i);
                                 }
                             }
                             if (blockState.getRenderShape() != RenderShape.INVISIBLE &&
                                 ItemBlockRenderTypes.getChunkRenderType(blockState) == renderType) {
                                 BufferBuilder builder = fixedBuffers.builder(i);
                                 if ((compiledChunk.hasLayer & 1 << i) == 0) {
-                                    compiledChunk.hasLayer |= 1 << i;
+                                    compiledChunk.hasLayer |= (byte) (1 << i);
                                     RenderChunk.this.beginLayer(builder);
                                 }
                                 matrices.pushPose();
                                 matrices.translate(dx, dy, dz);
                                 if (dispatcher.renderBatched(blockState, px, py, pz, EvChunkRenderDispatcher.this.level, matrices, builder, true, random)) {
-                                    compiledChunk.hasBlocks |= 1 << i;
+                                    compiledChunk.hasBlocks |= (byte) (1 << i);
                                 }
                                 matrices.popPose();
                             }
@@ -676,7 +676,7 @@ public class EvChunkRenderDispatcher {
             CompiledChunk compiled = this.compiled;
             this.cachedFlags = compiled.hasBlocks;
             if (compiled == CompiledChunk.UNCOMPILED) {
-                this.cachedFlags |= 1 << 7;
+                this.cachedFlags |= (byte) (1 << 7);
             }
             else if (!compiled.renderableTEs.isEmpty()) {
                 this.cachedFlags |= 1 << 6;
@@ -701,7 +701,7 @@ public class EvChunkRenderDispatcher {
             }
         }
 
-        public abstract class ChunkCompileTask implements Comparable<ChunkCompileTask> {
+        public abstract static class ChunkCompileTask implements Comparable<ChunkCompileTask> {
             protected final double distAtCreation;
             protected final AtomicBoolean isCancelled = new AtomicBoolean(false);
             protected final boolean isHighPriority;
@@ -790,17 +790,17 @@ public class EvChunkRenderDispatcher {
                                     if (!fluidState.isEmpty() && ItemBlockRenderTypes.getRenderLayer(fluidState) == renderType) {
                                         BufferBuilder builder = builderPack.builder(i);
                                         if ((compiledChunk.hasLayer & 1 << i) == 0) {
-                                            compiledChunk.hasLayer |= 1 << i;
+                                            compiledChunk.hasLayer |= (byte) (1 << i);
                                             RenderChunk.this.beginLayer(builder);
                                         }
                                         if (dispatcher.renderLiquid(px, py, pz, region, builder, blockState, fluidState)) {
-                                            compiledChunk.hasBlocks |= 1 << i;
+                                            compiledChunk.hasBlocks |= (byte) (1 << i);
                                         }
                                     }
                                     if (blockState.getRenderShape() != RenderShape.INVISIBLE && ItemBlockRenderTypes.getChunkRenderType(blockState) == renderType) {
                                         BufferBuilder builder = builderPack.builder(i);
                                         if ((compiledChunk.hasLayer & 1 << i) == 0) {
-                                            compiledChunk.hasLayer |= 1 << i;
+                                            compiledChunk.hasLayer |= (byte) (1 << i);
                                             RenderChunk.this.beginLayer(builder);
                                         }
                                         matrices.pushPose();
