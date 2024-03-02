@@ -376,6 +376,18 @@ public final class StarLightInterface {
         return this.blockReader;
     }
 
+    public int getClampedBlockLight(long pos) {
+        int x = BlockPos.getX(pos);
+        int y = BlockPos.getY(pos);
+        int z = BlockPos.getZ(pos);
+        ChunkAccess chunk = this.getAnyChunkNow(SectionPos.blockToSectionCoord(x), SectionPos.blockToSectionCoord(z));
+        int value = this.getBlockLightValue(x, y, z, chunk);
+        int r = value & 0xF;
+        int g = value >>> 5 & 0xF;
+        int b = value >>> 10 & 0xF;
+        return Math.max(r, Math.max(g, b));
+    }
+
     private int getClampedBlockLightValue(int x, int y, int z, @Nullable ChunkAccess chunk) {
         int value = this.getBlockLightValue(x, y, z, chunk);
         int r = value & 0xF;

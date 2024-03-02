@@ -144,6 +144,11 @@ public abstract class Mixin_CF_LevelLightEngine implements PatchLevelLightEngine
         //Do nothing
     }
 
+    @Override
+    public int getClampedBlockLight(long pos) {
+        return this.lightEngine.getClampedBlockLight(pos);
+    }
+
     @Overwrite
     public String getDebugData(LightLayer lightLayer, SectionPos sectionPos) {
         return "n/a";

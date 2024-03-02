@@ -7,7 +7,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.HalfTransparentBlock;
 import net.minecraft.world.level.block.IceBlock;
@@ -68,7 +67,7 @@ public abstract class Mixin_M_IceBlock extends HalfTransparentBlock {
 
     @Override
     public void randomTick_(BlockState state, ServerLevel level, int x, int y, int z, Random random) {
-        if (level.getBrightness_(LightLayer.BLOCK, BlockPos.asLong(x, y, z)) > 11 - state.getLightBlock_(level, x, y, z)) {
+        if (level.getLightEngine().getClampedBlockLight(BlockPos.asLong(x, y, z)) > 11 - state.getLightBlock_(level, x, y, z)) {
             this.melt(state, level, new BlockPos(x, y, z));
         }
     }

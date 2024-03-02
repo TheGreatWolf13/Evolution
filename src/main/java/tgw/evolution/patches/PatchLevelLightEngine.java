@@ -20,6 +20,10 @@ public interface PatchLevelLightEngine {
         throw new AbstractMethodError();
     }
 
+    default int getClampedBlockLight(long pos) {
+        throw new AbstractMethodError();
+    }
+
     default StarLightInterface getLightEngine() {
         throw new AbstractMethodError();
     }

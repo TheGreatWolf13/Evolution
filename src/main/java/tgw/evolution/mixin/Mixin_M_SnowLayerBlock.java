@@ -8,7 +8,6 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
-import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SnowLayerBlock;
@@ -129,7 +128,7 @@ public abstract class Mixin_M_SnowLayerBlock extends Block {
 
     @Override
     public void randomTick_(BlockState state, ServerLevel level, int x, int y, int z, Random random) {
-        if (level.getBrightness_(LightLayer.BLOCK, BlockPos.asLong(x, y, z)) > 11) {
+        if (level.getLightEngine().getClampedBlockLight(BlockPos.asLong(x, y, z)) > 11) {
             BlockUtils.dropResources(state, level, x, y, z);
             level.removeBlock_(x, y, z, false);
         }
