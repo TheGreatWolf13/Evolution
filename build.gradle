@@ -1,6 +1,8 @@
 plugins {
     id 'fabric-loom' version '0.11-SNAPSHOT'
     id 'maven-publish'
+    id 'java-library'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
 }
 
 sourceCompatibility = JavaVersion.VERSION_17
@@ -11,6 +13,7 @@ version = project.mod_version
 group = project.maven_group
 
 repositories {
+    mavenCentral()
     // Add repositories to retrieve artifacts from in here.
     // You should only use this when depending on other mods because
     // Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
@@ -23,6 +26,7 @@ dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings loom.officialMojangMappings()
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    shadow(implementation('org.jocl:jocl:2.0.5'))
 }
 
 processResources {
@@ -50,9 +54,19 @@ java {
 }
 
 jar {
-    from("LICENSE") {
-        rename { "${it}_${project.archivesBaseName}" }
-    }
+    from "LICENSE"
+    archiveClassifier.set("dev")
+}
+
+shadowJar {
+    configurations = [project.configurations.shadow]
+    archiveClassifier.set("dev")
+    relocate "org.jocl", "tgw.evolution.shadow.org.jocl"
+}
+
+remapJar {
+    dependsOn(shadowJar)
+    inputFile = tasks.shadowJar.archiveFile
 }
 
 // configure the maven publication

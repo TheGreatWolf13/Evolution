@@ -489,6 +489,7 @@
     "Mixin_CF_EffectInstance",
     "Mixin_CF_Minecraft",
     "Mixin_CF_ModelResourceLocation",
+    "Mixin_CF_NativeImage",
     "Mixin_CF_ParticleEngine",
     "Mixin_CF_PoseStack",
     "Mixin_CF_PostPass",

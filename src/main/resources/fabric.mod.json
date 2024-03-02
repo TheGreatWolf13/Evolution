@@ -348,6 +348,9 @@
       ],
       "net/minecraft/network/protocol/game/ClientboundLightUpdatePacketData": [
         "tgw/evolution/patches/PatchClientboundLightUpdatePacketData"
+      ],
+      "com/mojang/blaze3d/platform/NativeImage": [
+        "tgw/evolution/patches/PatchNativeImage"
       ]
     }
   }

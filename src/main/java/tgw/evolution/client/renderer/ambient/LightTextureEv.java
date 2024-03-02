@@ -8,44 +8,150 @@ import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.level.LevelReader;
+import org.jetbrains.annotations.Nullable;
+import org.jocl.*;
 import org.lwjgl.opengl.GL11C;
 import tgw.evolution.client.renderer.DimensionOverworld;
 import tgw.evolution.events.ClientEvents;
 
+import java.nio.IntBuffer;
+
 public class LightTextureEv extends LightTexture {
 
+    private static final String CL_SOURCE = """
+                        inline float invGamma(float value) {
+                        	float f = 1.0F - value;
+                        	return 1.0F - f * f * f;
+                        }
+                        			
+                        kernel void computeLightmap(global const float* table, float skyFlash, float corrSkyBrightness, float skyRed, float skyGreen, float skyBlue, float darkenAmount, float nightVisionMod, float gamma, global int* lightmap) {
+                        	int x = get_global_id(0);
+                        	int y = get_global_id(1);
+                        	int bl = get_global_id(2);
+                        	for (int sl = 0; sl < 16; ++sl) {
+                        		float skyLight = table[sl] * skyFlash;
+                        		float bLRed = bl < 16 ? table[bl] * 0.5f : table[bl - 16];
+                        		float bLGreen = x < 16 ? table[x] * 0.5f : table[x - 16];
+                        		float bLBlue = y < 16 ? table[y] * 0.5f : table[y - 16];
+                        		float addend = corrSkyBrightness * skyLight;
+                        		float redMod = addend * skyRed;
+                        		float greenMod = addend * skyGreen;
+                        		float blueMod = addend * skyBlue;
+                        		bLRed *= 1 - redMod;
+                        		bLGreen *= 1 - greenMod;
+                        		bLBlue *= 1 - blueMod;
+                        		bLRed += redMod;
+                        		bLGreen += greenMod;
+                        		bLBlue += blueMod;
+                        		if (darkenAmount > 0.0F) {
+                        			float r = bLRed * 0.7f * darkenAmount;
+                        			float g = bLGreen * 0.6f * darkenAmount;
+                        			float b = bLBlue * 0.6f * darkenAmount;
+                        			float f = 1.0f - darkenAmount;
+                        			bLRed *= f;
+                        			bLGreen *= f;
+                        			bLBlue *= f;
+                        			bLRed += r;
+                        			bLGreen += g;
+                        			bLBlue += b;
+                        		}
+                        		if (nightVisionMod > 0.0F) {
+                        			float max = fmax(bLRed, fmax(bLGreen, bLBlue));
+                        			if (max < 1.0F) {
+                        				float r = bLRed;
+                        				float g = bLGreen;
+                        				float b = bLBlue;
+                        				float f = 1.0F / max;
+                        				if (isinf(f) == 1) {
+                        					r = 1.0f;
+                        					g = 1.0f;
+                        					b = 1.0f;
+                        				}
+                        				else {
+                        					r *= f;
+                        					g *= f;
+                        					b *= f;
+                        				}
+                        				float m = 1 - nightVisionMod;
+                        				bLRed *= m;
+                        				bLGreen *= m;
+                        				bLBlue *= m;
+                        				bLRed += r * nightVisionMod;
+                        				bLGreen += g * nightVisionMod;
+                        				bLBlue += b * nightVisionMod;
+                        			}
+                        		}
+                        		float max = fmax(bLRed, fmax(bLGreen, bLBlue));
+                        		float gammaMult = max == 0 ? 0 : (max * (1.0f - gamma) + invGamma(max) * gamma) / max;
+                        		bLRed *= gammaMult;
+                        		bLGreen *= gammaMult;
+                        		bLBlue *= gammaMult;
+                        		bLRed *= 255.0f;
+                        		bLGreen *= 255.0f;
+                        		bLBlue *= 255.0f;
+                        		int red = (int) bLRed;
+                        		int green = (int) bLGreen;
+                        		int blue = (int) bLBlue;
+                        		lightmap[(x * 32 + bl) + 1024 * (y * 16 + sl)] = 0xff000000 | blue << 16 | green << 8 | red;
+                        	}
+                        }
+            """;
+    private final float[] corrSkyBrightness = new float[1];
+    private final Pointer corrSkyBrightnessPointer = Pointer.to(this.corrSkyBrightness);
+    private final float[] darkenAmount = new float[1];
+    private final Pointer darkenAmountPointer = Pointer.to(this.darkenAmount);
     private final GameRenderer gameRenderer;
-    private final NativeImage lightPixels;
+    private final float[] gamma = new float[1];
+    private final Pointer gammaPointer = Pointer.to(this.gamma);
+    private final long[] globalWorkSize = new long[3];
+    private final Pointer imagePointer;
     private final DynamicTexture lightTexture;
     private final ResourceLocation lightTextureLocation;
     private final Minecraft mc;
+    private final float[] nightVisionMod = new float[1];
+    private final Pointer nightVisionPointer = Pointer.to(this.nightVisionMod);
+    private final float[] skyBlue = new float[1];
+    private final Pointer skyBluePointer = Pointer.to(this.skyBlue);
+    private final float[] skyFlash = new float[1];
+    private final Pointer skyFlashPointer = Pointer.to(this.skyFlash);
+    private final float[] skyGreen = new float[1];
+    private final Pointer skyGreenPointer = Pointer.to(this.skyGreen);
+    private final float[] skyRed = new float[1];
+    private final Pointer skyRedPointer = Pointer.to(this.skyRed);
+    private cl_command_queue commandQueue;
+    private cl_context context;
+    private cl_kernel kernel;
+    private cl_mem memOut;
+    private Pointer memOutPointer;
+    private @Nullable cl_mem memTable;
     private boolean needsUpdate;
-    private float oldDarkenAmount = Float.NaN;
-    private boolean oldForce;
-    private float oldGamma = Float.NaN;
-    private float oldNightVisionMod = Float.NaN;
-    private float oldSkyBrightness = Float.NaN;
-    private float oldSkyFlash = Float.NaN;
+    private float[] oldTable;
+    private cl_program program;
+    private Pointer tablePointer;
 
     public LightTextureEv(GameRenderer gameRenderer, Minecraft mc) {
         super(gameRenderer, mc);
         this.gameRenderer = gameRenderer;
         this.mc = mc;
-        this.lightTexture = new DynamicTexture(1_024, 512, false);
+        this.lightTexture = new DynamicTexture(1_024, 512, true);
         this.lightTextureLocation = this.mc.getTextureManager().register("light_map", this.lightTexture);
         NativeImage pixels = this.lightTexture.getPixels();
         assert pixels != null;
-        this.lightPixels = pixels;
         for (int i = 0; i < 512; ++i) {
             for (int j = 0; j < 1_024; ++j) {
-                this.lightPixels.setPixelRGBA(j, i, 0xffff_ffff);
+                pixels.setPixelRGBA(j, i, 0xffff_ffff);
             }
         }
         this.lightTexture.upload();
+        this.initCL();
+        IntBuffer buffer = pixels.getBuffer();
+        if (buffer == null) {
+            throw new RuntimeException("Null pointer for image!");
+        }
+        this.imagePointer = Pointer.to(buffer);
     }
 
     public static float getLightBrightness(LevelReader level, int lightLevel) {
@@ -76,14 +182,51 @@ public class LightTextureEv extends LightTexture {
         return world.getSkyDarken(partialTicks);
     }
 
-    private static float invGamma(float value) {
-        float f = 1.0F - value;
-        return 1.0F - f * f * f;
-    }
-
     @Override
     public void close() {
+        if (this.memTable != null) {
+            CL.clReleaseMemObject(this.memTable);
+        }
+        CL.clReleaseMemObject(this.memOut);
+        CL.clReleaseKernel(this.kernel);
+        CL.clReleaseProgram(this.program);
+        CL.clReleaseCommandQueue(this.commandQueue);
+        CL.clReleaseContext(this.context);
         this.lightTexture.close();
+    }
+
+    private void initCL() {
+        final int platformIndex = 0;
+        final long deviceType = CL.CL_DEVICE_TYPE_GPU;
+        final int deviceIndex = 0;
+        CL.setExceptionsEnabled(true);
+        int[] numPlatformsArray = new int[1];
+        CL.clGetPlatformIDs(0, null, numPlatformsArray);
+        int numPlatforms = numPlatformsArray[0];
+        cl_platform_id[] platforms = new cl_platform_id[numPlatforms];
+        CL.clGetPlatformIDs(platforms.length, platforms, null);
+        cl_platform_id platform = platforms[platformIndex];
+        cl_context_properties contextProperties = new cl_context_properties();
+        contextProperties.addProperty(CL.CL_CONTEXT_PLATFORM, platform);
+        int[] numDevicesArray = new int[1];
+        CL.clGetDeviceIDs(platform, deviceType, 0, null, numDevicesArray);
+        int numDevices = numDevicesArray[0];
+        cl_device_id[] devices = new cl_device_id[numDevices];
+        CL.clGetDeviceIDs(platform, deviceType, numDevices, devices, null);
+        cl_device_id device = devices[deviceIndex];
+        this.context = CL.clCreateContext(contextProperties, 1, new cl_device_id[]{device}, null, null, null);
+        cl_queue_properties properties = new cl_queue_properties();
+        properties.addProperty(CL.CL_QUEUE_PROFILING_ENABLE, 1);
+        properties.addProperty(CL.CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 1);
+        this.commandQueue = CL.clCreateCommandQueueWithProperties(this.context, device, properties, null);
+        this.program = CL.clCreateProgramWithSource(this.context, 1, new String[]{CL_SOURCE}, null, null);
+        CL.clBuildProgram(this.program, 0, null, null, null, null);
+        this.kernel = CL.clCreateKernel(this.program, "computeLightmap", null);
+        this.globalWorkSize[0] = 32;
+        this.globalWorkSize[1] = 32;
+        this.globalWorkSize[2] = 32;
+        this.memOut = CL.clCreateBuffer(this.context, CL.CL_MEM_WRITE_ONLY, Sizeof.cl_int * 1_024 * 512, null, null);
+        this.memOutPointer = Pointer.to(this.memOut);
     }
 
     @Override
@@ -108,18 +251,22 @@ public class LightTextureEv extends LightTexture {
             profiler.push("lightTex");
             ClientLevel level = this.mc.level;
             if (level != null) {
-                boolean shouldUpdate = false;
+                float[] table = getLightBrightnessTable(level);
+                //noinspection ArrayEquality
+                if (table != this.oldTable) {
+                    this.oldTable = table;
+                    if (this.memTable != null) {
+                        CL.clReleaseMemObject(this.memTable);
+                    }
+                    this.memTable = CL.clCreateBuffer(this.context, CL.CL_MEM_READ_ONLY | CL.CL_MEM_USE_HOST_PTR, Sizeof.cl_float * 16, Pointer.to(table), null);
+                    this.tablePointer = Pointer.to(this.memTable);
+                }
                 float skyBrightness = getSunBrightness(level, partialTicks);
-                float skyFlash;
                 if (level.getSkyFlashTime() > 0) {
-                    skyFlash = 1.0F;
+                    this.skyFlash[0] = 1.0F;
                 }
                 else {
-                    skyFlash = skyBrightness;
-                }
-                if (!Mth.equal(skyFlash, this.oldSkyFlash)) {
-                    this.oldSkyFlash = skyFlash;
-                    shouldUpdate = true;
+                    this.skyFlash[0] = skyBrightness;
                 }
                 assert this.mc.player != null;
                 float waterBrightness = this.mc.player.getWaterVision();
@@ -133,126 +280,28 @@ public class LightTextureEv extends LightTexture {
                 else {
                     nightVisionMod = 0.0F;
                 }
-                if (nightVisionMod != this.oldNightVisionMod) {
-                    this.oldNightVisionMod = nightVisionMod;
-                    shouldUpdate = true;
-                }
-                float corrSkyBrightness = skyBrightness * 0.65f + 0.35f;
-                if (!Mth.equal(corrSkyBrightness, this.oldSkyBrightness)) {
-                    this.oldSkyBrightness = corrSkyBrightness;
-                    shouldUpdate = true;
-                }
-                boolean forceBrightLightmap = level.effects().forceBrightLightmap();
-                if (forceBrightLightmap != this.oldForce) {
-                    this.oldForce = forceBrightLightmap;
-                    shouldUpdate = true;
-                }
-                float darkenAmount = this.gameRenderer.getDarkenWorldAmount(partialTicks);
-                if (darkenAmount != this.oldDarkenAmount) {
-                    this.oldDarkenAmount = darkenAmount;
-                    shouldUpdate = true;
-                }
-                float gamma = (float) this.mc.options.gamma;
-                if (gamma != this.oldGamma) {
-                    this.oldGamma = gamma;
-                    shouldUpdate = true;
-                }
-                if (shouldUpdate) {
-                    float skyRed = 1.0f;
-                    float skyGreen = 1.0f;
-                    float skyBlue = 1.0f;
-                    float[] table = getLightBrightnessTable(level);
-                    float invGamma = 1.0f - gamma;
-                    for (int x = 0; x < 32; ++x) {
-                        for (int y = 0; y < 32; ++y) {
-                            for (int sl = 0; sl < 16; ++sl) {
-                                for (int bl = 0; bl < 32; ++bl) {
-                                    float skyLight = table[sl] * skyFlash;
-                                    float bLRed = bl < 16 ? table[bl] * 0.5f : table[bl - 16];
-                                    float bLGreen = x < 16 ? table[x] * 0.5f : table[x - 16];
-                                    float bLBlue = y < 16 ? table[y] * 0.5f : table[y - 16];
-                                    if (forceBrightLightmap) {
-                                        bLRed *= 0.75f;
-                                        bLGreen *= 0.75f;
-                                        bLBlue *= 0.75f;
-                                        bLRed += 0.99f * 0.25f;
-                                        bLGreen += 1.12f * 0.25f;
-                                        bLBlue += 0.25f;
-                                    }
-                                    else {
-                                        float addend = corrSkyBrightness * skyLight;
-                                        float redMod = addend * skyRed;
-                                        float greenMod = addend * skyGreen;
-                                        float blueMod = addend * skyBlue;
-                                        bLRed *= 1 - redMod;
-                                        bLGreen *= 1 - greenMod;
-                                        bLBlue *= 1 - blueMod;
-                                        bLRed += redMod;
-                                        bLGreen += greenMod;
-                                        bLBlue += blueMod;
-                                        if (darkenAmount > 0.0F) {
-                                            float r = bLRed * 0.7f * darkenAmount;
-                                            float g = bLGreen * 0.6f * darkenAmount;
-                                            float b = bLBlue * 0.6f * darkenAmount;
-                                            float f = 1.0f - darkenAmount;
-                                            bLRed *= f;
-                                            bLGreen *= f;
-                                            bLBlue *= f;
-                                            bLRed += r;
-                                            bLGreen += g;
-                                            bLBlue += b;
-                                        }
-                                    }
-                                    assert 0 <= bLRed && bLRed <= 1;
-                                    assert 0 <= bLGreen && bLGreen <= 1;
-                                    assert 0 <= bLBlue && bLBlue <= 1;
-                                    if (nightVisionMod > 0.0F) {
-                                        float max = Math.max(bLRed, Math.max(bLGreen, bLBlue));
-                                        if (max < 1.0F) {
-                                            float r = bLRed;
-                                            float g = bLGreen;
-                                            float b = bLBlue;
-                                            float f = 1.0F / max;
-                                            if (Float.isInfinite(f)) {
-                                                r = 1.0f;
-                                                g = 1.0f;
-                                                b = 1.0f;
-                                            }
-                                            else {
-                                                r *= f;
-                                                g *= f;
-                                                b *= f;
-                                            }
-                                            float m = 1 - nightVisionMod;
-                                            bLRed *= m;
-                                            bLGreen *= m;
-                                            bLBlue *= m;
-                                            bLRed += r * nightVisionMod;
-                                            bLGreen += g * nightVisionMod;
-                                            bLBlue += b * nightVisionMod;
-                                        }
-                                    }
-                                    float max = Math.max(bLRed, Math.max(bLGreen, bLBlue));
-                                    float gammaMult = max == 0 ? 0 : (max * invGamma + invGamma(max) * gamma) / max;
-                                    bLRed *= gammaMult;
-                                    bLGreen *= gammaMult;
-                                    bLBlue *= gammaMult;
-                                    assert 0 <= bLRed && bLRed <= 1;
-                                    assert 0 <= bLGreen && bLGreen <= 1;
-                                    assert 0 <= bLBlue && bLBlue <= 1;
-                                    bLRed *= 255.0f;
-                                    bLGreen *= 255.0f;
-                                    bLBlue *= 255.0f;
-                                    int red = (int) bLRed;
-                                    int green = (int) bLGreen;
-                                    int blue = (int) bLBlue;
-                                    this.lightPixels.setPixelRGBA(x * 32 + bl, y * 16 + sl, 0xff00_0000 | blue << 16 | green << 8 | red);
-                                }
-                            }
-                        }
-                    }
-                    this.lightTexture.upload();
-                }
+                this.nightVisionMod[0] = nightVisionMod;
+                this.corrSkyBrightness[0] = skyBrightness * 0.65f + 0.35f;
+                this.darkenAmount[0] = this.gameRenderer.getDarkenWorldAmount(partialTicks);
+                this.gamma[0] = (float) this.mc.options.gamma;
+                this.skyRed[0] = 1.0f;
+                this.skyGreen[0] = 1.0f;
+                this.skyBlue[0] = 1.0f;
+                cl_kernel kernel = this.kernel;
+                CL.clSetKernelArg(kernel, 0, Sizeof.cl_mem, this.tablePointer);
+                CL.clSetKernelArg(kernel, 1, Sizeof.cl_float, this.skyFlashPointer);
+                CL.clSetKernelArg(kernel, 2, Sizeof.cl_float, this.corrSkyBrightnessPointer);
+                CL.clSetKernelArg(kernel, 3, Sizeof.cl_float, this.skyRedPointer);
+                CL.clSetKernelArg(kernel, 4, Sizeof.cl_float, this.skyGreenPointer);
+                CL.clSetKernelArg(kernel, 5, Sizeof.cl_float, this.skyBluePointer);
+                CL.clSetKernelArg(kernel, 6, Sizeof.cl_float, this.darkenAmountPointer);
+                CL.clSetKernelArg(kernel, 7, Sizeof.cl_float, this.nightVisionPointer);
+                CL.clSetKernelArg(kernel, 8, Sizeof.cl_float, this.gammaPointer);
+                CL.clSetKernelArg(kernel, 9, Sizeof.cl_mem, this.memOutPointer);
+                CL.clEnqueueNDRangeKernel(this.commandQueue, kernel, 3, null, this.globalWorkSize, null, 0, null, null);
+                // Read the output data
+                CL.clEnqueueReadBuffer(this.commandQueue, this.memOut, CL.CL_TRUE, 0, 1_024 * 512 * Sizeof.cl_int, this.imagePointer, 0, null, null);
+                this.lightTexture.upload();
             }
             profiler.pop();
         }
