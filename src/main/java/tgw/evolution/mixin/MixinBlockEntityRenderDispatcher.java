@@ -15,6 +15,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import tgw.evolution.client.renderer.ambient.DynamicLights;
 import tgw.evolution.client.renderer.chunk.EvLevelRenderer;
 
 import javax.annotation.Nullable;
@@ -24,16 +25,8 @@ public abstract class MixinBlockEntityRenderDispatcher {
 
     @Shadow public Camera camera;
 
-    /**
-     * @author TheGreatWolf
-     * @reason Replace LevelRenderer
-     */
     @Overwrite
-    private static <T extends BlockEntity> void setupAndRender(BlockEntityRenderer<T> renderer,
-                                                               T tile,
-                                                               float partialTick,
-                                                               PoseStack matrices,
-                                                               MultiBufferSource bufferSource) {
+    private static <T extends BlockEntity> void setupAndRender(BlockEntityRenderer<T> renderer, T tile, float partialTick, PoseStack matrices, MultiBufferSource bufferSource) {
         Level level = tile.getLevel();
         int light;
         if (level != null) {
@@ -41,7 +34,7 @@ public abstract class MixinBlockEntityRenderDispatcher {
             light = EvLevelRenderer.getLightColor(level, pos.getX(), pos.getY(), pos.getZ());
         }
         else {
-            light = 0xff_00ff;
+            light = DynamicLights.FULL_LIGHTMAP;
         }
         renderer.render(tile, partialTick, matrices, bufferSource, light, OverlayTexture.NO_OVERLAY);
     }
@@ -50,10 +43,6 @@ public abstract class MixinBlockEntityRenderDispatcher {
     @Nullable
     public abstract <E extends BlockEntity> BlockEntityRenderer<E> getRenderer(E pBlockEntity);
 
-    /**
-     * @author TheGreatWolf
-     * @reason Avoid allocations
-     */
     @Overwrite
     public <E extends BlockEntity> void render(E tile, float partialTicks, PoseStack matrices, MultiBufferSource bufferSource) {
         BlockEntityRenderer<E> renderer = this.getRenderer(tile);
@@ -73,11 +62,7 @@ public abstract class MixinBlockEntityRenderDispatcher {
             }
         }
     }
-
-    /**
-     * @author TheGreatWolf
-     * @reason Avoid allocations
-     */
+    
     @Overwrite
     public <E extends BlockEntity> boolean renderItem(E tile, PoseStack matrices, MultiBufferSource bufferSource, int light, int overlay) {
         BlockEntityRenderer<E> renderer = this.getRenderer(tile);

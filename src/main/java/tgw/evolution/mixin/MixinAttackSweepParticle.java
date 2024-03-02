@@ -5,6 +5,7 @@ import net.minecraft.client.particle.AttackSweepParticle;
 import net.minecraft.client.particle.TextureSheetParticle;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
+import tgw.evolution.client.renderer.ambient.DynamicLights;
 
 @Mixin(AttackSweepParticle.class)
 public abstract class MixinAttackSweepParticle extends TextureSheetParticle {
@@ -16,6 +17,6 @@ public abstract class MixinAttackSweepParticle extends TextureSheetParticle {
     @Override
     @Overwrite
     public int getLightColor(float partialTicks) {
-        return 0xFF_00FF;
+        return DynamicLights.FULL_LIGHTMAP;
     }
 }

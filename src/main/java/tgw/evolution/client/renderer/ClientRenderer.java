@@ -42,6 +42,7 @@ import tgw.evolution.client.audio.SoundEntityEmitted;
 import tgw.evolution.client.gui.EvolutionGui;
 import tgw.evolution.client.gui.GUIUtils;
 import tgw.evolution.client.gui.ScreenDisplayEffects;
+import tgw.evolution.client.renderer.ambient.DynamicLights;
 import tgw.evolution.client.util.Blending;
 import tgw.evolution.client.util.ClientEffectInstance;
 import tgw.evolution.config.EvolutionConfig;
@@ -466,7 +467,7 @@ public class ClientRenderer {
                             if (type.getFollowUps() > 0) {
                                 String s = String.valueOf(player.isOnGracePeriod() ? player.getFollowUp() : player.getFollowUp() + 1);
                                 MultiBufferSource.BufferSource bufferSource = this.mc.renderBuffers().bufferSource();
-                                this.mc.font.drawInBatch8xOutline(new TextComponent(s).getVisualOrderText(), (width - this.mc.font.width(s)) / 2.0f, height / 2.0f - 17, 0xffff_ffff, 0x0, matrix, bufferSource, 0xff_00ff);
+                                this.mc.font.drawInBatch8xOutline(new TextComponent(s).getVisualOrderText(), (width - this.mc.font.width(s)) / 2.0f, height / 2.0f - 17, 0xffff_ffff, 0x0, matrix, bufferSource, DynamicLights.FULL_LIGHTMAP);
                                 bufferSource.endBatch();
                             }
                         }

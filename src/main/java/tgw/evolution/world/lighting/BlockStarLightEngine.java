@@ -324,7 +324,7 @@ public final class BlockStarLightEngine extends StarLightEngine<SWMRShortArray> 
                         //Cached
                         int targetLight = DynamicLights.decreaseLight(propagatedLight, Math.max(1, opacityCached));
                         int targetColour = DynamicLights.getComponent(targetLight, colour);
-                        if (DynamicLights.isComponentGreater(currentColour, targetColour)) {
+                        if (DynamicLights.isComponentGreaterInRange(currentColour, targetColour)) {
                             //It looks like another source propagated here, so re-propagate it
                             if (incrQLen >= incrQ.length) {
                                 incrQ = this.resizeIncreaseQueue(colour);
@@ -365,7 +365,7 @@ public final class BlockStarLightEngine extends StarLightEngine<SWMRShortArray> 
                     int opacity = stateAt.getLightBlock_(level, offX, offY, offZ);
                     int targetLight = DynamicLights.decreaseLight(propagatedLight, Math.max(1, opacity));
                     int targetColour = DynamicLights.getComponent(targetLight, colour);
-                    if (DynamicLights.isComponentGreater(currentColour, targetColour)) {
+                    if (DynamicLights.isComponentGreaterInRange(currentColour, targetColour)) {
                         // it looks like another source propagated here, so re-propagate it
                         if (incrQLen >= incrQ.length) {
                             incrQ = this.resizeIncreaseQueue(colour);
@@ -423,7 +423,7 @@ public final class BlockStarLightEngine extends StarLightEngine<SWMRShortArray> 
                         //Cached
                         int targetLight = DynamicLights.decreaseLight(propagatedLight, Math.max(1, opacityCached));
                         int targetColour = DynamicLights.getComponent(targetLight, colour);
-                        if (DynamicLights.isComponentGreater(currentColour, targetColour)) {
+                        if (DynamicLights.isComponentGreaterInRange(currentColour, targetColour)) {
                             // it looks like another source propagated here, so re-propagate it
                             if (incrQLen >= incrQ.length) {
                                 incrQ = this.resizeIncreaseQueue(colour);
@@ -464,7 +464,7 @@ public final class BlockStarLightEngine extends StarLightEngine<SWMRShortArray> 
                     int opacity = stateAt.getLightBlock_(level, offX, offY, offZ);
                     int targetLight = DynamicLights.decreaseLight(propagatedLight, Math.max(1, opacity));
                     int targetColour = DynamicLights.getComponent(targetLight, colour);
-                    if (DynamicLights.isComponentGreater(currentColour, targetColour)) {
+                    if (DynamicLights.isComponentGreaterInRange(currentColour, targetColour)) {
                         // it looks like another source propagated here, so re-propagate it
                         if (incrQLen >= incrQ.length) {
                             incrQ = this.resizeIncreaseQueue(colour);
@@ -550,7 +550,7 @@ public final class BlockStarLightEngine extends StarLightEngine<SWMRShortArray> 
                     int currentLight = currentNibble.getUpdating(localIndex);
                     int currentColour = DynamicLights.getComponent(currentLight, colour);
                     int comp = DynamicLights.decreaseComponent(propagatedColour, 1);
-                    if (currentColour == comp || DynamicLights.isComponentGreater(currentColour, comp)) {
+                    if (currentColour == comp || DynamicLights.isComponentTotallyGreater(currentColour, comp)) {
                         //Already at the level we want or more
                         continue;
                     }
@@ -560,8 +560,7 @@ public final class BlockStarLightEngine extends StarLightEngine<SWMRShortArray> 
                         //Cached
                         int targetLight = DynamicLights.decreaseLight(propagatedLight, Math.max(1, opacityCached));
                         int targetColour = DynamicLights.getComponent(targetLight, colour);
-                        if (DynamicLights.isComponentGreater(targetColour, currentColour)) {
-                            targetColour = DynamicLights.combineComponent(targetColour, currentColour);
+                        if (DynamicLights.isComponentGreaterInRange(targetColour, currentColour)) {
                             targetLight = DynamicLights.recombine(currentLight, targetColour, colour);
                             currentNibble.set(localIndex, targetLight);
                             this.postLightUpdate(offX, offY, offZ);
@@ -587,10 +586,9 @@ public final class BlockStarLightEngine extends StarLightEngine<SWMRShortArray> 
                     int opacity = stateAt.getLightBlock_(level, offX, offY, offZ);
                     int targetLight = DynamicLights.decreaseLight(propagatedLight, Math.max(1, opacity));
                     int targetColour = DynamicLights.getComponent(targetLight, colour);
-                    if (targetColour == currentColour || DynamicLights.isComponentGreater(currentColour, targetColour)) {
+                    if (targetColour == currentColour || DynamicLights.isComponentGreaterInRange(currentColour, targetColour)) {
                         continue;
                     }
-                    targetColour = DynamicLights.combineComponent(targetColour, currentColour);
                     targetLight = DynamicLights.recombine(currentLight, targetColour, colour);
                     currentNibble.set(localIndex, targetLight);
                     this.postLightUpdate(offX, offY, offZ);
@@ -623,7 +621,7 @@ public final class BlockStarLightEngine extends StarLightEngine<SWMRShortArray> 
                     int currentLight = currentNibble.getUpdating(localIndex);
                     int currentColour = DynamicLights.getComponent(currentLight, colour);
                     int comp = DynamicLights.decreaseComponent(propagatedColour, 1);
-                    if (currentColour == comp || DynamicLights.isComponentGreater(currentColour, comp)) {
+                    if (currentColour == comp || DynamicLights.isComponentGreaterInRange(currentColour, comp)) {
                         //Already at the level we want or more
                         continue;
                     }
@@ -633,8 +631,7 @@ public final class BlockStarLightEngine extends StarLightEngine<SWMRShortArray> 
                         //Cached
                         int targetLight = DynamicLights.decreaseLight(propagatedLight, Math.max(1, opacityCached));
                         int targetColour = DynamicLights.getComponent(targetLight, colour);
-                        if (DynamicLights.isComponentGreater(targetColour, currentColour)) {
-                            targetColour = DynamicLights.combineComponent(targetColour, currentColour);
+                        if (DynamicLights.isComponentGreaterInRange(targetColour, currentColour)) {
                             targetLight = DynamicLights.recombine(currentLight, targetColour, colour);
                             currentNibble.set(localIndex, targetLight);
                             this.postLightUpdate(offX, offY, offZ);
@@ -660,10 +657,9 @@ public final class BlockStarLightEngine extends StarLightEngine<SWMRShortArray> 
                     int opacity = stateAt.getLightBlock_(level, offX, offY, offZ);
                     int targetLight = DynamicLights.decreaseLight(propagatedLight, Math.max(1, opacity));
                     int targetColour = DynamicLights.getComponent(targetLight, colour);
-                    if (targetColour == currentColour || DynamicLights.isComponentGreater(currentColour, targetColour)) {
+                    if (targetColour == currentColour || DynamicLights.isComponentGreaterInRange(currentColour, targetColour)) {
                         continue;
                     }
-                    targetColour = DynamicLights.combineComponent(targetColour, currentColour);
                     targetLight = DynamicLights.recombine(currentLight, targetColour, colour);
                     currentNibble.set(localIndex, targetLight);
                     this.postLightUpdate(offX, offY, offZ);

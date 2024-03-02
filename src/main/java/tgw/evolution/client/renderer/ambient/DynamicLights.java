@@ -14,6 +14,8 @@ import tgw.evolution.world.lighting.RGB;
 
 public class DynamicLights {
 
+    public static final int FULL_LIGHTMAP = 31 | 31 << 5 | 15 << 16 | 31 << 20;
+    public static final int FULL_LIGHTMAP_NO_SKY = 31 | 31 << 5 | 31 << 20;
     private final L2SMap added = new L2SHashMap();
     private final I2LSHashMap entityEmission = new I2LSHashMap();
     private final ClientLevel level;
@@ -56,6 +58,14 @@ public class DynamicLights {
         return range | strength;
     }
 
+    public static int componentsToLightmap(int red, int green, int blue, int sky) {
+        assert 0 <= red && red < 32 : "Red out of bounds: " + red;
+        assert 0 <= green && green < 32 : "Green out of bounds: " + green;
+        assert 0 <= blue && blue < 32 : "Blue out of bounds: " + blue;
+        assert 0 <= sky && sky < 16 : "Sky out of bounds: " + sky;
+        return red | green << 5 | sky << 16 | blue << 20;
+    }
+
     public static int decreaseComponent(int lightColour, int decreaseAmount) {
         int range = Math.max(0, (lightColour & 15) - decreaseAmount);
         if (range == 0) {
@@ -83,11 +93,21 @@ public class DynamicLights {
         };
     }
 
-    public static boolean isComponentGreater(int l1, int l2) {
+    public static boolean isComponentGreaterInRange(int l1, int l2) {
         if ((l1 & 0b1111) > (l2 & 0b1111)) {
             return true;
         }
-        return (l1 & 0b1_0000) > (l2 & 0b1_0000);
+        if ((l1 & 0b1111) == (l2 & 0b1111)) {
+            return (l1 & 0b1_0000) > (l2 & 0b1_0000);
+        }
+        return false;
+    }
+
+    public static boolean isComponentTotallyGreater(int l1, int l2) {
+        if ((l1 & 0b1111) > (l2 & 0b1111)) {
+            return (l1 & 0b1_0000) > (l2 & 0b1_0000);
+        }
+        return false;
     }
 
     public static boolean isLightGreater(int l1, int l2) {

@@ -5,6 +5,7 @@ import net.minecraft.client.particle.HugeExplosionParticle;
 import net.minecraft.client.particle.TextureSheetParticle;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
+import tgw.evolution.client.renderer.ambient.DynamicLights;
 
 @Mixin(HugeExplosionParticle.class)
 public abstract class MixinHugeExplosionParticle extends TextureSheetParticle {
@@ -16,6 +17,6 @@ public abstract class MixinHugeExplosionParticle extends TextureSheetParticle {
     @Override
     @Overwrite
     public int getLightColor(float partialTicks) {
-        return 0xFF_00FF;
+        return DynamicLights.FULL_LIGHTMAP;
     }
 }

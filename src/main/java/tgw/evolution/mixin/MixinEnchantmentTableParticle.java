@@ -7,6 +7,7 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import tgw.evolution.client.renderer.ambient.DynamicLights;
 import tgw.evolution.util.math.AABBMutable;
 
 @Mixin(EnchantmentTableParticle.class)
@@ -27,7 +28,7 @@ public abstract class MixinEnchantmentTableParticle extends TextureSheetParticle
         float life = this.age / (float) this.lifetime;
         life *= life;
         life *= life;
-        int bl = color & 0xF0_00FF;
+        int bl = color & DynamicLights.FULL_LIGHTMAP_NO_SKY;
         int sl = color >> 16 & 0xF;
         sl += (int) (life * 15);
         if (sl > 15) {

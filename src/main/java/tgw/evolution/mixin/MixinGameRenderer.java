@@ -357,11 +357,7 @@ public abstract class MixinGameRenderer implements PatchGameRenderer {
 
     @Shadow
     protected abstract void renderItemActivationAnimation(int pWidthsp, int pHeightScaled, float pPartialTicks);
-
-    /**
-     * @author TheGreatWolf
-     * @reason Remove references to hand rendering, as even if we cancel the event, a lot of calculations still run.
-     */
+    
     @Overwrite
     public void renderLevel(float partialTicks, long endTickTime, PoseStack matrices) {
         this.lightTexture.updateLightTexture(partialTicks);

@@ -45,9 +45,9 @@ public class DimensionOverworld {
 
     private void generateLightBrightnessTable() {
         this.lightBrightnessTable = new float[16];
-        for (int lightLevel = 0; lightLevel <= 15; ++lightLevel) {
-            float f1 = 1.0F - lightLevel / 15.0F;
-            this.lightBrightnessTable[lightLevel] = (1.0F - f1) / (f1 * 3.0F + 1.0F);
+        for (int lightLevel = 0; lightLevel < 16; ++lightLevel) {
+            float f = 1.0F - lightLevel / 15.0F;
+            this.lightBrightnessTable[lightLevel] = (1.0F - f) / (f * 3.0F + 1.0F);
         }
     }
 
@@ -73,6 +73,10 @@ public class DimensionOverworld {
 
     public float getLatitude() {
         return this.latitude;
+    }
+
+    public float[] getLightBrightnessTable() {
+        return this.lightBrightnessTable;
     }
 
     public float getLunarEclipseDRightAscension() {

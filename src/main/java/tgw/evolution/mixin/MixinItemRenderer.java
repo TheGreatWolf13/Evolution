@@ -36,6 +36,7 @@ import net.minecraft.world.level.block.StainedGlassPaneBlock;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.*;
 import tgw.evolution.client.models.data.IModelData;
+import tgw.evolution.client.renderer.ambient.DynamicLights;
 import tgw.evolution.items.IItemTemperature;
 import tgw.evolution.patches.PatchVertexConsumer;
 import tgw.evolution.resources.IKeyedReloadListener;
@@ -50,7 +51,7 @@ import java.util.List;
 @Mixin(ItemRenderer.class)
 public abstract class MixinItemRenderer implements IKeyedReloadListener {
 
-    private static final List<ResourceLocation> DEPENDENCY = List.of(ReloadListernerKeys.MODELS);
+    @Unique private static final List<ResourceLocation> DEPENDENCY = List.of(ReloadListernerKeys.MODELS);
     @Unique private final MultiBufferSource.BufferSource bufferForCount = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
     @Unique private final PoseStack matricesForCount = new PoseStack();
     @Unique private final PoseStack matricesForGuiItems = new PoseStack();
@@ -61,15 +62,8 @@ public abstract class MixinItemRenderer implements IKeyedReloadListener {
     @Shadow @Final private ItemModelShaper itemModelShaper;
     @Shadow @Final private TextureManager textureManager;
 
-    private static void addVertexDataTemperature(VertexConsumer builder,
-                                                 PoseStack.Pose entry,
-                                                 BakedQuad quad,
-                                                 float red,
-                                                 float green,
-                                                 float blue,
-                                                 float alpha,
-                                                 int packedLight,
-                                                 int overlay) {
+    @Unique
+    private static void addVertexDataTemperature(VertexConsumer builder, PoseStack.Pose entry, BakedQuad quad, float red, float green, float blue, float alpha, int packedLight, int overlay) {
         int[] vertices = quad.getVertices();
         Vec3i faceNormal = quad.getDirection().getNormal();
         Matrix4f poseMat = entry.pose();
@@ -97,7 +91,7 @@ public abstract class MixinItemRenderer implements IKeyedReloadListener {
             float u = Float.intBitsToFloat(vertices[offset + 4]);
             float v = Float.intBitsToFloat(vertices[offset + 5]);
             //Light : 2 short
-            int l = quad.getTintIndex() == 0 ? packedLight : 0xff_00ff;
+            int l = quad.getTintIndex() == 0 ? packedLight : DynamicLights.FULL_LIGHTMAP;
             int bl = l & 0xFFFF;
             int sl = l >> 16 & 0xFFFF;
             int light = vertices[offset + 6];
@@ -257,7 +251,7 @@ public abstract class MixinItemRenderer implements IKeyedReloadListener {
         if (flatLight) {
             Lighting.setupForFlatItems();
         }
-        this.render(itemStack, ItemTransforms.TransformType.GUI, false, this.matricesForGuiItems.reset(), builder, 0xff_00ff, OverlayTexture.NO_OVERLAY, bakedModel);
+        this.render(itemStack, ItemTransforms.TransformType.GUI, false, this.matricesForGuiItems.reset(), builder, DynamicLights.FULL_LIGHTMAP, OverlayTexture.NO_OVERLAY, bakedModel);
         builder.endBatch();
         RenderSystem.enableDepthTest();
         if (flatLight) {
@@ -275,7 +269,7 @@ public abstract class MixinItemRenderer implements IKeyedReloadListener {
                 String count = countText == null ? String.valueOf(stack.getCount()) : countText;
                 matrices.translate(0, 0, this.blitOffset + 200);
                 MultiBufferSource.BufferSource bufferSource = this.bufferForCount;
-                font.drawInBatch(count, x + 17 - font.width(count), y + 9, 0xff_ffff, true, matrices.last().pose(), bufferSource, false, 0, 0xff_00ff);
+                font.drawInBatch(count, x + 17 - font.width(count), y + 9, 0xff_ffff, true, matrices.last().pose(), bufferSource, false, 0, DynamicLights.FULL_LIGHTMAP);
                 bufferSource.endBatch();
             }
             if (stack.isBarVisible()) {

@@ -155,6 +155,7 @@ accessible field net/minecraft/world/level/block/state/pattern/BlockInWorld pos 
 mutable field net/minecraft/world/level/block/state/pattern/BlockInWorld pos Lnet/minecraft/core/BlockPos;
 accessible field net/minecraft/world/level/block/state/pattern/BlockInWorld state Lnet/minecraft/world/level/block/state/BlockState;
 accessible field net/minecraft/world/level/chunk/LevelChunkSection states Lnet/minecraft/world/level/chunk/PalettedContainer;
+accessible field net/minecraft/world/level/dimension/DimensionType brightnessRamp [F
 accessible field net/minecraft/world/level/GameRules rules Ljava/util/Map;
 accessible field net/minecraft/world/entity/ai/village/poi/PoiType TYPE_BY_STATE Ljava/util/Map;
 accessible field net/minecraft/world/entity/Entity portalEntrancePos Lnet/minecraft/core/BlockPos;

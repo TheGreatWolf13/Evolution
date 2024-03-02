@@ -69,6 +69,7 @@ import tgw.evolution.blocks.tileentities.TEKnapping;
 import tgw.evolution.blocks.tileentities.TEMolding;
 import tgw.evolution.client.renderer.ClientRenderer;
 import tgw.evolution.client.renderer.RenderHelper;
+import tgw.evolution.client.renderer.ambient.DynamicLights;
 import tgw.evolution.client.renderer.ambient.SkyRenderer;
 import tgw.evolution.client.util.Blending;
 import tgw.evolution.config.EvolutionConfig;
@@ -278,11 +279,10 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
         LevelLightEngine lightEngine = level.getLightEngine();
         int sl = lightEngine.getLayerListener(LightLayer.SKY).getLightValue_(packed);
         int bl = lightEngine.getLayerListener(LightLayer.BLOCK).getLightValue_(packed);
-        int rbl = bl & 0xF;
-        int gbl = bl >>> 5 & 0xF;
-        int bbl = bl >>> 10 & 0xF;
-        assert 0 <= sl && sl <= 15;
-        return rbl | gbl << 4 | bbl << 20 | sl << 16;
+        int rbl = bl & 31;
+        int gbl = bl >>> 5 & 31;
+        int bbl = bl >>> 10 & 31;
+        return DynamicLights.componentsToLightmap(rbl, gbl, bbl, sl);
     }
 
     private static void renderEndSky(PoseStack matrices) {
@@ -1876,7 +1876,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
                             }
                             else {
                                 if (i1 != 1) {
-                                    if (i1 >= 0) {
+                                    if (i1 == 0) {
                                         tesselator.end();
                                     }
                                     i1 = 1;
@@ -2541,7 +2541,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
         }
 
         public void addSourceDirection(Direction direction) {
-            this.sourceDirections |= this.sourceDirections | 1 << direction.ordinal();
+            this.sourceDirections |= (byte) (this.sourceDirections | 1 << direction.ordinal());
         }
 
         @Override
@@ -2573,7 +2573,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
         }
 
         public void setDirections(byte dir, Direction facing) {
-            this.directions |= dir | 1 << facing.ordinal();
+            this.directions |= (byte) (dir | 1 << facing.ordinal());
         }
     }
 

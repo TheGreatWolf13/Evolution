@@ -11,6 +11,7 @@ import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import org.jetbrains.annotations.Nullable;
+import tgw.evolution.client.renderer.ambient.DynamicLights;
 import tgw.evolution.init.EvolutionResources;
 
 public final class EvolutionTooltipRenderer implements ClientTooltipComponent {
@@ -93,7 +94,7 @@ public final class EvolutionTooltipRenderer implements ClientTooltipComponent {
     @Override
     public void renderText(Font font, int x, int y, Matrix4f matrix, MultiBufferSource.BufferSource buffer) {
         if (this.tooltip != null) {
-            font.drawInBatch(this.tooltip.getText(), x + this.tooltip.getOffsetX(), y, 0xffff_ffff, true, matrix, buffer, false, 0x0, 0xff_00ff);
+            font.drawInBatch(this.tooltip.getText(), x + this.tooltip.getOffsetX(), y, 0xffff_ffff, true, matrix, buffer, false, 0x0, DynamicLights.FULL_LIGHTMAP);
         }
     }
 

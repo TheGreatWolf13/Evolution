@@ -17,6 +17,7 @@ import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import tgw.evolution.client.renderer.StringSink;
+import tgw.evolution.client.renderer.ambient.DynamicLights;
 import tgw.evolution.patches.PatchFont;
 
 import java.util.List;
@@ -77,7 +78,7 @@ public abstract class MixinFont implements PatchFont {
     @Overwrite
     private int drawInternal(String string, float x, float y, int color, Matrix4f matrix, boolean shadow, boolean bidi) {
         MultiBufferSource.BufferSource bufferSource = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
-        int dy = this.drawInBatch(string, x, y, color, shadow, matrix, bufferSource, false, 0, 0xff_00ff, bidi);
+        int dy = this.drawInBatch(string, x, y, color, shadow, matrix, bufferSource, false, 0, DynamicLights.FULL_LIGHTMAP, bidi);
         bufferSource.endBatch();
         return dy;
     }
@@ -85,7 +86,7 @@ public abstract class MixinFont implements PatchFont {
     @Overwrite
     private int drawInternal(FormattedCharSequence charSequence, float x, float y, int color, Matrix4f matrix, boolean shadow) {
         MultiBufferSource.BufferSource bufferSource = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
-        int j = this.drawInternal(charSequence, x, y, color, shadow, matrix, bufferSource, false, 0, 0xff_00ff);
+        int j = this.drawInternal(charSequence, x, y, color, shadow, matrix, bufferSource, false, 0, DynamicLights.FULL_LIGHTMAP);
         bufferSource.endBatch();
         return j;
     }

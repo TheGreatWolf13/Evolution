@@ -13,5 +13,5 @@ vec4 minecraft_mix_light(vec3 lightDir0, vec3 lightDir1, vec3 normal, vec4 color
 }
 
 vec4 minecraft_sample_lightmap(sampler2D lightMap, ivec2 uv) {
-    return texture(lightMap, clamp((uv + 0.5) / 256.0, vec2(0.5 / 256.0), vec2(255.5 / 256.0)));
+    return texture(lightMap, vec2((uv.x + 0.5) / 1024.0, (uv.y + 0.5) / 512.0));
 }

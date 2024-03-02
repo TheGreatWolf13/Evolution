@@ -40,9 +40,12 @@ public class EvAmbientOcclusionFace {
             return blend3(lightColor0, lightColor1, lightColor3);
         }
         return (lightColor0 & 0xf) + (lightColor1 & 0xf) + (lightColor2 & 0xf) + (lightColor3 & 0xf) >> 2 & 0xf |
-               (lightColor0 & 0xf0) + (lightColor1 & 0xf0) + (lightColor2 & 0xf0) + (lightColor3 & 0xf0) >> 2 & 0xf0 |
+               ((lightColor0 & 0x10) + (lightColor1 & 0x10) + (lightColor2 & 0x10) + (lightColor3 & 0x10) >= 0x20 ? 0x10 : 0) |
+               (lightColor0 & 0x1e0) + (lightColor1 & 0x1e0) + (lightColor2 & 0x1e0) + (lightColor3 & 0x1e0) >> 2 & 0x1e0 |
+               ((lightColor0 & 0x200) + (lightColor1 & 0x200) + (lightColor2 & 0x200) + (lightColor3 & 0x200) >= 0x400 ? 0x200 : 0) |
                (lightColor0 & 0xf_0000) + (lightColor1 & 0xf_0000) + (lightColor2 & 0xf_0000) + (lightColor3 & 0xf_0000) >> 2 & 0xf_0000 |
-               (lightColor0 & 0xf0_0000) + (lightColor1 & 0xf0_0000) + (lightColor2 & 0xf0_0000) + (lightColor3 & 0xf0_0000) >> 2 & 0xf0_0000;
+               (lightColor0 & 0xf0_0000) + (lightColor1 & 0xf0_0000) + (lightColor2 & 0xf0_0000) + (lightColor3 & 0xf0_0000) >> 2 & 0xf0_0000 |
+               ((lightColor0 & 0x100_0000) + (lightColor1 & 0x100_0000) + (lightColor2 & 0x100_0000) + (lightColor3 & 0x100_0000) >= 0x200_0000 ? 0x100_0000 : 0);
     }
 
     private static int blend(int brightness0,
@@ -66,16 +69,23 @@ public class EvAmbientOcclusionFace {
 
     private static int blend2(int lightColor0, int lightColor1) {
         return (lightColor0 & 0xf) + (lightColor1 & 0xf) >> 1 & 0xf |
-               (lightColor0 & 0xf0) + (lightColor1 & 0xf0) >> 1 & 0xf0 |
+               ((lightColor0 & 0x10) != 0 || (lightColor1 & 0x10) != 0 ? 0x10 : 0) |
+               (lightColor0 & 0x1e0) + (lightColor1 & 0x1e0) >> 1 & 0x1e0 |
+               ((lightColor0 & 0x200) != 0 || (lightColor1 & 0x200) != 0 ? 0x200 : 0) |
                (lightColor0 & 0xf_0000) + (lightColor1 & 0xf_0000) >> 1 & 0xf_0000 |
-               (lightColor0 & 0xf0_0000) + (lightColor1 & 0xf0_0000) >> 1 & 0xf0_0000;
+               (lightColor0 & 0xf0_0000) + (lightColor1 & 0xf0_0000) >> 1 & 0xf0_0000 |
+               ((lightColor0 & 0x100_0000) != 0 || (lightColor1 & 0x100_0000) != 0 ? 0x100_0000 : 0);
     }
 
     private static int blend3(int lightColor0, int lightColor1, int lightColor2) {
         return ((lightColor0 & 0xf) + (lightColor1 & 0xf) + (lightColor2 & 0xf)) / 3 & 0xf |
-               ((lightColor0 & 0xf0) + (lightColor1 & 0xf0) + (lightColor2 & 0xf0)) / 3 & 0xf0 |
+               ((lightColor0 & 0x10) + (lightColor1 & 0x10) + (lightColor2 & 0x10) >= 0x20 ? 0x10 : 0) |
+               ((lightColor0 & 0x1e0) + (lightColor1 & 0x1e0) + (lightColor2 & 0x1e0)) / 3 & 0x1e0 |
+               ((lightColor0 & 0x200) + (lightColor1 & 0x200) + (lightColor2 & 0x200) >= 0x400 ? 0x200 : 0) |
                ((lightColor0 & 0xf_0000) + (lightColor1 & 0xf_0000) + (lightColor2 & 0xf_0000)) / 3 & 0xf_0000 |
-               ((lightColor0 & 0xf0_0000) + (lightColor1 & 0xf0_0000) + (lightColor2 & 0xf0_0000)) / 3 & 0xf0_0000;
+               ((lightColor0 & 0xf0_0000) + (lightColor1 & 0xf0_0000) + (lightColor2 & 0xf0_0000)) / 3 & 0xf0_0000 |
+               ((lightColor0 & 0x100_0000) + (lightColor1 & 0x100_0000) + (lightColor2 & 0x100_0000) >= 0x200_0000 ? 0x100_0000 : 0);
+
     }
 
     /**
@@ -83,13 +93,7 @@ public class EvAmbientOcclusionFace {
      * @param flags the bit set to store the shape flags in. The first bit will be {@code true} if the face
      *              should be offset, and the second if the face is less than a block in width and height.
      */
-    public void calculate(BlockAndTintGetter level,
-                          BlockState state,
-                          final int px, final int py, final int pz,
-                          Direction direction,
-                          float @Nullable [] shape,
-                          byte flags,
-                          boolean shadeDirection) {
+    public void calculate(BlockAndTintGetter level, BlockState state, final int px, final int py, final int pz, Direction direction, float @Nullable [] shape, byte flags, boolean shadeDirection) {
         boolean offset = (flags & 1) != 0;
         int x = px;
         int y = py;

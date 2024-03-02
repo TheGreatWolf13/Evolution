@@ -27,6 +27,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.Evolution;
+import tgw.evolution.client.renderer.ambient.DynamicLights;
 import tgw.evolution.patches.PatchBlockBehaviour;
 import tgw.evolution.util.constants.BlockFlags;
 
@@ -120,7 +121,7 @@ public abstract class MixinBlockBehaviour implements PatchBlockBehaviour {
 
     @Override
     public int getEmissiveLightColor(BlockState state, BlockAndTintGetter level, int x, int y, int z) {
-        return 0xff_00ff;
+        return DynamicLights.FULL_LIGHTMAP;
     }
 
     @Deprecated

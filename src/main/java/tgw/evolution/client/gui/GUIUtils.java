@@ -39,6 +39,7 @@ import net.minecraft.world.level.storage.LevelData;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL11;
 import tgw.evolution.client.renderer.RenderHelper;
+import tgw.evolution.client.renderer.ambient.DynamicLights;
 import tgw.evolution.mixin.AccessorRenderSystem;
 import tgw.evolution.util.math.MathHelper;
 
@@ -102,8 +103,8 @@ public final class GUIUtils {
      * Minecraft.getMinecraft().getTextureManager().bindTexture(resourceLocation).
      *
      * @param poseStack     the gui pose stack
-     * @param x             x axis offset
-     * @param y             y axis offset
+     * @param x             x-axis offset
+     * @param y             y-axis offset
      * @param u             bound resource location image x offset
      * @param v             bound resource location image y offset
      * @param width         the desired box width
@@ -188,8 +189,8 @@ public final class GUIUtils {
      *
      * @param poseStack     the gui pose stack
      * @param res           the ResourceLocation object that contains the desired image
-     * @param x             x axis offset
-     * @param y             y axis offset
+     * @param x             x-axis offset
+     * @param y             y-axis offset
      * @param u             bound resource location image x offset
      * @param v             bound resource location image y offset
      * @param width         the desired box width
@@ -452,7 +453,7 @@ public final class GUIUtils {
             targetHeight *= 2;
         }
         else if (entity.getType() == EntityType.SQUID) {
-            targetHeight /= 2.5;
+            targetHeight /= 2.5F;
         }
         return Math.min(targetWidth / entity.getBbWidth(), targetHeight / entity.getBbHeight()) * baseScale;
     }
@@ -613,7 +614,7 @@ public final class GUIUtils {
         dispatcher.overrideCameraOrientation(xRot);
         dispatcher.setRenderShadow(false);
         MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
-        RenderSystem.runAsFancy(() -> dispatcher.render(entity, 0, 0, 0, 0.0F, 1.0F, matrices, bufferSource, 0xff_00ff));
+        RenderSystem.runAsFancy(() -> dispatcher.render(entity, 0, 0, 0, 0.0F, 1.0F, matrices, bufferSource, DynamicLights.FULL_LIGHTMAP));
         bufferSource.endBatch();
         dispatcher.setRenderShadow(true);
         entity.yBodyRot = bodyYaw;

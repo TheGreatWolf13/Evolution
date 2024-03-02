@@ -30,6 +30,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.spongepowered.asm.mixin.*;
+import tgw.evolution.client.renderer.ambient.DynamicLights;
 import tgw.evolution.client.renderer.ambient.LightTextureEv;
 import tgw.evolution.client.renderer.chunk.EvLevelRenderer;
 import tgw.evolution.events.ClientEvents;
@@ -49,7 +50,7 @@ public abstract class Mixin_M_EntityRenderDispatcher {
 
     @Overwrite
     private static void fireVertex(PoseStack.Pose pose, VertexConsumer consumer, float x, float y, float z, float u, float v) {
-        consumer.vertex(pose.pose(), x, y, z).color(255, 255, 255, 255).uv(u, v).overlayCoords(0, 10).uv2(0xf0_00ff).normal(pose.normal(), 0.0F, 1.0F, 0.0F).endVertex();
+        consumer.vertex(pose.pose(), x, y, z).color(255, 255, 255, 255).uv(u, v).overlayCoords(0, 10).uv2(DynamicLights.FULL_LIGHTMAP_NO_SKY).normal(pose.normal(), 0.0F, 1.0F, 0.0F).endVertex();
     }
 
     @Overwrite

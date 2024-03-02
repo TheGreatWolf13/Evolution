@@ -19,6 +19,7 @@ import net.minecraft.world.scores.Objective;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.client.gui.overlays.Overlays;
 import tgw.evolution.client.renderer.RenderHelper;
+import tgw.evolution.client.renderer.ambient.DynamicLights;
 import tgw.evolution.client.util.Blending;
 import tgw.evolution.util.collection.lists.IArrayList;
 import tgw.evolution.util.collection.lists.IList;
@@ -181,7 +182,7 @@ public class EvolutionGui extends Gui {
             for (int i = 0, len = left.size(); i < len; i++) {
                 String msg = left.get(i);
                 if (!StringUtil.isNullOrEmpty(msg)) {
-                    font.drawInBatch(msg, 2, top, 0xe0_e0e0, false, matrix, this.buffer, false, 0, 0xff_00ff, false);
+                    font.drawInBatch(msg, 2, top, 0xe0_e0e0, false, matrix, this.buffer, false, 0, DynamicLights.FULL_LIGHTMAP, false);
                 }
                 top += font.lineHeight;
             }
@@ -191,7 +192,7 @@ public class EvolutionGui extends Gui {
                 if (!StringUtil.isNullOrEmpty(msg)) {
                     int w = this.rightWidthCache.getInt(i);
                     int x = this.screenWidth - 2 - w;
-                    font.drawInBatch(msg, x, top, 0xe0_e0e0, false, matrix, this.buffer, false, 0, 0xff_00ff, false);
+                    font.drawInBatch(msg, x, top, 0xe0_e0e0, false, matrix, this.buffer, false, 0, DynamicLights.FULL_LIGHTMAP, false);
                 }
                 top += font.lineHeight;
             }

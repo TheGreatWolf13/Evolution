@@ -536,7 +536,7 @@ public abstract class MixinPlayer extends LivingEntity implements PatchPlayer {
 
     @Override
     public long getLightEmissionPos() {
-        return this.eyeBlockPosition().asLong();
+        return this.blockPosition().asLong();
     }
 
     @Override

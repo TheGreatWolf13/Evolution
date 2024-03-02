@@ -5,6 +5,7 @@ import net.minecraft.client.particle.TextureSheetParticle;
 import net.minecraft.client.particle.VibrationSignalParticle;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
+import tgw.evolution.client.renderer.ambient.DynamicLights;
 
 @Mixin(VibrationSignalParticle.class)
 public abstract class MixinVibrationSignalParticle extends TextureSheetParticle {
@@ -16,6 +17,6 @@ public abstract class MixinVibrationSignalParticle extends TextureSheetParticle 
     @Override
     @Overwrite
     public int getLightColor(float partialTicks) {
-        return 0xF0_00FF;
+        return DynamicLights.FULL_LIGHTMAP_NO_SKY;
     }
 }

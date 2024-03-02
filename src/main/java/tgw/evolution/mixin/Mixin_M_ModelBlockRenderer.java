@@ -171,6 +171,7 @@ public abstract class Mixin_M_ModelBlockRenderer implements PatchModelBlockRende
         return min == max && (max > 0.999_9F || state.isCollisionShapeFullBlock_(level, x, y, z));
     }
 
+    @Unique
     private static void renderQuad(PoseStack.Pose entry, VertexConsumer consumer, int defaultColor, List<BakedQuad> list, int light, int overlay) {
         if (list.isEmpty()) {
             return;
@@ -308,7 +309,7 @@ public abstract class Mixin_M_ModelBlockRenderer implements PatchModelBlockRende
 
     @Override
     public boolean tesselateBlock(BlockAndTintGetter level, BakedModel model, BlockState state, int x, int y, int z, PoseStack matrices, VertexConsumer builder, boolean checkSides, IRandom random, long seed, int packedOverlay) {
-        boolean ao = Minecraft.useAmbientOcclusion() && state.getLightEmission() < 15 && model.useAmbientOcclusion();
+        boolean ao = Minecraft.useAmbientOcclusion() && state.getLightEmission() < 0x7FFF && model.useAmbientOcclusion();
         state.getBlock().translateByOffset(matrices, x, z);
         IModelData modelData = model.getModelData(level, x, y, z, state);
         try {

@@ -10,6 +10,7 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import tgw.evolution.client.renderer.ambient.DynamicLights;
 
 @Mixin(ClientTextTooltip.class)
 public abstract class MixinClientTextTooltip implements ClientTooltipComponent {
@@ -19,6 +20,6 @@ public abstract class MixinClientTextTooltip implements ClientTooltipComponent {
     @Override
     @Overwrite
     public void renderText(Font font, int x, int y, Matrix4f matrix, MultiBufferSource.BufferSource buffer) {
-        font.drawInBatch(this.text, x, y, 0xffff_ffff, true, matrix, buffer, false, 0x0, 0xff_00ff);
+        font.drawInBatch(this.text, x, y, 0xffff_ffff, true, matrix, buffer, false, 0x0, DynamicLights.FULL_LIGHTMAP);
     }
 }
