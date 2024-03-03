@@ -25,6 +25,10 @@ public abstract class Mixin_M_AbstractFurnaceBlock extends BaseEntityBlock {
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -50,6 +54,10 @@ public abstract class Mixin_M_AbstractFurnaceBlock extends BaseEntityBlock {
     @Shadow
     protected abstract void openContainer(Level level, BlockPos blockPos, Player player);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

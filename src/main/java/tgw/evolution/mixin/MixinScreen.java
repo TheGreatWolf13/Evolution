@@ -36,6 +36,10 @@ public abstract class MixinScreen extends AbstractContainerEventHandler implemen
     @Shadow @Final private List<NarratableEntry> narratables;
     @Unique private ItemStack tooltipStack = ItemStack.EMPTY;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public <T extends GuiEventListener & NarratableEntry> T addWidget(T widget) {
         this.children.add(widget);
@@ -46,6 +50,10 @@ public abstract class MixinScreen extends AbstractContainerEventHandler implemen
         return widget;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void clearWidgets() {
         this.renderables.clear();
@@ -62,6 +70,10 @@ public abstract class MixinScreen extends AbstractContainerEventHandler implemen
     @Shadow
     public abstract List<Component> getTooltipFromItem(ItemStack itemStack);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void removeWidget(GuiEventListener widget) {
         if (widget instanceof Widget) {
@@ -76,6 +88,10 @@ public abstract class MixinScreen extends AbstractContainerEventHandler implemen
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void render(PoseStack matrices, int mouseX, int mouseY, float partialTicks) {
@@ -85,6 +101,10 @@ public abstract class MixinScreen extends AbstractContainerEventHandler implemen
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void renderTooltip(PoseStack matrices, ItemStack stack, int mouseX, int mouseY) {
         this.tooltipStack = stack;
@@ -92,11 +112,19 @@ public abstract class MixinScreen extends AbstractContainerEventHandler implemen
         this.tooltipStack = ItemStack.EMPTY;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void renderTooltip(PoseStack matrices, List<Component> tooltip, Optional<TooltipComponent> image, int mouseX, int mouseY) {
         this.renderTooltipInternal(matrices, ItemEvents.gatherTooltipComponents(this.tooltipStack, tooltip, image, mouseX, this.width, this.font), mouseX, mouseY);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private void renderTooltipInternal(PoseStack matrices, List<ClientTooltipComponent> tooltip, int mouseX, int mouseY) {
         if (!tooltip.isEmpty()) {

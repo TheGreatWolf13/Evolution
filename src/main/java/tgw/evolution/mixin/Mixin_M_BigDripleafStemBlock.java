@@ -36,6 +36,10 @@ public abstract class Mixin_M_BigDripleafStemBlock extends HorizontalDirectional
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -51,6 +55,10 @@ public abstract class Mixin_M_BigDripleafStemBlock extends HorizontalDirectional
                (stateAbove.is(this) || stateAbove.is(Blocks.BIG_DRIPLEAF));
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -68,6 +76,10 @@ public abstract class Mixin_M_BigDripleafStemBlock extends HorizontalDirectional
         };
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -82,6 +94,10 @@ public abstract class Mixin_M_BigDripleafStemBlock extends HorizontalDirectional
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

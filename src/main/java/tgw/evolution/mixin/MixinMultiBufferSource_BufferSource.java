@@ -30,6 +30,10 @@ public abstract class MixinMultiBufferSource_BufferSource implements ICrashReset
     @Shadow
     public abstract void endBatch(RenderType pRenderType);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void endBatch() {
         if (this.lastState.isPresent()) {

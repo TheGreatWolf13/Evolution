@@ -29,6 +29,10 @@ import java.util.random.RandomGenerator;
 @Mixin(WaterFluid.class)
 public abstract class MixinWaterFluid extends FlowingFluid {
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -48,6 +52,10 @@ public abstract class MixinWaterFluid extends FlowingFluid {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void beforeDestroyingBlock(LevelAccessor level, BlockPos pos, BlockState state) {
@@ -61,6 +69,10 @@ public abstract class MixinWaterFluid extends FlowingFluid {
         BlockUtils.dropResources(state, level, x, y, z, tile, null, ItemStack.EMPTY);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public boolean canBeReplacedWith(FluidState state, BlockGetter level, BlockPos pos, net.minecraft.world.level.material.Fluid fluid, Direction direction) {

@@ -28,7 +28,7 @@ public abstract class MixinOptions {
     @Mutable @Shadow @Final public KeyMapping[] keyMappings;
     @Shadow public List<String> resourcePacks;
 
-    @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lorg/apache/commons/lang3/ArrayUtils;addAll([Ljava/lang/Object;[Ljava/lang/Object;)[Ljava/lang/Object;"))
+    @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lorg/apache/commons/lang3/ArrayUtils;addAll([Ljava/lang/Object;[Ljava/lang/Object;)[Ljava/lang/Object;", remap = false))
     private Object[] onInit(Object[] type2, Object[] ase) {
         O2OMap<String, KeyMapping> allKeymapping = EvolutionClient.ALL_KEYMAPPING;
         KeyMapping[] a = new KeyMapping[allKeymapping.size()];

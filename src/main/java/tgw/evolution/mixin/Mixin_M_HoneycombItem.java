@@ -33,6 +33,10 @@ public abstract class Mixin_M_HoneycombItem extends Item {
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

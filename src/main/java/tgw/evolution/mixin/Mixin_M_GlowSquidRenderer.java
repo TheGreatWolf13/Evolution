@@ -19,6 +19,10 @@ public abstract class Mixin_M_GlowSquidRenderer extends SquidRenderer<GlowSquid>
         super(context, squidModel);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

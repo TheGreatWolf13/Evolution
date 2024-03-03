@@ -48,6 +48,10 @@ public abstract class MixinServerPlayerGameMode implements PatchServerPlayerGame
     @Shadow private boolean isDestroyingBlock;
     @Shadow private int lastSentState;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void destroyAndAck(BlockPos pos, ServerboundPlayerActionPacket.Action action, String string) {
         Evolution.deprecatedMethod();
@@ -67,6 +71,10 @@ public abstract class MixinServerPlayerGameMode implements PatchServerPlayerGame
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean destroyBlock(BlockPos pos) {
         Evolution.deprecatedMethod();
@@ -104,6 +112,10 @@ public abstract class MixinServerPlayerGameMode implements PatchServerPlayerGame
         return true;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void handleBlockBreakAction(BlockPos pos, ServerboundPlayerActionPacket.Action action, Direction direction, int buildHeight) {
         Evolution.deprecatedMethod();
@@ -219,6 +231,10 @@ public abstract class MixinServerPlayerGameMode implements PatchServerPlayerGame
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private float incrementDestroyProgress(BlockState state, BlockPos pos, int destroyStart) {
         int delta = this.gameTicks - destroyStart;
@@ -246,6 +262,10 @@ public abstract class MixinServerPlayerGameMode implements PatchServerPlayerGame
         this.delayedDestroyPos = new BlockPos.MutableBlockPos();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void tick() {
         ++this.gameTicks;
@@ -276,6 +296,10 @@ public abstract class MixinServerPlayerGameMode implements PatchServerPlayerGame
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public InteractionResult useItemOn(ServerPlayer player,
                                        Level level,

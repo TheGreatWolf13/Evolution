@@ -30,6 +30,10 @@ public abstract class Mixin_M_FaceAttachedHorizontalDirectionalBlock extends Hor
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -42,6 +46,10 @@ public abstract class Mixin_M_FaceAttachedHorizontalDirectionalBlock extends Hor
         return canAttach(level, new BlockPos(x, y, z), getConnectedDirection(state).getOpposite());
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

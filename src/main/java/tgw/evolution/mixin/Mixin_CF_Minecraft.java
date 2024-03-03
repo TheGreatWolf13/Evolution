@@ -472,6 +472,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
         throw new AbstractMethodError();
     }
 
+    @Unique
     private static void outputReport(CrashReport report) {
         try {
             if (report.getSaveFile() == null) {
@@ -501,6 +502,10 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
     @Shadow
     public abstract void clearLevel(Screen p_213231_1_);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void close() {
@@ -532,6 +537,10 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
     @Shadow
     protected abstract ProfilerFiller constructProfiler(boolean p_167971_, @Nullable SingleTickProfiler p_167972_);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private void continueAttack(boolean leftClick) {
         if (!leftClick || ClientEvents.getInstance().shouldRenderSpecialAttack()) {
@@ -571,6 +580,10 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
     @Shadow
     protected abstract UserApiService createUserApiService(YggdrasilAuthenticationService yggdrasilAuthenticationService, GameConfig gameConfig);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean debugClientMetricsStart(Consumer<TranslatableComponent> c) {
         if (this.metricsRecorder.isRecording()) {
@@ -638,6 +651,10 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void emergencySave() {
         try {
@@ -705,6 +722,10 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
     @Shadow
     public abstract RenderTarget getMainRenderTarget();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public Music getSituationalMusic() {
         if (this.screen instanceof WinScreen) {
@@ -813,6 +834,10 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private void handleKeybinds() {
         assert this.player != null;
@@ -1595,7 +1620,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
                                 this.useFlags |= 1;
                                 Direction direction = ClientEvents.getDirectionFromInput(this.player.getDirection(), this.player.input);
                                 if (direction != null) {
-                                    this.useFlags |= direction.ordinal() + 1 << 2;
+                                    this.useFlags |= (byte) (direction.ordinal() + 1 << 2);
                                 }
                                 this.lastHoldingPos.setWithOffset(blockRayTrace.posX(), blockRayTrace.posY(), blockRayTrace.posZ(), blockRayTrace.getDirection());
                             }
@@ -1655,7 +1680,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
         if ((this.useFlags >> 2 & 0b111) == 0) {
             direction = ClientEvents.getDirectionFromInput(this.player.getDirection(), this.player.input);
             if (direction != null) {
-                this.useFlags |= direction.ordinal() + 1 << 2;
+                this.useFlags |= (byte) (direction.ordinal() + 1 << 2);
             }
         }
         else {

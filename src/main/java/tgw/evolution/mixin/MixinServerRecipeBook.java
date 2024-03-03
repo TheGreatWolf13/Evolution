@@ -26,6 +26,10 @@ public abstract class MixinServerRecipeBook extends RecipeBook {
 
     @Shadow @Final private static Logger LOGGER;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public int addRecipes(Collection<Recipe<?>> collection, ServerPlayer serverPlayer) {
         List<ResourceLocation> list = new OArrayList<>();
@@ -44,6 +48,10 @@ public abstract class MixinServerRecipeBook extends RecipeBook {
         return i;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private void loadRecipes(ListTag listTag, Consumer<Recipe<?>> consumer, RecipeManager recipeManager) {
         for (int i = 0, len = listTag.size(); i < len; ++i) {

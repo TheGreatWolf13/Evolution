@@ -17,6 +17,10 @@ public abstract class Mixin_M_DiggerItem extends TieredItem implements Vanishabl
         super(tier, properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

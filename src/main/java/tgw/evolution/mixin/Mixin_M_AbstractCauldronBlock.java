@@ -44,6 +44,10 @@ public abstract class Mixin_M_AbstractCauldronBlock extends Block {
     @Shadow
     protected abstract boolean canReceiveStalactiteDrip(Fluid fluid);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -56,6 +60,10 @@ public abstract class Mixin_M_AbstractCauldronBlock extends Block {
         return INSIDE;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -71,6 +79,10 @@ public abstract class Mixin_M_AbstractCauldronBlock extends Block {
     @Shadow
     protected abstract void receiveStalactiteDrip(BlockState blockState, Level level, BlockPos blockPos, Fluid fluid);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -90,6 +102,10 @@ public abstract class Mixin_M_AbstractCauldronBlock extends Block {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

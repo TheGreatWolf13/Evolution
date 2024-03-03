@@ -12,10 +12,7 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.*;
 import tgw.evolution.client.models.ModelRegistry;
 import tgw.evolution.resources.IKeyedReloadListener;
 import tgw.evolution.resources.ReloadListernerKeys;
@@ -27,7 +24,7 @@ import java.util.Map;
 @Mixin(ModelManager.class)
 public abstract class MixinModelManager implements IKeyedReloadListener {
 
-    private static final List<ResourceLocation> DEPENDENCY = List.of(ReloadListernerKeys.TEXTURES);
+    @Unique private static final List<ResourceLocation> DEPENDENCY = List.of(ReloadListernerKeys.TEXTURES);
     @Shadow private @Nullable AtlasSet atlases;
     @Shadow private Map<ResourceLocation, BakedModel> bakedRegistry;
     @Shadow @Final private BlockModelShaper blockModelShaper;
@@ -35,6 +32,10 @@ public abstract class MixinModelManager implements IKeyedReloadListener {
     @Shadow private Object2IntMap<BlockState> modelGroups;
     @Shadow @Final private TextureManager textureManager;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void apply(ModelBakery bakery, ResourceManager resourceManager, ProfilerFiller profiler) {
         profiler.startTick();

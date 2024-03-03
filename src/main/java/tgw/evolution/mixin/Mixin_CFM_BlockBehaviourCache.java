@@ -29,7 +29,7 @@ public abstract class Mixin_CFM_BlockBehaviourCache implements PatchBlockStateCa
      * Bit 3: isCollisionShapeFullBlock; <br>
      * Bit 4 ~ 21: isFaceSturdy; <br>
      */
-    private final int flags;
+    @Unique private final int flags;
     @Mutable @Shadow @Final @RestoreFinal public VoxelShape collisionShape;
     @Mutable @Shadow @Final @RestoreFinal public int lightBlock;
     @Mutable @Shadow @Final @RestoreFinal public VoxelShape @Nullable [] occlusionShapes;
@@ -82,6 +82,10 @@ public abstract class Mixin_CFM_BlockBehaviourCache implements PatchBlockStateCa
         this.flags = f;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @DeleteMethod
     @Overwrite
     private static int getFaceSupportIndex(Direction direction, SupportType supportType) {
@@ -93,6 +97,10 @@ public abstract class Mixin_CFM_BlockBehaviourCache implements PatchBlockStateCa
         return (this.flags & 8) != 0;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean isFaceSturdy(Direction direction, SupportType supportType) {
         return (this.flags & 1 << direction.ordinal() * 3 + supportType.ordinal() + 4) != 0;

@@ -16,6 +16,10 @@ public abstract class Mixin_M_BarrierBlock extends Block {
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -28,6 +32,10 @@ public abstract class Mixin_M_BarrierBlock extends Block {
         return 1.0f;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

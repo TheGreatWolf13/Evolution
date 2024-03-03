@@ -36,6 +36,10 @@ public abstract class Mixin_M_DispenserBlock extends BaseEntityBlock {
     @Shadow
     protected abstract void dispenseFrom(ServerLevel serverLevel, BlockPos blockPos);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -66,6 +70,10 @@ public abstract class Mixin_M_DispenserBlock extends BaseEntityBlock {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -84,6 +92,10 @@ public abstract class Mixin_M_DispenserBlock extends BaseEntityBlock {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -96,6 +108,10 @@ public abstract class Mixin_M_DispenserBlock extends BaseEntityBlock {
         this.dispenseFrom(level, new BlockPos(x, y, z));
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

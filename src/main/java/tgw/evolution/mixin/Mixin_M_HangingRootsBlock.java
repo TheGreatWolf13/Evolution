@@ -33,6 +33,10 @@ public abstract class Mixin_M_HangingRootsBlock extends Block implements SimpleW
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -46,6 +50,10 @@ public abstract class Mixin_M_HangingRootsBlock extends Block implements SimpleW
         return stateAbove.isFaceSturdy_(level, x, y + 1, z, Direction.DOWN);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -58,6 +66,10 @@ public abstract class Mixin_M_HangingRootsBlock extends Block implements SimpleW
         return SHAPE;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

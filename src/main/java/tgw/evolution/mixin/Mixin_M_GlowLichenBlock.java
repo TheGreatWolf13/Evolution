@@ -26,6 +26,10 @@ public abstract class Mixin_M_GlowLichenBlock extends MultifaceBlock implements 
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -38,6 +42,10 @@ public abstract class Mixin_M_GlowLichenBlock extends MultifaceBlock implements 
         return state.getFluidState().isEmpty();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

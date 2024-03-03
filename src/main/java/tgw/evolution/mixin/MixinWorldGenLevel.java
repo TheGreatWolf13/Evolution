@@ -10,7 +10,11 @@ import tgw.evolution.patches.PatchWorldGenLevel;
 
 @Mixin(WorldGenLevel.class)
 public interface MixinWorldGenLevel extends ServerLevelAccessor, PatchWorldGenLevel {
-
+    
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     default boolean ensureCanWrite(BlockPos pos) {
         Evolution.deprecatedMethod();

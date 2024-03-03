@@ -153,6 +153,10 @@ public abstract class MixinServerGamePacketListenerImpl implements ServerGamePac
 //        }
 //    }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void handlePlaceRecipe(ServerboundPlaceRecipePacket packet) {
@@ -210,6 +214,10 @@ public abstract class MixinServerGamePacketListenerImpl implements ServerGamePac
         LivingHooks.calculateFallDamage(this.player, packet.velocity, packet.distanceOfSlowDown, packet.water);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void handleRecipeBookSeenRecipePacket(ServerboundRecipeBookSeenRecipePacket packet) {
@@ -371,6 +379,10 @@ public abstract class MixinServerGamePacketListenerImpl implements ServerGamePac
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void handleUseItemOn(ServerboundUseItemOnPacket packet) {

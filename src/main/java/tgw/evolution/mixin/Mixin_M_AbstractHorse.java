@@ -31,6 +31,10 @@ public abstract class Mixin_M_AbstractHorse extends Animal implements ContainerL
     @Shadow
     protected abstract void playGallopSound(SoundType soundType);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

@@ -33,6 +33,10 @@ public abstract class Mixin_M_BlockItem extends Item {
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean canPlace(BlockPlaceContext context, BlockState state) {
         Player player = context.getPlayer();
@@ -55,6 +59,10 @@ public abstract class Mixin_M_BlockItem extends Item {
     @Shadow
     protected abstract boolean mustSurvive();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public InteractionResult place(BlockPlaceContext context) {
         if (!context.canPlace()) {
@@ -97,6 +105,10 @@ public abstract class Mixin_M_BlockItem extends Item {
         return level.isClientSide ? InteractionResult.SUCCESS : InteractionResult.CONSUME_PARTIAL;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean placeBlock(BlockPlaceContext context, BlockState state) {
         BlockPos pos = context.getClickedPos();
@@ -112,6 +124,10 @@ public abstract class Mixin_M_BlockItem extends Item {
     @Shadow
     public abstract @Nullable BlockPlaceContext updatePlacementContext(BlockPlaceContext blockPlaceContext);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

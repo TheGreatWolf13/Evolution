@@ -21,6 +21,10 @@ public abstract class Mixin_M_AbstractGlassBlock extends HalfTransparentBlock {
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @DeleteMethod
     @Overwrite
@@ -33,6 +37,10 @@ public abstract class Mixin_M_AbstractGlassBlock extends HalfTransparentBlock {
         return 1.0f;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -45,6 +53,10 @@ public abstract class Mixin_M_AbstractGlassBlock extends HalfTransparentBlock {
         return Shapes.empty();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @DeleteMethod
     @Overwrite

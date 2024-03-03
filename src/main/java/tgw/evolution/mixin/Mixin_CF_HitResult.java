@@ -22,6 +22,10 @@ public abstract class Mixin_CF_HitResult implements PatchHitResult {
         this.x = 0;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public double distanceTo(Entity entity) {
         Vec3 position = entity.position();
@@ -31,6 +35,10 @@ public abstract class Mixin_CF_HitResult implements PatchHitResult {
         return dx * dx + dy * dy + dz * dz;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public Vec3 getLocation() {
         Evolution.warn("getLocation() should not be called!");

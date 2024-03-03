@@ -57,6 +57,10 @@ public abstract class MixinTitleScreen extends Screen {
     @Shadow
     protected abstract boolean hasRealmsSubscription();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @Override
     public void init() {
@@ -103,6 +107,10 @@ public abstract class MixinTitleScreen extends Screen {
     @Shadow
     protected abstract boolean realmsNotificationsEnabled();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void render(PoseStack matrices, int mouseX, int mouseY, float partialTicks) {

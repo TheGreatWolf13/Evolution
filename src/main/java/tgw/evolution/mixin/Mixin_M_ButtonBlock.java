@@ -56,6 +56,10 @@ public abstract class Mixin_M_ButtonBlock extends FaceAttachedHorizontalDirectio
     @Shadow
     protected abstract void checkPressed(BlockState blockState, Level level, BlockPos blockPos);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -89,6 +93,10 @@ public abstract class Mixin_M_ButtonBlock extends FaceAttachedHorizontalDirectio
         };
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -114,6 +122,10 @@ public abstract class Mixin_M_ButtonBlock extends FaceAttachedHorizontalDirectio
     @Shadow
     public abstract void press(BlockState blockState, Level level, BlockPos blockPos);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -140,6 +152,10 @@ public abstract class Mixin_M_ButtonBlock extends FaceAttachedHorizontalDirectio
     @Shadow
     protected abstract void updateNeighbours(BlockState blockState, Level level, BlockPos blockPos);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

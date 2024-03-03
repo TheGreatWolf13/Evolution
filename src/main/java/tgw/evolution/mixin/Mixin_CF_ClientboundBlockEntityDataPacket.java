@@ -45,6 +45,10 @@ public abstract class Mixin_CF_ClientboundBlockEntityDataPacket implements Packe
         this.tag = buf.readNbt();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public BlockPos getPos() {
         Evolution.deprecatedMethod();
@@ -66,6 +70,10 @@ public abstract class Mixin_CF_ClientboundBlockEntityDataPacket implements Packe
         return this.z;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void write(FriendlyByteBuf buf) {

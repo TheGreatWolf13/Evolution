@@ -41,6 +41,10 @@ public abstract class Mixin_M_BaseFireBlock extends Block {
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -94,6 +98,10 @@ public abstract class Mixin_M_BaseFireBlock extends Block {
     @Shadow
     protected abstract boolean canBurn(BlockState blockState);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -106,6 +114,10 @@ public abstract class Mixin_M_BaseFireBlock extends Block {
         return DOWN_AABB;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -129,6 +141,10 @@ public abstract class Mixin_M_BaseFireBlock extends Block {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -144,6 +160,10 @@ public abstract class Mixin_M_BaseFireBlock extends Block {
         super.playerWillDestroy_(level, x, y, z, state, player);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

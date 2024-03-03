@@ -37,6 +37,10 @@ public abstract class Mixin_M_HoeItem extends DiggerItem {
         super(f, g, tier, tagKey, properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

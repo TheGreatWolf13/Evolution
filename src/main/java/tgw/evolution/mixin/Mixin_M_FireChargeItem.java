@@ -32,6 +32,10 @@ public abstract class Mixin_M_FireChargeItem extends Item {
     @Shadow
     protected abstract void playSound(Level level, BlockPos blockPos);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

@@ -36,6 +36,10 @@ public abstract class Mixin_M_HangingEntityItem extends Item {
     @Shadow
     protected abstract boolean mayPlace(Player player, Direction direction, ItemStack itemStack, BlockPos blockPos);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

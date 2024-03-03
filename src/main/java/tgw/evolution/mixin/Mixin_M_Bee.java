@@ -19,6 +19,10 @@ public abstract class Mixin_M_Bee extends Animal implements NeutralMob, FlyingAn
         super(entityType, level);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

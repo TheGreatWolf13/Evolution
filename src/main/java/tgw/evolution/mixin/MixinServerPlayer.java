@@ -171,6 +171,10 @@ public abstract class MixinServerPlayer extends Player implements PatchServerPla
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void awardRecipesByKey(ResourceLocation[] recipes) {
@@ -266,6 +270,10 @@ public abstract class MixinServerPlayer extends Player implements PatchServerPla
         this.getCombatTracker().recheckStatus();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void doCheckFallDamage(double y, boolean onGround) {
         if (!this.touchingUnloadedChunk()) {

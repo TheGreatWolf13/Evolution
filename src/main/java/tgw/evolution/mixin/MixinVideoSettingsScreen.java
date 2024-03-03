@@ -60,8 +60,8 @@ public abstract class MixinVideoSettingsScreen extends OptionsSubScreen {
     }
 
     /**
+     * @reason _
      * @author TheGreatWolf
-     * @reason Replace LevelRenderer
      */
     @Override
     @Overwrite

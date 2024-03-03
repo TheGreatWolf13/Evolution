@@ -35,6 +35,10 @@ public abstract class Mixin_M_ComparatorBlock extends DiodeBlock implements Enti
     @Shadow
     protected abstract void refreshOutputState(Level level, BlockPos blockPos, BlockState blockState);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -47,6 +51,10 @@ public abstract class Mixin_M_ComparatorBlock extends DiodeBlock implements Enti
         this.refreshOutputState(level, new BlockPos(x, y, z), state);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

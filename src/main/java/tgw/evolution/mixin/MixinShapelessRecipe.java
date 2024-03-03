@@ -22,6 +22,10 @@ public abstract class MixinShapelessRecipe implements CraftingRecipe {
     @Shadow @Final NonNullList<Ingredient> ingredients;
     @Unique private boolean isSimple;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public boolean matches(CraftingContainer container, Level level) {

@@ -37,12 +37,20 @@ public abstract class Mixin_CF_BlockHitResult extends HitResult implements Patch
         Evolution.deprecatedConstructor();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public static BlockHitResult miss(Vec3 v, Direction direction, BlockPos pos) {
         Evolution.deprecatedMethod();
         return PatchBlockHitResult.createMiss(v.x, v.y, v.z, direction, pos.getX(), pos.getY(), pos.getZ());
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public BlockPos getBlockPos() {
         Evolution.warn("getBlockPos() should not be called!");
@@ -71,6 +79,10 @@ public abstract class Mixin_CF_BlockHitResult extends HitResult implements Patch
         this.posZ = z;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public BlockHitResult withDirection(Direction direction) {
         BlockHitResult hitResult = new BlockHitResult(this.miss, Vec3.ZERO, direction, BlockPos.ZERO, this.inside);
@@ -79,6 +91,10 @@ public abstract class Mixin_CF_BlockHitResult extends HitResult implements Patch
         return hitResult;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public BlockHitResult withPosition(BlockPos pos) {
         Evolution.deprecatedMethod();

@@ -105,6 +105,10 @@ public abstract class Mixin_M_ClientLevel extends Level implements PatchClientLe
                 .addParticle(particleData, particleData.getType().getOverrideLimiter() || ignoreRange, true, x, y, z, velX, velY, velZ);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -160,6 +164,10 @@ public abstract class Mixin_M_ClientLevel extends Level implements PatchClientLe
                 .addParticle(particleData, particleData.getType().getOverrideLimiter() || force, false, x, y, z, velX, velY, velZ);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void animateTick(int x, int y, int z) {
         Block block = this.getMarkerParticleTarget();
@@ -169,6 +177,10 @@ public abstract class Mixin_M_ClientLevel extends Level implements PatchClientLe
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public int calculateBlockTint(BlockPos pos, ColorResolver colorResolver) {
         Evolution.deprecatedMethod();
@@ -261,6 +273,10 @@ public abstract class Mixin_M_ClientLevel extends Level implements PatchClientLe
         return this.getChunkSource().getChunk(chunkX, chunkZ, false);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public int getBlockTint(BlockPos pos, ColorResolver colorResolver) {
@@ -282,6 +298,10 @@ public abstract class Mixin_M_ClientLevel extends Level implements PatchClientLe
     @Shadow
     protected abstract @Nullable Block getMarkerParticleTarget();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public BlockPos getSharedSpawnPos() {
         int x = this.levelData.getXSpawn();
@@ -328,8 +348,8 @@ public abstract class Mixin_M_ClientLevel extends Level implements PatchClientLe
     }
 
     /**
+     * @reason _
      * @author TheGreatWolf
-     * @reason Replace LevelRenderer
      */
     @Override
     @Overwrite
@@ -367,8 +387,8 @@ public abstract class Mixin_M_ClientLevel extends Level implements PatchClientLe
     public abstract void removeEntity(int i, Entity.RemovalReason removalReason);
 
     /**
+     * @reason _
      * @author TheGreatWolf
-     * @reason Replace LevelRenderer
      */
     @Override
     @Overwrite
@@ -382,6 +402,10 @@ public abstract class Mixin_M_ClientLevel extends Level implements PatchClientLe
         this.minecraft.lvlRenderer().blockChanged(x, y, z, oldState, newState, flags);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -394,6 +418,10 @@ public abstract class Mixin_M_ClientLevel extends Level implements PatchClientLe
         this.minecraft.lvlRenderer().setBlockDirty(x, y, z, oldState, newState);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void setKnownState(BlockPos pos, BlockState state) {
         Evolution.deprecatedMethod();
@@ -417,6 +445,10 @@ public abstract class Mixin_M_ClientLevel extends Level implements PatchClientLe
     @Shadow
     protected abstract void spawnFluidParticle(double d, double e, double f, double g, double h, ParticleOptions particleOptions);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     private void spawnParticle(BlockPos blockPos, ParticleOptions particleOptions, VoxelShape voxelShape, double d) {
@@ -454,12 +486,20 @@ public abstract class Mixin_M_ClientLevel extends Level implements PatchClientLe
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     private void trySpawnDripParticles(BlockPos blockPos, BlockState blockState, ParticleOptions particleOptions, boolean bl) {
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void unload(LevelChunk chunk) {
         chunk.clearAllBlockEntities();

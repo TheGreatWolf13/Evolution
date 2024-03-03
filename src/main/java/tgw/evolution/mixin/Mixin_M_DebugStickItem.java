@@ -24,6 +24,10 @@ public abstract class Mixin_M_DebugStickItem extends Item {
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -45,6 +49,10 @@ public abstract class Mixin_M_DebugStickItem extends Item {
                                                  LevelAccessor levelAccessor,
                                                  BlockPos blockPos, boolean bl, ItemStack itemStack);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

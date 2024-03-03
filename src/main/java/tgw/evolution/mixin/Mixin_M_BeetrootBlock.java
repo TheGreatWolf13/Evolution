@@ -27,6 +27,10 @@ public abstract class Mixin_M_BeetrootBlock extends CropBlock {
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -39,6 +43,10 @@ public abstract class Mixin_M_BeetrootBlock extends CropBlock {
         return SHAPE_BY_AGE[state.getValue(this.getAgeProperty())];
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

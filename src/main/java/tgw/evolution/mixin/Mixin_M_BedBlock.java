@@ -59,6 +59,10 @@ public abstract class Mixin_M_BedBlock extends HorizontalDirectionalBlock implem
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -78,6 +82,10 @@ public abstract class Mixin_M_BedBlock extends HorizontalDirectionalBlock implem
         return Mth.getSeed(seedX, y, seedZ);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -98,6 +106,10 @@ public abstract class Mixin_M_BedBlock extends HorizontalDirectionalBlock implem
     @Shadow
     protected abstract boolean kickVillagerOutOfBed(Level level, BlockPos blockPos);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -124,6 +136,10 @@ public abstract class Mixin_M_BedBlock extends HorizontalDirectionalBlock implem
         super.playerWillDestroy_(level, x, y, z, state, player);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -155,6 +171,10 @@ public abstract class Mixin_M_BedBlock extends HorizontalDirectionalBlock implem
         return super.updateShape_(state, from, fromState, level, x, y, z, fromX, fromY, fromZ);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

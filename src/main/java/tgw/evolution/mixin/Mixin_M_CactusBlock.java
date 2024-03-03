@@ -37,6 +37,10 @@ public abstract class Mixin_M_CactusBlock extends Block {
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -57,6 +61,10 @@ public abstract class Mixin_M_CactusBlock extends Block {
                !level.getBlockState_(x, y + 1, z).getMaterial().isLiquid();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -69,6 +77,10 @@ public abstract class Mixin_M_CactusBlock extends Block {
         return COLLISION_SHAPE;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -81,6 +93,10 @@ public abstract class Mixin_M_CactusBlock extends Block {
         return OUTLINE_SHAPE;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -112,6 +128,10 @@ public abstract class Mixin_M_CactusBlock extends Block {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -126,6 +146,10 @@ public abstract class Mixin_M_CactusBlock extends Block {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

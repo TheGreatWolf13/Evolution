@@ -50,6 +50,10 @@ public abstract class Mixin_M_EnderChestBlock extends AbstractChestBlock<EnderCh
         super(properties, supplier);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -68,6 +72,10 @@ public abstract class Mixin_M_EnderChestBlock extends AbstractChestBlock<EnderCh
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -80,6 +88,10 @@ public abstract class Mixin_M_EnderChestBlock extends AbstractChestBlock<EnderCh
         return SHAPE;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -94,6 +106,10 @@ public abstract class Mixin_M_EnderChestBlock extends AbstractChestBlock<EnderCh
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -123,6 +139,10 @@ public abstract class Mixin_M_EnderChestBlock extends AbstractChestBlock<EnderCh
         return super.updateShape_(state, from, fromState, level, x, y, z, fromX, fromY, fromZ);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

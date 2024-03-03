@@ -30,6 +30,10 @@ public abstract class Mixin_M_EndCrystalItem extends Item {
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

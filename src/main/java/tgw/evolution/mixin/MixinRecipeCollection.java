@@ -52,6 +52,10 @@ public abstract class MixinRecipeCollection implements PatchRecipeCollection {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public List<Recipe<?>> getDisplayRecipes(boolean onlyCraftable) {
         OList<Recipe<?>> list = new OArrayList<>();

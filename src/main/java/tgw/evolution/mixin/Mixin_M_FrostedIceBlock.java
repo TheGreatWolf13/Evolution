@@ -32,6 +32,10 @@ public abstract class Mixin_M_FrostedIceBlock extends IceBlock {
     @Shadow
     protected abstract boolean fewerNeigboursThan(BlockGetter blockGetter, BlockPos blockPos, int i);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -59,6 +63,10 @@ public abstract class Mixin_M_FrostedIceBlock extends IceBlock {
         super.neighborChanged_(state, level, x, y, z, oldBlock, fromX, fromY, fromZ, isMoving);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -74,6 +82,10 @@ public abstract class Mixin_M_FrostedIceBlock extends IceBlock {
     @Shadow
     protected abstract boolean slightlyMelt(BlockState blockState, Level level, BlockPos blockPos);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

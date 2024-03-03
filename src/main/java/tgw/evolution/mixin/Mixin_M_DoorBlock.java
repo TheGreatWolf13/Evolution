@@ -51,6 +51,10 @@ public abstract class Mixin_M_DoorBlock extends Block {
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -69,6 +73,10 @@ public abstract class Mixin_M_DoorBlock extends Block {
     @Shadow
     protected abstract @LvlEvent int getCloseSound();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private DoorHingeSide getHinge(BlockPlaceContext context) {
         BlockGetter level = context.getLevel();
@@ -107,6 +115,10 @@ public abstract class Mixin_M_DoorBlock extends Block {
     @Shadow
     protected abstract @LvlEvent int getOpenSound();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -119,6 +131,10 @@ public abstract class Mixin_M_DoorBlock extends Block {
         return Mth.getSeed(x, state.getValue(HALF) == DoubleBlockHalf.LOWER ? y : y - 1, z);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -139,6 +155,10 @@ public abstract class Mixin_M_DoorBlock extends Block {
         };
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @Override
     public @Nullable BlockState getStateForPlacement(BlockPlaceContext context) {
@@ -157,6 +177,10 @@ public abstract class Mixin_M_DoorBlock extends Block {
     @Shadow
     public abstract boolean isOpen(BlockState blockState);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -190,6 +214,10 @@ public abstract class Mixin_M_DoorBlock extends Block {
     @Shadow
     protected abstract void playSound(Level level, BlockPos blockPos, boolean bl);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -205,6 +233,10 @@ public abstract class Mixin_M_DoorBlock extends Block {
         super.playerWillDestroy_(level, x, y, z, state, player);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -217,6 +249,10 @@ public abstract class Mixin_M_DoorBlock extends Block {
         level.setBlock_(x, y + 1, z, stateAtPos.setValue(HALF, DoubleBlockHalf.UPPER), BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -254,6 +290,10 @@ public abstract class Mixin_M_DoorBlock extends Block {
                super.updateShape_(state, from, fromState, level, x, y, z, fromX, fromY, fromZ);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

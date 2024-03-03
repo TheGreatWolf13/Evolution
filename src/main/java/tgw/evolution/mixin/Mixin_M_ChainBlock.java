@@ -32,6 +32,10 @@ public abstract class Mixin_M_ChainBlock extends RotatedPillarBlock implements S
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -48,6 +52,10 @@ public abstract class Mixin_M_ChainBlock extends RotatedPillarBlock implements S
         };
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

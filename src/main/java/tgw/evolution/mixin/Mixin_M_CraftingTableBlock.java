@@ -21,6 +21,10 @@ public abstract class Mixin_M_CraftingTableBlock extends Block {
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

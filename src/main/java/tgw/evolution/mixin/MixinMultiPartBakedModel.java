@@ -31,6 +31,10 @@ public abstract class MixinMultiPartBakedModel implements BakedModel {
 
     @Shadow @Final private List<Pair<Predicate<BlockState>, BakedModel>> selectors;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public List<BakedQuad> getQuads(@Nullable BlockState blockState, @Nullable Direction direction, Random random) {

@@ -147,6 +147,10 @@ public abstract class MixinRecipeManager extends SimpleJsonResourceReloadListene
         this.byName = Object2ObjectMaps.unmodifiable(byName);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     public void replaceRecipes(Iterable<Recipe<?>> iterable) {

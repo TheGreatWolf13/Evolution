@@ -45,6 +45,10 @@ public abstract class Mixin_CF_ClientRecipeBook extends RecipeBook implements Pa
         this.recipesByTab = R2OMap.emptyMap();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Contract(value = "_ -> fail", pure = true)
     @Overwrite
     @DeleteMethod
@@ -87,6 +91,10 @@ public abstract class Mixin_CF_ClientRecipeBook extends RecipeBook implements Pa
         return recipeLists;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Contract(value = "_ -> fail", pure = true)
     @Overwrite
     @DeleteMethod
@@ -136,6 +144,10 @@ public abstract class Mixin_CF_ClientRecipeBook extends RecipeBook implements Pa
         return this.allRecipes;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     public List<RecipeCollection> getCollection(RecipeBookCategories categories) {
@@ -147,12 +159,20 @@ public abstract class Mixin_CF_ClientRecipeBook extends RecipeBook implements Pa
         return this.recipesByTab.getOrDefault(category, OList.emptyList());
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     public List<RecipeCollection> getCollections() {
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void setupCollections(Iterable<Recipe<?>> recipes) {
         R2OMap<RecipeCategory, OList<OList<Recipe<?>>>> recipeLists = categorizeAndGroupRecipes_(recipes);

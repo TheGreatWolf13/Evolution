@@ -32,6 +32,10 @@ public abstract class Mixin_M_CrossCollisionBlock extends Block implements Simpl
     @Shadow
     protected abstract int getAABBIndex(BlockState blockState);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -44,6 +48,10 @@ public abstract class Mixin_M_CrossCollisionBlock extends Block implements Simpl
         return this.collisionShapeByIndex[this.getAABBIndex(state)];
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -56,6 +64,10 @@ public abstract class Mixin_M_CrossCollisionBlock extends Block implements Simpl
         return this.shapeByIndex[this.getAABBIndex(state)];
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

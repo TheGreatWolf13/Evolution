@@ -32,6 +32,10 @@ public abstract class Mixin_M_DirtPathBlock extends Block {
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -45,6 +49,10 @@ public abstract class Mixin_M_DirtPathBlock extends Block {
         return !stateAbove.getMaterial().isSolid() || stateAbove.getBlock() instanceof FenceGateBlock;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -57,6 +65,10 @@ public abstract class Mixin_M_DirtPathBlock extends Block {
         return SHAPE;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -69,6 +81,10 @@ public abstract class Mixin_M_DirtPathBlock extends Block {
         FarmBlock.turnToDirt(state, level, new BlockPos(x, y, z));
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

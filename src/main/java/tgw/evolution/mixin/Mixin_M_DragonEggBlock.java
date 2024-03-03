@@ -30,6 +30,10 @@ public abstract class Mixin_M_DragonEggBlock extends FallingBlock {
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -42,6 +46,10 @@ public abstract class Mixin_M_DragonEggBlock extends FallingBlock {
         this.teleport(state, level, new BlockPos(x, y, z));
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -57,6 +65,10 @@ public abstract class Mixin_M_DragonEggBlock extends FallingBlock {
     @Shadow
     protected abstract void teleport(BlockState blockState, Level level, BlockPos blockPos);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

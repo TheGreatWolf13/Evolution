@@ -30,6 +30,10 @@ public abstract class Mixin_M_ConduitBlock extends BaseEntityBlock implements Si
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -42,6 +46,10 @@ public abstract class Mixin_M_ConduitBlock extends BaseEntityBlock implements Si
         return SHAPE;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

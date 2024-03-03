@@ -88,18 +88,30 @@ public abstract class Mixin_M_CommandBlock extends BaseEntityBlock implements Ga
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     private static void executeChain(Level level, BlockPos blockPos, Direction direction) {
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     private void execute(BlockState blockState, Level level, BlockPos blockPos, BaseCommandBlock baseCommandBlock, boolean bl) {
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -134,6 +146,10 @@ public abstract class Mixin_M_CommandBlock extends BaseEntityBlock implements Ga
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity entity, ItemStack stack) {
@@ -155,6 +171,10 @@ public abstract class Mixin_M_CommandBlock extends BaseEntityBlock implements Ga
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -193,6 +213,10 @@ public abstract class Mixin_M_CommandBlock extends BaseEntityBlock implements Ga
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

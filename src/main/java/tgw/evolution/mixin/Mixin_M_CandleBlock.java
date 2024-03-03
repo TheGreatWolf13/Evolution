@@ -42,6 +42,10 @@ public abstract class Mixin_M_CandleBlock extends AbstractCandleBlock implements
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -54,6 +58,10 @@ public abstract class Mixin_M_CandleBlock extends AbstractCandleBlock implements
         return BlockUtils.canSupportCenter(level, x, y - 1, z, Direction.UP);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -71,6 +79,10 @@ public abstract class Mixin_M_CandleBlock extends AbstractCandleBlock implements
         };
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -100,6 +112,10 @@ public abstract class Mixin_M_CandleBlock extends AbstractCandleBlock implements
         return super.updateShape_(state, from, fromState, level, x, y, z, fromX, fromY, fromZ);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

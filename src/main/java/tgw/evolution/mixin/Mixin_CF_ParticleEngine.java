@@ -101,6 +101,10 @@ public abstract class Mixin_CF_ParticleEngine implements PreparableReloadListene
         this.random = new Random();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void add(Particle particle) {
         Optional<ParticleGroup> optional = particle.getParticleGroup();
@@ -129,6 +133,10 @@ public abstract class Mixin_CF_ParticleEngine implements PreparableReloadListene
         return String.valueOf(count);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void crack(BlockPos pos, Direction face) {
         Evolution.deprecatedMethod();
@@ -163,18 +171,30 @@ public abstract class Mixin_CF_ParticleEngine implements PreparableReloadListene
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void createTrackingEmitter(Entity entity, ParticleOptions particleOptions) {
         assert this.level != null;
         this.trackingEmitters_.add(new TrackingEmitter(this.level, entity, particleOptions));
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void createTrackingEmitter(Entity entity, ParticleOptions particleOptions, int i) {
         assert this.level != null;
         this.trackingEmitters_.add(new TrackingEmitter(this.level, entity, particleOptions, i));
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void destroy(BlockPos pos, BlockState state) {
         Evolution.deprecatedMethod();
@@ -222,11 +242,19 @@ public abstract class Mixin_CF_ParticleEngine implements PreparableReloadListene
         return this.renderedParticles;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private boolean hasSpaceInParticleLimit(ParticleGroup group) {
         return this.trackedParticleCounts_.getInt(group) < group.getLimit();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private void loadParticleDescription(ResourceManager manager, ResourceLocation resLoc, Map<ResourceLocation, List<ResourceLocation>> map) {
         ResourceLocation jsonLoc = new ResourceLocation(resLoc.getNamespace(), "particles/" + resLoc.getPath() + ".json");
@@ -285,6 +313,10 @@ public abstract class Mixin_CF_ParticleEngine implements PreparableReloadListene
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private @Nullable <T extends ParticleOptions> Particle makeParticle(T particleOptions,
                                                                         double d,
@@ -301,11 +333,19 @@ public abstract class Mixin_CF_ParticleEngine implements PreparableReloadListene
         return provider.createParticle(particleOptions, this.level, d, e, f, g, h, i);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private <T extends ParticleOptions> void register(ParticleType<T> particleType, ParticleProvider<T> provider) {
         this.providers_.put(Registry.PARTICLE_TYPE.getId(particleType), provider);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private <T extends ParticleOptions> void register(ParticleType<T> particleType, ParticleEngine.SpriteParticleRegistration<T> registration) {
         ParticleEngine.MutableSpriteSet mutableSpriteSet = new ParticleEngine.MutableSpriteSet();
@@ -316,6 +356,10 @@ public abstract class Mixin_CF_ParticleEngine implements PreparableReloadListene
     @Shadow
     protected abstract void registerProviders();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public CompletableFuture<Void> reload(PreparableReloadListener.PreparationBarrier barrier,
@@ -436,6 +480,10 @@ public abstract class Mixin_CF_ParticleEngine implements PreparableReloadListene
         lightTexture.turnOffLightLayer();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void setLevel(@Nullable ClientLevel level) {
         this.level = level;
@@ -503,12 +551,20 @@ public abstract class Mixin_CF_ParticleEngine implements PreparableReloadListene
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     private void tickParticleList(Collection<Particle> particles) {
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private void updateCount(ParticleGroup group, int i) {
         this.trackedParticleCounts_.addTo(group, i);

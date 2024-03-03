@@ -38,6 +38,10 @@ public abstract class Mixin_M_FenceBlock extends CrossCollisionBlock {
     @Shadow
     public abstract boolean connectsTo(BlockState blockState, boolean bl, Direction direction);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -50,6 +54,10 @@ public abstract class Mixin_M_FenceBlock extends CrossCollisionBlock {
         return this.occlusionByIndex[this.getAABBIndex(state)];
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -62,6 +70,10 @@ public abstract class Mixin_M_FenceBlock extends CrossCollisionBlock {
         return this.getShape_(state, level, x, y, z, entity);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -97,6 +109,10 @@ public abstract class Mixin_M_FenceBlock extends CrossCollisionBlock {
                super.updateShape_(state, from, fromState, level, x, y, z, fromX, fromY, fromZ);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

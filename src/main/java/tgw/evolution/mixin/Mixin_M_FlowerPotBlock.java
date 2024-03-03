@@ -41,6 +41,10 @@ public abstract class Mixin_M_FlowerPotBlock extends Block {
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -56,6 +60,10 @@ public abstract class Mixin_M_FlowerPotBlock extends Block {
     @Shadow
     protected abstract boolean isEmpty();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -84,6 +92,10 @@ public abstract class Mixin_M_FlowerPotBlock extends Block {
                super.updateShape_(state, from, fromState, level, x, y, z, fromX, fromY, fromZ);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

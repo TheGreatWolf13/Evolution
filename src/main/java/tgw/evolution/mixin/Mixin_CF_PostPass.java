@@ -60,6 +60,10 @@ public abstract class Mixin_CF_PostPass implements AutoCloseable {
         this.outTarget = outTarget;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void addAuxAsset(String name, IntSupplier asset, int width, int height) {
         this.auxNames_.add(name);
@@ -68,6 +72,10 @@ public abstract class Mixin_CF_PostPass implements AutoCloseable {
         this.auxHeights_.add(height);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void process(float partialTicks) {
         Minecraft mc = Minecraft.getInstance();

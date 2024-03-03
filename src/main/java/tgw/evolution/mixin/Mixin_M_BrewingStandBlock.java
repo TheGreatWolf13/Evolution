@@ -36,6 +36,10 @@ public abstract class Mixin_M_BrewingStandBlock extends BaseEntityBlock {
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -48,6 +52,10 @@ public abstract class Mixin_M_BrewingStandBlock extends BaseEntityBlock {
         level.addParticle(ParticleTypes.SMOKE, x + 0.4 + random.nextFloat() * 0.2, y + 0.7 + random.nextFloat() * 0.3, z + 0.4 + random.nextFloat() * 0.2, 0, 0, 0);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -60,6 +68,10 @@ public abstract class Mixin_M_BrewingStandBlock extends BaseEntityBlock {
         return SHAPE;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -77,6 +89,10 @@ public abstract class Mixin_M_BrewingStandBlock extends BaseEntityBlock {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

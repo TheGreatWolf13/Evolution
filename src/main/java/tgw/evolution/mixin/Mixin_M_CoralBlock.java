@@ -29,6 +29,10 @@ public abstract class Mixin_M_CoralBlock extends Block {
     @Shadow
     protected abstract boolean scanForWater(BlockGetter blockGetter, BlockPos blockPos);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -43,6 +47,10 @@ public abstract class Mixin_M_CoralBlock extends Block {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

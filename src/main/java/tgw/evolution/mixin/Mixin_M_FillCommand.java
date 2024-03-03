@@ -36,6 +36,10 @@ public abstract class Mixin_M_FillCommand {
     @Shadow @Final private static Dynamic2CommandExceptionType ERROR_AREA_TOO_LARGE;
     @Shadow @Final private static SimpleCommandExceptionType ERROR_FAILED;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     private static int fillBlocks(CommandSourceStack commandSourceStack, BoundingBox boundingBox, BlockInput blockInput, FillCommand.Mode mode, @Nullable Predicate<BlockInWorld> predicate) {
@@ -90,6 +94,10 @@ public abstract class Mixin_M_FillCommand {
         return count;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("fill")

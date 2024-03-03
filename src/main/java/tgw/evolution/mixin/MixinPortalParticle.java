@@ -14,6 +14,10 @@ public abstract class MixinPortalParticle extends TextureSheetParticle {
         super(clientLevel, d, e, f);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @Override
     public int getLightColor(float partialTicks) {

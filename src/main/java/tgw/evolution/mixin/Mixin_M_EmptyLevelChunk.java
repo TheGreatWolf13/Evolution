@@ -115,6 +115,10 @@ public abstract class Mixin_M_EmptyLevelChunk extends LevelChunk {
         //Do nothing
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -137,6 +141,10 @@ public abstract class Mixin_M_EmptyLevelChunk extends LevelChunk {
         //Do nothing
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public @Nullable BlockState setBlockState(BlockPos pos, BlockState state, boolean isMoving) {

@@ -34,6 +34,10 @@ public abstract class Mixin_CF_BlockLightEngine extends LayerLightEngine<BlockLi
         this.isClientSide = lightChunkGetter.getLevel() instanceof Level level && level.isClientSide;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public int computeLevelFromNeighbor(long otherPos_, long pos_, int someLight_) {
@@ -64,6 +68,10 @@ public abstract class Mixin_CF_BlockLightEngine extends LayerLightEngine<BlockLi
         return Shapes.faceShapeOccludes(voxelShape, voxelShape2) ? 15 : someLight_ + Math.max(1, mutableInt.getValue());
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private int getLightEmission(long pos) {
         int dl = 0;
@@ -87,6 +95,10 @@ public abstract class Mixin_CF_BlockLightEngine extends LayerLightEngine<BlockLi
         return DynamicLights.combine(bl, dl);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void onBlockEmissionIncrease(BlockPos pos, int lightEmission) {

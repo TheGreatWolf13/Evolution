@@ -20,6 +20,10 @@ public abstract class Mixin_M_Hoglin extends Animal implements Enemy, HoglinBase
         super(entityType, level);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

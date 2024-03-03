@@ -56,6 +56,10 @@ public abstract class Mixin_CF_LevelLightEngine implements PatchLevelLightEngine
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void checkBlock(BlockPos pos) {
@@ -137,6 +141,10 @@ public abstract class Mixin_CF_LevelLightEngine implements PatchLevelLightEngine
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void enableLightSources(ChunkPos chunkPos, boolean bl) {
@@ -149,11 +157,19 @@ public abstract class Mixin_CF_LevelLightEngine implements PatchLevelLightEngine
         return this.lightEngine.getClampedBlockLight(pos);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public String getDebugData(LightLayer lightLayer, SectionPos sectionPos) {
         return "n/a";
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public LayerLightEventListener getLayerListener(LightLayer lightLayer) {
         return lightLayer == LightLayer.BLOCK ? this.lightEngine.getBlockReader() : this.lightEngine.getSkyReader();
@@ -164,6 +180,10 @@ public abstract class Mixin_CF_LevelLightEngine implements PatchLevelLightEngine
         return this.lightEngine;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public int getRawBrightness(BlockPos pos, int reducedSkyLight) {
         Evolution.deprecatedMethod();
@@ -175,12 +195,20 @@ public abstract class Mixin_CF_LevelLightEngine implements PatchLevelLightEngine
         return this.lightEngine.getRawBrightness(pos, reducedSkyLight);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public boolean hasLightWork() {
         return this.lightEngine.hasUpdates();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void onBlockEmissionIncrease(BlockPos pos, int lightEmission) {
@@ -188,17 +216,29 @@ public abstract class Mixin_CF_LevelLightEngine implements PatchLevelLightEngine
         //No op
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void queueSectionData(LightLayer lightLayer, SectionPos secPos, @Nullable DataLayer dataLayer, boolean trustEdges) {
         Evolution.deprecatedMethod();
         //Do nothing
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void retainData(ChunkPos chunkPos, boolean retainData) {
         //Not used
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public int runUpdates(int limit, boolean bl, boolean bl2) {
@@ -207,6 +247,10 @@ public abstract class Mixin_CF_LevelLightEngine implements PatchLevelLightEngine
         return hadUpdates ? 1 : 0;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void updateSectionStatus(SectionPos secPos, boolean notReady) {

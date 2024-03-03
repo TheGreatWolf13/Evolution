@@ -31,6 +31,10 @@ public abstract class Mixin_M_AbstactCandleBlock extends Block {
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

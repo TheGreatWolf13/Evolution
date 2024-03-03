@@ -83,6 +83,10 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
     @Shadow
     protected abstract BlockState asState();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void attack(Level level, BlockPos pos, Player player) {
         Evolution.deprecatedMethod();
@@ -98,6 +102,10 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
         return this.getBlock().canBeReplaced_(this.asState(), level, x, y, z, player, hand, hitResult);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean canSurvive(LevelReader level, BlockPos pos) {
         Evolution.deprecatedMethod();
@@ -109,6 +117,10 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
         return this.getBlock().canSurvive_(this.asState(), level, x, y, z);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean emissiveRendering(BlockGetter level, BlockPos pos) {
         Evolution.deprecatedMethod();
@@ -123,6 +135,10 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
     @Shadow
     public abstract Block getBlock();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public VoxelShape getBlockSupportShape(BlockGetter level, BlockPos pos) {
         Evolution.deprecatedMethod();
@@ -134,12 +150,20 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
         return this.getBlock().getBlockSupportShape_(this.asState(), level, x, y, z);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public VoxelShape getCollisionShape(BlockGetter level, BlockPos pos, CollisionContext context) {
         Evolution.deprecatedMethod();
         return this.getCollisionShape_(level, pos.getX(), pos.getY(), pos.getZ(), context instanceof EntityCollisionContext e ? e.getEntity() : null);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public VoxelShape getCollisionShape(BlockGetter level, BlockPos pos) {
         Evolution.deprecatedMethod();
@@ -160,6 +184,10 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
         return this.cache != null ? this.cache.collisionShape : this.getCollisionShape_(level, x, y, z, null);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public float getDestroyProgress(Player player, BlockGetter level, BlockPos pos) {
         Evolution.deprecatedMethod();
@@ -171,6 +199,10 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
         return this.getBlock().getDestroyProgress_(this.asState(), player, level, x, y, z);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public float getDestroySpeed(BlockGetter blockGetter, BlockPos blockPos) {
         Evolution.deprecatedMethod();
@@ -182,6 +214,10 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
         return this.destroySpeed;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public List<ItemStack> getDrops(LootContext.Builder builder) {
         Evolution.deprecatedMethod();
@@ -209,6 +245,10 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
         return this.getBlock().getEmissiveLightColor(this.asState(), level, x, y, z);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public VoxelShape getFaceOcclusionShape(BlockGetter level, BlockPos pos, Direction face) {
         Evolution.deprecatedMethod();
@@ -222,6 +262,10 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
                Shapes.getFaceShape(this.getOcclusionShape_(level, x, y, z), face);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public VoxelShape getInteractionShape(BlockGetter level, BlockPos pos) {
         Evolution.deprecatedMethod();
@@ -233,6 +277,10 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
         return this.getBlock().getInteractionShape_(this.asState(), level, x, y, z);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public int getLightBlock(BlockGetter level, BlockPos pos) {
         Evolution.deprecatedMethod();
@@ -244,6 +292,10 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
         return this.cache != null ? this.cache.lightBlock : this.getBlock().getLightBlock_(this.asState(), level, x, y, z);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public VoxelShape getOcclusionShape(BlockGetter level, BlockPos pos) {
         Evolution.deprecatedMethod();
@@ -260,6 +312,10 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
         return this.opacityIfCached;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public long getSeed(BlockPos pos) {
         Evolution.deprecatedMethod();
@@ -271,6 +327,10 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
         return this.getBlock().getSeed_(this.asState(), x, y, z);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public float getShadeBrightness(BlockGetter level, BlockPos pos) {
         Evolution.deprecatedMethod();
@@ -282,12 +342,20 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
         return this.getBlock().getShadeBrightness_(this.asState(), level, x, y, z);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public VoxelShape getShape(BlockGetter level, BlockPos pos, CollisionContext context) {
         Evolution.deprecatedMethod();
         return this.getShape_(level, pos.getX(), pos.getY(), pos.getZ(), context instanceof EntityCollisionContext c ? c.getEntity() : null);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public VoxelShape getShape(BlockGetter level, BlockPos pos) {
         Evolution.deprecatedMethod();
@@ -304,6 +372,10 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
         return this.getBlock().getShape_(this.asState(), level, x, y, z, entity);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public VoxelShape getVisualShape(BlockGetter level, BlockPos pos, CollisionContext context) {
         Evolution.deprecatedMethod();
@@ -319,11 +391,19 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
         return this.getBlock().getVisualShape_(this.asState(), level, x, y, z, entity);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean hasLargeCollisionShape() {
         return this.cache == null || this.cache.largeCollisionShape();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean hasPostProcess(BlockGetter level, BlockPos pos) {
         Evolution.deprecatedMethod();
@@ -335,6 +415,10 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
         return this.getBlock().properties.hasPostProcess_().test(this.asState(), level, x, y, z);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void initCache() {
         if (!this.getBlock().hasDynamicShape()) {
@@ -344,6 +428,10 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
         this.opacityIfCached = this.cache == null || this.isConditionallyFullOpaque ? -1 : this.cache.lightBlock;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean isCollisionShapeFullBlock(BlockGetter level, BlockPos pos) {
         return this.isCollisionShapeFullBlock_(level, pos.getX(), pos.getY(), pos.getZ());
@@ -361,12 +449,20 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
         return this.isConditionallyFullOpaque;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean isFaceSturdy(BlockGetter level, BlockPos pos, Direction side, SupportType support) {
         Evolution.deprecatedMethod();
         return this.isFaceSturdy_(level, pos.getX(), pos.getY(), pos.getZ(), side, support);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean isFaceSturdy(BlockGetter level, BlockPos pos, Direction side) {
         Evolution.deprecatedMethod();
@@ -383,6 +479,10 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
         return this.isFaceSturdy_(level, x, y, z, side, SupportType.FULL);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean isRedstoneConductor(BlockGetter level, BlockPos pos) {
         Evolution.deprecatedMethod();
@@ -394,6 +494,10 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
         return this.getBlock().properties.isRedstoneConductor_().test(this.asState(), level, x, y, z);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean isSolidRender(BlockGetter level, BlockPos pos) {
         Evolution.deprecatedMethod();
@@ -409,6 +513,10 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
         return state.canOcclude() && Block.isShapeFullBlock(state.getOcclusionShape_(level, x, y, z));
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean isSuffocating(BlockGetter level, BlockPos pos) {
         Evolution.deprecatedMethod();
@@ -420,6 +528,10 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
         return this.getBlock().properties.isSuffocating_().test(this.asState(), level, x, y, z);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean isValidSpawn(BlockGetter level, BlockPos pos, EntityType<?> entity) {
         Evolution.deprecatedMethod();
@@ -431,6 +543,10 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
         return this.getBlock().properties.isValidSpawn_().test(this.asState(), level, x, y, z, entity);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean isViewBlocking(BlockGetter level, BlockPos pos) {
         Evolution.deprecatedMethod();
@@ -442,6 +558,10 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
         return this.getBlock().properties.isViewBlocking_().test(this.asState(), level, x, y, z);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void neighborChanged(Level level, BlockPos pos, Block block, BlockPos fromPos, boolean bl) {
         Evolution.deprecatedMethod();
@@ -453,6 +573,10 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
         this.getBlock().neighborChanged_(this.asState(), level, x, y, z, block, fromX, fromY, fromZ, isMoving);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void onPlace(Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
         Evolution.deprecatedMethod();
@@ -464,6 +588,10 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
         this.getBlock().onPlace_(this.asState(), level, x, y, z, oldState, isMoving);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void onRemove(Level level, BlockPos pos, BlockState state, boolean isMoving) {
         Evolution.deprecatedMethod();
@@ -475,6 +603,10 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
         this.getBlock().onRemove_(this.asState(), level, x, y, z, newState, isMoving);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean propagatesSkylightDown(BlockGetter level, BlockPos pos) {
         Evolution.deprecatedMethod();
@@ -486,6 +618,10 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
         return this.cache != null ? this.cache.propagatesSkylightDown() : this.getBlock().propagatesSkylightDown_(this.asState(), level, x, y, z);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void randomTick(ServerLevel level, BlockPos pos, Random random) {
         Evolution.deprecatedMethod();
@@ -497,6 +633,10 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
         this.getBlock().randomTick_(this.asState(), level, x, y, z, random);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void spawnAfterBreak(ServerLevel level, BlockPos pos, ItemStack stack) {
         Evolution.deprecatedMethod();
@@ -513,6 +653,10 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
         return this.getBlock().stateForParticles(this.asState(), level, x, y, z);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void tick(ServerLevel level, BlockPos pos, Random random) {
         Evolution.deprecatedMethod();
@@ -524,6 +668,10 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
         this.getBlock().tick_(this.asState(), level, x, y, z, random);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void updateIndirectNeighbourShapes(LevelAccessor level, BlockPos pos, @BlockFlags int flags, int limit) {
         Evolution.deprecatedMethod();
@@ -535,6 +683,10 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
         this.getBlock().updateIndirectNeighbourShapes_(this.asState(), level, x, y, z, flags, limit);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public final void updateNeighbourShapes(LevelAccessor level, BlockPos pos, int flags, int limit) {
         Evolution.deprecatedMethod();
@@ -553,6 +705,10 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public BlockState updateShape(Direction from, BlockState fromState, LevelAccessor level, BlockPos pos, BlockPos fromPos) {
         Evolution.deprecatedMethod();
@@ -564,6 +720,10 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
         return this.getBlock().updateShape_(this.asState(), from, fromState, level, x, y, z, fromX, fromY, fromZ);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public InteractionResult use(Level level, Player player, InteractionHand hand, BlockHitResult hitResult) {
         return this.getBlock().use_(this.asState(), level, hitResult.posX(), hitResult.posY(), hitResult.posZ(), player, hand, hitResult);

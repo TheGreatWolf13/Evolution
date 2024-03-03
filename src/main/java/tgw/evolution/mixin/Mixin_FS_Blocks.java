@@ -3527,6 +3527,10 @@ public abstract class Mixin_FS_Blocks {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private static LeavesBlock leaves(SoundType soundType) {
         return new LeavesBlock(of(Material.LEAVES)
@@ -3569,6 +3573,10 @@ public abstract class Mixin_FS_Blocks {
         return BlockBehaviour.Properties.of(material, color);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private static PistonBaseBlock pistonBase(boolean bl) {
         IStatePredicate statePredicate = (state, level, x, y, z) -> {
@@ -3586,6 +3594,10 @@ public abstract class Mixin_FS_Blocks {
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private static ShulkerBoxBlock shulkerBox(@Nullable DyeColor dyeColor, BlockBehaviour.Properties properties) {
         IStatePredicate predicate = (state, level, x, y, z) -> {
@@ -3602,6 +3614,10 @@ public abstract class Mixin_FS_Blocks {
                                                        .isViewBlocking_(predicate));
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private static StainedGlassBlock stainedGlass(DyeColor dyeColor) {
         return new StainedGlassBlock(dyeColor, of(Material.GLASS, dyeColor)

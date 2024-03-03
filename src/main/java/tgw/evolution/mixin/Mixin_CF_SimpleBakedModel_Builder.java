@@ -50,18 +50,30 @@ public abstract class Mixin_CF_SimpleBakedModel_Builder {
         this.transforms = transforms;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public SimpleBakedModel.Builder addCulledFace(Direction direction, BakedQuad bakedQuad) {
         this.culledFaces_.get(direction).add(bakedQuad);
         return (SimpleBakedModel.Builder) (Object) this;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public SimpleBakedModel.Builder addUnculledFace(BakedQuad bakedQuad) {
         this.unculledFaces_.add(bakedQuad);
         return (SimpleBakedModel.Builder) (Object) this;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public BakedModel build() {
         if (this.particleIcon == null) {

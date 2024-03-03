@@ -26,6 +26,10 @@ public abstract class Mixin_M_BuddingAmethystBlock extends AmethystBlock {
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

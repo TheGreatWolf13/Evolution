@@ -56,6 +56,10 @@ public abstract class Mixin_M_BubbleColumnBlock extends Block implements BucketP
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -80,6 +84,10 @@ public abstract class Mixin_M_BubbleColumnBlock extends Block implements BucketP
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -93,6 +101,10 @@ public abstract class Mixin_M_BubbleColumnBlock extends Block implements BucketP
         return stateBelow.is(Blocks.BUBBLE_COLUMN) || stateBelow.is(Blocks.MAGMA_BLOCK) || stateBelow.is(Blocks.SOUL_SAND);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -105,6 +117,10 @@ public abstract class Mixin_M_BubbleColumnBlock extends Block implements BucketP
         return Shapes.empty();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -117,6 +133,10 @@ public abstract class Mixin_M_BubbleColumnBlock extends Block implements BucketP
         updateColumn(level, new BlockPos(x, y, z), state, level.getBlockState_(x, y - 1, z));
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

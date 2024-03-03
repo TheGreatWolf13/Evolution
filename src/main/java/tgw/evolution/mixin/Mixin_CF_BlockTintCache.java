@@ -27,13 +27,17 @@ public abstract class Mixin_CF_BlockTintCache implements PatchBlockTintCache {
     @ModifyConstructor
     public Mixin_CF_BlockTintCache(ToIntFunction<BlockPos> source) {
         this.latestChunkOnThread = ThreadLocal.withInitial(BlockTintCache.LatestCacheInfo::new);
-        this.cache = new Long2ObjectLinkedOpenHashMap(256, 0.25F);
+        this.cache = new Long2ObjectLinkedOpenHashMap<>(256, 0.25F);
         this.lock = new ReentrantReadWriteLock();
     }
 
     @Shadow
     protected abstract BlockTintCache.CacheData findOrCreateChunkCache(int i, int j);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public int getColor(BlockPos pos) {
         Evolution.deprecatedMethod();

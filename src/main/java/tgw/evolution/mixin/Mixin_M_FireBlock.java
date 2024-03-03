@@ -37,6 +37,10 @@ public abstract class Mixin_M_FireBlock extends BaseFireBlock {
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -56,6 +60,10 @@ public abstract class Mixin_M_FireBlock extends BaseFireBlock {
     @Shadow
     protected abstract int getFireOdds(LevelReader levelReader, BlockPos blockPos);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -77,6 +85,10 @@ public abstract class Mixin_M_FireBlock extends BaseFireBlock {
     @Shadow
     protected abstract boolean isValidFireLocation(BlockGetter blockGetter, BlockPos blockPos);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     @Override
@@ -90,6 +102,10 @@ public abstract class Mixin_M_FireBlock extends BaseFireBlock {
         level.scheduleTick(new BlockPos(x, y, z), this, getFireTickDelay(level.random));
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -169,6 +185,10 @@ public abstract class Mixin_M_FireBlock extends BaseFireBlock {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

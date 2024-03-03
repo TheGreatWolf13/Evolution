@@ -47,6 +47,10 @@ public abstract class Mixin_M_CakeBlock extends Block {
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -59,6 +63,10 @@ public abstract class Mixin_M_CakeBlock extends Block {
         return level.getBlockState_(x, y - 1, z).getMaterial().isSolid();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -71,6 +79,10 @@ public abstract class Mixin_M_CakeBlock extends Block {
         return SHAPE_BY_BITE[state.getValue(BITES)];
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -99,6 +111,10 @@ public abstract class Mixin_M_CakeBlock extends Block {
                super.updateShape_(state, from, fromState, level, x, y, z, fromX, fromY, fromZ);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

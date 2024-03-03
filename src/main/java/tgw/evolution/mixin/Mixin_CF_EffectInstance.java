@@ -182,6 +182,10 @@ public abstract class Mixin_CF_EffectInstance implements Effect, AutoCloseable {
         this.markDirty();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public static EffectProgram getOrCreate(ResourceManager resourceManager, Program.Type type, String string) throws IOException {
         Program program = type.getPrograms().get(string);
@@ -213,6 +217,10 @@ public abstract class Mixin_CF_EffectInstance implements Effect, AutoCloseable {
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void apply() {
         RenderSystem.assertOnGameThread();
@@ -243,6 +251,10 @@ public abstract class Mixin_CF_EffectInstance implements Effect, AutoCloseable {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void clear() {
         RenderSystem.assertOnRenderThread();
@@ -258,6 +270,10 @@ public abstract class Mixin_CF_EffectInstance implements Effect, AutoCloseable {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void close() {
@@ -268,6 +284,10 @@ public abstract class Mixin_CF_EffectInstance implements Effect, AutoCloseable {
         ProgramManager.releaseProgram(this);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public @Nullable Uniform getUniform(String string) {
         RenderSystem.assertOnRenderThread();
@@ -278,6 +298,10 @@ public abstract class Mixin_CF_EffectInstance implements Effect, AutoCloseable {
     @Shadow
     public abstract void markDirty();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private void parseSamplerNode(JsonElement jsonElement) {
         JsonObject jsonObject = GsonHelper.convertToJsonObject(jsonElement, "sampler");
@@ -291,6 +315,10 @@ public abstract class Mixin_CF_EffectInstance implements Effect, AutoCloseable {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private void parseUniformNode(JsonElement jsonElement) throws ChainedJsonException {
         JsonObject jsonObject = GsonHelper.convertToJsonObject(jsonElement, "uniform");
@@ -335,12 +363,20 @@ public abstract class Mixin_CF_EffectInstance implements Effect, AutoCloseable {
         this.uniforms_.add(uniform);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void setSampler(String string, IntSupplier intSupplier) {
         this.samplerMap_.put(string, intSupplier);
         this.markDirty();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private void updateLocations() {
         RenderSystem.assertOnRenderThread();

@@ -66,7 +66,7 @@ public abstract class Mixin_CFM_MultiPlayerGameMode implements PatchMultiPlayerG
         this.destroyBlockPos = new BlockPos.MutableBlockPos();
         this.destroyingItem = ItemStack.EMPTY;
         this.localPlayerMode = GameType.DEFAULT_MODE;
-        this.unAckedActions_ = new Object2ObjectLinkedOpenHashMap();
+        this.unAckedActions_ = new Object2ObjectLinkedOpenHashMap<>();
         this.minecraft = mc;
         this.connection = listener;
     }
@@ -126,6 +126,10 @@ public abstract class Mixin_CFM_MultiPlayerGameMode implements PatchMultiPlayerG
         return this.startDestroyBlock_(hitResult);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean destroyBlock(BlockPos pos) {
         Evolution.deprecatedMethod();
@@ -163,6 +167,7 @@ public abstract class Mixin_CFM_MultiPlayerGameMode implements PatchMultiPlayerG
     @Shadow
     protected abstract void ensureHasSentCarriedItem();
 
+    @Unique
     private int getBlockBreakingProgress() {
         if (this.destroyProgress == 0) {
             return -1;
@@ -170,6 +175,10 @@ public abstract class Mixin_CFM_MultiPlayerGameMode implements PatchMultiPlayerG
         return Mth.floor(this.destroyProgress * 10.0f);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void handleBlockBreakAck(ClientLevel level, BlockPos pos, BlockState state, ServerboundPlayerActionPacket.Action action, boolean bl) {
         Evolution.deprecatedMethod();
@@ -203,6 +212,10 @@ public abstract class Mixin_CFM_MultiPlayerGameMode implements PatchMultiPlayerG
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public InteractionResult interactAt(Player player, Entity entity, EntityHitResult entityHitResult, InteractionHand hand) {
         this.ensureHasSentCarriedItem();
@@ -214,12 +227,17 @@ public abstract class Mixin_CFM_MultiPlayerGameMode implements PatchMultiPlayerG
         return this.localPlayerMode == GameType.SPECTATOR ? InteractionResult.PASS : entity.interactAt_(player, x, y, z, hand);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     private boolean sameDestroyTarget(BlockPos pos) {
         throw new AbstractMethodError();
     }
 
+    @Unique
     private boolean sameDestroyTarget(int x, int y, int z) {
         assert this.minecraft.player != null;
         return x == this.destroyBlockPos.getX() &&
@@ -228,6 +246,10 @@ public abstract class Mixin_CFM_MultiPlayerGameMode implements PatchMultiPlayerG
                ItemUtils.isSameIgnoreCount(this.minecraft.player.getMainHandItem(), this.destroyingItem);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     private void sendBlockAction(ServerboundPlayerActionPacket.Action action, BlockPos blockPos, Direction direction) {
@@ -330,6 +352,10 @@ public abstract class Mixin_CFM_MultiPlayerGameMode implements PatchMultiPlayerG
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public InteractionResult useItemOn(LocalPlayer player, ClientLevel level, InteractionHand hand, BlockHitResult hitResult) {
         this.wasLastOnBlock = false;

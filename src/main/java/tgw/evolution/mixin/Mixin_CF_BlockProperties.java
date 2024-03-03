@@ -92,6 +92,10 @@ public abstract class Mixin_CF_BlockProperties implements PatchBlockProperties {
         return this.material.blocksMotion() && state.isCollisionShapeFullBlock_(level, x, y, z);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public BlockBehaviour.Properties emissiveRendering(BlockBehaviour.StatePredicate statePredicate) {
         Evolution.deprecatedMethod();
@@ -109,6 +113,10 @@ public abstract class Mixin_CF_BlockProperties implements PatchBlockProperties {
         return (BlockBehaviour.Properties) (Object) this;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public BlockBehaviour.Properties hasPostProcess(BlockBehaviour.StatePredicate statePredicate) {
         Evolution.deprecatedMethod();
@@ -126,6 +134,10 @@ public abstract class Mixin_CF_BlockProperties implements PatchBlockProperties {
         return this.hasPostProcess_;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public BlockBehaviour.Properties isRedstoneConductor(BlockBehaviour.StatePredicate statePredicate) {
         Evolution.deprecatedMethod();
@@ -143,6 +155,10 @@ public abstract class Mixin_CF_BlockProperties implements PatchBlockProperties {
         return (BlockBehaviour.Properties) (Object) this;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public BlockBehaviour.Properties isSuffocating(BlockBehaviour.StatePredicate statePredicate) {
         return (BlockBehaviour.Properties) (Object) this;
@@ -159,6 +175,10 @@ public abstract class Mixin_CF_BlockProperties implements PatchBlockProperties {
         return this.isSuffocating_;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public BlockBehaviour.Properties isValidSpawn(BlockBehaviour.StateArgumentPredicate<EntityType<?>> stateArgumentPredicate) {
         Evolution.deprecatedMethod();
@@ -176,6 +196,10 @@ public abstract class Mixin_CF_BlockProperties implements PatchBlockProperties {
         return this.isValidSpawn_;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public BlockBehaviour.Properties isViewBlocking(BlockBehaviour.StatePredicate statePredicate) {
         Evolution.deprecatedMethod();

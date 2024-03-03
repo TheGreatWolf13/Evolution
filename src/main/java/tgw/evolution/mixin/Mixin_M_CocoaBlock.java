@@ -22,6 +22,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.hooks.asm.DeleteMethod;
+import tgw.evolution.util.constants.BlockFlags;
 
 import java.util.Random;
 
@@ -38,6 +39,10 @@ public abstract class Mixin_M_CocoaBlock extends HorizontalDirectionalBlock impl
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -50,6 +55,10 @@ public abstract class Mixin_M_CocoaBlock extends HorizontalDirectionalBlock impl
         return level.getBlockStateAtSide(x, y, z, state.getValue(FACING)).is(BlockTags.JUNGLE_LOGS);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -68,6 +77,10 @@ public abstract class Mixin_M_CocoaBlock extends HorizontalDirectionalBlock impl
         };
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -80,11 +93,15 @@ public abstract class Mixin_M_CocoaBlock extends HorizontalDirectionalBlock impl
         if (level.random.nextInt(5) == 0) {
             int age = state.getValue(AGE);
             if (age < 2) {
-                level.setBlock_(x, y, z, state.setValue(AGE, age + 1), 2);
+                level.setBlock_(x, y, z, state.setValue(AGE, age + 1), BlockFlags.BLOCK_UPDATE);
             }
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

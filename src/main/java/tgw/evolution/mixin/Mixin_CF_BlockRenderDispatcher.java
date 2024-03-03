@@ -99,6 +99,10 @@ public abstract class Mixin_CF_BlockRenderDispatcher implements PatchBlockRender
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void renderBreakingTexture(BlockState state, BlockPos pos, BlockAndTintGetter level, PoseStack matrices, VertexConsumer builder) {
         Evolution.deprecatedMethod();
@@ -112,6 +116,10 @@ public abstract class Mixin_CF_BlockRenderDispatcher implements PatchBlockRender
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean renderLiquid(BlockPos pos, BlockAndTintGetter level, VertexConsumer builder, BlockState state, FluidState fluidState) {
         Evolution.deprecatedMethod();

@@ -64,6 +64,10 @@ public abstract class Mixin_M_ChestBlock extends AbstractChestBlock<ChestBlockEn
     @Shadow
     protected abstract Stat<ResourceLocation> getOpenChestStat();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -84,6 +88,10 @@ public abstract class Mixin_M_ChestBlock extends AbstractChestBlock<ChestBlockEn
         };
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -102,6 +110,10 @@ public abstract class Mixin_M_ChestBlock extends AbstractChestBlock<ChestBlockEn
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -116,6 +128,10 @@ public abstract class Mixin_M_ChestBlock extends AbstractChestBlock<ChestBlockEn
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -157,6 +173,10 @@ public abstract class Mixin_M_ChestBlock extends AbstractChestBlock<ChestBlockEn
         return super.updateShape_(state, from, fromState, level, x, y, z, fromX, fromY, fromZ);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

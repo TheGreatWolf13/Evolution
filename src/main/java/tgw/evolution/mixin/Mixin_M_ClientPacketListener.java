@@ -84,6 +84,10 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
     @Shadow private int serverChunkRadius;
     @Shadow private int serverSimulationDistance;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private void applyLightData(int i, int j, ClientboundLightUpdatePacketData packetData) {
         LevelLightEngine levelLightEngine = this.level.getChunkSource().getLightEngine();
@@ -96,6 +100,10 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
         this.level.setLightReady(i, j);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private void enableChunkLight(LevelChunk levelChunk, int i, int j) {
         LevelLightEngine lightEngine = this.level.getChunkSource().getLightEngine();
@@ -116,6 +124,10 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
         ClientEvents.getInstance().onPotionAdded(packet.instance, packet.logic);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void handleAddOrRemoveRecipes(ClientboundRecipePacket packet) {
@@ -182,6 +194,10 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
         this.level.destroyBlockProgress(packet.id, packet.pos, packet.progress);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void handleBlockEntityData(ClientboundBlockEntityDataPacket packet) {
@@ -236,6 +252,10 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void handleForgetLevelChunk(ClientboundForgetLevelChunkPacket packet) {
@@ -254,6 +274,10 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
         hunger.setSaturationLevel(packet.saturationLevel);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void handleLevelChunkWithLight(ClientboundLevelChunkWithLightPacket packet) {
@@ -289,6 +313,10 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void handleLightUpdatePacket(ClientboundLightUpdatePacket packet) {
@@ -707,6 +735,10 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
         this.level.getChunkSource().updateCameraViewCenter(packet.camX, packet.camZ);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void handleUpdateRecipes(ClientboundUpdateRecipesPacket packet) {
@@ -724,30 +756,50 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
         searchTree.refresh();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     private void method_38545(int par1, int par2, ClientboundLightUpdatePacketData par3) {
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     private void method_38546(ClientboundForgetLevelChunkPacket par1) {
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     private void method_38547(int par1, int par2, ClientboundLightUpdatePacketData par3) {
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     private void queueLightUpdate(int i, int j, ClientboundLightUpdatePacketData clientboundLightUpdatePacketData) {
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     private void queueLightUpdate(ClientboundForgetLevelChunkPacket clientboundForgetLevelChunkPacket) {
@@ -767,6 +819,10 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     private void readSectionList(int i,
@@ -780,6 +836,10 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private void updateLevelChunk(int i, int j, ClientboundLevelChunkPacketData packet) {
         this.level.getChunkSource().replaceWithPacketData_(i, j, packet.getReadBuffer(), packet.getHeightmaps(), packet.getBlockEntitiesTagsConsumer_(i, j));

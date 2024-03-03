@@ -27,6 +27,10 @@ public abstract class Mixin_M_DetectorRailBlock extends BaseRailBlock {
     @Shadow
     protected abstract void checkPressed(Level level, BlockPos blockPos, BlockState blockState);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -43,6 +47,10 @@ public abstract class Mixin_M_DetectorRailBlock extends BaseRailBlock {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

@@ -27,6 +27,10 @@ public abstract class MixinSheetedDecalTextureGenerator extends DefaultedVertexC
     @Shadow private float y;
     @Shadow private float z;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @SuppressWarnings("UnnecessaryLocalVariable")
     @Override
     @Overwrite

@@ -60,12 +60,20 @@ public abstract class Mixin_FS_Block extends BlockBehaviour implements PatchBloc
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public static boolean canSupportCenter(LevelReader level, BlockPos pos, Direction side) {
         Evolution.deprecatedMethod();
         return BlockUtils.canSupportCenter(level, pos.getX(), pos.getY(), pos.getZ(), side);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public static boolean canSupportRigidBlock(BlockGetter level, BlockPos pos) {
         Evolution.deprecatedMethod();
@@ -85,6 +93,10 @@ public abstract class Mixin_FS_Block extends BlockBehaviour implements PatchBloc
         });
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public static void dropResources(BlockState state, LootContext.Builder builder) {
         ServerLevel level = builder.getLevel();
@@ -96,6 +108,10 @@ public abstract class Mixin_FS_Block extends BlockBehaviour implements PatchBloc
         state.spawnAfterBreak(level, pos, ItemStack.EMPTY);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public static void dropResources(BlockState state, Level level, BlockPos pos) {
         if (level instanceof ServerLevel serverLevel) {
@@ -107,6 +123,10 @@ public abstract class Mixin_FS_Block extends BlockBehaviour implements PatchBloc
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public static void dropResources(BlockState state, LevelAccessor level, BlockPos pos, @Nullable BlockEntity te) {
         if (level instanceof ServerLevel serverLevel) {
@@ -166,6 +186,10 @@ public abstract class Mixin_FS_Block extends BlockBehaviour implements PatchBloc
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public static void popResource(Level level, BlockPos pos, ItemStack stack) {
         Evolution.deprecatedMethod();
@@ -182,12 +206,20 @@ public abstract class Mixin_FS_Block extends BlockBehaviour implements PatchBloc
         return BlockUtils.shouldRenderFace(state, level, offset.getX(), offset.getY(), offset.getZ(), face, pos.getX(), pos.getY(), pos.getZ());
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public static BlockState updateFromNeighbourShapes(BlockState state, LevelAccessor level, BlockPos pos) {
         Evolution.deprecatedMethod();
         return BlockUtils.updateFromNeighbourShapes(state, level, pos.getX(), pos.getY(), pos.getZ());
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public static void updateOrDestroy(BlockState state,
                                        BlockState updatedState,
@@ -199,6 +231,10 @@ public abstract class Mixin_FS_Block extends BlockBehaviour implements PatchBloc
         BlockUtils.updateOrDestroy(state, updatedState, level, pos.getX(), pos.getY(), pos.getZ(), flags, limit);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void animateTick(BlockState state, Level level, BlockPos pos, Random random) {
         Evolution.deprecatedMethod();
@@ -212,6 +248,10 @@ public abstract class Mixin_FS_Block extends BlockBehaviour implements PatchBloc
     @Shadow
     public abstract BlockState defaultBlockState();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void destroy(LevelAccessor level, BlockPos pos, BlockState state) {
         Evolution.deprecatedMethod();
@@ -264,6 +304,10 @@ public abstract class Mixin_FS_Block extends BlockBehaviour implements PatchBloc
         return this.defaultBlockState();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void playerDestroy(Level level, Player player, BlockPos pos, BlockState state, @Nullable BlockEntity te, ItemStack stack) {
         Evolution.deprecatedMethod();
@@ -276,6 +320,10 @@ public abstract class Mixin_FS_Block extends BlockBehaviour implements PatchBloc
         BlockUtils.dropResources(state, level, x, y, z, te, player, stack);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     //ok
     public void playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
@@ -291,6 +339,10 @@ public abstract class Mixin_FS_Block extends BlockBehaviour implements PatchBloc
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean propagatesSkylightDown(BlockState state, BlockGetter level, BlockPos pos) {
         Evolution.deprecatedMethod();
@@ -302,6 +354,10 @@ public abstract class Mixin_FS_Block extends BlockBehaviour implements PatchBloc
         return !isShapeFullBlock(state.getShape_(level, x, y, z)) && state.getFluidState().isEmpty();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void spawnDestroyParticles(Level level, Player player, BlockPos pos, BlockState state) {
         Evolution.deprecatedMethod();
@@ -318,6 +374,10 @@ public abstract class Mixin_FS_Block extends BlockBehaviour implements PatchBloc
         return state;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void stepOn(Level level, BlockPos pos, BlockState state, Entity entity) {
         Evolution.deprecatedMethod();
@@ -328,6 +388,10 @@ public abstract class Mixin_FS_Block extends BlockBehaviour implements PatchBloc
     public void stepOn_(Level level, int x, int y, int z, BlockState state, Entity entity) {
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void updateEntityAfterFallOn(BlockGetter level, Entity entity) {
         Vec3 velocity = entity.getDeltaMovement();

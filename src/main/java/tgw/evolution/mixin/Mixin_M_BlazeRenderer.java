@@ -18,6 +18,10 @@ public abstract class Mixin_M_BlazeRenderer extends MobRenderer<Blaze, BlazeMode
         super(context, entityModel, f);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

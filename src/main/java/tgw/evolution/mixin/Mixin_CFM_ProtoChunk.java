@@ -84,6 +84,10 @@ public abstract class Mixin_CFM_ProtoChunk extends ChunkAccess {
         return (short) (x & 15 | (y & 15) << 4 | (z & 15) << 8);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void addLight(BlockPos pos) {
         this.lights_.add(pos.asLong());
@@ -182,6 +186,10 @@ public abstract class Mixin_CFM_ProtoChunk extends ChunkAccess {
         return section.hasOnlyAir() ? Fluids.EMPTY.defaultFluidState() : section.getFluidState(x & 15, y & 15, z & 15);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public Stream<BlockPos> getLights() {
@@ -194,6 +202,10 @@ public abstract class Mixin_CFM_ProtoChunk extends ChunkAccess {
         return this.lights_;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public ShortList[] getPackedLights() {
         ShortList[] shortLists = new ShortList[this.getSectionsCount()];
@@ -224,6 +236,10 @@ public abstract class Mixin_CFM_ProtoChunk extends ChunkAccess {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void removeBlockEntity(BlockPos pos) {
@@ -247,6 +263,10 @@ public abstract class Mixin_CFM_ProtoChunk extends ChunkAccess {
         this.blockEntities_().put(te.getBlockPos().asLong(), te);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public @Nullable BlockState setBlockState(BlockPos pos, BlockState state, boolean isMoving) {

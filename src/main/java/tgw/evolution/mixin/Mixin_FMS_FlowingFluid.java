@@ -108,6 +108,10 @@ public abstract class Mixin_FMS_FlowingFluid extends Fluid implements PatchFlowi
         return (short) ((dx + 128 & 255) << 8 | dz + 128 & 255);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     private static short getCacheKey(BlockPos blockPos, BlockPos blockPos2) {
@@ -129,12 +133,20 @@ public abstract class Mixin_FMS_FlowingFluid extends Fluid implements PatchFlowi
     @Shadow
     protected abstract boolean canConvertToSource();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     private boolean canHoldFluid(BlockGetter blockGetter, BlockPos blockPos, BlockState blockState, Fluid fluid) {
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     private boolean canPassThrough(BlockGetter blockGetter, Fluid fluid, BlockPos blockPos, BlockState blockState, Direction direction, BlockPos blockPos2, BlockState blockState2, FluidState fluidState) {
@@ -146,12 +158,20 @@ public abstract class Mixin_FMS_FlowingFluid extends Fluid implements PatchFlowi
         return !this.isSourceBlockOfThisType(fluidAtOff) && canPassThroughWall(direction, level, x, y, z, state, offX, offY, offZ, stateAtOff) && canHoldFluid(level, offX, offY, offZ, stateAtOff, newLiquid);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     private boolean canPassThroughWall(Direction direction, BlockGetter blockGetter, BlockPos blockPos, BlockState blockState, BlockPos blockPos2, BlockState blockState2) {
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     public boolean canSpreadTo(BlockGetter blockGetter, BlockPos blockPos, BlockState blockState, Direction direction, BlockPos blockPos2, BlockState blockState2, FluidState fluidState, Fluid fluid) {
@@ -211,6 +231,10 @@ public abstract class Mixin_FMS_FlowingFluid extends Fluid implements PatchFlowi
         return flow.set(flowX * norm, flowY * norm, flowZ * norm);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public Vec3 getFlow(BlockGetter level, BlockPos pos, FluidState fluidState) {
@@ -224,6 +248,10 @@ public abstract class Mixin_FMS_FlowingFluid extends Fluid implements PatchFlowi
     @Shadow
     public abstract Fluid getFlowing();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public float getHeight(FluidState fluidState, BlockGetter level, BlockPos pos) {
@@ -236,6 +264,10 @@ public abstract class Mixin_FMS_FlowingFluid extends Fluid implements PatchFlowi
         return hasSameAbove_(fluidState, level, x, y, z) ? 1.0F : fluidState.getOwnHeight();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     public FluidState getNewLiquid(LevelReader levelReader, BlockPos blockPos, BlockState blockState) {
@@ -273,6 +305,10 @@ public abstract class Mixin_FMS_FlowingFluid extends Fluid implements PatchFlowi
         return this.getFlowing(actualAmount, false);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public VoxelShape getShape(FluidState fluidState, BlockGetter level, BlockPos pos) {
@@ -293,12 +329,17 @@ public abstract class Mixin_FMS_FlowingFluid extends Fluid implements PatchFlowi
         return shape;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     public int getSlopeDistance(LevelReader levelReader, BlockPos blockPos, int i, Direction direction, BlockState blockState, BlockPos blockPos2, Short2ObjectMap<Pair<BlockState, FluidState>> short2ObjectMap, Short2BooleanMap short2BooleanMap) {
         throw new AbstractMethodError();
     }
 
+    @Unique
     protected int getSlopeDistance(LevelReader level, int x, int y, int z, int i, Direction direction, BlockState state, int originX, int originZ, Short2ObjectMap<Pair<BlockState, FluidState>> short2ObjectMap, Short2BooleanMap short2BooleanMap) {
         int j = 1_000;
         for (Direction dir : DirectionUtil.HORIZ_NESW) {
@@ -340,6 +381,10 @@ public abstract class Mixin_FMS_FlowingFluid extends Fluid implements PatchFlowi
     @Shadow
     public abstract FluidState getSource(boolean bl);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     public Map<Direction, FluidState> getSpread(LevelReader levelReader, BlockPos blockPos, BlockState blockState) {
@@ -350,7 +395,7 @@ public abstract class Mixin_FMS_FlowingFluid extends Fluid implements PatchFlowi
     private Map<Direction, FluidState> getSpread(LevelReader level, int x, int y, int z, BlockState state) {
         int i = 1_000;
         Map<Direction, FluidState> map = Maps.newEnumMap(Direction.class);
-        Short2ObjectMap<Pair<BlockState, FluidState>> short2ObjectMap = new Short2ObjectOpenHashMap();
+        Short2ObjectMap<Pair<BlockState, FluidState>> short2ObjectMap = new Short2ObjectOpenHashMap<>();
         Short2BooleanMap short2BooleanMap = new Short2BooleanOpenHashMap();
         for (Direction dir : DirectionUtil.HORIZ_NESW) {
             int offX = x + dir.getStepX();
@@ -389,6 +434,10 @@ public abstract class Mixin_FMS_FlowingFluid extends Fluid implements PatchFlowi
         return map;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public int getSpreadDelay(Level level, BlockPos pos, FluidState fluidState, FluidState fluidState2) {
         Evolution.deprecatedMethod();
@@ -400,6 +449,10 @@ public abstract class Mixin_FMS_FlowingFluid extends Fluid implements PatchFlowi
         return this.getTickDelay(level);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     public boolean isSolidFace(BlockGetter level, BlockPos pos, Direction dir) {
@@ -421,6 +474,10 @@ public abstract class Mixin_FMS_FlowingFluid extends Fluid implements PatchFlowi
     @Shadow
     protected abstract boolean isSourceBlockOfThisType(FluidState fluidState);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     private boolean isWaterHole(BlockGetter blockGetter, Fluid fluid, BlockPos blockPos, BlockState blockState, BlockPos blockPos2, BlockState blockState2) {
@@ -435,6 +492,10 @@ public abstract class Mixin_FMS_FlowingFluid extends Fluid implements PatchFlowi
         return level.getFluidState_(offX, offY, offZ).getType().isSame(this) || canHoldFluid(level, offX, offY, offZ, stateAtOff, fluid);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     private int sourceNeighborCount(LevelReader levelReader, BlockPos blockPos) {
@@ -452,6 +513,10 @@ public abstract class Mixin_FMS_FlowingFluid extends Fluid implements PatchFlowi
         return source;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     public void spread(LevelAccessor levelAccessor, BlockPos blockPos, FluidState fluidState) {
@@ -476,12 +541,20 @@ public abstract class Mixin_FMS_FlowingFluid extends Fluid implements PatchFlowi
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void spreadTo(LevelAccessor level, BlockPos pos, BlockState state, Direction direction, FluidState fluid) {
         Evolution.deprecatedMethod();
         this.spreadTo_(level, pos.getX(), pos.getY(), pos.getZ(), state, direction, fluid);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     private void spreadToSides(LevelAccessor levelAccessor, BlockPos blockPos, FluidState fluidState, BlockState blockState) {
@@ -522,6 +595,10 @@ public abstract class Mixin_FMS_FlowingFluid extends Fluid implements PatchFlowi
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

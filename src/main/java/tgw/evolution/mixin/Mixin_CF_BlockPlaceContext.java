@@ -32,6 +32,10 @@ public abstract class Mixin_CF_BlockPlaceContext extends UseOnContext {
         this.replaceClicked = level.getBlockState_(x, y, z).canBeReplaced((BlockPlaceContext) (Object) this);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean canPlace() {
         return this.replaceClicked || this.getLevel().getBlockState_(this.getClickedPos()).canBeReplaced((BlockPlaceContext) (Object) this);

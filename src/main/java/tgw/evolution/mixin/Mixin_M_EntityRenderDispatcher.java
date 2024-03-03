@@ -48,11 +48,19 @@ public abstract class Mixin_M_EntityRenderDispatcher {
     @Shadow private boolean renderHitBoxes;
     @Shadow private boolean shouldRenderShadow;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private static void fireVertex(PoseStack.Pose pose, VertexConsumer consumer, float x, float y, float z, float u, float v) {
         consumer.vertex(pose.pose(), x, y, z).color(255, 255, 255, 255).uv(u, v).overlayCoords(0, 10).uv2(DynamicLights.FULL_LIGHTMAP_NO_SKY).normal(pose.normal(), 0.0F, 1.0F, 0.0F).endVertex();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     private static void renderBlockShadow(PoseStack.Pose pose, VertexConsumer buffer, LevelReader level, BlockPos pos, double x, double y, double z, float size, float weight) {
@@ -161,6 +169,10 @@ public abstract class Mixin_M_EntityRenderDispatcher {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private static void renderShadow(PoseStack matrices, MultiBufferSource buffer, Entity entity, float weight, float partialTicks, LevelReader level, float size) {
         float actualSize = size;
@@ -199,6 +211,10 @@ public abstract class Mixin_M_EntityRenderDispatcher {
     @Shadow
     public abstract <T extends Entity> EntityRenderer<? super T> getRenderer(T pEntity);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public <E extends Entity> void render(E entity, double x, double y, double z, float rotYaw, float partialTicks, PoseStack matrices, MultiBufferSource buffer, int light) {
         EntityRenderer<? super E> renderer = this.getRenderer(entity);

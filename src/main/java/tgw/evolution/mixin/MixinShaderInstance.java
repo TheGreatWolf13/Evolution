@@ -30,6 +30,10 @@ public abstract class MixinShaderInstance implements Shader, AutoCloseable {
     @Shadow @Final private List<String> samplerNames;
     @Shadow @Final private List<Uniform> uniforms;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void apply() {
         RenderSystem.assertOnRenderThread();

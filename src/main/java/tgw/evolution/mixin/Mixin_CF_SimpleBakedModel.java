@@ -47,6 +47,10 @@ public abstract class Mixin_CF_SimpleBakedModel implements BakedModel, PatchSimp
         this.overrides = itemOverrides;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public List<BakedQuad> getQuads(@Nullable BlockState blockState, @Nullable Direction direction, Random random) {

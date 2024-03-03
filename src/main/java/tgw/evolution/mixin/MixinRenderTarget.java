@@ -31,6 +31,10 @@ public abstract class MixinRenderTarget implements PatchRenderTarget {
     @Shadow protected int depthBufferId;
     @Unique private boolean stencilEnabled;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private void _blitToScreen(int width, int height, boolean disableBlend) {
         RenderSystem.assertOnRenderThread();

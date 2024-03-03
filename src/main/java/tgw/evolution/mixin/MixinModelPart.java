@@ -42,6 +42,10 @@ public abstract class MixinModelPart implements HM, PatchModelPart {
         this.zRot += dz;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private void compile(PoseStack.Pose matrices, VertexConsumer vertexConsumer, int light, int overlay, float red, float green, float blue, float alpha) {
         Matrix4f poseMat = matrices.pose();
@@ -80,6 +84,10 @@ public abstract class MixinModelPart implements HM, PatchModelPart {
         return this.z;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void render(PoseStack matrices, VertexConsumer builder, int light, int overlay, float r, float g, float b, float a) {
         if (this.visible) {

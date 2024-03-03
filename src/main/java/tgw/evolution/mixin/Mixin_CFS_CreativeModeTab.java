@@ -57,6 +57,7 @@ public abstract class Mixin_CFS_CreativeModeTab {
         this.iconItemStack = ItemStack.EMPTY;
     }
 
+    @Unique
     @ModifyStatic
     private static void clinit() {
         EMPTY_ENCH = new EnchantmentCategory[0];
@@ -141,6 +142,10 @@ public abstract class Mixin_CFS_CreativeModeTab {
         TAB_MATERIALS = TAB_MISC;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public int getColumn() {
         return switch (this.id) {
@@ -160,6 +165,10 @@ public abstract class Mixin_CFS_CreativeModeTab {
         };
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean isAlignedRight() {
         return switch (this.id) {
@@ -168,6 +177,10 @@ public abstract class Mixin_CFS_CreativeModeTab {
         };
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean isTopRow() {
         return switch (this.id) {

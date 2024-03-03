@@ -79,6 +79,7 @@ public abstract class Mixin_CFS_GameRules {
         this.rules = map;
     }
 
+    @Unique
     @ModifyStatic
     private static void clinit() {
         LOGGER = LogUtils.getLogger();
@@ -143,6 +144,10 @@ public abstract class Mixin_CFS_GameRules {
     @Shadow
     protected abstract <T extends GameRules.Value<T>> void assignCap(GameRules.Key<T> key, GameRules gameRules, @Nullable MinecraftServer minecraftServer);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void assignFrom(GameRules gameRules, @Nullable MinecraftServer minecraftServer) {
         O2OMap<GameRules.Key<?>, GameRules.Value<?>> rules = (O2OMap<GameRules.Key<?>, GameRules.Value<?>>) gameRules.rules;
@@ -151,6 +156,10 @@ public abstract class Mixin_CFS_GameRules {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public GameRules copy() {
         O2OMap<GameRules.Key<?>, GameRules.Value<?>> map = new O2OHashMap<>();
@@ -162,6 +171,10 @@ public abstract class Mixin_CFS_GameRules {
         return new GameRules(map);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public CompoundTag createTag() {
         CompoundTag tag = new CompoundTag();
@@ -172,6 +185,10 @@ public abstract class Mixin_CFS_GameRules {
         return tag;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private void loadFromTag(DynamicLike<?> dynamicLike) {
         O2OMap<GameRules.Key<?>, GameRules.Value<?>> rules = (O2OMap<GameRules.Key<?>, GameRules.Value<?>>) this.rules;

@@ -48,6 +48,10 @@ public abstract class Mixin_M_FenceGateBlock extends HorizontalDirectionalBlock 
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -63,6 +67,10 @@ public abstract class Mixin_M_FenceGateBlock extends HorizontalDirectionalBlock 
         return state.getValue(FACING).getAxis() == Direction.Axis.Z ? Z_COLLISION_SHAPE : X_COLLISION_SHAPE;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -78,6 +86,10 @@ public abstract class Mixin_M_FenceGateBlock extends HorizontalDirectionalBlock 
         return state.getValue(FACING).getAxis() == Direction.Axis.X ? X_OCCLUSION_SHAPE : Z_OCCLUSION_SHAPE;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -96,6 +108,10 @@ public abstract class Mixin_M_FenceGateBlock extends HorizontalDirectionalBlock 
     @Shadow
     protected abstract boolean isWall(BlockState blockState);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -127,6 +143,10 @@ public abstract class Mixin_M_FenceGateBlock extends HorizontalDirectionalBlock 
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -158,6 +178,10 @@ public abstract class Mixin_M_FenceGateBlock extends HorizontalDirectionalBlock 
         return state.setValue(IN_WALL, bl);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

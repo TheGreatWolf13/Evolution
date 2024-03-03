@@ -103,6 +103,10 @@ public abstract class MixinPlayer extends LivingEntity implements PatchPlayer {
         super(type, level);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public static AttributeSupplier.Builder createAttributes() {
         return LivingEntity.createLivingAttributes()
@@ -271,6 +275,10 @@ public abstract class MixinPlayer extends LivingEntity implements PatchPlayer {
     @Shadow
     public abstract void awardStat(ResourceLocation pStatKey);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean blockActionRestricted(Level level, BlockPos pos, GameType gameType) {
         Evolution.deprecatedMethod();
@@ -407,6 +415,10 @@ public abstract class MixinPlayer extends LivingEntity implements PatchPlayer {
     @Shadow
     protected abstract void closeContainer();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public @Nullable ItemEntity drop(ItemStack stack, boolean dropAround, boolean setThrower) {
         if (stack.isEmpty()) {

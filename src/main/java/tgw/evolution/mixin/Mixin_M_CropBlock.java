@@ -37,6 +37,10 @@ public abstract class Mixin_M_CropBlock extends BushBlock implements Bonemealabl
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -59,6 +63,10 @@ public abstract class Mixin_M_CropBlock extends BushBlock implements Bonemealabl
     @Shadow
     public abstract int getMaxAge();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -74,6 +82,10 @@ public abstract class Mixin_M_CropBlock extends BushBlock implements Bonemealabl
     @Shadow
     public abstract BlockState getStateForAge(int i);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

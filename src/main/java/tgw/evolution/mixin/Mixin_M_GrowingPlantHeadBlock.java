@@ -37,6 +37,10 @@ public abstract class Mixin_M_GrowingPlantHeadBlock extends GrowingPlantBlock im
     @Shadow
     protected abstract BlockState getGrowIntoState(BlockState blockState, Random random);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -59,6 +63,10 @@ public abstract class Mixin_M_GrowingPlantHeadBlock extends GrowingPlantBlock im
     @Shadow
     protected abstract BlockState updateBodyAfterConvertedFromHead(BlockState blockState, BlockState blockState2);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

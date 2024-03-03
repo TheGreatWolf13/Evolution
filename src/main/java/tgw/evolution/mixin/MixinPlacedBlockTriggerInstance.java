@@ -28,6 +28,10 @@ public abstract class MixinPlacedBlockTriggerInstance extends AbstractCriterionT
         super(resourceLocation, composite);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean matches(BlockState state, BlockPos pos, ServerLevel level, ItemStack stack) {
         Evolution.deprecatedMethod();

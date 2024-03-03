@@ -13,10 +13,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.*;
 import tgw.evolution.client.renderer.RenderLayer;
 import tgw.evolution.hooks.asm.DeleteField;
 import tgw.evolution.hooks.asm.ModifyStatic;
@@ -31,6 +28,7 @@ public abstract class Mixin_FS_ItemBlockRenderTypes {
     @Shadow @Final @DeleteField private static Map<Fluid, RenderType> TYPE_BY_FLUID;
     @Shadow private static boolean renderCutout;
 
+    @Unique
     @ModifyStatic
     private static void clinit() {
         RenderLayer.set(Blocks.TRIPWIRE, RenderLayer.TRIPWIRE);
@@ -298,22 +296,38 @@ public abstract class Mixin_FS_ItemBlockRenderTypes {
         RenderLayer.set(Fluids.WATER, RenderLayer.TRANSLUCENT);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public static RenderType getChunkRenderType(BlockState state) {
         return RenderLayer.get(state.getBlock(), renderCutout);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public static RenderType getMovingBlockRenderType(BlockState state) {
         RenderType renderType = RenderLayer.get(state.getBlock(), renderCutout);
         return renderType == RenderType.translucent() ? RenderType.translucentMovingBlock() : renderType;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public static RenderType getRenderLayer(FluidState state) {
         return RenderLayer.get(state.getType(), renderCutout);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public static RenderType getRenderType(ItemStack stack, boolean translucent) {
         Item item = stack.getItem();
@@ -326,6 +340,10 @@ public abstract class Mixin_FS_ItemBlockRenderTypes {
         return translucent ? Sheets.translucentCullBlockSheet() : Sheets.translucentItemSheet();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public static RenderType getRenderType(BlockState state, boolean translucent) {
         RenderType renderType = getChunkRenderType(state);

@@ -23,6 +23,10 @@ public abstract class Mixin_M_ChorusPlantBlock extends PipeBlock {
         super(f, properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -49,6 +53,10 @@ public abstract class Mixin_M_ChorusPlantBlock extends PipeBlock {
         return stateBelow.is(this) || stateBelow.is(Blocks.END_STONE);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -63,6 +71,10 @@ public abstract class Mixin_M_ChorusPlantBlock extends PipeBlock {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

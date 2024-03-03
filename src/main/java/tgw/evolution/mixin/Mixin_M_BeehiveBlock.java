@@ -59,6 +59,10 @@ public abstract class Mixin_M_BeehiveBlock extends BaseEntityBlock {
     @Shadow
     protected abstract void angerNearbyBees(Level level, BlockPos blockPos);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -79,6 +83,10 @@ public abstract class Mixin_M_BeehiveBlock extends BaseEntityBlock {
     @Shadow
     protected abstract boolean hiveContainsBees(Level level, BlockPos blockPos);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -105,6 +113,10 @@ public abstract class Mixin_M_BeehiveBlock extends BaseEntityBlock {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -151,6 +163,10 @@ public abstract class Mixin_M_BeehiveBlock extends BaseEntityBlock {
     @Shadow
     protected abstract void trySpawnDripParticles(Level level, BlockPos blockPos, BlockState blockState);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -182,6 +198,10 @@ public abstract class Mixin_M_BeehiveBlock extends BaseEntityBlock {
         return super.updateShape_(state, from, fromState, level, x, y, z, fromX, fromY, fromZ);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

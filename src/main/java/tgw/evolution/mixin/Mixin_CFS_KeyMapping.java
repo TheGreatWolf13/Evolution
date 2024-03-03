@@ -53,6 +53,10 @@ public abstract class Mixin_CFS_KeyMapping implements PatchKeyMapping, Comparabl
         CATEGORIES_.add(category);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public static void click(InputConstants.Key key) {
         KeyMapping keyMapping = MAP_.get(key);
@@ -61,6 +65,7 @@ public abstract class Mixin_CFS_KeyMapping implements PatchKeyMapping, Comparabl
         }
     }
 
+    @Unique
     @ModifyStatic
     private static void clinit() {
         MAP_ = new O2OHashMap<>();
@@ -77,6 +82,10 @@ public abstract class Mixin_CFS_KeyMapping implements PatchKeyMapping, Comparabl
         CATEGORY_SORT_ORDER_ = map;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public static Supplier<Component> createNameSupplier(String string) {
         KeyMapping keyMapping = EvolutionClient.ALL_KEYMAPPING.get(string);
@@ -86,6 +95,10 @@ public abstract class Mixin_CFS_KeyMapping implements PatchKeyMapping, Comparabl
         return keyMapping::getTranslatedKeyMessage;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public static void releaseAll() {
         O2OMap<String, KeyMapping> allKeymapping = EvolutionClient.ALL_KEYMAPPING;
@@ -94,6 +107,10 @@ public abstract class Mixin_CFS_KeyMapping implements PatchKeyMapping, Comparabl
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public static void resetMapping() {
         MAP_.clear();
@@ -104,6 +121,10 @@ public abstract class Mixin_CFS_KeyMapping implements PatchKeyMapping, Comparabl
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public static void set(InputConstants.Key key, boolean isDown) {
         KeyMapping keyMapping = MAP_.get(key);
@@ -112,6 +133,10 @@ public abstract class Mixin_CFS_KeyMapping implements PatchKeyMapping, Comparabl
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public static void setAll() {
         long window = Minecraft.getInstance().getWindow().getWindow();
@@ -124,6 +149,10 @@ public abstract class Mixin_CFS_KeyMapping implements PatchKeyMapping, Comparabl
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public int compareTo(KeyMapping keyMapping) {

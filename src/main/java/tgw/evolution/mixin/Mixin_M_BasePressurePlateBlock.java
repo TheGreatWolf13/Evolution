@@ -34,6 +34,10 @@ public abstract class Mixin_M_BasePressurePlateBlock extends Block {
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -49,6 +53,10 @@ public abstract class Mixin_M_BasePressurePlateBlock extends Block {
     @Shadow
     protected abstract void checkPressed(@Nullable Entity entity, Level level, BlockPos blockPos, BlockState blockState, int i);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -64,6 +72,10 @@ public abstract class Mixin_M_BasePressurePlateBlock extends Block {
     @Shadow
     protected abstract int getSignalForState(BlockState blockState);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -81,6 +93,10 @@ public abstract class Mixin_M_BasePressurePlateBlock extends Block {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -99,6 +115,10 @@ public abstract class Mixin_M_BasePressurePlateBlock extends Block {
     @Shadow
     protected abstract void updateNeighbours(Level level, BlockPos blockPos);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

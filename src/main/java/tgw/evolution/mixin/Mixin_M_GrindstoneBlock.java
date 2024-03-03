@@ -28,6 +28,10 @@ public abstract class Mixin_M_GrindstoneBlock extends FaceAttachedHorizontalDire
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -40,6 +44,10 @@ public abstract class Mixin_M_GrindstoneBlock extends FaceAttachedHorizontalDire
         return true;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -52,6 +60,10 @@ public abstract class Mixin_M_GrindstoneBlock extends FaceAttachedHorizontalDire
         return this.getVoxelShape(state);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -67,6 +79,10 @@ public abstract class Mixin_M_GrindstoneBlock extends FaceAttachedHorizontalDire
     @Shadow
     protected abstract VoxelShape getVoxelShape(BlockState blockState);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

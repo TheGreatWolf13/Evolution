@@ -32,6 +32,10 @@ public abstract class Mixin_M_BaseCoralPlantTypeBlock extends Block implements S
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -44,6 +48,10 @@ public abstract class Mixin_M_BaseCoralPlantTypeBlock extends Block implements S
         return level.getBlockState_(x, y - 1, z).isFaceSturdy_(level, x, y - 1, z, Direction.UP);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -56,6 +64,10 @@ public abstract class Mixin_M_BaseCoralPlantTypeBlock extends Block implements S
         return AABB;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

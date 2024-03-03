@@ -24,6 +24,10 @@ public abstract class Mixin_CF_PlayerMap implements PatchPlayerMap {
         this.players_ = new O2ZHashMap<>();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void addPlayer(long l, ServerPlayer player, boolean ignore) {
         this.players_.put(player, ignore);
@@ -34,31 +38,55 @@ public abstract class Mixin_CF_PlayerMap implements PatchPlayerMap {
         return this.players_.view();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public Set<ServerPlayer> getPlayers(long l) {
         return this.players_.keySet();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void ignorePlayer(ServerPlayer player) {
         this.players_.replace(player, true);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean ignored(ServerPlayer player) {
         return this.players_.getBoolean(player);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean ignoredOrUnknown(ServerPlayer player) {
         return this.players_.getOrDefault(player, true);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void removePlayer(long l, ServerPlayer player) {
         this.players_.removeBoolean(player);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void unIgnorePlayer(ServerPlayer player) {
         this.players_.replace(player, false);

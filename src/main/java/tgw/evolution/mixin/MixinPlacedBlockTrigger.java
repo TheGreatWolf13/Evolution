@@ -13,7 +13,10 @@ import tgw.evolution.patches.PatchSimpleCriteria;
 
 @Mixin(PlacedBlockTrigger.class)
 public abstract class MixinPlacedBlockTrigger extends SimpleCriterionTrigger<PlacedBlockTrigger.TriggerInstance> implements PatchSimpleCriteria {
-
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void trigger(ServerPlayer player, BlockPos pos, ItemStack stack) {
         Evolution.deprecatedMethod();

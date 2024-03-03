@@ -30,6 +30,10 @@ public abstract class Mixin_C_PartDefinition {
         this.partPose = partPose;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public ModelPart bake(int scaleX, int scaleY) {
         O2OMap<String, PartDefinition> children = (O2OMap<String, PartDefinition>) this.children;
@@ -38,7 +42,7 @@ public abstract class Mixin_C_PartDefinition {
             parts.put(e.key(), e.value().bake(scaleX, scaleY));
         }
         List<CubeDefinition> cubes = this.cubes;
-        OList<ModelPart.Cube> bakedCubes = new OArrayList(cubes.size());
+        OList<ModelPart.Cube> bakedCubes = new OArrayList<>(cubes.size());
         for (int i = 0, len = cubes.size(); i < len; ++i) {
             //noinspection ObjectAllocationInLoop
             bakedCubes.add(cubes.get(i).bake(scaleX, scaleY));

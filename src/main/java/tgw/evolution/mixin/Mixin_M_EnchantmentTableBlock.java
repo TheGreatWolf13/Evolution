@@ -36,6 +36,10 @@ public abstract class Mixin_M_EnchantmentTableBlock extends BaseEntityBlock {
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public static boolean isValidBookShelf(Level level, BlockPos pos, BlockPos offset) {
         int x = pos.getX();
@@ -47,6 +51,10 @@ public abstract class Mixin_M_EnchantmentTableBlock extends BaseEntityBlock {
         return level.getBlockState_(x + dx, y + dy, z + dz).is(Blocks.BOOKSHELF) && level.isEmptyBlock_(x + dx / 2, y + dy / 2, z + dz / 2);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -67,6 +75,10 @@ public abstract class Mixin_M_EnchantmentTableBlock extends BaseEntityBlock {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -79,6 +91,10 @@ public abstract class Mixin_M_EnchantmentTableBlock extends BaseEntityBlock {
         return SHAPE;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

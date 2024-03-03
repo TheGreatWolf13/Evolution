@@ -30,6 +30,10 @@ public abstract class Mixin_M_AbstractSkeleton extends Monster {
     @Shadow
     abstract SoundEvent getStepSound();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

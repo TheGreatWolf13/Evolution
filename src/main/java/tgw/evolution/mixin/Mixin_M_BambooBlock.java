@@ -44,6 +44,10 @@ public abstract class Mixin_M_BambooBlock extends Block implements BonemealableB
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -56,6 +60,10 @@ public abstract class Mixin_M_BambooBlock extends Block implements BonemealableB
         return level.getBlockState_(x, y - 1, z).is(BlockTags.BAMBOO_PLANTABLE_ON);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -68,6 +76,10 @@ public abstract class Mixin_M_BambooBlock extends Block implements BonemealableB
         return this.moveShapeByOffset(COLLISION_SHAPE, x, z);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -83,6 +95,10 @@ public abstract class Mixin_M_BambooBlock extends Block implements BonemealableB
     @Shadow
     protected abstract int getHeightBelowUpToMax(BlockGetter blockGetter, BlockPos blockPos);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -98,6 +114,10 @@ public abstract class Mixin_M_BambooBlock extends Block implements BonemealableB
     @Shadow
     protected abstract void growBamboo(BlockState blockState, Level level, BlockPos blockPos, Random random, int i);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -110,6 +130,10 @@ public abstract class Mixin_M_BambooBlock extends Block implements BonemealableB
         return false;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -122,6 +146,10 @@ public abstract class Mixin_M_BambooBlock extends Block implements BonemealableB
         return true;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -142,6 +170,10 @@ public abstract class Mixin_M_BambooBlock extends Block implements BonemealableB
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -156,6 +188,10 @@ public abstract class Mixin_M_BambooBlock extends Block implements BonemealableB
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

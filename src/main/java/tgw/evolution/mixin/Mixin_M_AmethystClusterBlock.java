@@ -39,6 +39,10 @@ public abstract class Mixin_M_AmethystClusterBlock extends AmethystBlock impleme
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -60,6 +64,10 @@ public abstract class Mixin_M_AmethystClusterBlock extends AmethystBlock impleme
         return level.getBlockState_(x, y, z).isFaceSturdy_(level, x, y, z, direction);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -79,6 +87,10 @@ public abstract class Mixin_M_AmethystClusterBlock extends AmethystBlock impleme
         };
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

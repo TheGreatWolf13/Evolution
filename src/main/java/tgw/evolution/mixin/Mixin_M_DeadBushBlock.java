@@ -24,6 +24,10 @@ public abstract class Mixin_M_DeadBushBlock extends BushBlock {
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     @Override

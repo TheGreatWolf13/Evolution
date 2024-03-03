@@ -33,6 +33,10 @@ public abstract class Mixin_M_BaseCoralWallFanBlock extends BaseCoralFanBlock {
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -54,6 +58,10 @@ public abstract class Mixin_M_BaseCoralWallFanBlock extends BaseCoralFanBlock {
         return level.getBlockState_(x, y, z).isFaceSturdy_(level, x, y, z, direction);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -66,6 +74,10 @@ public abstract class Mixin_M_BaseCoralWallFanBlock extends BaseCoralFanBlock {
         return SHAPES.get(state.getValue(FACING));
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

@@ -46,6 +46,10 @@ public abstract class MixinResetChunksCommand {
         STATUSES = list.view();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private static int resetChunks(CommandSourceStack source, int range, boolean skipOldChunks) {
         ServerLevel level = source.getLevel();

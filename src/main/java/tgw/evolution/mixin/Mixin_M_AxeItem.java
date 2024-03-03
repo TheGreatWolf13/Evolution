@@ -39,6 +39,10 @@ public abstract class Mixin_M_AxeItem extends DiggerItem {
     @Shadow
     protected abstract Optional<BlockState> getStripped(BlockState blockState);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

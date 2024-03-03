@@ -37,6 +37,10 @@ public abstract class MixinServerChunkCache extends ChunkSource implements Patch
     @Shadow private boolean spawnEnemies;
     @Shadow private boolean spawnFriendlies;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void blockChanged(BlockPos pos) {
         Evolution.deprecatedMethod();
@@ -106,6 +110,10 @@ public abstract class MixinServerChunkCache extends ChunkSource implements Patch
         return !this.chunkAbsent(holder, ticket);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void onLightUpdate(LightLayer lightLayer, SectionPos pos) {

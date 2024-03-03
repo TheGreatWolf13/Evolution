@@ -28,6 +28,10 @@ public abstract class Mixin_M_CarpetBlock extends Block {
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -40,6 +44,10 @@ public abstract class Mixin_M_CarpetBlock extends Block {
         return !level.isEmptyBlock_(x, y - 1, z);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -52,6 +60,10 @@ public abstract class Mixin_M_CarpetBlock extends Block {
         return SHAPE;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

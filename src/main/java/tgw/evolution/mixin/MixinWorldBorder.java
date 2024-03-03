@@ -29,6 +29,10 @@ public abstract class MixinWorldBorder implements PatchWorldBorder {
     @Shadow
     public abstract double getMinZ();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean isInsideCloseToBorder(Entity entity, AABB bb) {
         Evolution.deprecatedMethod();
@@ -41,6 +45,10 @@ public abstract class MixinWorldBorder implements PatchWorldBorder {
         return this.getDistanceToBorder(entity) < maxSize * 2.0D && this.isWithinBounds(entity.getX(), entity.getZ(), maxSize);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean isWithinBounds(BlockPos pos) {
         Evolution.deprecatedMethod();

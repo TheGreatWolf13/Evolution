@@ -23,6 +23,10 @@ public abstract class Mixin_M_BeaconBlock extends BaseEntityBlock implements Bea
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

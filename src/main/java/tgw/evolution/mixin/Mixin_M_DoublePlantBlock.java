@@ -39,6 +39,10 @@ public abstract class Mixin_M_DoublePlantBlock extends BushBlock {
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -55,6 +59,10 @@ public abstract class Mixin_M_DoublePlantBlock extends BushBlock {
         return stateBelow.is(this) && stateBelow.getValue(HALF) == DoubleBlockHalf.LOWER;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -67,6 +75,10 @@ public abstract class Mixin_M_DoublePlantBlock extends BushBlock {
         return Mth.getSeed(x, state.getValue(HALF) == DoubleBlockHalf.LOWER ? y : y - 1, z);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -84,6 +96,10 @@ public abstract class Mixin_M_DoublePlantBlock extends BushBlock {
         super.playerDestroy_(level, player, x, y, z, Blocks.AIR.defaultBlockState(), te, stack);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -104,6 +120,10 @@ public abstract class Mixin_M_DoublePlantBlock extends BushBlock {
         super.playerWillDestroy_(level, x, y, z, state, player);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

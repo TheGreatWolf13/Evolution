@@ -48,6 +48,10 @@ public abstract class Mixin_CF_LayerLightEngine<M extends DataLayerStorageMap<M>
         this.clearCache();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void checkBlock(BlockPos pos) {
@@ -72,6 +76,10 @@ public abstract class Mixin_CF_LayerLightEngine<M extends DataLayerStorageMap<M>
     @Shadow
     protected abstract void clearCache();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void enableLightSources(ChunkPos chunkPos, boolean bl) {
@@ -88,6 +96,10 @@ public abstract class Mixin_CF_LayerLightEngine<M extends DataLayerStorageMap<M>
     @Shadow
     protected abstract @Nullable BlockGetter getChunk(int i, int j);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public int getLightValue(BlockPos pos) {
@@ -100,6 +112,10 @@ public abstract class Mixin_CF_LayerLightEngine<M extends DataLayerStorageMap<M>
         return this.storage.getLightValue(pos);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public VoxelShape getShape(BlockState state, long pos, Direction direction) {
         return state.canOcclude() ?
@@ -139,6 +155,10 @@ public abstract class Mixin_CF_LayerLightEngine<M extends DataLayerStorageMap<M>
         return blocksLight ? blockState : Blocks.AIR.defaultBlockState();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void onBlockEmissionIncrease(BlockPos pos, int lightEmission) {
@@ -150,6 +170,10 @@ public abstract class Mixin_CF_LayerLightEngine<M extends DataLayerStorageMap<M>
     public void onBlockEmissionIncrease_(long pos, int lightEmission) {
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void updateSectionStatus(SectionPos secPos, boolean hasOnlyAir) {

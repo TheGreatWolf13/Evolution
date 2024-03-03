@@ -50,6 +50,10 @@ public abstract class Mixin_M_CampfireBlock extends BaseEntityBlock implements S
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -71,6 +75,10 @@ public abstract class Mixin_M_CampfireBlock extends BaseEntityBlock implements S
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -86,6 +94,10 @@ public abstract class Mixin_M_CampfireBlock extends BaseEntityBlock implements S
     @Shadow
     protected abstract boolean isSmokeSource(BlockState blockState);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -103,6 +115,10 @@ public abstract class Mixin_M_CampfireBlock extends BaseEntityBlock implements S
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -134,6 +150,10 @@ public abstract class Mixin_M_CampfireBlock extends BaseEntityBlock implements S
                super.updateShape_(state, from, fromState, level, x, y, z, fromX, fromY, fromZ);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

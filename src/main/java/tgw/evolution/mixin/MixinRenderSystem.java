@@ -22,14 +22,22 @@ public abstract class MixinRenderSystem {
     @Shadow private static Matrix4f projectionMatrix;
     @Shadow private static PoseStack modelViewStack;
     @Shadow private static Matrix4f modelViewMatrix;
-    @Shadow private static float shaderGameTime;
+    @Shadow(remap = false) private static float shaderGameTime;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public static void _setShaderLights(Vector3f lightingVec0, Vector3f lightingVec1) {
         shaderLightDirections[0].set(lightingVec0.x(), lightingVec0.y(), lightingVec0.z());
         shaderLightDirections[1].set(lightingVec1.x(), lightingVec1.y(), lightingVec1.z());
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite(remap = false)
     public static void applyModelViewMatrix() {
         Matrix4f matrix = modelViewStack.last().pose();
@@ -62,6 +70,10 @@ public abstract class MixinRenderSystem {
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public static void setProjectionMatrix(Matrix4f matrix) {
         if (!isOnRenderThread()) {
@@ -73,7 +85,11 @@ public abstract class MixinRenderSystem {
         }
     }
 
-    @Overwrite
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Overwrite(remap = false)
     public static void setShaderGameTime(long l, float partialTicks) {
         float g = (l % Time.TICKS_PER_DAY + partialTicks) / Time.TICKS_PER_DAY;
         if (!isOnRenderThread()) {

@@ -41,6 +41,10 @@ public abstract class Mixin_M_BaseRailBlock extends Block implements SimpleWater
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -53,6 +57,10 @@ public abstract class Mixin_M_BaseRailBlock extends Block implements SimpleWater
         return canSupportRigidBlock(level, new BlockPos(x, y - 1, z));
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -69,6 +77,10 @@ public abstract class Mixin_M_BaseRailBlock extends Block implements SimpleWater
         return railShape != null && railShape.isAscending() ? HALF_BLOCK_AABB : FLAT_AABB;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -100,6 +112,10 @@ public abstract class Mixin_M_BaseRailBlock extends Block implements SimpleWater
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -114,6 +130,10 @@ public abstract class Mixin_M_BaseRailBlock extends Block implements SimpleWater
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -135,6 +155,10 @@ public abstract class Mixin_M_BaseRailBlock extends Block implements SimpleWater
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

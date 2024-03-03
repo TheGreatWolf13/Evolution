@@ -18,6 +18,10 @@ import tgw.evolution.util.math.Vec3d;
 @Mixin(EmptyFluid.class)
 public abstract class Mixin_M_EmptyFluid extends Fluid {
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public boolean canBeReplacedWith(FluidState state, BlockGetter level, BlockPos pos, Fluid fluid, Direction direction) {
@@ -40,6 +44,10 @@ public abstract class Mixin_M_EmptyFluid extends Fluid {
         return flow;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -48,7 +56,8 @@ public abstract class Mixin_M_EmptyFluid extends Fluid {
     }
 
     /**
-     * @reason Deprecated
+     * @reason _
+     * @author TheGreatWolf
      */
     @Override
     @Overwrite
@@ -63,7 +72,8 @@ public abstract class Mixin_M_EmptyFluid extends Fluid {
     }
 
     /**
-     * @reason Deprecated
+     * @reason _
+     * @author TheGreatWolf
      */
     @Override
     @Overwrite

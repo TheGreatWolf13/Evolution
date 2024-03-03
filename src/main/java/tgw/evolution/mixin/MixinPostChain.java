@@ -42,6 +42,10 @@ public abstract class MixinPostChain {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void process(float partialTicks) {
         if (partialTicks < this.lastStamp) {

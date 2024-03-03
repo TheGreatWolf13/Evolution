@@ -36,6 +36,10 @@ public abstract class Mixin_M_CoralPlantBlock extends BaseCoralPlantTypeBlock {
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -48,6 +52,10 @@ public abstract class Mixin_M_CoralPlantBlock extends BaseCoralPlantTypeBlock {
         return SHAPE;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -60,6 +68,10 @@ public abstract class Mixin_M_CoralPlantBlock extends BaseCoralPlantTypeBlock {
         this.tryScheduleDieTick(state, level, new BlockPos(x, y, z));
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -74,6 +86,10 @@ public abstract class Mixin_M_CoralPlantBlock extends BaseCoralPlantTypeBlock {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

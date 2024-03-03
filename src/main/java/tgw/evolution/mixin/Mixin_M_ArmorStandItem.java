@@ -37,6 +37,10 @@ public abstract class Mixin_M_ArmorStandItem extends Item {
     @Shadow
     protected abstract void randomizePose(ArmorStand armorStand, Random random);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

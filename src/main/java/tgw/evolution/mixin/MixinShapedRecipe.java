@@ -16,6 +16,10 @@ public abstract class MixinShapedRecipe {
     @Shadow @Final NonNullList<Ingredient> recipeItems;
     @Shadow @Final int width;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private boolean matches(CraftingContainer container, int width, int height, boolean mirrored) {
         container.reset();

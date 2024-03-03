@@ -20,6 +20,10 @@ public abstract class MixinPathNavigation implements PatchPathNavigation {
     @Shadow @Final protected Mob mob;
     @Shadow protected @Nullable Path path;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean shouldRecomputePath(BlockPos pos) {
         Evolution.deprecatedMethod();

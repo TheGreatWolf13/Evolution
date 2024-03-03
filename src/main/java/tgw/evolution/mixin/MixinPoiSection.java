@@ -28,6 +28,10 @@ public abstract class MixinPoiSection implements PatchPoiSection {
     @Shadow
     protected abstract boolean add(PoiRecord poiRecord);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void add(BlockPos pos, PoiType poi) {
         Evolution.deprecatedMethod();
@@ -42,6 +46,10 @@ public abstract class MixinPoiSection implements PatchPoiSection {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void remove(BlockPos pos) {
         Evolution.deprecatedMethod();

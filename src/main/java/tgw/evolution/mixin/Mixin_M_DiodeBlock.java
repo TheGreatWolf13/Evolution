@@ -38,6 +38,10 @@ public abstract class Mixin_M_DiodeBlock extends HorizontalDirectionalBlock {
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -56,6 +60,10 @@ public abstract class Mixin_M_DiodeBlock extends HorizontalDirectionalBlock {
     @Shadow
     protected abstract int getDelay(BlockState blockState);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -71,6 +79,10 @@ public abstract class Mixin_M_DiodeBlock extends HorizontalDirectionalBlock {
     @Shadow
     public abstract boolean isLocked(LevelReader levelReader, BlockPos blockPos, BlockState blockState);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -103,6 +115,10 @@ public abstract class Mixin_M_DiodeBlock extends HorizontalDirectionalBlock {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -115,6 +131,10 @@ public abstract class Mixin_M_DiodeBlock extends HorizontalDirectionalBlock {
         this.updateNeighborsInFront(level, new BlockPos(x, y, z), state);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -133,6 +153,10 @@ public abstract class Mixin_M_DiodeBlock extends HorizontalDirectionalBlock {
     @Shadow
     protected abstract boolean shouldTurnOn(Level level, BlockPos blockPos, BlockState blockState);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

@@ -34,6 +34,10 @@ public abstract class Mixin_M_AttachedStemBlock extends BushBlock {
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -46,6 +50,10 @@ public abstract class Mixin_M_AttachedStemBlock extends BushBlock {
         return AABBS.get(state.getValue(FACING));
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

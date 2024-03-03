@@ -23,6 +23,10 @@ public abstract class MixinStandingAndWallBlockItem extends BlockItem {
         super(block, properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public @Nullable BlockState getPlacementState(BlockPlaceContext context) {

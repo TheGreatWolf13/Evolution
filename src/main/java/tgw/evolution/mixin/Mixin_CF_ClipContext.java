@@ -37,6 +37,10 @@ public abstract class Mixin_CF_ClipContext implements PatchClipContext {
         this.entity = entity;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public VoxelShape getBlockShape(BlockState state, BlockGetter level, BlockPos pos) {
         Evolution.deprecatedMethod();
@@ -48,6 +52,10 @@ public abstract class Mixin_CF_ClipContext implements PatchClipContext {
         return this.block.get_(state, level, x, y, z, this.entity);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public VoxelShape getFluidShape(FluidState state, BlockGetter level, BlockPos pos) {
         Evolution.deprecatedMethod();

@@ -34,6 +34,10 @@ public abstract class Mixin_M_GrowingPlantBlock extends Block {
     @Shadow
     protected abstract boolean canAttachTo(BlockState blockState);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -66,6 +70,10 @@ public abstract class Mixin_M_GrowingPlantBlock extends Block {
     @Shadow
     protected abstract GrowingPlantHeadBlock getHeadBlock();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -78,6 +86,10 @@ public abstract class Mixin_M_GrowingPlantBlock extends Block {
         return this.shape;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

@@ -25,6 +25,10 @@ public abstract class Mixin_M_ArmorStand extends LivingEntity {
         super(entityType, level);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     private EquipmentSlot getClickedSlot(Vec3 vec3) {
@@ -55,6 +59,10 @@ public abstract class Mixin_M_ArmorStand extends LivingEntity {
         return EquipmentSlot.MAINHAND;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

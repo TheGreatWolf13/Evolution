@@ -13,6 +13,10 @@ public abstract class MixinUseOnContext {
 
     @Shadow @Final private BlockHitResult hitResult;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public BlockPos getClickedPos() {
         return new BlockPos(this.hitResult.posX(), this.hitResult.posY(), this.hitResult.posZ());

@@ -29,6 +29,10 @@ public abstract class Mixin_M_CoralFanBlock extends BaseCoralFanBlock {
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -40,6 +44,10 @@ public abstract class Mixin_M_CoralFanBlock extends BaseCoralFanBlock {
         this.tryScheduleDieTick(state, level, new BlockPos(x, y, z));
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -54,6 +62,10 @@ public abstract class Mixin_M_CoralFanBlock extends BaseCoralFanBlock {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

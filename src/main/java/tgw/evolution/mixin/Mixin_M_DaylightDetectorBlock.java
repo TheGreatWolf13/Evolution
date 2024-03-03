@@ -36,6 +36,10 @@ public abstract class Mixin_M_DaylightDetectorBlock extends BaseEntityBlock {
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -48,6 +52,10 @@ public abstract class Mixin_M_DaylightDetectorBlock extends BaseEntityBlock {
         return SHAPE;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

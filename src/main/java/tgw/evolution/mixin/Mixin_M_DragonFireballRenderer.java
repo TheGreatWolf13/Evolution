@@ -17,6 +17,10 @@ public abstract class Mixin_M_DragonFireballRenderer extends EntityRenderer<Drag
         super(context);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

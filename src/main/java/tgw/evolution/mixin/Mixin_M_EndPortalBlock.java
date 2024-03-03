@@ -29,6 +29,10 @@ public abstract class Mixin_M_EndPortalBlock extends BaseEntityBlock {
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -41,6 +45,10 @@ public abstract class Mixin_M_EndPortalBlock extends BaseEntityBlock {
         level.addParticle(ParticleTypes.SMOKE, x + random.nextDouble(), y + 0.8, z + random.nextDouble(), 0, 0, 0);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

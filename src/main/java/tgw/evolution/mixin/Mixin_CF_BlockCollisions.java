@@ -24,7 +24,7 @@ import tgw.evolution.util.math.MathHelper;
 @Mixin(BlockCollisions.class)
 public abstract class Mixin_CF_BlockCollisions extends AbstractIterator<VoxelShape> {
 
-    private final @Nullable Entity entity;
+    @Unique private final @Nullable Entity entity;
     @Mutable @Shadow @Final @RestoreFinal private AABB box;
     @Mutable @Shadow @Final @RestoreFinal private CollisionGetter collisionGetter;
     @Shadow @Final @DeleteField private CollisionContext context;
@@ -49,6 +49,10 @@ public abstract class Mixin_CF_BlockCollisions extends AbstractIterator<VoxelSha
         this.entity = entity;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public VoxelShape computeNext() {

@@ -58,6 +58,10 @@ public abstract class Mixin_M_ComposterBlock extends Block implements WorldlyCon
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -70,6 +74,10 @@ public abstract class Mixin_M_ComposterBlock extends Block implements WorldlyCon
         return SHAPES[0];
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -82,6 +90,10 @@ public abstract class Mixin_M_ComposterBlock extends Block implements WorldlyCon
         return OUTER_SHAPE;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -94,6 +106,10 @@ public abstract class Mixin_M_ComposterBlock extends Block implements WorldlyCon
         return SHAPES[state.getValue(LEVEL)];
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -108,6 +124,10 @@ public abstract class Mixin_M_ComposterBlock extends Block implements WorldlyCon
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -123,6 +143,10 @@ public abstract class Mixin_M_ComposterBlock extends Block implements WorldlyCon
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

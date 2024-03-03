@@ -32,6 +32,10 @@ public abstract class MixinPoiManager extends SectionStorage<PoiSection> impleme
         super(path, function, function2, dataFixer, dataFixTypes, bl, levelHeightAccessor);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void add(BlockPos pos, PoiType poi) {
         Evolution.deprecatedMethod();
@@ -44,6 +48,10 @@ public abstract class MixinPoiManager extends SectionStorage<PoiSection> impleme
             .add_(x, y, z, poi);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void remove(BlockPos pos) {
         Evolution.deprecatedMethod();

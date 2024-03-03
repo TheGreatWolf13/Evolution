@@ -21,6 +21,10 @@ public abstract class Mixin_M_BushBlock extends Block {
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -36,6 +40,10 @@ public abstract class Mixin_M_BushBlock extends Block {
     @Shadow
     protected abstract boolean mayPlaceOn(BlockState blockState, BlockGetter blockGetter, BlockPos blockPos);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -48,6 +56,10 @@ public abstract class Mixin_M_BushBlock extends Block {
         return state.getFluidState().isEmpty();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

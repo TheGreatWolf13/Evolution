@@ -46,6 +46,10 @@ public abstract class Mixin_M_BellBlock extends BaseEntityBlock {
     @Shadow
     public abstract boolean attemptToRing(Level level, BlockPos blockPos, @Nullable Direction direction);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -61,6 +65,10 @@ public abstract class Mixin_M_BellBlock extends BaseEntityBlock {
                FaceAttachedHorizontalDirectionalBlock.canAttach(level, new BlockPos(x, y, z), direction);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -73,6 +81,10 @@ public abstract class Mixin_M_BellBlock extends BaseEntityBlock {
         return this.getVoxelShape(state);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -88,6 +100,10 @@ public abstract class Mixin_M_BellBlock extends BaseEntityBlock {
     @Shadow
     protected abstract VoxelShape getVoxelShape(BlockState blockState);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -122,6 +138,10 @@ public abstract class Mixin_M_BellBlock extends BaseEntityBlock {
                                   BlockHitResult blockHitResult,
                                   @Nullable Player player, boolean bl);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -163,6 +183,10 @@ public abstract class Mixin_M_BellBlock extends BaseEntityBlock {
         return super.updateShape_(state, from, fromState, level, x, y, z, fromX, fromY, fromZ);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

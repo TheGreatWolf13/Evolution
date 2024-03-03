@@ -14,6 +14,10 @@ public abstract class MixinSimpleAnimatedParticle extends TextureSheetParticle {
         super(clientLevel, d, e, f);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public int getLightColor(float partialTicks) {

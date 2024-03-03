@@ -36,6 +36,10 @@ public abstract class Mixin_M_BambooSaplingBlock extends Block implements Boneme
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -48,6 +52,10 @@ public abstract class Mixin_M_BambooSaplingBlock extends Block implements Boneme
         return level.getBlockState_(x, y - 1, z).is(BlockTags.BAMBOO_PLANTABLE_ON);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -60,6 +68,10 @@ public abstract class Mixin_M_BambooSaplingBlock extends Block implements Boneme
         return player.getMainHandItem().getItem() instanceof SwordItem ? 1.0F : super.getDestroyProgress_(state, player, level, x, y, z);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -75,6 +87,10 @@ public abstract class Mixin_M_BambooSaplingBlock extends Block implements Boneme
     @Shadow
     protected abstract void growBamboo(Level level, BlockPos blockPos);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -89,6 +105,10 @@ public abstract class Mixin_M_BambooSaplingBlock extends Block implements Boneme
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

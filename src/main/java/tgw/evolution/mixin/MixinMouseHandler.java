@@ -110,8 +110,8 @@ public abstract class MixinMouseHandler {
     }
 
     /**
+     * @reason _
      * @author TheGreatWolf
-     * @reason Avoid allocations
      */
     @Overwrite
     private void onPress(long windowPointer, @MouseButton int button, @Action int action, @Modifiers int mod) {

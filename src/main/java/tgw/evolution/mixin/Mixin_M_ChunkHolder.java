@@ -16,10 +16,7 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.lighting.LevelLightEngine;
 import org.jetbrains.annotations.Nullable;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.*;
 import tgw.evolution.Evolution;
 import tgw.evolution.hooks.asm.DeleteMethod;
 import tgw.evolution.network.PacketSCBlockUpdate;
@@ -44,6 +41,10 @@ public abstract class Mixin_M_ChunkHolder implements PatchChunkHolder {
     @Shadow private boolean resendLight;
     @Shadow @Final private BitSet skyChangedLightSectionFilter;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void blockChanged(BlockPos pos) {
         Evolution.deprecatedMethod();
@@ -67,12 +68,17 @@ public abstract class Mixin_M_ChunkHolder implements PatchChunkHolder {
     @Shadow
     protected abstract void broadcast(Packet<?> packet, boolean bl);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     private void broadcastBlockEntity(Level level, BlockPos blockPos) {
         throw new AbstractMethodError();
     }
 
+    @Unique
     private void broadcastBlockEntity(BlockGetter level, int x, int y, int z) {
         BlockEntity tile = level.getBlockEntity_(x, y, z);
         if (tile != null) {
@@ -83,18 +89,27 @@ public abstract class Mixin_M_ChunkHolder implements PatchChunkHolder {
         }
     }
 
+    @Unique
     private void broadcastBlockEntityIfNeeded(BlockGetter level, int x, int y, int z, BlockState state) {
         if (state.hasBlockEntity()) {
             this.broadcastBlockEntity(level, x, y, z);
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     private void broadcastBlockEntityIfNeeded(Level level, BlockPos blockPos, BlockState blockState) {
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void broadcastChanges(LevelChunk chunk) {
         if (this.hasChangedSections || !this.skyChangedLightSectionFilter.isEmpty() || !this.blockChangedLightSectionFilter.isEmpty()) {
@@ -156,6 +171,10 @@ public abstract class Mixin_M_ChunkHolder implements PatchChunkHolder {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public @Nullable LevelChunk getTickingChunk() {
         CompletableFuture<Either<LevelChunk, ChunkHolder.ChunkLoadingFailure>> future = this.getTickingChunkFuture();

@@ -361,6 +361,10 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
     @Shadow
     public abstract net.minecraft.server.level.ChunkHolder.FullChunkStatus getFullStatus();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public Stream<BlockPos> getLights() {
@@ -401,6 +405,10 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
     @Shadow
     protected abstract boolean isInLevel();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean isTicking(BlockPos pos) {
         if (!this.level.getWorldBorder().isWithinBounds_(pos.getX(), pos.getZ())) {
@@ -413,6 +421,10 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
                level.areEntitiesLoaded(ChunkPos.asLong(pos));
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void postProcessGeneration() {
         ChunkPos chunkPos = this.getPos();
@@ -564,6 +576,10 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @Override
     public void removeBlockEntity(BlockPos pos) {
@@ -632,6 +648,10 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public @Nullable BlockState setBlockState(BlockPos pos, BlockState state, boolean isMoving) {

@@ -20,6 +20,10 @@ public abstract class MixinPauseScreen extends Screen {
         super(component);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private void createPauseMenu() {
         assert this.minecraft != null;

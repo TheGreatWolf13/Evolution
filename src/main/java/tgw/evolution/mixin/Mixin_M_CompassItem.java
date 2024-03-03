@@ -30,6 +30,10 @@ public abstract class Mixin_M_CompassItem extends Item implements Vanishable {
                                              BlockPos blockPos,
                                              CompoundTag compoundTag);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

@@ -46,6 +46,10 @@ public abstract class Mixin_M_BigDripleafBlock extends HorizontalDirectionalBloc
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -59,6 +63,10 @@ public abstract class Mixin_M_BigDripleafBlock extends HorizontalDirectionalBloc
         return stateBelow.is(this) || stateBelow.is(Blocks.BIG_DRIPLEAF_STEM) || stateBelow.is(BlockTags.BIG_DRIPLEAF_PLACEABLE);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -71,6 +79,10 @@ public abstract class Mixin_M_BigDripleafBlock extends HorizontalDirectionalBloc
         return LEAF_SHAPES.get(state.getValue(TILT));
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -83,6 +95,10 @@ public abstract class Mixin_M_BigDripleafBlock extends HorizontalDirectionalBloc
         return this.shapesCache.get(state);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -114,6 +130,10 @@ public abstract class Mixin_M_BigDripleafBlock extends HorizontalDirectionalBloc
                                                    Tilt tilt,
                                                    @Nullable SoundEvent soundEvent);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -137,6 +157,10 @@ public abstract class Mixin_M_BigDripleafBlock extends HorizontalDirectionalBloc
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
