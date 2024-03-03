@@ -26,14 +26,19 @@ dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings loom.officialMojangMappings()
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-    shadow(implementation('org.jocl:jocl:2.0.5'))
+    include "org.jocl:jocl:2.0.5"
+    implementation("org.jocl:jocl:2.0.5")
+    shadow "org.jocl:jocl:2.0.5"
 }
 
 processResources {
     inputs.property "version", project.version
 
-    filesMatching("fabric.mod.json") {
-        expand "version": project.version
+    afterEvaluate {
+        from(sourceSets.main.resources.srcDirs) {
+            include "fabric.mod.json"
+            duplicatesStrategy DuplicatesStrategy.INCLUDE
+        }
     }
 }
 
@@ -42,31 +47,28 @@ loom {
 }
 
 tasks.withType(JavaCompile).configureEach {
-    // Minecraft 1.18 (1.18-pre2) upwards uses Java 17.
-    it.options.release = 17
+    options.encoding = "UTF-8"
+    options.release = 17
 }
 
 java {
     // Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
     // if it is present.
     // If you remove this line, sources will not be generated.
-    withSourcesJar()
+//    withSourcesJar()
 }
 
 jar {
     from "LICENSE"
-    archiveClassifier.set("dev")
 }
 
 shadowJar {
     configurations = [project.configurations.shadow]
-    archiveClassifier.set("dev")
     relocate "org.jocl", "tgw.evolution.shadow.org.jocl"
 }
 
 remapJar {
     dependsOn(shadowJar)
-    inputFile = tasks.shadowJar.archiveFile
 }
 
 // configure the maven publication
