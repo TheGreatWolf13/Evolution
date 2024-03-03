@@ -284,9 +284,32 @@ public class LightTextureEv extends LightTexture {
                 this.corrSkyBrightness[0] = skyBrightness * 0.65f + 0.35f;
                 this.darkenAmount[0] = this.gameRenderer.getDarkenWorldAmount(partialTicks);
                 this.gamma[0] = (float) this.mc.options.gamma;
-                this.skyRed[0] = 1.0f;
-                this.skyGreen[0] = 1.0f;
-                this.skyBlue[0] = 1.0f;
+                float r = 1.0f;
+                float g = 1.0f;
+                float b = 1.0f;
+                ClientEvents client = ClientEvents.getInstance();
+                if (client.isInitialized()) {
+                    DimensionOverworld dimension = client.getDimension();
+                    assert dimension != null;
+                    float[] duskDawnColors = dimension.getDuskDawnColors();
+                    if (duskDawnColors != null) {
+                        float alpha = duskDawnColors[3];
+                        alpha *= alpha;
+                        if (alpha > 0.5f) {
+                            alpha = 0.5f;
+                        }
+                        float antiAlpha = 1 - alpha;
+                        r *= antiAlpha;
+                        g *= antiAlpha;
+                        b *= antiAlpha;
+                        r += alpha * duskDawnColors[0];
+                        g += alpha * duskDawnColors[1];
+                        b += alpha * duskDawnColors[2];
+                    }
+                }
+                this.skyRed[0] = r;
+                this.skyGreen[0] = g;
+                this.skyBlue[0] = b;
                 cl_kernel kernel = this.kernel;
                 CL.clSetKernelArg(kernel, 0, Sizeof.cl_mem, this.tablePointer);
                 CL.clSetKernelArg(kernel, 1, Sizeof.cl_float, this.skyFlashPointer);
