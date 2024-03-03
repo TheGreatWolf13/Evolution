@@ -30,6 +30,10 @@ public abstract class Mixin_M_PumpkinBlock extends StemGrownBlock {
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

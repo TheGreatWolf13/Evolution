@@ -25,6 +25,10 @@ public abstract class Mixin_M_SkullBlock extends AbstractSkullBlock {
         super(type, properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -37,6 +41,10 @@ public abstract class Mixin_M_SkullBlock extends AbstractSkullBlock {
         return Shapes.empty();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

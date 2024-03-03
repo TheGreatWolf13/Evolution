@@ -47,6 +47,10 @@ public abstract class Mixin_M_Spider extends Monster {
         return LegacyEntityHitboxes.SPIDER.get((Spider) (Object) this);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

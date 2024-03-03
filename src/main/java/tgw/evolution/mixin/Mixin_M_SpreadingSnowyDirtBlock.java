@@ -26,6 +26,10 @@ public abstract class Mixin_M_SpreadingSnowyDirtBlock extends SnowyDirtBlock {
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     private static boolean canBeGrass(BlockState state, LevelReader level, BlockPos pos) {
@@ -46,6 +50,10 @@ public abstract class Mixin_M_SpreadingSnowyDirtBlock extends SnowyDirtBlock {
         return lightBlock < level.getMaxLightLevel();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     private static boolean canPropagate(BlockState state, LevelReader level, BlockPos pos) {
@@ -57,6 +65,10 @@ public abstract class Mixin_M_SpreadingSnowyDirtBlock extends SnowyDirtBlock {
         return canBeGrass_(state, level, x, y, z) && !level.getFluidState_(x, y + 1, z).is(FluidTags.WATER);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

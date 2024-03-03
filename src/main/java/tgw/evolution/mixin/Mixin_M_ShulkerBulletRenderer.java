@@ -17,6 +17,10 @@ public abstract class Mixin_M_ShulkerBulletRenderer extends EntityRenderer<Shulk
         super(context);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

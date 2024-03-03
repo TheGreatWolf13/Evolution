@@ -110,6 +110,10 @@ public abstract class Mixin_M_PointedDripstoneBlock extends Block implements Fal
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -128,6 +132,10 @@ public abstract class Mixin_M_PointedDripstoneBlock extends Block implements Fal
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -140,6 +148,10 @@ public abstract class Mixin_M_PointedDripstoneBlock extends Block implements Fal
         return isValidPointedDripstonePlacement(level, new BlockPos(x, y, z), state.getValue(TIP_DIRECTION));
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -152,6 +164,10 @@ public abstract class Mixin_M_PointedDripstoneBlock extends Block implements Fal
         return Shapes.empty();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -177,6 +193,10 @@ public abstract class Mixin_M_PointedDripstoneBlock extends Block implements Fal
         return this.moveShapeByOffset(shape, x, z);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -189,6 +209,10 @@ public abstract class Mixin_M_PointedDripstoneBlock extends Block implements Fal
         return false;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -205,6 +229,10 @@ public abstract class Mixin_M_PointedDripstoneBlock extends Block implements Fal
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -222,6 +250,10 @@ public abstract class Mixin_M_PointedDripstoneBlock extends Block implements Fal
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

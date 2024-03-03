@@ -31,6 +31,10 @@ public abstract class Mixin_M_SaplingBlock extends BushBlock implements Bonemeal
     @Shadow
     public abstract void advanceTree(ServerLevel serverLevel, BlockPos blockPos, BlockState blockState, Random random);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     @Override
@@ -43,6 +47,10 @@ public abstract class Mixin_M_SaplingBlock extends BushBlock implements Bonemeal
         return SHAPE;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

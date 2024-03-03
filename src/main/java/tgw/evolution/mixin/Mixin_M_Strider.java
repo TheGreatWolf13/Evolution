@@ -20,6 +20,10 @@ public abstract class Mixin_M_Strider extends Animal implements ItemSteerable, S
         super(entityType, level);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

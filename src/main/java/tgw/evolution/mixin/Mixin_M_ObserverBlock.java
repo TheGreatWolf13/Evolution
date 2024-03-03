@@ -27,6 +27,10 @@ public abstract class Mixin_M_ObserverBlock extends DirectionalBlock {
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -46,6 +50,10 @@ public abstract class Mixin_M_ObserverBlock extends DirectionalBlock {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -68,6 +76,10 @@ public abstract class Mixin_M_ObserverBlock extends DirectionalBlock {
     @Shadow
     protected abstract void startSignal(LevelAccessor levelAccessor, BlockPos blockPos);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -91,6 +103,10 @@ public abstract class Mixin_M_ObserverBlock extends DirectionalBlock {
     @Shadow
     protected abstract void updateNeighborsInFront(Level level, BlockPos blockPos, BlockState blockState);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

@@ -18,6 +18,10 @@ public abstract class Mixin_M_SwordItem extends TieredItem implements Vanishable
         super(tier, properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -30,6 +34,10 @@ public abstract class Mixin_M_SwordItem extends TieredItem implements Vanishable
         return !player.isCreative();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

@@ -18,6 +18,10 @@ public abstract class Mixin_M_SlimeBlock extends HalfTransparentBlock {
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

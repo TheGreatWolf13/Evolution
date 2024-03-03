@@ -37,6 +37,10 @@ public abstract class Mixin_M_SugarCaneBlock extends Block {
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -61,6 +65,10 @@ public abstract class Mixin_M_SugarCaneBlock extends Block {
         return false;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -73,6 +81,10 @@ public abstract class Mixin_M_SugarCaneBlock extends Block {
         return SHAPE;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -100,6 +112,10 @@ public abstract class Mixin_M_SugarCaneBlock extends Block {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -114,6 +130,10 @@ public abstract class Mixin_M_SugarCaneBlock extends Block {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

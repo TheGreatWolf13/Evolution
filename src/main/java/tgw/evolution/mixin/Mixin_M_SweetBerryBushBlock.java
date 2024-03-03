@@ -41,6 +41,10 @@ public abstract class Mixin_M_SweetBerryBushBlock extends BushBlock implements B
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -56,6 +60,10 @@ public abstract class Mixin_M_SweetBerryBushBlock extends BushBlock implements B
         return state.getValue(AGE) < 3 ? MID_GROWTH_SHAPE : super.getShape_(state, level, x, y, z, entity);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -71,6 +79,10 @@ public abstract class Mixin_M_SweetBerryBushBlock extends BushBlock implements B
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

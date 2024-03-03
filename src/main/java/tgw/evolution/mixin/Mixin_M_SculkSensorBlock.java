@@ -58,6 +58,10 @@ public abstract class Mixin_M_SculkSensorBlock extends BaseEntityBlock implement
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -80,6 +84,10 @@ public abstract class Mixin_M_SculkSensorBlock extends BaseEntityBlock implement
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -92,6 +100,10 @@ public abstract class Mixin_M_SculkSensorBlock extends BaseEntityBlock implement
         return SHAPE;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -110,6 +122,10 @@ public abstract class Mixin_M_SculkSensorBlock extends BaseEntityBlock implement
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -127,6 +143,10 @@ public abstract class Mixin_M_SculkSensorBlock extends BaseEntityBlock implement
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -146,6 +166,10 @@ public abstract class Mixin_M_SculkSensorBlock extends BaseEntityBlock implement
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

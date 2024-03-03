@@ -36,6 +36,10 @@ public abstract class Mixin_M_SnowLayerBlock extends Block {
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -56,6 +60,10 @@ public abstract class Mixin_M_SnowLayerBlock extends Block {
         return false;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -68,6 +76,10 @@ public abstract class Mixin_M_SnowLayerBlock extends Block {
         return SHAPE_BY_LAYER[state.getValue(LAYERS)];
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -85,6 +97,10 @@ public abstract class Mixin_M_SnowLayerBlock extends Block {
         return ItemUtils.RepeatedUse.NOT_ON_FIRST_TICK;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -97,6 +113,10 @@ public abstract class Mixin_M_SnowLayerBlock extends Block {
         return SHAPE_BY_LAYER[state.getValue(LAYERS)];
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public @Nullable BlockState getStateForPlacement(BlockPlaceContext context) {
@@ -107,6 +127,10 @@ public abstract class Mixin_M_SnowLayerBlock extends Block {
         return super.getStateForPlacement(context);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -119,6 +143,10 @@ public abstract class Mixin_M_SnowLayerBlock extends Block {
         return SHAPE_BY_LAYER[state.getValue(LAYERS)];
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -134,6 +162,10 @@ public abstract class Mixin_M_SnowLayerBlock extends Block {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

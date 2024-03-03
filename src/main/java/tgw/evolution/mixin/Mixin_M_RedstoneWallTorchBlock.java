@@ -34,6 +34,10 @@ public abstract class Mixin_M_RedstoneWallTorchBlock extends RedstoneTorchBlock 
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -51,6 +55,10 @@ public abstract class Mixin_M_RedstoneWallTorchBlock extends RedstoneTorchBlock 
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -63,6 +71,10 @@ public abstract class Mixin_M_RedstoneWallTorchBlock extends RedstoneTorchBlock 
         return Blocks.WALL_TORCH.canSurvive_(state, level, x, y, z);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -75,6 +87,10 @@ public abstract class Mixin_M_RedstoneWallTorchBlock extends RedstoneTorchBlock 
         return WallTorchBlock.getShape(state);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

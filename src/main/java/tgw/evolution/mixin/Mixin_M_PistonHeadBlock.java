@@ -34,6 +34,10 @@ public abstract class Mixin_M_PistonHeadBlock extends DirectionalBlock {
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -48,6 +52,10 @@ public abstract class Mixin_M_PistonHeadBlock extends DirectionalBlock {
         return this.isFittingBase(state, stateAtSide) || stateAtSide.is(Blocks.MOVING_PISTON) && stateAtSide.getValue(FACING) == facing;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -63,6 +71,10 @@ public abstract class Mixin_M_PistonHeadBlock extends DirectionalBlock {
     @Shadow
     protected abstract boolean isFittingBase(BlockState blockState, BlockState blockState2);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -90,6 +102,10 @@ public abstract class Mixin_M_PistonHeadBlock extends DirectionalBlock {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -108,6 +124,10 @@ public abstract class Mixin_M_PistonHeadBlock extends DirectionalBlock {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -129,6 +149,10 @@ public abstract class Mixin_M_PistonHeadBlock extends DirectionalBlock {
         super.playerWillDestroy_(level, x, y, z, state, player);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

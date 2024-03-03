@@ -40,6 +40,10 @@ public abstract class Mixin_M_SlabBlock extends Block implements SimpleWaterlogg
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public boolean canBeReplaced(BlockState state, BlockPlaceContext context) {
@@ -64,6 +68,10 @@ public abstract class Mixin_M_SlabBlock extends Block implements SimpleWaterlogg
         return ItemUtils.RepeatedUse.NOT_ON_FIRST_TICK;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -80,6 +88,10 @@ public abstract class Mixin_M_SlabBlock extends Block implements SimpleWaterlogg
         };
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public @Nullable BlockState getStateForPlacement(BlockPlaceContext context) {
@@ -98,6 +110,10 @@ public abstract class Mixin_M_SlabBlock extends Block implements SimpleWaterlogg
         return direction != Direction.DOWN && (direction == Direction.UP || !(context.getHitResult().y() - y > 0.5)) ? stateForPlace : stateForPlace.setValue(TYPE, SlabType.TOP);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

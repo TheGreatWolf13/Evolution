@@ -39,6 +39,10 @@ public abstract class Mixin_M_ShovelItem extends DiggerItem {
         super(f, g, tier, tagKey, properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

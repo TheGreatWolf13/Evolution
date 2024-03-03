@@ -25,6 +25,10 @@ public abstract class Mixin_M_StructureBlock extends BaseEntityBlock implements 
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -61,6 +65,10 @@ public abstract class Mixin_M_StructureBlock extends BaseEntityBlock implements 
     @Shadow
     protected abstract void trigger(ServerLevel serverLevel, StructureBlockEntity structureBlockEntity);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

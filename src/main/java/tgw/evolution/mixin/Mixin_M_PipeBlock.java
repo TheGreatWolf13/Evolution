@@ -27,6 +27,10 @@ public abstract class Mixin_M_PipeBlock extends Block {
     @Shadow
     protected abstract int getAABBIndex(BlockState blockState);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -39,6 +43,10 @@ public abstract class Mixin_M_PipeBlock extends Block {
         return this.shapeByIndex[this.getAABBIndex(state)];
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

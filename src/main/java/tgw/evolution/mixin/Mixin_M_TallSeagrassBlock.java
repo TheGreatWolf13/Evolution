@@ -29,6 +29,10 @@ public abstract class Mixin_M_TallSeagrassBlock extends DoublePlantBlock impleme
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -49,6 +53,10 @@ public abstract class Mixin_M_TallSeagrassBlock extends DoublePlantBlock impleme
         return fluidState.is(FluidTags.WATER) && fluidState.getAmount() == 8;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

@@ -18,6 +18,10 @@ public abstract class Mixin_M_Ravager extends Raider {
         super(entityType, level);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

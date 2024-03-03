@@ -32,6 +32,10 @@ public abstract class Mixin_M_ShearsItem extends Item {
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -55,6 +59,10 @@ public abstract class Mixin_M_ShearsItem extends Item {
                state.is(BlockTags.WOOL) || super.mineBlock_(stack, level, state, x, y, z, entity);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

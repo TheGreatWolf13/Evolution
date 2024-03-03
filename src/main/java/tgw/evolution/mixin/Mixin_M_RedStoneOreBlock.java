@@ -34,6 +34,10 @@ public abstract class Mixin_M_RedStoneOreBlock extends Block {
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     private static void interact(BlockState blockState, Level level, BlockPos blockPos) {
@@ -48,6 +52,10 @@ public abstract class Mixin_M_RedStoneOreBlock extends Block {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     private static void spawnParticles(Level level, BlockPos blockPos) {
@@ -77,6 +85,10 @@ public abstract class Mixin_M_RedStoneOreBlock extends Block {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -91,6 +103,10 @@ public abstract class Mixin_M_RedStoneOreBlock extends Block {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -104,6 +120,10 @@ public abstract class Mixin_M_RedStoneOreBlock extends Block {
         super.attack_(state, level, x, y, z, face, hitX, hitY, hitZ, player);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -118,6 +138,10 @@ public abstract class Mixin_M_RedStoneOreBlock extends Block {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -134,6 +158,10 @@ public abstract class Mixin_M_RedStoneOreBlock extends Block {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -147,6 +175,10 @@ public abstract class Mixin_M_RedStoneOreBlock extends Block {
         super.stepOn_(level, x, y, z, state, entity);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

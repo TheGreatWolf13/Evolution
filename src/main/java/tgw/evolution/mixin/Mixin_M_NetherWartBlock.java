@@ -30,6 +30,10 @@ public abstract class Mixin_M_NetherWartBlock extends BushBlock {
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -42,6 +46,10 @@ public abstract class Mixin_M_NetherWartBlock extends BushBlock {
         return SHAPE_BY_AGE[state.getValue(AGE)];
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

@@ -33,6 +33,10 @@ public abstract class Mixin_M_PowderSnowBlock extends Block implements BucketPic
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -57,6 +61,10 @@ public abstract class Mixin_M_PowderSnowBlock extends Block implements BucketPic
         return Shapes.empty();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -69,6 +77,10 @@ public abstract class Mixin_M_PowderSnowBlock extends Block implements BucketPic
         return Shapes.empty();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

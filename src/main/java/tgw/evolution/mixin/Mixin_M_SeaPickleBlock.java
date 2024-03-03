@@ -34,6 +34,10 @@ public abstract class Mixin_M_SeaPickleBlock extends BushBlock implements Boneme
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -46,6 +50,10 @@ public abstract class Mixin_M_SeaPickleBlock extends BushBlock implements Boneme
         return this.mayPlaceOn(level.getBlockState_(x, y - 1, z), level, new BlockPos(x, y - 1, z));
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -63,6 +71,10 @@ public abstract class Mixin_M_SeaPickleBlock extends BushBlock implements Boneme
         };
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

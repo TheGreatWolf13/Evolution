@@ -106,6 +106,10 @@ public abstract class Mixin_M_ServerLevel extends Level implements WorldGenLevel
         player.onAddedToWorld();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -183,6 +187,10 @@ public abstract class Mixin_M_ServerLevel extends Level implements WorldGenLevel
     @Shadow
     public abstract @NotNull MinecraftServer getServer();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public BlockPos getSharedSpawnPos() {
         int x = this.levelData.getXSpawn();
@@ -197,6 +205,10 @@ public abstract class Mixin_M_ServerLevel extends Level implements WorldGenLevel
         return new BlockPos(x, y, z);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -209,6 +221,10 @@ public abstract class Mixin_M_ServerLevel extends Level implements WorldGenLevel
         this.server.getPlayerList().broadcastAll(new PacketSCLevelEvent(event, BlockPos.asLong(x, y, z), data, true));
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void levelEvent(@Nullable Player player, @LvlEvent int event, BlockPos pos, int data) {
@@ -222,6 +238,10 @@ public abstract class Mixin_M_ServerLevel extends Level implements WorldGenLevel
                    .broadcast(player, x, y, z, 64, this.dimension(), new PacketSCLevelEvent(event, BlockPos.asLong(x, y, z), data, false));
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public boolean mayInteract(Player player, BlockPos pos) {
@@ -234,6 +254,10 @@ public abstract class Mixin_M_ServerLevel extends Level implements WorldGenLevel
         return !this.server.isUnderSpawnProtection_((ServerLevel) (Object) this, x, y, z, player) && this.getWorldBorder().isWithinBounds_(x, z);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -265,6 +289,10 @@ public abstract class Mixin_M_ServerLevel extends Level implements WorldGenLevel
     @Shadow
     public abstract void removePlayerImmediately(ServerPlayer serverPlayer, Entity.RemovalReason removalReason);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void sendBlockUpdated(BlockPos pos, BlockState oldState, BlockState newState, @BlockFlags int flags) {
@@ -296,6 +324,10 @@ public abstract class Mixin_M_ServerLevel extends Level implements WorldGenLevel
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private void tickBlock(BlockPos pos, Block block) {
         int x = pos.getX();
@@ -346,6 +378,10 @@ public abstract class Mixin_M_ServerLevel extends Level implements WorldGenLevel
         profiler.pop();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private void tickFluid(BlockPos pos, Fluid fluid) {
         int x = pos.getX();

@@ -54,6 +54,10 @@ public abstract class Mixin_M_StairBlock extends Block implements SimpleWaterlog
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -66,6 +70,10 @@ public abstract class Mixin_M_StairBlock extends Block implements SimpleWaterlog
         this.base.animateTick_(state, level, x, y, z, random);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -78,6 +86,10 @@ public abstract class Mixin_M_StairBlock extends Block implements SimpleWaterlog
         this.baseState.attack_(level, x, y, z, face, hitX, hitY, hitZ, player);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -90,6 +102,10 @@ public abstract class Mixin_M_StairBlock extends Block implements SimpleWaterlog
         this.base.destroy_(level, x, y, z, state);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -105,6 +121,10 @@ public abstract class Mixin_M_StairBlock extends Block implements SimpleWaterlog
         return (state.getValue(HALF) == Half.TOP ? TOP_SHAPES : BOTTOM_SHAPES)[SHAPE_BY_STATE[this.getShapeIndex(state)]];
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public BlockState getStateForPlacement(BlockPlaceContext context) {
@@ -115,6 +135,10 @@ public abstract class Mixin_M_StairBlock extends Block implements SimpleWaterlog
         return state.setValue(SHAPE, getStairsShape(state, context.getLevel(), pos));
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -131,6 +155,10 @@ public abstract class Mixin_M_StairBlock extends Block implements SimpleWaterlog
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -145,6 +173,10 @@ public abstract class Mixin_M_StairBlock extends Block implements SimpleWaterlog
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -157,6 +189,10 @@ public abstract class Mixin_M_StairBlock extends Block implements SimpleWaterlog
         this.base.randomTick_(state, level, x, y, z, random);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -169,6 +205,10 @@ public abstract class Mixin_M_StairBlock extends Block implements SimpleWaterlog
         this.base.stepOn_(level, x, y, z, state, entity);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -181,6 +221,10 @@ public abstract class Mixin_M_StairBlock extends Block implements SimpleWaterlog
         this.base.tick_(state, level, x, y, z, random);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -212,6 +256,10 @@ public abstract class Mixin_M_StairBlock extends Block implements SimpleWaterlog
                super.updateShape_(state, from, fromState, level, x, y, z, fromX, fromY, fromZ);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

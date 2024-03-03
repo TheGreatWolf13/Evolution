@@ -28,6 +28,10 @@ public abstract class Mixin_M_SnowyDirtBlock extends Block {
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public BlockState getStateForPlacement(BlockPlaceContext context) {
@@ -36,6 +40,10 @@ public abstract class Mixin_M_SnowyDirtBlock extends Block {
         return this.defaultBlockState().setValue(SNOWY, isSnowySetting(stateAbove));
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

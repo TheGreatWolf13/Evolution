@@ -45,6 +45,10 @@ public abstract class Mixin_M_SignBlock extends BaseEntityBlock implements Simpl
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -57,6 +61,10 @@ public abstract class Mixin_M_SignBlock extends BaseEntityBlock implements Simpl
         return SHAPE;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -86,6 +94,10 @@ public abstract class Mixin_M_SignBlock extends BaseEntityBlock implements Simpl
         return super.updateShape_(state, from, fromState, level, x, y, z, fromX, fromY, fromZ);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

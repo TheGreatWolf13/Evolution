@@ -37,6 +37,10 @@ public abstract class Mixin_M_PistonBaseBlock extends DirectionalBlock {
     @Shadow
     protected abstract void checkIfExtend(Level level, BlockPos blockPos, BlockState blockState);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -59,6 +63,10 @@ public abstract class Mixin_M_PistonBaseBlock extends DirectionalBlock {
         return Shapes.block();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -82,6 +90,10 @@ public abstract class Mixin_M_PistonBaseBlock extends DirectionalBlock {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

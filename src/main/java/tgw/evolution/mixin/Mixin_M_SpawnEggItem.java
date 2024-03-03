@@ -36,6 +36,10 @@ public abstract class Mixin_M_SpawnEggItem extends Item {
     @Shadow
     public abstract EntityType<?> getType(@Nullable CompoundTag compoundTag);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

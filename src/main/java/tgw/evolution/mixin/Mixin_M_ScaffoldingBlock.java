@@ -50,6 +50,10 @@ public abstract class Mixin_M_ScaffoldingBlock extends Block implements SimpleWa
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -62,6 +66,10 @@ public abstract class Mixin_M_ScaffoldingBlock extends Block implements SimpleWa
         return getDistance(level, new BlockPos(x, y, z)) < 7;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -79,6 +87,10 @@ public abstract class Mixin_M_ScaffoldingBlock extends Block implements SimpleWa
                EntityUtils.isAbove(entity, BELOW_BLOCK, y) ? UNSTABLE_SHAPE_BOTTOM : Shapes.empty();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -91,6 +103,10 @@ public abstract class Mixin_M_ScaffoldingBlock extends Block implements SimpleWa
         return Shapes.block();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -109,6 +125,10 @@ public abstract class Mixin_M_ScaffoldingBlock extends Block implements SimpleWa
     @Shadow
     protected abstract boolean isBottom(BlockGetter blockGetter, BlockPos blockPos, int i);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -123,6 +143,10 @@ public abstract class Mixin_M_ScaffoldingBlock extends Block implements SimpleWa
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -148,6 +172,10 @@ public abstract class Mixin_M_ScaffoldingBlock extends Block implements SimpleWa
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

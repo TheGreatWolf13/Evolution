@@ -49,6 +49,10 @@ public abstract class Mixin_M_ShulkerBoxBlock extends BaseEntityBlock {
     @Shadow
     public abstract @Nullable DyeColor getColor();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -64,6 +68,10 @@ public abstract class Mixin_M_ShulkerBoxBlock extends BaseEntityBlock {
         return Shapes.block();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -81,6 +89,10 @@ public abstract class Mixin_M_ShulkerBoxBlock extends BaseEntityBlock {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -108,6 +120,10 @@ public abstract class Mixin_M_ShulkerBoxBlock extends BaseEntityBlock {
         super.playerWillDestroy_(level, x, y, z, state, player);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

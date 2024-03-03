@@ -29,6 +29,10 @@ public abstract class Mixin_M_SeagrassBlock extends BushBlock implements Bonemea
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -41,6 +45,10 @@ public abstract class Mixin_M_SeagrassBlock extends BushBlock implements Bonemea
         return SHAPE;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

@@ -42,6 +42,10 @@ public abstract class Mixin_M_RedstoneTorchBlock extends TorchBlock {
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -62,6 +66,10 @@ public abstract class Mixin_M_RedstoneTorchBlock extends TorchBlock {
     @Shadow
     protected abstract boolean hasNeighborSignal(Level level, BlockPos blockPos, BlockState blockState);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -86,6 +94,10 @@ public abstract class Mixin_M_RedstoneTorchBlock extends TorchBlock {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -101,6 +113,10 @@ public abstract class Mixin_M_RedstoneTorchBlock extends TorchBlock {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -120,6 +136,10 @@ public abstract class Mixin_M_RedstoneTorchBlock extends TorchBlock {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

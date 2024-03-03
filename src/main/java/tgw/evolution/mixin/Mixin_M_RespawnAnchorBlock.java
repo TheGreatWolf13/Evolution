@@ -62,6 +62,10 @@ public abstract class Mixin_M_RespawnAnchorBlock extends Block {
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -85,6 +89,10 @@ public abstract class Mixin_M_RespawnAnchorBlock extends Block {
     @Shadow
     protected abstract void explode(BlockState blockState, Level level, BlockPos blockPos);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

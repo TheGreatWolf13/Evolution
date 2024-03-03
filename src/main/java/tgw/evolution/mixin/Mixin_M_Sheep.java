@@ -19,6 +19,10 @@ public abstract class Mixin_M_Sheep extends Animal implements Shearable {
         super(entityType, level);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

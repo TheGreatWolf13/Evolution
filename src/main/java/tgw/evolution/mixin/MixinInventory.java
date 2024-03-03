@@ -15,6 +15,10 @@ public abstract class MixinInventory {
 
     @Shadow @Final private List<NonNullList<ItemStack>> compartments;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public ItemStack getItem(int index) {
         List<NonNullList<ItemStack>> compartments = this.compartments;

@@ -27,6 +27,10 @@ public abstract class Mixin_M_SetBlockCommand {
 
     @Shadow @Final private static SimpleCommandExceptionType ERROR_FAILED;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("setblock")
@@ -68,6 +72,10 @@ public abstract class Mixin_M_SetBlockCommand {
                                                                               })))));
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     private static int setBlock(CommandSourceStack commandSourceStack,

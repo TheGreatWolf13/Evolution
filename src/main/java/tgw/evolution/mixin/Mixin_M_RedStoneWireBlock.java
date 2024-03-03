@@ -64,6 +64,10 @@ public abstract class Mixin_M_RedStoneWireBlock extends Block {
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -96,6 +100,10 @@ public abstract class Mixin_M_RedStoneWireBlock extends Block {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -118,6 +126,10 @@ public abstract class Mixin_M_RedStoneWireBlock extends Block {
     @Shadow
     protected abstract BlockState getConnectionState(BlockGetter blockGetter, BlockState blockState, BlockPos blockPos);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -130,6 +142,10 @@ public abstract class Mixin_M_RedStoneWireBlock extends Block {
         return SHAPES_CACHE.get(state.setValue(POWER, 0));
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -160,6 +176,10 @@ public abstract class Mixin_M_RedStoneWireBlock extends Block {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -179,6 +199,10 @@ public abstract class Mixin_M_RedStoneWireBlock extends Block {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -207,6 +231,10 @@ public abstract class Mixin_M_RedStoneWireBlock extends Block {
     @Shadow
     protected abstract void spawnParticlesAlongLine(Level level, Random random, BlockPos blockPos, Vec3 vec3, Direction direction, Direction direction2, float f, float g);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -246,6 +274,10 @@ public abstract class Mixin_M_RedStoneWireBlock extends Block {
     @Shadow
     protected abstract void updatePowerStrength(Level level, BlockPos blockPos, BlockState blockState);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -287,6 +319,10 @@ public abstract class Mixin_M_RedStoneWireBlock extends Block {
     @Shadow
     protected abstract void updatesOnShapeChange(Level level, BlockPos blockPos, BlockState blockState, BlockState blockState2);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

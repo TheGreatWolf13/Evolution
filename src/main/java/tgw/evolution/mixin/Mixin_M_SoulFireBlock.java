@@ -25,6 +25,10 @@ public abstract class Mixin_M_SoulFireBlock extends BaseFireBlock {
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -37,6 +41,10 @@ public abstract class Mixin_M_SoulFireBlock extends BaseFireBlock {
         return canSurviveOnBlock(level.getBlockState_(x, y - 1, z));
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

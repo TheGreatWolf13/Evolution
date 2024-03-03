@@ -18,6 +18,10 @@ public abstract class Mixin_M_PiglinBrute extends AbstractPiglin {
         super(entityType, level);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

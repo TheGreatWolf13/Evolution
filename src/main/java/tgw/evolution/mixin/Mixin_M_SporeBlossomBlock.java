@@ -34,6 +34,10 @@ public abstract class Mixin_M_SporeBlossomBlock extends Block {
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -55,6 +59,10 @@ public abstract class Mixin_M_SporeBlossomBlock extends Block {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -67,6 +75,10 @@ public abstract class Mixin_M_SporeBlossomBlock extends Block {
         return BlockUtils.canSupportCenter(level, x, y + 1, z, Direction.DOWN) && !level.isWaterAt_(x, y, z);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -79,6 +91,10 @@ public abstract class Mixin_M_SporeBlossomBlock extends Block {
         return SHAPE;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

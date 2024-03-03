@@ -20,6 +20,10 @@ public abstract class Mixin_M_StandingSignBlock extends SignBlock {
         super(properties, woodType);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -32,6 +36,10 @@ public abstract class Mixin_M_StandingSignBlock extends SignBlock {
         return level.getBlockState_(x, y - 1, z).getMaterial().isSolid();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

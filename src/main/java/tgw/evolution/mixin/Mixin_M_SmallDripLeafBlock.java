@@ -34,6 +34,10 @@ public abstract class Mixin_M_SmallDripLeafBlock extends DoublePlantBlock implem
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -49,6 +53,10 @@ public abstract class Mixin_M_SmallDripLeafBlock extends DoublePlantBlock implem
         return this.mayPlaceOn(level.getBlockState_(x, y - 1, z), level, new BlockPos(x, y - 1, z));
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -61,6 +69,10 @@ public abstract class Mixin_M_SmallDripLeafBlock extends DoublePlantBlock implem
         return SHAPE;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
