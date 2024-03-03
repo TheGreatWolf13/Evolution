@@ -79,8 +79,7 @@ public final class Physics implements ILocked {
                                       double sizeZ,
                                       Fluid fluid) {
         Physics physics = CACHE.get();
-        assert !physics.isLocked() : "The local instance of Physics is locked, you probably forgot to unlock it! Use it with try-with-resources to " +
-                                     "unlock automatically.";
+        assert !physics.isLocked() : "The local instance of Physics is locked, you probably forgot to unlock it! Use it with try-with-resources to unlock automatically.";
         physics.level = level;
         physics.x = x;
         physics.y = y;
@@ -250,7 +249,7 @@ public final class Physics implements ILocked {
             }
             float f = this.calcStaticFrictionCoef(entity);
             if (entity.isSprinting()) {
-                f *= 1.1;
+                f *= 1.1F;
             }
             return Math.min(acceleration, this.calcAccNormal() * f);
         }

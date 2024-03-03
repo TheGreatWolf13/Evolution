@@ -30,9 +30,7 @@ public final class CollisionPosCalculator extends AbstractCollisionCalculator<Bl
                                                      double maxZ,
                                                      boolean onlySuffocatingBlocks) {
         CollisionPosCalculator calculator = CACHE.get();
-        assert !calculator.isLocked() :
-                "The local instance of CollisionPosCalculator is locked, you probably forgot to unlock it! Use it with try-with-resources to " +
-                "unlock automatically.";
+        assert !calculator.isLocked() : "The local instance of CollisionPosCalculator is locked, you probably forgot to unlock it! Use it with try-with-resources to unlock automatically.";
         calculator.entity = entity;
         calculator.box.set(minX, minY, minZ, maxX, maxY, maxZ);
         calculator.entityShape = Shapes.create(calculator.box);

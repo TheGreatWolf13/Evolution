@@ -212,8 +212,7 @@ public final class Temperature implements ILocked {
 
     public static Temperature getInstance(ServerLevel level, double x, double y, double z, long t) {
         Temperature temperature = CACHE.get();
-        assert !temperature.isLocked() : "The local instance of Temperature is locked, you probably forgot to unlock it! Use it with " +
-                                         "try-with-resources to unlock automatically.";
+        assert !temperature.isLocked() : "The local instance of Temperature is locked, you probably forgot to unlock it! Use it with try-with-resources to unlock automatically.";
         temperature.x = x;
         temperature.y = y;
         temperature.z = z;
