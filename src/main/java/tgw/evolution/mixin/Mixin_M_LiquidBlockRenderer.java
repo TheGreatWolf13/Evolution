@@ -39,6 +39,7 @@ public abstract class Mixin_M_LiquidBlockRenderer implements PatchLiquidBlockRen
     @Shadow @Final private TextureAtlasSprite[] waterIcons;
     @Shadow private TextureAtlasSprite waterOverlay;
 
+    @Unique
     private static long addWeightedHeight(long a, float f) {
         if (f >= 0.8F) {
             float f0 = Float.intBitsToFloat((int) (a >> 32));
@@ -100,6 +101,10 @@ public abstract class Mixin_M_LiquidBlockRenderer implements PatchLiquidBlockRen
         return Math.max(k, l) | Math.max(i1, j1) << 16;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     private static boolean isFaceOccludedByNeighbor(BlockGetter level, BlockPos pos, Direction direction, float height, BlockState state) {
@@ -111,6 +116,10 @@ public abstract class Mixin_M_LiquidBlockRenderer implements PatchLiquidBlockRen
         return isFaceOccludedByState(level, dir, height, x + dir.getStepX(), y + dir.getStepY(), z + dir.getStepZ(), state);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     private static boolean isFaceOccludedBySelf(BlockGetter level, BlockPos pos, BlockState state, Direction direction) {
@@ -122,6 +131,10 @@ public abstract class Mixin_M_LiquidBlockRenderer implements PatchLiquidBlockRen
         return isFaceOccludedByState(level, direction.getOpposite(), 1.0F, x, y, z, state);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     private static boolean isFaceOccludedByState(BlockGetter blockGetter, Direction direction, float f, BlockPos blockPos, BlockState blockState) {
@@ -160,34 +173,55 @@ public abstract class Mixin_M_LiquidBlockRenderer implements PatchLiquidBlockRen
         return false;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     public static boolean shouldRenderFace(BlockAndTintGetter blockAndTintGetter, BlockPos blockPos, FluidState fluidState, BlockState blockState, Direction direction, FluidState fluidState2) {
         return !isFaceOccludedBySelf(blockAndTintGetter, blockPos, blockState, direction) && !isNeighborSameFluid(fluidState, fluidState2);
     }
 
+    @Unique
     private static boolean shouldRenderFace(BlockAndTintGetter level, int x, int y, int z, FluidState fluid, BlockState state, Direction direction, FluidState fluidAtDir) {
         return !isFaceOccludedBySelf(level, x, y, z, state, direction) && !isNeighborSameFluid(fluid, fluidAtDir);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     private void addWeightedHeight(float[] fs, float f) {
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     private float calculateAverageHeight(BlockAndTintGetter blockAndTintGetter, Fluid fluid, float f, float g, float h, BlockPos blockPos) {
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     private float getHeight(BlockAndTintGetter blockAndTintGetter, Fluid fluid, BlockPos blockPos) {
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     private float getHeight(BlockAndTintGetter blockAndTintGetter, Fluid fluid, BlockPos blockPos, BlockState blockState, FluidState fluidState) {
@@ -204,6 +238,10 @@ public abstract class Mixin_M_LiquidBlockRenderer implements PatchLiquidBlockRen
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean tesselate(BlockAndTintGetter level, BlockPos pos, VertexConsumer builder, BlockState state, FluidState fluidState) {
         Evolution.deprecatedMethod();

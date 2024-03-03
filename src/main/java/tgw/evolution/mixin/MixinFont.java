@@ -40,6 +40,10 @@ public abstract class MixinFont implements PatchFont {
     @Shadow
     public abstract int drawInBatch(String string, float f, float g, int i, boolean bl, Matrix4f matrix4f, MultiBufferSource multiBufferSource, boolean bl2, int j, int k, boolean bl3);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private int drawInternal(String text, float x, float y, int color, boolean dropShadow, Matrix4f matrix, MultiBufferSource buffer, boolean transparent, int colorBackground, int packedLight, boolean bidiFlag) {
         if (bidiFlag) {
@@ -59,6 +63,10 @@ public abstract class MixinFont implements PatchFont {
         return (int) x + (dropShadow ? 1 : 0);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private int drawInternal(FormattedCharSequence processor, float x, float y, int color, boolean drawShadow, Matrix4f matrix, MultiBufferSource buffer, boolean transparent, int colorBackground, int packedLight) {
         color = adjustColor(color);
@@ -75,6 +83,10 @@ public abstract class MixinFont implements PatchFont {
         return (int) x + (drawShadow ? 1 : 0);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private int drawInternal(String string, float x, float y, int color, Matrix4f matrix, boolean shadow, boolean bidi) {
         MultiBufferSource.BufferSource bufferSource = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
@@ -83,6 +95,10 @@ public abstract class MixinFont implements PatchFont {
         return dy;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private int drawInternal(FormattedCharSequence charSequence, float x, float y, int color, Matrix4f matrix, boolean shadow) {
         MultiBufferSource.BufferSource bufferSource = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
@@ -91,6 +107,10 @@ public abstract class MixinFont implements PatchFont {
         return j;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void drawWordWrap(FormattedText text, int x, int y, int maxWidth, int color) {
         Matrix4f matrix = Transformation.identity().getMatrix();
@@ -127,6 +147,10 @@ public abstract class MixinFont implements PatchFont {
         this.lineHeight = 10;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private float renderText(String text, float x, float y, int color, boolean shadow, Matrix4f matrix, MultiBufferSource buffer, boolean transparent, int bgColor, int packedLight) {
         StringSink sink = StringSink.INSTANCE;

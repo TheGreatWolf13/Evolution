@@ -16,18 +16,23 @@ import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
+import org.spongepowered.asm.mixin.Unique;
 import tgw.evolution.util.math.FastRandom;
 import tgw.evolution.util.math.IRandom;
 
 @Mixin(FallingBlockRenderer.class)
 public abstract class MixinFallingBlockRenderer extends EntityRenderer<FallingBlockEntity> {
 
-    private static final IRandom RANDOM = new FastRandom();
+    @Unique private static final IRandom RANDOM = new FastRandom();
 
     public MixinFallingBlockRenderer(EntityRendererProvider.Context context) {
         super(context);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void render(FallingBlockEntity entity, float yaw, float partialTicks, PoseStack matrices, MultiBufferSource buffer, int packedLight) {

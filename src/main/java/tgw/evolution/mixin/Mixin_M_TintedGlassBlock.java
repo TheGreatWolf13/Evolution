@@ -16,6 +16,10 @@ public abstract class Mixin_M_TintedGlassBlock extends AbstractGlassBlock {
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -28,6 +32,10 @@ public abstract class Mixin_M_TintedGlassBlock extends AbstractGlassBlock {
         return level.getMaxLightLevel();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

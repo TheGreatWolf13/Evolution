@@ -59,6 +59,10 @@ public abstract class Mixin_M_MultifaceBlock extends Block {
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -89,6 +93,10 @@ public abstract class Mixin_M_MultifaceBlock extends Block {
         return false;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -105,6 +113,10 @@ public abstract class Mixin_M_MultifaceBlock extends Block {
     @Shadow
     protected abstract boolean isWaterloggable();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

@@ -40,6 +40,10 @@ public abstract class Mixin_M_LightBlock extends Block implements SimpleWaterlog
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -52,6 +56,10 @@ public abstract class Mixin_M_LightBlock extends Block implements SimpleWaterlog
         return 1.0f;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -67,6 +75,10 @@ public abstract class Mixin_M_LightBlock extends Block implements SimpleWaterlog
         return Shapes.empty();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -79,6 +91,10 @@ public abstract class Mixin_M_LightBlock extends Block implements SimpleWaterlog
         return true;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -108,6 +124,10 @@ public abstract class Mixin_M_LightBlock extends Block implements SimpleWaterlog
         return super.updateShape_(state, from, fromState, level, x, y, z, fromX, fromY, fromZ);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

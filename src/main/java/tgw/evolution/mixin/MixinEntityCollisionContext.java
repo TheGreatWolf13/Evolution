@@ -16,6 +16,10 @@ public abstract class MixinEntityCollisionContext implements CollisionContext {
 
     @Shadow @Final private double entityBottom;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public boolean isAbove(VoxelShape shape, BlockPos pos, boolean canAscend) {

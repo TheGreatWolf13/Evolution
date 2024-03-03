@@ -38,12 +38,20 @@ public abstract class Mixin_M_LadderBlock extends Block implements SimpleWaterlo
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     private boolean canAttachTo(BlockGetter blockGetter, BlockPos blockPos, Direction direction) {
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -58,6 +66,10 @@ public abstract class Mixin_M_LadderBlock extends Block implements SimpleWaterlo
         return BlockUtils.hasSolidFace(level, x + opp.getStepX(), y, z + opp.getStepZ(), dir);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -75,6 +87,10 @@ public abstract class Mixin_M_LadderBlock extends Block implements SimpleWaterlo
         };
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

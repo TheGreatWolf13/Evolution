@@ -51,6 +51,10 @@ public abstract class Mixin_M_LeverBlock extends FaceAttachedHorizontalDirection
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -65,6 +69,10 @@ public abstract class Mixin_M_LeverBlock extends FaceAttachedHorizontalDirection
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @Override
     @DeleteMethod
@@ -96,6 +104,10 @@ public abstract class Mixin_M_LeverBlock extends FaceAttachedHorizontalDirection
         };
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -119,6 +131,10 @@ public abstract class Mixin_M_LeverBlock extends FaceAttachedHorizontalDirection
     @Shadow
     protected abstract void updateNeighbours(BlockState blockState, Level level, BlockPos blockPos);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

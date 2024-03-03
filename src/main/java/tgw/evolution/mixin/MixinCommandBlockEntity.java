@@ -16,6 +16,10 @@ public abstract class MixinCommandBlockEntity extends BlockEntity {
         super(blockEntityType, blockPos, blockState);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean isConditional() {
         assert this.level != null;

@@ -18,6 +18,10 @@ public abstract class Mixin_M_MagmaCubeRenderer extends MobRenderer<MagmaCube, L
         super(context, entityModel, f);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     @Override

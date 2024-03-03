@@ -90,6 +90,10 @@ public abstract class MixinGameRenderer implements PatchGameRenderer {
     @Shadow private float zoomX;
     @Shadow private float zoomY;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private void bobHurt(PoseStack matrices, float partialTicks) {
         if (this.minecraft.getCameraEntity() instanceof LivingEntity entity) {
@@ -357,7 +361,11 @@ public abstract class MixinGameRenderer implements PatchGameRenderer {
 
     @Shadow
     protected abstract void renderItemActivationAnimation(int pWidthsp, int pHeightScaled, float pPartialTicks);
-    
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void renderLevel(float partialTicks, long endTickTime, PoseStack matrices) {
         this.lightTexture.updateLightTexture(partialTicks);
@@ -425,6 +433,10 @@ public abstract class MixinGameRenderer implements PatchGameRenderer {
         this.minecraft.lvlRenderer().resize(width, height);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private boolean shouldRenderBlockOutline() {
         assert this.minecraft.level != null;

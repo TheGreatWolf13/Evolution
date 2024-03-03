@@ -6,10 +6,7 @@ import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.resources.FallbackResourceManager;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.SimpleResource;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.*;
 import tgw.evolution.resources.GroupResourcePack;
 import tgw.evolution.resources.ResourcePackSourceTracker;
 import tgw.evolution.util.collection.lists.OArrayList;
@@ -23,7 +20,7 @@ import java.util.List;
 @Mixin(FallbackResourceManager.class)
 public abstract class MixinFallbackResourceManager {
 
-    private final ThreadLocal<List<Resource>> resources = new ThreadLocal<>();
+    @Unique private final ThreadLocal<List<Resource>> resources = new ThreadLocal<>();
     @Shadow @Final public PackType type;
     @Shadow @Final protected List<PackResources> fallbacks;
 
@@ -32,6 +29,10 @@ public abstract class MixinFallbackResourceManager {
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public Resource getResource(ResourceLocation resLoc) throws IOException {
         this.validateLocation(resLoc);
@@ -55,6 +56,10 @@ public abstract class MixinFallbackResourceManager {
         throw new FileNotFoundException(resLoc.toString());
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public List<Resource> getResources(ResourceLocation resourceLocation) throws IOException {
         this.validateLocation(resourceLocation);

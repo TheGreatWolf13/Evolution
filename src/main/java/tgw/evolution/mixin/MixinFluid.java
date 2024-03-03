@@ -17,6 +17,10 @@ import java.util.random.RandomGenerator;
 @Mixin(Fluid.class)
 public abstract class MixinFluid implements PatchFluid {
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void animateTick(Level level, BlockPos pos, FluidState state, Random random) {
         Evolution.deprecatedMethod();
@@ -32,12 +36,20 @@ public abstract class MixinFluid implements PatchFluid {
         return 0.014;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Deprecated
     @Overwrite
     public boolean is(TagKey<Fluid> tag) {
         return this.fluid().tag() == tag;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void randomTick(Level level, BlockPos pos, FluidState fluidState, Random random) {
         Evolution.deprecatedMethod();
@@ -48,6 +60,10 @@ public abstract class MixinFluid implements PatchFluid {
     public void randomTick_(Level level, int x, int y, int z, FluidState fluidState, Random random) {
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void tick(Level level, BlockPos pos, FluidState state) {
         Evolution.deprecatedMethod();

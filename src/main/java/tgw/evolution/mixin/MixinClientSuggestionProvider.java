@@ -28,6 +28,10 @@ public abstract class MixinClientSuggestionProvider implements SharedSuggestionP
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public Collection<TextCoordinates> getAbsoluteCoordinates() {
@@ -39,6 +43,10 @@ public abstract class MixinClientSuggestionProvider implements SharedSuggestionP
         return SharedSuggestionProvider.super.getAbsoluteCoordinates();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public Collection<SharedSuggestionProvider.TextCoordinates> getRelevantCoordinates() {

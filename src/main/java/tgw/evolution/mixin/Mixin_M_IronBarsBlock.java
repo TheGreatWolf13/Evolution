@@ -28,6 +28,10 @@ public abstract class Mixin_M_IronBarsBlock extends CrossCollisionBlock {
     @Shadow
     public abstract boolean attachsTo(BlockState blockState, boolean bl);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -40,6 +44,10 @@ public abstract class Mixin_M_IronBarsBlock extends CrossCollisionBlock {
         return Shapes.empty();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

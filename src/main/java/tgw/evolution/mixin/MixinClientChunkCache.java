@@ -36,6 +36,10 @@ public abstract class MixinClientChunkCache extends ChunkSource implements Patch
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private static boolean isValidChunk(@Nullable LevelChunk chunk, int x, int z) {
         if (chunk == null) {
@@ -46,7 +50,8 @@ public abstract class MixinClientChunkCache extends ChunkSource implements Patch
     }
 
     /**
-     * Runs on the main thread. Called by {@link net.minecraft.network.protocol.game.ClientboundForgetLevelChunkPacket}
+     * @reason _
+     * @author TheGreatWolf
      */
     @Overwrite
     public void drop(int x, int z) {
@@ -69,12 +74,20 @@ public abstract class MixinClientChunkCache extends ChunkSource implements Patch
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public String gatherStats() {
         return (this.storage.chunks.length() + this.storage.getCameraChunksLength()) + ", " + this.getLoadedChunksCount();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public @Nullable LevelChunk getChunk(int x, int z, ChunkStatus status, boolean load) {
@@ -97,6 +110,10 @@ public abstract class MixinClientChunkCache extends ChunkSource implements Patch
         return load ? this.emptyChunk : null;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void onLightUpdate(LightLayer type, SectionPos pos) {
@@ -109,6 +126,10 @@ public abstract class MixinClientChunkCache extends ChunkSource implements Patch
         Minecraft.getInstance().lvlRenderer().setSectionDirty(secX, secY, secZ);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public @Nullable LevelChunk replaceWithPacketData(int x, int z, FriendlyByteBuf buf, CompoundTag tag, Consumer<ClientboundLevelChunkPacketData.BlockEntityTagOutput> consumer) {
         Evolution.deprecatedMethod();
@@ -160,6 +181,10 @@ public abstract class MixinClientChunkCache extends ChunkSource implements Patch
         this.storage.setCamViewCenter(x, z);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void updateViewRadius(int radius) {
         ClientChunkCache.Storage oldStorage = this.storage;

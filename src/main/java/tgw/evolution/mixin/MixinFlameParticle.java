@@ -19,6 +19,10 @@ public abstract class MixinFlameParticle extends RisingParticle {
         super(p_107631_, p_107632_, p_107633_, p_107634_, p_107635_, p_107636_, p_107637_);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @Override
     public int getLightColor(float partialTicks) {

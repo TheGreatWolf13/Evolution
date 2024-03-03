@@ -42,6 +42,10 @@ public abstract class Mixin_M_TntBlock extends Block {
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -67,6 +71,10 @@ public abstract class Mixin_M_TntBlock extends Block {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -85,6 +93,10 @@ public abstract class Mixin_M_TntBlock extends Block {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -100,6 +112,10 @@ public abstract class Mixin_M_TntBlock extends Block {
         super.playerWillDestroy_(level, x, y, z, state, player);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

@@ -31,6 +31,10 @@ public abstract class Mixin_M_IceBlock extends HalfTransparentBlock {
     @Shadow
     protected abstract void melt(BlockState blockState, Level level, BlockPos blockPos);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -58,6 +62,10 @@ public abstract class Mixin_M_IceBlock extends HalfTransparentBlock {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

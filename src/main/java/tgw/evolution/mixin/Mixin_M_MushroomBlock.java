@@ -31,6 +31,10 @@ public abstract class Mixin_M_MushroomBlock extends BushBlock implements Bonemea
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -47,6 +51,10 @@ public abstract class Mixin_M_MushroomBlock extends BushBlock implements Bonemea
         return level.getRawBrightness_(BlockPos.asLong(x, y, z), 0) < 13 && this.mayPlaceOn(stateBelow, level, new BlockPos(x, y - 1, z));
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -59,6 +67,10 @@ public abstract class Mixin_M_MushroomBlock extends BushBlock implements Bonemea
         return SHAPE;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

@@ -41,6 +41,10 @@ public abstract class MixinImposterProtoChunk extends ProtoChunk {
         return this.wrapped.getBlockEmptinessMap();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @Override
     public @Nullable BlockEntity getBlockEntity(BlockPos pos) {
@@ -48,6 +52,10 @@ public abstract class MixinImposterProtoChunk extends ProtoChunk {
         return this.getBlockEntity_(pos.getX(), pos.getY(), pos.getZ());
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @Override
     public @Nullable CompoundTag getBlockEntityNbt(BlockPos pos) {
@@ -55,6 +63,10 @@ public abstract class MixinImposterProtoChunk extends ProtoChunk {
         return this.getBlockEntityNbt_(pos.getX(), pos.getY(), pos.getZ());
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @Override
     public @Nullable CompoundTag getBlockEntityNbtForSaving(BlockPos pos) {
@@ -82,6 +94,10 @@ public abstract class MixinImposterProtoChunk extends ProtoChunk {
         return this.wrapped.getBlockShorts();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public BlockState getBlockState(BlockPos pos) {
@@ -94,6 +110,10 @@ public abstract class MixinImposterProtoChunk extends ProtoChunk {
         return this.wrapped.getBlockState_(x, y, z);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public FluidState getFluidState(BlockPos pos) {
@@ -106,6 +126,10 @@ public abstract class MixinImposterProtoChunk extends ProtoChunk {
         return this.wrapped.getFluidState_(x, y, z);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public Stream<BlockPos> getLights() {
@@ -128,6 +152,10 @@ public abstract class MixinImposterProtoChunk extends ProtoChunk {
         return this.wrapped.getSkyNibbles();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void markPosForPostprocessing(BlockPos pos) {
@@ -138,6 +166,10 @@ public abstract class MixinImposterProtoChunk extends ProtoChunk {
     public void markPosForPostprocessing_(int x, int y, int z) {
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void removeBlockEntity(BlockPos pos) {
@@ -158,6 +190,10 @@ public abstract class MixinImposterProtoChunk extends ProtoChunk {
         this.wrapped.setBlockShorts(nibbles);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public @Nullable BlockState setBlockState(BlockPos pos, BlockState state, boolean isMoving) {

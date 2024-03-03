@@ -35,6 +35,10 @@ public abstract class Mixin_M_LavaFluid extends FlowingFluid {
         level.levelEvent_(LevelEvent.LAVA_FIZZ, x, y, z, 0);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -58,6 +62,10 @@ public abstract class Mixin_M_LavaFluid extends FlowingFluid {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void beforeDestroyingBlock(LevelAccessor level, BlockPos pos, BlockState state) {
@@ -70,6 +78,10 @@ public abstract class Mixin_M_LavaFluid extends FlowingFluid {
         fizz(level, x, y, z);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public boolean canBeReplacedWith(FluidState state, BlockGetter level, BlockPos pos, net.minecraft.world.level.material.Fluid fluid, Direction direction) {
@@ -82,6 +94,10 @@ public abstract class Mixin_M_LavaFluid extends FlowingFluid {
         return state.getHeight_(level, x, y, z) >= 0.444_444_45F && fluid.is(FluidTags.WATER);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     private void fizz(LevelAccessor level, BlockPos pos) {
@@ -98,6 +114,10 @@ public abstract class Mixin_M_LavaFluid extends FlowingFluid {
         return type.ultraWarm() ? 0.007 : 0.002_333_333_333_333_333_5;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @DeleteMethod
     @Overwrite
@@ -120,6 +140,10 @@ public abstract class Mixin_M_LavaFluid extends FlowingFluid {
     @Shadow
     protected abstract boolean isFlammable(LevelReader levelReader, BlockPos blockPos);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -173,6 +197,10 @@ public abstract class Mixin_M_LavaFluid extends FlowingFluid {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

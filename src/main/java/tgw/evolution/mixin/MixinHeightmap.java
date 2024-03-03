@@ -88,6 +88,10 @@ public abstract class MixinHeightmap {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean update(int localX, int y, int localZ, BlockState state) {
         int currentY = this.getFirstAvailable(localX, localZ);

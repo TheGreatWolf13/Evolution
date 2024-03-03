@@ -84,7 +84,7 @@ public abstract class Mixin_FS_Block extends BlockBehaviour implements PatchBloc
     @Unique
     private static void clinit() {
         LOGGER = LogUtils.getLogger();
-        BLOCK_STATE_REGISTRY = new IdMapper();
+        BLOCK_STATE_REGISTRY = new IdMapper<>();
         SHAPE_FULL_BLOCK_CACHE = CacheBuilder.newBuilder().maximumSize(512L).weakKeys().build(new CacheLoader<>() {
             @Override
             public Boolean load(VoxelShape shape) {

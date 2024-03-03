@@ -18,6 +18,10 @@ public abstract class MixinCommandBlockEntity_1 {
     @Shadow
     public abstract ServerLevel getLevel();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void onUpdated() {
         BlockPos pos = this.field_11921.getBlockPos();

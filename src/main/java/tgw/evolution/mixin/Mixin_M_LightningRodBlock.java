@@ -35,6 +35,10 @@ public abstract class Mixin_M_LightningRodBlock extends RodBlock implements Simp
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -49,6 +53,10 @@ public abstract class Mixin_M_LightningRodBlock extends RodBlock implements Simp
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -65,6 +73,10 @@ public abstract class Mixin_M_LightningRodBlock extends RodBlock implements Simp
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -82,6 +94,10 @@ public abstract class Mixin_M_LightningRodBlock extends RodBlock implements Simp
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -98,6 +114,10 @@ public abstract class Mixin_M_LightningRodBlock extends RodBlock implements Simp
     @Shadow
     protected abstract void updateNeighbours(BlockState blockState, Level level, BlockPos blockPos);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

@@ -3,10 +3,7 @@ package tgw.evolution.mixin;
 import com.mojang.math.Matrix4f;
 import com.mojang.math.Vector4f;
 import net.minecraft.client.renderer.culling.Frustum;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import tgw.evolution.client.renderer.chunk.Visibility;
@@ -85,6 +82,7 @@ public abstract class MixinFrustum implements PatchFrustum {
         vec.normalize();
     }
 
+    @Unique
     private @Visibility int intersect(float minX, float minY, float minZ, float maxX, float maxY, float maxZ) {
         boolean inside = true;
         for (Vector4f plane : this.frustumData) {

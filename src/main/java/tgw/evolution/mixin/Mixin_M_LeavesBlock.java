@@ -43,6 +43,10 @@ public abstract class Mixin_M_LeavesBlock extends Block {
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -62,6 +66,10 @@ public abstract class Mixin_M_LeavesBlock extends Block {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -74,6 +82,10 @@ public abstract class Mixin_M_LeavesBlock extends Block {
         return Shapes.empty();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -86,6 +98,10 @@ public abstract class Mixin_M_LeavesBlock extends Block {
         return 1;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -101,6 +117,10 @@ public abstract class Mixin_M_LeavesBlock extends Block {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -113,6 +133,10 @@ public abstract class Mixin_M_LeavesBlock extends Block {
         level.setBlockAndUpdate_(x, y, z, updateDistance(state, level, new BlockPos(x, y, z)));
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

@@ -21,6 +21,10 @@ public abstract class Mixin_M_ThrownItemRenderer<T extends Entity & ItemSupplier
         super(context);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

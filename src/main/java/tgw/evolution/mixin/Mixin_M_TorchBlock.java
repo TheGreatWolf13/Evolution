@@ -37,6 +37,10 @@ public abstract class Mixin_M_TorchBlock extends Block {
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -53,6 +57,10 @@ public abstract class Mixin_M_TorchBlock extends Block {
         level.addParticle(this.flameParticle, px, py, pz, 0, 0, 0);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -65,6 +73,10 @@ public abstract class Mixin_M_TorchBlock extends Block {
         return BlockUtils.canSupportCenter(level, x, y - 1, z, Direction.UP);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -77,6 +89,10 @@ public abstract class Mixin_M_TorchBlock extends Block {
         return AABB;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

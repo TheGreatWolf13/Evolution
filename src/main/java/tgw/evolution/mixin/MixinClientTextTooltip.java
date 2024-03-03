@@ -17,6 +17,10 @@ public abstract class MixinClientTextTooltip implements ClientTooltipComponent {
 
     @Shadow @Final private FormattedCharSequence text;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void renderText(Font font, int x, int y, Matrix4f matrix, MultiBufferSource.BufferSource buffer) {

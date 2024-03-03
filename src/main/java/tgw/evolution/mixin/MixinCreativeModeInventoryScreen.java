@@ -57,6 +57,10 @@ public abstract class MixinCreativeModeInventoryScreen extends EffectRenderingIn
         super(abstractContainerMenu, inventory, component);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private boolean canScroll() {
         return selectedTab != CreativeModeTab.TAB_INVENTORY.getId() && CreativeTabs.get(selectedTab).canScroll() && this.menu.canScroll();
@@ -68,6 +72,10 @@ public abstract class MixinCreativeModeInventoryScreen extends EffectRenderingIn
     @Shadow
     protected abstract boolean checkTabHovering(PoseStack poseStack, CreativeModeTab creativeModeTab, int i, int j);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @Override
     public void containerTick() {
@@ -83,6 +91,10 @@ public abstract class MixinCreativeModeInventoryScreen extends EffectRenderingIn
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public boolean hasClickedOutside(double mouseX, double mouseY, int leftPos, int topPos, @MouseButton int button) {
@@ -91,6 +103,10 @@ public abstract class MixinCreativeModeInventoryScreen extends EffectRenderingIn
         return this.hasClickedOutside;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @Override
     public void init() {
@@ -124,6 +140,10 @@ public abstract class MixinCreativeModeInventoryScreen extends EffectRenderingIn
     @Shadow
     protected abstract boolean insideScrollbar(double d, double e);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public boolean mouseClicked(double mouseX, double mouseY, @MouseButton int button) {
@@ -150,6 +170,10 @@ public abstract class MixinCreativeModeInventoryScreen extends EffectRenderingIn
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public boolean mouseReleased(double mouseX, double mouseY, @MouseButton int button) {
@@ -177,6 +201,10 @@ public abstract class MixinCreativeModeInventoryScreen extends EffectRenderingIn
         return super.mouseReleased(mouseX, mouseY, button);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void render(PoseStack matrices, int mouseX, int mouseY, float partialTicks) {
@@ -202,6 +230,10 @@ public abstract class MixinCreativeModeInventoryScreen extends EffectRenderingIn
         this.renderTooltip(matrices, mouseX, mouseY);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void renderBg(PoseStack matrices, float partialTicks, int mouseX, int mouseY) {
@@ -243,6 +275,10 @@ public abstract class MixinCreativeModeInventoryScreen extends EffectRenderingIn
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void renderLabels(PoseStack poseStack, int i, int j) {
@@ -256,6 +292,10 @@ public abstract class MixinCreativeModeInventoryScreen extends EffectRenderingIn
     @Shadow
     protected abstract void renderTabButton(PoseStack poseStack, CreativeModeTab creativeModeTab);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void renderTooltip(PoseStack matrices, ItemStack stack, int mouseX, int mouseY) {

@@ -24,6 +24,10 @@ public abstract class Mixin_M_NetherSproutsBlock extends BushBlock {
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

@@ -31,6 +31,10 @@ public abstract class Mixin_M_MagmaBlock extends Block {
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -43,6 +47,10 @@ public abstract class Mixin_M_MagmaBlock extends Block {
         level.scheduleTick(new BlockPos(x, y, z), this, 20);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -60,6 +68,10 @@ public abstract class Mixin_M_MagmaBlock extends Block {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -75,6 +87,10 @@ public abstract class Mixin_M_MagmaBlock extends Block {
         super.stepOn_(level, x, y, z, state, entity);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -87,6 +103,10 @@ public abstract class Mixin_M_MagmaBlock extends Block {
         BubbleColumnBlock.updateColumn(level, new BlockPos(x, y + 1, z), state);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

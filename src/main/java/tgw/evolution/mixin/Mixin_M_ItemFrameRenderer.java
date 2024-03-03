@@ -18,6 +18,10 @@ public abstract class Mixin_M_ItemFrameRenderer<T extends ItemFrame> extends Ent
         super(context);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

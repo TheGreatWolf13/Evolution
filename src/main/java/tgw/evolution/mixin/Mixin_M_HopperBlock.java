@@ -49,6 +49,10 @@ public abstract class Mixin_M_HopperBlock extends BaseEntityBlock {
     @Shadow
     protected abstract void checkPoweredState(Level level, BlockPos blockPos, BlockState blockState);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -68,6 +72,10 @@ public abstract class Mixin_M_HopperBlock extends BaseEntityBlock {
         };
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -87,6 +95,10 @@ public abstract class Mixin_M_HopperBlock extends BaseEntityBlock {
         };
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -108,6 +120,10 @@ public abstract class Mixin_M_HopperBlock extends BaseEntityBlock {
         this.checkPoweredState(level, new BlockPos(x, y, z), state);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -122,6 +138,10 @@ public abstract class Mixin_M_HopperBlock extends BaseEntityBlock {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -140,6 +160,10 @@ public abstract class Mixin_M_HopperBlock extends BaseEntityBlock {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

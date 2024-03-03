@@ -38,6 +38,10 @@ public abstract class Mixin_M_LiquidBlock extends Block implements BucketPickup 
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -58,6 +62,10 @@ public abstract class Mixin_M_LiquidBlock extends Block implements BucketPickup 
         return Shapes.empty();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -70,6 +78,10 @@ public abstract class Mixin_M_LiquidBlock extends Block implements BucketPickup 
         return Shapes.empty();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -94,6 +106,10 @@ public abstract class Mixin_M_LiquidBlock extends Block implements BucketPickup 
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -109,6 +125,10 @@ public abstract class Mixin_M_LiquidBlock extends Block implements BucketPickup 
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -121,6 +141,10 @@ public abstract class Mixin_M_LiquidBlock extends Block implements BucketPickup 
         return false;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -136,6 +160,10 @@ public abstract class Mixin_M_LiquidBlock extends Block implements BucketPickup 
     @Shadow
     protected abstract boolean shouldSpreadLiquid(Level level, BlockPos blockPos, BlockState blockState);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

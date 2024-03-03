@@ -21,6 +21,10 @@ public abstract class Mixin_M_TridentItem extends Item implements Vanishable {
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -33,6 +37,10 @@ public abstract class Mixin_M_TridentItem extends Item implements Vanishable {
         return !player.isCreative();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

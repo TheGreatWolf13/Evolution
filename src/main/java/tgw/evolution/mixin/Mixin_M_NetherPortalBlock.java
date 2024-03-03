@@ -42,6 +42,10 @@ public abstract class Mixin_M_NetherPortalBlock extends Block {
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -74,6 +78,10 @@ public abstract class Mixin_M_NetherPortalBlock extends Block {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -89,6 +97,10 @@ public abstract class Mixin_M_NetherPortalBlock extends Block {
         return X_AXIS_AABB;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -113,6 +125,10 @@ public abstract class Mixin_M_NetherPortalBlock extends Block {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

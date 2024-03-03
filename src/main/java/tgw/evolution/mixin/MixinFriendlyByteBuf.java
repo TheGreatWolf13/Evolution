@@ -12,7 +12,11 @@ import tgw.evolution.patches.PatchBlockHitResult;
 
 @Mixin(FriendlyByteBuf.class)
 public abstract class MixinFriendlyByteBuf extends ByteBuf {
-
+    
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public BlockHitResult readBlockHitResult() {
         long pos = this.readLong();
@@ -34,6 +38,10 @@ public abstract class MixinFriendlyByteBuf extends ByteBuf {
     @Shadow
     public abstract long readLong();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void writeBlockHitResult(BlockHitResult hitResult) {
         int posX = hitResult.posX();

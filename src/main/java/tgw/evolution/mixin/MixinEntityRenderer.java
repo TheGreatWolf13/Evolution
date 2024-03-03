@@ -23,12 +23,20 @@ public abstract class MixinEntityRenderer<T extends Entity> implements HREntity<
 
     @Shadow public float shadowRadius;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public int getBlockLightLevel(T entity, BlockPos pos) {
         Evolution.deprecatedMethod();
         return 0;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public final int getPackedLightCoords(T entity, float partialTicks) {
         Vec3 lightProbePosition = entity.getLightProbePosition(partialTicks);
@@ -48,6 +56,10 @@ public abstract class MixinEntityRenderer<T extends Entity> implements HREntity<
         return this.renderOffset(entity, partialTicks);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public int getSkyLightLevel(T entity, BlockPos pos) {
         Evolution.deprecatedMethod();

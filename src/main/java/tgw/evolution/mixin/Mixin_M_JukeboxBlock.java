@@ -28,6 +28,10 @@ public abstract class Mixin_M_JukeboxBlock extends BaseEntityBlock {
     @Shadow
     protected abstract void dropRecording(Level level, BlockPos blockPos);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -43,6 +47,10 @@ public abstract class Mixin_M_JukeboxBlock extends BaseEntityBlock {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

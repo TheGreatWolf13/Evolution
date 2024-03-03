@@ -24,6 +24,10 @@ public abstract class MixinIngredient implements Predicate<ItemStack>, PatchIngr
 
     @Shadow private ItemStack @Nullable [] itemStacks;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Contract("_ -> new")
     @Overwrite
     private static Ingredient.Value valueFromJson(JsonObject json) {
@@ -62,6 +66,10 @@ public abstract class MixinIngredient implements Predicate<ItemStack>, PatchIngr
         return true;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public boolean test(@Nullable ItemStack stack) {

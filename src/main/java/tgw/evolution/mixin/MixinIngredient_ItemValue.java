@@ -14,6 +14,10 @@ public abstract class MixinIngredient_ItemValue implements Ingredient.Value {
 
     @Shadow @Final private ItemStack item;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public JsonObject serialize() {

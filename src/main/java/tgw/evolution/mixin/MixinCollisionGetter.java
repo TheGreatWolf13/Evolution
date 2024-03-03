@@ -21,6 +21,10 @@ import tgw.evolution.world.util.CollisionShapeCalculator;
 @Mixin(CollisionGetter.class)
 public interface MixinCollisionGetter extends PatchCollisionGetter, BlockGetter {
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private @Nullable VoxelShape borderCollision(Entity entity, AABB bb) {
         WorldBorder worldBorder = this.getWorldBorder();
@@ -49,6 +53,10 @@ public interface MixinCollisionGetter extends PatchCollisionGetter, BlockGetter 
     @Shadow
     boolean isUnobstructed(@Nullable Entity entity, VoxelShape voxelShape);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     default boolean isUnobstructed(BlockState state, BlockPos pos, CollisionContext context) {
         Evolution.deprecatedMethod();

@@ -21,6 +21,10 @@ public abstract class Mixin_M_LoomBlock extends HorizontalDirectionalBlock {
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

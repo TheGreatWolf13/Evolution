@@ -132,6 +132,10 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
     @Shadow private Vec3 position;
     @Shadow private int remainingFireTicks;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public static Vec3 collideBoundingBox(@Nullable Entity entity, Vec3 delta, AABB bb, Level level, List<VoxelShape> list) {
         OList<VoxelShape> shapes = new OArrayList<>(list.size() + 1);
@@ -288,7 +292,8 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
     protected abstract void checkFallDamage(double pY, boolean pOnGround, BlockState pState, BlockPos pPos);
 
     /**
-     * @reason Deprecated
+     * @reason _
+     * @author TheGreatWolf
      */
     @Overwrite
     public void checkInsideBlocks() {
@@ -376,6 +381,10 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
     @Shadow
     public abstract float getBbWidth();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public float getBlockJumpFactor() {
         if (this.supportingPos.isPresent()) {
@@ -418,6 +427,10 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
         return this.bbForPose.setUnchecked(this.getX() - f, this.getY(), this.getZ() - f, this.getX() + f, this.getY() + dim.height, this.getZ() + f);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public float getBrightness() {
         int x = this.blockPosition.getX();
@@ -484,7 +497,8 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
     public abstract double getEyeY();
 
     /**
-     * @reason Deprecated
+     * @reason _
+     * @author TheGreatWolf
      */
     @Overwrite
     public BlockState getFeetBlockState() {
@@ -660,6 +674,10 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
     @Shadow
     public abstract boolean hurt(DamageSource p_19946_, float p_19947_);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public InteractionResult interactAt(Player player, Vec3 hit, InteractionHand hand) {
         Evolution.deprecatedMethod();
@@ -676,6 +694,10 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
         return this.isAddedToWorld;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean isColliding(BlockPos pos, BlockState state) {
         Evolution.deprecatedMethod();
@@ -724,7 +746,8 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
     }
 
     /**
-     * @reason Deprecated
+     * @reason _
+     * @author TheGreatWolf
      */
     @Overwrite
     private boolean isInBubbleColumn() {
@@ -963,7 +986,8 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
     }
 
     /**
-     * @reason Deprecated
+     * @reason _
+     * @author TheGreatWolf
      */
     @Overwrite
     public void moveTowardsClosestSpace(double x, double y, double z) {
@@ -1088,7 +1112,8 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
     public abstract void playSound(SoundEvent pSound, float pVolume, float pPitch);
 
     /**
-     * @reason Deprecated
+     * @reason _
+     * @author TheGreatWolf
      */
     @Overwrite
     public void playStepSound(BlockPos pos, BlockState state) {

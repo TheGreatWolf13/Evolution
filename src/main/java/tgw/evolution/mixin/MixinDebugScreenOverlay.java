@@ -103,6 +103,10 @@ public abstract class MixinDebugScreenOverlay extends GuiComponent {
         return this.evolution;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public List<String> getGameInformation() {
         assert this.lastPos != null;
@@ -287,6 +291,10 @@ public abstract class MixinDebugScreenOverlay extends GuiComponent {
     @Shadow
     protected abstract String getPropertyValueString(Map.Entry<Property<?>, Comparable<?>> pEntry);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @javax.annotation.Nullable
     @Overwrite
     private @Nullable LevelChunk getServerChunk() {
@@ -320,6 +328,10 @@ public abstract class MixinDebugScreenOverlay extends GuiComponent {
     @Shadow
     protected abstract @Nullable ServerLevel getServerLevel();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public List<String> getSystemInformation() {
         assert this.minecraft.level != null;

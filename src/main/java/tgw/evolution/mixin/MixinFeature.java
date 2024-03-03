@@ -19,9 +19,13 @@ public abstract class MixinFeature<FC extends FeatureConfiguration> {
     @Shadow
     public abstract boolean place(FeaturePlaceContext<FC> featurePlaceContext);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean place(FC config, WorldGenLevel level, ChunkGenerator chunkGenerator, Random random, BlockPos origin) {
         return level.ensureCanWrite_(origin.getX(), origin.getY(), origin.getZ()) &&
-               this.place(new FeaturePlaceContext(Optional.empty(), level, chunkGenerator, random, origin, config));
+               this.place(new FeaturePlaceContext<>(Optional.empty(), level, chunkGenerator, random, origin, config));
     }
 }

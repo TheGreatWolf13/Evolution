@@ -40,6 +40,10 @@ public abstract class Mixin_M_LanternBlock extends Block implements SimpleWaterl
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -54,6 +58,10 @@ public abstract class Mixin_M_LanternBlock extends Block implements SimpleWaterl
         return BlockUtils.canSupportCenter(level, x + opp.getStepX(), y + opp.getStepY(), z + opp.getStepZ(), dir);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -66,6 +74,10 @@ public abstract class Mixin_M_LanternBlock extends Block implements SimpleWaterl
         return state.getValue(HANGING) ? HANGING_AABB : AABB;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

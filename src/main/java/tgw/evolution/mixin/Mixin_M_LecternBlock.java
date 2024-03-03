@@ -49,6 +49,10 @@ public abstract class Mixin_M_LecternBlock extends BaseEntityBlock {
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -61,6 +65,10 @@ public abstract class Mixin_M_LecternBlock extends BaseEntityBlock {
         return SHAPE_COLLISION;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -73,6 +81,10 @@ public abstract class Mixin_M_LecternBlock extends BaseEntityBlock {
         return SHAPE_COMMON;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -91,6 +103,10 @@ public abstract class Mixin_M_LecternBlock extends BaseEntityBlock {
         };
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -117,6 +133,10 @@ public abstract class Mixin_M_LecternBlock extends BaseEntityBlock {
     @Shadow
     protected abstract void popBook(BlockState blockState, Level level, BlockPos blockPos);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -129,6 +149,10 @@ public abstract class Mixin_M_LecternBlock extends BaseEntityBlock {
         changePowered(level, new BlockPos(x, y, z), state, false);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
