@@ -162,9 +162,12 @@ public final class BlockStarLightEngine extends StarLightEngine<SWMRShortArray> 
     private int getEmittedLight(int x, int y, int z, BlockState state) {
         int dl = 0;
         if (this.level.isClientSide) {
-            dl = ClientEvents.getInstance().getDynamicLights().getLight(BlockPos.asLong(x, y, z));
-            if (dl == 0b1_1111_1_1111_1_1111) {
-                return 0b1_1111_1_1111_1_1111;
+            ClientEvents client = ClientEvents.getInstance();
+            if (client.isInitialized()) {
+                dl = client.getDynamicLights().getLight(BlockPos.asLong(x, y, z));
+                if (dl == 0b1_1111_1_1111_1_1111) {
+                    return 0b1_1111_1_1111_1_1111;
+                }
             }
         }
         if (dl == 0) {
