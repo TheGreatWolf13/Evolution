@@ -195,6 +195,10 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
         return EntityStates.GENERIC_HIT_SOUND;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void actuallyHurt(DamageSource source, float amount) {
         if (!this.isInvulnerableTo(source)) {
@@ -1460,6 +1464,10 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
         return null;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean onSoulSpeedBlock() {
         return this.level.getBlockState_(this.getFrictionPos()).is(BlockTags.SOUL_SPEED_BLOCKS);
@@ -1532,6 +1540,10 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void readAdditionalSaveData(CompoundTag tag) {
@@ -1597,6 +1609,10 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
         return AdditionalSlotType.SLOTS;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean removeEffect(MobEffect mobEffect) {
         //noinspection ConstantConditions
@@ -1650,6 +1666,10 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
     @Shadow
     protected abstract boolean shouldTriggerItemUseEffects();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private void spawnItemParticles(ItemStack stack, int amount) {
         float xRot = -this.getXRot() * Mth.DEG_TO_RAD;

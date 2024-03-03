@@ -25,7 +25,11 @@ import java.util.Optional;
 
 @Mixin(BlockGetter.class)
 public interface MixinBlockGetter extends PatchBlockGetter {
-
+    
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private static BlockHitResult method_17746(ClipContext c) {
         Vec3 from = c.getFrom();
@@ -40,7 +44,8 @@ public interface MixinBlockGetter extends PatchBlockGetter {
     }
 
     /**
-     * @reason Deprecated
+     * @reason _
+     * @author TheGreatWolf
      */
     @Overwrite
     private static BlockHitResult method_32882(ClipBlockStateContext c) {
@@ -52,6 +57,10 @@ public interface MixinBlockGetter extends PatchBlockGetter {
         return BlockHitResult.miss(to, Direction.getNearest(x, y, z), new BlockPos(to));
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     default BlockHitResult clip(ClipContext context) {
         Vec3 from = context.getFrom();
@@ -172,7 +181,8 @@ public interface MixinBlockGetter extends PatchBlockGetter {
     }
 
     /**
-     * @reason Deprecated
+     * @reason _
+     * @author TheGreatWolf
      */
     @Overwrite
     default BlockHitResult isBlockInLine(ClipBlockStateContext context) {

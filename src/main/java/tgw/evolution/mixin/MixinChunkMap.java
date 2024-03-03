@@ -46,7 +46,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BooleanSupplier;
 import java.util.function.IntFunction;
-import java.util.stream.Collectors;
 
 @Mixin(ChunkMap.class)
 public abstract class MixinChunkMap extends ChunkStorage {
@@ -55,12 +54,12 @@ public abstract class MixinChunkMap extends ChunkStorage {
     @Unique private final LSet chunksLoaded = new LHashSet();
     @Unique private final LSet chunksToLoad = new LHashSet();
     @Unique private final LSet chunksToUnload = new LHashSet();
+    @Shadow @Final public BlockableEventLoop<Runnable> mainThreadExecutor;
     @Shadow public int viewDistance;
     @Shadow @Final ServerLevel level;
     @Shadow @Final private ChunkMap.DistanceManager distanceManager;
     @Shadow @Final private Int2ObjectMap<ChunkMap.TrackedEntity> entityMap;
     @Shadow @Final private ThreadedLevelLightEngine lightEngine;
-    @Shadow @Final private BlockableEventLoop<Runnable> mainThreadExecutor;
     @Shadow @Final private ProcessorHandle<ChunkTaskPriorityQueueSorter.Message<Runnable>> mainThreadMailbox;
     @Shadow @Final private PlayerMap playerMap;
     @Shadow @Final private PoiManager poiManager;
@@ -86,6 +85,10 @@ public abstract class MixinChunkMap extends ChunkStorage {
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean anyPlayerCloseEnoughForSpawning(ChunkPos chunkPos) {
         if (!this.distanceManager.hasPlayersNearby(chunkPos.toLong())) {
@@ -105,6 +108,10 @@ public abstract class MixinChunkMap extends ChunkStorage {
                                                                                                                          int i,
                                                                                                                          IntFunction<ChunkStatus> intFunction);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public List<ServerPlayer> getPlayers(ChunkPos pos, boolean boundaryOnly) {
         OList<ServerPlayer> list = null;
@@ -134,7 +141,7 @@ public abstract class MixinChunkMap extends ChunkStorage {
     }
 
     @Shadow
-    protected abstract @Nullable ChunkHolder getVisibleChunkIfPresent(long p_140328_);
+    public abstract @Nullable ChunkHolder getVisibleChunkIfPresent(long p_140328_);
 
     @Shadow
     protected abstract boolean isExistingChunkFull(ChunkPos pChunkPos);
@@ -368,6 +375,7 @@ public abstract class MixinChunkMap extends ChunkStorage {
                                               MutableObject<ClientboundLevelChunkWithLightPacket> mutableObject,
                                               LevelChunk levelChunk);
 
+    @Unique
     private void playerLoadedChunkNoPkt(ServerPlayer player, LevelChunk chunk) {
         player.trackChunk(chunk.getPos(), new ClientboundLevelChunkWithLightPacket(chunk, this.lightEngine, null, null, true));
         OList<Mob> leashes = null;
@@ -404,6 +412,10 @@ public abstract class MixinChunkMap extends ChunkStorage {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public CompletableFuture<Either<LevelChunk, ChunkHolder.ChunkLoadingFailure>> prepareTickingChunk(ChunkHolder holder) {
         ChunkPos chunkPos = holder.getPos();
@@ -431,7 +443,7 @@ public abstract class MixinChunkMap extends ChunkStorage {
                 LevelChunk chunk = e.getLeft();
                 List<ServerPlayer> players = this.getPlayers(chunk.getPos(), false);
                 if (!players.isEmpty()) {
-                    MutableObject<ClientboundLevelChunkWithLightPacket> mutableObject = new MutableObject();
+                    MutableObject<ClientboundLevelChunkWithLightPacket> mutableObject = new MutableObject<>();
                     for (int i = 0, len = players.size(); i < len; ++i) {
                         this.playerLoadedChunk(players.get(i), mutableObject, chunk);
                     }
@@ -492,7 +504,7 @@ public abstract class MixinChunkMap extends ChunkStorage {
                                                          .stream()
                                                          //Remove filter to make it always accessible flush save
                                                          .peek(ChunkHolder::refreshAccessibility)
-                                                         .collect(Collectors.toList());
+                                                         .toList();
             MutableBoolean mutableboolean = new MutableBoolean();
             do {
                 mutableboolean.setFalse();
@@ -578,6 +590,10 @@ public abstract class MixinChunkMap extends ChunkStorage {
     @Shadow
     protected abstract SectionPos updatePlayerPos(ServerPlayer p_140374_);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void updatePlayerStatus(ServerPlayer player, boolean load) {
         boolean skip = this.skipPlayer(player);

@@ -80,6 +80,10 @@ public abstract class MixinChunkSerializer {
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private static void method_39797(@Nullable ListTag entities, ServerLevel level, @Nullable ListTag blockEntities, LevelChunk chunk) {
         if (entities != null) {
@@ -118,6 +122,10 @@ public abstract class MixinChunkSerializer {
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @SuppressWarnings("ConstantConditions")
     @Overwrite
     private static @Nullable LevelChunk.PostLoadProcessor postLoadChunk(ServerLevel level, CompoundTag compoundTag) {
@@ -343,6 +351,10 @@ public abstract class MixinChunkSerializer {
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public static CompoundTag write(ServerLevel level, ChunkAccess chunk) {
         ChunkPos pos = chunk.getPos();

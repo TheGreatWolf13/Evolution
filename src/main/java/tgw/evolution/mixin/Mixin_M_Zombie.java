@@ -30,6 +30,10 @@ public abstract class Mixin_M_Zombie extends Monster {
     @Shadow
     protected abstract SoundEvent getStepSound();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

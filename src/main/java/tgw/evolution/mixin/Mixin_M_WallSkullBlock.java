@@ -31,6 +31,10 @@ public abstract class Mixin_M_WallSkullBlock extends AbstractSkullBlock {
         super(type, properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

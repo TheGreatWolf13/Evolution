@@ -18,6 +18,10 @@ public abstract class Mixin_M_WitherBossRenderer extends MobRenderer<WitherBoss,
         super(context, entityModel, f);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

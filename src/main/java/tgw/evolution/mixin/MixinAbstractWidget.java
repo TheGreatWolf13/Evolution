@@ -71,6 +71,10 @@ public abstract class MixinAbstractWidget extends GuiComponent implements PatchA
     @Shadow
     protected abstract void renderBg(PoseStack pPoseStack, Minecraft pMinecraft, int pMouseX, int pMouseY);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void renderButton(PoseStack matrices, int mouseX, int mouseY, float partialTick) {
         Minecraft minecraft = Minecraft.getInstance();

@@ -18,6 +18,10 @@ import tgw.evolution.Evolution;
 @Mixin(ClipContext.Block.class)
 public abstract class MixinClipContext_Block implements ClipContext.ShapeGetter {
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public VoxelShape get(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {

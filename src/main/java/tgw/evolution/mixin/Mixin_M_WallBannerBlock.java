@@ -33,6 +33,10 @@ public abstract class Mixin_M_WallBannerBlock extends AbstractBannerBlock {
         super(dyeColor, properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -45,6 +49,10 @@ public abstract class Mixin_M_WallBannerBlock extends AbstractBannerBlock {
         return level.getBlockStateAtSide(x, y, z, state.getValue(FACING).getOpposite()).getMaterial().isSolid();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -57,6 +65,10 @@ public abstract class Mixin_M_WallBannerBlock extends AbstractBannerBlock {
         return SHAPES.get(state.getValue(FACING));
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

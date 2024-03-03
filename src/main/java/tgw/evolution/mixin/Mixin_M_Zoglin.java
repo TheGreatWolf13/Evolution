@@ -20,6 +20,10 @@ public abstract class Mixin_M_Zoglin extends Monster implements Enemy, HoglinBas
         super(entityType, level);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

@@ -11,6 +11,10 @@ import tgw.evolution.client.tooltip.TooltipManager;
 @Mixin(ClientTooltipComponent.class)
 public interface MixinClientTooltipComponent {
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     static ClientTooltipComponent create(TooltipComponent component) {
         if (component instanceof BundleTooltip bundle) {

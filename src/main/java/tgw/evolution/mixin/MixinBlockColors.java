@@ -26,6 +26,10 @@ public abstract class MixinBlockColors implements PatchBlockColors {
 
     @Shadow @Final private IdMapper<BlockColor> blockColors;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public static BlockColors createDefault() {
         BlockColors colors = new BlockColors();
@@ -52,6 +56,10 @@ public abstract class MixinBlockColors implements PatchBlockColors {
         return colors;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public int getColor(BlockState state, @Nullable BlockAndTintGetter level, @Nullable BlockPos pos, int data) {
         Evolution.deprecatedMethod();
@@ -67,6 +75,10 @@ public abstract class MixinBlockColors implements PatchBlockColors {
         return blockColor == null ? 0xffff_ffff : blockColor.getColor_(state, level, x, y, z, data);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @SuppressWarnings("OverwriteModifiers")
     @Overwrite
     public void register(BlockColor blockColor, Block... blocks) {

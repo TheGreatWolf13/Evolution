@@ -25,6 +25,7 @@ public abstract class MixinLevelLoadingScreen extends Screen {
         super(text);
     }
 
+    @Unique
     private static void addRect(Matrix4f matrix, VertexConsumer buffer, int x1, int y1, int x2, int y2, int color) {
         buffer.vertex(matrix, x1, y2, 0).color(color).endVertex();
         buffer.vertex(matrix, x2, y2, 0).color(color).endVertex();

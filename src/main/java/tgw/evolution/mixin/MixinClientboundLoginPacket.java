@@ -3,6 +3,8 @@ package tgw.evolution.mixin;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundLoginPacket;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.GameType;
@@ -19,7 +21,7 @@ import javax.annotation.Nullable;
 import java.util.Set;
 
 @Mixin(ClientboundLoginPacket.class)
-public abstract class MixinClientboundLoginPacket implements PatchClientboundLoginPacket {
+public abstract class MixinClientboundLoginPacket implements PatchClientboundLoginPacket, Packet<ClientGamePacketListener> {
 
     @Shadow @Final private int chunkRadius;
     @Unique private long daytime;
@@ -70,6 +72,7 @@ public abstract class MixinClientboundLoginPacket implements PatchClientboundLog
      * @author TheGreatWolf
      * @reason Add more info, avoid allocations when possible
      */
+    @Override
     @Overwrite
     public void write(FriendlyByteBuf buffer) {
         buffer.writeInt(this.playerId);

@@ -27,6 +27,10 @@ public abstract class Mixin_M_WetSpongeBlock extends Block {
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -73,6 +77,10 @@ public abstract class Mixin_M_WetSpongeBlock extends Block {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

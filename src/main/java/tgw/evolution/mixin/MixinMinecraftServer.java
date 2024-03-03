@@ -144,6 +144,10 @@ public abstract class MixinMinecraftServer extends ReentrantBlockableEventLoop<T
     @Shadow
     public abstract boolean isSingleplayer();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean isUnderSpawnProtection(ServerLevel level, BlockPos pos, Player player) {
         Evolution.deprecatedMethod();

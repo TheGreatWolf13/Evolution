@@ -25,6 +25,10 @@ public abstract class MixinBlockEntityRenderDispatcher {
 
     @Shadow public Camera camera;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private static <T extends BlockEntity> void setupAndRender(BlockEntityRenderer<T> renderer, T tile, float partialTick, PoseStack matrices, MultiBufferSource bufferSource) {
         Level level = tile.getLevel();
@@ -43,6 +47,10 @@ public abstract class MixinBlockEntityRenderDispatcher {
     @Nullable
     public abstract <E extends BlockEntity> BlockEntityRenderer<E> getRenderer(E pBlockEntity);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public <E extends BlockEntity> void render(E tile, float partialTicks, PoseStack matrices, MultiBufferSource bufferSource) {
         BlockEntityRenderer<E> renderer = this.getRenderer(tile);
@@ -62,7 +70,11 @@ public abstract class MixinBlockEntityRenderDispatcher {
             }
         }
     }
-    
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public <E extends BlockEntity> boolean renderItem(E tile, PoseStack matrices, MultiBufferSource bufferSource, int light, int overlay) {
         BlockEntityRenderer<E> renderer = this.getRenderer(tile);

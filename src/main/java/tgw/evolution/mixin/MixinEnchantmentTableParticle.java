@@ -21,6 +21,10 @@ public abstract class MixinEnchantmentTableParticle extends TextureSheetParticle
         super(clientLevel, d, e, f);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public int getLightColor(float partialTicks) {
@@ -37,6 +41,10 @@ public abstract class MixinEnchantmentTableParticle extends TextureSheetParticle
         return bl | sl << 16;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void move(double dx, double dy, double dz) {
@@ -44,6 +52,10 @@ public abstract class MixinEnchantmentTableParticle extends TextureSheetParticle
         this.setLocationFromBoundingbox();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void tick() {

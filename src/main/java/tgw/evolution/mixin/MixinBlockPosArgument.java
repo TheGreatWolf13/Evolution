@@ -21,6 +21,10 @@ public abstract class MixinBlockPosArgument implements ArgumentType<Coordinates>
 
     @Shadow @Final public static SimpleCommandExceptionType ERROR_OUT_OF_WORLD;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public static BlockPos getLoadedBlockPos(CommandContext<CommandSourceStack> context, String string) throws CommandSyntaxException {
         CommandSourceStack source = context.getSource();

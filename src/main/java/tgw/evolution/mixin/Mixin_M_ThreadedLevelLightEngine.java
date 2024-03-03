@@ -37,6 +37,10 @@ public abstract class Mixin_M_ThreadedLevelLightEngine extends LevelLightEngine 
         super(lightChunkGetter, bl, bl2);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void checkBlock(BlockPos pos) {
@@ -52,6 +56,10 @@ public abstract class Mixin_M_ThreadedLevelLightEngine extends LevelLightEngine 
         this.queueTaskForSection(x >> 4, y >> 4, z >> 4, () -> this.getLightEngine().blockChange(pos));
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void enableLightSources(ChunkPos chunkPos, boolean bl) {
@@ -59,6 +67,10 @@ public abstract class Mixin_M_ThreadedLevelLightEngine extends LevelLightEngine 
         //Do nothing
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public CompletableFuture<ChunkAccess> lightChunk(ChunkAccess chunk, boolean lit) {
         ChunkPos chunkPos = chunk.getPos();
@@ -88,6 +100,10 @@ public abstract class Mixin_M_ThreadedLevelLightEngine extends LevelLightEngine 
         });
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void onBlockEmissionIncrease(BlockPos pos, int lightEmission) {
@@ -95,6 +111,10 @@ public abstract class Mixin_M_ThreadedLevelLightEngine extends LevelLightEngine 
         throw Util.pauseInIde(new UnsupportedOperationException("Ran automatically on a different thread!"));
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -161,6 +181,10 @@ public abstract class Mixin_M_ThreadedLevelLightEngine extends LevelLightEngine 
         });
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void retainData(ChunkPos chunkPos, boolean bl) {
@@ -170,11 +194,19 @@ public abstract class Mixin_M_ThreadedLevelLightEngine extends LevelLightEngine 
     @Shadow
     public abstract void tryScheduleUpdate();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void updateChunkStatus(ChunkPos chunkPos) {
         //Do nothing
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void updateSectionStatus(SectionPos secPos, boolean hasOnlyAir) {

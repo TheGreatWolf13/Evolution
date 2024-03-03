@@ -15,6 +15,10 @@ import org.spongepowered.asm.mixin.Overwrite;
 @Mixin(ItemColors.class)
 public abstract class MixinItemColors {
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public static ItemColors createDefault(BlockColors blockColors) {
         ItemColors itemColors = new ItemColors();

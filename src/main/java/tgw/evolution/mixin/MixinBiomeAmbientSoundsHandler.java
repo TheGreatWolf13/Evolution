@@ -37,7 +37,11 @@ public abstract class MixinBiomeAmbientSoundsHandler {
     @Shadow @Nullable private Biome previousBiome;
     @Shadow @Final private Random random;
     @Shadow @Final private SoundManager soundManager;
-    
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void tick() {
         this.loopSounds.values().removeIf(AbstractTickableSoundInstance::isStopped);

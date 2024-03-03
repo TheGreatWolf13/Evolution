@@ -14,6 +14,10 @@ import java.util.List;
 @Mixin(ClientboundLightUpdatePacketData.class)
 public abstract class MixinClientboundLightUpdatePacketData implements PatchClientboundLightUpdatePacketData {
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private void prepareSectionData(ChunkPos pos, LevelLightEngine engine, LightLayer layer, int index, BitSet yMask, BitSet emptyYMask, List<byte[]> list) {
         byte[] dataLayer = engine.getLayerListener(layer).getDataLayerData_(pos.x, engine.getMinLightSection() + index, pos.z);

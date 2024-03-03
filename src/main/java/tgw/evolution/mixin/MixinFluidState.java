@@ -31,6 +31,10 @@ public abstract class MixinFluidState extends StateHolder<Fluid, FluidState> imp
         super(object, immutableMap, mapCodec);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void animateTick(Level level, BlockPos pos, Random random) {
         Evolution.deprecatedMethod();
@@ -42,6 +46,10 @@ public abstract class MixinFluidState extends StateHolder<Fluid, FluidState> imp
         this.getType().animateTick_(level, x, y, z, (FluidState) (Object) this, random);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     public boolean canBeReplacedWith(BlockGetter level, BlockPos pos, Fluid fluid, Direction direction) {
@@ -54,6 +62,10 @@ public abstract class MixinFluidState extends StateHolder<Fluid, FluidState> imp
         return this.getType().canBeReplacedWith_((FluidState) (Object) this, level, x, y, z, fluid, direction);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public float getHeight(BlockGetter level, BlockPos pos) {
         Evolution.deprecatedMethod();
@@ -65,6 +77,10 @@ public abstract class MixinFluidState extends StateHolder<Fluid, FluidState> imp
         return this.getType().getHeight_((FluidState) (Object) this, level, x, y, z);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public VoxelShape getShape(BlockGetter level, BlockPos pos) {
         Evolution.deprecatedMethod();
@@ -79,11 +95,19 @@ public abstract class MixinFluidState extends StateHolder<Fluid, FluidState> imp
     @Shadow
     public abstract Fluid getType();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean is(TagKey<Fluid> tagKey) {
         return this.getType().fluid().tag() == tagKey;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void randomTick(Level level, BlockPos pos, Random random) {
         Evolution.deprecatedMethod();
@@ -95,6 +119,10 @@ public abstract class MixinFluidState extends StateHolder<Fluid, FluidState> imp
         this.getType().randomTick_(level, x, y, z, (FluidState) (Object) this, random);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void tick(Level level, BlockPos pos) {
         Evolution.deprecatedMethod();

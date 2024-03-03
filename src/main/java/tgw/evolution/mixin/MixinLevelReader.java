@@ -21,6 +21,10 @@ import tgw.evolution.world.util.LevelUtils;
 @Mixin(LevelReader.class)
 public interface MixinLevelReader extends BlockAndTintGetter, PatchLevelReader {
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     default boolean containsAnyLiquid(AABB bb) {
         Evolution.deprecatedMethod();
@@ -30,6 +34,10 @@ public interface MixinLevelReader extends BlockAndTintGetter, PatchLevelReader {
     @Shadow
     DimensionType dimensionType();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     default Holder<Biome> getBiome(BlockPos pos) {
         Evolution.deprecatedMethod();
@@ -44,6 +52,10 @@ public interface MixinLevelReader extends BlockAndTintGetter, PatchLevelReader {
         return this.getBiomeManager().getBiome_(x, y, z);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     default int getBlockTint(BlockPos pos, ColorResolver colorResolver) {
@@ -56,6 +68,10 @@ public interface MixinLevelReader extends BlockAndTintGetter, PatchLevelReader {
         return colorResolver.getColor(this.getBiome_(x, y, z).value(), x, z);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Deprecated
     @Overwrite
     default float getBrightness(BlockPos pos) {
@@ -71,12 +87,20 @@ public interface MixinLevelReader extends BlockAndTintGetter, PatchLevelReader {
     @Shadow
     ChunkAccess getChunk(int i, int j);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     default int getMaxLocalRawBrightness(BlockPos pos) {
         Evolution.deprecatedMethod();
         return this.getMaxLocalRawBrightness_(pos.getX(), pos.getY(), pos.getZ());
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     default int getMaxLocalRawBrightness(BlockPos pos, int skyDarken) {
         Evolution.deprecatedMethod();
@@ -98,6 +122,10 @@ public interface MixinLevelReader extends BlockAndTintGetter, PatchLevelReader {
     @Shadow
     int getSkyDarken();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     default boolean isEmptyBlock(BlockPos pos) {
         Evolution.deprecatedMethod();
@@ -109,6 +137,10 @@ public interface MixinLevelReader extends BlockAndTintGetter, PatchLevelReader {
         return this.getBlockState_(x, y, z).isAir();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     default boolean isWaterAt(BlockPos pos) {
         Evolution.deprecatedMethod();

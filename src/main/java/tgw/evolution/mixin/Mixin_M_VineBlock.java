@@ -57,6 +57,10 @@ public abstract class Mixin_M_VineBlock extends Block {
     @Shadow
     protected abstract boolean canSupportAtFace(BlockGetter blockGetter, BlockPos blockPos, Direction direction);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -72,6 +76,10 @@ public abstract class Mixin_M_VineBlock extends Block {
     @Shadow
     protected abstract BlockState copyRandomFaces(BlockState blockState, BlockState blockState2, Random random);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -93,6 +101,10 @@ public abstract class Mixin_M_VineBlock extends Block {
     @Shadow
     protected abstract boolean hasHorizontalConnection(BlockState blockState);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -105,6 +117,10 @@ public abstract class Mixin_M_VineBlock extends Block {
         return true;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -203,6 +219,10 @@ public abstract class Mixin_M_VineBlock extends Block {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

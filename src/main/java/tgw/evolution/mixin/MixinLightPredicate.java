@@ -16,6 +16,10 @@ public abstract class MixinLightPredicate implements PatchLocationPredicate {
 
     @Shadow @Final private MinMaxBounds.Ints composite;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean matches(ServerLevel level, BlockPos pos) {
         Evolution.deprecatedMethod();

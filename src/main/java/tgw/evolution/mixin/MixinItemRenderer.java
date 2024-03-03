@@ -232,6 +232,10 @@ public abstract class MixinItemRenderer implements IKeyedReloadListener {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void renderGuiItem(ItemStack itemStack, int i, int j, BakedModel bakedModel) {
         this.textureManager.getTexture(TextureAtlas.LOCATION_BLOCKS).setFilter(false, false);
@@ -261,6 +265,10 @@ public abstract class MixinItemRenderer implements IKeyedReloadListener {
         RenderSystem.applyModelViewMatrix();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void renderGuiItemDecorations(Font font, ItemStack stack, int x, int y, @Nullable String countText) {
         if (!stack.isEmpty()) {

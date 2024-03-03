@@ -231,6 +231,10 @@ public abstract class MixinFogRenderer {
         RenderSystem.clearColor(fogRed, fogGreen, fogBlue, 0.0F);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public static void setupFog(Camera camera, FogRenderer.FogMode fogMode, float renderDistance, boolean isFoggy) {
         FogType fogType = camera.getFluidInCamera();

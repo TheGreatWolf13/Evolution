@@ -22,6 +22,10 @@ public abstract class MixinBubbleColumnAmbientSoundHandler implements AmbientSou
     @Shadow @Final private LocalPlayer player;
     @Shadow private boolean wasInBubbleColumn;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void tick() {

@@ -26,6 +26,10 @@ public abstract class MixinBlockInput implements Predicate<BlockInWorld>, PatchB
 
     @Shadow @Final private @Nullable CompoundTag tag;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean place(ServerLevel level, BlockPos pos, @BlockFlags int flags) {
         Evolution.deprecatedMethod();

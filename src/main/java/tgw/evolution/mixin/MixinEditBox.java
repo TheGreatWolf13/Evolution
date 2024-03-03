@@ -48,6 +48,10 @@ public abstract class MixinEditBox extends AbstractWidget {
     @Shadow
     public abstract boolean isVisible();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void renderButton(PoseStack matrices, int mouseX, int mouseY, float partialTicks) {

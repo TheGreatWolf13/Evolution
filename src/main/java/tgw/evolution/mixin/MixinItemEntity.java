@@ -52,6 +52,10 @@ public abstract class MixinItemEntity extends Entity {
     @Shadow
     protected abstract void mergeWithNeighbours();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void tick() {

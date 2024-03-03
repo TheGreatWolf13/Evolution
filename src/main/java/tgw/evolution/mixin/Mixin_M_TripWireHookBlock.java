@@ -51,6 +51,10 @@ public abstract class Mixin_M_TripWireHookBlock extends Block {
                                         int i,
                                         @Nullable BlockState blockState2);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -63,6 +67,10 @@ public abstract class Mixin_M_TripWireHookBlock extends Block {
         return BlockUtils.hasSolidFaceAtSide(level, x, y, z, state.getValue(FACING).getOpposite());
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -84,6 +92,10 @@ public abstract class Mixin_M_TripWireHookBlock extends Block {
     @Shadow
     public abstract BlockState mirror(BlockState blockState, Mirror mirror);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -110,6 +122,10 @@ public abstract class Mixin_M_TripWireHookBlock extends Block {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -122,6 +138,10 @@ public abstract class Mixin_M_TripWireHookBlock extends Block {
         this.calculateState(level, new BlockPos(x, y, z), state, false, true, -1, null);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

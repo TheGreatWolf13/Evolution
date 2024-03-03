@@ -11,6 +11,10 @@ import tgw.evolution.Evolution;
 @Mixin(LayerLightEventListener.DummyLightLayerEventListener.class)
 public abstract class MixinDummyLightLayerEventListener implements LayerLightEventListener {
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void checkBlock(BlockPos pos) {
@@ -21,6 +25,10 @@ public abstract class MixinDummyLightLayerEventListener implements LayerLightEve
     public void checkBlock_(long pos) {
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void enableLightSources(ChunkPos chunkPos, boolean bl) {
@@ -31,6 +39,10 @@ public abstract class MixinDummyLightLayerEventListener implements LayerLightEve
     public void enableLightSources_(int secX, int secZ, boolean bl) {
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public int getLightValue(BlockPos pos) {
@@ -43,6 +55,10 @@ public abstract class MixinDummyLightLayerEventListener implements LayerLightEve
         return 0;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void onBlockEmissionIncrease(BlockPos pos, int lightEmission) {
@@ -54,6 +70,10 @@ public abstract class MixinDummyLightLayerEventListener implements LayerLightEve
     public void onBlockEmissionIncrease_(long pos, int lightEmission) {
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void updateSectionStatus(SectionPos secPos, boolean hasOnlyAir) {

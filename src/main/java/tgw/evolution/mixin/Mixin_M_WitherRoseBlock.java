@@ -23,6 +23,10 @@ public abstract class Mixin_M_WitherRoseBlock extends FlowerBlock {
         super(mobEffect, i, properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

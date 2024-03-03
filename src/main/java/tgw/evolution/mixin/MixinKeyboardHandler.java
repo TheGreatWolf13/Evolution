@@ -36,6 +36,10 @@ public abstract class MixinKeyboardHandler {
     @Shadow @Final private Minecraft minecraft;
     @Shadow private boolean sendRepeatsToGui;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private void charTyped(long windowPointer, int codePoint, @Modifiers int mod) {
         if (windowPointer == this.minecraft.getWindow().getWindow()) {
@@ -79,6 +83,10 @@ public abstract class MixinKeyboardHandler {
     @Shadow
     protected abstract void debugFeedbackTranslated(String pMessage, Object... pArgs);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private boolean handleDebugKeys(@Key int key) {
         if (this.debugCrashKeyTime > 0L && this.debugCrashKeyTime < Util.getMillis() - 100L) {
@@ -196,6 +204,10 @@ public abstract class MixinKeyboardHandler {
         };
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void keyPress(long windowPointer, @Key int key, int scanCode, @Action int action, @Modifiers int mod) {
         long window = this.minecraft.getWindow().getWindow();

@@ -18,6 +18,10 @@ public abstract class MixinDirection {
     @Unique private int offsetZ;
     @Shadow @Final private int oppositeIndex;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public static Direction getRandom(Random random) {
         return VALUES[random.nextInt(6)];

@@ -2,6 +2,7 @@ package tgw.evolution.mixin;
 
 import net.minecraft.client.resources.language.LanguageInfo;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -12,7 +13,7 @@ import java.util.Locale;
 @Mixin(LanguageInfo.class)
 public abstract class MixinLanguageInfo implements PatchLanguageInfo {
 
-    private Locale locale;
+    @Unique private Locale locale;
 
     @Override
     public Locale getLocale() {

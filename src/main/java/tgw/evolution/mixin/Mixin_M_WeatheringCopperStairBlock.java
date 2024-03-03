@@ -20,6 +20,10 @@ public abstract class Mixin_M_WeatheringCopperStairBlock extends StairBlock impl
         super(blockState, properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

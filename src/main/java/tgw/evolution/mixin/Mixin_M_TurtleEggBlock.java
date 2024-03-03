@@ -55,6 +55,10 @@ public abstract class Mixin_M_TurtleEggBlock extends Block {
     @Shadow
     protected abstract void destroyEgg(Level level, BlockState blockState, BlockPos blockPos, Entity entity, int i);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -67,6 +71,10 @@ public abstract class Mixin_M_TurtleEggBlock extends Block {
         return state.getValue(EGGS) > 1 ? MULTIPLE_EGGS_AABB : ONE_EGG_AABB;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -82,6 +90,10 @@ public abstract class Mixin_M_TurtleEggBlock extends Block {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -100,6 +112,10 @@ public abstract class Mixin_M_TurtleEggBlock extends Block {
         this.decreaseEggs(level, new BlockPos(x, y, z), state);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -139,6 +155,10 @@ public abstract class Mixin_M_TurtleEggBlock extends Block {
     @Shadow
     protected abstract boolean shouldUpdateHatchLevel(Level level);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

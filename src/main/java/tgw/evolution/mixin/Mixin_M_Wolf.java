@@ -19,6 +19,10 @@ public abstract class Mixin_M_Wolf extends TamableAnimal implements NeutralMob {
         super(entityType, level);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

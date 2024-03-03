@@ -25,6 +25,10 @@ public abstract class MixinBoundTickingBlockEntity<T extends BlockEntity> implem
     @Shadow private boolean loggedInvalidBlockState;
     @Shadow @Final private BlockEntityTicker<T> ticker;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void tick() {

@@ -24,6 +24,10 @@ import tgw.evolution.patches.PatchItem;
 @Mixin(Item.class)
 public abstract class MixinItem implements PatchItem {
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean canAttackBlock(BlockState state, Level level, BlockPos pos, Player player) {
         Evolution.deprecatedMethod();
@@ -60,6 +64,10 @@ public abstract class MixinItem implements PatchItem {
         return this.getMaxDamage();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean mineBlock(ItemStack stack, Level level, BlockState state, BlockPos pos, LivingEntity entity) {
         Evolution.deprecatedMethod();
@@ -71,6 +79,10 @@ public abstract class MixinItem implements PatchItem {
         return false;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public InteractionResult useOn(UseOnContext context) {
         Evolution.deprecatedMethod();

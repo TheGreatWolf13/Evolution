@@ -3,6 +3,7 @@ package tgw.evolution.mixin;
 import com.mojang.math.Matrix3f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import tgw.evolution.patches.PatchMatrix3f;
 
 @Mixin(Matrix3f.class)
@@ -70,6 +71,7 @@ public abstract class MixinMatrix3f implements PatchMatrix3f {
         this.m22 = m22;
     }
 
+    @Unique
     private void rotateXYZ(float i, float j, float k, float r) {
         float ii = 2.0F * i * i;
         float jj = 2.0F * j * j;

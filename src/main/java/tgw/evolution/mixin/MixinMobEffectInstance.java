@@ -29,6 +29,10 @@ public abstract class MixinMobEffectInstance implements PatchMobEffectInstance {
     @Shadow private boolean showIcon;
     @Shadow private boolean visible;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public static @Nullable MobEffectInstance load(CompoundTag compoundTag) {
         String id = compoundTag.getString("Id");
@@ -42,6 +46,10 @@ public abstract class MixinMobEffectInstance implements PatchMobEffectInstance {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private static MobEffectInstance loadSpecifiedEffect(MobEffect effect, CompoundTag nbt) {
         int amplifier = Byte.toUnsignedInt(nbt.getByte("Amplifier"));
@@ -128,6 +136,10 @@ public abstract class MixinMobEffectInstance implements PatchMobEffectInstance {
     @Shadow
     public abstract boolean isVisible();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public CompoundTag save(CompoundTag compoundTag) {
         //noinspection ConstantConditions

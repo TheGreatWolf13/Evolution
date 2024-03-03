@@ -14,6 +14,10 @@ import tgw.evolution.patches.PatchBlockAndTintGetter;
 @Mixin(BlockAndTintGetter.class)
 public interface MixinBlockAndTintGetter extends BlockGetter, PatchBlockAndTintGetter {
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     default boolean canSeeSky(BlockPos pos) {
         Evolution.deprecatedMethod();
@@ -25,6 +29,10 @@ public interface MixinBlockAndTintGetter extends BlockGetter, PatchBlockAndTintG
         return this.getLightEngine().getLayerListener(LightLayer.SKY).getLightValue_(pos) >= this.getMaxLightLevel();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     default int getBrightness(LightLayer lightLayer, BlockPos pos) {
         Evolution.deprecatedMethod();
@@ -34,6 +42,10 @@ public interface MixinBlockAndTintGetter extends BlockGetter, PatchBlockAndTintG
     @Shadow
     LevelLightEngine getLightEngine();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     default int getRawBrightness(BlockPos pos, int subtractedSkyLight) {
         Evolution.deprecatedMethod();

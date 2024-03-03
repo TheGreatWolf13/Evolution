@@ -19,6 +19,10 @@ public abstract class Mixin_M_WeatheringCopperSlabBlock extends SlabBlock implem
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

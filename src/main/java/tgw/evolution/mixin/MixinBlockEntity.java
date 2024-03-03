@@ -19,12 +19,20 @@ public abstract class MixinBlockEntity implements PatchBlockEntity {
 
     @Unique private static final AABBMutable TE_BOX = new AABBMutable();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public static @Nullable BlockEntity loadStatic(BlockPos pos, BlockState state, CompoundTag tag) {
         Evolution.deprecatedMethod();
         return TEUtils.loadStatic(pos.getX(), pos.getY(), pos.getZ(), state, tag);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public static void setChanged(Level level, BlockPos pos, BlockState state) {
         int x = pos.getX();

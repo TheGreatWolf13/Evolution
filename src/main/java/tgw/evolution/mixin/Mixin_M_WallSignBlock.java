@@ -33,6 +33,10 @@ public abstract class Mixin_M_WallSignBlock extends SignBlock {
         super(properties, woodType);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -45,6 +49,10 @@ public abstract class Mixin_M_WallSignBlock extends SignBlock {
         return level.getBlockStateAtSide(x, y, z, state.getValue(FACING).getOpposite()).getMaterial().isSolid();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -57,6 +65,10 @@ public abstract class Mixin_M_WallSignBlock extends SignBlock {
         return AABBS.get(state.getValue(FACING));
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

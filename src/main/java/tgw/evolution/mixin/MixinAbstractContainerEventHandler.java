@@ -16,6 +16,10 @@ public abstract class MixinAbstractContainerEventHandler extends GuiComponent im
 
     @Shadow private @Nullable GuiEventListener focused;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void setFocused(@Nullable GuiEventListener widget) {

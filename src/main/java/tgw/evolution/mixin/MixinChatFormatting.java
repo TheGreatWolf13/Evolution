@@ -12,7 +12,11 @@ import java.util.Collection;
 
 @Mixin(ChatFormatting.class)
 public abstract class MixinChatFormatting {
-
+    
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public static @Nullable ChatFormatting getByCode(char c) {
         char d = Character.toLowerCase(c);
@@ -24,6 +28,10 @@ public abstract class MixinChatFormatting {
         return null;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public static @Nullable ChatFormatting getById(int i) {
         if (i < 0) {
@@ -37,6 +45,10 @@ public abstract class MixinChatFormatting {
         return null;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public static Collection<String> getNames(boolean bl, boolean bl2) {
         OList<String> list = new OArrayList<>();

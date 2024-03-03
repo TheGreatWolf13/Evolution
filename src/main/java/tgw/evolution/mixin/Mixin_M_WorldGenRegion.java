@@ -41,6 +41,10 @@ public abstract class Mixin_M_WorldGenRegion implements WorldGenLevel {
     @Shadow @Final private ServerLevel level;
     @Shadow @Final private int writeRadiusCutoff;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -134,6 +138,10 @@ public abstract class Mixin_M_WorldGenRegion implements WorldGenLevel {
     @Shadow
     public abstract ChunkPos getCenter();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public DifficultyInstance getCurrentDifficultyAt(BlockPos pos) {
@@ -165,6 +173,10 @@ public abstract class Mixin_M_WorldGenRegion implements WorldGenLevel {
         return this.getChunk(SectionPos.blockToSectionCoord(x), SectionPos.blockToSectionCoord(z)).getFluidState_(x, y, z);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void levelEvent(@Nullable Player player, int i, BlockPos blockPos, int j) {
@@ -175,12 +187,20 @@ public abstract class Mixin_M_WorldGenRegion implements WorldGenLevel {
     public void levelEvent_(@Nullable Player player, int event, int x, int y, int z, int data) {
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     private void markPosForPostprocessing(BlockPos blockPos) {
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public boolean removeBlock(BlockPos pos, boolean isMoving) {
@@ -193,6 +213,10 @@ public abstract class Mixin_M_WorldGenRegion implements WorldGenLevel {
         return this.setBlock_(x, y, z, Blocks.AIR.defaultBlockState(), BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public boolean setBlock(BlockPos pos, BlockState state, @BlockFlags int flags, int limit) {

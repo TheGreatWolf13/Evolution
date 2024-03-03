@@ -43,6 +43,10 @@ public abstract class MixinBlockModelShape {
         return null;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void rebuildCache() {
         this.modelByStateCache.clear();

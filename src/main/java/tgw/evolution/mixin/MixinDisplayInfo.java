@@ -33,6 +33,10 @@ public abstract class MixinDisplayInfo {
     @Shadow private float x;
     @Shadow private float y;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public static DisplayInfo fromJson(JsonObject pJson) {
         Component title = Component.Serializer.fromJson(pJson.get("title"));
@@ -53,6 +57,10 @@ public abstract class MixinDisplayInfo {
         return new TagDisplayInfo(getTag(jsonIcon), title, description, background, frameType, showToast, announceToChat, hidden);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public static DisplayInfo fromNetwork(FriendlyByteBuf buffer) {
         if (!buffer.readBoolean()) {
@@ -81,6 +89,10 @@ public abstract class MixinDisplayInfo {
         return displayInfo;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private static @Nullable ItemStack getIcon(JsonObject json) {
         if (!json.has("item")) {
@@ -112,6 +124,10 @@ public abstract class MixinDisplayInfo {
         return TagKey.create(Registry.ITEM_REGISTRY, new ResourceLocation(name));
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void serializeToNetwork(FriendlyByteBuf buffer) {
         buffer.writeBoolean(false);

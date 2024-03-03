@@ -15,6 +15,10 @@ public abstract class MixinBubbleParticle extends TextureSheetParticle {
         super(clientLevel, d, e, f);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void tick() {

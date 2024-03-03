@@ -42,6 +42,10 @@ public abstract class MixinCamera {
     @Shadow private float xRot;
     @Shadow private float yRot;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public FogType getFluidInCamera() {
         if (!this.initialized) {
@@ -178,6 +182,7 @@ public abstract class MixinCamera {
         }
     }
 
+    @Unique
     private NearPlane setupAndGetNearPlane() {
         Minecraft minecraft = Minecraft.getInstance();
         double aspectRatio = minecraft.getWindow().getWidth() / (double) minecraft.getWindow().getHeight();

@@ -41,6 +41,10 @@ public abstract class MixinLayerLightSectionStorage<M extends DataLayerStorageMa
     @Shadow
     protected abstract boolean hasInconsistencies();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void markNewInconsistencies(LayerLightEngine<M, ?> lightEngine, boolean bl, boolean bl2) {
         if (this.hasInconsistencies() || !this.queuedSections.isEmpty()) {

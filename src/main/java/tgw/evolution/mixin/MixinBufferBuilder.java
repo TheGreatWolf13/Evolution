@@ -97,6 +97,7 @@ public abstract class MixinBufferBuilder extends DefaultedVertexConsumer impleme
     @Shadow
     protected abstract IntConsumer intConsumer(VertexFormat.IndexType pIndexType);
 
+    @Unique
     private void makeNewQuadSortingPoints() {
         FloatBuffer floatbuffer = this.buffer.asFloatBuffer();
         int i = this.totalRenderedBytes / 4;

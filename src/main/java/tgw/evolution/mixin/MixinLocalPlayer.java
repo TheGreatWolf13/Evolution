@@ -238,6 +238,10 @@ public abstract class MixinLocalPlayer extends AbstractClientPlayer {
     @Shadow
     protected abstract void handleNetherPortalClient();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     private boolean hasEnoughImpulseToStartSprinting() {
         if (this.horizontalCollision && !this.minorHorizontalCollision) {
@@ -371,11 +375,12 @@ public abstract class MixinLocalPlayer extends AbstractClientPlayer {
             }
             this.yBobO = this.yBob;
             this.xBobO = this.xBob;
-            this.xBob += (this.getXRot() - this.xBob) * 0.5;
-            this.yBob += (this.getYRot() - this.yBob) * 0.5;
+            this.xBob += (float) ((this.getXRot() - this.xBob) * 0.5);
+            this.yBob += (float) ((this.getYRot() - this.yBob) * 0.5);
         }
     }
 
+    @Unique
     private boolean suffocatesAt(int x, int z) {
         AABB bb = this.getBoundingBox();
         return LevelUtils.collidesWithSuffocatingBlock(this.level, this,

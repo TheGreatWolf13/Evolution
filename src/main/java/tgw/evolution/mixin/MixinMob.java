@@ -16,6 +16,10 @@ public abstract class MixinMob extends LivingEntity {
         super(entityType, level);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean isSunBurnTick() {
         if (this.level.isDay() && !this.level.isClientSide) {

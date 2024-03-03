@@ -42,6 +42,10 @@ public abstract class MixinBlockBehaviour implements PatchBlockBehaviour {
     @Shadow
     public abstract Item asItem();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Deprecated
     @Overwrite
     //ok
@@ -62,6 +66,10 @@ public abstract class MixinBlockBehaviour implements PatchBlockBehaviour {
         return false;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Deprecated
     @Overwrite
     //ok
@@ -75,6 +83,10 @@ public abstract class MixinBlockBehaviour implements PatchBlockBehaviour {
         return true;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Deprecated
     @Overwrite
     //ok
@@ -88,6 +100,10 @@ public abstract class MixinBlockBehaviour implements PatchBlockBehaviour {
         return this.getCollisionShape_(state, level, x, y, z, null);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Deprecated
     @Overwrite
     //ok
@@ -101,6 +117,10 @@ public abstract class MixinBlockBehaviour implements PatchBlockBehaviour {
         return this.hasCollision ? state.getShape_(level, x, y, z) : Shapes.empty();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Deprecated
     @Overwrite
     //ok
@@ -124,6 +144,10 @@ public abstract class MixinBlockBehaviour implements PatchBlockBehaviour {
         return DynamicLights.FULL_LIGHTMAP;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Deprecated
     @Overwrite
     //ok
@@ -137,6 +161,10 @@ public abstract class MixinBlockBehaviour implements PatchBlockBehaviour {
         return Shapes.empty();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Deprecated
     @Overwrite
     //ok
@@ -159,6 +187,10 @@ public abstract class MixinBlockBehaviour implements PatchBlockBehaviour {
     @Shadow
     public abstract float getMaxVerticalOffset();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Deprecated
     @Overwrite
     //ok
@@ -175,6 +207,10 @@ public abstract class MixinBlockBehaviour implements PatchBlockBehaviour {
     @Shadow
     public abstract BlockBehaviour.OffsetType getOffsetType();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Deprecated
     @Overwrite
     public long getSeed(BlockState state, BlockPos pos) {
@@ -187,6 +223,10 @@ public abstract class MixinBlockBehaviour implements PatchBlockBehaviour {
         return Mth.getSeed(x, y, z);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Deprecated
     @Overwrite
     //ok
@@ -200,6 +240,10 @@ public abstract class MixinBlockBehaviour implements PatchBlockBehaviour {
         return state.isCollisionShapeFullBlock_(level, x, y, z) ? 0.2F : 1.0F;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Deprecated
     @Overwrite
     //ok
@@ -213,6 +257,10 @@ public abstract class MixinBlockBehaviour implements PatchBlockBehaviour {
         return Shapes.block();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Deprecated
     @Overwrite
     //ok
@@ -226,6 +274,10 @@ public abstract class MixinBlockBehaviour implements PatchBlockBehaviour {
         return this.getCollisionShape_(state, level, x, y, z, entity);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Deprecated
     @Overwrite
     //ok
@@ -253,6 +305,10 @@ public abstract class MixinBlockBehaviour implements PatchBlockBehaviour {
         return shape.move(d, e, g);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Deprecated
     @Overwrite
     //ok
@@ -265,6 +321,10 @@ public abstract class MixinBlockBehaviour implements PatchBlockBehaviour {
     public void neighborChanged_(BlockState state, Level level, int x, int y, int z, Block oldBlock, int fromX, int fromY, int fromZ, boolean isMoving) {
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Deprecated
     @Overwrite
     //ok
@@ -277,6 +337,10 @@ public abstract class MixinBlockBehaviour implements PatchBlockBehaviour {
     public void onPlace_(BlockState state, Level level, int x, int y, int z, BlockState oldState, boolean isMoving) {
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Deprecated
     @Overwrite
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
@@ -291,6 +355,10 @@ public abstract class MixinBlockBehaviour implements PatchBlockBehaviour {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Deprecated
     @Overwrite
     public void randomTick(BlockState state, ServerLevel level, BlockPos pos, Random random) {
@@ -303,6 +371,10 @@ public abstract class MixinBlockBehaviour implements PatchBlockBehaviour {
         this.tick_(state, level, x, y, z, random);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Deprecated
     @Overwrite
     public void spawnAfterBreak(BlockState state, ServerLevel level, BlockPos pos, ItemStack stack) {
@@ -314,6 +386,10 @@ public abstract class MixinBlockBehaviour implements PatchBlockBehaviour {
     public void spawnAfterBreak_(BlockState state, ServerLevel level, int x, int y, int z, ItemStack stack) {
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Deprecated
     @Overwrite
     public void tick(BlockState state, ServerLevel level, BlockPos pos, Random random) {
@@ -339,6 +415,10 @@ public abstract class MixinBlockBehaviour implements PatchBlockBehaviour {
         matrices.translate(d, e, g);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Deprecated
     @Overwrite
     public void updateIndirectNeighbourShapes(BlockState state, LevelAccessor level, BlockPos pos, @BlockFlags int flags, int limit) {
@@ -350,6 +430,10 @@ public abstract class MixinBlockBehaviour implements PatchBlockBehaviour {
     public void updateIndirectNeighbourShapes_(BlockState state, LevelAccessor level, int x, int y, int z, @BlockFlags int flags, int limit) {
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Deprecated
     @Overwrite
     //ok
@@ -363,6 +447,10 @@ public abstract class MixinBlockBehaviour implements PatchBlockBehaviour {
         return state;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Deprecated
     @Overwrite
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {

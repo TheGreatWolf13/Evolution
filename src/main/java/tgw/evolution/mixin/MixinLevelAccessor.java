@@ -12,6 +12,10 @@ import tgw.evolution.util.constants.LvlEvent;
 @Mixin(LevelAccessor.class)
 public interface MixinLevelAccessor extends PatchLevelAccessor {
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     default void blockUpdated(BlockPos pos, Block block) {
         Evolution.deprecatedMethod();
@@ -22,6 +26,10 @@ public interface MixinLevelAccessor extends PatchLevelAccessor {
     default void blockUpdated_(int x, int y, int z, Block block) {
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     default void levelEvent(@LvlEvent int event, BlockPos pos, int data) {
         Evolution.deprecatedMethod();

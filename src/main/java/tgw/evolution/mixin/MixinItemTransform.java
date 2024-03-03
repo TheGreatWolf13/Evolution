@@ -15,6 +15,10 @@ public abstract class MixinItemTransform {
     @Shadow @Final public Vector3f scale;
     @Shadow @Final public Vector3f translation;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void apply(boolean leftHanded, PoseStack poseStack) {
         if ((Object) this != ItemTransform.NO_TRANSFORM) {

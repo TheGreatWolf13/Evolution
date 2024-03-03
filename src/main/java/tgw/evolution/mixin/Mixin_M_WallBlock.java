@@ -34,6 +34,10 @@ public abstract class Mixin_M_WallBlock extends Block implements SimpleWaterlogg
         super(properties);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -46,6 +50,10 @@ public abstract class Mixin_M_WallBlock extends Block implements SimpleWaterlogg
         return this.collisionShapeByIndex.get(state);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -58,6 +66,10 @@ public abstract class Mixin_M_WallBlock extends Block implements SimpleWaterlogg
         return this.shapeByIndex.get(state);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -83,6 +95,10 @@ public abstract class Mixin_M_WallBlock extends Block implements SimpleWaterlogg
                                             BlockPos blockPos,
                                             BlockState blockState2);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

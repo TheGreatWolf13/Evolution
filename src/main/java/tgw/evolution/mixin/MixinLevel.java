@@ -47,6 +47,10 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
     @Shadow @Final public boolean isClientSide;
     @Shadow @Final private Thread thread;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void addDestroyBlockEffect(BlockPos pos, BlockState state) {
         Evolution.deprecatedMethod();
@@ -57,6 +61,10 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
     public void addDestroyBlockEffect_(int x, int y, int z, BlockState state) {
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void blockEntityChanged(BlockPos pos) {
         Evolution.deprecatedMethod();
@@ -71,6 +79,10 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public boolean destroyBlock(BlockPos pos, boolean drop, @Nullable Entity entity, int limit) {
@@ -159,6 +171,10 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
         return this.getChunk(SectionPos.blockToSectionCoord(x), SectionPos.blockToSectionCoord(z));
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public DifficultyInstance getCurrentDifficultyAt(BlockPos pos) {
@@ -210,6 +226,10 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
     @Shadow
     public abstract ProfilerFiller getProfiler();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public int getSignal(BlockPos pos, Direction dir) {
         BlockState blockState = this.getBlockState_(pos);
@@ -217,6 +237,10 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
         return blockState.isRedstoneConductor(this, pos) ? Math.max(signal, this.getDirectSignalTo(pos)) : signal;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void globalLevelEvent(@LvlEvent int event, BlockPos pos, int data) {
         Evolution.deprecatedMethod();
@@ -230,6 +254,10 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
     @Shadow
     public abstract boolean isDebug();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean isHumidAt(BlockPos pos) {
         Evolution.deprecatedMethod();
@@ -241,6 +269,10 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
         return this.getBiome_(x, y, z).value().isHumid();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean isInWorldBounds(BlockPos pos) {
         Evolution.deprecatedMethod();
@@ -252,6 +284,10 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
         return !this.isOutsideBuildHeight(y) && x >= -30_000_000 && z >= -30_000_000 && x < 30_000_000 && z < 30_000_000;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean isLoaded(BlockPos pos) {
         Evolution.deprecatedMethod();
@@ -287,6 +323,10 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
         return biome.getPrecipitation() == Biome.Precipitation.RAIN && biome.warmEnoughToRain(pos);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void neighborChanged(BlockPos pos, Block block, BlockPos fromPos) {
         Evolution.deprecatedMethod();
@@ -321,6 +361,10 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void onBlockStateChange(BlockPos pos, BlockState oldState, BlockState newState) {
         Evolution.deprecatedMethod();
@@ -342,6 +386,10 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
         return this.removeBlock_(pos.getX(), pos.getY(), pos.getZ(), isMoving);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void removeBlockEntity(BlockPos pos) {
         Evolution.deprecatedMethod();
@@ -365,6 +413,10 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
                               BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE | (isMoving ? BlockFlags.IS_MOVING : 0));
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public boolean setBlock(BlockPos pos, BlockState state, @BlockFlags int flags) {
@@ -372,6 +424,10 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
         return this.setBlock_(pos.getX(), pos.getY(), pos.getZ(), state, flags);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public boolean setBlock(BlockPos pos, BlockState state, @BlockFlags int flags, int limit) {
@@ -379,6 +435,10 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
         return this.setBlock_(pos.getX(), pos.getY(), pos.getZ(), state, flags, limit);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean setBlockAndUpdate(BlockPos pos, BlockState state) {
         Evolution.deprecatedMethod();
@@ -441,6 +501,10 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
         return true;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void setBlocksDirty(BlockPos pos, BlockState oldState, BlockState newState) {
         Evolution.deprecatedMethod();
@@ -451,6 +515,10 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
     public void setBlocksDirty_(int x, int y, int z, BlockState oldState, BlockState newState) {
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void updateNeighborsAt(BlockPos pos, Block block) {
         Evolution.deprecatedMethod();
@@ -467,6 +535,10 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
         this.neighborChanged_(x, y, z + 1, block, x, y, z);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void updateNeighbourForOutputSignal(BlockPos pos, Block block) {
         Evolution.deprecatedMethod();

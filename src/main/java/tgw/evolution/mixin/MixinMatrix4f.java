@@ -5,6 +5,7 @@ import com.mojang.math.Quaternion;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import tgw.evolution.patches.PatchMatrix4f;
 
 @Mixin(Matrix4f.class)
@@ -119,6 +120,7 @@ public abstract class MixinMatrix4f implements PatchMatrix4f {
         this.m31 = m31;
     }
 
+    @Unique
     private void rotateXYZ(float i, float j, float k, float r) {
         float ii = 2.0F * i * i;
         float jj = 2.0F * j * j;

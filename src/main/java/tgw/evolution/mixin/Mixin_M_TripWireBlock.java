@@ -35,6 +35,7 @@ public abstract class Mixin_M_TripWireBlock extends Block {
     @Shadow @Final protected static VoxelShape AABB;
     @Shadow @Final protected static VoxelShape NOT_ATTACHED_AABB;
     @Shadow @Final private static Map<Direction, BooleanProperty> PROPERTY_BY_DIRECTION;
+
     public Mixin_M_TripWireBlock(Properties properties) {
         super(properties);
     }
@@ -42,6 +43,10 @@ public abstract class Mixin_M_TripWireBlock extends Block {
     @Shadow
     protected abstract void checkPressed(Level level, BlockPos blockPos);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -54,6 +59,10 @@ public abstract class Mixin_M_TripWireBlock extends Block {
         return state.getValue(ATTACHED) ? AABB : NOT_ATTACHED_AABB;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -68,6 +77,10 @@ public abstract class Mixin_M_TripWireBlock extends Block {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -82,6 +95,10 @@ public abstract class Mixin_M_TripWireBlock extends Block {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -102,6 +119,10 @@ public abstract class Mixin_M_TripWireBlock extends Block {
     @Shadow
     public abstract boolean shouldConnectTo(BlockState blockState, Direction direction);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -116,6 +137,10 @@ public abstract class Mixin_M_TripWireBlock extends Block {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

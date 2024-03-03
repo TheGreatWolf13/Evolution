@@ -18,6 +18,10 @@ public abstract class Mixin_M_VexRenderer extends HumanoidMobRenderer<Vex, VexMo
         super(context, humanoidModel, f);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

@@ -42,6 +42,10 @@ public abstract class Mixin_M_WallTorchBlock extends TorchBlock {
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -59,6 +63,10 @@ public abstract class Mixin_M_WallTorchBlock extends TorchBlock {
         level.addParticle(this.flameParticle, px, py, pz, 0, 0, 0);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -71,6 +79,10 @@ public abstract class Mixin_M_WallTorchBlock extends TorchBlock {
         return BlockUtils.hasSolidFaceAtSide(level, x, y, z, state.getValue(FACING).getOpposite());
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod
@@ -83,6 +95,10 @@ public abstract class Mixin_M_WallTorchBlock extends TorchBlock {
         return getShape(state);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public @Nullable BlockState getStateForPlacement(BlockPlaceContext context) {
@@ -101,6 +117,10 @@ public abstract class Mixin_M_WallTorchBlock extends TorchBlock {
         return null;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     @DeleteMethod

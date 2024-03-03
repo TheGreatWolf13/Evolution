@@ -28,6 +28,10 @@ public abstract class MixinItemPickupParticle extends Particle {
         super(clientLevel, d, e, f);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void render(VertexConsumer builder, Camera camera, float partialTicks) {

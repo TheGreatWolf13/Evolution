@@ -21,6 +21,10 @@ public abstract class MixinModelBlockRenderer_Cache implements PatchModelBlockRe
     @Shadow @Final private Long2IntLinkedOpenHashMap colorCache;
     @Shadow private boolean enabled;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @DeleteMethod
     @Overwrite
     public int getLightColor(BlockState state, BlockAndTintGetter level, BlockPos pos) {
@@ -46,6 +50,10 @@ public abstract class MixinModelBlockRenderer_Cache implements PatchModelBlockRe
         return color;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     @DeleteMethod
     public float getShadeBrightness(BlockState state, BlockAndTintGetter level, BlockPos pos) {

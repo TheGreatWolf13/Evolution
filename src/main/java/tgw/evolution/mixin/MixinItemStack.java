@@ -78,6 +78,10 @@ public abstract class MixinItemStack implements PatchItemStack {
         throw new AbstractMethodError();
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public Multimap<Attribute, AttributeModifier> getAttributeModifiers(EquipmentSlot slot) {
         //noinspection ConstantConditions
@@ -130,6 +134,10 @@ public abstract class MixinItemStack implements PatchItemStack {
     @Shadow
     public abstract Rarity getRarity();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public List<Component> getTooltipLines(@Nullable Player player, TooltipFlag tooltipFlag) {
         OList<Component> list = new OArrayList<>();
@@ -292,11 +300,19 @@ public abstract class MixinItemStack implements PatchItemStack {
     @Shadow
     public abstract boolean isDamaged();
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean isEmpty() {
         return this.emptyCacheFlag;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public void mineBlock(Level level, BlockState state, BlockPos pos, Player player) {
         Evolution.deprecatedMethod();
@@ -331,6 +347,10 @@ public abstract class MixinItemStack implements PatchItemStack {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public InteractionResult useOn(UseOnContext context) {
         Evolution.deprecatedMethod();

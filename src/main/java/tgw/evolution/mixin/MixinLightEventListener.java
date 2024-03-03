@@ -10,6 +10,10 @@ import tgw.evolution.patches.PatchLightEventListener;
 @Mixin(LightEventListener.class)
 public interface MixinLightEventListener extends PatchLightEventListener {
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     default void updateSectionStatus(BlockPos pos, boolean hasOnlyAir) {
         Evolution.deprecatedMethod();

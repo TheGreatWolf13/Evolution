@@ -27,6 +27,10 @@ public abstract class MixinBlockPredicate implements PatchLocationPredicate {
     @Shadow @Final private StatePropertiesPredicate properties;
     @Shadow @Final private @Nullable TagKey<Block> tag;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Overwrite
     public boolean matches(ServerLevel level, BlockPos pos) {
         Evolution.deprecatedMethod();
