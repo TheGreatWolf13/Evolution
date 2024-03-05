@@ -7,11 +7,14 @@ import it.unimi.dsi.fastutil.shorts.ShortList;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelHeightAccessor;
 import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.biome.BiomeManager;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.FeatureAccess;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.chunk.UpgradeData;
 import net.minecraft.world.level.levelgen.Heightmap;
@@ -39,7 +42,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Mixin(ChunkAccess.class)
-public abstract class Mixin_CF_ChunkAccess implements PatchChunkAccess {
+public abstract class Mixin_CF_ChunkAccess implements PatchChunkAccess, BlockGetter, BiomeManager.NoiseBiomeSource, FeatureAccess {
 
     @Shadow @Final private static Logger LOGGER;
     @Unique private final L2OMap<BlockEntity> blockEntities_;
