@@ -36,7 +36,7 @@ public class AtmStorage {
         return a;
     }
 
-    public void acquire() {
+    private void acquire() {
         this.threadingDetector.checkAndLock();
     }
 
@@ -112,7 +112,7 @@ public class AtmStorage {
         };
     }
 
-    public void release() {
+    private void release() {
         this.threadingDetector.checkAndUnlock();
     }
 
@@ -150,10 +150,7 @@ public class AtmStorage {
         }
     }
 
-    public void set(@Range(from = 0, to = 15) int x,
-                    @Range(from = 0, to = 15) int y,
-                    @Range(from = 0, to = 15) int z,
-                    @Range(from = 0, to = 31) int value) {
+    public void set(@Range(from = 0, to = 15) int x, @Range(from = 0, to = 15) int y, @Range(from = 0, to = 15) int z, @Range(from = 0, to = 31) int value) {
         this.acquire();
         try {
             this.set(16 * (x & 0b11) + z, 20 * y + 5 * (x >> 2), value);
