@@ -3,6 +3,7 @@ package tgw.evolution.mixin;
 import com.mojang.authlib.GameProfile;
 import io.netty.buffer.Unpooled;
 import net.minecraft.ChatFormatting;
+import net.minecraft.FileUtil;
 import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
@@ -42,14 +43,13 @@ import net.minecraft.world.level.biome.BiomeManager;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.LevelData;
+import net.minecraft.world.level.storage.LevelResource;
 import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import tgw.evolution.events.EntityEvents;
 import tgw.evolution.hooks.TickrateChanger;
 import tgw.evolution.init.EvolutionStats;
@@ -57,12 +57,12 @@ import tgw.evolution.network.Message;
 import tgw.evolution.network.PacketSCChangeTickrate;
 import tgw.evolution.network.PacketSCFixRotation;
 import tgw.evolution.network.PacketSCSimpleMessage;
-import tgw.evolution.patches.PatchMinecraftServer;
 import tgw.evolution.stats.EvolutionServerStatsCounter;
 import tgw.evolution.util.NBTHelper;
 
 import javax.annotation.Nullable;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -90,9 +90,29 @@ public abstract class MixinPlayerList {
     @Shadow
     public abstract int getMaxPlayers();
 
-    @Redirect(method = "getPlayerStats", at = @At(value = "NEW", target = "net/minecraft/stats/ServerStatsCounter"))
-    public ServerStatsCounter getPlayerStatsProxy(MinecraftServer server, File statsFile) {
-        return new EvolutionServerStatsCounter(server, statsFile);
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public ServerStatsCounter getPlayerStats(Player player) {
+        UUID uuid = player.getUUID();
+        ServerStatsCounter statsCounter = this.stats.get(uuid);
+        if (statsCounter == null) {
+            File statsFolder = this.server.getWorldPath(LevelResource.PLAYER_STATS_DIR).toFile();
+            File statsFile = new File(statsFolder, uuid + ".json");
+            if (!statsFile.exists()) {
+                File oldFile = new File(statsFolder, player.getName().getString() + ".json");
+                Path path = oldFile.toPath();
+                if (FileUtil.isPathNormalized(path) && FileUtil.isPathPortable(path) && path.startsWith(statsFolder.getPath()) && oldFile.isFile()) {
+                    //noinspection ResultOfMethodCallIgnored
+                    oldFile.renameTo(statsFile);
+                }
+            }
+            statsCounter = new EvolutionServerStatsCounter(this.server, statsFile);
+            this.stats.put(uuid, statsCounter);
+        }
+        return statsCounter;
     }
 
     @Shadow
@@ -183,8 +203,7 @@ public abstract class MixinPlayerList {
         this.server.getCustomBossEvents().onPlayerConnect(player);
         listener.send(new PacketSCChangeTickrate(TickrateChanger.getCurrentTickrate()));
         //noinspection ConstantConditions
-        listener.send(new PacketSCSimpleMessage(((PatchMinecraftServer) player.getServer()).isMultiplayerPaused() ?
-                                                Message.S2C.MULTIPLAYER_PAUSE : Message.S2C.MULTIPLAYER_RESUME));
+        listener.send(new PacketSCSimpleMessage(player.getServer().isMultiplayerPaused() ? Message.S2C.MULTIPLAYER_PAUSE : Message.S2C.MULTIPLAYER_RESUME));
         this.sendLevelInfo(player, level);
         if (!this.server.getResourcePack().isEmpty()) {
             player.sendTexturePack(this.server.getResourcePack(), this.server.getResourcePackHash(), this.server.isResourcePackRequired(),
