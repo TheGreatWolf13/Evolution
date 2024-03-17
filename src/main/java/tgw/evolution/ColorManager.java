@@ -12,6 +12,7 @@ import net.minecraft.world.level.GrassColor;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.block.Block;
 import tgw.evolution.client.renderer.IBlockColor;
+import tgw.evolution.client.renderer.IItemColor;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.items.IItemTemperature;
@@ -82,12 +83,12 @@ public final class ColorManager {
     }
 
     public static void registerItemColorHandlers(ItemColors colors) {
-        ItemColor grass = (stack, tint) -> GrassColor.get(0.5, 1.0);
-        ItemColor spruce = (stack, tint) -> FoliageColor.getEvergreenColor();
-        ItemColor birch = (stack, tint) -> FoliageColor.getBirchColor();
-        ItemColor leaves = (stack, tint) -> FoliageColor.getDefaultColor();
-        ItemColor aspen = (stack, tint) -> 0xff_fc00;
-        ItemColor temperature = (stack, tint) -> {
+        IItemColor grass = (stack, tint, level, x, y, z) -> level != null && x != Integer.MIN_VALUE ? getAverageGrassColor(level, x, y, z) : GrassColor.get(0.5, 1.0);
+        IItemColor spruce = (stack, tint, level, x, y, z) -> FoliageColor.getEvergreenColor();
+        IItemColor birch = (stack, tint, level, x, y, z) -> FoliageColor.getBirchColor();
+        IItemColor leaves = (stack, tint, level, x, y, z) -> level != null && x != Integer.MIN_VALUE ? getAverageFoliageColor(level, x, y, z) : FoliageColor.getDefaultColor();
+        IItemColor aspen = (stack, tint, level, x, y, z) -> 0xff_fc00;
+        IItemColor temperature = (stack, tint, level, x, y, z) -> {
             if (tint == 1) {
                 Item item = stack.getItem();
                 if (item instanceof IItemTemperature itemTemperature) {

@@ -36,13 +36,13 @@ public abstract class MixinBlockColors implements PatchBlockColors {
         colors.register((IBlockColor) (state, level, x, y, z, data) -> level != null && x != Integer.MIN_VALUE ? ColorManager.getAverageGrassColor(level, x, state.getValue(DoublePlantBlock.HALF) == DoubleBlockHalf.UPPER ? y - 1 : y, z) : 0xffff_ffff, Blocks.LARGE_FERN, Blocks.TALL_GRASS);
         colors.addColoringState(DoublePlantBlock.HALF, Blocks.LARGE_FERN, Blocks.TALL_GRASS);
         colors.register((IBlockColor) (state, level, x, y, z, data) -> level != null && x != Integer.MIN_VALUE ? ColorManager.getAverageGrassColor(level, x, y, z) : GrassColor.get(0.5, 1.0), Blocks.GRASS_BLOCK, Blocks.FERN, Blocks.GRASS, Blocks.POTTED_FERN);
-        colors.register((IBlockColor) (state, level, x, y, z, data) -> FoliageColor.getEvergreenColor(), Blocks.SPRUCE_LEAVES);
-        colors.register((IBlockColor) (state, level, x, y, z, data) -> FoliageColor.getBirchColor(), Blocks.BIRCH_LEAVES);
+        colors.register((state, level, x, y, z, data) -> FoliageColor.getEvergreenColor(), Blocks.SPRUCE_LEAVES);
+        colors.register((state, level, x, y, z, data) -> FoliageColor.getBirchColor(), Blocks.BIRCH_LEAVES);
         colors.register((IBlockColor) (state, level, x, y, z, data) -> level != null && x != Integer.MIN_VALUE ? ColorManager.getAverageFoliageColor(level, x, y, z) : FoliageColor.getDefaultColor(), Blocks.OAK_LEAVES, Blocks.JUNGLE_LEAVES, Blocks.ACACIA_LEAVES, Blocks.DARK_OAK_LEAVES, Blocks.VINE);
         colors.register((IBlockColor) (state, level, x, y, z, data) -> level != null && x != Integer.MIN_VALUE ? ColorManager.getAverageWaterColor(level, x, y, z) : 0xffff_ffff, Blocks.WATER, Blocks.BUBBLE_COLUMN, Blocks.WATER_CAULDRON);
-        colors.register((IBlockColor) (state, level, x, y, z, data) -> RedStoneWireBlock.getColorForPower(state.getValue(RedStoneWireBlock.POWER)), Blocks.REDSTONE_WIRE);
+        colors.register((state, level, x, y, z, data) -> RedStoneWireBlock.getColorForPower(state.getValue(RedStoneWireBlock.POWER)), Blocks.REDSTONE_WIRE);
         colors.addColoringState(RedStoneWireBlock.POWER, Blocks.REDSTONE_WIRE);
-        colors.register((IBlockColor) (state, level, x, y, z, data) -> level != null && x != Integer.MIN_VALUE ? ColorManager.getAverageGrassColor(level, x, y, z) : 0xffff_ffff, Blocks.SUGAR_CANE);
+        colors.register((state, level, x, y, z, data) -> level != null && x != Integer.MIN_VALUE ? ColorManager.getAverageGrassColor(level, x, y, z) : 0xffff_ffff, Blocks.SUGAR_CANE);
         colors.register((IBlockColor) (state, level, x, y, z, data) -> 0xe0_c71c, Blocks.ATTACHED_MELON_STEM, Blocks.ATTACHED_PUMPKIN_STEM);
         colors.register((IBlockColor) (state, level, x, y, z, data) -> {
             int age = state.getValue(StemBlock.AGE);
@@ -52,7 +52,7 @@ public abstract class MixinBlockColors implements PatchBlockColors {
             return r << 16 | g << 8 | b;
         }, Blocks.MELON_STEM, Blocks.PUMPKIN_STEM);
         colors.addColoringState(StemBlock.AGE, Blocks.MELON_STEM, Blocks.PUMPKIN_STEM);
-        colors.register((IBlockColor) (state, level, x, y, z, data) -> level != null && x != Integer.MIN_VALUE ? 0x20_8030 : 0x71_c35c, Blocks.LILY_PAD);
+        colors.register((state, level, x, y, z, data) -> level != null && x != Integer.MIN_VALUE ? 0x20_8030 : 0x71_c35c, Blocks.LILY_PAD);
         return colors;
     }
 
@@ -91,10 +91,7 @@ public abstract class MixinBlockColors implements PatchBlockColors {
     }
 
     @Override
-    public void register(BlockColor blockColor, Block block) {
-        if (!(blockColor instanceof IBlockColor)) {
-            throw new RuntimeException("Trying to register invalid BlockColor. All BlockColors should implement IBlockColor!");
-        }
+    public void register(IBlockColor blockColor, Block block) {
         this.blockColors.addMapping(blockColor, Registry.BLOCK.getId(block));
     }
 }

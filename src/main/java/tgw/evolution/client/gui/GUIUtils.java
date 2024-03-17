@@ -25,6 +25,7 @@ import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelBakery;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -675,7 +676,8 @@ public final class GUIUtils {
     }
 
     private static void renderGuiItem(ItemRenderer renderer, ItemStack stack, int x, int y, BakedModel model, int packedLight) {
-        Minecraft.getInstance().getTextureManager().getTexture(TextureAtlas.LOCATION_BLOCKS).setFilter(false, false);
+        Minecraft mc = Minecraft.getInstance();
+        mc.getTextureManager().getTexture(TextureAtlas.LOCATION_BLOCKS).setFilter(false, false);
         RenderSystem.setShaderTexture(0, TextureAtlas.LOCATION_BLOCKS);
         RenderSystem.enableBlend();
         RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
@@ -688,12 +690,14 @@ public final class GUIUtils {
         internalMat.scale(16.0F, 16.0F, 16.0F);
         RenderSystem.applyModelViewMatrix();
         PoseStack matrices = MATRICES.reset();
-        MultiBufferSource.BufferSource buffer = Minecraft.getInstance().renderBuffers().bufferSource();
+        MultiBufferSource.BufferSource buffer = mc.renderBuffers().bufferSource();
         boolean notBlockLight = !model.usesBlockLight();
         if (notBlockLight) {
             Lighting.setupForFlatItems();
         }
-        renderer.render(stack, ItemTransforms.TransformType.GUI, false, matrices, buffer, packedLight, OverlayTexture.NO_OVERLAY, model);
+        assert mc.cameraEntity != null;
+        BlockPos pos = mc.cameraEntity.blockPosition();
+        renderer.render_(stack, ItemTransforms.TransformType.GUI, false, matrices, buffer, packedLight, OverlayTexture.NO_OVERLAY, model, mc.level, pos.getX(), pos.getY(), pos.getZ());
         buffer.endBatch();
         RenderSystem.enableDepthTest();
         if (notBlockLight) {

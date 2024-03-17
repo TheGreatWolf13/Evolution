@@ -372,6 +372,12 @@
       ],
       "net/minecraft/server/level/TickingTracker": [
         "tgw/evolution/patches/PatchTickingTracker"
+      ],
+      "net/minecraft/client/color/item/ItemColors": [
+        "tgw/evolution/patches/PatchItemColors"
+      ],
+      "net/minecraft/client/renderer/entity/ItemRenderer": [
+        "tgw/evolution/patches/PatchItemRenderer"
       ]
     }
   }
