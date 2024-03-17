@@ -1,9 +1,6 @@
 package tgw.evolution.mixin;
 
 import com.mojang.blaze3d.platform.GlUtil;
-import it.unimi.dsi.fastutil.longs.LongSet;
-import it.unimi.dsi.fastutil.longs.LongSets;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.ChatFormatting;
 import net.minecraft.SharedConstants;
@@ -18,21 +15,15 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.Registry;
 import net.minecraft.core.SectionPos;
 import net.minecraft.network.Connection;
-import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
-import net.minecraft.world.level.NaturalSpawner;
-import net.minecraft.world.level.biome.BiomeSource;
-import net.minecraft.world.level.biome.Climate;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.level.chunk.ChunkAccess;
-import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.lighting.LevelLightEngine;
@@ -60,7 +51,6 @@ public abstract class MixinDebugScreenOverlay extends GuiComponent {
 
     @Unique private final AllocationRateCalculator allocationRateCalculator = new AllocationRateCalculator();
     @Unique private final OList<String> gameInfo = new OArrayList<>();
-    @Unique private final MobCategory[] mobCategories = MobCategory.values();
     @Unique private final OList<String> systemInfo = new OArrayList<>();
     @Shadow public HitResult block;
     @Shadow public HitResult liquid;
@@ -167,7 +157,7 @@ public abstract class MixinDebugScreenOverlay extends GuiComponent {
             this.clearChunkCache();
         }
         Level level = this.getLevel();
-        LongSet forcedChunks = level instanceof ServerLevel server ? server.getForcedChunks() : LongSets.EMPTY_SET;
+        int forcedChunks = level instanceof ServerLevel server ? server.getForcedChunks().size() : 0;
         this.gameInfo.add(this.getMCFull());
         this.gameInfo.add(this.getEvolution());
         this.gameInfo.add(this.minecraft.fpsString);
@@ -175,7 +165,7 @@ public abstract class MixinDebugScreenOverlay extends GuiComponent {
         this.gameInfo.add(this.minecraft.lvlRenderer().getChunkStatistics());
         this.gameInfo.add(this.minecraft.lvlRenderer().getEntityStatistics());
         this.gameInfo.add("P: " + this.minecraft.particleEngine.getRenderedParticles() + "/" + this.minecraft.particleEngine.countParticles());
-        this.gameInfo.add(this.minecraft.level.dimension().location() + " FC: " + forcedChunks.size());
+        this.gameInfo.add(this.minecraft.level.dimension().location() + " FC: " + forcedChunks);
         this.gameInfo.add("");
         this.gameInfo.add("XYZ: " +
                           Metric.formatForceDecimals(this.minecraft.player.getX(), 3) +
@@ -196,7 +186,16 @@ public abstract class MixinDebugScreenOverlay extends GuiComponent {
                           " " +
                           SectionPos.blockToSectionCoord(pos.getY()) +
                           " " +
-                          SectionPos.blockToSectionCoord(pos.getZ())
+                          secZ +
+                          " [" +
+                          (secX & 0x1F) +
+                          " " +
+                          (secZ & 0x1F) +
+                          " in r." +
+                          (secX >> 5) +
+                          "." +
+                          (secZ >> 5) +
+                          ".mca]"
         );
         this.gameInfo.add("Facing: " +
                           direction +
@@ -224,34 +223,6 @@ public abstract class MixinDebugScreenOverlay extends GuiComponent {
                 this.gameInfo.add("Biome: " + this.minecraft.level.registryAccess().registryOrThrow(Registry.BIOME_REGISTRY).getKey(this.minecraft.level.getBiome_(pos).value()));
             }
             this.gameInfo.add("Day " + (1 + (this.minecraft.level.getDayTime() + 6L * Time.TICKS_PER_HOUR) / Time.TICKS_PER_DAY));
-        }
-        ServerLevel serverLevel = this.getServerLevel();
-        if (serverLevel != null) {
-            ServerChunkCache chunkSource = serverLevel.getChunkSource();
-            ChunkGenerator generator = chunkSource.getGenerator();
-            Climate.Sampler sampler = generator.climateSampler();
-            BiomeSource biomeSource = generator.getBiomeSource();
-            biomeSource.addDebugInfo(this.gameInfo, pos, sampler);
-            NaturalSpawner.SpawnState lastSpawnState = chunkSource.getLastSpawnState();
-            if (lastSpawnState != null) {
-                Object2IntMap<MobCategory> categoryCounts = lastSpawnState.getMobCategoryCounts();
-                int spawnableCount = lastSpawnState.getSpawnableChunkCount();
-                StringBuilder builder = new StringBuilder("SC: ");
-                builder.append(spawnableCount);
-                builder.append(", ");
-                for (MobCategory category : this.mobCategories) {
-                    builder.append(Character.toUpperCase(category.getName().charAt(0)));
-                    builder.append(": ");
-                    builder.append(categoryCounts.getInt(category));
-                    builder.append(", ");
-                }
-                builder.deleteCharAt(builder.length() - 1);
-                builder.deleteCharAt(builder.length() - 1);
-                this.gameInfo.add(builder.toString());
-            }
-            else {
-                this.gameInfo.add("SC: N/A");
-            }
         }
         PostChain postchain = this.minecraft.gameRenderer.currentEffect();
         if (postchain != null) {

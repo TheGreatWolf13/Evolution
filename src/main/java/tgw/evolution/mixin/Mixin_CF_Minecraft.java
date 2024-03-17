@@ -108,6 +108,7 @@ import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.client.renderer.ambient.DynamicLights;
 import tgw.evolution.client.renderer.chunk.EvClientMetricsSamplersProvider;
 import tgw.evolution.client.renderer.chunk.EvLevelRenderer;
+import tgw.evolution.client.util.TimerQuery;
 import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.datagen.DataGenerators;
 import tgw.evolution.events.ClientEvents;
@@ -183,6 +184,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
     @Mutable @Shadow @Final @RestoreFinal private BlockRenderDispatcher blockRenderer;
     @Unique private int cancelUseCooldown;
     @Mutable @Shadow @Final @RestoreFinal private ClientPackSource clientPackSource;
+    @Unique private @Nullable TimerQuery.FrameProfile currentFrameProfile;
     @Shadow private String debugPath;
     @Shadow private @Nullable Supplier<CrashReport> delayedCrash;
     @Mutable @Shadow @Final @RestoreFinal private boolean demo;
@@ -196,6 +198,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
     @Shadow private int frames;
     @Mutable @Shadow @Final @RestoreFinal private Game game;
     @Shadow private Thread gameThread;
+    @Unique private double gpuUtilization;
     @Mutable @Shadow @Final @RestoreFinal private GpuWarnlistManager gpuWarnlistManager;
     @Mutable @Shadow @Final @RestoreFinal private HotbarManager hotbarManager;
     @Mutable @Shadow @Final @RestoreFinal private boolean is64bit;
@@ -236,6 +239,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
     @Mutable @Shadow @Final @RestoreFinal private PackRepository resourcePackRepository;
     @Shadow private int rightClickDelay;
     @Shadow private volatile boolean running;
+    @Unique private long savedCpuDuration;
     @Mutable @Shadow @Final @RestoreFinal private SearchRegistry searchRegistry;
     @Shadow private @Nullable IntegratedServer singleplayerServer;
     @Mutable @Shadow @Final @RestoreFinal private SkinManager skinManager;
@@ -262,7 +266,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
         super("Client");
         this.timer = new Timer(20.0F, 0L);
         this.searchRegistry = new SearchRegistry();
-        this.progressListener = new AtomicReference();
+        this.progressListener = new AtomicReference<>();
         this.frameTimer = new FrameTimer();
         this.lastFrameRateLimit = 60;
         this.regionalCompliancies = new PeriodicNotificationManager(REGIONAL_COMPLIANCIES, Mixin_CF_Minecraft::countryEqualsISO3);
@@ -475,6 +479,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
     @Unique
     private static void outputReport(CrashReport report) {
         try {
+            //noinspection ConstantValue
             if (report.getSaveFile() == null) {
                 String reportName = "crash-";
                 reportName += new SimpleDateFormat("yyyy-MM-dd_HH.mm.ss").format(new Date());
@@ -488,6 +493,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
         catch (Throwable e) {
             LOGGER.error(LogUtils.FATAL_MARKER, "Failed saving report", e);
         }
+        //noinspection ConstantValue
         LOGGER.error(LogUtils.FATAL_MARKER, "Minecraft ran into a problem! " +
                                             (report.getSaveFile() != null ?
                                              "Report saved to: " + report.getSaveFile() :
@@ -509,6 +515,9 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
     @Override
     @Overwrite
     public void close() {
+        if (this.currentFrameProfile != null) {
+            this.currentFrameProfile.cancel();
+        }
         try {
             this.regionalCompliancies.close();
             this.modelManager.close();
@@ -1325,6 +1334,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
      */
     @Overwrite
     private void runTick(boolean shouldRender) {
+        boolean profileDone;
         this.window.setErrorSection("Pre render");
         long endTickTime = Util.getNanos() + 1_000_000_000L / this.lastFrameRateLimit;
         if (this.window.shouldClose()) {
@@ -1357,6 +1367,19 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
         PoseStack matrices = RenderSystem.getModelViewStack();
         matrices.pushPose();
         RenderSystem.applyModelViewMatrix();
+        if (this.options.renderDebug || this.metricsRecorder.isRecording()) {
+            profileDone = this.currentFrameProfile == null || this.currentFrameProfile.isDone();
+            if (profileDone) {
+                TimerQuery timerQuery = TimerQuery.getInstance();
+                if (timerQuery != null) {
+                    timerQuery.beginProfile();
+                }
+            }
+        }
+        else {
+            profileDone = false;
+            this.gpuUtilization = 0.0;
+        }
         RenderSystem.clear(16_640, ON_OSX);
         this.mainRenderTarget.bindWrite(true);
         FogRenderer.setupNoFog();
@@ -1384,6 +1407,12 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
         this.mainRenderTarget.blitToScreen(this.window.getWidth(), this.window.getHeight());
         matrices.popPose();
         RenderSystem.applyModelViewMatrix();
+        if (profileDone) {
+            TimerQuery timerQuery = TimerQuery.getInstance();
+            if (timerQuery != null) {
+                this.currentFrameProfile = timerQuery.endProfile();
+            }
+        }
         this.profiler.popPush("updateDisplay");
         this.window.updateDisplay();
         int fpsLimit = this.getFramerateLimit();
@@ -1411,18 +1440,28 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
             this.pause = shouldPause;
         }
         long l = Util.getNanos();
-        this.frameTimer.logFrameDuration(l - this.lastNanoTime);
+        long cpuTime = l - this.lastNanoTime;
+        if (profileDone) {
+            this.savedCpuDuration = cpuTime;
+        }
+        this.frameTimer.logFrameDuration(cpuTime);
         this.lastNanoTime = l;
         this.profiler.push("fpsUpdate");
+        if (this.currentFrameProfile != null && this.currentFrameProfile.isDone()) {
+            this.gpuUtilization = this.currentFrameProfile.get() * 100.0 / this.savedCpuDuration;
+        }
         while (Util.getMillis() >= this.lastTime + 1_000L) {
+            //noinspection ObjectAllocationInLoop
+            String gpuString = this.gpuUtilization > 0.0 ? " GPU: " + (this.gpuUtilization > 100.0 ? ChatFormatting.RED + "100%" : Math.round(this.gpuUtilization) + "%") : "";
             fps = this.frames;
-            this.fpsString = String.format("%d fps T: %s%s%s%s B: %d", fps,
+            this.fpsString = String.format("%d fps T: %s%s%s%s B: %d%s", fps,
                                            this.options.framerateLimit == Option.FRAMERATE_LIMIT.getMaxValue() ? "inf" : this.options.framerateLimit,
                                            this.options.enableVsync ? " vsync" : "", this.options.graphicsMode,
                                            this.options.renderClouds == CloudStatus.OFF ?
                                            "" :
                                            this.options.renderClouds == CloudStatus.FAST ? " fast-clouds" : " fancy-clouds",
-                                           this.options.biomeBlendRadius);
+                                           this.options.biomeBlendRadius,
+                                           gpuString);
             this.lastTime += 1_000L;
             this.frames = 0;
         }
