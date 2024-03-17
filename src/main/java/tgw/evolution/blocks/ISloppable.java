@@ -40,7 +40,8 @@ public interface ISloppable extends IFallable {
         if (!this.canSlope(level, x, y, z)) {
             return false;
         }
-        if (level.random.nextFloat() < this.slopeChance()) {
+        float chance = this.slopeChance();
+        if (chance >= 1.0f || level.random.nextFloat() < chance) {
             int slopePossibility = 0;
             for (Direction slopeDirection : DirectionUtil.HORIZ_NESW) {
                 if (!(level.getBlockStateAtSide(x, y, z, slopeDirection).getBlock() instanceof IFillable)) {
