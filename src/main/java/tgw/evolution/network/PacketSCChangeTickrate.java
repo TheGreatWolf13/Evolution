@@ -3,7 +3,6 @@ package tgw.evolution.network;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import tgw.evolution.patches.PatchClientPacketListener;
 
 public class PacketSCChangeTickrate implements Packet<ClientGamePacketListener> {
 
@@ -19,7 +18,7 @@ public class PacketSCChangeTickrate implements Packet<ClientGamePacketListener> 
 
     @Override
     public void handle(ClientGamePacketListener listener) {
-        ((PatchClientPacketListener) listener).handleChangeTickrate(this);
+        listener.handleChangeTickrate(this);
     }
 
     @Override

@@ -39,6 +39,7 @@ import org.spongepowered.asm.mixin.*;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.BlockAtm;
 import tgw.evolution.blocks.IAir;
+import tgw.evolution.blocks.IFillable;
 import tgw.evolution.blocks.tileentities.TEUtils;
 import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.capabilities.chunk.CapabilityChunkStorage;
@@ -710,8 +711,11 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
                 this.updateBlockEntityTicker(tile);
             }
         }
-        if (!this.level.isClientSide && !(newBlock instanceof BlockAtm)) {
-            this.chunkStorage.scheduleAtmTick((LevelChunk) (Object) this, localX, y, localZ, newBlock instanceof IAir || oldState.getBlock() instanceof IAir);
+        if (!this.level.isClientSide) {
+            if (!(newBlock instanceof BlockAtm)) {
+                this.chunkStorage.scheduleAtmTick((LevelChunk) (Object) this, localX, y, localZ, newBlock instanceof IAir || oldState.getBlock() instanceof IAir);
+            }
+            this.chunkStorage.scheduleIntegrityTick((LevelChunk) (Object) this, localX, y, localZ, oldState.getBlock() instanceof IFillable);
         }
         this.unsaved = true;
         return oldState;
@@ -763,8 +767,7 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
                     int x1 = x + dir.getStepX();
                     int y1 = y + dir.getStepY();
                     int z1 = z + dir.getStepZ();
-                    BlockState stateAtDir = CapabilityChunkStorage.safeGetBlockstate((LevelChunk) (Object) this, section, holder, x1, y1, z1,
-                                                                                     sectionIndex);
+                    BlockState stateAtDir = CapabilityChunkStorage.safeGetBlockstate((LevelChunk) (Object) this, section, holder, x1, y1, z1, sectionIndex, 0);
                     if (stateAtDir.isAir() || stateAtDir.getBlock() instanceof IAir a && a.allowsFrom(stateAtDir, dir.getOpposite())) {
                         list = DirectionList.add(list, dir);
                         int atm = CapabilityChunkStorage.safeGetAtm((LevelChunk) (Object) this, section, holder, x1, y1, z1, sectionIndex);
@@ -881,8 +884,7 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
                 int x1 = x + dir.getStepX();
                 int y1 = y + dir.getStepY();
                 int z1 = z + dir.getStepZ();
-                BlockState stateAtDir = CapabilityChunkStorage.safeGetBlockstate((LevelChunk) (Object) this, section, holder, x1, y1, z1,
-                                                                                 sectionIndex);
+                BlockState stateAtDir = CapabilityChunkStorage.safeGetBlockstate((LevelChunk) (Object) this, section, holder, x1, y1, z1, sectionIndex, 0);
                 if (stateAtDir.isAir() || stateAtDir.getBlock() instanceof IAir a && a.allowsFrom(stateAtDir, dir.getOpposite())) {
                     list = DirectionList.add(list, dir);
                     int atm = CapabilityChunkStorage.safeGetAtm((LevelChunk) (Object) this, section, holder, x1, y1, z1, sectionIndex);

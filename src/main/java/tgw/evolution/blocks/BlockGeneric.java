@@ -8,6 +8,9 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import tgw.evolution.util.constants.HarvestLevel;
 
+/**
+ * Represents a generic block with no special behaviour.
+ */
 public abstract class BlockGeneric extends Block {
 
     public BlockGeneric(Properties properties) {

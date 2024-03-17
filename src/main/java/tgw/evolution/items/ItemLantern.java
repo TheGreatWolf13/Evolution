@@ -3,7 +3,7 @@ package tgw.evolution.items;
 import net.minecraft.world.item.ItemStack;
 import tgw.evolution.events.ClientEvents;
 
-public class ItemLantern extends ItemEv {
+public class ItemLantern extends ItemGeneric {
 
     private final short lightColor;
 

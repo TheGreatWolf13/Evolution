@@ -15,7 +15,7 @@ import static tgw.evolution.init.EvolutionBStates.AXIS;
 
 public abstract class BlockXYZAxis extends BlockPhysics {
 
-    public BlockXYZAxis(Properties builder, double mass) {
+    public BlockXYZAxis(Properties builder) {
         super(builder);
         this.registerDefaultState(this.defaultBlockState().setValue(AXIS, Direction.Axis.Y));
     }
@@ -27,13 +27,7 @@ public abstract class BlockXYZAxis extends BlockPhysics {
     }
 
     @Override
-    public @Nullable BlockState getStateForPlacement_(Level level,
-                                                      int x,
-                                                      int y,
-                                                      int z,
-                                                      Player player,
-                                                      InteractionHand hand,
-                                                      BlockHitResult hitResult) {
+    public @Nullable BlockState getStateForPlacement_(Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult) {
         return this.defaultBlockState().setValue(AXIS, hitResult.getDirection().getAxis());
     }
 

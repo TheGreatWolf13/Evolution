@@ -15,10 +15,10 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
-import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.constants.BlockFlags;
 
 import java.util.Random;
+import java.util.function.Consumer;
 
 public interface PatchBlockBehaviour {
 
@@ -41,6 +41,10 @@ public interface PatchBlockBehaviour {
         throw new AbstractMethodError();
     }
 
+    default void dropLoot(BlockState state, ServerLevel level, int x, int y, int z, ItemStack tool, @Nullable BlockEntity tile, @Nullable Entity entity, Random random, Consumer<ItemStack> consumer) {
+        throw new AbstractMethodError();
+    }
+
     default VoxelShape getBlockSupportShape_(BlockState state, BlockGetter level, int x, int y, int z) {
         throw new AbstractMethodError();
     }
@@ -51,18 +55,6 @@ public interface PatchBlockBehaviour {
 
     default float getDestroyProgress_(BlockState state, Player player, BlockGetter level, int x, int y, int z) {
         throw new AbstractMethodError();
-    }
-
-    default OList<ItemStack> getDrops(BlockState state,
-                                      ServerLevel level,
-                                      int x,
-                                      int y,
-                                      int z,
-                                      ItemStack tool,
-                                      @Nullable BlockEntity tile,
-                                      @Nullable Entity entity,
-                                      Random random) {
-        return OList.emptyList();
     }
 
     default int getEmissiveLightColor(BlockState state, BlockAndTintGetter level, int x, int y, int z) {
@@ -90,6 +82,10 @@ public interface PatchBlockBehaviour {
     }
 
     default VoxelShape getShape_(BlockState state, BlockGetter level, int x, int y, int z, @Nullable Entity entity) {
+        throw new AbstractMethodError();
+    }
+
+    default int getSignal_(BlockState state, BlockGetter level, int x, int y, int z, Direction dir) {
         throw new AbstractMethodError();
     }
 

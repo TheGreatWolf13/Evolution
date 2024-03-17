@@ -11,7 +11,7 @@ import tgw.evolution.inventory.SlotType;
 import tgw.evolution.util.collection.maps.R2OHashMap;
 import tgw.evolution.util.collection.maps.R2OMap;
 
-public class ItemSocks extends ItemEv implements IAdditionalEquipment, IHeatResistant, IColdResistant {
+public class ItemSocks extends ItemGeneric implements IAdditionalEquipment, IHeatResistant, IColdResistant {
 
     public ItemSocks(Properties properties) {
         super(properties);

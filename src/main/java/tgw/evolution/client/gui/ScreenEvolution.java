@@ -301,7 +301,7 @@ public class ScreenEvolution extends Screen {
         langList.addAction(languageManager.getLanguage("en_us"));
         langList.addAction(languageManager.getLanguage("pt_br"));
         panel.addBeginning(langList);
-        panel.addBeginning(new TextArea(panel.x, panel.y, panel.getWidth(), new TranslatableComponent("evolution.gui.evolution.welcome.translation", new TextComponent("https://github.com/MGSchultz-13/Evolution/").withStyle(ChatFormatting.UNDERLINE).withStyle(s -> s.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://github.com/MGSchultz-13/Evolution/")))), 0xff_ffff));
+        panel.addBeginning(new TextArea(panel.x, panel.y, panel.getWidth(), new TranslatableComponent("evolution.gui.evolution.welcome.translation", new TextComponent("https://github.com/TheGreatWolf13/Evolution/").withStyle(ChatFormatting.UNDERLINE).withStyle(s -> s.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://github.com/TheGreatWolf13/Evolution/")))), 0xff_ffff));
         if (isFirst) {
             panel.addBeginning(new TextArea(panel.x, panel.y, panel.getWidth(), new TranslatableComponent("evolution.gui.evolution.welcome.first"), 0xff_ffff));
         }

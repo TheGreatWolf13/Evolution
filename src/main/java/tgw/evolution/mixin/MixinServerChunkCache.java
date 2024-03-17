@@ -42,6 +42,21 @@ public abstract class MixinServerChunkCache extends ChunkSource implements Patch
      * @author TheGreatWolf
      */
     @Overwrite
+    public <T> void addRegionTicket(TicketType<T> ticketType, ChunkPos chunkPos, int i, T object) {
+        Evolution.deprecatedMethod();
+        throw new RuntimeException("Use non-ChunkPos version!");
+    }
+
+    @Override
+    public <T> void addRegionTicket_(TicketType<T> ticketType, long chunkPos, int level, long key) {
+        this.distanceManager.addRegionTicket_(ticketType, chunkPos, level, key);
+    }
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Overwrite
     public void blockChanged(BlockPos pos) {
         Evolution.deprecatedMethod();
         this.blockChanged_(pos.getX(), pos.getY(), pos.getZ());
@@ -65,16 +80,12 @@ public abstract class MixinServerChunkCache extends ChunkSource implements Patch
      * @reason Delay ChunkPos allocation
      */
     @Overwrite
-    private CompletableFuture<Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure>> getChunkFutureMainThread(int x,
-                                                                                                             int z,
-                                                                                                             ChunkStatus status,
-                                                                                                             boolean p_8460_) {
+    private CompletableFuture<Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure>> getChunkFutureMainThread(int x, int z, ChunkStatus status, boolean load) {
         long longPos = ChunkPos.asLong(x, z);
         int ticketLevel = 33 + ChunkStatus.getDistance(status);
         ChunkHolder chunkholder = this.getVisibleChunkIfPresent(longPos);
-        if (p_8460_) {
-            ChunkPos chunkPos = new ChunkPos(x, z);
-            this.distanceManager.addTicket(TicketType.UNKNOWN, chunkPos, ticketLevel, chunkPos);
+        if (load) {
+            this.distanceManager.addTicket_(TicketType.UNKNOWN, longPos, ticketLevel, longPos);
             if (this.chunkAbsent(chunkholder, ticketLevel)) {
                 ProfilerFiller profilerfiller = this.level.getProfiler();
                 profilerfiller.push("chunkLoad");
@@ -129,6 +140,21 @@ public abstract class MixinServerChunkCache extends ChunkSource implements Patch
                 chunkHolder.sectionLightChanged(lightLayer, secY);
             }
         });
+    }
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Overwrite
+    public <T> void removeRegionTicket(TicketType<T> ticketType, ChunkPos chunkPos, int i, T object) {
+        Evolution.deprecatedMethod();
+        throw new RuntimeException("Use non-ChunkPos version!");
+    }
+
+    @Override
+    public <T> void removeRegionTicket_(TicketType<T> ticketType, long chunkPos, int level, long key) {
+        this.distanceManager.removeRegionTicket_(ticketType, chunkPos, level, key);
     }
 
     @Shadow
@@ -202,5 +228,21 @@ public abstract class MixinServerChunkCache extends ChunkSource implements Patch
             this.chunkMap.tick();
             list.clear();
         }
+    }
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Override
+    @Overwrite
+    public void updateChunkForced(ChunkPos chunkPos, boolean bl) {
+        Evolution.deprecatedMethod();
+        throw new RuntimeException("Use non-ChunkPos version!");
+    }
+
+    @Override
+    public void updateChunkForced_(long chunkPos, boolean adding) {
+        this.distanceManager.updateChunkForced_(chunkPos, adding);
     }
 }

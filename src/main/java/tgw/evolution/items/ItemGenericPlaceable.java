@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.util.constants.BlockFlags;
 
-public abstract class ItemGenericPlaceable extends ItemEv {
+public abstract class ItemGenericPlaceable extends ItemGeneric {
 
     protected ItemGenericPlaceable(Properties properties) {
         super(properties);

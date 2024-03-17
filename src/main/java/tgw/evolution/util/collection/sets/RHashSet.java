@@ -88,6 +88,20 @@ public class RHashSet<K> extends ReferenceOpenHashSet<K> implements RSet<K> {
         return null;
     }
 
+    @Override
+    public @Nullable K getElement() {
+        if (this.isEmpty()) {
+            return null;
+        }
+        for (int pos = this.n; pos-- != 0; ) {
+            K k = this.key[pos];
+            if (k != null) {
+                return k;
+            }
+        }
+        return null;
+    }
+
     protected void handleRehash() {
         byte oldFlags = this.flags;
         this.flags = 0b01;

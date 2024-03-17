@@ -24,7 +24,7 @@ import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionCreativeTabs;
 import tgw.evolution.init.EvolutionStats;
 
-public class ItemFireStarter extends ItemEv implements IDurability {
+public class ItemFireStarter extends ItemGeneric implements IDurability {
 
     public ItemFireStarter() {
         super(new Item.Properties().tab(EvolutionCreativeTabs.MISC).durability(10));

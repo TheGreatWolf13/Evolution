@@ -134,14 +134,6 @@ public class BlockFirewoodPile extends BlockPhysics implements IReplaceable, Ent
     }
 
     @Override
-    public double getMass(Level level, int x, int y, int z, BlockState state) {
-        if (level.getBlockEntity_(x, y, z) instanceof TEFirewoodPile te) {
-            return te.calculateMass();
-        }
-        return 0;
-    }
-
-    @Override
     public VoxelShape getShape_(BlockState state, BlockGetter level, int x, int y, int z, @Nullable Entity entity) {
         int logCount = state.getValue(FIREWOOD_COUNT);
         if (logCount == 16) {

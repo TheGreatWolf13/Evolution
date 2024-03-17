@@ -76,7 +76,6 @@ import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.mixin.AccessorRenderSystem;
-import tgw.evolution.patches.PatchDebugRenderer;
 import tgw.evolution.resources.IKeyedReloadListener;
 import tgw.evolution.resources.ReloadListernerKeys;
 import tgw.evolution.util.AdvancedEntityHitResult;
@@ -441,7 +440,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
     public void allChanged() {
         this.renderOnThread = EvolutionConfig.SYNC_RENDERING.get();
         if (this.level != null) {
-            ((PatchDebugRenderer) this.mc.debugRenderer).setRenderHeightmap(EvolutionConfig.RENDER_HEIGHTMAP.get());
+            this.mc.debugRenderer.setRenderHeightmap(EvolutionConfig.RENDER_HEIGHTMAP.get());
             this.graphicsChanged();
             this.level.clearTintCaches();
             if (this.chunkRenderDispatcher == null) {
@@ -1680,6 +1679,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
         internalMat.mulPoseMatrix(matrices.last().pose());
         RenderSystem.applyModelViewMatrix();
         this.mc.debugRenderer.render(matrices, buffer, camX, camY, camZ);
+        this.renderLoadFactor(matrices, buffer, camX, camY, camZ);
         internalMat.popPose();
         RenderSystem.applyModelViewMatrix();
         buffer.endBatch(Sheets.translucentCullBlockSheet());
@@ -1766,6 +1766,13 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
         internalMat.popPose();
         RenderSystem.applyModelViewMatrix();
         FogRenderer.setupNoFog();
+    }
+
+    private void renderLoadFactor(PoseStack matrices, MultiBufferSource buffer, float camX, float camY, float camZ) {
+        if (Minecraft.getInstance().showOnlyReducedInfo() || this.level == null) {
+            return;
+        }
+        ClientEvents.CLIENT_INTEGRITY_STORAGE.render(this.level, matrices, buffer, camX, camY, camZ);
     }
 
     public void renderSky(PoseStack matrices, float partialTicks, Camera camera, boolean isFoggy, SkyFogSetup skyFogSetup) {

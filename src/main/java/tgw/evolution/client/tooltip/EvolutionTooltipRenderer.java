@@ -35,6 +35,8 @@ public final class EvolutionTooltipRenderer implements ClientTooltipComponent {
     public static final EvolutionTooltipRenderer[] MASS_PARTS = new EvolutionTooltipRenderer[4];
     public static final EvolutionTooltipRenderer MINING = new EvolutionTooltipRenderer();
     public static final EvolutionTooltipRenderer PRECISION = new EvolutionTooltipRenderer();
+    public static final EvolutionTooltipRenderer STRUCTURAL_INTEGRITY = new EvolutionTooltipRenderer();
+    public static final EvolutionTooltipRenderer STRUCTURAL_TYPE = new EvolutionTooltipRenderer();
     public static final EvolutionTooltipRenderer THROW_SPEED = new EvolutionTooltipRenderer();
 
     static {

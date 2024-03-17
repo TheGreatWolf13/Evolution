@@ -103,11 +103,6 @@ public class BlockChopping extends BlockPhysics implements IReplaceable, ISittab
     }
 
     @Override
-    public double getMass(Level level, int x, int y, int z, BlockState state) {
-        return this.woodVariant().getMass() / 2.0;
-    }
-
-    @Override
     public VoxelShape getShape_(BlockState state, BlockGetter level, int x, int y, int z, @Nullable Entity entity) {
         return EvolutionShapes.SLAB_2_D;
     }

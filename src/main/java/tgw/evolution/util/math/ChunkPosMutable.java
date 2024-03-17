@@ -29,9 +29,9 @@ public class ChunkPosMutable extends ChunkPos {
         return this.set(SectionPos.blockToSectionCoord(pos.getX()), SectionPos.blockToSectionCoord(pos.getZ()));
     }
 
-    public ChunkPosMutable set(int x, int z) {
-        ((AccessorChunkPos) this).setX(x);
-        ((AccessorChunkPos) this).setZ(z);
+    public ChunkPosMutable set(int secX, int secZ) {
+        ((AccessorChunkPos) this).setX(secX);
+        ((AccessorChunkPos) this).setZ(secZ);
         return this;
     }
 }

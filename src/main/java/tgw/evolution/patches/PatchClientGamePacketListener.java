@@ -4,7 +4,7 @@ import net.minecraft.world.entity.Entity;
 import tgw.evolution.entities.IEntitySpawnData;
 import tgw.evolution.network.*;
 
-public interface PatchClientPacketListener {
+public interface PatchClientGamePacketListener {
 
     void handleAddEffect(PacketSCAddEffect packet);
 
@@ -22,7 +22,13 @@ public interface PatchClientPacketListener {
 
     void handleHungerData(PacketSCHungerData packet);
 
-    void handleLevelEvent(PacketSCLevelEvent packet);
+    default void handleLevelEvent(PacketSCLevelEvent packet) {
+        throw new AbstractMethodError();
+    }
+
+    default void handleLoadFactor(PacketSCLoadFactor packet) {
+        throw new AbstractMethodError();
+    }
 
     void handleMomentum(PacketSCMomentum packet);
 

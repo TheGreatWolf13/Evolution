@@ -40,12 +40,12 @@ import tgw.evolution.hooks.asm.DeleteField;
 import tgw.evolution.hooks.asm.ModifyStatic;
 import tgw.evolution.hooks.asm.RestoreFinal;
 import tgw.evolution.patches.PatchBlock;
-import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.constants.BlockFlags;
 import tgw.evolution.util.constants.HarvestLevel;
 
 import java.util.List;
 import java.util.Random;
+import java.util.function.Consumer;
 import java.util.random.RandomGenerator;
 
 @Mixin(Block.class)
@@ -263,24 +263,16 @@ public abstract class Mixin_FS_Block extends BlockBehaviour implements PatchBloc
     }
 
     @Override
-    public ItemStack getCloneItemStack(BlockState state, HitResult target, BlockGetter level, int x, int y, int z, Player player) {
-        return new ItemStack(this);
+    public void dropLoot(BlockState state, ServerLevel level, int x, int y, int z, ItemStack tool, @Nullable BlockEntity tile, @Nullable Entity entity, Random random, Consumer<ItemStack> consumer) {
+        if (this.properties.drops == BuiltInLootTables.EMPTY) {
+            return;
+        }
+        consumer.accept(new ItemStack(this));
     }
 
     @Override
-    public OList<ItemStack> getDrops(BlockState state,
-                                     ServerLevel level,
-                                     int x,
-                                     int y,
-                                     int z,
-                                     ItemStack tool,
-                                     @Nullable BlockEntity tile,
-                                     @Nullable Entity entity,
-                                     Random random) {
-        if (this.properties.drops == BuiltInLootTables.EMPTY) {
-            return OList.emptyList();
-        }
-        return OList.singleton(new ItemStack(this));
+    public ItemStack getCloneItemStack(BlockState state, HitResult target, BlockGetter level, int x, int y, int z, Player player) {
+        return new ItemStack(this);
     }
 
     @Override

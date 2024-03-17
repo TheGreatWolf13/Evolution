@@ -9,7 +9,9 @@ accessible class net/minecraft/client/particle/ParticleEngine$SpriteParticleRegi
 accessible class net/minecraft/client/renderer/block/ModelBlockRenderer$Cache
 accessible class net/minecraft/client/renderer/RenderStateShard$OutputStateShard
 accessible class net/minecraft/client/resources/model/ModelBakery$BlockStateDefinitionException
+accessible class net/minecraft/server/commands/CloneCommands$Mode
 accessible class net/minecraft/server/commands/FillCommand$Mode
+accessible class net/minecraft/server/commands/TeleportCommand$LookAt
 accessible class net/minecraft/server/level/ChunkMap$DistanceManager
 accessible class net/minecraft/server/level/DistanceManager$ChunkTicketTracker
 accessible class net/minecraft/server/level/DistanceManager$FixedPlayerDistanceChunkTracker
@@ -125,11 +127,18 @@ accessible field net/minecraft/server/level/ChunkHolder chunkToSave Ljava/util/c
 accessible field net/minecraft/server/level/ChunkMap mainThreadExecutor Lnet/minecraft/util/thread/BlockableEventLoop;
 accessible field net/minecraft/server/level/ChunkMap viewDistance I
 accessible field net/minecraft/server/level/ChunkMap$TrackedEntity entity Lnet/minecraft/world/entity/Entity;
+accessible field net/minecraft/server/level/DistanceManager mainThreadExecutor Ljava/util/concurrent/Executor;
+accessible field net/minecraft/server/level/DistanceManager PLAYER_TICKET_LEVEL I
+accessible field net/minecraft/server/level/DistanceManager ticketsToRelease Lit/unimi/dsi/fastutil/longs/LongSet;
+accessible field net/minecraft/server/level/DistanceManager ticketThrottlerInput Lnet/minecraft/util/thread/ProcessorHandle;
+accessible field net/minecraft/server/level/DistanceManager ticketThrottlerReleaser Lnet/minecraft/util/thread/ProcessorHandle;
 accessible field net/minecraft/server/level/ServerLevel dragonParts Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;
 accessible field net/minecraft/server/level/ServerLevel isUpdatingNavigations Z
 accessible field net/minecraft/server/level/ServerLevel navigatingMobs Ljava/util/Set;
 accessible field net/minecraft/server/level/ServerPlayer enteredNetherPosition Lnet/minecraft/world/phys/Vec3;
 accessible field net/minecraft/server/level/ServerPlayer seenCredits Z
+accessible field net/minecraft/server/level/Ticket ticketLevel I
+accessible field net/minecraft/server/level/Ticket type Lnet/minecraft/server/level/TicketType;
 accessible field net/minecraft/server/packs/repository/FolderRepositorySource packSource Lnet/minecraft/server/packs/repository/PackSource;
 accessible field net/minecraft/server/packs/repository/PackRepository sources Ljava/util/Set;
 accessible field net/minecraft/server/packs/resources/FallbackResourceManager type Lnet/minecraft/server/packs/PackType;
@@ -237,9 +246,13 @@ accessible method net/minecraft/server/level/ChunkMap getVisibleChunkIfPresent (
 accessible method net/minecraft/server/level/ChunkMap releaseLightTicket (Lnet/minecraft/world/level/ChunkPos;)V
 accessible method net/minecraft/server/level/ChunkMap tick ()V
 accessible method net/minecraft/server/level/ChunkTracker update (JIZ)V
+accessible method net/minecraft/server/level/DistanceManager addTicket (JLnet/minecraft/server/level/Ticket;)V
+accessible method net/minecraft/server/level/DistanceManager removeTicket (JLnet/minecraft/server/level/Ticket;)V
 accessible method net/minecraft/server/level/DistanceManager updatePlayerTickets (I)V
 accessible method net/minecraft/server/level/ServerPlayerGameMode setGameModeForPlayer (Lnet/minecraft/world/level/GameType;Lnet/minecraft/world/level/GameType;)V
+accessible method net/minecraft/server/level/Ticket <init> (Lnet/minecraft/server/level/TicketType;ILjava/lang/Object;)V
 accessible method net/minecraft/server/level/Ticket timedOut (J)Z
+accessible method net/minecraft/server/level/TicketType <init> (Ljava/lang/String;Ljava/util/Comparator;J)V
 accessible method net/minecraft/server/MinecraftServer$TimeProfiler <init> (JI)V
 accessible method net/minecraft/server/packs/resources/FallbackResourceManager getMetadataLocation (Lnet/minecraft/resources/ResourceLocation;)Lnet/minecraft/resources/ResourceLocation;
 accessible method net/minecraft/server/packs/resources/FallbackResourceManager getWrappedResource (Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/server/packs/PackResources;)Ljava/io/InputStream;
@@ -360,6 +373,7 @@ accessible method net/minecraft/world/level/GameRules$BooleanValue create (ZLjav
 accessible method net/minecraft/world/level/GameRules$IntegerValue create (I)Lnet/minecraft/world/level/GameRules$Type;
 accessible method net/minecraft/world/level/GameRules$Value copy ()Lnet/minecraft/world/level/GameRules$Value;
 accessible method net/minecraft/world/level/GameRules$Value deserialize (Ljava/lang/String;)V
+accessible method net/minecraft/world/level/Level isOutsideSpawnableHeight (I)Z
 accessible method net/minecraft/world/level/levelgen/Beardifier <init> (Lnet/minecraft/world/level/StructureFeatureManager;Lnet/minecraft/world/level/chunk/ChunkAccess;)V
 accessible method net/minecraft/world/level/levelgen/Heightmap setHeight (III)V
 accessible method net/minecraft/world/level/levelgen/NoiseChunk getInterpolatedState ()Lnet/minecraft/world/level/block/state/BlockState;

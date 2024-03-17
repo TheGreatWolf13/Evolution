@@ -8,8 +8,8 @@
     "TheGreatWolf"
   ],
   "contact": {
-    "homepage": "https://github.com/MGSchultz-13/Evolution/",
-    "sources": "https://github.com/MGSchultz-13/Evolution/"
+    "homepage": "https://github.com/TheGreatWolf13/Evolution/",
+    "sources": "https://github.com/TheGreatWolf13/Evolution/"
   },
   "license": "GNU General Public License v3/0",
   "icon": "assets/evolution/icon.png",
@@ -351,6 +351,27 @@
       ],
       "com/mojang/blaze3d/platform/NativeImage": [
         "tgw/evolution/patches/PatchNativeImage"
+      ],
+      "net/minecraft/network/protocol/game/ClientGamePacketListener": [
+        "tgw/evolution/patches/PatchClientGamePacketListener"
+      ],
+      "net/minecraft/client/renderer/debug/DebugRenderer": [
+        "tgw/evolution/patches/PatchDebugRenderer"
+      ],
+      "net/minecraft/server/level/DistanceManager": [
+        "tgw/evolution/patches/PatchDistanceManager"
+      ],
+      "net/minecraft/server/level/Ticket": [
+        "tgw/evolution/patches/PatchTicket"
+      ],
+      "net/minecraft/server/level/TicketType": [
+        "tgw/evolution/patches/PatchTicketType"
+      ],
+      "net/minecraft/server/level/ChunkMap": [
+        "tgw/evolution/patches/PatchChunkMap"
+      ],
+      "net/minecraft/server/level/TickingTracker": [
+        "tgw/evolution/patches/PatchTickingTracker"
       ]
     }
   }

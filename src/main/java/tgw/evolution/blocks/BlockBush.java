@@ -3,7 +3,6 @@ package tgw.evolution.blocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
@@ -35,11 +34,6 @@ public class BlockBush extends BlockPhysics implements IReplaceable, IPoppable {
 
     @Override
     public int getLightBlock_(BlockState state, BlockGetter level, int x, int y, int z) {
-        return 0;
-    }
-
-    @Override
-    public double getMass(Level level, int x, int y, int z, BlockState state) {
         return 0;
     }
 

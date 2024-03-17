@@ -1,5 +1,7 @@
 package tgw.evolution.patches;
 
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -9,6 +11,10 @@ import tgw.evolution.util.constants.BlockFlags;
 import tgw.evolution.util.constants.LvlEvent;
 
 public interface PatchLevel extends PatchLevelWriter {
+
+    static boolean isInSpawnableBounds_(int x, int y, int z) {
+        return !Level.isOutsideSpawnableHeight(y) && x >= -30_000_000 && z >= -30_000_000 && x < 30_000_000 && z < 30_000_000;
+    }
 
     default void addDestroyBlockEffect_(int x, int y, int z, BlockState state) {
         throw new AbstractMethodError();
@@ -40,7 +46,19 @@ public interface PatchLevel extends PatchLevelWriter {
         throw new AbstractMethodError();
     }
 
+    default int getDirectSignalTo_(int x, int y, int z) {
+        throw new AbstractMethodError();
+    }
+
+    default int getSignal_(int x, int y, int z, Direction dir) {
+        throw new AbstractMethodError();
+    }
+
     default void globalLevelEvent_(@LvlEvent int event, int x, int y, int z, int data) {
+        throw new AbstractMethodError();
+    }
+
+    default boolean hasNeighborSignal_(int x, int y, int z) {
         throw new AbstractMethodError();
     }
 

@@ -5,7 +5,6 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
-import tgw.evolution.patches.PatchClientPacketListener;
 
 public class PacketSCUpdateBeltBackItem implements Packet<ClientGamePacketListener> {
 
@@ -27,7 +26,7 @@ public class PacketSCUpdateBeltBackItem implements Packet<ClientGamePacketListen
 
     @Override
     public void handle(ClientGamePacketListener listener) {
-        ((PatchClientPacketListener) listener).handleUpdateBeltBackItem(this);
+        listener.handleUpdateBeltBackItem(this);
     }
 
     @Override

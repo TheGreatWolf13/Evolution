@@ -1,7 +1,9 @@
 package tgw.evolution.mixin;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseRailBlock;
 import net.minecraft.world.level.block.DetectorRailBlock;
@@ -26,6 +28,22 @@ public abstract class Mixin_M_DetectorRailBlock extends BaseRailBlock {
 
     @Shadow
     protected abstract void checkPressed(Level level, BlockPos blockPos, BlockState blockState);
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Override
+    @Overwrite
+    @DeleteMethod
+    public int getSignal(BlockState blockState, BlockGetter blockGetter, BlockPos blockPos, Direction direction) {
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public int getSignal_(BlockState state, BlockGetter level, int x, int y, int z, Direction dir) {
+        return state.getValue(POWERED) ? 15 : 0;
+    }
 
     /**
      * @reason _

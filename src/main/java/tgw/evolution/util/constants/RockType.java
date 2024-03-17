@@ -1,25 +1,17 @@
 package tgw.evolution.util.constants;
 
 public enum RockType {
-    SEDIMENTARY(14.0F, 4),
-    METAMORPHIC(15.0F, 5),
-    IGNEOUS_INTRUSIVE(16.0F, 6),
-    IGNEOUS_EXTRUSIVE(16.0F, 6);
+    SEDIMENTARY(14.0F, 6),
+    METAMORPHIC(15.0F, 7),
+    IGNEOUS_INTRUSIVE(16.0F, 8),
+    IGNEOUS_EXTRUSIVE(16.0F, 9);
 
-    private final float hardness;
-    private final int rangeStone;
+    public final int baseIntegrity;
+    public final float hardness;
 
-    RockType(float hardness, int rangeStone) {
+    RockType(float hardness, int baseIntegrity) {
         this.hardness = hardness;
-        this.rangeStone = rangeStone;
-    }
-
-    public float getHardness() {
-        return this.hardness;
-    }
-
-    public int getRangeStone() {
-        return this.rangeStone;
+        this.baseIntegrity = baseIntegrity;
     }
 }
 

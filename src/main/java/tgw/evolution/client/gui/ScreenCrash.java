@@ -101,10 +101,10 @@ public class ScreenCrash extends Screen {
                                             EvolutionTexts.GUI_MENU_REPORT_BUGS,
                                             button -> this.minecraft.setScreen(new ConfirmLinkScreen(b -> {
                                                 if (b) {
-                                                    Util.getPlatform().openUri("https://github.com/MGSchultz-13/Evolution/issues");
+                                                    Util.getPlatform().openUri("https://github.com/TheGreatWolf13/Evolution/issues");
                                                 }
                                                 this.minecraft.setScreen(this);
-                                            }, "https://github.com/MGSchultz-13/Evolution/issues", true))));
+                                            }, "https://github.com/TheGreatWolf13/Evolution/issues", true))));
     }
 
     @Override

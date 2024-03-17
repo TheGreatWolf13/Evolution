@@ -4,7 +4,6 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import tgw.evolution.capabilities.player.CapabilityHunger;
-import tgw.evolution.patches.PatchClientPacketListener;
 
 public class PacketSCHungerData implements Packet<ClientGamePacketListener> {
 
@@ -23,7 +22,7 @@ public class PacketSCHungerData implements Packet<ClientGamePacketListener> {
 
     @Override
     public void handle(ClientGamePacketListener listener) {
-        ((PatchClientPacketListener) listener).handleHungerData(this);
+        listener.handleHungerData(this);
     }
 
     @Override

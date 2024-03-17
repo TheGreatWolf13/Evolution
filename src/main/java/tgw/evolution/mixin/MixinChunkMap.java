@@ -4,14 +4,16 @@ import com.mojang.datafixers.DataFixer;
 import com.mojang.datafixers.util.Either;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
+import net.minecraft.CrashReport;
+import net.minecraft.CrashReportCategory;
+import net.minecraft.ReportedException;
+import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.protocol.game.ClientboundForgetLevelChunkPacket;
-import net.minecraft.network.protocol.game.ClientboundLevelChunkWithLightPacket;
-import net.minecraft.network.protocol.game.ClientboundSetEntityLinkPacket;
-import net.minecraft.network.protocol.game.ClientboundSetPassengersPacket;
+import net.minecraft.network.protocol.game.*;
 import net.minecraft.server.level.*;
+import net.minecraft.server.level.progress.ChunkProgressListener;
 import net.minecraft.util.Mth;
 import net.minecraft.util.thread.BlockableEventLoop;
 import net.minecraft.util.thread.ProcessorHandle;
@@ -19,21 +21,22 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.village.poi.PoiManager;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.chunk.ChunkAccess;
-import net.minecraft.world.level.chunk.ChunkStatus;
-import net.minecraft.world.level.chunk.LevelChunk;
-import net.minecraft.world.level.chunk.ProtoChunk;
+import net.minecraft.world.level.chunk.*;
 import net.minecraft.world.level.chunk.storage.ChunkSerializer;
 import net.minecraft.world.level.chunk.storage.ChunkStorage;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
-import org.apache.commons.lang3.mutable.MutableBoolean;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureManager;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.*;
+import tgw.evolution.Evolution;
+import tgw.evolution.hooks.asm.DeleteMethod;
 import tgw.evolution.network.PacketSCUpdateCameraViewCenter;
+import tgw.evolution.patches.PatchChunkMap;
 import tgw.evolution.patches.PatchEither;
+import tgw.evolution.util.OptionalMutableChunkPos;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.collection.maps.O2ZMap;
@@ -43,12 +46,13 @@ import tgw.evolution.util.collection.sets.LSet;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BooleanSupplier;
 import java.util.function.IntFunction;
 
 @Mixin(ChunkMap.class)
-public abstract class MixinChunkMap extends ChunkStorage {
+public abstract class MixinChunkMap extends ChunkStorage implements PatchChunkMap, ChunkHolder.PlayerProvider {
 
     @Shadow @Final private static Logger LOGGER;
     @Unique private final LSet chunksLoaded = new LHashSet();
@@ -59,13 +63,17 @@ public abstract class MixinChunkMap extends ChunkStorage {
     @Shadow @Final ServerLevel level;
     @Shadow @Final private ChunkMap.DistanceManager distanceManager;
     @Shadow @Final private Int2ObjectMap<ChunkMap.TrackedEntity> entityMap;
+    @Shadow private ChunkGenerator generator;
     @Shadow @Final private ThreadedLevelLightEngine lightEngine;
     @Shadow @Final private ProcessorHandle<ChunkTaskPriorityQueueSorter.Message<Runnable>> mainThreadMailbox;
     @Shadow @Final private PlayerMap playerMap;
     @Shadow @Final private PoiManager poiManager;
+    @Shadow @Final private ChunkProgressListener progressListener;
+    @Shadow @Final private StructureManager structureManager;
     @Shadow @Final private AtomicInteger tickingGenerated;
     @Shadow @Final private Long2ObjectLinkedOpenHashMap<ChunkHolder> updatingChunkMap;
     @Shadow private volatile Long2ObjectLinkedOpenHashMap<ChunkHolder> visibleChunkMap;
+    @Shadow @Final private ProcessorHandle<ChunkTaskPriorityQueueSorter.Message<Runnable>> worldgenMailbox;
 
     public MixinChunkMap(Path pRegionFolder, DataFixer pFixerUpper, boolean pSync) {
         super(pRegionFolder, pFixerUpper, pSync);
@@ -83,6 +91,15 @@ public abstract class MixinChunkMap extends ChunkStorage {
     private static boolean isChunkOnRangeBorder(int p_183829_, int p_183830_, int p_183831_, int p_183832_, int p_183833_) {
         //noinspection Contract
         throw new AbstractMethodError();
+    }
+
+    @Unique
+    private static void updatePlayerPos_(ServerPlayer player) {
+        BlockPos pos = player.blockPosition();
+        int secX = SectionPos.blockToSectionCoord(pos.getX());
+        int secZ = SectionPos.blockToSectionCoord(pos.getZ());
+        player.setLastChunkPos_(secX, secZ);
+        player.connection.send(new ClientboundSetChunkCacheCenterPacket(secX, secZ));
     }
 
     /**
@@ -108,28 +125,36 @@ public abstract class MixinChunkMap extends ChunkStorage {
                                                                                                                          int i,
                                                                                                                          IntFunction<ChunkStatus> intFunction);
 
+    @Shadow
+    protected abstract ChunkStatus getDependencyStatus(ChunkStatus chunkStatus, int i);
+
     /**
      * @reason _
      * @author TheGreatWolf
      */
+    @Override
     @Overwrite
     public List<ServerPlayer> getPlayers(ChunkPos pos, boolean boundaryOnly) {
         OList<ServerPlayer> list = null;
+        int x = pos.x;
+        int z = pos.z;
         //Cannot use fastEntries as apparently this runs asynchronously
         for (ServerPlayer player : this.playerMap.getPlayers(0L)) {
-            SectionPos lastSectionPos = player.getLastSectionPos();
-            if (boundaryOnly && isChunkOnRangeBorder(pos.x, pos.z, lastSectionPos.x(), lastSectionPos.z(), this.viewDistance) ||
-                !boundaryOnly && isChunkInRange(pos.x, pos.z, lastSectionPos.x(), lastSectionPos.z(), this.viewDistance)) {
+            ChunkPos lastChunkPos = player.getLastChunkPos();
+            int lastX = lastChunkPos.x;
+            int lastZ = lastChunkPos.z;
+            if (boundaryOnly && isChunkOnRangeBorder(x, z, lastX, lastZ, this.viewDistance) || !boundaryOnly && isChunkInRange(x, z, lastX, lastZ, this.viewDistance)) {
                 if (list == null) {
                     list = new OArrayList<>();
                 }
                 list.add(player);
                 continue;
             }
-            SectionPos lastCameraSectionPos = player.getLastCameraSectionPos();
-            if (lastCameraSectionPos != null) {
-                if (boundaryOnly && isChunkOnRangeBorder(pos.x, pos.z, lastCameraSectionPos.x(), lastCameraSectionPos.z(), this.viewDistance) ||
-                    !boundaryOnly && isChunkInRange(pos.x, pos.z, lastCameraSectionPos.x(), lastCameraSectionPos.z(), this.viewDistance)) {
+            ChunkPos lastCameraChunkPos = player.getLastCameraChunkPos().getOrNull();
+            if (lastCameraChunkPos != null) {
+                int lastCamX = lastCameraChunkPos.x;
+                int lastCamZ = lastCameraChunkPos.z;
+                if (boundaryOnly && isChunkOnRangeBorder(x, z, lastCamX, lastCamZ, this.viewDistance) || !boundaryOnly && isChunkInRange(x, z, lastCamX, lastCamZ, this.viewDistance)) {
                     if (list == null) {
                         list = new OArrayList<>();
                     }
@@ -163,20 +188,25 @@ public abstract class MixinChunkMap extends ChunkStorage {
                 trackedEntity.updatePlayer(player);
             }
         }
-        SectionPos lastSectionPos = player.getLastSectionPos();
-        SectionPos currentSectionPos = SectionPos.of(player);
-        long lastChunk = ChunkPos.asLong(lastSectionPos.x(), lastSectionPos.z());
-        long currentChunk = ChunkPos.asLong(currentSectionPos.x(), currentSectionPos.z());
+        final ChunkPos lastSectionPos = player.getLastChunkPos();
+        final int lastSecX = lastSectionPos.x;
+        final int lastSecZ = lastSectionPos.z;
+        BlockPos playerPos = player.blockPosition();
+        final int currSecX = SectionPos.blockToSectionCoord(playerPos.getX());
+        final int currSecZ = SectionPos.blockToSectionCoord(playerPos.getZ());
+        long lastChunk = ChunkPos.asLong(lastSecX, lastSecZ);
+        long currentChunk = ChunkPos.asLong(currSecX, currSecZ);
         boolean ignored = this.playerMap.ignored(player);
         boolean skip = this.skipPlayer(player);
-        boolean diffSections = lastSectionPos.asLong() != currentSectionPos.asLong();
+        boolean diffSections = lastSecX != currSecX || lastSecZ != currSecZ;
         boolean shouldRemovePlayerTicket = false;
         boolean shouldAddPlayerTicket = false;
+        final BlockPos cameraPos = player.getCamera().blockPosition();
+        final int currCamSecX = SectionPos.blockToSectionCoord(cameraPos.getX());
+        final int currCamSecZ = SectionPos.blockToSectionCoord(cameraPos.getZ());
         if (diffSections || ignored != skip) {
-            this.updatePlayerPos(player);
-            BlockPos pos = player.getCamera().blockPosition();
-            player.connection.send(
-                    new PacketSCUpdateCameraViewCenter(SectionPos.blockToSectionCoord(pos.getX()), SectionPos.blockToSectionCoord(pos.getZ())));
+            updatePlayerPos_(player);
+            player.connection.send(new PacketSCUpdateCameraViewCenter(currCamSecX, currCamSecZ));
             if (!ignored) {
                 shouldRemovePlayerTicket = true;
             }
@@ -198,19 +228,19 @@ public abstract class MixinChunkMap extends ChunkStorage {
         LSet chunksToUnload = this.chunksToUnload;
         chunksToUnload.clear();
         this.chunksLoaded.clear();
-        int sectionX = currentSectionPos.x();
-        int sectionZ = currentSectionPos.z();
-        int lastX = lastSectionPos.x();
-        int lastZ = lastSectionPos.z();
-        if (Math.abs(lastX - sectionX) <= this.viewDistance * 2 && Math.abs(lastZ - sectionZ) <= this.viewDistance * 2) {
-            int minX = Math.min(sectionX, lastX) - this.viewDistance - 1;
-            int minZ = Math.min(sectionZ, lastZ) - this.viewDistance - 1;
-            int maxX = Math.max(sectionX, lastX) + this.viewDistance + 1;
-            int maxZ = Math.max(sectionZ, lastZ) + this.viewDistance + 1;
+        int currX = currSecX;
+        int currZ = currSecZ;
+        int lastX = lastSecX;
+        int lastZ = lastSecZ;
+        if (Math.abs(lastX - currX) <= this.viewDistance * 2 && Math.abs(lastZ - currZ) <= this.viewDistance * 2) {
+            int minX = Math.min(currX, lastX) - this.viewDistance - 1;
+            int minZ = Math.min(currZ, lastZ) - this.viewDistance - 1;
+            int maxX = Math.max(currX, lastX) + this.viewDistance + 1;
+            int maxZ = Math.max(currZ, lastZ) + this.viewDistance + 1;
             for (int dx = minX; dx <= maxX; ++dx) {
                 for (int dz = minZ; dz <= maxZ; ++dz) {
                     boolean wasLoaded = isChunkInRange(dx, dz, lastX, lastZ, this.viewDistance);
-                    boolean load = isChunkInRange(dx, dz, sectionX, sectionZ, this.viewDistance);
+                    boolean load = isChunkInRange(dx, dz, currX, currZ, this.viewDistance);
                     if (load != wasLoaded) {
                         if (load) {
                             chunksToLoad.add(ChunkPos.asLong(dx, dz));
@@ -235,9 +265,9 @@ public abstract class MixinChunkMap extends ChunkStorage {
                 }
             }
             //Loads chunks
-            for (int dx = sectionX - this.viewDistance - 1; dx <= sectionX + this.viewDistance + 1; ++dx) {
-                for (int dz = sectionZ - this.viewDistance - 1; dz <= sectionZ + this.viewDistance + 1; ++dz) {
-                    if (isChunkInRange(dx, dz, sectionX, sectionZ, this.viewDistance)) {
+            for (int dx = currX - this.viewDistance - 1; dx <= currX + this.viewDistance + 1; ++dx) {
+                for (int dz = currZ - this.viewDistance - 1; dz <= currZ + this.viewDistance + 1; ++dz) {
+                    if (isChunkInRange(dx, dz, currX, currZ, this.viewDistance)) {
                         chunksToLoad.add(ChunkPos.asLong(dx, dz));
                     }
                 }
@@ -248,8 +278,18 @@ public abstract class MixinChunkMap extends ChunkStorage {
         boolean shouldAddCameraTicket = false;
         boolean shouldUnloadAll = false;
         boolean shouldCameraLoad = true;
-        SectionPos lastCameraSectionPos = player.getLastCameraSectionPos();
-        SectionPos currentCameraSectionPos = null;
+        OptionalMutableChunkPos camPosHolder = player.getLastCameraChunkPos();
+        ChunkPos lastCameraSectionPos = camPosHolder.getOrNull();
+        int lastCamSecX;
+        int lastCamSecZ;
+        if (lastCameraSectionPos == null) {
+            lastCamSecX = Integer.MAX_VALUE;
+            lastCamSecZ = Integer.MAX_VALUE;
+        }
+        else {
+            lastCamSecX = lastCameraSectionPos.x;
+            lastCamSecZ = lastCameraSectionPos.z;
+        }
         if (player.getCamera() == player) {
             if (!player.getCameraUnload()) {
                 shouldCameraLoad = false;
@@ -263,29 +303,34 @@ public abstract class MixinChunkMap extends ChunkStorage {
             player.setCameraUnload(!shouldUnloadAll);
             boolean firstTick = false;
             if (lastCameraSectionPos == null) {
-                lastCameraSectionPos = lastSectionPos;
+                lastCamSecX = lastSecX;
+                lastCamSecZ = lastSecZ;
                 firstTick = true;
             }
-            currentCameraSectionPos = SectionPos.of(player.getCamera());
-            sectionX = currentCameraSectionPos.getX();
-            sectionZ = currentCameraSectionPos.getZ();
-            if (firstTick || lastCameraSectionPos.asLong() != currentCameraSectionPos.asLong()) {
+            currX = currCamSecX;
+            currZ = currCamSecZ;
+            if (firstTick || lastCamSecX != currCamSecX || lastCamSecZ != currCamSecZ) {
                 shouldAddCameraTicket = true;
                 shouldRemoveCameraTicket = !firstTick;
-                player.connection.send(new PacketSCUpdateCameraViewCenter(sectionX, sectionZ));
+                player.connection.send(new PacketSCUpdateCameraViewCenter(currX, currZ));
             }
-            player.setLastCameraSectionPos(shouldUnloadAll ? null : currentCameraSectionPos);
-            lastX = lastCameraSectionPos.x();
-            lastZ = lastCameraSectionPos.z();
-            if (!shouldUnloadAll && Math.abs(lastX - sectionX) <= this.viewDistance * 2 && Math.abs(lastZ - sectionZ) <= this.viewDistance * 2) {
-                int minX = Math.min(sectionX, lastX) - this.viewDistance - 1;
-                int minZ = Math.min(sectionZ, lastZ) - this.viewDistance - 1;
-                int maxX = Math.max(sectionX, lastX) + this.viewDistance + 1;
-                int maxZ = Math.max(sectionZ, lastZ) + this.viewDistance + 1;
+            if (shouldUnloadAll) {
+                camPosHolder.remove();
+            }
+            else {
+                camPosHolder.set(currCamSecX, currCamSecZ);
+            }
+            lastX = lastCamSecX;
+            lastZ = lastCamSecZ;
+            if (!shouldUnloadAll && Math.abs(lastX - currX) <= this.viewDistance * 2 && Math.abs(lastZ - currZ) <= this.viewDistance * 2) {
+                int minX = Math.min(currX, lastX) - this.viewDistance - 1;
+                int minZ = Math.min(currZ, lastZ) - this.viewDistance - 1;
+                int maxX = Math.max(currX, lastX) + this.viewDistance + 1;
+                int maxZ = Math.max(currZ, lastZ) + this.viewDistance + 1;
                 for (int dx = minX; dx <= maxX; ++dx) {
                     for (int dz = minZ; dz <= maxZ; ++dz) {
                         boolean wasLoaded = isChunkInRange(dx, dz, lastX, lastZ, this.viewDistance);
-                        boolean load = isChunkInRange(dx, dz, sectionX, sectionZ, this.viewDistance);
+                        boolean load = isChunkInRange(dx, dz, currX, currZ, this.viewDistance);
                         long pos = ChunkPos.asLong(dx, dz);
                         if (load) {
                             if (!this.chunksLoaded.contains(pos)) {
@@ -321,9 +366,9 @@ public abstract class MixinChunkMap extends ChunkStorage {
                 }
                 //Loads chunks
                 if (!shouldUnloadAll) {
-                    for (int dx = sectionX - this.viewDistance - 1; dx <= sectionX + this.viewDistance + 1; ++dx) {
-                        for (int dz = sectionZ - this.viewDistance - 1; dz <= sectionZ + this.viewDistance + 1; ++dz) {
-                            if (isChunkInRange(dx, dz, sectionX, sectionZ, this.viewDistance)) {
+                    for (int dx = currX - this.viewDistance - 1; dx <= currX + this.viewDistance + 1; ++dx) {
+                        for (int dz = currZ - this.viewDistance - 1; dz <= currZ + this.viewDistance + 1; ++dz) {
+                            if (isChunkInRange(dx, dz, currX, currZ, this.viewDistance)) {
                                 long pos = ChunkPos.asLong(dx, dz);
                                 if (!this.chunksLoaded.contains(pos)) {
                                     if (chunksToLoad.add(pos)) {
@@ -338,26 +383,26 @@ public abstract class MixinChunkMap extends ChunkStorage {
         }
         //Tickets
         if (shouldRemovePlayerTicket) {
-            if (shouldCameraLoad && !shouldUnloadAll && lastSectionPos.asLong() == currentCameraSectionPos.asLong()) {
+            if (shouldCameraLoad && !shouldUnloadAll && lastSecX == currCamSecX && lastSecZ == currCamSecZ) {
                 shouldRemovePlayerTicket = false;
             }
         }
         if (shouldRemoveCameraTicket) {
-            if (lastCameraSectionPos.asLong() == currentSectionPos.asLong()) {
+            if (lastCamSecX == currSecX && lastCamSecZ == currSecZ) {
                 shouldRemoveCameraTicket = false;
             }
         }
         if (shouldRemovePlayerTicket) {
-            this.distanceManager.removePlayer(lastSectionPos, player);
+            this.distanceManager.removePlayer_(lastSecX, lastSecZ, player);
         }
         if (shouldRemoveCameraTicket) {
-            this.distanceManager.removePlayer(lastCameraSectionPos, player);
+            this.distanceManager.removePlayer_(lastCamSecX, lastCamSecZ, player);
         }
         if (shouldAddPlayerTicket) {
-            this.distanceManager.addPlayer(currentSectionPos, player);
+            this.distanceManager.addPlayer_(currSecX, currSecZ, player);
         }
         if (shouldAddCameraTicket) {
-            this.distanceManager.addPlayer(currentCameraSectionPos, player);
+            this.distanceManager.addPlayer_(currCamSecX, currCamSecZ, player);
         }
         for (LSet.Entry e = chunksToUnload.fastEntries(); e != null; e = chunksToUnload.fastEntries()) {
             this.updateChunkTrackingNoPkt(player, e.get(), true, false);
@@ -371,9 +416,7 @@ public abstract class MixinChunkMap extends ChunkStorage {
     protected abstract boolean playerIsCloseEnoughForSpawning(ServerPlayer serverPlayer, ChunkPos chunkPos);
 
     @Shadow
-    protected abstract void playerLoadedChunk(ServerPlayer serverPlayer,
-                                              MutableObject<ClientboundLevelChunkWithLightPacket> mutableObject,
-                                              LevelChunk levelChunk);
+    protected abstract void playerLoadedChunk(ServerPlayer serverPlayer, MutableObject<ClientboundLevelChunkWithLightPacket> mutableObject, LevelChunk levelChunk);
 
     @Unique
     private void playerLoadedChunkNoPkt(ServerPlayer player, LevelChunk chunk) {
@@ -419,15 +462,8 @@ public abstract class MixinChunkMap extends ChunkStorage {
     @Overwrite
     public CompletableFuture<Either<LevelChunk, ChunkHolder.ChunkLoadingFailure>> prepareTickingChunk(ChunkHolder holder) {
         ChunkPos chunkPos = holder.getPos();
-        CompletableFuture<Either<List<ChunkAccess>, ChunkHolder.ChunkLoadingFailure>> future = this.getChunkRangeFuture(chunkPos, 1,
-                                                                                                                        i -> ChunkStatus.FULL);
-        CompletableFuture<Either<LevelChunk, ChunkHolder.ChunkLoadingFailure>> processingFuture = future.thenApplyAsync(either -> {
-            return either.mapLeft(list -> {
-                return (LevelChunk) list.get(list.size() / 2);
-            });
-        }, runnable -> {
-            this.mainThreadMailbox.tell(ChunkTaskPriorityQueueSorter.message(holder, runnable));
-        });
+        CompletableFuture<Either<List<ChunkAccess>, ChunkHolder.ChunkLoadingFailure>> future = this.getChunkRangeFuture(chunkPos, 1, i -> ChunkStatus.FULL);
+        CompletableFuture<Either<LevelChunk, ChunkHolder.ChunkLoadingFailure>> processingFuture = future.thenApplyAsync(either -> either.mapLeft(list -> (LevelChunk) list.get(list.size() / 2)), runnable -> this.mainThreadMailbox.tell(ChunkTaskPriorityQueueSorter.message(holder, runnable)));
         processingFuture.thenAcceptAsync(either -> {
             PatchEither<LevelChunk, ChunkHolder.ChunkLoadingFailure> e = (PatchEither<LevelChunk, ChunkHolder.ChunkLoadingFailure>) either;
             if (e.isLeft()) {
@@ -449,14 +485,30 @@ public abstract class MixinChunkMap extends ChunkStorage {
                     }
                 }
             }
-        }, runnable -> {
-            this.mainThreadMailbox.tell(ChunkTaskPriorityQueueSorter.message(holder, runnable));
-        });
+        }, runnable -> this.mainThreadMailbox.tell(ChunkTaskPriorityQueueSorter.message(holder, runnable)));
         return processingFuture;
     }
 
     @Shadow
     protected abstract void processUnloads(BooleanSupplier pHasMoreTime);
+
+    @Shadow
+    protected abstract CompletableFuture<Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure>> protoChunkToFullChunk(ChunkHolder chunkHolder);
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public void releaseLightTicket(ChunkPos chunkPos) {
+        Evolution.deprecatedMethod();
+        this.releaseLightTicket_(chunkPos.toLong());
+    }
+
+    @Override
+    public void releaseLightTicket_(long chunkPos) {
+        this.mainThreadExecutor.tell(Util.name(() -> this.distanceManager.removeTicket_(TicketType.LIGHT, chunkPos, 33 + ChunkStatus.getDistance(ChunkStatus.LIGHT), chunkPos), () -> "release light ticket " + chunkPos));
+    }
 
     /**
      * @author TheGreatWolf
@@ -505,21 +557,25 @@ public abstract class MixinChunkMap extends ChunkStorage {
                                                          //Remove filter to make it always accessible flush save
                                                          .peek(ChunkHolder::refreshAccessibility)
                                                          .toList();
-            MutableBoolean mutableboolean = new MutableBoolean();
+            boolean bool = false;
             do {
-                mutableboolean.setFalse();
-                //noinspection ObjectAllocationInLoop
-                list.stream().map(p_203102_ -> {
+                bool = false;
+                for (int i = 0, len = list.size(); i < len; ++i) {
+                    ChunkHolder holder = list.get(i);
                     CompletableFuture<ChunkAccess> completablefuture;
                     do {
-                        completablefuture = p_203102_.getChunkToSave();
+                        completablefuture = holder.getChunkToSave();
                         //noinspection ObjectAllocationInLoop
                         this.mainThreadExecutor.managedBlock(completablefuture::isDone);
-                    } while (completablefuture != p_203102_.getChunkToSave());
-                    return completablefuture.join();
-                }).filter(c -> c instanceof LevelChunk /*save proto chunks*/ || c instanceof ProtoChunk).filter(this::save).forEach(
-                        p_203051_ -> mutableboolean.setTrue());
-            } while (mutableboolean.isTrue());
+                    } while (completablefuture != holder.getChunkToSave());
+                    ChunkAccess chunk = completablefuture.join();
+                    if (chunk instanceof LevelChunk || chunk instanceof ProtoChunk) {
+                        if (this.save(chunk)) {
+                            bool = true;
+                        }
+                    }
+                }
+            } while (bool);
             this.processUnloads(() -> true);
             this.flushWorker();
         }
@@ -530,6 +586,66 @@ public abstract class MixinChunkMap extends ChunkStorage {
 
     @Shadow
     protected abstract boolean saveChunkIfNeeded(ChunkHolder p_198875_);
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public CompletableFuture<Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure>> schedule(ChunkHolder holder, ChunkStatus status) {
+        ChunkPos pos = holder.getPos();
+        if (status == ChunkStatus.EMPTY) {
+            return this.scheduleChunkLoad(pos);
+        }
+        if (status == ChunkStatus.LIGHT) {
+            long longPos = pos.toLong();
+            this.distanceManager.addTicket_(TicketType.LIGHT, longPos, 33 + ChunkStatus.getDistance(ChunkStatus.LIGHT), longPos);
+        }
+        ChunkAccess chunk = ((PatchEither<ChunkAccess, ChunkHolder.ChunkLoadingFailure>) holder.getOrScheduleFuture(status.getParent(), (ChunkMap) (Object) this).getNow(ChunkHolder.UNLOADED_CHUNK)).leftOrNull();
+        if (chunk != null && chunk.getStatus().isOrAfter(status)) {
+            CompletableFuture<Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure>> completableFuture = status.load(this.level, this.structureManager, this.lightEngine, chunkAccess -> this.protoChunkToFullChunk(holder), chunk);
+            this.progressListener.onStatusChange(pos, status);
+            return completableFuture;
+        }
+        return this.scheduleChunkGeneration(holder, status);
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    private CompletableFuture<Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure>> scheduleChunkGeneration(ChunkHolder holder, ChunkStatus status) {
+        ChunkPos chunkPos = holder.getPos();
+        CompletableFuture<Either<List<ChunkAccess>, ChunkHolder.ChunkLoadingFailure>> future = this.getChunkRangeFuture(chunkPos, status.getRange(), i -> this.getDependencyStatus(status, i));
+        this.level.getProfiler().incrementCounter(() -> "chunkGenerate " + status.getName());
+        Executor executor = runnable -> this.worldgenMailbox.tell(ChunkTaskPriorityQueueSorter.message(holder, runnable));
+        return future.thenComposeAsync(either -> either.map(list -> {
+            try {
+                CompletableFuture<Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure>> completableFuture = status.generate(executor, this.level, this.generator, this.structureManager, this.lightEngine, chunkAccess -> this.protoChunkToFullChunk(holder), list, false);
+                this.progressListener.onStatusChange(chunkPos, status);
+                return completableFuture;
+            }
+            catch (Exception t) {
+                t.getStackTrace();
+                CrashReport crashReport = CrashReport.forThrowable(t, "Exception generating new chunk");
+                CrashReportCategory crashReportCategory = crashReport.addCategory("Chunk to be generated");
+                crashReportCategory.setDetail("Location", String.format("%d,%d", chunkPos.x, chunkPos.z));
+                crashReportCategory.setDetail("Position hash", ChunkPos.asLong(chunkPos.x, chunkPos.z));
+                crashReportCategory.setDetail("Generator", this.generator);
+                this.mainThreadExecutor.execute(() -> {
+                    throw new ReportedException(crashReport);
+                });
+                throw new ReportedException(crashReport);
+            }
+        }, chunkLoadingFailure -> {
+            this.releaseLightTicket_(chunkPos.toLong());
+            return CompletableFuture.completedFuture(Either.right(chunkLoadingFailure));
+        }), executor);
+    }
+
+    @Shadow
+    protected abstract CompletableFuture<Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure>> scheduleChunkLoad(ChunkPos chunkPos);
 
     /**
      * @author TheGreatWolf
@@ -544,12 +660,16 @@ public abstract class MixinChunkMap extends ChunkStorage {
             this.distanceManager.updatePlayerTickets(this.viewDistance + 1);
             for (ChunkHolder chunkHolder : this.updatingChunkMap.values()) {
                 ChunkPos pos = chunkHolder.getPos();
+                int x = pos.x;
+                int z = pos.z;
                 //noinspection ObjectAllocationInLoop
                 MutableObject<ClientboundLevelChunkWithLightPacket> packetHolder = new MutableObject<>();
                 for (ServerPlayer player : this.getPlayers(pos, false)) {
-                    SectionPos sectionPos = player.getLastSectionPos();
-                    boolean wasLoaded = isChunkInRange(pos.x, pos.z, sectionPos.x(), sectionPos.z(), oldViewDist);
-                    boolean load = isChunkInRange(pos.x, pos.z, sectionPos.x(), sectionPos.z(), this.viewDistance);
+                    ChunkPos chunkPos = player.getLastChunkPos();
+                    int secX = chunkPos.x;
+                    int secZ = chunkPos.z;
+                    boolean wasLoaded = isChunkInRange(x, z, secX, secZ, oldViewDist);
+                    boolean load = isChunkInRange(x, z, secX, secZ, this.viewDistance);
                     this.updateChunkTracking(player, pos, packetHolder, wasLoaded, load);
                 }
             }
@@ -560,11 +680,7 @@ public abstract class MixinChunkMap extends ChunkStorage {
     protected abstract boolean skipPlayer(ServerPlayer pPlayer);
 
     @Shadow
-    protected abstract void updateChunkTracking(ServerPlayer pPlayer,
-                                                ChunkPos pChunkPos,
-                                                MutableObject<ClientboundLevelChunkWithLightPacket> pPacketCache,
-                                                boolean pWasLoaded,
-                                                boolean pLoad);
+    protected abstract void updateChunkTracking(ServerPlayer pPlayer, ChunkPos pChunkPos, MutableObject<ClientboundLevelChunkWithLightPacket> pPacketCache, boolean pWasLoaded, boolean pLoad);
 
     @Unique
     private void updateChunkTrackingNoPkt(ServerPlayer player, long pos, boolean wasLoaded, boolean load) {
@@ -587,8 +703,15 @@ public abstract class MixinChunkMap extends ChunkStorage {
         }
     }
 
-    @Shadow
-    protected abstract SectionPos updatePlayerPos(ServerPlayer p_140374_);
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    @DeleteMethod
+    private SectionPos updatePlayerPos(ServerPlayer player) {
+        throw new AbstractMethodError();
+    }
 
     /**
      * @reason _
@@ -603,16 +726,18 @@ public abstract class MixinChunkMap extends ChunkStorage {
         int secZ = SectionPos.blockToSectionCoord(pos.getZ());
         if (load) {
             this.playerMap.addPlayer(ChunkPos.asLong(secX, secZ), player, skip);
-            this.updatePlayerPos(player);
+            updatePlayerPos_(player);
             if (!skip) {
-                this.distanceManager.addPlayer(SectionPos.of(player), player);
+                this.distanceManager.addPlayer_(secX, secZ, player);
             }
         }
         else {
-            SectionPos sectionPos = player.getLastSectionPos();
-            this.playerMap.removePlayer(ChunkPos.asLong(sectionPos.x(), sectionPos.z()), player);
+            ChunkPos chunkPos = player.getLastChunkPos();
+            int lastSecX = chunkPos.x;
+            int lastSecZ = chunkPos.z;
+            this.playerMap.removePlayer(ChunkPos.asLong(lastSecX, lastSecZ), player);
             if (!ignored) {
-                this.distanceManager.removePlayer(sectionPos, player);
+                this.distanceManager.removePlayer_(lastSecX, lastSecZ, player);
             }
         }
         int x0 = secX - this.viewDistance - 1;

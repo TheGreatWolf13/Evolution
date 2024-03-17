@@ -5,7 +5,6 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.world.entity.LivingEntity;
 import tgw.evolution.items.IMelee;
-import tgw.evolution.patches.PatchClientPacketListener;
 
 public class PacketSCSpecialAttackStop implements Packet<ClientGamePacketListener> {
 
@@ -24,7 +23,7 @@ public class PacketSCSpecialAttackStop implements Packet<ClientGamePacketListene
 
     @Override
     public void handle(ClientGamePacketListener listener) {
-        ((PatchClientPacketListener) listener).handleSpecialAttackStop(this);
+        listener.handleSpecialAttackStop(this);
     }
 
     @Override

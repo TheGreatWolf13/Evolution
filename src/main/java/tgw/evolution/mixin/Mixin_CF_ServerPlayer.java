@@ -22,7 +22,9 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerPlayerGameMode;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
+import net.minecraft.server.network.TextFilter;
 import net.minecraft.stats.ServerRecipeBook;
+import net.minecraft.stats.ServerStatsCounter;
 import net.minecraft.stats.Stats;
 import net.minecraft.util.Unit;
 import net.minecraft.world.damagesource.DamageSource;
@@ -32,8 +34,11 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.player.ChatVisiblity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.inventory.ContainerListener;
+import net.minecraft.world.inventory.ContainerSynchronizer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.level.GameRules;
@@ -50,53 +55,114 @@ import org.spongepowered.asm.mixin.*;
 import tgw.evolution.Evolution;
 import tgw.evolution.capabilities.player.*;
 import tgw.evolution.entities.misc.EntityPlayerCorpse;
+import tgw.evolution.hooks.asm.DeleteField;
+import tgw.evolution.hooks.asm.ModifyConstructor;
+import tgw.evolution.hooks.asm.RestoreFinal;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.network.PacketSCAddEffect;
 import tgw.evolution.patches.PatchEither;
 import tgw.evolution.patches.PatchServerPlayer;
+import tgw.evolution.patches.obj.ContainerListenerImpl;
+import tgw.evolution.patches.obj.ContainerSynchronizerImpl;
 import tgw.evolution.util.NBTHelper;
+import tgw.evolution.util.OptionalMutableChunkPos;
 import tgw.evolution.util.PlayerHelper;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.damage.DamageSourceEv;
+import tgw.evolution.util.math.ChunkPosMutable;
 
 import java.util.Collection;
 import java.util.List;
 
 @Mixin(ServerPlayer.class)
-public abstract class MixinServerPlayer extends Player implements PatchServerPlayer {
+public abstract class Mixin_CF_ServerPlayer extends Player implements PatchServerPlayer {
 
     @Shadow @Final private static Logger LOGGER;
-    @Unique private final CapabilityInventory extraInventory = new CapabilityInventory(this);
-    @Unique private final CapabilityHealth healthStats = new CapabilityHealth();
-    @Unique private final CapabilityHunger hungerStats = new CapabilityHunger();
-    @Unique private final CapabilityStamina staminaStats = new CapabilityStamina();
-    @Unique private final CapabilityTemperature temperatureStats = new CapabilityTemperature();
-    @Unique private final CapabilityThirst thirstStats = new CapabilityThirst();
-    @Unique private final CapabilityToast toastStats = new CapabilityToast();
+    @Unique private final CapabilityInventory extraInventory;
+    @Unique private final CapabilityHealth healthStats;
+    @Unique private final CapabilityHunger hungerStats;
+    @Unique private final OptionalMutableChunkPos lastCameraSectionPos;
+    @Unique private final ChunkPosMutable lastChunkPos;
+    @Unique private final CapabilityStamina staminaStats;
+    @Unique private final CapabilityTemperature temperatureStats;
+    @Unique private final CapabilityThirst thirstStats;
+    @Unique private final CapabilityToast toastStats;
     @Shadow public ServerGamePacketListenerImpl connection;
     @Shadow public @Nullable Vec3 enteredNetherPosition;
-    @Shadow @Final public ServerPlayerGameMode gameMode;
+    @Mutable @Shadow @Final @RestoreFinal public ServerPlayerGameMode gameMode;
     @Shadow public boolean seenCredits;
-    @Shadow @Final public MinecraftServer server;
-    @Shadow @Final private PlayerAdvancements advancements;
+    @Mutable @Shadow @Final @RestoreFinal public MinecraftServer server;
+    @Mutable @Shadow @Final @RestoreFinal private PlayerAdvancements advancements;
+    @Shadow private boolean allowsListing;
     @Shadow private @Nullable Entity camera;
     @Unique private boolean cameraUnload;
-    @Unique private @Nullable SectionPos lastCameraSectionPos;
+    @Shadow private boolean canChatColor;
+    @Shadow private ChatVisiblity chatVisibility;
+    @Mutable @Shadow @Final @RestoreFinal private ContainerListener containerListener;
+    @Mutable @Shadow @Final @RestoreFinal private ContainerSynchronizer containerSynchronizer;
+    @Shadow private long lastActionTime;
+    @Shadow private boolean lastFoodSaturationZero;
+    @Shadow private int lastRecordedAirLevel;
+    @Shadow private int lastRecordedArmor;
+    @Shadow private int lastRecordedExperience;
+    @Shadow private int lastRecordedFoodLevel;
+    @Shadow private float lastRecordedHealthAndAbsorption;
+    @Shadow private int lastRecordedLevel;
+    @Shadow @DeleteField private SectionPos lastSectionPos;
     @Shadow private int lastSentExp;
+    @Shadow private int lastSentFood;
     @Shadow private float lastSentHealth;
     @Shadow private @Nullable Vec3 levitationStartPos;
     @Shadow private int levitationStartTime;
-    @Shadow @Final private ServerRecipeBook recipeBook;
+    @Mutable @Shadow @Final @RestoreFinal private ServerRecipeBook recipeBook;
     @Shadow private float respawnAngle;
     @Shadow private ResourceKey<Level> respawnDimension;
     @Shadow private boolean respawnForced;
     @Shadow private @Nullable BlockPos respawnPosition;
     @Shadow private int spawnInvulnerableTime;
+    @Mutable @Shadow @Final @RestoreFinal private ServerStatsCounter stats;
+    @Mutable @Shadow @Final @RestoreFinal private TextFilter textFilter;
     @Shadow private boolean textFilteringEnabled;
 
-    public MixinServerPlayer(Level level, BlockPos pos, float spawnAngle, GameProfile profile) {
-        super(level, pos, spawnAngle, profile);
+    @ModifyConstructor
+    public Mixin_CF_ServerPlayer(MinecraftServer server, ServerLevel level, GameProfile profile) {
+        super(level, level.getSharedSpawnPos(), level.getSharedSpawnAngle(), profile);
+        this.lastRecordedHealthAndAbsorption = Float.MIN_VALUE;
+        this.lastRecordedFoodLevel = Integer.MIN_VALUE;
+        this.lastRecordedAirLevel = Integer.MIN_VALUE;
+        this.lastRecordedArmor = Integer.MIN_VALUE;
+        this.lastRecordedLevel = Integer.MIN_VALUE;
+        this.lastRecordedExperience = Integer.MIN_VALUE;
+        this.lastChunkPos = new ChunkPosMutable();
+        this.lastSentHealth = -1.0E8F;
+        this.lastSentFood = -99_999_999;
+        this.lastFoodSaturationZero = true;
+        this.lastSentExp = -99_999_999;
+        this.spawnInvulnerableTime = 60;
+        this.extraInventory = new CapabilityInventory(this);
+        this.healthStats = new CapabilityHealth();
+        this.hungerStats = new CapabilityHunger();
+        this.lastCameraSectionPos = new OptionalMutableChunkPos();
+        this.staminaStats = new CapabilityStamina();
+        this.temperatureStats = new CapabilityTemperature();
+        this.thirstStats = new CapabilityThirst();
+        this.toastStats = new CapabilityToast();
+        this.chatVisibility = ChatVisiblity.FULL;
+        this.canChatColor = true;
+        this.lastActionTime = Util.getMillis();
+        this.recipeBook = new ServerRecipeBook();
+        this.respawnDimension = Level.OVERWORLD;
+        this.allowsListing = true;
+        this.containerSynchronizer = new ContainerSynchronizerImpl((ServerPlayer) (Object) this);
+        this.containerListener = new ContainerListenerImpl((ServerPlayer) (Object) this);
+        this.textFilter = server.createTextFilterForPlayer((ServerPlayer) (Object) this);
+        this.gameMode = server.createGameModeForPlayer((ServerPlayer) (Object) this);
+        this.server = server;
+        this.stats = server.getPlayerList().getPlayerStats(this);
+        this.advancements = server.getPlayerList().getPlayerAdvancements((ServerPlayer) (Object) this);
+        this.maxUpStep = 1.0F;
+        this.fudgeSpawnLocation(level);
     }
 
     /**
@@ -214,9 +280,7 @@ public abstract class MixinServerPlayer extends Player implements PatchServerPla
                     String string = deathMessage.getString(256);
                     Component desc = new TranslatableComponent("death.attack.message_too_long",
                                                                new TextComponent(string).withStyle(ChatFormatting.YELLOW));
-                    Component longMessage = new TranslatableComponent("death.attack.even_more_magic", this.getDisplayName()).withStyle(style -> {
-                        return style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, desc));
-                    });
+                    Component longMessage = new TranslatableComponent("death.attack.even_more_magic", this.getDisplayName()).withStyle(style -> style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, desc)));
                     this.connection.send(new ClientboundPlayerCombatKillPacket(this.getCombatTracker(), longMessage));
                 }
             });
@@ -305,6 +369,9 @@ public abstract class MixinServerPlayer extends Player implements PatchServerPla
     }
 
     @Shadow
+    protected abstract void fudgeSpawnLocation(ServerLevel serverLevel);
+
+    @Shadow
     public abstract Entity getCamera();
 
     @Override
@@ -328,8 +395,23 @@ public abstract class MixinServerPlayer extends Player implements PatchServerPla
     }
 
     @Override
-    public @Nullable SectionPos getLastCameraSectionPos() {
+    public OptionalMutableChunkPos getLastCameraChunkPos() {
         return this.lastCameraSectionPos;
+    }
+
+    @Override
+    public ChunkPosMutable getLastChunkPos() {
+        return this.lastChunkPos;
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public SectionPos getLastSectionPos() {
+        Evolution.deprecatedMethod();
+        return SectionPos.of(0, 0, 0);
     }
 
     @Override
@@ -477,14 +559,13 @@ public abstract class MixinServerPlayer extends Player implements PatchServerPla
         this.enteredNetherPosition = oldPlayer.enteredNetherPosition;
         this.setShoulderEntityLeft(oldPlayer.getShoulderEntityLeft());
         this.setShoulderEntityRight(oldPlayer.getShoulderEntityRight());
-        PatchServerPlayer patch = (PatchServerPlayer) oldPlayer;
-        this.extraInventory.set(patch.getExtraInventory());
-        this.healthStats.set(patch.getHealthStats());
-        this.hungerStats.set(patch.getHungerStats());
-        this.staminaStats.set(patch.getStaminaStats());
-        this.temperatureStats.set(patch.getTemperatureStats());
-        this.thirstStats.set(patch.getThirstStats());
-        this.toastStats.set(patch.getToastStats());
+        this.extraInventory.set(oldPlayer.getExtraInventory());
+        this.healthStats.set(oldPlayer.getHealthStats());
+        this.hungerStats.set(oldPlayer.getHungerStats());
+        this.staminaStats.set(oldPlayer.getStaminaStats());
+        this.temperatureStats.set(oldPlayer.getTemperatureStats());
+        this.thirstStats.set(oldPlayer.getThirstStats());
+        this.toastStats.set(oldPlayer.getToastStats());
     }
 
     /**
@@ -510,14 +591,22 @@ public abstract class MixinServerPlayer extends Player implements PatchServerPla
     }
 
     @Override
-    @Unique
-    public void setLastCameraSectionPos(@Nullable SectionPos pos) {
-        this.lastCameraSectionPos = pos;
+    public void setLastChunkPos_(int secX, int secZ) {
+        this.lastChunkPos.set(secX, secZ);
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public void setLastSectionPos(SectionPos sectionPos) {
+        Evolution.deprecatedMethod();
+        this.lastSectionPos = sectionPos;
     }
 
     @Shadow
-    public abstract void setRespawnPosition(ResourceKey<Level> resourceKey,
-                                            @Nullable BlockPos blockPos, float f, boolean bl, boolean bl2);
+    public abstract void setRespawnPosition(ResourceKey<Level> resourceKey, @Nullable BlockPos blockPos, float f, boolean bl, boolean bl2);
 
     /**
      * @author TheGreatWolf
@@ -550,7 +639,7 @@ public abstract class MixinServerPlayer extends Player implements PatchServerPla
                 }
             }
             Either<BedSleepingProblem, Unit> either = super.startSleepInBed(pos);
-            if (((PatchEither) either).isRight()) {
+            if (((PatchEither<BedSleepingProblem, Unit>) either).isRight()) {
                 this.awardStat(Stats.SLEEP_IN_BED);
                 CriteriaTriggers.SLEPT_IN_BED.trigger((ServerPlayer) (Object) this);
             }

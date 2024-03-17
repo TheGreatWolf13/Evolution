@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import tgw.evolution.inventory.AdditionalSlotType;
 import tgw.evolution.util.collection.maps.R2OMap;
 
-public class ItemShirt extends ItemEv implements IAdditionalEquipment {
+public class ItemShirt extends ItemGeneric implements IAdditionalEquipment {
 
     public ItemShirt(Properties properties) {
         super(properties);

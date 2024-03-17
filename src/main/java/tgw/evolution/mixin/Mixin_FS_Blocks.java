@@ -32,6 +32,7 @@ import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.material.MaterialColor;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.*;
+import tgw.evolution.blocks.BlockBedrock;
 import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.hooks.asm.ModifyStatic;
 import tgw.evolution.hooks.asm.RestoreFinal;
@@ -1079,10 +1080,7 @@ public abstract class Mixin_FS_Blocks {
                 .randomTicks()
                 .instabreak()
                 .sound(SoundType.GRASS)));
-        BEDROCK = register("bedrock", new Block(of(Material.STONE)
-                                                        .strength(-1.0F, 3_600_000.0F)
-                                                        .noDrops()
-                                                        .isValidSpawn_(BlockUtils.NEVER_SPAWN)));
+        BEDROCK = register("bedrock", new BlockBedrock());
         WATER = register("water", new LiquidBlock(Fluids.WATER, of(Material.WATER).noCollission().strength(100.0F).noDrops()));
         LAVA = register("lava", new LiquidBlock(Fluids.LAVA, of(Material.LAVA)
                 .noCollission()

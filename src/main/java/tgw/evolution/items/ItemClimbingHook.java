@@ -23,7 +23,7 @@ import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.util.math.MathHelper;
 
-public class ItemClimbingHook extends ItemEv implements IThrowable {
+public class ItemClimbingHook extends ItemGeneric implements IThrowable {
 
     public ItemClimbingHook() {
         super(new Item.Properties().tab(EvolutionCreativeTabs.MISC).stacksTo(1));

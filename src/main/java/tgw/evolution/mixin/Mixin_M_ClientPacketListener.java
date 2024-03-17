@@ -62,7 +62,6 @@ import tgw.evolution.events.ClientEvents;
 import tgw.evolution.hooks.asm.DeleteMethod;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.network.*;
-import tgw.evolution.patches.PatchClientPacketListener;
 import tgw.evolution.patches.PatchLivingEntity;
 import tgw.evolution.stats.EvolutionStatsCounter;
 import tgw.evolution.util.collection.lists.OList;
@@ -72,7 +71,7 @@ import tgw.evolution.util.math.Vec3d;
 import java.util.*;
 
 @Mixin(ClientPacketListener.class)
-public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketListener, PatchClientPacketListener {
+public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketListener {
 
     @Shadow @Final private Connection connection;
     @Shadow private ClientLevel level;
@@ -322,6 +321,16 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
     public void handleLightUpdatePacket(ClientboundLightUpdatePacket packet) {
         PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
         this.applyLightData(packet.getX(), packet.getZ(), packet.getLightData());
+    }
+
+    @Override
+    public void handleLoadFactor(PacketSCLoadFactor packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        switch (packet.action) {
+            case CLEAR -> ClientEvents.CLIENT_INTEGRITY_STORAGE.clear();
+            case REMOVE -> ClientEvents.CLIENT_INTEGRITY_STORAGE.remove(packet.pos);
+            case ADD -> ClientEvents.CLIENT_INTEGRITY_STORAGE.put(packet.pos, packet.getLoadArray(), packet.getIntegrityArray(), packet.getStabilityArray());
+        }
     }
 
     /**
@@ -825,14 +834,7 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
      */
     @Overwrite
     @DeleteMethod
-    private void readSectionList(int i,
-                                 int j,
-                                 LevelLightEngine levelLightEngine,
-                                 LightLayer lightLayer,
-                                 BitSet bitSet,
-                                 BitSet bitSet2,
-                                 Iterator<byte[]> iterator,
-                                 boolean bl) {
+    private void readSectionList(int i, int j, LevelLightEngine levelLightEngine, LightLayer lightLayer, BitSet bitSet, BitSet bitSet2, Iterator<byte[]> iterator, boolean bl) {
         throw new AbstractMethodError();
     }
 

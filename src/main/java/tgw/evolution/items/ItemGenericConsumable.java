@@ -17,7 +17,7 @@ import net.minecraft.world.level.Level;
 import tgw.evolution.patches.PatchServerPlayer;
 import tgw.evolution.util.collection.O2FPair;
 
-public abstract class ItemGenericConsumable extends ItemEv implements IConsumable {
+public abstract class ItemGenericConsumable extends ItemGeneric implements IConsumable {
 
     public ItemGenericConsumable(Item.Properties properties) {
         super(properties);

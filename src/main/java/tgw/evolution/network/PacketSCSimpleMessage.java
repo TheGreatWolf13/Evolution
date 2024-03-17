@@ -3,7 +3,7 @@ package tgw.evolution.network;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import tgw.evolution.patches.PatchClientPacketListener;
+import tgw.evolution.patches.PatchClientGamePacketListener;
 
 public class PacketSCSimpleMessage implements Packet<ClientGamePacketListener> {
 
@@ -19,7 +19,7 @@ public class PacketSCSimpleMessage implements Packet<ClientGamePacketListener> {
 
     @Override
     public void handle(ClientGamePacketListener listener) {
-        ((PatchClientPacketListener) listener).handleSimpleMessage(this);
+        listener.handleSimpleMessage(this);
     }
 
     @Override

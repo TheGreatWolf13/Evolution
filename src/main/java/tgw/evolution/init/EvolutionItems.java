@@ -191,7 +191,7 @@ public final class EvolutionItems {
         PLANK = make(WoodVariant.class, WoodVariant.VALUES, "plank_", e -> wood());
         PLANKS = makeBlock(WoodVariant.class, EvolutionBlocks.PLANKS, e -> woodBlock(e.get(EvolutionBlocks.PLANKS)));
         POLISHED_STONES = makeBlock(RockVariant.class, EvolutionBlocks.POLISHED_STONES, e -> itemBlock(e.get(EvolutionBlocks.POLISHED_STONES)));
-        PRIMITIVE_KNIVES = make(RockVariant.class, RockVariant.VALUES_STONE, "primitive_knife_", e -> new ItemEv(propPartTool()));
+        PRIMITIVE_KNIVES = make(RockVariant.class, RockVariant.VALUES_STONE, "primitive_knife_", e -> new ItemGeneric(propPartTool()));
         ROCKS = makeBlock(RockVariant.class, EvolutionBlocks.ROCKS, e -> new ItemRock(e.get(EvolutionBlocks.ROCKS), propMisc(), e));
         SANDS = makeBlock(RockVariant.class, EvolutionBlocks.SANDS, e -> itemBlock(e.get(EvolutionBlocks.SANDS)));
         SAPLINGS = makeBlock(WoodVariant.class, EvolutionBlocks.SAPLINGS, e -> woodBlock(e.get(EvolutionBlocks.SAPLINGS)));
@@ -225,7 +225,7 @@ public final class EvolutionItems {
 
     @Contract("_ -> new")
     private static Item item(Item.Properties prop) {
-        return new ItemEv(prop);
+        return new ItemGeneric(prop);
     }
 
     @Contract("_ -> new")
@@ -306,7 +306,7 @@ public final class EvolutionItems {
 
     @Contract(" -> new")
     private static Item wood() {
-        return new ItemEv(propTreesAndWood());
+        return new ItemGeneric(propTreesAndWood());
     }
 
     @Contract("_ -> new")

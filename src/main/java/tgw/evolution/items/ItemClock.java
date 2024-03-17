@@ -8,7 +8,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import tgw.evolution.util.time.FullDate;
 
-public class ItemClock extends ItemEv {
+public class ItemClock extends ItemGeneric {
 
     public ItemClock(Properties properties) {
         super(properties);

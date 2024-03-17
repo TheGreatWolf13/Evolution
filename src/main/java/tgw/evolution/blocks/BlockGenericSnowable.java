@@ -17,7 +17,7 @@ import static tgw.evolution.init.EvolutionBStates.SNOWY;
 
 public abstract class BlockGenericSnowable extends BlockPhysics implements ICollisionBlock {
 
-    protected BlockGenericSnowable(Block.Properties builder, double mass) {
+    protected BlockGenericSnowable(Block.Properties builder) {
         super(builder);
         this.registerDefaultState(this.defaultBlockState().setValue(SNOWY, false));
     }

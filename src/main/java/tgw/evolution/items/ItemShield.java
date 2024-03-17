@@ -8,7 +8,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
 
-public class ItemShield extends ItemEv implements IDurability {
+public class ItemShield extends ItemGeneric implements IDurability {
 
     public ItemShield(Properties properties) {
         super(properties);

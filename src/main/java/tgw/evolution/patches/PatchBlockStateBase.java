@@ -15,10 +15,10 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
-import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.constants.BlockFlags;
 
 import java.util.Random;
+import java.util.function.Consumer;
 
 public interface PatchBlockStateBase {
 
@@ -31,6 +31,10 @@ public interface PatchBlockStateBase {
     }
 
     default boolean canSurvive_(LevelReader level, int x, int y, int z) {
+        throw new AbstractMethodError();
+    }
+
+    default void dropLoot(ServerLevel level, int x, int y, int z, ItemStack tool, @Nullable BlockEntity tile, @Nullable Entity entity, Random random, Consumer<ItemStack> consumer) {
         throw new AbstractMethodError();
     }
 
@@ -55,17 +59,6 @@ public interface PatchBlockStateBase {
     }
 
     default float getDestroySpeed_() {
-        throw new AbstractMethodError();
-    }
-
-    default OList<ItemStack> getDrops(ServerLevel level,
-                                      int x,
-                                      int y,
-                                      int z,
-                                      ItemStack tool,
-                                      @Nullable BlockEntity tile,
-                                      @Nullable Entity entity,
-                                      Random random) {
         throw new AbstractMethodError();
     }
 
@@ -106,6 +99,10 @@ public interface PatchBlockStateBase {
     }
 
     default VoxelShape getShape_(BlockGetter level, int x, int y, int z) {
+        throw new AbstractMethodError();
+    }
+
+    default int getSignal_(BlockGetter level, int x, int y, int z, Direction dir) {
         throw new AbstractMethodError();
     }
 

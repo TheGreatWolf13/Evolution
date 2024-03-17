@@ -74,11 +74,6 @@ public class BlockKnapping extends BlockPhysics implements IReplaceable, IRockVa
     }
 
     @Override
-    public double getMass(Level level, int x, int y, int z, BlockState state) {
-        return 0;
-    }
-
-    @Override
     public VoxelShape getShape_(BlockState state, BlockGetter world, int x, int y, int z, @Nullable Entity entity) {
         if (world.getBlockEntity_(x, y, z) instanceof TEKnapping te) {
             return te.getOrMakeHitbox();

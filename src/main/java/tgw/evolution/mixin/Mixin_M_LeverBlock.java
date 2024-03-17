@@ -111,6 +111,22 @@ public abstract class Mixin_M_LeverBlock extends FaceAttachedHorizontalDirection
     @Override
     @Overwrite
     @DeleteMethod
+    public int getSignal(BlockState blockState, BlockGetter blockGetter, BlockPos blockPos, Direction direction) {
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public int getSignal_(BlockState state, BlockGetter level, int x, int y, int z, Direction dir) {
+        return state.getValue(POWERED) ? 15 : 0;
+    }
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Override
+    @Overwrite
+    @DeleteMethod
     public void onRemove(BlockState blockState, Level level, BlockPos blockPos, BlockState blockState2, boolean bl) {
         throw new AbstractMethodError();
     }

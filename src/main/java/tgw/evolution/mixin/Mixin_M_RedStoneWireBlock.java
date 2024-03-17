@@ -45,6 +45,7 @@ public abstract class Mixin_M_RedStoneWireBlock extends Block {
     @Shadow @Final private static Map<BlockState, VoxelShape> SHAPES_CACHE;
     @Shadow @Final private static Vec3[] COLORS;
     @Shadow @Final private BlockState crossState;
+    @Shadow private boolean shouldSignal;
 
     public Mixin_M_RedStoneWireBlock(Properties properties) {
         super(properties);
@@ -149,29 +150,42 @@ public abstract class Mixin_M_RedStoneWireBlock extends Block {
     @Override
     @Overwrite
     @DeleteMethod
+    public int getSignal(BlockState blockState, BlockGetter blockGetter, BlockPos blockPos, Direction direction) {
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public int getSignal_(BlockState state, BlockGetter level, int x, int y, int z, Direction dir) {
+        if (this.shouldSignal && dir != Direction.DOWN) {
+            int power = state.getValue(POWER);
+            if (power == 0) {
+                return 0;
+            }
+            return dir != Direction.UP && !this.getConnectionState(level, state, new BlockPos(x, y, z)).getValue(PROPERTY_BY_DIRECTION.get(dir.getOpposite())).isConnected() ? 0 : power;
+        }
+        return 0;
+    }
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Override
+    @Overwrite
+    @DeleteMethod
     public void neighborChanged(BlockState blockState, Level level, BlockPos blockPos, Block block, BlockPos blockPos2, boolean bl) {
         throw new AbstractMethodError();
     }
 
     @Override
-    public void neighborChanged_(BlockState state,
-                                 Level level,
-                                 int x,
-                                 int y,
-                                 int z,
-                                 Block oldBlock,
-                                 int fromX,
-                                 int fromY,
-                                 int fromZ,
-                                 boolean isMoving) {
+    public void neighborChanged_(BlockState state, Level level, int x, int y, int z, Block oldBlock, int fromX, int fromY, int fromZ, boolean isMoving) {
         if (!level.isClientSide) {
             if (state.canSurvive_(level, x, y, z)) {
                 this.updatePowerStrength(level, new BlockPos(x, y, z), state);
             }
             else {
-                BlockPos pos = new BlockPos(x, y, z);
-                dropResources(state, level, pos);
-                level.removeBlock(pos, false);
+                dropResources(state, level, new BlockPos(x, y, z));
+                level.removeBlock_(x, y, z, false);
             }
         }
     }

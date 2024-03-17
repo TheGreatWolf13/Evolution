@@ -4,7 +4,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import tgw.evolution.patches.PatchClientPacketListener;
 
 public class PacketSCOpenMoldingGui implements Packet<ClientGamePacketListener> {
 
@@ -20,7 +19,7 @@ public class PacketSCOpenMoldingGui implements Packet<ClientGamePacketListener> 
 
     @Override
     public void handle(ClientGamePacketListener listener) {
-        ((PatchClientPacketListener) listener).handleOpenMoldingGui(this);
+        listener.handleOpenMoldingGui(this);
     }
 
     @Override

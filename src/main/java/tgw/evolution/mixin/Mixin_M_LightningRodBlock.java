@@ -6,6 +6,7 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.ParticleUtils;
 import net.minecraft.util.valueproviders.UniformInt;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.LightningRodBlock;
@@ -51,6 +52,22 @@ public abstract class Mixin_M_LightningRodBlock extends RodBlock implements Simp
         if (level.isThundering() && level.random.nextInt(200) <= level.getGameTime() % 200L && y == level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1) {
             ParticleUtils.spawnParticlesAlongAxis(state.getValue(FACING).getAxis(), level, new BlockPos(x, y, z), 0.125, ParticleTypes.ELECTRIC_SPARK, UniformInt.of(1, 2));
         }
+    }
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Override
+    @Overwrite
+    @DeleteMethod
+    public int getSignal(BlockState blockState, BlockGetter blockGetter, BlockPos blockPos, Direction direction) {
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public int getSignal_(BlockState state, BlockGetter level, int x, int y, int z, Direction dir) {
+        return state.getValue(POWERED) ? 15 : 0;
     }
 
     /**

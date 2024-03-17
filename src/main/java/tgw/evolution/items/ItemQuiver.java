@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import tgw.evolution.inventory.AdditionalSlotType;
 import tgw.evolution.util.collection.maps.R2OMap;
 
-public class ItemQuiver extends ItemEv implements IAdditionalEquipment {
+public class ItemQuiver extends ItemGeneric implements IAdditionalEquipment {
 
     public ItemQuiver(Properties properties) {
         super(properties);

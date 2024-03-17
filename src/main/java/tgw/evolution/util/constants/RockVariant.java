@@ -28,23 +28,23 @@ import java.util.Map;
 import static tgw.evolution.util.constants.RockType.*;
 
 public enum RockVariant implements IVariant<RockVariant> {
-    ANDESITE(0, IGNEOUS_EXTRUSIVE, "andesite", 2_565, 40_000_000),
-    BASALT(1, IGNEOUS_EXTRUSIVE, "basalt", 2_768, 30_000_000),
-    CHERT(2, SEDIMENTARY, "chert", 2_564, 9_000_000),
-    DIORITE(3, IGNEOUS_INTRUSIVE, "diorite", 2_797, 18_000_000),
-    GABBRO(4, IGNEOUS_INTRUSIVE, "gabbro", 2_884, 60_000_000),
-    GNEISS(5, METAMORPHIC, "gneiss", 2_812, 10_000_000),
-    GRANITE(6, IGNEOUS_INTRUSIVE, "granite", 2_640, 20_000_000),
-    LIMESTONE(7, SEDIMENTARY, "limestone", 2_484, 20_000_000),
-    MARBLE(8, METAMORPHIC, "marble", 2_716, 20_000_000),
-    RED_SANDSTONE(9, SEDIMENTARY, "red_sandstone", 2_475, 8_000_000),
-    RHYOLITE(10, IGNEOUS_EXTRUSIVE, "rhyolite", 2_350, 0),
-    SANDSTONE(11, SEDIMENTARY, "sandstone", 2_463, 8_000_000),
-    SCHIST(12, METAMORPHIC, "schist", 2_732, 5_000_000),
-    SHALE(13, SEDIMENTARY, "shale", 2_335, 5_000_000),
-    SLATE(14, METAMORPHIC, "slate", 2_691, 10_000_000),
+    ANDESITE(0, IGNEOUS_EXTRUSIVE, "andesite"),
+    BASALT(1, IGNEOUS_EXTRUSIVE, "basalt"),
+    CHERT(2, SEDIMENTARY, "chert"),
+    DIORITE(3, IGNEOUS_INTRUSIVE, "diorite"),
+    GABBRO(4, IGNEOUS_INTRUSIVE, "gabbro"),
+    GNEISS(5, METAMORPHIC, "gneiss"),
+    GRANITE(6, IGNEOUS_INTRUSIVE, "granite"),
+    LIMESTONE(7, SEDIMENTARY, "limestone"),
+    MARBLE(8, METAMORPHIC, "marble"),
+    RED_SANDSTONE(9, SEDIMENTARY, "red_sandstone"),
+    RHYOLITE(10, IGNEOUS_EXTRUSIVE, "rhyolite"),
+    SANDSTONE(11, SEDIMENTARY, "sandstone"),
+    SCHIST(12, METAMORPHIC, "schist"),
+    SHALE(13, SEDIMENTARY, "shale"),
+    SLATE(14, METAMORPHIC, "slate"),
     //    PEAT(15, null, "peat", 1_156, 0),
-    CLAY(15, null, "clay", 2_067, 0);
+    CLAY(15, null, "clay");
 
     public static final RockVariant[] VALUES = values();
     public static final RockVariant[] VALUES_STONE = Arrays.stream(VALUES).filter(v -> v != CLAY).toArray(RockVariant[]::new);
@@ -62,18 +62,14 @@ public enum RockVariant implements IVariant<RockVariant> {
         REGISTRY = Byte2ReferenceMaps.unmodifiable(map);
     }
 
-    private final double density;
     private final byte id;
     private final String name;
     private final @Nullable RockType rockType;
-    private final int shearStrength;
 
-    RockVariant(int id, @Nullable RockType rockType, String name, double densityInkg, int shearStrengthInPa) {
+    RockVariant(int id, @Nullable RockType rockType, String name) {
         this.id = (byte) id;
         this.rockType = rockType;
         this.name = name;
-        this.density = densityInkg;
-        this.shearStrength = shearStrengthInPa;
     }
 
     public static RockVariant fromId(byte id) {
@@ -120,10 +116,6 @@ public enum RockVariant implements IVariant<RockVariant> {
         };
     }
 
-    public double getMass() {
-        return this.density;
-    }
-
     private EvolutionMaterials getMaterial() {
         return switch (this) {
             case CLAY -> throw new IllegalStateException("This variant is not a valid material!");
@@ -160,10 +152,6 @@ public enum RockVariant implements IVariant<RockVariant> {
             throw new IllegalStateException("RockVariant " + this + " does not have a RockType");
         }
         return this.rockType;
-    }
-
-    public int getShearStrength() {
-        return this.shearStrength;
     }
 
     @Override

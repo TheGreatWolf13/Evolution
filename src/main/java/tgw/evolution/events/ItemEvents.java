@@ -43,6 +43,7 @@ public final class ItemEvents {
 
     private static final OList<Component> TEMP_TOOLTIP_HOLDER = new OArrayList<>();
     private static final EitherList<FormattedText, TooltipComponent> EITHER_LIST = new EitherList<>();
+    private static final OList<ClientTooltipComponent> TOOLTIP = new OArrayList<>();
 
     private ItemEvents() {
     }
@@ -160,7 +161,8 @@ public final class ItemEvents {
                 needsWrap = true;
             }
         }
-        OList<ClientTooltipComponent> list = new OArrayList<>();
+        OList<ClientTooltipComponent> list = TOOLTIP;
+        list.clear();
         if (needsWrap) {
             for (int i = 0, len = elements.size(); i < len; i++) {
                 if (elements.isLeft(i)) {
@@ -256,6 +258,10 @@ public final class ItemEvents {
                     }
                 }
             }
+        }
+        //Structural
+        if (item instanceof ItemBlock i) {
+            i.makeTooltip(tooltip, Screen.hasControlDown());
         }
         //Part
         if (item instanceof ItemPart part) {

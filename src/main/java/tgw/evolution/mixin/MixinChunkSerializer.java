@@ -23,7 +23,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.*;
 import net.minecraft.world.level.chunk.storage.ChunkSerializer;
-import net.minecraft.world.level.levelgen.BelowZeroRetrogen;
 import net.minecraft.world.level.levelgen.GenerationStep;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.blending.BlendingData;
@@ -42,8 +41,11 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.blocks.tileentities.TEUtils;
 import tgw.evolution.capabilities.chunk.AtmStorage;
+import tgw.evolution.capabilities.chunk.IntegrityStorage;
+import tgw.evolution.capabilities.chunk.StabilityStorage;
 import tgw.evolution.hooks.ChunkHooks;
 import tgw.evolution.patches.PatchLevelChunk;
+import tgw.evolution.util.NBTHelper;
 import tgw.evolution.util.collection.ArrayHelper;
 import tgw.evolution.util.collection.maps.L2OMap;
 import tgw.evolution.util.collection.sets.RSet;
@@ -148,9 +150,7 @@ public abstract class MixinChunkSerializer {
         if (pos.x != xPos || pos.z != zPos) {
             LOGGER.error("Chunk file at {} is in the wrong location; relocating. (Expected {}, got [{}, {}])", pos, pos, xPos, zPos);
         }
-        UpgradeData upgradeData = tag.contains("UpgradeData", Tag.TAG_COMPOUND) ?
-                                  new UpgradeData(tag.getCompound("UpgradeData"), level) :
-                                  UpgradeData.EMPTY;
+        UpgradeData upgradeData = tag.contains("UpgradeData", Tag.TAG_COMPOUND) ? new UpgradeData(tag.getCompound("UpgradeData"), level) : UpgradeData.EMPTY;
         boolean isLightOn = tag.getBoolean("isLightOn");
         ListTag sections = tag.getList("sections", Tag.TAG_COMPOUND);
         int sectionsCount = level.getSectionsCount();
@@ -189,21 +189,22 @@ public abstract class MixinChunkSerializer {
                 }
                 else {
                     //noinspection ObjectAllocationInLoop
-                    biomeContainer = new PalettedContainer<>(registry.asHolderIdMap(), registry.getHolderOrThrow(Biomes.PLAINS),
-                                                             PalettedContainer.Strategy.SECTION_BIOMES);
+                    biomeContainer = new PalettedContainer<>(registry.asHolderIdMap(), registry.getHolderOrThrow(Biomes.PLAINS), PalettedContainer.Strategy.SECTION_BIOMES);
                 }
-                AtmStorage atm;
-                if (compound.contains("atm", Tag.TAG_COMPOUND)) {
-                    //noinspection ObjectAllocationInLoop
-                    atm = AtmStorage.read(compound.getCompound("atm"));
-                }
-                else {
-                    //noinspection ObjectAllocationInLoop
-                    atm = new AtmStorage();
-                }
+                //noinspection ObjectAllocationInLoop
+                AtmStorage atm = AtmStorage.read(NBTHelper.getCompound(compound, "atm"));
+                //noinspection ObjectAllocationInLoop
+                IntegrityStorage integrity = IntegrityStorage.read(NBTHelper.getCompound(compound, "integrity"));
+                //noinspection ObjectAllocationInLoop
+                IntegrityStorage loadFactor = IntegrityStorage.read(NBTHelper.getCompound(compound, "loadFactor"));
+                //noinspection ObjectAllocationInLoop
+                StabilityStorage stability = StabilityStorage.read(NBTHelper.getCompound(compound, "stability"));
                 //noinspection ObjectAllocationInLoop
                 LevelChunkSection section = new LevelChunkSection(y, stateContainer, biomeContainer);
                 section.setAtmStorage(atm);
+                section.setIntegrityStorage(integrity);
+                section.setLoadFactorStorage(loadFactor);
+                section.setStabilityStorage(stability);
                 levelChunkSections[index] = section;
                 poiManager.checkConsistencyWithBlocks(pos, section);
             }
@@ -243,10 +244,11 @@ public abstract class MixinChunkSerializer {
         if (chunkType == ChunkStatus.ChunkType.LEVELCHUNK) {
             LevelChunkTicks<Block> blockTicks = LevelChunkTicks.load(tag.getList("block_ticks", Tag.TAG_COMPOUND), s -> Registry.BLOCK.getOptional(ResourceLocation.tryParse(s)), pos);
             LevelChunkTicks<Fluid> fluidTicks = LevelChunkTicks.load(tag.getList("fluid_ticks", Tag.TAG_COMPOUND), s -> Registry.FLUID.getOptional(ResourceLocation.tryParse(s)), pos);
-            chunkAccess = new LevelChunk(level.getLevel(), pos, upgradeData, blockTicks, fluidTicks, inhabitedTime, levelChunkSections, postLoadChunk(level, tag), blendingData);
+            LevelChunk chunk = new LevelChunk(level.getLevel(), pos, upgradeData, blockTicks, fluidTicks, inhabitedTime, levelChunkSections, postLoadChunk(level, tag), blendingData);
             if (tag.contains("Storage")) {
-                ((PatchLevelChunk) chunkAccess).getChunkStorage().deserializeNBT(tag.getCompound("Storage"));
+                chunk.getChunkStorage().deserializeNBT(tag.getCompound("Storage"));
             }
+            chunkAccess = chunk;
         }
         else {
             ProtoChunkTicks<Block> blockTicks = ProtoChunkTicks.load(tag.getList("block_ticks", Tag.TAG_COMPOUND), s -> Registry.BLOCK.getOptional(ResourceLocation.tryParse(s)), pos);
@@ -254,18 +256,12 @@ public abstract class MixinChunkSerializer {
             ProtoChunk protoChunk = new ProtoChunk(pos, upgradeData, levelChunkSections, blockTicks, fluidTicks, level, registry, blendingData);
             chunkAccess = protoChunk;
             protoChunk.setInhabitedTime(inhabitedTime);
-            if (tag.contains("below_zero_retrogen", Tag.TAG_COMPOUND)) {
-                BelowZeroRetrogen.CODEC.parse(new Dynamic<>(NbtOps.INSTANCE, tag.getCompound("below_zero_retrogen")))
-                                       .resultOrPartial(LOGGER::error)
-                                       .ifPresent(protoChunk::setBelowZeroRetrogen);
-            }
             ChunkStatus chunkStatus = ChunkStatus.byName(tag.getString("Status"));
             protoChunk.setStatus(chunkStatus);
             if (chunkStatus.isOrAfter(ChunkStatus.FEATURES)) {
                 protoChunk.setLightEngine(lightEngine);
             }
-            BelowZeroRetrogen belowZeroRetrogen = protoChunk.getBelowZeroRetrogen();
-            boolean lightDone = chunkStatus.isOrAfter(ChunkStatus.LIGHT) || belowZeroRetrogen != null && belowZeroRetrogen.targetStatus().isOrAfter(ChunkStatus.LIGHT);
+            boolean lightDone = chunkStatus.isOrAfter(ChunkStatus.LIGHT);
             if (!isLightOn && lightDone) {
                 for (BlockPos p : BlockPos.betweenClosed(pos.getMinBlockX(), level.getMinBuildHeight(), pos.getMinBlockZ(), pos.getMaxBlockX(), level.getMaxBuildHeight() - 1, pos.getMaxBlockZ())) {
                     if (chunkAccess.getBlockState(p).getLightEmission() != 0) {
@@ -370,12 +366,6 @@ public abstract class MixinChunkSerializer {
         if (blendingData != null) {
             BlendingData.CODEC.encodeStart(NbtOps.INSTANCE, blendingData).resultOrPartial(LOGGER::error).ifPresent(s -> tag.put("blending_data", s));
         }
-        BelowZeroRetrogen belowZeroRetrogen = chunk.getBelowZeroRetrogen();
-        if (belowZeroRetrogen != null) {
-            BelowZeroRetrogen.CODEC.encodeStart(NbtOps.INSTANCE, belowZeroRetrogen)
-                                   .resultOrPartial(LOGGER::error)
-                                   .ifPresent(s -> tag.put("below_zero_retrogen", s));
-        }
         LevelChunkSection[] sections = chunk.getSections();
         ListTag sectionsList = new ListTag();
         LevelLightEngine lightEngine = level.getChunkSource().getLightEngine();
@@ -401,6 +391,12 @@ public abstract class MixinChunkSerializer {
                     sectionTag.put("biomes", codec.encodeStart(NbtOps.INSTANCE, section.getBiomes()).getOrThrow(false, LOGGER::error));
                     //noinspection ObjectAllocationInLoop
                     sectionTag.put("atm", section.getAtmStorage().serialize());
+                    //noinspection ObjectAllocationInLoop
+                    sectionTag.put("integrity", section.getIntegrityStorage().serialize());
+                    //noinspection ObjectAllocationInLoop
+                    sectionTag.put("loadFactor", section.getLoadFactorStorage().serialize());
+                    //noinspection ObjectAllocationInLoop
+                    sectionTag.put("stability", section.getStabilityStorage().serialize());
                 }
                 if (blockNibble != null) {
                     if (blockNibble.data != null) {

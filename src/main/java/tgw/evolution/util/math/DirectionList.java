@@ -7,6 +7,8 @@ import java.util.random.RandomGenerator;
 public final class DirectionList {
 
     public static final int NULL = -1;
+    public static final int X_AXIS = 0b100_101_010;
+    public static final int Z_AXIS = 0b010_011_010;
     public static final int HORIZONTAL = 0b100_011_101_010_100;
     public static final int ALL_EXCEPT_UP = 0b100_011_101_010_101;
 

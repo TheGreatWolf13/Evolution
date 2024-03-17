@@ -5,48 +5,40 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Material;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.init.EvolutionSounds;
 import tgw.evolution.util.constants.HarvestLevel;
 import tgw.evolution.util.constants.WoodVariant;
 
-public class BlockLog extends BlockXYZAxis implements IWoodVariant {
+import static tgw.evolution.init.EvolutionBStates.AXIS;
+
+public class BlockLog extends BlockXYZAxis implements IWoodVariant, IStructural, IFallable {
 
     private final WoodVariant variant;
 
     public BlockLog(WoodVariant variant) {
-        super(Properties.of(Material.WOOD).strength(8.0F, 2.0F).sound(SoundType.WOOD), variant.getMass());
+        super(Properties.of(Material.WOOD).strength(8.0F, 2.0F).sound(SoundType.WOOD));
         this.variant = variant;
     }
 
     @Override
-    public SoundEvent fallingSound() {
+    public boolean canMakeABeamWith(BlockState thisState, BlockState otherState) {
+        return otherState.getBlock() == this;
+    }
+
+    @Override
+    public @Nullable SoundEvent fallingSound() {
         return EvolutionSounds.WOOD_COLLAPSE;
     }
 
-//    @Override
-//    public boolean beamCondition(BlockState checking, BlockState state) {
-//        return state.getValue(AXIS) == checking.getValue(AXIS);
-//    }
-
-//    @Override
-//    public Direction[] beamDirections(BlockState state) {
-//        return new Direction[]{MathHelper.getNegativeAxis(state.getValue(AXIS)), MathHelper.getPositiveAxis(state.getValue(AXIS))};
-//    }
-
-//    @Override
-//    public int beamSize() {
-//        return 8;
-//    }
-
-//    @Override
-//    public SoundEvent breakSound() {
-//        return EvolutionSounds.WOOD_BREAK.get();
-//    }
-
-//    @Override
-//    protected boolean canSustainWeight(BlockState state) {
-//        return state.getValue(AXIS) != Direction.Axis.Y && super.canSustainWeight(state);
-//    }
+    @Override
+    public BeamType getBeamType(BlockState state) {
+        return switch (state.getValue(AXIS)) {
+            case X -> BeamType.X_ARCH;
+            case Y -> BeamType.NONE;
+            case Z -> BeamType.Z_ARCH;
+        };
+    }
 
     @Override
     public float getFrictionCoefficient(BlockState state) {
@@ -59,17 +51,21 @@ public class BlockLog extends BlockXYZAxis implements IWoodVariant {
     }
 
     @Override
-    public double getMass(Level level, int x, int y, int z, BlockState state) {
-        return this.woodVariant().getMass();
+    public int getIntegrity(BlockState state) {
+        //TODO this needs balancing
+        return 8;
+    }
+
+    @Override
+    public Stabilization getStabilization(BlockState state) {
+        return switch (state.getValue(AXIS)) {
+            case X, Z -> Stabilization.ARCH;
+            case Y -> Stabilization.NONE;
+        };
     }
 
     @Override
     public WoodVariant woodVariant() {
         return this.variant;
     }
-
-//    @Override
-//    public int getShearStrength() {
-//        return this.variant.getShearStrength();
-//    }
 }

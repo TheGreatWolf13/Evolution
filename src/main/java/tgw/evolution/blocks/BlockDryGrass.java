@@ -1,6 +1,5 @@
 package tgw.evolution.blocks;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
@@ -13,6 +12,7 @@ import net.minecraft.world.level.block.SnowLayerBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Material;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionSounds;
@@ -22,12 +22,12 @@ import java.util.Random;
 
 import static tgw.evolution.init.EvolutionBStates.SNOWY;
 
-public class BlockDryGrass extends BlockGenericSnowable implements IRockVariant {
+public class BlockDryGrass extends BlockGenericSnowable implements IRockVariant, IFillable, IFallable {
 
     private final RockVariant variant;
 
     public BlockDryGrass(RockVariant variant) {
-        super(Properties.of(Material.DIRT).strength(3.0F, 0.6F).sound(SoundType.GRASS).randomTicks(), variant.getMass() / 4.0);
+        super(Properties.of(Material.DIRT).strength(3.0F, 0.6F).sound(SoundType.GRASS).randomTicks());
         this.variant = variant;
     }
 
@@ -45,7 +45,7 @@ public class BlockDryGrass extends BlockGenericSnowable implements IRockVariant 
     }
 
     @Override
-    public SoundEvent fallingSound() {
+    public @Nullable SoundEvent fallingSound() {
         return EvolutionSounds.SOIL_COLLAPSE;
     }
 
@@ -55,31 +55,17 @@ public class BlockDryGrass extends BlockGenericSnowable implements IRockVariant 
     }
 
     @Override
-    public double getMass(Level level, int x, int y, int z, BlockState state) {
-        return this.rockVariant().getMass() / 4;
-    }
-
-    @Override
     public BlockState getStateForPhysicsChange(BlockState state) {
         return this.variant.get(EvolutionBlocks.DIRTS).defaultBlockState();
     }
 
     @Override
-    public void neighborChanged_(BlockState state,
-                                 Level level,
-                                 int x,
-                                 int y,
-                                 int z,
-                                 Block oldBlock,
-                                 int fromX,
-                                 int fromY,
-                                 int fromZ,
-                                 boolean isMoving) {
+    public void neighborChanged_(BlockState state, Level level, int x, int y, int z, Block oldBlock, int fromX, int fromY, int fromZ, boolean isMoving) {
         super.neighborChanged_(state, level, x, y, z, oldBlock, fromX, fromY, fromZ, isMoving);
         if (!level.isClientSide) {
             if (x == fromX && z == fromZ && y + 1 == fromY) {
                 if (BlockUtils.hasSolidFace(level, x, y + 1, z, Direction.DOWN)) {
-                    level.setBlockAndUpdate(new BlockPos(x, y, z), this.variant.get(EvolutionBlocks.DIRTS).defaultBlockState());
+                    level.setBlockAndUpdate_(x, y, z, this.variant.get(EvolutionBlocks.DIRTS).defaultBlockState());
                 }
             }
         }

@@ -33,7 +33,6 @@ public abstract class Mixin_M_DiodeBlock extends HorizontalDirectionalBlock {
 
     @Shadow @Final public static BooleanProperty POWERED;
     @Shadow @Final protected static VoxelShape SHAPE;
-
     public Mixin_M_DiodeBlock(Properties properties) {
         super(properties);
     }
@@ -60,6 +59,9 @@ public abstract class Mixin_M_DiodeBlock extends HorizontalDirectionalBlock {
     @Shadow
     protected abstract int getDelay(BlockState blockState);
 
+    @Shadow
+    protected abstract int getOutputSignal(BlockGetter blockGetter, BlockPos blockPos, BlockState blockState);
+
     /**
      * @reason _
      * @author TheGreatWolf
@@ -74,6 +76,25 @@ public abstract class Mixin_M_DiodeBlock extends HorizontalDirectionalBlock {
     @Override
     public VoxelShape getShape_(BlockState state, BlockGetter level, int x, int y, int z, @Nullable Entity entity) {
         return SHAPE;
+    }
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Override
+    @Overwrite
+    @DeleteMethod
+    public int getSignal(BlockState blockState, BlockGetter blockGetter, BlockPos blockPos, Direction direction) {
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public int getSignal_(BlockState state, BlockGetter level, int x, int y, int z, Direction dir) {
+        if (!state.getValue(POWERED)) {
+            return 0;
+        }
+        return state.getValue(FACING) == dir ? this.getOutputSignal(level, new BlockPos(x, y, z), state) : 0;
     }
 
     @Shadow

@@ -7,7 +7,7 @@ import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionMaterials;
 import tgw.evolution.init.EvolutionSounds;
 
-public class ItemPrimitiveKnife extends ItemEv implements IMelee {
+public class ItemPrimitiveKnife extends ItemGeneric implements IMelee {
 
     private final EvolutionMaterials material;
 

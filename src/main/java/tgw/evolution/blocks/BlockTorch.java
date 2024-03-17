@@ -102,11 +102,6 @@ public class BlockTorch extends BlockPhysics implements IReplaceable, IFireSourc
     }
 
     @Override
-    public double getMass(Level level, int x, int y, int z, BlockState state) {
-        return 0;
-    }
-
-    @Override
     public VoxelShape getShape_(BlockState state, BlockGetter level, int x, int y, int z, @Nullable Entity entity) {
         return EvolutionShapes.TORCH;
     }

@@ -29,7 +29,7 @@
 //import org.jetbrains.annotations.Nullable;
 //import tgw.evolution.init.EvolutionCreativeTabs;
 //
-//public class ItemSpawnEgg<E extends Entity> extends ItemEv {
+//public class ItemSpawnEgg<E extends Entity> extends ItemGeneric {
 //
 //    private final EntityType<E> type;
 //

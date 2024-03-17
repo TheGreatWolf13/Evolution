@@ -9,7 +9,7 @@ import net.minecraft.world.phys.Vec3;
 import tgw.evolution.util.math.Metric;
 import tgw.evolution.util.physics.SI;
 
-public class ItemSpeedometer extends ItemEv {
+public class ItemSpeedometer extends ItemGeneric {
 
     public ItemSpeedometer(Properties properties) {
         super(properties);

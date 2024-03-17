@@ -107,6 +107,19 @@ public class SimpleEnumSet<E extends Enum<E>> extends AbstractSet<E> implements 
         return null;
     }
 
+    @Override
+    public @Nullable E getElement() {
+        if (this.isEmpty()) {
+            return null;
+        }
+        for (int i = 0; i < 64; ++i) {
+            if ((this.data & 1L << i) != 0) {
+                return this.values[i];
+            }
+        }
+        return null;
+    }
+
     @Contract(pure = true)
     @Override
     public boolean isEmpty() {

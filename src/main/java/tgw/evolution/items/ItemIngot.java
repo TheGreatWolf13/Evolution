@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class ItemIngot extends ItemEv implements IItemTemperature {
+public class ItemIngot extends ItemGeneric implements IItemTemperature {
 
     public ItemIngot(Properties properties) {
         super(properties);

@@ -15,6 +15,8 @@ public final class EvolutionCommands {
         CommandDate.register(dispatcher);
         CommandGC.register(dispatcher);
         CommandHeal.register(dispatcher);
+        CommandIntegrity.register(dispatcher);
+        CommandLoadFactor.register(dispatcher);
         CommandPause.register(dispatcher);
         CommandRegen.register(dispatcher);
         CommandShader.register(dispatcher);

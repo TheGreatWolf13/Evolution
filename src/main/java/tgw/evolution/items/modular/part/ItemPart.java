@@ -18,12 +18,12 @@ import tgw.evolution.init.EvolutionMaterials;
 import tgw.evolution.inventory.SlotType;
 import tgw.evolution.items.IDurability;
 import tgw.evolution.items.IMass;
-import tgw.evolution.items.ItemEv;
+import tgw.evolution.items.ItemGeneric;
 import tgw.evolution.util.collection.lists.EitherList;
 
 import java.util.Random;
 
-public abstract class ItemPart<T extends IPartType<T, I, P>, I extends ItemPart<T, I, P>, P extends IPart<T, I, P>> extends ItemEv implements IDurability, IMass {
+public abstract class ItemPart<T extends IPartType<T, I, P>, I extends ItemPart<T, I, P>, P extends IPart<T, I, P>> extends ItemGeneric implements IDurability, IMass {
 
     protected static final Random RANDOM = new Random();
 

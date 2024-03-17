@@ -17,6 +17,9 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import tgw.evolution.Evolution;
+import tgw.evolution.patches.PatchDistanceManager;
+import tgw.evolution.patches.PatchTicket;
 import tgw.evolution.util.collection.sets.OHashSet;
 
 import java.util.Set;
@@ -24,14 +27,14 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 @Mixin(DistanceManager.class)
-public abstract class MixinDistanceManager {
+public abstract class MixinDistanceManager implements PatchDistanceManager {
 
+    @Shadow @Final public Executor mainThreadExecutor;
+    @Shadow @Final public ProcessorHandle<ChunkTaskPriorityQueueSorter.Release> ticketThrottlerReleaser;
+    @Shadow @Final public LongSet ticketsToRelease;
     @Shadow @Final Set<ChunkHolder> chunksToUpdateFutures;
-    @Shadow @Final Executor mainThreadExecutor;
     @Shadow @Final Long2ObjectMap<ObjectSet<ServerPlayer>> playersPerChunk;
-    @Shadow @Final ProcessorHandle<ChunkTaskPriorityQueueSorter.Release> ticketThrottlerReleaser;
     @Shadow @Final Long2ObjectOpenHashMap<SortedArraySet<Ticket<?>>> tickets;
-    @Shadow @Final LongSet ticketsToRelease;
     @Shadow @Final private DistanceManager.FixedPlayerDistanceChunkTracker naturalSpawnChunkCounter;
     @Shadow @Final private DistanceManager.PlayerTicketTracker playerTicketManager;
     @Shadow private long ticketTickCounter;
@@ -49,8 +52,13 @@ public abstract class MixinDistanceManager {
      */
     @Overwrite
     public void addPlayer(SectionPos sectionPos, ServerPlayer player) {
-        ChunkPos chunkPos = sectionPos.chunk();
-        long pos = chunkPos.toLong();
+        Evolution.deprecatedMethod();
+        this.addPlayer_(sectionPos.x(), sectionPos.z(), player);
+    }
+
+    @Override
+    public void addPlayer_(int secX, int secZ, ServerPlayer player) {
+        long pos = ChunkPos.asLong(secX, secZ);
         ObjectSet<ServerPlayer> chunkPlayers = this.playersPerChunk.get(pos);
         if (chunkPlayers == null) {
             chunkPlayers = new OHashSet<>();
@@ -59,7 +67,42 @@ public abstract class MixinDistanceManager {
         chunkPlayers.add(player);
         this.naturalSpawnChunkCounter.update(pos, 0, true);
         this.playerTicketManager.update(pos, 0, true);
-        this.tickingTicketsTracker.addTicket(TicketType.PLAYER, chunkPos, this.getPlayerTicketLevel(), chunkPos);
+        this.tickingTicketsTracker.addTicket_(TicketType.PLAYER, pos, this.getPlayerTicketLevel(), pos);
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public <T> void addRegionTicket(TicketType<T> ticketType, ChunkPos chunkPos, int i, T object) {
+        Evolution.deprecatedMethod();
+        throw new RuntimeException("Use non-ChunkPos version!");
+    }
+
+    @Override
+    public <T> void addRegionTicket_(TicketType<T> ticketType, long chunkPos, int level, long key) {
+        Ticket<T> ticket = PatchTicket.newTicket(ticketType, 33 - level, key);
+        this.addTicket(chunkPos, ticket);
+        this.tickingTicketsTracker.addTicket(chunkPos, ticket);
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public <T> void addTicket(TicketType<T> ticketType, ChunkPos chunkPos, int level, T object) {
+        Evolution.deprecatedMethod();
+        throw new RuntimeException("Use non-ChunkPos version!");
+    }
+
+    @Shadow
+    public abstract void addTicket(long l, Ticket<?> ticket);
+
+    @Override
+    public <T> void addTicket_(TicketType<T> ticketType, long chunkPos, int level, long key) {
+        this.addTicket(chunkPos, PatchTicket.newTicket(ticketType, level, key));
     }
 
     @Shadow
@@ -108,6 +151,65 @@ public abstract class MixinDistanceManager {
 
     /**
      * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public void removePlayer(SectionPos sectionPos, ServerPlayer player) {
+        Evolution.deprecatedMethod();
+        this.removePlayer_(sectionPos.x(), sectionPos.z(), player);
+    }
+
+    @Override
+    public void removePlayer_(int secX, int secZ, ServerPlayer player) {
+        long pos = ChunkPos.asLong(secX, secZ);
+        ObjectSet<ServerPlayer> objectSet = this.playersPerChunk.get(pos);
+        objectSet.remove(player);
+        if (objectSet.isEmpty()) {
+            this.playersPerChunk.remove(pos);
+            this.naturalSpawnChunkCounter.update(pos, Integer.MAX_VALUE, false);
+            this.playerTicketManager.update(pos, Integer.MAX_VALUE, false);
+            this.tickingTicketsTracker.removeTicket_(TicketType.PLAYER, pos, this.getPlayerTicketLevel(), pos);
+        }
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public <T> void removeRegionTicket(TicketType<T> ticketType, ChunkPos chunkPos, int i, T object) {
+        Evolution.deprecatedMethod();
+        throw new RuntimeException("Use non-ChunkPos version!");
+    }
+
+    @Override
+    public <T> void removeRegionTicket_(TicketType<T> ticketType, long chunkPos, int level, long key) {
+        Ticket<T> ticket = PatchTicket.newTicket(ticketType, 33 - level, key);
+        this.removeTicket(chunkPos, ticket);
+        this.tickingTicketsTracker.removeTicket(chunkPos, ticket);
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public <T> void removeTicket(TicketType<T> ticketType, ChunkPos chunkPos, int i, T object) {
+        Evolution.deprecatedMethod();
+        throw new RuntimeException("Use non-ChunkPos version!");
+    }
+
+    @Shadow
+    public abstract void removeTicket(long l, Ticket<?> ticket);
+
+    @Override
+    public <T> void removeTicket_(TicketType<T> ticketType, long chunkPos, int level, long key) {
+        Ticket<T> ticket = PatchTicket.newTicket(ticketType, level, key);
+        this.removeTicket(chunkPos, ticket);
+    }
+
+    /**
+     * @author TheGreatWolf
      * @reason Avoid most allocations
      */
     @Overwrite
@@ -139,17 +241,36 @@ public abstract class MixinDistanceManager {
                     if (chunkHolder == null) {
                         throw new IllegalStateException();
                     }
-                    CompletableFuture<Either<LevelChunk, ChunkHolder.ChunkLoadingFailure>>
-                            completablefuture
-                            = chunkHolder.getEntityTickingChunkFuture();
+                    CompletableFuture<Either<LevelChunk, ChunkHolder.ChunkLoadingFailure>> completablefuture = chunkHolder.getEntityTickingChunkFuture();
                     //noinspection ObjectAllocationInLoop
-                    completablefuture.thenAccept(either -> this.mainThreadExecutor.execute(
-                            () -> this.ticketThrottlerReleaser.tell(ChunkTaskPriorityQueueSorter.release(() -> {
-                            }, pos, false))));
+                    completablefuture.thenAccept(either -> this.mainThreadExecutor.execute(() -> this.ticketThrottlerReleaser.tell(ChunkTaskPriorityQueueSorter.release(() -> {}, pos, false))));
                 }
             }
             this.ticketsToRelease.clear();
         }
         return i != 0;
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public void updateChunkForced(ChunkPos chunkPos, boolean bl) {
+        Evolution.deprecatedMethod();
+        throw new RuntimeException("Use non-ChunkPos version!");
+    }
+
+    @Override
+    public void updateChunkForced_(long chunkPos, boolean adding) {
+        Ticket<ChunkPos> ticket = PatchTicket.newTicket(TicketType.FORCED, 31, chunkPos);
+        if (adding) {
+            this.addTicket(chunkPos, ticket);
+            this.tickingTicketsTracker.addTicket(chunkPos, ticket);
+        }
+        else {
+            this.removeTicket(chunkPos, ticket);
+            this.tickingTicketsTracker.removeTicket(chunkPos, ticket);
+        }
     }
 }

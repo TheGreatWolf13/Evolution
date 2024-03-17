@@ -2,6 +2,7 @@ package tgw.evolution.mixin;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -17,7 +18,7 @@ import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.DoorBlock;
-import net.minecraft.world.level.block.DoublePlantBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.*;
 import net.minecraft.world.level.gameevent.GameEvent;
@@ -30,9 +31,13 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.hooks.asm.DeleteMethod;
 import tgw.evolution.util.constants.BlockFlags;
 import tgw.evolution.util.constants.LvlEvent;
+
+import java.util.Random;
+import java.util.function.Consumer;
 
 @Mixin(DoorBlock.class)
 public abstract class Mixin_M_DoorBlock extends Block {
@@ -68,6 +73,13 @@ public abstract class Mixin_M_DoorBlock extends Block {
         return state.getValue(HALF) == DoubleBlockHalf.LOWER ?
                stateBelow.isFaceSturdy_(level, x, y - 1, z, Direction.UP) :
                stateBelow.is(this);
+    }
+
+    @Override
+    public void dropLoot(BlockState state, ServerLevel level, int x, int y, int z, ItemStack tool, @Nullable BlockEntity tile, @Nullable Entity entity, Random random, Consumer<ItemStack> consumer) {
+        if (state.getValue(HALF) == DoubleBlockHalf.LOWER) {
+            super.dropLoot(state, level, x, y, z, tool, tile, entity, random, consumer);
+        }
     }
 
     @Shadow
@@ -168,7 +180,7 @@ public abstract class Mixin_M_DoorBlock extends Block {
         int y = pos.getY();
         int z = pos.getZ();
         if (y < level.getMaxBuildHeight() - 1 && level.getBlockState_(x, y + 1, z).canBeReplaced_(level, x, y, z, context.getPlayer(), context.getHand(), context.getHitResult())) {
-            boolean bl = level.hasNeighborSignal(pos) || level.hasNeighborSignal(pos.above());
+            boolean bl = level.hasNeighborSignal_(x, y, z) || level.hasNeighborSignal_(x, y + 1, z);
             return this.defaultBlockState().setValue(FACING, context.getHorizontalDirection()).setValue(HINGE, this.getHinge(context)).setValue(POWERED, bl).setValue(OPEN, bl).setValue(HALF, DoubleBlockHalf.LOWER);
         }
         return null;
@@ -189,25 +201,15 @@ public abstract class Mixin_M_DoorBlock extends Block {
     }
 
     @Override
-    public void neighborChanged_(BlockState state,
-                                 Level level,
-                                 int x,
-                                 int y,
-                                 int z,
-                                 Block oldBlock,
-                                 int fromX,
-                                 int fromY,
-                                 int fromZ,
-                                 boolean isMoving) {
-        BlockPos pos = new BlockPos(x, y, z);
-        boolean hasSignal = level.hasNeighborSignal(pos) ||
-                            level.hasNeighborSignal(pos.relative(state.getValue(HALF) == DoubleBlockHalf.LOWER ? Direction.UP : Direction.DOWN));
+    public void neighborChanged_(BlockState state, Level level, int x, int y, int z, Block oldBlock, int fromX, int fromY, int fromZ, boolean isMoving) {
+        boolean hasSignal = level.hasNeighborSignal_(x, y, z) || level.hasNeighborSignal_(x, y + (state.getValue(HALF) == DoubleBlockHalf.LOWER ? 1 : -1), z);
         if (!this.defaultBlockState().is(oldBlock) && hasSignal != state.getValue(POWERED)) {
             if (hasSignal != state.getValue(OPEN)) {
+                BlockPos pos = new BlockPos(x, y, z);
                 this.playSound(level, pos, hasSignal);
                 level.gameEvent(hasSignal ? GameEvent.BLOCK_OPEN : GameEvent.BLOCK_CLOSE, pos);
             }
-            level.setBlock(pos, state.setValue(POWERED, hasSignal).setValue(OPEN, hasSignal), 2);
+            level.setBlock_(x, y, z, state.setValue(POWERED, hasSignal).setValue(OPEN, hasSignal), BlockFlags.BLOCK_UPDATE);
         }
     }
 
@@ -228,7 +230,7 @@ public abstract class Mixin_M_DoorBlock extends Block {
     @Override
     public void playerWillDestroy_(Level level, int x, int y, int z, BlockState state, Player player) {
         if (!level.isClientSide && player.isCreative()) {
-            DoublePlantBlock.preventCreativeDropFromBottomPart(level, new BlockPos(x, y, z), state, player);
+            BlockUtils.preventCreativeDropFromBottomPart(level, x, y, z, state, player);
         }
         super.playerWillDestroy_(level, x, y, z, state, player);
     }
@@ -256,26 +258,12 @@ public abstract class Mixin_M_DoorBlock extends Block {
     @Override
     @Overwrite
     @DeleteMethod
-    public BlockState updateShape(BlockState blockState,
-                                  Direction direction,
-                                  BlockState blockState2,
-                                  LevelAccessor levelAccessor,
-                                  BlockPos blockPos,
-                                  BlockPos blockPos2) {
+    public BlockState updateShape(BlockState blockState, Direction direction, BlockState blockState2, LevelAccessor levelAccessor, BlockPos blockPos, BlockPos blockPos2) {
         throw new AbstractMethodError();
     }
 
     @Override
-    public BlockState updateShape_(BlockState state,
-                                   Direction from,
-                                   BlockState fromState,
-                                   LevelAccessor level,
-                                   int x,
-                                   int y,
-                                   int z,
-                                   int fromX,
-                                   int fromY,
-                                   int fromZ) {
+    public BlockState updateShape_(BlockState state, Direction from, BlockState fromState, LevelAccessor level, int x, int y, int z, int fromX, int fromY, int fromZ) {
         DoubleBlockHalf doubleBlockHalf = state.getValue(HALF);
         if (from.getAxis() == Direction.Axis.Y && doubleBlockHalf == DoubleBlockHalf.LOWER == (from == Direction.UP)) {
             return fromState.is(this) && fromState.getValue(HALF) != doubleBlockHalf ?
@@ -297,12 +285,7 @@ public abstract class Mixin_M_DoorBlock extends Block {
     @Override
     @Overwrite
     @DeleteMethod
-    public InteractionResult use(BlockState blockState,
-                                 Level level,
-                                 BlockPos blockPos,
-                                 Player player,
-                                 InteractionHand interactionHand,
-                                 BlockHitResult blockHitResult) {
+    public InteractionResult use(BlockState blockState, Level level, BlockPos blockPos, Player player, InteractionHand interactionHand, BlockHitResult blockHitResult) {
         throw new AbstractMethodError();
     }
 

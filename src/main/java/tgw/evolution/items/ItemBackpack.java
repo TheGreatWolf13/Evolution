@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import tgw.evolution.inventory.AdditionalSlotType;
 import tgw.evolution.util.collection.maps.R2OMap;
 
-public class ItemBackpack extends ItemEv implements IAdditionalEquipment {
+public class ItemBackpack extends ItemGeneric implements IAdditionalEquipment {
 
     public ItemBackpack(Properties properties) {
         super(properties);

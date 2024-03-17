@@ -1,6 +1,7 @@
 package tgw.evolution.patches;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.world.level.biome.Biome;
 
@@ -18,7 +19,7 @@ public interface PatchLevelReader {
         throw new AbstractMethodError();
     }
 
-    default int getMaxLocalRawBrightness_(int x, int y, int z) {
+    default int getDirectSignal_(int x, int y, int z, Direction direction) {
         throw new AbstractMethodError();
     }
 
@@ -26,12 +27,16 @@ public interface PatchLevelReader {
         throw new AbstractMethodError();
     }
 
-    default boolean isEmptyBlock_(BlockPos pos) {
-        return this.isEmptyBlock_(pos.getX(), pos.getY(), pos.getZ());
+    default int getMaxLocalRawBrightness_(int x, int y, int z) {
+        throw new AbstractMethodError();
     }
 
     default boolean isEmptyBlock_(int x, int y, int z) {
         throw new AbstractMethodError();
+    }
+
+    default boolean isEmptyBlock_(BlockPos pos) {
+        return this.isEmptyBlock_(pos.getX(), pos.getY(), pos.getZ());
     }
 
     default boolean isWaterAt_(int x, int y, int z) {

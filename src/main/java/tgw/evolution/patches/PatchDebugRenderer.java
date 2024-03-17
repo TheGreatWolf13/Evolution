@@ -2,5 +2,7 @@ package tgw.evolution.patches;
 
 public interface PatchDebugRenderer {
 
-    void setRenderHeightmap(boolean render);
+    default void setRenderHeightmap(boolean render) {
+        throw new AbstractMethodError();
+    }
 }

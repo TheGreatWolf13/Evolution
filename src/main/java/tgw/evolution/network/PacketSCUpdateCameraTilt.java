@@ -4,7 +4,6 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.world.entity.player.Player;
-import tgw.evolution.patches.PatchClientPacketListener;
 
 public class PacketSCUpdateCameraTilt implements Packet<ClientGamePacketListener> {
 
@@ -20,7 +19,7 @@ public class PacketSCUpdateCameraTilt implements Packet<ClientGamePacketListener
 
     @Override
     public void handle(ClientGamePacketListener listener) {
-        ((PatchClientPacketListener) listener).handleUpdateCameraTilt(this);
+        listener.handleUpdateCameraTilt(this);
     }
 
     @Override

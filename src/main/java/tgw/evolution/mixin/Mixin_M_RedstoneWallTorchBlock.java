@@ -94,6 +94,22 @@ public abstract class Mixin_M_RedstoneWallTorchBlock extends RedstoneTorchBlock 
     @Override
     @Overwrite
     @DeleteMethod
+    public int getSignal(BlockState blockState, BlockGetter blockGetter, BlockPos blockPos, Direction direction) {
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public int getSignal_(BlockState state, BlockGetter level, int x, int y, int z, Direction dir) {
+        return state.getValue(LIT) && state.getValue(FACING) != dir ? 15 : 0;
+    }
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Override
+    @Overwrite
+    @DeleteMethod
     public BlockState updateShape(BlockState blockState,
                                   Direction direction,
                                   BlockState blockState2,

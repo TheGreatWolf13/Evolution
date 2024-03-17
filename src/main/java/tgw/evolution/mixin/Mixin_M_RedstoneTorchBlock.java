@@ -63,6 +63,22 @@ public abstract class Mixin_M_RedstoneTorchBlock extends TorchBlock {
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Override
+    @Overwrite
+    @DeleteMethod
+    public int getSignal(BlockState blockState, BlockGetter blockGetter, BlockPos blockPos, Direction direction) {
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public int getSignal_(BlockState state, BlockGetter level, int x, int y, int z, Direction dir) {
+        return state.getValue(LIT) && Direction.UP != dir ? 15 : 0;
+    }
+
     @Shadow
     protected abstract boolean hasNeighborSignal(Level level, BlockPos blockPos, BlockState blockState);
 

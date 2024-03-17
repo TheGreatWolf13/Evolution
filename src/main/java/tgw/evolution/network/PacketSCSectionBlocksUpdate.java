@@ -7,7 +7,7 @@ import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunkSection;
-import tgw.evolution.patches.PatchClientPacketListener;
+import tgw.evolution.patches.PatchClientGamePacketListener;
 import tgw.evolution.util.collection.sets.SSet;
 
 public class PacketSCSectionBlocksUpdate implements Packet<ClientGamePacketListener> {
@@ -48,7 +48,7 @@ public class PacketSCSectionBlocksUpdate implements Packet<ClientGamePacketListe
 
     @Override
     public void handle(ClientGamePacketListener listener) {
-        ((PatchClientPacketListener) listener).handleSectionBlocksUpdate(this);
+        listener.handleSectionBlocksUpdate(this);
     }
 
     @Override

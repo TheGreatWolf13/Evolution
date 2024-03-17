@@ -10,23 +10,28 @@ import tgw.evolution.init.EvolutionSounds;
 import tgw.evolution.util.constants.HarvestLevel;
 import tgw.evolution.util.constants.RockVariant;
 
-public class BlockPolishedStone extends BlockPhysics implements IRockVariant, IFallable {
+public class BlockPolishedStone extends BlockPhysics implements IRockVariant, IFallable, IStructural {
 
     private final RockVariant variant;
 
     public BlockPolishedStone(RockVariant variant) {
-        super(Properties.of(Material.STONE).strength(variant.getRockType().getHardness() / 2.0F, 6.0F).sound(SoundType.STONE));
+        super(Properties.of(Material.STONE).strength(variant.getRockType().hardness / 2.0F, 6.0F).sound(SoundType.STONE));
         this.variant = variant;
     }
 
-//    @Override
-//    public int beamSize() {
-//        return this.variant.getRockType().getRangeStone() + 2;
-//    }
+    @Override
+    public boolean canMakeABeamWith(BlockState thisState, BlockState otherState) {
+        return otherState.getBlock() instanceof BlockPolishedStone;
+    }
 
     @Override
     public @Nullable SoundEvent fallingSound() {
         return EvolutionSounds.STONE_COLLAPSE;
+    }
+
+    @Override
+    public BeamType getBeamType(BlockState state) {
+        return BeamType.CARDINAL_ARCH;
     }
 
     @Override
@@ -40,14 +45,14 @@ public class BlockPolishedStone extends BlockPhysics implements IRockVariant, IF
     }
 
     @Override
-    public double getMass(Level level, int x, int y, int z, BlockState state) {
-        return this.rockVariant().getMass();
+    public int getIntegrity(BlockState state) {
+        return this.variant.getRockType().baseIntegrity;
     }
 
-//    @Override
-//    public int getShearStrength() {
-//        return this.variant.getShearStrength();
-//    }
+    @Override
+    public Stabilization getStabilization(BlockState state) {
+        return Stabilization.ARCH;
+    }
 
     @Override
     public RockVariant rockVariant() {

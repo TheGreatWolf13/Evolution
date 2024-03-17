@@ -10,22 +10,17 @@ import tgw.evolution.init.EvolutionSounds;
 import tgw.evolution.util.constants.HarvestLevel;
 import tgw.evolution.util.constants.RockVariant;
 
-public class BlockCobblestone extends BlockPhysics implements IRockVariant, ISloppable {
+public class BlockCobblestone extends BlockPhysics implements IRockVariant, ISloppable, IFillable {
 
     private final RockVariant variant;
 
     public BlockCobblestone(RockVariant variant) {
-        super(Properties.of(Material.STONE).strength(variant.getRockType().getHardness(), 6.0F).sound(SoundType.STONE));
+        super(Properties.of(Material.STONE).strength(variant.getRockType().hardness, 6.0F).sound(SoundType.STONE));
         this.variant = variant;
     }
 
     @Override
     public boolean canSlope(BlockGetter level, int x, int y, int z) {
-        return true;
-    }
-
-    @Override
-    public boolean canSlopeFail() {
         return true;
     }
 
@@ -42,11 +37,6 @@ public class BlockCobblestone extends BlockPhysics implements IRockVariant, ISlo
     @Override
     public int getHarvestLevel(BlockState state, Level level, int x, int y, int z) {
         return HarvestLevel.LOW_METAL;
-    }
-
-    @Override
-    public double getMass(Level level, int x, int y, int z, BlockState state) {
-        return this.rockVariant().getMass();
     }
 
     @Override

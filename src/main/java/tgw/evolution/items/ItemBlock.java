@@ -1,10 +1,12 @@
 package tgw.evolution.items;
 
+import com.google.common.collect.ImmutableList;
 import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FormattedText;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
@@ -12,6 +14,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -25,14 +28,22 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
+import tgw.evolution.blocks.IStructural;
+import tgw.evolution.client.tooltip.TooltipStructuralIntegrity;
+import tgw.evolution.client.tooltip.TooltipStructureType;
 import tgw.evolution.init.EvolutionStats;
+import tgw.evolution.init.EvolutionTexts;
+import tgw.evolution.util.collection.lists.EitherList;
+import tgw.evolution.util.collection.sets.RSet;
+import tgw.evolution.util.collection.sets.SimpleEnumSet;
 import tgw.evolution.util.constants.BlockFlags;
 
 import java.util.List;
 import java.util.Map;
 
-public class ItemBlock extends Item implements IEvolutionItem {
+public class ItemBlock extends ItemGeneric {
 
+    private static final RSet<IStructural.BeamType> BEAM_TYPES = new SimpleEnumSet<>(IStructural.BeamType.class, IStructural.BeamType.VALUES);
     protected final Block block;
 
     public ItemBlock(Block block, Properties builder) {
@@ -101,9 +112,44 @@ public class ItemBlock extends Item implements IEvolutionItem {
         return this.block.getStateForPlacement_(level, x, y, z, player, hand, hitResult);
     }
 
-    @Override
-    public boolean isCorrectToolForDrops(ItemStack stack, BlockState state, @Nullable Level level, int x, int y, int z) {
-        return false;
+    public void makeTooltip(EitherList<FormattedText, TooltipComponent> tooltip, boolean expanded) {
+        if (this.block instanceof IStructural structural) {
+            tooltip.addLeft(EvolutionTexts.EMPTY);
+            if (expanded) {
+                tooltip.addLeft(EvolutionTexts.TOOLTIP_STRUCTURAL);
+                int min = Integer.MAX_VALUE;
+                int max = 0;
+                RSet<IStructural.BeamType> types = BEAM_TYPES;
+                types.clear();
+                types.add(IStructural.BeamType.NONE);
+                ImmutableList<BlockState> possibleStates = this.block.getStateDefinition().getPossibleStates();
+                for (int i = 0, len = possibleStates.size(); i < len; ++i) {
+                    BlockState state = possibleStates.get(i);
+                    int integrity = structural.getIntegrity(state);
+                    types.add(structural.getBeamType(state));
+                    if (integrity < min) {
+                        min = integrity;
+                    }
+                    if (integrity > max) {
+                        max = integrity;
+                    }
+                }
+                if (types.contains(IStructural.BeamType.CARDINAL_ARCH)) {
+                    types.add(IStructural.BeamType.CARDINAL_BEAM);
+                }
+                if (types.contains(IStructural.BeamType.X_ARCH)) {
+                    types.add(IStructural.BeamType.X_BEAM);
+                }
+                if (types.contains(IStructural.BeamType.Z_ARCH)) {
+                    types.add(IStructural.BeamType.Z_BEAM);
+                }
+                tooltip.addRight(TooltipStructuralIntegrity.setup(min, max));
+                tooltip.addRight(TooltipStructureType.setup(types));
+            }
+            else {
+                tooltip.addLeft(EvolutionTexts.TOOLTIP_SHOW_STRUCTURAL);
+            }
+        }
     }
 
     protected boolean mustSurvive() {

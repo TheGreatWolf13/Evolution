@@ -4,7 +4,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import tgw.evolution.capabilities.player.CapabilityTemperature;
-import tgw.evolution.patches.PatchClientPacketListener;
+import tgw.evolution.patches.PatchClientGamePacketListener;
 
 public class PacketSCTemperatureData implements Packet<ClientGamePacketListener> {
 
@@ -26,7 +26,7 @@ public class PacketSCTemperatureData implements Packet<ClientGamePacketListener>
 
     @Override
     public void handle(ClientGamePacketListener listener) {
-        ((PatchClientPacketListener) listener).handleTemperatureData(this);
+        listener.handleTemperatureData(this);
     }
 
     @Override

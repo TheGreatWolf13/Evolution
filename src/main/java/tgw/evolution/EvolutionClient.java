@@ -20,7 +20,7 @@ import tgw.evolution.client.gui.ScreenInventory;
 import tgw.evolution.client.gui.overlays.EvolutionOverlays;
 import tgw.evolution.client.gui.overlays.VanillaOverlays;
 import tgw.evolution.client.renderer.RenderLayer;
-import tgw.evolution.client.tooltip.*;
+import tgw.evolution.client.tooltip.TooltipManager;
 import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.init.EvolutionContainers;
@@ -147,23 +147,6 @@ public final class EvolutionClient implements ClientModInitializer {
         MenuScreens.register(EvolutionContainers.CORPSE, ScreenCorpse::new);
     }
 
-    private static void registerTooltips() {
-        TooltipManager.registerTooltipFactory(TooltipCold.class, EvolutionTooltipRenderer.COLD::setTooltip);
-        TooltipManager.registerTooltipFactory(TooltipCooldown.class, EvolutionTooltipRenderer.COOLDOWN::setTooltip);
-        TooltipManager.registerTooltipFactory(TooltipDamage.class, TooltipDamage::setup);
-        TooltipManager.registerTooltipFactory(TooltipDmgMultiplier.class, TooltipDmgMultiplier::setup);
-        TooltipManager.registerTooltipFactory(TooltipDrink.class, EvolutionTooltipRenderer.DRINK::setTooltip);
-        TooltipManager.registerTooltipFactory(TooltipDurability.class, TooltipDurability::setup);
-        TooltipManager.registerTooltipFactory(TooltipFollowUp.class, EvolutionTooltipRenderer.FOLLOW_UP::setTooltip);
-        TooltipManager.registerTooltipFactory(TooltipFood.class, EvolutionTooltipRenderer.FOOD::setTooltip);
-        TooltipManager.registerTooltipFactory(TooltipHeat.class, EvolutionTooltipRenderer.HEAT::setTooltip);
-        TooltipManager.registerTooltipFactory(TooltipInfo.class, EvolutionTooltipRenderer.INFO::setTooltip);
-        TooltipManager.registerTooltipFactory(TooltipMass.class, TooltipMass::setup);
-        TooltipManager.registerTooltipFactory(TooltipMining.class, EvolutionTooltipRenderer.MINING::setTooltip);
-        TooltipManager.registerTooltipFactory(TooltipPrecision.class, EvolutionTooltipRenderer.PRECISION::setTooltip);
-        TooltipManager.registerTooltipFactory(TooltipThrowSpeed.class, EvolutionTooltipRenderer.THROW_SPEED::setTooltip);
-    }
-
     public static void sendToServer(Packet<ServerGamePacketListener> packet) {
         assert mc.player != null;
         mc.player.connection.send(packet);
@@ -176,7 +159,7 @@ public final class EvolutionClient implements ClientModInitializer {
 //        addTextures(event);
         RenderLayer.setup();
         fixInputMappings();
-        registerTooltips();
+        TooltipManager.registerTooltipFactories();
         changeWorldOrders();
         VanillaOverlays.register();
         EvolutionOverlays.register();

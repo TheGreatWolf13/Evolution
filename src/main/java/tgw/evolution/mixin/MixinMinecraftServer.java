@@ -1,17 +1,22 @@
 package tgw.evolution.mixin;
 
 import com.mojang.authlib.GameProfile;
+import it.unimi.dsi.fastutil.longs.LongIterator;
 import net.minecraft.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestTicker;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.protocol.game.ClientboundSetTimePacket;
 import net.minecraft.network.protocol.status.ServerStatus;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerFunctionManager;
 import net.minecraft.server.TickTask;
+import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.TicketType;
+import net.minecraft.server.level.progress.ChunkProgressListener;
 import net.minecraft.server.network.ServerConnectionListener;
 import net.minecraft.server.packs.PackResources;
 import net.minecraft.server.packs.repository.Pack;
@@ -24,13 +29,17 @@ import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.util.profiling.jfr.JvmProfiler;
 import net.minecraft.util.thread.ReentrantBlockableEventLoop;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.ForcedChunksSavedData;
 import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import tgw.evolution.Evolution;
+import tgw.evolution.commands.CommandLoadFactor;
 import tgw.evolution.hooks.TickrateChanger;
 import tgw.evolution.network.Message;
 import tgw.evolution.network.PacketSCSimpleMessage;
@@ -60,6 +69,7 @@ public abstract class MixinMinecraftServer extends ReentrantBlockableEventLoop<T
     @Shadow private volatile boolean isReady;
     @Shadow private long lastOverloadWarning;
     @Shadow private long lastServerStatus;
+    @Shadow @Final private Map<ResourceKey<Level>, ServerLevel> levels;
     @Shadow private boolean mayHaveDelayedTasks;
     @Shadow private @Nullable String motd;
     @Shadow private long nextTickTime;
@@ -164,6 +174,47 @@ public abstract class MixinMinecraftServer extends ReentrantBlockableEventLoop<T
 
     @Shadow
     public abstract void onServerExit();
+
+    @Shadow
+    public abstract ServerLevel overworld();
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    private void prepareLevels(ChunkProgressListener chunkProgressListener) {
+        ServerLevel serverLevel = this.overworld();
+        LOGGER.info("Preparing start region for dimension {}", serverLevel.dimension().location());
+        BlockPos spawnPos = serverLevel.getSharedSpawnPos();
+        ChunkPos chunkSpawnPos = new ChunkPos(spawnPos);
+        chunkProgressListener.updateSpawnPos(chunkSpawnPos);
+        ServerChunkCache serverChunkCache = serverLevel.getChunkSource();
+        serverChunkCache.getLightEngine().setTaskPerBatch(500);
+        this.nextTickTime = Util.getMillis();
+        serverChunkCache.addRegionTicket_(TicketType.START, chunkSpawnPos.toLong(), 11, 0L);
+        while (serverChunkCache.getTickingGenerated() != 441) {
+            this.nextTickTime = Util.getMillis() + 10L;
+            this.waitUntilNextTick();
+        }
+        this.nextTickTime = Util.getMillis() + 10L;
+        this.waitUntilNextTick();
+        for (ServerLevel level : this.levels.values()) {
+            ForcedChunksSavedData forcedChunks = level.getDataStorage().get(ForcedChunksSavedData::load, "chunks");
+            if (forcedChunks == null) {
+                continue;
+            }
+            LongIterator it = forcedChunks.getChunks().iterator();
+            while (it.hasNext()) {
+                level.getChunkSource().updateChunkForced_(it.nextLong(), true);
+            }
+        }
+        this.nextTickTime = Util.getMillis() + 10L;
+        this.waitUntilNextTick();
+        chunkProgressListener.stop();
+        serverChunkCache.getLightEngine().setTaskPerBatch(5);
+        this.updateMobSpawningFlags();
+    }
 
     /**
      * @author TheGreatWolf
@@ -283,10 +334,7 @@ public abstract class MixinMinecraftServer extends ReentrantBlockableEventLoop<T
             if (this.tickCount % 20 == 0 || !this.wasPaused && this.isMultiplayerPaused) {
                 this.profiler.push("timeSync");
                 //noinspection ObjectAllocationInLoop
-                this.playerList.broadcastAll(new ClientboundSetTimePacket(level.getGameTime(),
-                                                                          level.getDayTime(),
-                                                                          level.getGameRules().getBoolean(GameRules.RULE_DAYLIGHT)),
-                                             level.dimension());
+                this.playerList.broadcastAll(new ClientboundSetTimePacket(level.getGameTime(), level.getDayTime(), level.getGameRules().getBoolean(GameRules.RULE_DAYLIGHT)), level.dimension());
                 this.profiler.pop();
             }
             this.profiler.push("tick");
@@ -302,6 +350,9 @@ public abstract class MixinMinecraftServer extends ReentrantBlockableEventLoop<T
             }
             this.profiler.pop();
             this.profiler.pop();
+        }
+        if (this.tickCount % 10 == 0) {
+            CommandLoadFactor.tick(this.playerList);
         }
         this.profiler.popPush("connection");
         assert this.getConnection() != null;
@@ -364,6 +415,9 @@ public abstract class MixinMinecraftServer extends ReentrantBlockableEventLoop<T
         this.profiler.pop();
         this.wasPaused = this.isMultiplayerPaused;
     }
+
+    @Shadow
+    protected abstract void updateMobSpawningFlags();
 
     @Shadow
     protected abstract void updateStatusIcon(ServerStatus serverStatus);

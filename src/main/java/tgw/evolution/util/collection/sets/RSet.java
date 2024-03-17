@@ -34,6 +34,11 @@ public interface RSet<K> extends ReferenceSet<K>, ICollectionExtension {
 
     @Nullable K fastEntries();
 
+    /**
+     * Gets the "first" element of this set. Used when collection size is 1.
+     */
+    @Nullable K getElement();
+
     default boolean removeAll(RSet<?> set) {
         boolean modified = false;
         for (K e = this.fastEntries(); e != null; e = this.fastEntries()) {
@@ -66,6 +71,11 @@ public interface RSet<K> extends ReferenceSet<K>, ICollectionExtension {
 
         @Override
         public @Nullable K fastEntries() {
+            return null;
+        }
+
+        @Override
+        public @Nullable K getElement() {
             return null;
         }
 

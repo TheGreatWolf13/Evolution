@@ -6,11 +6,18 @@ import net.minecraft.network.chat.*;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
+import tgw.evolution.blocks.IStructural;
 import tgw.evolution.items.IFireAspect;
 import tgw.evolution.items.IHeavyAttack;
 import tgw.evolution.items.IItemFluidContainer;
 import tgw.evolution.items.IKnockback;
+import tgw.evolution.util.collection.maps.R2OEnumMap;
+import tgw.evolution.util.collection.maps.R2OMap;
+import tgw.evolution.util.collection.sets.RSet;
 import tgw.evolution.util.math.MathHelper;
+
+import java.util.Locale;
+import java.util.stream.Collectors;
 
 import static net.minecraft.world.effect.MobEffectCategory.*;
 import static tgw.evolution.init.EvolutionFormatter.*;
@@ -69,10 +76,8 @@ public final class EvolutionTexts {
     public static final Component TOOLTIP_CONTAINER_EMPTY = transl("evolution.tooltip.containerEmpty").setStyle(BLUE);
     public static final Component TOOLTIP_DAMAGE_PROPORTIONAL = transl("evolution.tooltip.damageProportional").setStyle(LIGHT_GREY);
     public static final Component TOOLTIP_EFFECT_CAUSES = transl("evolution.tooltip.effect.causes").setStyle(LIGHT_GREY);
-    public static final Component TOOLTIP_EFFECT_DISABLE_REGEN = arrow(HARMFUL).append(
-            transl("evolution.tooltip.effect.disableRegen").withStyle(WHITE));
-    public static final Component TOOLTIP_EFFECT_DISABLE_SPRINT = arrow(HARMFUL).append(
-            transl("evolution.tooltip.effect.disableSprint").withStyle(WHITE));
+    public static final Component TOOLTIP_EFFECT_DISABLE_REGEN = arrow(HARMFUL).append(transl("evolution.tooltip.effect.disableRegen").withStyle(WHITE));
+    public static final Component TOOLTIP_EFFECT_DISABLE_SPRINT = arrow(HARMFUL).append(transl("evolution.tooltip.effect.disableSprint").withStyle(WHITE));
     public static final Component TOOLTIP_EFFECT_MAY_CAUSE = transl("evolution.tooltip.effect.mayCause").setStyle(LIGHT_GREY);
     public static final Component TOOLTIP_FIREWOOD_PILE = transl("evolution.tooltip.firewoodPile").setStyle(BLUE);
     public static final Component TOOLTIP_FOLLOW_UP_SINGLE = transl("evolution.tooltip.followUp.single").setStyle(DARK_YELLOW);
@@ -86,22 +91,33 @@ public final class EvolutionTexts {
     public static final Component TOOLTIP_ROPE = transl("evolution.tooltip.rope").setStyle(BLUE);
     public static final Component TOOLTIP_SHOW_MELEE_STATS = transl("evolution.tooltip.showMeleeStats").setStyle(BLUE);
     public static final Component TOOLTIP_SHOW_PARTS = transl("evolution.tooltip.showParts").setStyle(BLUE);
+    public static final Component TOOLTIP_SHOW_STRUCTURAL = transl("evolution.tooltip.showStructural").setStyle(BLUE);
     public static final Component TOOLTIP_STICK_LIT = transl("evolution.tooltip.stickLit").setStyle(BLUE);
+    public static final Component TOOLTIP_STRUCTURAL = transl("evolution.tooltip.structural").setStyle(BLUE);
     public static final Component TOOLTIP_THROWABLE = transl("evolution.tooltip.throwable").setStyle(GOLD);
     public static final Component TOOLTIP_TORCH_RELIT = transl("evolution.tooltip.torchRelit").setStyle(BLUE);
     public static final Component TOOLTIP_TWO_HANDED = transl("evolution.tooltip.twoHanded").setStyle(GOLD);
     public static final Component TOOLTIP_UNBREAKABLE = transl("evolution.tooltip.unbreakable").setStyle(BLUE);
+    private static final R2OMap<IStructural.BeamType, Component> BEAM_TYPES;
+
+    static {
+        R2OMap<IStructural.BeamType, Component> map = new R2OEnumMap<>(IStructural.BeamType.VALUES);
+        for (IStructural.BeamType value : IStructural.BeamType.VALUES) {
+            //noinspection ObjectAllocationInLoop
+            map.put(value, transl("evolution.tooltip.structuralType." + value.name().toLowerCase(Locale.ROOT)));
+        }
+        BEAM_TYPES = map.view();
+    }
 
     private EvolutionTexts() {
     }
 
     private static MutableComponent arrow(MobEffectCategory category) {
-        return new TextComponent(" \u25ba ").withStyle(category == BENEFICIAL ? DARK_GREEN : category == HARMFUL ? RED : DARK_YELLOW);
+        return new TextComponent(" ► ").withStyle(category == BENEFICIAL ? DARK_GREEN : category == HARMFUL ? RED : DARK_YELLOW);
     }
 
     public static FormattedText basicAttack() {
-        return new TranslatableComponent("evolution.tooltip.basicAttack",
-                                         Minecraft.getInstance().options.keyAttack.getTranslatedKeyMessage());
+        return new TranslatableComponent("evolution.tooltip.basicAttack", Minecraft.getInstance().options.keyAttack.getTranslatedKeyMessage());
     }
 
     public static Component capacity(IItemFluidContainer container) {
@@ -109,8 +125,7 @@ public final class EvolutionTexts {
     }
 
     public static FormattedText chargeAttack() {
-        return new TranslatableComponent("evolution.tooltip.chargeAttack",
-                                         Minecraft.getInstance().options.keyAttack.getTranslatedKeyMessage());
+        return new TranslatableComponent("evolution.tooltip.chargeAttack", Minecraft.getInstance().options.keyAttack.getTranslatedKeyMessage());
     }
 
     public static Component coldResistance(double amount) {
@@ -141,6 +156,10 @@ public final class EvolutionTexts {
         return new TranslatableComponent("evolution.tooltip.cooldown", TWO_PLACES.format(amount / 20)).setStyle(GREEN);
     }
 
+    public static Component damage(String damage, double amount) {
+        return new TranslatableComponent(damage, TWO_PLACES.format(amount)).setStyle(DARK_RED);
+    }
+
 //    public static Component container(IItemFluidContainer container, ItemStack stack) {
 //        return new TranslatableComponent("evolution.tooltip.containerAmount",
 //                                         VOLUME.format(container.getAmount(stack) / 100.0f),
@@ -148,10 +167,6 @@ public final class EvolutionTexts {
 //                                         ((FluidGeneric) container.getFluid()).getTextComp() :
 //                                         "null").setStyle(BLUE);
 //    }
-
-    public static Component damage(String damage, double amount) {
-        return new TranslatableComponent(damage, TWO_PLACES.format(amount)).setStyle(DARK_RED);
-    }
 
     public static Component dmgMultiplier(double mult) {
         return new TranslatableComponent("evolution.tooltip.damageMultiplier", TWO_PLACES.format(mult)).setStyle(AQUA);
@@ -166,8 +181,7 @@ public final class EvolutionTexts {
     }
 
     public static Component effect(MobEffectInstance instance) {
-        MutableComponent comp = arrow(instance.getEffect().getCategory()).append(
-                new TranslatableComponent(instance.getEffect().getDescriptionId()).withStyle(WHITE));
+        MutableComponent comp = arrow(instance.getEffect().getCategory()).append(new TranslatableComponent(instance.getEffect().getDescriptionId()).withStyle(WHITE));
         if (instance.getAmplifier() > 0) {
             comp.append(new TextComponent(" " + MathHelper.getRomanNumber(instance.getAmplifier() + 1)).withStyle(WHITE));
         }
@@ -175,23 +189,19 @@ public final class EvolutionTexts {
     }
 
     public static Component effectAbsorption(float absorption) {
-        return arrow(BENEFICIAL).append(
-                new TranslatableComponent("evolution.tooltip.effect.absorption", HP_FORMAT.format(absorption)).withStyle(WHITE));
+        return arrow(BENEFICIAL).append(new TranslatableComponent("evolution.tooltip.effect.absorption", HP_FORMAT.format(absorption)).withStyle(WHITE));
     }
 
     public static Component effectAttSpeed(float speed) {
-        return arrow(speed > 0 ? BENEFICIAL : HARMFUL).append(
-                new TranslatableComponent("evolution.tooltip.effect.attackSpeed", PERCENT_ONE_PLACE_BONUS.format(speed)).withStyle(WHITE));
+        return arrow(speed > 0 ? BENEFICIAL : HARMFUL).append(new TranslatableComponent("evolution.tooltip.effect.attackSpeed", PERCENT_ONE_PLACE_BONUS.format(speed)).withStyle(WHITE));
     }
 
     public static Component effectDmg(float dmg, int tickInterval, boolean isAddition) {
-        return new TranslatableComponent(isAddition ? "evolution.tooltip.effect.damage.addition" : "evolution.tooltip.effect.damage",
-                                         HP_FORMAT.format(dmg), time(tickInterval / 20.0, 1));
+        return new TranslatableComponent(isAddition ? "evolution.tooltip.effect.damage.addition" : "evolution.tooltip.effect.damage", HP_FORMAT.format(dmg), time(tickInterval / 20.0, 1));
     }
 
     public static Component effectHealth(float health) {
-        return arrow(health > 0 ? BENEFICIAL : HARMFUL).append(
-                new TranslatableComponent("evolution.tooltip.effect.health", HP_BONUS_FORMAT.format(health)).withStyle(WHITE));
+        return arrow(health > 0 ? BENEFICIAL : HARMFUL).append(new TranslatableComponent("evolution.tooltip.effect.health", HP_BONUS_FORMAT.format(health)).withStyle(WHITE));
     }
 
     public static Component effectHunger(float hunger) {
@@ -200,51 +210,41 @@ public final class EvolutionTexts {
 
     public static Component effectInstaHP(float instaHP) {
         if (instaHP > 0) {
-            return arrow(BENEFICIAL).append(
-                    new TranslatableComponent("evolution.tooltip.effect.instantHealth", HP_FORMAT.format(instaHP)).withStyle(WHITE));
+            return arrow(BENEFICIAL).append(new TranslatableComponent("evolution.tooltip.effect.instantHealth", HP_FORMAT.format(instaHP)).withStyle(WHITE));
         }
-        return arrow(HARMFUL).append(
-                new TranslatableComponent("evolution.tooltip.effect.instantDamage", HP_FORMAT.format(-instaHP)).withStyle(WHITE));
+        return arrow(HARMFUL).append(new TranslatableComponent("evolution.tooltip.effect.instantDamage", HP_FORMAT.format(-instaHP)).withStyle(WHITE));
     }
 
     public static Component effectJump(float jump) {
-        return arrow(jump > 0 ? BENEFICIAL : HARMFUL).append(
-                new TranslatableComponent("evolution.tooltip.effect.jump", PERCENT_ONE_PLACE_BONUS.format(jump)).withStyle(WHITE));
+        return arrow(jump > 0 ? BENEFICIAL : HARMFUL).append(new TranslatableComponent("evolution.tooltip.effect.jump", PERCENT_ONE_PLACE_BONUS.format(jump)).withStyle(WHITE));
     }
 
     public static Component effectLuck(int luck) {
-        return arrow(luck > 0 ? BENEFICIAL : HARMFUL).append(
-                new TranslatableComponent("evolution.tooltip.effect.luck", BONUS.format(luck)).withStyle(WHITE));
+        return arrow(luck > 0 ? BENEFICIAL : HARMFUL).append(new TranslatableComponent("evolution.tooltip.effect.luck", BONUS.format(luck)).withStyle(WHITE));
     }
 
     public static Component effectMeleeDmg(float dmg) {
-        return arrow(dmg > 0 ? BENEFICIAL : HARMFUL).append(
-                new TranslatableComponent("evolution.tooltip.effect.meleeDamage", HP_BONUS_FORMAT.format(dmg)).withStyle(WHITE));
+        return arrow(dmg > 0 ? BENEFICIAL : HARMFUL).append(new TranslatableComponent("evolution.tooltip.effect.meleeDamage", HP_BONUS_FORMAT.format(dmg)).withStyle(WHITE));
     }
 
     public static Component effectMining(float mining) {
-        return arrow(mining > 0 ? BENEFICIAL : HARMFUL).append(
-                new TranslatableComponent("evolution.tooltip.effect.miningSpeed", PERCENT_ONE_PLACE_BONUS.format(mining)).withStyle(WHITE));
+        return arrow(mining > 0 ? BENEFICIAL : HARMFUL).append(new TranslatableComponent("evolution.tooltip.effect.miningSpeed", PERCENT_ONE_PLACE_BONUS.format(mining)).withStyle(WHITE));
     }
 
     public static Component effectRegen(float regen, int tickInterval, boolean isAddition) {
-        return new TranslatableComponent(isAddition ? "evolution.tooltip.effect.regen.addition" : "evolution.tooltip.effect.regen",
-                                         HP_FORMAT.format(regen), time(tickInterval / 20.0, 1));
+        return new TranslatableComponent(isAddition ? "evolution.tooltip.effect.regen.addition" : "evolution.tooltip.effect.regen", HP_FORMAT.format(regen), time(tickInterval / 20.0, 1));
     }
 
     public static Component effectResist(float resist) {
-        return arrow(BENEFICIAL).append(
-                new TranslatableComponent("evolution.tooltip.effect.resistance", PERCENT_ONE_PLACE.format(resist)).withStyle(WHITE));
+        return arrow(BENEFICIAL).append(new TranslatableComponent("evolution.tooltip.effect.resistance", PERCENT_ONE_PLACE.format(resist)).withStyle(WHITE));
     }
 
     public static Component effectSpeed(float speed) {
-        return arrow(speed > 0 ? BENEFICIAL : HARMFUL).append(
-                new TranslatableComponent("evolution.tooltip.effect.moveSpeed", PERCENT_ONE_PLACE_BONUS.format(speed)).withStyle(WHITE));
+        return arrow(speed > 0 ? BENEFICIAL : HARMFUL).append(new TranslatableComponent("evolution.tooltip.effect.moveSpeed", PERCENT_ONE_PLACE_BONUS.format(speed)).withStyle(WHITE));
     }
 
     public static Component effectTemperature(double temp) {
-        return arrow(NEUTRAL).append(
-                new TranslatableComponent("evolution.tooltip.effect.temperature", TEMPERATURE_BODY_RELATIVE.format(temp)).withStyle(WHITE));
+        return arrow(NEUTRAL).append(new TranslatableComponent("evolution.tooltip.effect.temperature", TEMPERATURE_BODY_RELATIVE.format(temp)).withStyle(WHITE));
     }
 
     public static Component effectThirst(float thirst) {
@@ -282,8 +282,7 @@ public final class EvolutionTexts {
     }
 
     public static FormattedText heavyAttackDesc2(IHeavyAttack heavyAttack) {
-        return arrow(BENEFICIAL).append(
-                new TranslatableComponent("evolution.tooltip.heavyAttack.desc2", PERCENT_ONE_PLACE.format(0.1 * heavyAttack.heavyAttackLevel())));
+        return arrow(BENEFICIAL).append(new TranslatableComponent("evolution.tooltip.heavyAttack.desc2", PERCENT_ONE_PLACE.format(0.1 * heavyAttack.heavyAttackLevel())));
     }
 
     public static Component knockback(IKnockback item) {
@@ -319,16 +318,30 @@ public final class EvolutionTexts {
             return TOOLTIP_BLUNT;
         }
         if (sharpAmount > hardness) {
-            return new TextComponent("   ").append(new TranslatableComponent("evolution.tooltip.verySharp",
-                                                                             sharpAmount - hardness,
-                                                                             Mth.ceil(0.5 * hardness))).setStyle(DARK_AQUA);
+            return new TextComponent("   ").append(new TranslatableComponent("evolution.tooltip.verySharp", sharpAmount - hardness, Mth.ceil(0.5 * hardness))).setStyle(DARK_AQUA);
         }
         return new TextComponent("   ").append(new TranslatableComponent("evolution.tooltip.sharp", sharpAmount, hardness)).setStyle(DARK_AQUA);
     }
 
+    public static Component structuralIntegrity(int min, int max) {
+        if (min == max) {
+            return new TranslatableComponent("evolution.tooltip.structuralIntegrity", min).setStyle(LIGHT_GREY);
+        }
+        return new TranslatableComponent("evolution.tooltip.structuralIntegrityRange", min, max).setStyle(LIGHT_GREY);
+    }
+
+    public static Component structuralType(RSet<IStructural.BeamType> set) {
+        if (set.isEmpty()) {
+            return EMPTY;
+        }
+        if (set.size() == 1) {
+            return new TranslatableComponent("evolution.tooltip.structuralType", BEAM_TYPES.get(set.getElement())).setStyle(LIGHT_GREY);
+        }
+        return new TranslatableComponent("evolution.tooltip.structuralType", set.stream().map(BEAM_TYPES::get).map(Component::getString).collect(Collectors.joining(", "))).setStyle(LIGHT_GREY);
+    }
+
     public static FormattedText throwAttack() {
-        return new TranslatableComponent("evolution.tooltip.throwAttack",
-                                         Minecraft.getInstance().options.keyUse.getTranslatedKeyMessage());
+        return new TranslatableComponent("evolution.tooltip.throwAttack", Minecraft.getInstance().options.keyUse.getTranslatedKeyMessage());
     }
 
     public static Component throwSpeed(double speed) {

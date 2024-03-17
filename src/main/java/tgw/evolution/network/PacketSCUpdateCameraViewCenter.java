@@ -3,7 +3,6 @@ package tgw.evolution.network;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import tgw.evolution.patches.PatchClientPacketListener;
 
 public class PacketSCUpdateCameraViewCenter implements Packet<ClientGamePacketListener> {
 
@@ -22,7 +21,7 @@ public class PacketSCUpdateCameraViewCenter implements Packet<ClientGamePacketLi
 
     @Override
     public void handle(ClientGamePacketListener listener) {
-        ((PatchClientPacketListener) listener).handleUpdateCameraViewCenter(this);
+        listener.handleUpdateCameraViewCenter(this);
     }
 
     @Override

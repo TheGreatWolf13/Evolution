@@ -6,7 +6,7 @@ import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
-import tgw.evolution.patches.PatchClientPacketListener;
+import tgw.evolution.patches.PatchClientGamePacketListener;
 
 public class PacketSCPlaySoundEntityEmitted implements Packet<ClientGamePacketListener> {
 
@@ -34,7 +34,7 @@ public class PacketSCPlaySoundEntityEmitted implements Packet<ClientGamePacketLi
 
     @Override
     public void handle(ClientGamePacketListener listener) {
-        ((PatchClientPacketListener) listener).handlePlaySoundEntityEmitted(this);
+        listener.handlePlaySoundEntityEmitted(this);
     }
 
     @Override

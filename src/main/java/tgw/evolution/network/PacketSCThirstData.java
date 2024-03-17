@@ -4,7 +4,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import tgw.evolution.capabilities.player.CapabilityThirst;
-import tgw.evolution.patches.PatchClientPacketListener;
+import tgw.evolution.patches.PatchClientGamePacketListener;
 
 public class PacketSCThirstData implements Packet<ClientGamePacketListener> {
 
@@ -23,7 +23,7 @@ public class PacketSCThirstData implements Packet<ClientGamePacketListener> {
 
     @Override
     public void handle(ClientGamePacketListener listener) {
-        ((PatchClientPacketListener) listener).handleThirstData(this);
+        listener.handleThirstData(this);
     }
 
     @Override

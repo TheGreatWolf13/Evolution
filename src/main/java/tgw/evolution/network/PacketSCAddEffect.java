@@ -6,7 +6,6 @@ import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import tgw.evolution.client.util.ClientEffectInstance;
-import tgw.evolution.patches.PatchClientPacketListener;
 import tgw.evolution.util.math.MathHelper;
 
 public class PacketSCAddEffect implements Packet<ClientGamePacketListener> {
@@ -47,7 +46,7 @@ public class PacketSCAddEffect implements Packet<ClientGamePacketListener> {
 
     @Override
     public void handle(ClientGamePacketListener listener) {
-        ((PatchClientPacketListener) listener).handleAddEffect(this);
+        listener.handleAddEffect(this);
     }
 
     @Override

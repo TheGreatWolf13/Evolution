@@ -88,7 +88,7 @@ public abstract class Mixin_M_ThreadedLevelLightEngine extends LevelLightEngine 
                 // catch what we miss here.
                 this.getLightEngine().checkChunkEdges(chunkPos.x, chunkPos.z);
             }
-            this.chunkMap.releaseLightTicket(chunkPos);
+            this.chunkMap.releaseLightTicket_(chunkPos.toLong());
             return chunk;
         }, runnable -> {
             this.getLightEngine().scheduleChunkLight(chunkPos, runnable);
@@ -143,16 +143,15 @@ public abstract class Mixin_M_ThreadedLevelLightEngine extends LevelLightEngine 
             level.getChunkSource().chunkMap.mainThreadExecutor.execute(() -> this.queueTaskForSection(chunkX, chunkY, chunkZ, runnable));
             return;
         }
-        long key = ChunkPos.asLong(chunkX, chunkZ);
+        long pos = ChunkPos.asLong(chunkX, chunkZ);
         CompletableFuture<Void> updateFuture = runnable.get();
         if (updateFuture == null) {
             // not scheduled
             return;
         }
-        int references = this.chunksBeingWorkedOn.addTo(key, 1);
+        int references = this.chunksBeingWorkedOn.addTo(pos, 1);
         if (references == 0) {
-            ChunkPos pos = new ChunkPos(chunkX, chunkZ);
-            level.getChunkSource().addRegionTicket(StarLightInterface.CHUNK_WORK_TICKET, pos, 0, pos);
+            level.getChunkSource().addRegionTicket_(StarLightInterface.CHUNK_WORK_TICKET, pos, 0, pos);
         }
         // append future to this chunk and 1 radius neighbours chunk save futures
         // this prevents us from saving the level without first waiting for the light engine
@@ -165,18 +164,17 @@ public abstract class Mixin_M_ThreadedLevelLightEngine extends LevelLightEngine 
             }
         }
         updateFuture.thenAcceptAsync(ignore -> {
-            int newReferences = this.chunksBeingWorkedOn.get(key);
+            int newReferences = this.chunksBeingWorkedOn.get(pos);
             if (newReferences == 1) {
-                this.chunksBeingWorkedOn.remove(key);
-                ChunkPos pos = new ChunkPos(chunkX, chunkZ);
-                level.getChunkSource().removeRegionTicket(StarLightInterface.CHUNK_WORK_TICKET, pos, 0, pos);
+                this.chunksBeingWorkedOn.remove(pos);
+                level.getChunkSource().removeRegionTicket_(StarLightInterface.CHUNK_WORK_TICKET, pos, 0, pos);
             }
             else {
-                this.chunksBeingWorkedOn.put(key, newReferences - 1);
+                this.chunksBeingWorkedOn.put(pos, newReferences - 1);
             }
         }, level.getChunkSource().chunkMap.mainThreadExecutor).whenComplete((ignore, thr) -> {
             if (thr != null) {
-                LOGGER.error("Failed to remove ticket level for post chunk task " + new ChunkPos(chunkX, chunkZ), thr);
+                LOGGER.error("Failed to remove ticket level for post chunk task " + pos, thr);
             }
         });
     }

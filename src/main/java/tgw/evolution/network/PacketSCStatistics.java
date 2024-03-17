@@ -8,7 +8,7 @@ import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.stats.Stat;
 import net.minecraft.stats.StatType;
 import org.jetbrains.annotations.Nullable;
-import tgw.evolution.patches.PatchClientPacketListener;
+import tgw.evolution.patches.PatchClientGamePacketListener;
 import tgw.evolution.util.collection.maps.O2LHashMap;
 import tgw.evolution.util.collection.maps.O2LMap;
 
@@ -45,7 +45,7 @@ public class PacketSCStatistics implements Packet<ClientGamePacketListener> {
 
     @Override
     public void handle(ClientGamePacketListener listener) {
-        ((PatchClientPacketListener) listener).handleStatistics(this);
+        listener.handleStatistics(this);
     }
 
     @Override

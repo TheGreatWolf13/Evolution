@@ -34,7 +34,6 @@ import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionEntities;
 import tgw.evolution.network.PacketSCCustomEntity;
-import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 import tgw.evolution.util.math.ClipContextMutable;
 import tgw.evolution.util.physics.Fluid;
@@ -42,9 +41,11 @@ import tgw.evolution.util.physics.Physics;
 import tgw.evolution.util.physics.SI;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 public class EntityFallingWeight extends Entity implements IEntitySpawnData {
 
+    private static final ItemDropper DROPPER = new ItemDropper();
     private final ClipContextMutable clipContext = new ClipContextMutable();
     public int fallTime;
     protected double mass = 500;
@@ -82,20 +83,7 @@ public class EntityFallingWeight extends Entity implements IEntitySpawnData {
         if (this.level.isClientSide) {
             return false;
         }
-        DamageSource source = null;
-        Material material = this.state.getMaterial();
-        if (material == Material.STONE || this.state.getBlock() instanceof BlockKnapping) {
-            source = EvolutionDamage.FALLING_ROCK;
-        }
-        else if (material == Material.DIRT || material == Material.CLAY || material == Material.SAND) {
-            source = EvolutionDamage.FALLING_SOIL;
-        }
-        else if (material == Material.WOOD) {
-            source = EvolutionDamage.FALLING_WOOD;
-        }
-        else if (material == Material.METAL) {
-            source = EvolutionDamage.FALLING_METAL;
-        }
+        DamageSource source = this.getDamageSource();
         if (source == null) {
             Evolution.warn("No falling damage for block {}", this.state);
             return false;
@@ -151,6 +139,23 @@ public class EntityFallingWeight extends Entity implements IEntitySpawnData {
         return this.state;
     }
 
+    private @Nullable DamageSource getDamageSource() {
+        Material material = this.state.getMaterial();
+        if (material == Material.STONE || this.state.getBlock() instanceof BlockKnapping) {
+            return EvolutionDamage.FALLING_ROCK;
+        }
+        if (material == Material.DIRT || material == Material.CLAY || material == Material.SAND) {
+            return EvolutionDamage.FALLING_SOIL;
+        }
+        if (material == Material.WOOD) {
+            return EvolutionDamage.FALLING_WOOD;
+        }
+        if (material == Material.METAL) {
+            return EvolutionDamage.FALLING_METAL;
+        }
+        return null;
+    }
+
     @Override
     public float getFrictionModifier() {
         return 2.0f;
@@ -159,11 +164,6 @@ public class EntityFallingWeight extends Entity implements IEntitySpawnData {
     @Override
     public @Nullable HitboxEntity<? extends EntityFallingWeight> getHitboxes() {
         return null;
-    }
-
-    @Override
-    public double getLegSlowdown() {
-        return 0;
     }
 
     @Override
@@ -218,11 +218,8 @@ public class EntityFallingWeight extends Entity implements IEntitySpawnData {
                 accY += physics.calcForceBuoyancy(this) / this.mass;
             }
             //Pseudo-forces
-            double accCoriolisX = physics.calcAccCoriolisX();
             double accCoriolisY = physics.calcAccCoriolisY();
-            double accCoriolisZ = physics.calcAccCoriolisZ();
             double accCentrifugalY = physics.calcAccCentrifugalY();
-            double accCentrifugalZ = physics.calcAccCentrifugalZ();
             //Dissipative Forces
             double dissipativeX = 0;
             double dissipativeZ = 0;
@@ -240,30 +237,10 @@ public class EntityFallingWeight extends Entity implements IEntitySpawnData {
                     dissipativeZ = motionZ;
                 }
             }
-            //Drag
-            //TODO wind speed
-//            double windVelX = 0;
-//            double windVelY = 0;
-//            double windVelZ = 0;
-//            double dragX = physics.calcForceDragX(windVelX) / this.mass;
-//            double dragY = physics.calcForceDragY(windVelY) / this.mass;
-//            double dragZ = physics.calcForceDragZ(windVelZ) / this.mass;
-//            double maxDrag = Math.abs(windVelX - motionX);
-//            if (Math.abs(dragX) > maxDrag) {
-//                dragX = Math.signum(dragX) * maxDrag;
-//            }
-//            maxDrag = Math.abs(windVelY - motionY);
-//            if (Math.abs(dragY) > maxDrag) {
-//                dragY = Math.signum(dragY) * maxDrag;
-//            }
-//            maxDrag = Math.abs(windVelZ - motionZ);
-//            if (Math.abs(dragZ) > maxDrag) {
-//                dragZ = Math.signum(dragZ) * maxDrag;
-//            }
             //Update Motion
-            motionX += -dissipativeX + /*dragX +*/ accCoriolisX;
-            motionY += accY + /*dragY +*/ accCoriolisY + accCentrifugalY;
-            motionZ += -dissipativeZ + /*dragZ +*/ accCoriolisZ + accCentrifugalZ;
+            motionX -= dissipativeX;
+            motionY += accY + accCoriolisY + accCentrifugalY;
+            motionZ -= dissipativeZ;
         }
         this.setDeltaMovement(motionX, motionY, motionZ);
         this.move(MoverType.SELF, this.getDeltaMovement());
@@ -274,9 +251,7 @@ public class EntityFallingWeight extends Entity implements IEntitySpawnData {
         boolean isInWater = this.level.getFluidState_(x, y, z).is(FluidTags.WATER);
         double motionLenSqr = this.getDeltaMovement().lengthSqr();
         if (motionLenSqr > 1) {
-            BlockHitResult hitResult = this.level.clip(this.clipContext.set(this.xo, this.yo, this.zo,
-                                                                            this.getX(), this.getY(), this.getZ(),
-                                                                            ClipContext.Block.COLLIDER, ClipContext.Fluid.SOURCE_ONLY, this));
+            BlockHitResult hitResult = this.level.clip(this.clipContext.set(this.xo, this.yo, this.zo, this.getX(), this.getY(), this.getZ(), ClipContext.Block.COLLIDER, ClipContext.Fluid.SOURCE_ONLY, this));
             if (hitResult.getType() != HitResult.Type.MISS) {
                 int hitX = hitResult.posX();
                 int hitY = hitResult.posY();
@@ -303,11 +278,23 @@ public class EntityFallingWeight extends Entity implements IEntitySpawnData {
                 this.level.setBlockAndUpdate_(x, y, z, this.state);
             }
             else if (this.level.getGameRules().getBoolean(GameRules.RULE_DOENTITYDROPS) && !this.level.isClientSide) {
-                OList<ItemStack> drops = this.state.getDrops((ServerLevel) this.level, x, y, z, ItemStack.EMPTY, null, null, this.level.random);
-                for (int i = 0, len = drops.size(); i < len; i++) {
-                    this.spawnAtLocation(drops.get(i));
-                }
+                this.state.dropLoot((ServerLevel) this.level, x, y, z, ItemStack.EMPTY, null, null, this.level.random, DROPPER.setup(this));
             }
+        }
+    }
+
+    public static class ItemDropper implements Consumer<ItemStack> {
+
+        private EntityFallingWeight entity;
+
+        @Override
+        public void accept(ItemStack stack) {
+            this.entity.spawnAtLocation(stack);
+        }
+
+        public ItemDropper setup(EntityFallingWeight entity) {
+            this.entity = entity;
+            return this;
         }
     }
 

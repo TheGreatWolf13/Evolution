@@ -6,7 +6,6 @@ import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import tgw.evolution.patches.PatchClientPacketListener;
 
 public class PacketSCBlockBreakAck implements Packet<ClientGamePacketListener> {
 
@@ -35,7 +34,7 @@ public class PacketSCBlockBreakAck implements Packet<ClientGamePacketListener> {
 
     @Override
     public void handle(ClientGamePacketListener listener) {
-        ((PatchClientPacketListener) listener).handleBlockBreakAck(this);
+        listener.handleBlockBreakAck(this);
     }
 
     @Override

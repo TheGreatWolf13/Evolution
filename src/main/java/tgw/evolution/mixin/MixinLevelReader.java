@@ -1,6 +1,7 @@
 package tgw.evolution.mixin;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.level.BlockAndTintGetter;
@@ -86,6 +87,21 @@ public interface MixinLevelReader extends BlockAndTintGetter, PatchLevelReader {
 
     @Shadow
     ChunkAccess getChunk(int i, int j);
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Overwrite
+    default int getDirectSignal(BlockPos pos, Direction dir) {
+        Evolution.deprecatedMethod();
+        return this.getDirectSignal_(pos.getX(), pos.getY(), pos.getZ(), dir);
+    }
+
+    @Override
+    default int getDirectSignal_(int x, int y, int z, Direction direction) {
+        return this.getBlockState_(x, y, z).getDirectSignal(this, new BlockPos(x, y, z), direction);
+    }
 
     /**
      * @reason _

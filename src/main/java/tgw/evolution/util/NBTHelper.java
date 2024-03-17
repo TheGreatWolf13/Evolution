@@ -169,10 +169,11 @@ public final class NBTHelper {
     }
 
     public static @Nullable CompoundTag getCompound(CompoundTag tag, String key) {
-        if (!tag.contains(key, Tag.TAG_COMPOUND)) {
-            return null;
+        Tag t = tag.get(key);
+        if (t != null && t.getId() == Tag.TAG_COMPOUND) {
+            return (CompoundTag) t;
         }
-        return tag.getCompound(key);
+        return null;
     }
 
     /**
@@ -201,6 +202,14 @@ public final class NBTHelper {
 
     public static Optional<Tag> getGeneric(Tag input, Tag key) {
         return getMapValues(input).flatMap(map -> Optional.ofNullable(map.get(key)));
+    }
+
+    public static int getInt(CompoundTag nbt, String key) {
+        Tag tag = nbt.get(key);
+        if (tag instanceof NumericTag t) {
+            return t.getAsInt();
+        }
+        return 0;
     }
 
     public static Optional<Map<Tag, Tag>> getMapValues(Tag nbt) {
@@ -273,11 +282,11 @@ public final class NBTHelper {
     }
 
     public static NonNullList<ItemStack> readStackList(CompoundTag nbt) {
-        NonNullList<ItemStack> list = NonNullList.withSize(nbt.getInt("Size"), ItemStack.EMPTY);
+        NonNullList<ItemStack> list = NonNullList.withSize(getInt(nbt, "Size"), ItemStack.EMPTY);
         ListTag tagList = nbt.getList("Items", Tag.TAG_COMPOUND);
         for (int i = 0; i < tagList.size(); i++) {
             CompoundTag itemTags = tagList.getCompound(i);
-            int slot = itemTags.getInt("Slot");
+            int slot = getInt(itemTags, "Slot");
             if (slot >= 0 && slot < list.size()) {
                 list.set(slot, ItemStack.of(itemTags));
             }

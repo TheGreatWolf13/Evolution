@@ -3,7 +3,6 @@ package tgw.evolution.blocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.EntityBlock;
@@ -37,12 +36,6 @@ public class BlockMetal extends BlockPhysics implements EntityBlock {
 //    }
 
     @Override
-    public @Nullable SoundEvent fallingSound() {
-        //TODO implementation
-        return null;
-    }
-
-    @Override
     public float getFrictionCoefficient(BlockState state) {
         return this.metal.getFrictionCoefficient();
     }
@@ -50,12 +43,6 @@ public class BlockMetal extends BlockPhysics implements EntityBlock {
     @Override
     public int getHarvestLevel(BlockState state, Level level, int x, int y, int z) {
         return this.metal.getHarvestLevel();
-    }
-
-    @Override
-    public double getMass(Level level, int x, int y, int z, BlockState state) {
-        //TODO implementation
-        return 0;
     }
 
     public MetalVariant getMetal() {

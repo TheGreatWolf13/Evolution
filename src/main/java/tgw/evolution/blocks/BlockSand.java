@@ -2,14 +2,14 @@ package tgw.evolution.blocks;
 
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Material;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.init.EvolutionSounds;
 import tgw.evolution.util.constants.RockVariant;
 
-public class BlockSand extends BlockPhysics implements IRockVariant, ISloppable {
+public class BlockSand extends BlockPhysics implements IRockVariant, ISloppable, IFillable {
 
     private final RockVariant variant;
 
@@ -24,23 +24,13 @@ public class BlockSand extends BlockPhysics implements IRockVariant, ISloppable 
     }
 
     @Override
-    public boolean canSlopeFail() {
-        return false;
-    }
-
-    @Override
-    public SoundEvent fallingSound() {
+    public @Nullable SoundEvent fallingSound() {
         return EvolutionSounds.SOIL_COLLAPSE;
     }
 
     @Override
     public float getFrictionCoefficient(BlockState state) {
         return 0.55f;
-    }
-
-    @Override
-    public double getMass(Level level, int x, int y, int z, BlockState state) {
-        return this.rockVariant().getMass() / 8;
     }
 
     @Override

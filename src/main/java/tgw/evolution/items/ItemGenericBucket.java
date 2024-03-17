@@ -35,7 +35,7 @@
 //
 //import java.util.function.Supplier;
 //
-//public abstract class ItemGenericBucket extends ItemEv implements IItemFluidContainer {
+//public abstract class ItemGenericBucket extends ItemGeneric implements IItemFluidContainer {
 //
 //    private final Supplier<? extends Fluid> fluid;
 //

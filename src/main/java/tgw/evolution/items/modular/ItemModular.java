@@ -20,12 +20,12 @@ import tgw.evolution.capabilities.modular.IModular;
 import tgw.evolution.inventory.SlotType;
 import tgw.evolution.items.IDurability;
 import tgw.evolution.items.IMass;
-import tgw.evolution.items.ItemEv;
+import tgw.evolution.items.ItemGeneric;
 import tgw.evolution.patches.PatchItem;
 import tgw.evolution.util.collection.lists.EitherList;
 import tgw.evolution.util.constants.HarvestLevel;
 
-public abstract class ItemModular<M extends IModular> extends ItemEv implements IDurability, IMass, PatchItem {
+public abstract class ItemModular<M extends IModular> extends ItemGeneric implements IDurability, IMass, PatchItem {
 
     public ItemModular(Properties builder) {
         super(builder);

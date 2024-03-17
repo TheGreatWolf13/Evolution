@@ -36,6 +36,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.BlockFire;
 import tgw.evolution.blocks.util.BlockUtils;
+import tgw.evolution.hooks.asm.DeleteMethod;
 import tgw.evolution.patches.PatchLevel;
 import tgw.evolution.util.constants.BlockFlags;
 import tgw.evolution.util.constants.LvlEvent;
@@ -46,6 +47,26 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
 
     @Shadow @Final public boolean isClientSide;
     @Shadow @Final private Thread thread;
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Overwrite
+    public static boolean isInSpawnableBounds(BlockPos pos) {
+        Evolution.deprecatedMethod();
+        return PatchLevel.isInSpawnableBounds_(pos.getX(), pos.getY(), pos.getZ());
+    }
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Overwrite
+    @DeleteMethod
+    private static boolean isInWorldBoundsHorizontal(BlockPos blockPos) {
+        throw new AbstractMethodError();
+    }
 
     /**
      * @reason _
@@ -123,9 +144,7 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
         if (this.isOutsideBuildHeight(y)) {
             return null;
         }
-        return !this.isClientSide && Thread.currentThread() != this.thread ?
-               null :
-               this.getChunkAt_(x, z).getBlockEntity_(x, y, z, LevelChunk.EntityCreationType.IMMEDIATE);
+        return !this.isClientSide && Thread.currentThread() != this.thread ? null : this.getChunkAt_(x, z).getBlockEntity_(x, y, z, LevelChunk.EntityCreationType.IMMEDIATE);
     }
 
     /**
@@ -197,8 +216,40 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
     @Shadow
     public abstract long getDayTime();
 
-    @Shadow
-    public abstract int getDirectSignalTo(BlockPos blockPos);
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Overwrite
+    public int getDirectSignalTo(BlockPos pos) {
+        Evolution.deprecatedMethod();
+        return this.getDirectSignalTo_(pos.getX(), pos.getY(), pos.getZ());
+    }
+
+    @Override
+    public int getDirectSignalTo_(int x, int y, int z) {
+        int i = this.getDirectSignal_(x, y - 1, z, Direction.DOWN);
+        if (i >= 15) {
+            return i;
+        }
+        i = Math.max(i, this.getDirectSignal_(x, y + 1, z, Direction.UP));
+        if (i >= 15) {
+            return i;
+        }
+        i = Math.max(i, this.getDirectSignal_(x, y, z - 1, Direction.NORTH));
+        if (i >= 15) {
+            return i;
+        }
+        i = Math.max(i, this.getDirectSignal_(x, y, z + 1, Direction.SOUTH));
+        if (i >= 15) {
+            return i;
+        }
+        i = Math.max(i, this.getDirectSignal_(x - 1, y, z, Direction.WEST));
+        if (i >= 15) {
+            return i;
+        }
+        return Math.max(i, this.getDirectSignal_(x + 1, y, z, Direction.EAST));
+    }
 
     /**
      * @author TheGreatWolf
@@ -232,9 +283,15 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
      */
     @Overwrite
     public int getSignal(BlockPos pos, Direction dir) {
-        BlockState blockState = this.getBlockState_(pos);
-        int signal = blockState.getSignal(this, pos, dir);
-        return blockState.isRedstoneConductor(this, pos) ? Math.max(signal, this.getDirectSignalTo(pos)) : signal;
+        Evolution.deprecatedMethod();
+        return this.getSignal_(pos.getX(), pos.getY(), pos.getZ(), dir);
+    }
+
+    @Override
+    public int getSignal_(int x, int y, int z, Direction dir) {
+        BlockState state = this.getBlockState_(x, y, z);
+        int signal = state.getSignal_(this, x, y, z, dir);
+        return state.isRedstoneConductor_(this, x, y, z) ? Math.max(signal, this.getDirectSignalTo_(x, y, z)) : signal;
     }
 
     /**
@@ -249,6 +306,36 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
 
     @Override
     public void globalLevelEvent_(@LvlEvent int event, int x, int y, int z, int data) {
+    }
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Overwrite
+    public boolean hasNeighborSignal(BlockPos pos) {
+        Evolution.deprecatedMethod();
+        return this.hasNeighborSignal_(pos.getX(), pos.getY(), pos.getZ());
+    }
+
+    @Override
+    public boolean hasNeighborSignal_(int x, int y, int z) {
+        if (this.getSignal_(x, y - 1, z, Direction.DOWN) > 0) {
+            return true;
+        }
+        if (this.getSignal_(x, y + 1, z, Direction.UP) > 0) {
+            return true;
+        }
+        if (this.getSignal_(x, y, z - 1, Direction.NORTH) > 0) {
+            return true;
+        }
+        if (this.getSignal_(x, y, z + 1, Direction.SOUTH) > 0) {
+            return true;
+        }
+        if (this.getSignal_(x - 1, y, z, Direction.WEST) > 0) {
+            return true;
+        }
+        return this.getSignal_(x + 1, y, z, Direction.EAST) > 0;
     }
 
     @Shadow
@@ -405,12 +492,8 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
 
     @Override
     public boolean removeBlock_(int x, int y, int z, boolean isMoving) {
-        if (!this.isClientSide) {
-            BlockUtils.updateSlopingBlocks(this, x, y, z);
-        }
         FluidState fluidState = this.getFluidState_(x, y, z);
-        return this.setBlock_(x, y, z, fluidState.createLegacyBlock(),
-                              BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE | (isMoving ? BlockFlags.IS_MOVING : 0));
+        return this.setBlock_(x, y, z, fluidState.createLegacyBlock(), BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE | (isMoving ? BlockFlags.IS_MOVING : 0));
     }
 
     /**
@@ -491,7 +574,7 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
                 }
             }
             if ((flags & BlockFlags.UPDATE_NEIGHBORS) == 0 && limit > 0) {
-                int newFlags = flags & ~(BlockFlags.NO_NEIGHBOR_DROPS | BlockFlags.NOTIFY);
+                int newFlags = flags & ~BlockFlags.NOTIFY;
                 oldState.updateIndirectNeighbourShapes_(this, x, y, z, newFlags, limit - 1);
                 state.updateNeighbourShapes_(this, x, y, z, newFlags, limit - 1);
                 state.updateIndirectNeighbourShapes_(this, x, y, z, newFlags, limit - 1);

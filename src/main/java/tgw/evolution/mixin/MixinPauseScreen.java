@@ -42,16 +42,16 @@ public abstract class MixinPauseScreen extends Screen {
         y += 24;
         this.addRenderableWidget(new Button(xLeft, y, 98, 20, new TranslatableComponent("menu.sendFeedback"), b -> this.minecraft.setScreen(new ConfirmLinkScreen(confirmed -> {
             if (confirmed) {
-                Util.getPlatform().openUri("https://github.com/MGSchultz-13/Evolution/discussions/categories/feedback");
+                Util.getPlatform().openUri("https://github.com/TheGreatWolf13/Evolution/discussions/categories/feedback");
             }
             this.minecraft.setScreen(this);
-        }, "https://github.com/MGSchultz-13/Evolution/discussions/categories/feedback", true))));
+        }, "https://github.com/TheGreatWolf13/Evolution/discussions/categories/feedback", true))));
         this.addRenderableWidget(new Button(xMiddle, y, 98, 20, new TranslatableComponent("menu.reportBugs"), b -> this.minecraft.setScreen(new ConfirmLinkScreen(confirmed -> {
             if (confirmed) {
-                Util.getPlatform().openUri("https://github.com/MGSchultz-13/Evolution/issues");
+                Util.getPlatform().openUri("https://github.com/TheGreatWolf13/Evolution/issues");
             }
             this.minecraft.setScreen(this);
-        }, "https://github.com/MGSchultz-13/Evolution/issues", true))));
+        }, "https://github.com/TheGreatWolf13/Evolution/issues", true))));
         y += 24;
         Button lanBtn = this.addRenderableWidget(new Button(xLeft, y, 204, 20, new TranslatableComponent("menu.shareToLan"), b -> this.minecraft.setScreen(new ShareToLanScreen(this))));
         //noinspection ConstantConditions

@@ -56,7 +56,6 @@ public final class EvolutionNetwork {
                   .addPacket(PacketCSUpdateBeltBackItem.class, PacketCSUpdateBeltBackItem::new)
                   .addPacket(PacketCSPlaySoundEntityEmitted.class, PacketCSPlaySoundEntityEmitted::new)
                   .addPacket(PacketCSSkinType.class, PacketCSSkinType::new)
-//                  .addPacket(PacketCSSyncServerConfig.class, PacketCSSyncServerConfig::new)
                   .addPacket(PacketCSCollision.class, PacketCSCollision::new)
                   .addPacket(PacketCSSpecialHit.class, PacketCSSpecialHit::new)
                   .addPacket(PacketCSSpecialAttackStart.class, PacketCSSpecialAttackStart::new)
@@ -89,7 +88,6 @@ public final class EvolutionNetwork {
            .addPacket(PacketSCToast.class, PacketSCToast::new)
            .addPacket(PacketSCHungerData.class, PacketSCHungerData::new)
            .addPacket(PacketSCTemperatureData.class, PacketSCTemperatureData::new)
-//                  .addPacket(PacketSCSyncServerConfig.class, PacketSCSyncServerConfig::new)
            .addPacket(PacketSCSimpleMessage.class, PacketSCSimpleMessage::new)
            .addPacket(PacketSCUpdateCameraViewCenter.class, PacketSCUpdateCameraViewCenter::new)
            .addPacket(PacketSCMomentum.class, PacketSCMomentum::new)
@@ -101,7 +99,8 @@ public final class EvolutionNetwork {
         return set.addPacket(PacketSCBlockBreakAck.class, PacketSCBlockBreakAck::new)
                   .addPacket(PacketSCBlockUpdate.class, PacketSCBlockUpdate::new)
                   .addPacket(PacketSCLevelEvent.class, PacketSCLevelEvent::new)
-                  .addPacket(PacketSCSectionBlocksUpdate.class, PacketSCSectionBlocksUpdate::new);
+                  .addPacket(PacketSCSectionBlocksUpdate.class, PacketSCSectionBlocksUpdate::new)
+                  .addPacket(PacketSCLoadFactor.class, PacketSCLoadFactor::new);
     }
 
     private static <T extends IEntitySpawnData.EntityData> void registerSpawnData(Class<T> clazz, Function<FriendlyByteBuf, T> maker) {

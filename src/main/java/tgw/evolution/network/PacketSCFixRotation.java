@@ -5,7 +5,6 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
-import tgw.evolution.patches.PatchClientPacketListener;
 
 public class PacketSCFixRotation implements Packet<ClientGamePacketListener> {
 
@@ -30,7 +29,7 @@ public class PacketSCFixRotation implements Packet<ClientGamePacketListener> {
 
     @Override
     public void handle(ClientGamePacketListener listener) {
-        ((PatchClientPacketListener) listener).handleFixRotation(this);
+        listener.handleFixRotation(this);
     }
 
     @Override

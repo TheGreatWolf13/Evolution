@@ -18,6 +18,7 @@ import net.minecraft.world.entity.ai.village.poi.PoiManager;
 import net.minecraft.world.entity.ai.village.poi.PoiType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.ForcedChunksSavedData;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Block;
@@ -32,6 +33,7 @@ import net.minecraft.world.level.entity.PersistentEntitySectionManager;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.storage.DimensionDataStorage;
 import net.minecraft.world.level.storage.WritableLevelData;
 import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -98,7 +100,7 @@ public abstract class Mixin_M_ServerLevel extends Level implements WorldGenLevel
     private void addPlayer(ServerPlayer player) {
         Entity entity = this.getEntities().get(player.getUUID());
         if (entity != null) {
-            LOGGER.warn("Force-added player with duplicate UUID {}", player.getUUID().toString());
+            LOGGER.warn("Force-added player with duplicate UUID {}", player.getUUID());
             entity.unRide();
             this.removePlayerImmediately((ServerPlayer) entity, Entity.RemovalReason.DISCARDED);
         }
@@ -163,6 +165,9 @@ public abstract class Mixin_M_ServerLevel extends Level implements WorldGenLevel
     @Override
     @Shadow
     public abstract ServerChunkCache getChunkSource();
+
+    @Shadow
+    public abstract DimensionDataStorage getDataStorage();
 
     @Unique
     private @Nullable OList<PathNavigation> getPathNavigations(int x, int y, int z) {
@@ -322,6 +327,36 @@ public abstract class Mixin_M_ServerLevel extends Level implements WorldGenLevel
                 this.isUpdatingNavigations = false;
             }
         }
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public boolean setChunkForced(int i, int j, boolean add) {
+        DimensionDataStorage dataStorage = this.getDataStorage();
+        ForcedChunksSavedData forcedChunks = dataStorage.get(ForcedChunksSavedData::load, "chunks");
+        if (forcedChunks == null) {
+            forcedChunks = new ForcedChunksSavedData();
+            dataStorage.set("chunks", forcedChunks);
+        }
+        long pos = ChunkPos.asLong(i, j);
+        boolean changed;
+        if (add) {
+            changed = forcedChunks.getChunks().add(pos);
+            if (changed) {
+                this.getChunk(i, j);
+            }
+        }
+        else {
+            changed = forcedChunks.getChunks().remove(pos);
+        }
+        forcedChunks.setDirty(changed);
+        if (changed) {
+            this.getChunkSource().updateChunkForced_(pos, add);
+        }
+        return changed;
     }
 
     /**

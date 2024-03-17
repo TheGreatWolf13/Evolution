@@ -17,21 +17,24 @@ public class AtmStorage {
     private short totallyFullCount;
 
     @Contract("_ -> new")
-    public static AtmStorage read(CompoundTag atm) {
-        short nonEmptyCount = atm.getShort("NonEmptyCount");
+    public static AtmStorage read(@Nullable CompoundTag nbt) {
+        if (nbt == null) {
+            return new AtmStorage();
+        }
+        short nonEmptyCount = nbt.getShort("NonEmptyCount");
         if (nonEmptyCount == 0) {
             return new AtmStorage();
         }
         AtmStorage a = new AtmStorage();
         a.nonEmptyCount = nonEmptyCount;
         a.data = new long[5 * 4_096 / 64];
-        short totallyFullCount = atm.getShort("TotallyFullCount");
+        short totallyFullCount = nbt.getShort("TotallyFullCount");
         a.totallyFullCount = totallyFullCount;
         if (totallyFullCount == 4_096) {
             Arrays.fill(a.data, -1L);
             return a;
         }
-        long[] data = atm.getLongArray("Data");
+        long[] data = nbt.getLongArray("Data");
         System.arraycopy(data, 0, a.data, 0, Math.min(5 * 4_096 / 64, data.length));
         return a;
     }

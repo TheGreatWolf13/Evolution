@@ -2,7 +2,6 @@ package tgw.evolution.blocks.util;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.Direction.Axis;
 import net.minecraft.core.SectionPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
@@ -10,16 +9,17 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.CampfireBlock;
-import net.minecraft.world.level.block.SupportType;
+import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
@@ -29,19 +29,14 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.IClimbable;
-import tgw.evolution.blocks.IPhysics;
 import tgw.evolution.blocks.IReplaceable;
 import tgw.evolution.patches.obj.IStateArgumentPredicate;
 import tgw.evolution.patches.obj.IStatePredicate;
 import tgw.evolution.util.collection.TriKey2BLinkedHashCache;
-import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.constants.BlockFlags;
-import tgw.evolution.util.math.DirectionList;
-import tgw.evolution.util.math.DirectionToIntMap;
-import tgw.evolution.util.math.DirectionUtil;
 import tgw.evolution.util.physics.SI;
 
-import java.util.Random;
+import java.util.function.Consumer;
 import java.util.function.ToIntFunction;
 
 public final class BlockUtils {
@@ -61,8 +56,8 @@ public final class BlockUtils {
     public static final ToIntFunction<BlockState> LIGHT_14 = BlockUtils::light14;
     public static final ToIntFunction<BlockState> LIGHT_15 = BlockUtils::light15;
     public static final ToIntFunction<BlockState> LIGHT_YELLOW_15 = BlockUtils::lightYellow15;
-    private static final ThreadLocal<TriKey2BLinkedHashCache<BlockState, BlockState, Direction>> OCCLUSION_CACHE = ThreadLocal.withInitial(
-            () -> new TriKey2BLinkedHashCache<>(2_048, (byte) 127));
+    private static final ThreadLocal<TriKey2BLinkedHashCache<BlockState, BlockState, Direction>> OCCLUSION_CACHE = ThreadLocal.withInitial(() -> new TriKey2BLinkedHashCache<>(2_048, (byte) 127));
+    private static final ItemDropper DROPPER = new ItemDropper();
 
     private BlockUtils() {
     }
@@ -108,25 +103,15 @@ public final class BlockUtils {
         dropItemStack(world, x, y, z, stack, 0);
     }
 
-    public static void dropResources(BlockState state,
-                                     LevelAccessor level,
-                                     int x,
-                                     int y,
-                                     int z,
-                                     @Nullable BlockEntity tile,
-                                     @Nullable Entity entity,
-                                     ItemStack stack) {
+    public static void dropResources(BlockState state, LevelAccessor level, int x, int y, int z, @Nullable BlockEntity tile, @Nullable Entity entity, ItemStack tool) {
         if (level instanceof ServerLevel l) {
-            OList<ItemStack> drops = state.getDrops(l, x, y, z, stack, tile, entity, level.getRandom());
-            for (int i = 0, len = drops.size(); i < len; ++i) {
-                popResource(level, x, y, z, drops.get(i));
-            }
-            state.spawnAfterBreak_(l, x, y, z, ItemStack.EMPTY);
+            state.dropLoot(l, x, y, z, tool, tile, entity, l.random, DROPPER.setup(level, x, y, z));
+            state.spawnAfterBreak_(l, x, y, z, tool);
         }
     }
 
     public static void dropResources(BlockState state, LevelAccessor level, int x, int y, int z) {
-        dropResources(state, level, x, y, z, null, null, ItemStack.EMPTY);
+        dropResources(state, level, x, y, z, level.getBlockEntity_(x, y, z), null, ItemStack.EMPTY);
     }
 
     /**
@@ -139,21 +124,6 @@ public final class BlockUtils {
             return climbable.getUpSpeed();
         }
         return 0.1;
-    }
-
-    public static @Nullable Axis getSmallestBeam(DirectionToIntMap beams) {
-        int x = beams.getBeamSize(Axis.X);
-        int z = beams.getBeamSize(Axis.Z);
-        if (x == 0) {
-            if (z == 0) {
-                return null;
-            }
-            return Axis.Z;
-        }
-        if (z == 0) {
-            return Axis.X;
-        }
-        return x < z ? Axis.X : Axis.Z;
     }
 
     public static boolean hasSolidFace(BlockGetter level, int x, int y, int z, Direction face) {
@@ -262,6 +232,18 @@ public final class BlockUtils {
         }
     }
 
+    public static void preventCreativeDropFromBottomPart(Level level, int x, int y, int z, BlockState state, Player player) {
+        DoubleBlockHalf half = state.getValue(BlockStateProperties.DOUBLE_BLOCK_HALF);
+        if (half == DoubleBlockHalf.UPPER) {
+            BlockState stateBelow = level.getBlockState_(x, y - 1, z);
+            if (stateBelow.is(state.getBlock()) && stateBelow.getValue(BlockStateProperties.DOUBLE_BLOCK_HALF) == DoubleBlockHalf.LOWER) {
+                BlockState stateToBecome = stateBelow.hasProperty(BlockStateProperties.WATERLOGGED) && stateBelow.getValue(BlockStateProperties.WATERLOGGED) ? Blocks.WATER.defaultBlockState() : Blocks.AIR.defaultBlockState();
+                level.setBlock_(x, y - 1, z, stateToBecome, BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE | BlockFlags.NO_NEIGHBOR_DROPS);
+                level.levelEvent_(player, LevelEvent.PARTICLES_DESTROY_BLOCK, x, y - 1, z, Block.getId(stateBelow));
+            }
+        }
+    }
+
     public static void scheduleBlockTick(LevelAccessor level, int x, int y, int z) {
         if (level.isClientSide()) {
             return;
@@ -327,14 +309,7 @@ public final class BlockUtils {
         return updatedState;
     }
 
-    public static void updateOrDestroy(BlockState state,
-                                       BlockState updatedState,
-                                       LevelAccessor level,
-                                       int x,
-                                       int y,
-                                       int z,
-                                       @BlockFlags int flags,
-                                       int limit) {
+    public static void updateOrDestroy(BlockState state, BlockState updatedState, LevelAccessor level, int x, int y, int z, @BlockFlags int flags, int limit) {
         if (updatedState != state) {
             if (updatedState.isAir()) {
                 if (!level.isClientSide()) {
@@ -347,24 +322,24 @@ public final class BlockUtils {
         }
     }
 
-    public static void updateSlopingBlocks(LevelAccessor level, int x, int y, int z) {
-        if (!isReplaceable(level.getBlockState_(x, y, z))) {
-            if (isReplaceable(level.getBlockState_(x, y + 1, z))) {
-                int dirList = 0;
-                for (Direction direction : DirectionUtil.HORIZ_NESW) {
-                    BlockState state = level.getBlockStateAtSide(x, y + 1, z, direction);
-                    if (state.getBlock() instanceof IPhysics physics && physics.slopes()) {
-                        dirList = DirectionList.add(dirList, direction);
-                    }
-                }
-                Random random = level.getRandom();
-                while (!DirectionList.isEmpty(dirList)) {
-                    int index = DirectionList.getRandom(dirList, random);
-                    Direction direction = DirectionList.get(dirList, index);
-                    dirList = DirectionList.remove(dirList, index);
-                    scheduleBlockTick(level, x + direction.getStepX(), y + 1, z + direction.getStepZ());
-                }
-            }
+    public static class ItemDropper implements Consumer<ItemStack> {
+
+        private LevelAccessor level;
+        private int x;
+        private int y;
+        private int z;
+
+        @Override
+        public void accept(ItemStack stack) {
+            popResource(this.level, this.x, this.y, this.z, stack);
+        }
+
+        public ItemDropper setup(LevelAccessor level, int x, int y, int z) {
+            this.level = level;
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            return this;
         }
     }
 }

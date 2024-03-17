@@ -4,33 +4,38 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.tags.FluidTags;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SnowLayerBlock;
 import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.material.MaterialColor;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.init.EvolutionBlocks;
+import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionSounds;
 import tgw.evolution.util.constants.RockVariant;
 import tgw.evolution.util.math.DirectionUtil;
 
 import java.util.Random;
+import java.util.function.Consumer;
 
 import static tgw.evolution.init.EvolutionBStates.LAYERS_0_16;
 import static tgw.evolution.init.EvolutionBStates.SNOWY;
 
-public class BlockGrass extends BlockGenericSnowable implements IRockVariant {
+public class BlockGrass extends BlockGenericSnowable implements IRockVariant, IStructural, IFallable {
 
     private final RockVariant variant;
 
     public BlockGrass(RockVariant variant) {
-        super(Properties.of(Material.DIRT).color(MaterialColor.GRASS).strength(3.0F, 0.6F).sound(SoundType.GRASS).randomTicks(),
-              variant.getMass() / 4);
+        super(Properties.of(Material.DIRT).color(MaterialColor.GRASS).strength(3.0F, 0.6F).sound(SoundType.GRASS).randomTicks());
         this.variant = variant;
     }
 
@@ -56,14 +61,24 @@ public class BlockGrass extends BlockGenericSnowable implements IRockVariant {
         return canSustainGrass(level, x, y, z) && !level.getFluidState_(x, y + 1, z).is(FluidTags.WATER);
     }
 
-//    @Override
-//    public int beamSize() {
-//        return 1;
-//    }
+    @Override
+    public boolean canMakeABeamWith(BlockState thisState, BlockState otherState) {
+        return otherState.getBlock() instanceof BlockGrass;
+    }
 
     @Override
-    public SoundEvent fallingSound() {
+    public void dropLoot(BlockState state, ServerLevel level, int x, int y, int z, ItemStack tool, @Nullable BlockEntity tile, @Nullable Entity entity, Random random, Consumer<ItemStack> consumer) {
+        consumer.accept(new ItemStack(EvolutionItems.DIRTS.get(this.variant)));
+    }
+
+    @Override
+    public @Nullable SoundEvent fallingSound() {
         return EvolutionSounds.SOIL_COLLAPSE;
+    }
+
+    @Override
+    public BeamType getBeamType(BlockState state) {
+        return BeamType.CARDINAL_BEAM;
     }
 
     @Override
@@ -74,19 +89,20 @@ public class BlockGrass extends BlockGenericSnowable implements IRockVariant {
         return 0.6F;
     }
 
-//    @Override
+    @Override
+    public int getIntegrity(BlockState state) {
+        return 1;
+    }
 
     @Override
-    public double getMass(Level level, int x, int y, int z, BlockState state) {
-        //TODO implementation
-        return 0;
+    public Stabilization getStabilization(BlockState state) {
+        return Stabilization.NONE;
     }
-//    public BlockState getStateForFalling(BlockState state) {
-//        if (this == EvolutionBlocks.ALL_GRASS.get(RockVariant.PEAT).get()) {
-//            return EvolutionBlocks.PEAT.get().defaultBlockState().setValue(LAYERS_1_4, 4);
-//        }
-//        return this.variant.getDirt().defaultBlockState();
-//    }
+
+    @Override
+    public BlockState getStateForPhysicsChange(BlockState state) {
+        return EvolutionBlocks.DIRTS.get(this.variant).defaultBlockState();
+    }
 
     @Override
     public void neighborChanged_(BlockState state,

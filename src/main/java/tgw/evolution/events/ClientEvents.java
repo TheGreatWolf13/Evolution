@@ -49,6 +49,7 @@ import tgw.evolution.client.renderer.ClientRenderer;
 import tgw.evolution.client.renderer.DimensionOverworld;
 import tgw.evolution.client.renderer.ambient.DynamicLights;
 import tgw.evolution.client.renderer.ambient.SkyRenderer;
+import tgw.evolution.client.renderer.chunk.ClientIntegrityStorage;
 import tgw.evolution.client.util.ClientEffectInstance;
 import tgw.evolution.client.util.MouseButton;
 import tgw.evolution.client.util.Shader;
@@ -87,6 +88,7 @@ public class ClientEvents {
     public static final OList<ClientEffectInstance> EFFECTS = new OArrayList<>();
     public static final I2OMap<ItemStack> BELT_ITEMS = new I2OHashMap<>();
     public static final I2OMap<ItemStack> BACK_ITEMS = new I2OHashMap<>();
+    public static final ClientIntegrityStorage CLIENT_INTEGRITY_STORAGE = new ClientIntegrityStorage();
     private static final HitInformation MAINHAND_HITS = new HitInformation();
     private static final BlockHitResult[] MAINHAND_HIT_RESULT = new BlockHitResult[1];
     private static final Matrix4f PROJ_MATRIX = new Matrix4f();
@@ -323,6 +325,7 @@ public class ClientEvents {
         MAINHAND_HITS.clearMemory();
         BELT_ITEMS.reset();
         BACK_ITEMS.reset();
+        CLIENT_INTEGRITY_STORAGE.clear();
         this.desiredShaders.reset();
         this.currentShaders.reset();
         this.forcedShaders.reset();

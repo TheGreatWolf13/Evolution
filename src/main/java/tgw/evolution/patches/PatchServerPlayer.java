@@ -1,8 +1,8 @@
 package tgw.evolution.patches;
 
-import net.minecraft.core.SectionPos;
-import org.jetbrains.annotations.Nullable;
+import net.minecraft.world.level.ChunkPos;
 import tgw.evolution.capabilities.player.*;
+import tgw.evolution.util.OptionalMutableChunkPos;
 
 public interface PatchServerPlayer {
 
@@ -22,7 +22,11 @@ public interface PatchServerPlayer {
         throw new AbstractMethodError();
     }
 
-    default @Nullable SectionPos getLastCameraSectionPos() {
+    default OptionalMutableChunkPos getLastCameraChunkPos() {
+        throw new AbstractMethodError();
+    }
+
+    default ChunkPos getLastChunkPos() {
         throw new AbstractMethodError();
     }
 
@@ -46,7 +50,7 @@ public interface PatchServerPlayer {
         throw new AbstractMethodError();
     }
 
-    default void setLastCameraSectionPos(@Nullable SectionPos pos) {
+    default void setLastChunkPos_(int secX, int secZ) {
         throw new AbstractMethodError();
     }
 }

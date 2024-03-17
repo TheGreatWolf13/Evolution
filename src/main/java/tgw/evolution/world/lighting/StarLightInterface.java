@@ -18,18 +18,18 @@ import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.client.renderer.ambient.DynamicLights;
 import tgw.evolution.events.ClientEvents;
+import tgw.evolution.patches.PatchTicketType;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.collection.sets.LHashSet;
 import tgw.evolution.util.collection.sets.LSet;
 
 import java.util.ArrayDeque;
-import java.util.Comparator;
 import java.util.concurrent.CompletableFuture;
 
 public final class StarLightInterface {
 
-    public static final TicketType<ChunkPos> CHUNK_WORK_TICKET = TicketType.create("starlight_chunk_work_ticket", Comparator.comparingLong(ChunkPos::toLong));
+    public static final TicketType<ChunkPos> CHUNK_WORK_TICKET = PatchTicketType.create("starlight_chunk_work_ticket", Long::compare, 0);
     public final LevelLightEngine lightEngine;
     private final LayerLightEventListener blockReader;
     private final @Nullable ArrayDeque<BlockStarLightEngine> cachedBlockPropagators;

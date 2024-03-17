@@ -10,7 +10,6 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.phys.Vec3;
 import tgw.evolution.entities.IEntitySpawnData;
 import tgw.evolution.init.EvolutionNetwork;
-import tgw.evolution.patches.PatchClientPacketListener;
 
 import java.util.UUID;
 
@@ -62,7 +61,7 @@ public class PacketSCCustomEntity<T extends Entity & IEntitySpawnData> implement
 
     @Override
     public void handle(ClientGamePacketListener listener) {
-        ((PatchClientPacketListener) listener).handleCustomEntity(this);
+        listener.handleCustomEntity(this);
     }
 
     @Override

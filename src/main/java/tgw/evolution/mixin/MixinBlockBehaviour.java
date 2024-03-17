@@ -258,6 +258,22 @@ public abstract class MixinBlockBehaviour implements PatchBlockBehaviour {
     }
 
     /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    @Deprecated
+    public int getSignal(BlockState state, BlockGetter level, BlockPos pos, Direction dir) {
+        Evolution.deprecatedMethod();
+        return this.getSignal_(state, level, pos.getX(), pos.getY(), pos.getZ(), dir);
+    }
+
+    @Override
+    public int getSignal_(BlockState state, BlockGetter level, int x, int y, int z, Direction dir) {
+        return 0;
+    }
+
+    /**
      * @reason _
      * @author TheGreatWolf
      */

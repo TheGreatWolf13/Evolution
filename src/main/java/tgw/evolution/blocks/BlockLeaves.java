@@ -66,8 +66,7 @@ public class BlockLeaves extends BlockGeneric implements IReplaceable {
      */
     private static void fall(Level level, int x, int y, int z) {
         BlockState state = level.getBlockState_(x, y, z);
-        EntityFallingWeight entity = new EntityFallingWeight(level, x + 0.5, y, z + 0.5, state,
-                                                             state instanceof IPhysics physics ? physics.getMass(level, x, y, z, state) : 500);
+        EntityFallingWeight entity = new EntityFallingWeight(level, x + 0.5, y, z + 0.5, state, 500);
         level.addFreshEntity(entity);
     }
 

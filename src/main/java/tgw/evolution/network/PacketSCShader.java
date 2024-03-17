@@ -3,10 +3,10 @@ package tgw.evolution.network;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import tgw.evolution.patches.PatchClientPacketListener;
+import tgw.evolution.patches.PatchClientGamePacketListener;
 
 public class PacketSCShader implements Packet<ClientGamePacketListener> {
-    
+
     public final int shaderId;
 
     public PacketSCShader(int shaderId) {
@@ -19,7 +19,7 @@ public class PacketSCShader implements Packet<ClientGamePacketListener> {
 
     @Override
     public void handle(ClientGamePacketListener listener) {
-        ((PatchClientPacketListener) listener).handleShader(this);
+        listener.handleShader(this);
     }
 
     @Override

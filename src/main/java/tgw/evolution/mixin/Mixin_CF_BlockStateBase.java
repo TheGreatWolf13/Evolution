@@ -5,7 +5,6 @@ import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
@@ -23,9 +22,7 @@ import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.material.MaterialColor;
 import net.minecraft.world.level.storage.loot.LootContext;
-import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.EntityCollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -38,12 +35,12 @@ import tgw.evolution.hooks.asm.DeleteField;
 import tgw.evolution.hooks.asm.ModifyConstructor;
 import tgw.evolution.hooks.asm.RestoreFinal;
 import tgw.evolution.patches.PatchBlockStateBase;
-import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.constants.BlockFlags;
 import tgw.evolution.util.math.DirectionUtil;
 
 import java.util.List;
 import java.util.Random;
+import java.util.function.Consumer;
 
 @Mixin(BlockBehaviour.BlockStateBase.class)
 public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockState> implements PatchBlockStateBase {
@@ -115,6 +112,11 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
     @Override
     public boolean canSurvive_(LevelReader level, int x, int y, int z) {
         return this.getBlock().canSurvive_(this.asState(), level, x, y, z);
+    }
+
+    @Override
+    public void dropLoot(ServerLevel level, int x, int y, int z, ItemStack tool, @Nullable BlockEntity tile, @Nullable Entity entity, Random random, Consumer<ItemStack> consumer) {
+        this.getBlock().dropLoot(this.asState(), level, x, y, z, tool, tile, entity, random, consumer);
     }
 
     /**
@@ -221,23 +223,7 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
     @Overwrite
     public List<ItemStack> getDrops(LootContext.Builder builder) {
         Evolution.deprecatedMethod();
-        Vec3 origin = builder.getParameter(LootContextParams.ORIGIN);
-        ServerLevel level = builder.getLevel();
-        return this.getDrops(level, Mth.floor(origin.x), Mth.floor(origin.y), Mth.floor(origin.z),
-                             builder.getParameter(LootContextParams.TOOL), builder.getOptionalParameter(LootContextParams.BLOCK_ENTITY),
-                             builder.getOptionalParameter(LootContextParams.THIS_ENTITY), level.random);
-    }
-
-    @Override
-    public OList<ItemStack> getDrops(ServerLevel level,
-                                     int x,
-                                     int y,
-                                     int z,
-                                     ItemStack tool,
-                                     @Nullable BlockEntity tile,
-                                     @Nullable Entity entity,
-                                     Random random) {
-        return this.getBlock().getDrops(this.asState(), level, x, y, z, tool, tile, entity, random);
+        return List.of();
     }
 
     @Override
@@ -370,6 +356,21 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
     @Override
     public VoxelShape getShape_(BlockGetter level, int x, int y, int z, @Nullable Entity entity) {
         return this.getBlock().getShape_(this.asState(), level, x, y, z, entity);
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public int getSignal(BlockGetter level, BlockPos pos, Direction dir) {
+        Evolution.deprecatedMethod();
+        return this.getSignal_(level, pos.getX(), pos.getY(), pos.getZ(), dir);
+    }
+
+    @Override
+    public int getSignal_(BlockGetter level, int x, int y, int z, Direction dir) {
+        return this.getBlock().getSignal_(this.asState(), level, x, y, z, dir);
     }
 
     /**

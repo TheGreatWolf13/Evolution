@@ -88,6 +88,22 @@ public abstract class Mixin_M_TripWireHookBlock extends Block {
         };
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Override
+    @Overwrite
+    @DeleteMethod
+    public int getSignal(BlockState blockState, BlockGetter blockGetter, BlockPos blockPos, Direction direction) {
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public int getSignal_(BlockState state, BlockGetter level, int x, int y, int z, Direction dir) {
+        return state.getValue(POWERED) ? 15 : 0;
+    }
+
     @Override
     @Shadow
     public abstract BlockState mirror(BlockState blockState, Mirror mirror);

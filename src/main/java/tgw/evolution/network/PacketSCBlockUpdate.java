@@ -7,7 +7,6 @@ import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import tgw.evolution.patches.PatchClientPacketListener;
 
 public class PacketSCBlockUpdate implements Packet<ClientGamePacketListener> {
 
@@ -30,7 +29,7 @@ public class PacketSCBlockUpdate implements Packet<ClientGamePacketListener> {
 
     @Override
     public void handle(ClientGamePacketListener listener) {
-        ((PatchClientPacketListener) listener).handleBlockUpdate(this);
+        listener.handleBlockUpdate(this);
     }
 
     @Override

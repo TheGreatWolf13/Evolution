@@ -5,7 +5,7 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.world.effect.MobEffect;
 import org.jetbrains.annotations.Nullable;
-import tgw.evolution.patches.PatchClientPacketListener;
+import tgw.evolution.patches.PatchClientGamePacketListener;
 
 public class PacketSCRemoveEffect implements Packet<ClientGamePacketListener> {
 
@@ -21,7 +21,7 @@ public class PacketSCRemoveEffect implements Packet<ClientGamePacketListener> {
 
     @Override
     public void handle(ClientGamePacketListener listener) {
-        ((PatchClientPacketListener) listener).handleRemoveEffect(this);
+        listener.handleRemoveEffect(this);
     }
 
     @Override

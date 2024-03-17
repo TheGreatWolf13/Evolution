@@ -69,8 +69,24 @@ public abstract class Mixin_M_BasePressurePlateBlock extends Block {
         return this.getSignalForState(state) > 0 ? PRESSED_AABB : AABB;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Override
+    @Overwrite
+    @DeleteMethod
+    public int getSignal(BlockState blockState, BlockGetter blockGetter, BlockPos blockPos, Direction direction) {
+        throw new AbstractMethodError();
+    }
+
     @Shadow
     protected abstract int getSignalForState(BlockState blockState);
+
+    @Override
+    public int getSignal_(BlockState state, BlockGetter level, int x, int y, int z, Direction dir) {
+        return this.getSignalForState(state);
+    }
 
     /**
      * @reason _
