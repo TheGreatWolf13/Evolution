@@ -627,6 +627,7 @@
     "MixinPaintingRenderer",
     "MixinParticle",
     "MixinPauseScreen",
+    "MixinPlayerTabOverlay",
     "MixinPortalParticle",
     "MixinPostChain",
     "MixinReceivingLevelScreen",

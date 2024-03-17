@@ -8,7 +8,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiComponent;
-import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -274,8 +273,7 @@ public final class VanillaOverlays {
         assert mc.level != null;
         assert mc.player != null;
         Objective objective = mc.level.getScoreboard().getDisplayObjective(0);
-        ClientPacketListener handler = mc.player.connection;
-        if (mc.options.keyPlayerList.isDown() && (!mc.isLocalServer() || handler.getOnlinePlayers().size() > 1 || objective != null)) {
+        if (mc.options.keyPlayerList.isDown() && (objective != null || !mc.isLocalServer() || mc.player.connection.getOnlinePlayers().size() > 1)) {
             gui.getTabList().setVisible(true);
             gui.getTabList().render(matrices, width, mc.level.getScoreboard(), objective);
         }

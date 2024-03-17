@@ -239,7 +239,7 @@ public class ClientRenderer {
         blitInBatch(matrix, x + i, y, fullIndex * 17 + i, EvolutionResources.ICON_17_17, l, 17);
     }
 
-    private static int roundToHearts(float currentHealth) {
+    public static int roundToHearts(float currentHealth) {
         return Mth.ceil(currentHealth / 2.5f);
     }
 
