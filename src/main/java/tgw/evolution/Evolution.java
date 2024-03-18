@@ -51,8 +51,8 @@ public final class Evolution implements ModInitializer {
     }
 
     public static void error(String message, Throwable t) {
-        warn(message);
-        LOGGER.warn("Exception: ", t);
+        error(message);
+        LOGGER.error("Exception: ", t);
     }
 
     @Contract("_ -> new")

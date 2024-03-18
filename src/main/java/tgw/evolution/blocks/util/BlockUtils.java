@@ -1,6 +1,5 @@
 package tgw.evolution.blocks.util;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
 import net.minecraft.server.level.ServerLevel;
@@ -21,8 +20,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.level.chunk.LevelChunk;
-import net.minecraft.world.level.material.Fluid;
-import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -105,7 +102,9 @@ public final class BlockUtils {
 
     public static void dropResources(BlockState state, LevelAccessor level, int x, int y, int z, @Nullable BlockEntity tile, @Nullable Entity entity, ItemStack tool) {
         if (level instanceof ServerLevel l) {
-            state.dropLoot(l, x, y, z, tool, tile, entity, l.random, DROPPER.setup(level, x, y, z));
+            try (ItemDropper dropper = DROPPER.setup(level, x, y, z)) {
+                state.dropLoot(l, x, y, z, tool, tile, entity, l.random, dropper);
+            }
             state.spawnAfterBreak_(l, x, y, z, tool);
         }
     }
@@ -255,15 +254,6 @@ public final class BlockUtils {
         chunk.getChunkStorage().scheduleBlockTick(chunk, x, y, z);
     }
 
-    public static void scheduleFluidTick(LevelAccessor level, BlockPos pos) {
-        FluidState fluidState = level.getFluidState(pos);
-        if (fluidState.isEmpty()) {
-            return;
-        }
-        Fluid fluid = fluidState.getType();
-        level.scheduleTick(pos, fluid, fluid.getTickDelay(level));
-    }
-
     public static void schedulePreciseBlockTick(LevelAccessor level, int x, int y, int z, int ticksInTheFuture) {
         if (level.isClientSide()) {
             return;
@@ -322,19 +312,26 @@ public final class BlockUtils {
         }
     }
 
-    public static class ItemDropper implements Consumer<ItemStack> {
+    public static final class ItemDropper implements Consumer<ItemStack>, AutoCloseable {
 
-        private LevelAccessor level;
+        private @Nullable LevelAccessor level;
         private int x;
         private int y;
         private int z;
 
         @Override
         public void accept(ItemStack stack) {
+            assert this.level != null;
             popResource(this.level, this.x, this.y, this.z, stack);
         }
 
+        @Override
+        public void close() {
+            this.level = null;
+        }
+
         public ItemDropper setup(LevelAccessor level, int x, int y, int z) {
+            assert this.level == null;
             this.level = level;
             this.x = x;
             this.y = y;

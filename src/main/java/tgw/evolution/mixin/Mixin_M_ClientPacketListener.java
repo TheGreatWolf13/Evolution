@@ -26,6 +26,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.stats.Stat;
+import net.minecraft.stats.StatsCounter;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -63,7 +64,6 @@ import tgw.evolution.hooks.asm.DeleteMethod;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.network.*;
 import tgw.evolution.patches.PatchLivingEntity;
-import tgw.evolution.stats.EvolutionStatsCounter;
 import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.constants.BlockFlags;
 import tgw.evolution.util.math.Vec3d;
@@ -361,7 +361,7 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
                                      this.serverSimulationDistance, this.minecraft::getProfiler, null, flag, packet.seed());
         this.minecraft.setLevel(this.level);
         if (this.minecraft.player == null) {
-            this.minecraft.player = this.minecraft.gameMode.createPlayer(this.level, new EvolutionStatsCounter(), new ClientRecipeBook());
+            this.minecraft.player = this.minecraft.gameMode.createPlayer(this.level, new StatsCounter(), new ClientRecipeBook());
             this.minecraft.player.setYRot(-180.0F);
             if (this.minecraft.getSingleplayerServer() != null) {
                 this.minecraft.getSingleplayerServer().setUUID(this.minecraft.player.getUUID());
@@ -685,11 +685,11 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
         if (player == null) {
             return;
         }
-        EvolutionStatsCounter stats = (EvolutionStatsCounter) player.getStats();
+        StatsCounter stats = player.getStats();
         for (Map.Entry<Stat<?>, Long> entry : packet.statsData.object2LongEntrySet()) {
             Stat<?> stat = entry.getKey();
             long i = entry.getValue();
-            stats.setValueLong(stat, i);
+            stats.setValue_(stat, i);
         }
         if (this.minecraft.screen instanceof StatsUpdateListener s) {
             s.onStatsUpdated();
@@ -711,6 +711,12 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
         CapabilityThirst thirst = CapabilityThirst.CLIENT_INSTANCE;
         thirst.setThirstLevel(packet.thirstLevel);
         thirst.setHydrationLevel(packet.hydrationLevel);
+    }
+
+    @Override
+    public void handleTimeAlive(PacketSCTimeAlive packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        ClientEvents.getInstance().timeSinceLastDeath = packet.timeSinceLastDeath;
     }
 
     @Override

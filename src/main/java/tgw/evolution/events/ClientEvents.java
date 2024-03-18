@@ -110,6 +110,7 @@ public class ClientEvents {
     public @Nullable EntityHitResult leftRayTrace;
     public @Nullable Entity rightPointedEntity;
     public @Nullable EntityHitResult rightRayTrace;
+    public long timeSinceLastDeath = -1;
     private @Nullable IMelee.IAttackType cachedAttackType;
     private int cameraId = -1;
     private @Nullable DimensionOverworld dimension;
@@ -345,6 +346,7 @@ public class ClientEvents {
             }
             this.dimension = null;
         }
+        this.timeSinceLastDeath = -1;
     }
 
     private @Nullable Slot findPullSlot(List<Slot> slots, Slot selectedSlot) {

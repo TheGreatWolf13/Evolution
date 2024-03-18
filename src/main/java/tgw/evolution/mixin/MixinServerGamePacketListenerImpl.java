@@ -2,6 +2,7 @@ package tgw.evolution.mixin;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
+import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
@@ -15,12 +16,15 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
+import net.minecraft.stats.Stats;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.inventory.RecipeBookMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -46,10 +50,12 @@ import tgw.evolution.events.EntityEvents;
 import tgw.evolution.hooks.LivingHooks;
 import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.init.EvolutionDamage;
+import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.inventory.extendedinventory.ContainerInventoryProvider;
 import tgw.evolution.network.*;
 import tgw.evolution.patches.PatchServerPacketListener;
 import tgw.evolution.util.EntityHelper;
+import tgw.evolution.util.PlayerHelper;
 import tgw.evolution.util.constants.BlockFlags;
 import tgw.evolution.util.math.BlockPosUtil;
 
@@ -95,6 +101,42 @@ public abstract class MixinServerGamePacketListenerImpl implements ServerGamePac
 
     @Shadow
     public abstract ServerPlayer getPlayer();
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Override
+    @Overwrite
+    public void handleClientCommand(ServerboundClientCommandPacket packet) {
+        ServerPlayer player = this.player;
+        PacketUtils.ensureRunningOnSameThread(packet, this, player.getLevel());
+        player.resetLastActionTime();
+        ServerboundClientCommandPacket.Action action = packet.getAction();
+        switch (action) {
+            case PERFORM_RESPAWN -> {
+                if (player.wonGame) {
+                    player.wonGame = false;
+                    this.player = player = this.server.getPlayerList().respawn(player, true);
+                    CriteriaTriggers.CHANGED_DIMENSION.trigger(player, Level.END, Level.OVERWORLD);
+                }
+                else {
+                    if (player.getHealth() > 0.0F) {
+                        return;
+                    }
+                    this.player = player = this.server.getPlayerList().respawn(player, false);
+                    PlayerHelper.takeStat(player, Stats.CUSTOM.get(EvolutionStats.TIME_SINCE_LAST_DEATH));
+                    PlayerHelper.takeStat(player, Stats.CUSTOM.get(EvolutionStats.TIME_SINCE_LAST_REST));
+                    if (this.server.isHardcore()) {
+                        player.setGameMode(GameType.SPECTATOR);
+                        player.getLevel().getGameRules().getRule(GameRules.RULE_SPECTATORSGENERATECHUNKS).set(false, this.server);
+                    }
+                    player.connection.send(new PacketSCTimeAlive(player.getStats().getValue_(Stats.CUSTOM.get(EvolutionStats.TIME_SINCE_LAST_DEATH))));
+                }
+            }
+            case REQUEST_STATS -> player.getStats().sendStats(player);
+        }
+    }
 
     @Override
     public void handleCollision(PacketCSCollision packet) {

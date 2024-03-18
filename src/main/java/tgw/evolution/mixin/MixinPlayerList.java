@@ -30,6 +30,7 @@ import net.minecraft.server.players.PlayerList;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.ServerStatsCounter;
+import net.minecraft.stats.Stats;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.TagNetworkSerialization;
 import net.minecraft.util.Mth;
@@ -53,11 +54,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.events.EntityEvents;
 import tgw.evolution.hooks.TickrateChanger;
 import tgw.evolution.init.EvolutionStats;
-import tgw.evolution.network.Message;
-import tgw.evolution.network.PacketSCChangeTickrate;
-import tgw.evolution.network.PacketSCFixRotation;
-import tgw.evolution.network.PacketSCSimpleMessage;
-import tgw.evolution.stats.EvolutionServerStatsCounter;
+import tgw.evolution.network.*;
 import tgw.evolution.util.NBTHelper;
 
 import javax.annotation.Nullable;
@@ -109,7 +106,7 @@ public abstract class MixinPlayerList {
                     oldFile.renameTo(statsFile);
                 }
             }
-            statsCounter = new EvolutionServerStatsCounter(this.server, statsFile);
+            statsCounter = new ServerStatsCounter(this.server, statsFile);
             this.stats.put(uuid, statsCounter);
         }
         return statsCounter;
@@ -134,9 +131,7 @@ public abstract class MixinPlayerList {
         String profileName = optional.isPresent() ? optional.get().getName() : gameProfile.getName();
         profileCache.add(gameProfile);
         CompoundTag tag = this.load(player);
-        ResourceKey<Level> dimension = tag != null ?
-                                       NBTHelper.decodeResourceKey(Registry.DIMENSION_REGISTRY, tag.get("Dimension"), LOGGER, Level.OVERWORLD) :
-                                       Level.OVERWORLD;
+        ResourceKey<Level> dimension = tag != null ? NBTHelper.decodeResourceKey(Registry.DIMENSION_REGISTRY, tag.get("Dimension"), LOGGER, Level.OVERWORLD) : Level.OVERWORLD;
         ServerLevel desiredLevel = this.server.getLevel(dimension);
         ServerLevel level;
         if (desiredLevel == null) {
@@ -148,11 +143,11 @@ public abstract class MixinPlayerList {
         }
         player.setLevel(level);
         String s1 = "local";
+        //noinspection ConstantValue
         if (connection.getRemoteAddress() != null) {
             s1 = connection.getRemoteAddress().toString();
         }
-        LOGGER.info("{}[{}] logged in with entity id {} at ({}, {}, {})", player.getName().getString(), s1, player.getId(), player.getX(),
-                    player.getY(), player.getZ());
+        LOGGER.info("{}[{}] logged in with entity id {} at ({}, {}, {})", player.getName().getString(), s1, player.getId(), player.getX(), player.getY(), player.getZ());
         LevelData levelData = level.getLevelData();
         player.loadGameTypes(tag);
         ServerGamePacketListenerImpl listener = new ServerGamePacketListenerImpl(this.server, connection, player);
@@ -167,13 +162,14 @@ public abstract class MixinPlayerList {
                                                                    level.dimension(), BiomeManager.obfuscateSeed(level.getSeed()),
                                                                    this.getMaxPlayers(), this.viewDistance, this.simulationDistance,
                                                                    reducedDebug, !noDeathScreen,
-                                                                   level.isDebug(), level.isFlat());
+                                                                   level.isDebug(), level.isFlat()
+        );
         packet.setDaytime(level.getDayTime());
         packet.setMotion(player.getDeltaMovement());
         listener.send(packet);
-        listener.send(new ClientboundCustomPayloadPacket(ClientboundCustomPayloadPacket.BRAND, new FriendlyByteBuf(
-                Unpooled.buffer()).writeUtf(this.getServer().getServerModName())));
+        listener.send(new ClientboundCustomPayloadPacket(ClientboundCustomPayloadPacket.BRAND, new FriendlyByteBuf(Unpooled.buffer()).writeUtf(this.getServer().getServerModName())));
         listener.send(new ClientboundChangeDifficultyPacket(levelData.getDifficulty(), levelData.isDifficultyLocked()));
+        listener.send(new PacketSCTimeAlive(player.getStats().getValue_(Stats.CUSTOM.get(EvolutionStats.TIME_SINCE_LAST_DEATH))));
         listener.send(new ClientboundPlayerAbilitiesPacket(player.getAbilities()));
         listener.send(new ClientboundSetCarriedItemPacket(player.getInventory().selected));
         listener.send(new ClientboundUpdateRecipesPacket(this.server.getRecipeManager().getRecipes()));
@@ -206,8 +202,7 @@ public abstract class MixinPlayerList {
         listener.send(new PacketSCSimpleMessage(player.getServer().isMultiplayerPaused() ? Message.S2C.MULTIPLAYER_PAUSE : Message.S2C.MULTIPLAYER_RESUME));
         this.sendLevelInfo(player, level);
         if (!this.server.getResourcePack().isEmpty()) {
-            player.sendTexturePack(this.server.getResourcePack(), this.server.getResourcePackHash(), this.server.isResourcePackRequired(),
-                                   this.server.getResourcePackPrompt());
+            player.sendTexturePack(this.server.getResourcePack(), this.server.getResourcePackHash(), this.server.isResourcePackRequired(), this.server.getResourcePackPrompt());
         }
         for (MobEffectInstance effects : player.getActiveEffects()) {
             //noinspection ObjectAllocationInLoop
@@ -293,14 +288,14 @@ public abstract class MixinPlayerList {
         float respawnAngle = player.getRespawnAngle();
         boolean isForced = player.isRespawnForced();
         ServerLevel desiredRespawnDim = this.server.getLevel(player.getRespawnDimension());
-        Optional optional;
+        Optional<Vec3> properRespawnPos;
         if (desiredRespawnDim != null && respawnPos != null) {
-            optional = Player.findRespawnPositionAndUseSpawnBlock(desiredRespawnDim, respawnPos, respawnAngle, isForced, keepEverything);
+            properRespawnPos = Player.findRespawnPositionAndUseSpawnBlock(desiredRespawnDim, respawnPos, respawnAngle, isForced, keepEverything);
         }
         else {
-            optional = Optional.empty();
+            properRespawnPos = Optional.empty();
         }
-        ServerLevel respawnDim = desiredRespawnDim != null && optional.isPresent() ? desiredRespawnDim : this.server.overworld();
+        ServerLevel respawnDim = desiredRespawnDim != null && properRespawnPos.isPresent() ? desiredRespawnDim : this.server.overworld();
         ServerPlayer newPlayer = new ServerPlayer(this.server, respawnDim, player.getGameProfile());
         newPlayer.connection = player.connection;
         newPlayer.restoreFrom(player, keepEverything);
@@ -310,10 +305,10 @@ public abstract class MixinPlayerList {
             newPlayer.addTag(string);
         }
         boolean bl3 = false;
-        if (optional.isPresent()) {
-            BlockState blockState = respawnDim.getBlockState(respawnPos);
+        if (properRespawnPos.isPresent()) {
+            BlockState blockState = respawnDim.getBlockState_(respawnPos);
             boolean bl4 = blockState.is(Blocks.RESPAWN_ANCHOR);
-            Vec3 vec3 = (Vec3) optional.get();
+            Vec3 vec3 = properRespawnPos.get();
             float g;
             if (!blockState.is(BlockTags.BEDS) && !bl4) {
                 g = respawnAngle;
@@ -327,9 +322,10 @@ public abstract class MixinPlayerList {
             newPlayer.setRespawnPosition(respawnDim.dimension(), respawnPos, respawnAngle, isForced, false);
             bl3 = !keepEverything && bl4;
         }
-        else if (respawnPos != null) {
-            newPlayer.connection.send(new ClientboundGameEventPacket(ClientboundGameEventPacket.NO_RESPAWN_BLOCK_AVAILABLE, 0.0F));
-        }
+        else //noinspection VariableNotUsedInsideIf
+            if (respawnPos != null) {
+                newPlayer.connection.send(new ClientboundGameEventPacket(ClientboundGameEventPacket.NO_RESPAWN_BLOCK_AVAILABLE, 0.0F));
+            }
         while (!respawnDim.noCollision(newPlayer) && newPlayer.getY() < respawnDim.getMaxBuildHeight()) {
             newPlayer.setPos(newPlayer.getX(), newPlayer.getY() + 1.0D, newPlayer.getZ());
         }
@@ -339,14 +335,11 @@ public abstract class MixinPlayerList {
                                                                newPlayer.gameMode.getGameModeForPlayer(),
                                                                newPlayer.gameMode.getPreviousGameModeForPlayer(),
                                                                newPlayer.getLevel().isDebug(), newPlayer.getLevel().isFlat(),
-                                                               keepEverything));
-        newPlayer.connection.teleport(newPlayer.getX(), newPlayer.getY(), newPlayer.getZ(), newPlayer.getYRot(),
-                                      newPlayer.getXRot());
-        newPlayer.connection.send(
-                new ClientboundSetDefaultSpawnPositionPacket(respawnDim.getSharedSpawnPos(), respawnDim.getSharedSpawnAngle()));
+                                                               keepEverything)
+        );
+        newPlayer.connection.teleport(newPlayer.getX(), newPlayer.getY(), newPlayer.getZ(), newPlayer.getYRot(), newPlayer.getXRot());
+        newPlayer.connection.send(new ClientboundSetDefaultSpawnPositionPacket(respawnDim.getSharedSpawnPos(), respawnDim.getSharedSpawnAngle()));
         newPlayer.connection.send(new ClientboundChangeDifficultyPacket(levelData.getDifficulty(), levelData.isDifficultyLocked()));
-        newPlayer.connection.send(
-                new ClientboundSetExperiencePacket(newPlayer.experienceProgress, newPlayer.totalExperience, newPlayer.experienceLevel));
         this.sendLevelInfo(newPlayer, respawnDim);
         this.sendPlayerPermissionLevel(newPlayer);
         respawnDim.addRespawnedPlayer(newPlayer);
@@ -364,8 +357,7 @@ public abstract class MixinPlayerList {
         }
         respawnDim.getChunkSource().broadcast(newPlayer, new PacketSCFixRotation(player));
         if (bl3) {
-            newPlayer.connection.send(new ClientboundSoundPacket(SoundEvents.RESPAWN_ANCHOR_DEPLETE, SoundSource.BLOCKS,
-                                                                 respawnPos.getX(), respawnPos.getY(), respawnPos.getZ(), 1.0F, 1.0F));
+            newPlayer.connection.send(new ClientboundSoundPacket(SoundEvents.RESPAWN_ANCHOR_DEPLETE, SoundSource.BLOCKS, respawnPos.getX(), respawnPos.getY(), respawnPos.getZ(), 1.0F, 1.0F));
         }
         return newPlayer;
     }

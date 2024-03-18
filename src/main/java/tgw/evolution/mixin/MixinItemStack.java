@@ -39,7 +39,6 @@ import tgw.evolution.inventory.AdditionalSlotType;
 import tgw.evolution.patches.PatchItemStack;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
-import tgw.evolution.util.constants.NBTType;
 
 import java.text.DecimalFormat;
 import java.util.Collection;
@@ -85,12 +84,12 @@ public abstract class MixinItemStack implements PatchItemStack {
     @Overwrite
     public Multimap<Attribute, AttributeModifier> getAttributeModifiers(EquipmentSlot slot) {
         //noinspection ConstantConditions
-        if (this.hasTag() && this.tag.contains("AttributeModifiers", NBTType.LIST)) {
+        if (this.hasTag() && this.tag.contains("AttributeModifiers", Tag.TAG_LIST)) {
             Multimap<Attribute, AttributeModifier> multimap = HashMultimap.create();
-            ListTag listTag = this.tag.getList("AttributeModifiers", NBTType.COMPOUND);
+            ListTag listTag = this.tag.getList("AttributeModifiers", Tag.TAG_COMPOUND);
             for (int i = 0; i < listTag.size(); ++i) {
                 CompoundTag compoundTag = listTag.getCompound(i);
-                if (!compoundTag.contains("Slot", NBTType.STRING) || compoundTag.getString("Slot").equals(slot.getName())) {
+                if (!compoundTag.contains("Slot", Tag.TAG_STRING) || compoundTag.getString("Slot").equals(slot.getName())) {
                     Attribute attribute = Registry.ATTRIBUTE.get(ResourceLocation.tryParse(compoundTag.getString("AttributeName")));
                     if (attribute != null) {
                         AttributeModifier modifier = AttributeModifier.load(compoundTag);
@@ -162,9 +161,9 @@ public abstract class MixinItemStack implements PatchItemStack {
             if (shouldShowInTooltip(i, ItemStack.TooltipPart.ENCHANTMENTS)) {
                 appendEnchantmentNames(list, this.getEnchantmentTags());
             }
-            if (this.tag.contains("display", NBTType.COMPOUND)) {
+            if (this.tag.contains("display", Tag.TAG_COMPOUND)) {
                 CompoundTag compoundTag = this.tag.getCompound("display");
-                if (shouldShowInTooltip(i, ItemStack.TooltipPart.DYE) && compoundTag.contains("color", NBTType.ANY_NUMERIC)) {
+                if (shouldShowInTooltip(i, ItemStack.TooltipPart.DYE) && compoundTag.contains("color", Tag.TAG_ANY_NUMERIC)) {
                     if (tooltipFlag.isAdvanced()) {
                         list.add(new TranslatableComponent("item.color", String.format("#%06X", compoundTag.getInt("color"))).withStyle(ChatFormatting.GRAY));
                     }
@@ -173,7 +172,7 @@ public abstract class MixinItemStack implements PatchItemStack {
                     }
                 }
                 if (compoundTag.getTagType("Lore") == Tag.TAG_LIST) {
-                    ListTag listTag = compoundTag.getList("Lore", NBTType.STRING);
+                    ListTag listTag = compoundTag.getList("Lore", Tag.TAG_STRING);
                     for (j = 0; j < listTag.size(); ++j) {
                         String string = listTag.getString(j);
                         try {
@@ -251,8 +250,8 @@ public abstract class MixinItemStack implements PatchItemStack {
             }
 
             ListTag listTag2;
-            if (shouldShowInTooltip(i, ItemStack.TooltipPart.CAN_DESTROY) && this.tag.contains("CanDestroy", NBTType.LIST)) {
-                listTag2 = this.tag.getList("CanDestroy", NBTType.STRING);
+            if (shouldShowInTooltip(i, ItemStack.TooltipPart.CAN_DESTROY) && this.tag.contains("CanDestroy", Tag.TAG_LIST)) {
+                listTag2 = this.tag.getList("CanDestroy", Tag.TAG_STRING);
                 if (!listTag2.isEmpty()) {
                     list.add(TextComponent.EMPTY);
                     list.add(new TranslatableComponent("item.canBreak").withStyle(ChatFormatting.GRAY));
@@ -261,8 +260,8 @@ public abstract class MixinItemStack implements PatchItemStack {
                     }
                 }
             }
-            if (shouldShowInTooltip(i, ItemStack.TooltipPart.CAN_PLACE) && this.tag.contains("CanPlaceOn", NBTType.LIST)) {
-                listTag2 = this.tag.getList("CanPlaceOn", NBTType.STRING);
+            if (shouldShowInTooltip(i, ItemStack.TooltipPart.CAN_PLACE) && this.tag.contains("CanPlaceOn", Tag.TAG_LIST)) {
+                listTag2 = this.tag.getList("CanPlaceOn", Tag.TAG_STRING);
                 if (!listTag2.isEmpty()) {
                     list.add(TextComponent.EMPTY);
                     list.add(new TranslatableComponent("item.canPlace").withStyle(ChatFormatting.GRAY));

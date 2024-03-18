@@ -1,4 +1,4 @@
-package tgw.evolution.stats;
+package tgw.evolution.mixin;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -11,59 +11,74 @@ import net.minecraft.SharedConstants;
 import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
+import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.stats.ServerStatsCounter;
-import net.minecraft.stats.Stat;
-import net.minecraft.stats.StatType;
-import net.minecraft.stats.Stats;
+import net.minecraft.stats.*;
 import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.entity.player.Player;
 import org.apache.commons.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.spongepowered.asm.mixin.*;
 import tgw.evolution.Evolution;
+import tgw.evolution.hooks.asm.*;
 import tgw.evolution.network.PacketSCStatistics;
 import tgw.evolution.util.collection.maps.*;
 import tgw.evolution.util.collection.sets.OHashSet;
 import tgw.evolution.util.collection.sets.OSet;
-import tgw.evolution.util.constants.NBTType;
 import tgw.evolution.util.math.HalfFloat;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
-public class EvolutionServerStatsCounter extends ServerStatsCounter {
+@Mixin(ServerStatsCounter.class)
+public abstract class Mixin_CFM_ServerStatsCounter extends StatsCounter {
+    @Shadow @Final private static Logger LOGGER;
+    @Unique private final OSet<Stat<?>> dirtyData;
+    @Unique private final O2SMap<Stat<?>> partialData;
+    @Shadow @Final @DeleteField private Set<Stat<?>> dirty;
+    @Mutable @Shadow @Final @RestoreFinal private File file;
+    @Unique private int lastStatRequest;
+    @Mutable @Shadow @Final @RestoreFinal private MinecraftServer server;
 
-    protected final O2SMap<Stat<?>> partialData = new O2SHashMap<>();
-    protected final O2LMap<Stat<?>> statsData = new O2LHashMap<>();
-    private final OSet<Stat<?>> dirty = new OHashSet<>();
-    private final MinecraftServer server;
-    private final File statsFile;
-    private int lastStatRequest = -300;
+    @DummyConstructor
+    public Mixin_CFM_ServerStatsCounter(OSet<Stat<?>> dirtyData, O2SMap<Stat<?>> partialData) {
+        this.dirtyData = dirtyData;
+        this.partialData = partialData;
+    }
 
-    public EvolutionServerStatsCounter(MinecraftServer server, File statsFile) {
-        super(server, statsFile);
-        this.server = server;
-        this.statsFile = statsFile;
-        this.statsData.defaultReturnValue(0L);
+    @ModifyConstructor
+    public Mixin_CFM_ServerStatsCounter(MinecraftServer minecraftServer, File file) {
+        this.partialData = new O2SHashMap<>();
         this.partialData.defaultReturnValue((short) 0);
-        if (statsFile.isFile()) {
+        this.dirtyData = new OHashSet<>();
+        this.server = minecraftServer;
+        this.file = file;
+        this.lastStatRequest = -300;
+        if (file.isFile()) {
             try {
-                this.parseLocal(server.getFixerUpper(), FileUtils.readFileToString(statsFile));
+                this.parseLocal(minecraftServer.getFixerUpper(), FileUtils.readFileToString(file));
             }
-            catch (IOException exception) {
-                Evolution.error("Couldn't read statistics file {}", statsFile, exception);
+            catch (IOException t) {
+                LOGGER.error("Couldn't read statistics file {}", file, t);
             }
-            catch (JsonParseException exception) {
-                Evolution.error("Couldn't parse statistics file {}", statsFile, exception);
+            catch (JsonParseException t) {
+                LOGGER.error("Couldn't parse statistics file {}", file, t);
             }
         }
     }
 
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
     private static CompoundTag fromJson(JsonObject jsonObject) {
         CompoundTag tag = new CompoundTag();
         for (Map.Entry<String, JsonElement> entry : jsonObject.entrySet()) {
@@ -81,12 +96,13 @@ public class EvolutionServerStatsCounter extends ServerStatsCounter {
         return tag;
     }
 
+    @Shadow
     private static <T> ResourceLocation getKey(Stat<T> stat) {
-        //noinspection ConstantConditions
-        return stat.getType().getRegistry().getKey(stat.getValue());
+        throw new AbstractMethodError();
     }
 
-    private static @Nullable <T> Stat<T> getStat(StatType<T> statType, String resLoc) {
+    @Unique
+    private static @Nullable <T> Stat<T> getStat_(StatType<T> statType, String resLoc) {
         ResourceLocation resourceLocation = ResourceLocation.tryParse(resLoc);
         if (resourceLocation == null) {
             return null;
@@ -98,32 +114,31 @@ public class EvolutionServerStatsCounter extends ServerStatsCounter {
         return statType.get(t);
     }
 
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    @DeleteMethod
     private Set<Stat<?>> getDirty() {
-        OSet<Stat<?>> set = new OHashSet<>(this.dirty);
-        this.dirty.clear();
+        throw new AbstractMethodError();
+    }
+
+    @Unique
+    private OSet<Stat<?>> getDirtyData() {
+        OSet<Stat<?>> set = new OHashSet<>(this.dirtyData);
+        this.dirtyData.clear();
         return set;
     }
 
-    @Override
-    public <T> int getValue(StatType<T> statType, T stat) {
-        Evolution.warn("Wrong stats method, called by {}", Thread.currentThread().getStackTrace()[2]);
-        return 0;
-    }
-
-    @Override
-    public int getValue(Stat<?> stat) {
-        Evolution.warn("Wrong stats method, called by {}", Thread.currentThread().getStackTrace()[2]);
-        return 0;
-    }
-
-    public <T> long getValueLong(StatType<T> statType, T stat) {
-        return statType.contains(stat) ? this.getValueLong(statType.get(stat)) : 0;
-    }
-
-    public long getValueLong(Stat<?> stat) {
-        synchronized (this.statsData) {
-            return this.statsData.getLong(stat);
-        }
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    @DeleteMethod
+    private <T> Optional<Stat<T>> getStat(StatType<T> statType, String string) {
+        throw new AbstractMethodError();
     }
 
     @Override
@@ -133,24 +148,18 @@ public class EvolutionServerStatsCounter extends ServerStatsCounter {
                 return;
             }
         }
-        this.setValueLong(stat, this.getValueLong(stat) + amount);
+        super.increment(player, stat, amount);
     }
 
-    public void incrementLong(Stat<?> stat, long amount) {
-        this.setValueLong(stat, this.getValueLong(stat) + amount);
-    }
-
-    public void incrementPartial(Player player, Stat<?> stat, float amount) {
+    @Override
+    public void incrementPartial(Stat<?> stat, float amount) {
         if (amount <= 0 || Float.isNaN(amount)) {
             return;
         }
         if (Float.isInfinite(amount) || amount > Long.MAX_VALUE) {
-            if (stat.getType() == Stats.CUSTOM) {
-                return;
-            }
             return;
         }
-        synchronized (this.statsData) {
+        synchronized (this) {
             long value = (long) amount;
             amount -= value;
             amount += HalfFloat.toFloat(this.partialData.getOrDefault(stat, (short) 0));
@@ -160,133 +169,154 @@ public class EvolutionServerStatsCounter extends ServerStatsCounter {
             }
             this.partialData.put(stat, HalfFloat.toHalf(amount));
             if (value > 0) {
-                this.incrementLong(stat, value);
+                this.increment(stat, value);
             }
         }
     }
 
-    @Override
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
     public void markAllDirty() {
-        synchronized (this.statsData) {
-            this.dirty.addAll(this.statsData.keySet());
-        }
+        this.dirtyData.addAll(this._getMap().keySet());
     }
 
-    @Override
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
     public void parseLocal(DataFixer dataFixer, String path) {
-        synchronized (this.statsData) {
+        synchronized (this) {
+            O2LMap<Stat<?>> statsData = this._getMap();
             try (JsonReader jsonReader = new JsonReader(new StringReader(path))) {
                 jsonReader.setLenient(false);
                 JsonElement jsonElement = Streams.parse(jsonReader);
                 if (jsonElement.isJsonNull()) {
-                    Evolution.error("Unable to parse Stat data from {}", this.statsFile);
+                    Evolution.error("Unable to parse Stat data from {}", this.file);
                     return;
                 }
                 CompoundTag tag = fromJson(jsonElement.getAsJsonObject());
-                if (!tag.contains("DataVersion", NBTType.ANY_NUMERIC)) {
+                if (!tag.contains("DataVersion", Tag.TAG_ANY_NUMERIC)) {
                     tag.putInt("DataVersion", 1_343);
                 }
                 tag = NbtUtils.update(dataFixer, DataFixTypes.STATS, tag, tag.getInt("DataVersion"));
-                if (tag.contains("stats", NBTType.COMPOUND)) {
+                if (tag.contains("stats", Tag.TAG_COMPOUND)) {
                     CompoundTag stats = tag.getCompound("stats");
                     for (String typeKey : stats.getAllKeys()) {
-                        if (stats.contains(typeKey, NBTType.COMPOUND)) {
+                        if (stats.contains(typeKey, Tag.TAG_COMPOUND)) {
                             //noinspection ObjectAllocationInLoop
                             StatType<?> statType = Registry.STAT_TYPE.get(new ResourceLocation(typeKey));
                             if (statType != null) {
                                 CompoundTag type = stats.getCompound(typeKey);
                                 for (String key : type.getAllKeys()) {
-                                    if (type.contains(key, NBTType.ANY_NUMERIC)) {
-                                        Stat<?> stat = getStat(statType, key);
+                                    if (type.contains(key, Tag.TAG_ANY_NUMERIC)) {
+                                        Stat<?> stat = getStat_(statType, key);
                                         if (stat != null) {
-                                            this.statsData.put(stat, type.getLong(key));
+                                            statsData.put(stat, type.getLong(key));
                                         }
                                         else {
-                                            Evolution.warn("Invalid statistic in {}: Don't know what {} is", this.statsFile, key);
+                                            Evolution.warn("Invalid statistic in {}: Don't know what {} is", this.file, key);
                                         }
                                     }
                                     else {
-                                        Evolution.warn("Invalid statistic value in {}: Don't know what {} is for key {}", this.statsFile, type.get(key), key);
+                                        Evolution.warn("Invalid statistic value in {}: Don't know what {} is for key {}", this.file, type.get(key), key);
                                     }
                                 }
                             }
                             else {
-                                Evolution.warn("Invalid statistic type in {}: Don't know what {} is", this.statsFile, typeKey);
+                                Evolution.warn("Invalid statistic type in {}: Don't know what {} is", this.file, typeKey);
                             }
                         }
                     }
                 }
-                if (tag.contains("partial", NBTType.COMPOUND)) {
+                if (tag.contains("partial", Tag.TAG_COMPOUND)) {
                     CompoundTag partial = tag.getCompound("partial");
                     for (String typeKey : partial.getAllKeys()) {
-                        if (partial.contains(typeKey, NBTType.COMPOUND)) {
+                        if (partial.contains(typeKey, Tag.TAG_COMPOUND)) {
                             //noinspection ObjectAllocationInLoop
                             StatType<?> statType = Registry.STAT_TYPE.get(new ResourceLocation(typeKey));
                             if (statType != null) {
                                 CompoundTag type = partial.getCompound(typeKey);
                                 for (String key : type.getAllKeys()) {
-                                    if (type.contains(key, NBTType.ANY_NUMERIC)) {
-                                        Stat<?> stat = getStat(statType, key);
+                                    if (type.contains(key, Tag.TAG_ANY_NUMERIC)) {
+                                        Stat<?> stat = getStat_(statType, key);
                                         if (stat != null) {
                                             this.partialData.put(stat, type.getShort(key));
                                         }
                                         else {
-                                            Evolution.warn("Invalid statistic in {}: Don't know what {} is", this.statsFile, key);
+                                            Evolution.warn("Invalid statistic in {}: Don't know what {} is", this.file, key);
                                         }
                                     }
                                     else {
-                                        Evolution.warn("Invalid statistic value in {}: Don't know what {} is for key {}", this.statsFile, type.get(key), key);
+                                        Evolution.warn("Invalid statistic value in {}: Don't know what {} is for key {}", this.file, type.get(key), key);
                                     }
                                 }
                             }
                             else {
-                                Evolution.warn("Invalid statistic type in {}: Don't know what {} is", this.statsFile, typeKey);
+                                Evolution.warn("Invalid statistic type in {}: Don't know what {} is", this.file, typeKey);
                             }
                         }
                     }
                 }
             }
             catch (IOException | JsonParseException exception) {
-                Evolution.error("Unable to parse Stat data from {}", this.statsFile, exception);
+                Evolution.error("Unable to parse Stat data from {}", this.file, exception);
             }
         }
     }
 
-    @Override
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
     public void sendStats(ServerPlayer player) {
         int i = this.server.getTickCount();
         O2LMap<Stat<?>> stats = new O2LHashMap<>();
         if (i - this.lastStatRequest > 100) {
             this.lastStatRequest = i;
-            for (Stat<?> stat : this.getDirty()) {
-                stats.put(stat, this.getValueLong(stat));
+            for (Stat<?> stat : this.getDirtyData()) {
+                stats.put(stat, this.getValue_(stat));
             }
         }
         player.connection.send(new PacketSCStatistics(stats));
     }
 
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
     @Override
+    @Overwrite
     public void setValue(Player player, Stat<?> stat, int amount) {
         if (stat.getType() == Stats.CUSTOM) {
             if ("minecraft".equals(((ResourceLocation) stat.getValue()).getNamespace())) {
                 return;
             }
         }
-        Evolution.warn("Wrong stats method, called by {}", Thread.currentThread().getStackTrace()[2]);
-    }
-
-    public void setValueLong(Stat<?> stat, long amount) {
-        synchronized (this.statsData) {
-            this.statsData.put(stat, amount);
-        }
-        this.dirty.add(stat);
+        super.setValue(player, stat, amount);
+        this.dirtyData.add(stat);
     }
 
     @Override
-    protected String toJson() {
-        synchronized (this.statsData) {
+    public void setValue_(Stat<?> stat, long amount) {
+        super.setValue_(stat, amount);
+        this.dirtyData.add(stat);
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public String toJson() {
+        synchronized (this) {
+            O2LMap<Stat<?>> statsData = this._getMap();
             R2OMap<StatType<?>, JsonObject> dataMap = new R2OHashMap<>();
-            for (O2LMap.Entry<Stat<?>> e = this.statsData.fastEntries(); e != null; e = this.statsData.fastEntries()) {
+            for (O2LMap.Entry<Stat<?>> e = statsData.fastEntries(); e != null; e = statsData.fastEntries()) {
                 Stat<?> stat = e.key();
                 JsonObject json = dataMap.get(stat.getType());
                 if (json == null) {

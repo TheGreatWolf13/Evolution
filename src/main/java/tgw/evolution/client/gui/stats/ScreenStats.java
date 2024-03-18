@@ -38,7 +38,6 @@ import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.items.ItemBlock;
-import tgw.evolution.stats.EvolutionStatsCounter;
 import tgw.evolution.stats.IEvoStatFormatter;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
@@ -55,7 +54,7 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
     private final R2OMap<Item, ItemStack> cachedModularItems = new R2OHashMap<>();
     private final ResourceLocation resDamageIcons = Evolution.getResource("textures/gui/damage_icons.png");
     private final ResourceLocation resIcons = Evolution.getResource("textures/gui/stats_icons.png");
-    private final EvolutionStatsCounter stats;
+    private final StatsCounter stats;
     private final Component textDamageButton = new TranslatableComponent("evolution.gui.stats.damageButton");
     private final Component textDamageDealt = new TranslatableComponent("evolution.gui.stats.damageDealt");
     private final Component textDamageResisted = new TranslatableComponent("evolution.gui.stats.damageResisted");
@@ -80,7 +79,7 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
 
     public ScreenStats(StatsCounter statsCounter) {
         super(new TranslatableComponent("gui.stats"));
-        this.stats = (EvolutionStatsCounter) statsCounter;
+        this.stats = statsCounter;
         this.cachedModularItems.put(EvolutionItems.MODULAR_TOOL, EvolutionItems.MODULAR_TOOL.getDefaultInstance());
         this.cachedModularItems.put(EvolutionItems.PART_BLADE, EvolutionItems.PART_BLADE.getDefaultInstance());
         this.cachedModularItems.put(EvolutionItems.PART_GUARD, EvolutionItems.PART_GUARD.getDefaultInstance());
@@ -213,7 +212,8 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
                                LOADING_SYMBOLS[(int) (Util.getMillis() / 150L % LOADING_SYMBOLS.length)],
                                this.width / 2,
                                this.height / 2 + 9 * 2,
-                               0xff_ffff);
+                               0xff_ffff
+            );
         }
         else {
             if (this.displaySlot != null) {
@@ -291,7 +291,7 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
 
             private Entry(Stat<ResourceLocation> stat) {
                 this.title = getFormattedName(stat);
-                this.value = ((IEvoStatFormatter) stat.formatter).format(ScreenStats.this.stats.getValueLong(stat));
+                this.value = ((IEvoStatFormatter) stat.formatter).format(ScreenStats.this.stats.getValue_(stat));
             }
 
             @Override
@@ -460,7 +460,7 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
                     ResourceLocation aRes = ListDamageStats.this.sorting.get(a);
                     if (aRes != null) {
                         Stat<ResourceLocation> aStat = Stats.CUSTOM.get(aRes);
-                        i = ScreenStats.this.stats.getValueLong(aStat);
+                        i = ScreenStats.this.stats.getValue_(aStat);
                     }
                     else {
                         i = -1;
@@ -468,7 +468,7 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
                     ResourceLocation bRes = ListDamageStats.this.sorting.get(b);
                     if (bRes != null) {
                         Stat<ResourceLocation> bStat = Stats.CUSTOM.get(bRes);
-                        j = ScreenStats.this.stats.getValueLong(bStat);
+                        j = ScreenStats.this.stats.getValue_(bStat);
                     }
                     else {
                         j = -1;
@@ -486,7 +486,7 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             }
 
             private void drawStatCount(PoseStack matrices, @Nullable Stat<?> stat, int x, int y, boolean highlight) {
-                String s = stat == null ? "-" : EvolutionStats.METRIC.format(ScreenStats.this.stats.getValueLong(stat));
+                String s = stat == null ? "-" : EvolutionStats.METRIC.format(ScreenStats.this.stats.getValue_(stat));
                 drawString(matrices, ScreenStats.this.font, s, x - ScreenStats.this.font.width(s), y + 5, highlight ? 0xff_ffff : 0x75_7575);
             }
 
@@ -610,12 +610,10 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
                     j = 0;
                 }
                 else {
-                    i = ScreenStats.this.stats.getValueLong(a);
-                    j = ScreenStats.this.stats.getValueLong(b);
+                    i = ScreenStats.this.stats.getValue_(a);
+                    j = ScreenStats.this.stats.getValue_(b);
                 }
-                return i == j ?
-                       String.CASE_INSENSITIVE_ORDER.compare(getFormattedName(a), getFormattedName(b)) :
-                       ListDeathStats.this.sortOrder * Long.compare(i, j);
+                return i == j ? String.CASE_INSENSITIVE_ORDER.compare(getFormattedName(a), getFormattedName(b)) : ListDeathStats.this.sortOrder * Long.compare(i, j);
             }
         }
 
@@ -640,13 +638,14 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
                 String name = getFormattedName(ListDeathStats.this.deathList.get(index));
                 int color = index % 2 == 0 ? 0xff_ffff : 0x75_7575;
                 drawString(matrices, ScreenStats.this.font, name, x + 2, y + 1, color);
-                String value = EvolutionStats.DEFAULT.format(ScreenStats.this.stats.getValueLong(ListDeathStats.this.deathList.get(index)));
+                String value = EvolutionStats.DEFAULT.format(ScreenStats.this.stats.getValue_(ListDeathStats.this.deathList.get(index)));
                 drawString(matrices,
                            ScreenStats.this.font,
                            value,
                            x + 2 + ListDeathStats.this.getRowWidth() - 7 - ScreenStats.this.font.width(value),
                            y + 1,
-                           color);
+                           color
+                );
             }
         }
     }
@@ -740,12 +739,10 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
                     j = 0;
                 }
                 else {
-                    i = ScreenStats.this.stats.getValueLong(a);
-                    j = ScreenStats.this.stats.getValueLong(b);
+                    i = ScreenStats.this.stats.getValue_(a);
+                    j = ScreenStats.this.stats.getValue_(b);
                 }
-                return i == j ?
-                       String.CASE_INSENSITIVE_ORDER.compare(ListTimeStats.this.getFormattedName(a), ListTimeStats.this.getFormattedName(b)) :
-                       ListTimeStats.this.sortOrder * Long.compare(i, j);
+                return i == j ? String.CASE_INSENSITIVE_ORDER.compare(ListTimeStats.this.getFormattedName(a), ListTimeStats.this.getFormattedName(b)) : ListTimeStats.this.sortOrder * Long.compare(i, j);
             }
         }
 
@@ -757,20 +754,11 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             }
 
             @Override
-            public void render(PoseStack matrices,
-                               int index,
-                               int y,
-                               int x,
-                               int width,
-                               int height,
-                               int mouseX,
-                               int mouseY,
-                               boolean hovered,
-                               float partialTicks) {
+            public void render(PoseStack matrices, int index, int y, int x, int width, int height, int mouseX, int mouseY, boolean hovered, float partialTicks) {
                 String name = ListTimeStats.this.getFormattedName(ListTimeStats.this.timeList.get(index));
                 int color = index % 2 == 0 ? 0xff_ffff : 0x75_7575;
                 drawString(matrices, ScreenStats.this.font, name, x + 2, y + 1, color);
-                String value = EvolutionStats.TIME.format(ScreenStats.this.stats.getValueLong(ListTimeStats.this.timeList.get(index)));
+                String value = EvolutionStats.TIME.format(ScreenStats.this.stats.getValue_(ListTimeStats.this.timeList.get(index)));
                 drawString(matrices, ScreenStats.this.font, value, x + 2 + 213 - ScreenStats.this.font.width(value), y + 1, color);
             }
         }
@@ -866,12 +854,10 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
                     j = 0;
                 }
                 else {
-                    i = ScreenStats.this.stats.getValueLong(a);
-                    j = ScreenStats.this.stats.getValueLong(b);
+                    i = ScreenStats.this.stats.getValue_(a);
+                    j = ScreenStats.this.stats.getValue_(b);
                 }
-                return i == j ?
-                       String.CASE_INSENSITIVE_ORDER.compare(ListDistanceStats.this.getFormattedName(a), ListDistanceStats.this.getFormattedName(b)) :
-                       ListDistanceStats.this.sortOrder * Long.compare(i, j);
+                return i == j ? String.CASE_INSENSITIVE_ORDER.compare(ListDistanceStats.this.getFormattedName(a), ListDistanceStats.this.getFormattedName(b)) : ListDistanceStats.this.sortOrder * Long.compare(i, j);
             }
         }
 
@@ -883,20 +869,11 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             }
 
             @Override
-            public void render(PoseStack matrices,
-                               int index,
-                               int y,
-                               int x,
-                               int width,
-                               int height,
-                               int mouseX,
-                               int mouseY,
-                               boolean hovered,
-                               float partialTicks) {
+            public void render(PoseStack matrices, int index, int y, int x, int width, int height, int mouseX, int mouseY, boolean hovered, float partialTicks) {
                 String name = ListDistanceStats.this.getFormattedName(ListDistanceStats.this.distanceList.get(index));
                 int color = index % 2 == 0 ? 0xff_ffff : 0x75_7575;
                 drawString(matrices, ScreenStats.this.font, name, x + 2, y + 1, color);
-                String value = EvolutionStats.DISTANCE.format(ScreenStats.this.stats.getValueLong(ListDistanceStats.this.distanceList.get(index)));
+                String value = EvolutionStats.DISTANCE.format(ScreenStats.this.stats.getValue_(ListDistanceStats.this.distanceList.get(index)));
                 drawString(matrices, ScreenStats.this.font, value, x + 2 + 213 - ScreenStats.this.font.width(value), y + 1, color);
             }
         }
@@ -1007,16 +984,16 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
         }
 
         private boolean shouldAddEntry(EntityType<?> type) {
-            if (ScreenStats.this.stats.getValueLong(Stats.ENTITY_KILLED.get(type)) > 0) {
+            if (ScreenStats.this.stats.getValue_(Stats.ENTITY_KILLED.get(type)) > 0) {
                 return true;
             }
-            if (ScreenStats.this.stats.getValueLong(Stats.ENTITY_KILLED_BY.get(type)) > 0) {
+            if (ScreenStats.this.stats.getValue_(Stats.ENTITY_KILLED_BY.get(type)) > 0) {
                 return true;
             }
-            if (ScreenStats.this.stats.getValueLong(EvolutionStats.DAMAGE_DEALT.get(type)) > 0) {
+            if (ScreenStats.this.stats.getValue_(EvolutionStats.DAMAGE_DEALT.get(type)) > 0) {
                 return true;
             }
-            return ScreenStats.this.stats.getValueLong(EvolutionStats.DAMAGE_TAKEN.get(type)) > 0;
+            return ScreenStats.this.stats.getValue_(EvolutionStats.DAMAGE_TAKEN.get(type)) > 0;
         }
 
         protected void sortBy(StatType<?> statType) {
@@ -1071,16 +1048,7 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             }
 
             @Override
-            public void render(PoseStack matrices,
-                               int index,
-                               int y,
-                               int x,
-                               int width,
-                               int height,
-                               int mouseX,
-                               int mouseY,
-                               boolean hovered,
-                               float partialTicks) {
+            public void render(PoseStack matrices, int index, int y, int x, int width, int height, int mouseX, int mouseY, boolean hovered, float partialTicks) {
                 EntityType<?> type = ListMobStats.this.entityList.get(index);
                 LivingEntity entity = ListMobStats.this.entities.get(type);
                 if (type == EntityType.PLAYER) {
@@ -1089,10 +1057,10 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
                 if (entity != null) {
                     GUIUtils.drawEntityOnScreen(x - 30, y + 45, GUIUtils.getEntityScale(entity, 1.0f, 40, 35), mouseX, mouseY, entity);
                 }
-                long dmgDealt = ScreenStats.this.stats.getValueLong(EvolutionStats.DAMAGE_DEALT, type);
-                long dmgTaken = ScreenStats.this.stats.getValueLong(EvolutionStats.DAMAGE_TAKEN, type);
-                long killed = ScreenStats.this.stats.getValueLong(Stats.ENTITY_KILLED, type);
-                long killedBy = ScreenStats.this.stats.getValueLong(Stats.ENTITY_KILLED_BY, type);
+                long dmgDealt = ScreenStats.this.stats.getValue_(EvolutionStats.DAMAGE_DEALT, type);
+                long dmgTaken = ScreenStats.this.stats.getValue_(EvolutionStats.DAMAGE_TAKEN, type);
+                long killed = ScreenStats.this.stats.getValue_(Stats.ENTITY_KILLED, type);
+                long killedBy = ScreenStats.this.stats.getValue_(Stats.ENTITY_KILLED_BY, type);
                 String entityName = I18n.get(Util.makeDescriptionId("entity", EntityType.getKey(type)));
                 String entityNamePlural = I18n.get(Util.makeDescriptionId("entity", EntityType.getKey(type)) + ".plural");
                 drawString(matrices, ScreenStats.this.font, entityName, x + 2, y + 1, 0xff_ffff);
@@ -1125,12 +1093,10 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
                 }
                 else {
                     StatType<EntityType<?>> entitySorting = (StatType<EntityType<?>>) ScreenStats.ListMobStats.this.sorting;
-                    i = ScreenStats.this.stats.getValueLong(entitySorting, a);
-                    j = ScreenStats.this.stats.getValueLong(entitySorting, b);
+                    i = ScreenStats.this.stats.getValue_(entitySorting, a);
+                    j = ScreenStats.this.stats.getValue_(entitySorting, b);
                 }
-                return i == j ?
-                       String.CASE_INSENSITIVE_ORDER.compare(a.getDescription().getString(), b.getDescription().getString()) :
-                       ListMobStats.this.sortOrder * Long.compare(i, j);
+                return i == j ? String.CASE_INSENSITIVE_ORDER.compare(a.getDescription().getString(), b.getDescription().getString()) : ListMobStats.this.sortOrder * Long.compare(i, j);
             }
         }
     }
@@ -1162,7 +1128,7 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             for (Item item : Registry.ITEM) {
                 for (int i = 0, l = this.itemStatList.size(); i < l; i++) {
                     StatType<Item> statType = this.itemStatList.get(i);
-                    if (statType.contains(item) && ScreenStats.this.stats.getValueLong(statType.get(item)) > 0) {
+                    if (statType.contains(item) && ScreenStats.this.stats.getValue_(statType.get(item)) > 0) {
                         set.add(item);
                         continue allItemInRegistry;
                     }
@@ -1172,7 +1138,7 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             for (Block block : Registry.BLOCK) {
                 for (int i = 0, l = this.blockStatList.size(); i < l; i++) {
                     StatType<Block> statType = this.blockStatList.get(i);
-                    if (statType.contains(block) && ScreenStats.this.stats.getValueLong(statType.get(block)) > 0) {
+                    if (statType.contains(block) && ScreenStats.this.stats.getValue_(statType.get(block)) > 0) {
                         set.add(block.asItem());
                         continue allBlockInRegistry;
                     }
@@ -1320,18 +1286,18 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
                 }
                 else {
                     StatType<Item> itemSorting = (StatType<Item>) ScreenStats.ListStats.this.sorting;
-                    i = ScreenStats.this.stats.getValueLong(itemSorting, a);
-                    j = ScreenStats.this.stats.getValueLong(itemSorting, b);
+                    i = ScreenStats.this.stats.getValue_(itemSorting, a);
+                    j = ScreenStats.this.stats.getValue_(itemSorting, b);
                 }
                 return i == j ? String.CASE_INSENSITIVE_ORDER.compare(a.getDescription().getString(), b.getDescription().getString()) : ListStats.this.sortOrder * Long.compare(i, j);
             }
 
             private long getBlockStats(StatType<Block> blockSorting, Item item) {
                 if (item instanceof ItemBlock b) {
-                    return ScreenStats.this.stats.getValueLong(blockSorting, b.getBlock());
+                    return ScreenStats.this.stats.getValue_(blockSorting, b.getBlock());
                 }
                 if (item instanceof BlockItem b) {
-                    return ScreenStats.this.stats.getValueLong(blockSorting, b.getBlock());
+                    return ScreenStats.this.stats.getValue_(blockSorting, b.getBlock());
                 }
                 return -1;
             }
@@ -1343,7 +1309,7 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             }
 
             private void drawStatCount(PoseStack matrices, @Nullable Stat<?> stat, int x, int y, boolean highlight) {
-                String s = stat == null ? "-" : EvolutionStats.METRIC.format(ScreenStats.this.stats.getValueLong(stat));
+                String s = stat == null ? "-" : EvolutionStats.METRIC.format(ScreenStats.this.stats.getValue_(stat));
                 drawString(matrices, ScreenStats.this.font, s, x - ScreenStats.this.font.width(s), y + 5, highlight ? 0xff_ffff : 0x75_7575);
             }
 

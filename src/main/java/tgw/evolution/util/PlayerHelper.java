@@ -2,6 +2,7 @@ package tgw.evolution.util;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.stats.ServerStatsCounter;
 import net.minecraft.stats.Stat;
 import net.minecraft.stats.StatType;
 import net.minecraft.stats.Stats;
@@ -10,13 +11,14 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.scores.Score;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionStats;
-import tgw.evolution.stats.EvolutionServerStatsCounter;
 import tgw.evolution.util.physics.SI;
 
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 public final class PlayerHelper {
 
@@ -48,7 +50,8 @@ public final class PlayerHelper {
     public static final double LUNG_CAPACITY = 13.8 * SI.LITER;
     public static final EntityDimensions STANDING_SIZE = EntityDimensions.scalable(0.65F, 1.8F);
     public static final EntityDimensions SWIMMING_SIZE = EntityDimensions.scalable(0.65F, 0.65F);
-    public static final Map<Pose, EntityDimensions> SIZE_BY_POSE = new EnumMap(Pose.class);
+    public static final Map<Pose, EntityDimensions> SIZE_BY_POSE = new EnumMap<>(Pose.class);
+    private static final Scorer SCORER = new Scorer();
 
     static {
         SIZE_BY_POSE.put(Pose.STANDING, STANDING_SIZE);
@@ -70,12 +73,11 @@ public final class PlayerHelper {
     public static <T> void addStat(Player player, StatType<T> statType, T type, float amount) {
         if (player instanceof ServerPlayer p) {
             Stat<T> stat = statType.get(type);
-            EvolutionServerStatsCounter stats = (EvolutionServerStatsCounter) p.getStats();
-            stats.incrementPartial(player, stat, amount);
-            player.getScoreboard().forAllObjectives(stat, player.getScoreboardName(), score -> {
-                assert score != null;
-                score.setScore((int) stats.getValueLong(stat));
-            });
+            ServerStatsCounter stats = p.getStats();
+            stats.incrementPartial(stat, amount);
+            try (Scorer scorer = SCORER.setup(stats, stat)) {
+                player.getScoreboard().forAllObjectives(stat, player.getScoreboardName(), scorer);
+            }
         }
     }
 
@@ -88,8 +90,35 @@ public final class PlayerHelper {
 
     public static void takeStat(Player player, Stat<?> stat) {
         if (player instanceof ServerPlayer serverPlayer) {
-            ((EvolutionServerStatsCounter) serverPlayer.getStats()).setValueLong(stat, 0);
+            serverPlayer.getStats().setValue_(stat, 0);
             player.getScoreboard().forAllObjectives(stat, player.getScoreboardName(), Score::reset);
+        }
+    }
+
+    public static final class Scorer implements Consumer<Score>, AutoCloseable {
+
+        private @Nullable Stat<?> stat;
+        private @Nullable ServerStatsCounter stats;
+
+        @Override
+        public void accept(Score score) {
+            assert this.stats != null;
+            assert this.stat != null;
+            score.setScore((int) this.stats.getValue_(this.stat));
+        }
+
+        @Override
+        public void close() {
+            this.stat = null;
+            this.stats = null;
+        }
+
+        public Scorer setup(ServerStatsCounter stats, Stat<?> stat) {
+            assert this.stats == null;
+            assert this.stat == null;
+            this.stats = stats;
+            this.stat = stat;
+            return this;
         }
     }
 }

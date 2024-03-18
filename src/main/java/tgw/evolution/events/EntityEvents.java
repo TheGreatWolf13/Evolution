@@ -23,6 +23,7 @@ import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.network.PacketSCAddEffect;
 import tgw.evolution.network.PacketSCFixRotation;
 import tgw.evolution.network.PacketSCRemoveEffect;
+import tgw.evolution.network.PacketSCTimeAlive;
 import tgw.evolution.patches.PatchServerPlayer;
 import tgw.evolution.util.PlayerHelper;
 import tgw.evolution.util.Temperature;
@@ -30,6 +31,7 @@ import tgw.evolution.util.collection.maps.O2OHashMap;
 import tgw.evolution.util.constants.SkinType;
 import tgw.evolution.util.math.Metric;
 import tgw.evolution.util.physics.WindVector;
+import tgw.evolution.util.time.Time;
 
 import java.util.Map;
 import java.util.UUID;
@@ -85,7 +87,8 @@ public final class EntityEvents {
     }
 
     public static void onPlayerTickEnd(Player player) {
-        ProfilerFiller profiler = player.level.getProfiler();
+        Level level = player.level;
+        ProfilerFiller profiler = level.getProfiler();
         profiler.push("postTick");
         profiler.push("stats");
         player.awardStat(EvolutionStats.TIME_PLAYED);
@@ -104,12 +107,15 @@ public final class EntityEvents {
         if (player.isAlive()) {
             player.awardStat(EvolutionStats.TIME_SINCE_LAST_DEATH);
         }
+        if (!level.isClientSide && player.tickCount % Time.TICKS_PER_HOUR == 0) {
+            ServerPlayer p = (ServerPlayer) player;
+            p.connection.send(new PacketSCTimeAlive(p.getStats().getValue_(Stats.CUSTOM.get(EvolutionStats.TIME_SINCE_LAST_DEATH))));
+        }
         profiler.popPush("status");
         //Handles Status Updates
-        if (!player.level.isClientSide) {
-            long time = player.level.getDayTime();
-            try (Temperature temperature = Temperature.getInstance((ServerLevel) player.level, player.getX(), player.getY(), player.getZ(),
-                                                                   time)) {
+        if (!level.isClientSide) {
+            long time = level.getDayTime();
+            try (Temperature temperature = Temperature.getInstance((ServerLevel) level, player.getX(), player.getY(), player.getZ(), time)) {
                 LAST_TEMPERATURES[(int) (time % 20)] = Temperature.K2C(temperature.getAmbientBasedTemperature());
             }
             catch (Exception e) {
@@ -124,21 +130,21 @@ public final class EntityEvents {
             }
             //Ticks Player systems
             if (!player.isCreative() && !player.isSpectator()) {
-                ServerPlayer sPlayer = (ServerPlayer) player;
+                ServerPlayer p = (ServerPlayer) player;
                 PatchServerPlayer patch = (PatchServerPlayer) player;
                 profiler.push("thirst");
-                patch.getThirstStats().tick(sPlayer);
+                patch.getThirstStats().tick(p);
                 profiler.popPush("health");
-                patch.getHealthStats().tick(sPlayer);
+                patch.getHealthStats().tick(p);
                 profiler.popPush("hunger");
-                patch.getHungerStats().tick(sPlayer);
+                patch.getHungerStats().tick(p);
                 profiler.popPush("temperature");
-                patch.getTemperatureStats().tick(sPlayer);
+                patch.getTemperatureStats().tick(p);
                 profiler.pop();
             }
         }
         profiler.popPush("water");
-        if (!player.level.isClientSide) {
+        if (!level.isClientSide) {
             //Put off torches in Water
             if (player.isEyeInFluid(FluidTags.WATER)) {
                 ItemStack mainHand = player.getMainHandItem();
@@ -155,8 +161,7 @@ public final class EntityEvents {
                     torch = true;
                 }
                 if (torch) {
-                    player.level.playSound(null, player.blockPosition(), SoundEvents.FIRE_EXTINGUISH, SoundSource.BLOCKS, 1.0F,
-                                           2.6F + (player.level.random.nextFloat() - player.level.random.nextFloat()) * 0.8F);
+                    level.playSound(null, player.blockPosition(), SoundEvents.FIRE_EXTINGUISH, SoundSource.BLOCKS, 1.0F, 2.6F + (level.random.nextFloat() - level.random.nextFloat()) * 0.8F);
                 }
             }
         }

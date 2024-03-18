@@ -378,6 +378,9 @@
       ],
       "net/minecraft/client/renderer/entity/ItemRenderer": [
         "tgw/evolution/patches/PatchItemRenderer"
+      ],
+      "net/minecraft/stats/StatsCounter": [
+        "tgw/evolution/patches/PatchStatsCounter"
       ]
     }
   }

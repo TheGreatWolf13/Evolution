@@ -1,6 +1,7 @@
 package tgw.evolution.util.time;
 
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.TranslatableComponent;
 import tgw.evolution.util.math.Metric;
 
@@ -83,6 +84,23 @@ public class Time {
             return timeInTicks / (float) TICKS_PER_DAY + " days";
         }
         return timeInTicks / (float) TICKS_PER_YEAR + " years";
+    }
+
+    public static MutableComponent getFormattedTime(long timeInTicks) {
+        if (timeInTicks < TICKS_PER_DAY) {
+            int hours = (int) (timeInTicks / TICKS_PER_HOUR);
+            return new TranslatableComponent("evolution.time.hours", hours);
+        }
+        if (timeInTicks < TICKS_PER_YEAR) {
+            int days = (int) (timeInTicks / TICKS_PER_DAY);
+            timeInTicks -= days * TICKS_PER_DAY;
+            int hours = (int) (timeInTicks / TICKS_PER_HOUR);
+            return new TranslatableComponent("evolution.time.days", days, hours);
+        }
+        int years = (int) (timeInTicks / TICKS_PER_YEAR);
+        timeInTicks -= (long) years * TICKS_PER_YEAR;
+        int days = (int) (timeInTicks / TICKS_PER_DAY);
+        return new TranslatableComponent("evolution.time.years", years, days);
     }
 
     public static long roundToLastFullHour(long ticks) {

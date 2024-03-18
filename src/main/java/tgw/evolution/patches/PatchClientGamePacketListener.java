@@ -58,6 +58,8 @@ public interface PatchClientGamePacketListener {
 
     void handleThirstData(PacketSCThirstData packet);
 
+    void handleTimeAlive(PacketSCTimeAlive packet);
+
     void handleToast(PacketSCToast packet);
 
     void handleUpdateBeltBackItem(PacketSCUpdateBeltBackItem packet);

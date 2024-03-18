@@ -279,22 +279,31 @@ public class EntityFallingWeight extends Entity implements IEntitySpawnData {
                     this.level.setBlockAndUpdate_(x, y, z, this.state);
                 }
                 else if (this.level.getGameRules().getBoolean(GameRules.RULE_DOENTITYDROPS)) {
-                    this.state.dropLoot((ServerLevel) this.level, x, y, z, ItemStack.EMPTY, null, null, this.level.random, DROPPER.setup(this));
+                    try (ItemDropper dropper = DROPPER.setup(this)) {
+                        this.state.dropLoot((ServerLevel) this.level, x, y, z, ItemStack.EMPTY, null, null, this.level.random, dropper);
+                    }
                 }
             }
         }
     }
 
-    public static class ItemDropper implements Consumer<ItemStack> {
+    public static final class ItemDropper implements Consumer<ItemStack>, AutoCloseable {
 
-        private EntityFallingWeight entity;
+        private @Nullable EntityFallingWeight entity;
 
         @Override
         public void accept(ItemStack stack) {
+            assert this.entity != null;
             this.entity.spawnAtLocation(stack);
         }
 
+        @Override
+        public void close() {
+            this.entity = null;
+        }
+
         public ItemDropper setup(EntityFallingWeight entity) {
+            assert this.entity == null;
             this.entity = entity;
             return this;
         }

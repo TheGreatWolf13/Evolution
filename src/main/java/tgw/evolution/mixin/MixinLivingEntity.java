@@ -77,7 +77,6 @@ import tgw.evolution.patches.PatchLivingEntity;
 import tgw.evolution.patches.PatchMobEffect;
 import tgw.evolution.util.collection.maps.R2OHashMap;
 import tgw.evolution.util.constants.EntityStates;
-import tgw.evolution.util.constants.NBTType;
 import tgw.evolution.util.damage.DamageSourceEntity;
 import tgw.evolution.util.damage.DamageSourceEv;
 import tgw.evolution.util.damage.EvolutionCombatTracker;
@@ -1548,11 +1547,11 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
     @Overwrite
     public void readAdditionalSaveData(CompoundTag tag) {
         this.setAbsorptionAmount(tag.getFloat("AbsorptionAmount"));
-        if (tag.contains("Attributes", NBTType.LIST) && !this.level.isClientSide) {
-            this.getAttributes().load(tag.getList("Attributes", NBTType.COMPOUND));
+        if (tag.contains("Attributes", Tag.TAG_LIST) && !this.level.isClientSide) {
+            this.getAttributes().load(tag.getList("Attributes", Tag.TAG_COMPOUND));
         }
-        if (tag.contains("ActiveEffects", NBTType.LIST)) {
-            ListTag effects = tag.getList("ActiveEffects", NBTType.COMPOUND);
+        if (tag.contains("ActiveEffects", Tag.TAG_LIST)) {
+            ListTag effects = tag.getList("ActiveEffects", Tag.TAG_COMPOUND);
             for (int i = 0; i < effects.size(); ++i) {
                 CompoundTag compound = effects.getCompound(i);
                 MobEffectInstance effect = MobEffectInstance.load(compound);
@@ -1561,13 +1560,13 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
                 }
             }
         }
-        if (tag.contains("Health", NBTType.ANY_NUMERIC)) {
+        if (tag.contains("Health", Tag.TAG_ANY_NUMERIC)) {
             this.setHealth(tag.getFloat("Health"));
         }
         this.hurtTime = tag.getShort("HurtTime");
         this.deathTime = tag.getShort("DeathTime");
         this.lastHurtByMobTimestamp = tag.getInt("HurtByTimestamp");
-        if (tag.contains("Team", NBTType.STRING)) {
+        if (tag.contains("Team", Tag.TAG_STRING)) {
             String teamName = tag.getString("Team");
             PlayerTeam team = this.level.getScoreboard().getPlayerTeam(teamName);
             boolean teamExists = team != null && this.level.getScoreboard().addPlayerToTeam(this.getStringUUID(), team);
@@ -1578,7 +1577,7 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
         if (tag.getBoolean("FallFlying")) {
             this.setSharedFlag(7, true);
         }
-        if (tag.contains("SleepingX", NBTType.ANY_NUMERIC) && tag.contains("SleepingY", NBTType.ANY_NUMERIC) && tag.contains("SleepingZ", NBTType.ANY_NUMERIC)) {
+        if (tag.contains("SleepingX", Tag.TAG_ANY_NUMERIC) && tag.contains("SleepingY", Tag.TAG_ANY_NUMERIC) && tag.contains("SleepingZ", Tag.TAG_ANY_NUMERIC)) {
             BlockPos blockpos = new BlockPos(tag.getInt("SleepingX"), tag.getInt("SleepingY"), tag.getInt("SleepingZ"));
             this.setSleepingPos(blockpos);
             this.entityData.set(DATA_POSE, Pose.SLEEPING);
@@ -1586,7 +1585,7 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
                 this.setPosToBed(blockpos);
             }
         }
-        if (tag.contains("Brain", NBTType.COMPOUND)) {
+        if (tag.contains("Brain", Tag.TAG_COMPOUND)) {
             this.brain = this.makeBrain(new Dynamic<>(NbtOps.INSTANCE, tag.get("Brain")));
         }
         this.effectHelper.fromNBT(tag.getCompound("EffectHelper"));

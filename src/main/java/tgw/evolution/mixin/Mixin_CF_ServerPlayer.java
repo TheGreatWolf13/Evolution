@@ -67,7 +67,6 @@ import tgw.evolution.patches.obj.ContainerListenerImpl;
 import tgw.evolution.patches.obj.ContainerSynchronizerImpl;
 import tgw.evolution.util.NBTHelper;
 import tgw.evolution.util.OptionalMutableChunkPos;
-import tgw.evolution.util.PlayerHelper;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.damage.DamageSourceEv;
 import tgw.evolution.util.math.ChunkPosMutable;
@@ -317,8 +316,6 @@ public abstract class Mixin_CF_ServerPlayer extends Player implements PatchServe
         }
         this.level.broadcastEntityEvent(this, (byte) 3);
         this.awardStat(EvolutionStats.DEATHS);
-        PlayerHelper.takeStat(this, Stats.CUSTOM.get(EvolutionStats.TIME_SINCE_LAST_DEATH));
-        PlayerHelper.takeStat(this, Stats.CUSTOM.get(EvolutionStats.TIME_SINCE_LAST_REST));
         ResourceLocation stat = EvolutionStats.DEATH_SOURCE.get(source.msgId);
         if (stat != null) {
             this.awardStat(stat);

@@ -1,5 +1,6 @@
 package tgw.evolution.util.constants;
 
+import net.minecraft.nbt.Tag;
 import org.intellij.lang.annotations.MagicConstant;
 
 import java.lang.annotation.ElementType;
@@ -9,21 +10,20 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.TYPE_USE)
-@MagicConstant(valuesFromClass = NBTType.class)
+@MagicConstant(intValues = {Tag.TAG_END,
+                            Tag.TAG_BYTE,
+                            Tag.TAG_SHORT,
+                            Tag.TAG_INT,
+                            Tag.TAG_LONG,
+                            Tag.TAG_FLOAT,
+                            Tag.TAG_DOUBLE,
+                            Tag.TAG_BYTE_ARRAY,
+                            Tag.TAG_STRING,
+                            Tag.TAG_LIST,
+                            Tag.TAG_COMPOUND,
+                            Tag.TAG_INT_ARRAY,
+                            Tag.TAG_LONG_ARRAY,
+                            Tag.TAG_ANY_NUMERIC})
 public @interface NBTType {
 
-    int END = 0;
-    int BYTE = 1;
-    int SHORT = 2;
-    int INT = 3;
-    int LONG = 4;
-    int FLOAT = 5;
-    int DOUBLE = 6;
-    int BYTE_ARRAY = 7;
-    int STRING = 8;
-    int LIST = 9;
-    int COMPOUND = 10;
-    int INT_ARRAY = 11;
-    int LONG_ARRAY = 12;
-    int ANY_NUMERIC = 99;
 }

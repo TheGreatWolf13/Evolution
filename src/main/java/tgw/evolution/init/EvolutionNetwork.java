@@ -99,7 +99,8 @@ public final class EvolutionNetwork {
                   .addPacket(PacketSCBlockUpdate.class, PacketSCBlockUpdate::new)
                   .addPacket(PacketSCLevelEvent.class, PacketSCLevelEvent::new)
                   .addPacket(PacketSCSectionBlocksUpdate.class, PacketSCSectionBlocksUpdate::new)
-                  .addPacket(PacketSCLoadFactor.class, PacketSCLoadFactor::new);
+                  .addPacket(PacketSCLoadFactor.class, PacketSCLoadFactor::new)
+                  .addPacket(PacketSCTimeAlive.class, PacketSCTimeAlive::new);
     }
 
     private static <T extends IEntitySpawnData.EntityData> void registerSpawnData(Class<T> clazz, Function<FriendlyByteBuf, T> maker) {

@@ -33,7 +33,6 @@ import tgw.evolution.util.collection.lists.EitherList;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.constants.HarvestLevel;
-import tgw.evolution.util.constants.NBTType;
 
 import java.util.List;
 import java.util.Optional;
@@ -230,10 +229,10 @@ public final class ItemEvents {
         if (stack.hasTag()) {
             CompoundTag tag = stack.getTag();
             assert tag != null;
-            if (tag.contains("display", NBTType.COMPOUND)) {
+            if (tag.contains("display", Tag.TAG_COMPOUND)) {
                 CompoundTag nbt = tag.getCompound("display");
                 //Color
-                if (nbt.contains("color", NBTType.INT)) {
+                if (nbt.contains("color", Tag.TAG_INT)) {
                     if (isAdvanced) {
                         tooltip.addLeft(new TranslatableComponent("item.color", String.format("#%06X", nbt.getInt("color"))).withStyle(ChatFormatting.GRAY));
                     }
@@ -243,7 +242,7 @@ public final class ItemEvents {
                 }
                 //Lore
                 if (nbt.getTagType("Lore") == Tag.TAG_LIST) {
-                    ListTag lore = nbt.getList("Lore", NBTType.STRING);
+                    ListTag lore = nbt.getList("Lore", Tag.TAG_STRING);
                     for (int j = 0; j < lore.size(); j++) {
                         String s = lore.getString(j);
                         try {
