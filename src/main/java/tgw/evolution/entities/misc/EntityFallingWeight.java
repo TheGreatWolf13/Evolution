@@ -273,12 +273,14 @@ public class EntityFallingWeight extends Entity implements IEntitySpawnData {
         BlockState state = this.level.getBlockState_(x, y, z);
         if ((!isInWater || this.onGround) && state.getBlock() != Blocks.MOVING_PISTON) {
             this.discard();
-            if (BlockUtils.isReplaceable(state)) {
-                this.level.destroyBlock_(x, y, z, true);
-                this.level.setBlockAndUpdate_(x, y, z, this.state);
-            }
-            else if (this.level.getGameRules().getBoolean(GameRules.RULE_DOENTITYDROPS) && !this.level.isClientSide) {
-                this.state.dropLoot((ServerLevel) this.level, x, y, z, ItemStack.EMPTY, null, null, this.level.random, DROPPER.setup(this));
+            if (!this.level.isClientSide) {
+                if (BlockUtils.isReplaceable(state)) {
+                    this.level.destroyBlock_(x, y, z, true);
+                    this.level.setBlockAndUpdate_(x, y, z, this.state);
+                }
+                else if (this.level.getGameRules().getBoolean(GameRules.RULE_DOENTITYDROPS)) {
+                    this.state.dropLoot((ServerLevel) this.level, x, y, z, ItemStack.EMPTY, null, null, this.level.random, DROPPER.setup(this));
+                }
             }
         }
     }
