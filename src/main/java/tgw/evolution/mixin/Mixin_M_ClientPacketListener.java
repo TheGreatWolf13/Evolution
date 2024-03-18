@@ -511,6 +511,26 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
         }
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Override
+    @Overwrite
+    public void handlePlayerCombatKill(ClientboundPlayerCombatKillPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        assert this.minecraft.player != null;
+        Entity entity = this.level.getEntity(packet.getPlayerId());
+        if (entity == this.minecraft.player) {
+            if (this.minecraft.player.shouldShowDeathScreen()) {
+                this.minecraft.setScreen(new DeathScreen(packet.getMessage(), this.level.getLevelData().isHardcore()).setTimeAlive(packet.getTimeAlive()));
+            }
+            else {
+                this.minecraft.player.respawn();
+            }
+        }
+    }
+
     @Override
     public void handleRemoveEffect(PacketSCRemoveEffect packet) {
         PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
@@ -711,12 +731,6 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
         CapabilityThirst thirst = CapabilityThirst.CLIENT_INSTANCE;
         thirst.setThirstLevel(packet.thirstLevel);
         thirst.setHydrationLevel(packet.hydrationLevel);
-    }
-
-    @Override
-    public void handleTimeAlive(PacketSCTimeAlive packet) {
-        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
-        ClientEvents.getInstance().timeSinceLastDeath = packet.timeSinceLastDeath;
     }
 
     @Override

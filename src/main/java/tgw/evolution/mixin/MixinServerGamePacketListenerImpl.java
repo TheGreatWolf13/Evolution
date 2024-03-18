@@ -131,7 +131,6 @@ public abstract class MixinServerGamePacketListenerImpl implements ServerGamePac
                         player.setGameMode(GameType.SPECTATOR);
                         player.getLevel().getGameRules().getRule(GameRules.RULE_SPECTATORSGENERATECHUNKS).set(false, this.server);
                     }
-                    player.connection.send(new PacketSCTimeAlive(player.getStats().getValue_(Stats.CUSTOM.get(EvolutionStats.TIME_SINCE_LAST_DEATH))));
                 }
             }
             case REQUEST_STATS -> player.getStats().sendStats(player);

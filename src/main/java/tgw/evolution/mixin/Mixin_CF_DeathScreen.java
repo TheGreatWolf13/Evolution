@@ -10,17 +10,17 @@ import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.chat.TranslatableComponent;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.*;
-import tgw.evolution.events.ClientEvents;
 import tgw.evolution.hooks.asm.DeleteField;
 import tgw.evolution.hooks.asm.ModifyConstructor;
 import tgw.evolution.hooks.asm.RestoreFinal;
 import tgw.evolution.init.EvolutionTexts;
+import tgw.evolution.patches.PatchDeathScreen;
 import tgw.evolution.util.time.Time;
 
 import java.util.List;
 
 @Mixin(DeathScreen.class)
-public abstract class Mixin_CF_DeathScreen extends Screen {
+public abstract class Mixin_CF_DeathScreen extends Screen implements PatchDeathScreen {
 
     @Mutable @Shadow @Final @RestoreFinal private @Nullable Component causeOfDeath;
     @Shadow private Component deathScore;
@@ -29,11 +29,12 @@ public abstract class Mixin_CF_DeathScreen extends Screen {
     @Mutable @Shadow @Final @RestoreFinal private boolean hardcore;
     @Unique private Button rageQuitBtn;
     @Unique private Button respawnBtn;
+    @Unique private long timeAlive;
 
     @ModifyConstructor
-    public Mixin_CF_DeathScreen(@Nullable Component component, boolean hardcore) {
+    public Mixin_CF_DeathScreen(@Nullable Component causeOfDeath, boolean hardcore) {
         super(new TranslatableComponent(hardcore ? "deathScreen.title.hardcore" : "deathScreen.title"));
-        this.causeOfDeath = component;
+        this.causeOfDeath = causeOfDeath;
         this.hardcore = hardcore;
     }
 
@@ -69,13 +70,18 @@ public abstract class Mixin_CF_DeathScreen extends Screen {
             }
         }));
         this.rageQuitBtn.active = false;
-        long timeSinceLastDeath = ClientEvents.getInstance().timeSinceLastDeath;
-        if (timeSinceLastDeath != -1) {
-            this.deathScore = new TranslatableComponent("evolution.gui.death.timeAlive").append(": ").append(Time.getFormattedTime(timeSinceLastDeath).withStyle(ChatFormatting.YELLOW));
+        if (this.timeAlive != -1) {
+            this.deathScore = new TranslatableComponent("evolution.gui.death.timeAlive").append(": ").append(Time.getFormattedTime(this.timeAlive).withStyle(ChatFormatting.YELLOW));
         }
         else {
             this.deathScore = EvolutionTexts.EMPTY;
         }
+    }
+
+    @Override
+    public DeathScreen setTimeAlive(long timeAlive) {
+        this.timeAlive = timeAlive;
+        return (DeathScreen) (Object) this;
     }
 
     /**

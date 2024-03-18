@@ -271,16 +271,16 @@ public abstract class Mixin_CF_ServerPlayer extends Player implements PatchServe
             corpse.setInventory((ServerPlayer) (Object) this);
         }
         this.level.addFreshEntity(corpse);
-        boolean showDeathMessage = this.level.getGameRules().getBoolean(GameRules.RULE_SHOWDEATHMESSAGES);
-        if (showDeathMessage) {
+        long timeAlive = this.getStats().getValue_(Stats.CUSTOM.get(EvolutionStats.TIME_SINCE_LAST_DEATH));
+        if (this.level.getGameRules().getBoolean(GameRules.RULE_SHOWDEATHMESSAGES)) {
             Component deathMessage = this.getCombatTracker().getDeathMessage();
-            this.connection.send(new ClientboundPlayerCombatKillPacket(this.getCombatTracker(), deathMessage), future -> {
+            this.connection.send(new ClientboundPlayerCombatKillPacket(this.getCombatTracker(), deathMessage).setTimeAlive(timeAlive), future -> {
                 if (!future.isSuccess()) {
                     String string = deathMessage.getString(256);
                     Component desc = new TranslatableComponent("death.attack.message_too_long",
                                                                new TextComponent(string).withStyle(ChatFormatting.YELLOW));
                     Component longMessage = new TranslatableComponent("death.attack.even_more_magic", this.getDisplayName()).withStyle(style -> style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, desc)));
-                    this.connection.send(new ClientboundPlayerCombatKillPacket(this.getCombatTracker(), longMessage));
+                    this.connection.send(new ClientboundPlayerCombatKillPacket(this.getCombatTracker(), longMessage).setTimeAlive(timeAlive));
                 }
             });
             Team team = this.getTeam();
@@ -297,7 +297,7 @@ public abstract class Mixin_CF_ServerPlayer extends Player implements PatchServe
             }
         }
         else {
-            this.connection.send(new ClientboundPlayerCombatKillPacket(this.getCombatTracker(), TextComponent.EMPTY));
+            this.connection.send(new ClientboundPlayerCombatKillPacket(this.getCombatTracker(), TextComponent.EMPTY).setTimeAlive(timeAlive));
         }
         this.removeEntitiesOnShoulder();
         if (this.level.getGameRules().getBoolean(GameRules.RULE_FORGIVE_DEAD_PLAYERS)) {
@@ -419,6 +419,9 @@ public abstract class Mixin_CF_ServerPlayer extends Player implements PatchServe
     public CapabilityStamina getStaminaStats() {
         return this.staminaStats;
     }
+
+    @Shadow
+    public abstract ServerStatsCounter getStats();
 
     @Override
     public CapabilityTemperature getTemperatureStats() {

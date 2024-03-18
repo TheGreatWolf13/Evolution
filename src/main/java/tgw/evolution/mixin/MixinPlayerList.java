@@ -30,7 +30,6 @@ import net.minecraft.server.players.PlayerList;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.ServerStatsCounter;
-import net.minecraft.stats.Stats;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.TagNetworkSerialization;
 import net.minecraft.util.Mth;
@@ -54,7 +53,10 @@ import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.events.EntityEvents;
 import tgw.evolution.hooks.TickrateChanger;
 import tgw.evolution.init.EvolutionStats;
-import tgw.evolution.network.*;
+import tgw.evolution.network.Message;
+import tgw.evolution.network.PacketSCChangeTickrate;
+import tgw.evolution.network.PacketSCFixRotation;
+import tgw.evolution.network.PacketSCSimpleMessage;
 import tgw.evolution.util.NBTHelper;
 
 import javax.annotation.Nullable;
@@ -169,7 +171,6 @@ public abstract class MixinPlayerList {
         listener.send(packet);
         listener.send(new ClientboundCustomPayloadPacket(ClientboundCustomPayloadPacket.BRAND, new FriendlyByteBuf(Unpooled.buffer()).writeUtf(this.getServer().getServerModName())));
         listener.send(new ClientboundChangeDifficultyPacket(levelData.getDifficulty(), levelData.isDifficultyLocked()));
-        listener.send(new PacketSCTimeAlive(player.getStats().getValue_(Stats.CUSTOM.get(EvolutionStats.TIME_SINCE_LAST_DEATH))));
         listener.send(new ClientboundPlayerAbilitiesPacket(player.getAbilities()));
         listener.send(new ClientboundSetCarriedItemPacket(player.getInventory().selected));
         listener.send(new ClientboundUpdateRecipesPacket(this.server.getRecipeManager().getRecipes()));

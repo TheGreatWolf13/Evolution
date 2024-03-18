@@ -17,6 +17,7 @@
     "Mixin_CF_ChunkAccess",
     "Mixin_CF_ClientboundBlockEntityDataPacket",
     "Mixin_CF_ClientboundLevelChunkPacketData",
+    "Mixin_CF_ClientboundPlayerCombatKillPacket",
     "Mixin_CF_ClipContext",
     "Mixin_CF_HitResult",
     "Mixin_CF_LayerLightEngine",

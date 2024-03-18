@@ -1499,7 +1499,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
                 assert this.player != null;
                 if (this.player.isDeadOrDying()) {
                     if (this.player.shouldShowDeathScreen()) {
-                        screen = new DeathScreen(null, this.level.getLevelData().isHardcore());
+                        screen = new DeathScreen(null, this.level.getLevelData().isHardcore()).setTimeAlive(-1);
                     }
                     else {
                         this.player.respawn();

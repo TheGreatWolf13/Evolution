@@ -381,6 +381,12 @@
       ],
       "net/minecraft/stats/StatsCounter": [
         "tgw/evolution/patches/PatchStatsCounter"
+      ],
+      "net/minecraft/network/protocol/game/ClientboundPlayerCombatKillPacket": [
+        "tgw/evolution/patches/PatchClientboundPlayerCombatKillPacket"
+      ],
+      "net/minecraft/client/gui/screens/DeathScreen": [
+        "tgw/evolution/patches/PatchDeathScreen"
       ]
     }
   }

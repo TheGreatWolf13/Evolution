@@ -23,7 +23,6 @@ import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.network.PacketSCAddEffect;
 import tgw.evolution.network.PacketSCFixRotation;
 import tgw.evolution.network.PacketSCRemoveEffect;
-import tgw.evolution.network.PacketSCTimeAlive;
 import tgw.evolution.patches.PatchServerPlayer;
 import tgw.evolution.util.PlayerHelper;
 import tgw.evolution.util.Temperature;
@@ -31,7 +30,6 @@ import tgw.evolution.util.collection.maps.O2OHashMap;
 import tgw.evolution.util.constants.SkinType;
 import tgw.evolution.util.math.Metric;
 import tgw.evolution.util.physics.WindVector;
-import tgw.evolution.util.time.Time;
 
 import java.util.Map;
 import java.util.UUID;
@@ -106,10 +104,6 @@ public final class EntityEvents {
         }
         if (player.isAlive()) {
             player.awardStat(EvolutionStats.TIME_SINCE_LAST_DEATH);
-        }
-        if (!level.isClientSide && player.tickCount % Time.TICKS_PER_HOUR == 0) {
-            ServerPlayer p = (ServerPlayer) player;
-            p.connection.send(new PacketSCTimeAlive(p.getStats().getValue_(Stats.CUSTOM.get(EvolutionStats.TIME_SINCE_LAST_DEATH))));
         }
         profiler.popPush("status");
         //Handles Status Updates
