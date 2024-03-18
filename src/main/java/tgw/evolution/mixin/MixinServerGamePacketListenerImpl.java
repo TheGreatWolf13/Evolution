@@ -133,6 +133,23 @@ public abstract class MixinServerGamePacketListenerImpl implements ServerGamePac
         this.player.hurt(EvolutionDamage.WALL_IMPACT, packet.damage);
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Override
+    @Overwrite
+    public void handleKeepAlive(ServerboundKeepAlivePacket packet) {
+        if (this.keepAlivePending && packet.getId() == this.keepAliveChallenge) {
+            int i = (int) (Util.getMillis() - this.keepAliveTime);
+            this.player.latency = (this.player.latency + i) / 2;
+            this.keepAlivePending = false;
+        }
+        else if (!this.isSingleplayerOwner()) {
+            this.disconnect(new TranslatableComponent("disconnect.timeout"));
+        }
+    }
+
 //    @Override
 //    public void handleChangeBlock(PacketCSChangeBlock packet) {
 //        PacketUtils.ensureRunningOnSameThread(packet, this, this.player.getLevel());
@@ -427,6 +444,9 @@ public abstract class MixinServerGamePacketListenerImpl implements ServerGamePac
             LOGGER.warn("Ignoring UseItemOnPacket from {}: hit position [{}, {}, {}] too far away from player {}.", this.player.getGameProfile().getName(), x, y, z, this.player.blockPosition());
         }
     }
+
+    @Shadow
+    protected abstract boolean isSingleplayerOwner();
 
     @SuppressWarnings("MethodMayBeStatic")
     @Redirect(method = "handleInteract", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/border/WorldBorder;isWithinBounds(Lnet/minecraft/core/BlockPos;)Z"))
