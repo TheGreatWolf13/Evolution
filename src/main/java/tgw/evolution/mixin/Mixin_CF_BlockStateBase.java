@@ -90,8 +90,8 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
     }
 
     @Override
-    public void attack_(Level level, int x, int y, int z, Direction face, double hitX, double hitY, double hitZ, Player player) {
-        this.getBlock().attack_(this.asState(), level, x, y, z, face, hitX, hitY, hitZ, player);
+    public InteractionResult attack_(Level level, int x, int y, int z, Direction face, double hitX, double hitY, double hitZ, Player player) {
+        return this.getBlock().attack_(this.asState(), level, x, y, z, face, hitX, hitY, hitZ, player);
     }
 
     @Override
@@ -243,6 +243,7 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
 
     @Override
     public VoxelShape getFaceOcclusionShape_(BlockGetter level, int x, int y, int z, Direction face) {
+        //noinspection ConstantValue
         return this.cache != null && this.cache.occlusionShapes != null ?
                this.cache.occlusionShapes[face.ordinal()] :
                Shapes.getFaceShape(this.getOcclusionShape_(level, x, y, z), face);

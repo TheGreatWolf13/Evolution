@@ -45,11 +45,12 @@ public abstract class Mixin_M_NoteBlock extends Block {
     }
 
     @Override
-    public void attack_(BlockState state, Level level, int x, int y, int z, Direction face, double hitX, double hitY, double hitZ, Player player) {
+    public InteractionResult attack_(BlockState state, Level level, int x, int y, int z, Direction face, double hitX, double hitY, double hitZ, Player player) {
         if (!level.isClientSide) {
             this.playNote(level, new BlockPos(x, y, z));
             player.awardStat(Stats.PLAY_NOTEBLOCK);
         }
+        return InteractionResult.PASS;
     }
 
     /**

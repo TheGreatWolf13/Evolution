@@ -88,13 +88,13 @@ public class BlockPitKiln extends BlockGeneric implements IReplaceable, EntityBl
     }
 
     @Override
-    public void attack_(BlockState state, Level level, int x, int y, int z, Direction face, double hitX, double hitY, double hitZ, Player player) {
+    public InteractionResult attack_(BlockState state, Level level, int x, int y, int z, Direction face, double hitX, double hitY, double hitZ, Player player) {
         if (level.isClientSide) {
-            return;
+            return InteractionResult.PASS;
         }
         int layers = state.getValue(LAYERS_0_16);
         if (layers == 0) {
-            return;
+            return InteractionResult.PASS;
         }
         if (layers <= 8) {
             level.setBlockAndUpdate(new BlockPos(x, y, z), state.setValue(LAYERS_0_16, layers - 1));
@@ -102,7 +102,7 @@ public class BlockPitKiln extends BlockGeneric implements IReplaceable, EntityBl
             if (!player.getInventory().add(stack)) {
                 BlockUtils.dropItemStack(level, x, y, z, stack);
             }
-            return;
+            return InteractionResult.PASS;
         }
         if (level.getBlockEntity_(x, y, z) instanceof TEPitKiln tile) {
             level.setBlockAndUpdate(new BlockPos(x, y, z), state.setValue(LAYERS_0_16, layers - 1));
@@ -113,6 +113,7 @@ public class BlockPitKiln extends BlockGeneric implements IReplaceable, EntityBl
                 BlockUtils.dropItemStack(level, x, y, z, stack);
             }
         }
+        return InteractionResult.PASS;
     }
 
     @Override

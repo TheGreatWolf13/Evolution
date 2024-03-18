@@ -185,17 +185,13 @@ public abstract class Mixin_CFM_MultiPlayerGameMode implements PatchMultiPlayerG
     }
 
     @Override
-    public void handleBlockBreakAck_(ClientLevel level,
-                                     long pos, BlockState state,
-                                     ServerboundPlayerActionPacket.Action action,
-                                     boolean allGood) {
+    public void handleBlockBreakAck_(ClientLevel level, long pos, BlockState state, ServerboundPlayerActionPacket.Action action, boolean allGood) {
         Vec3 position = this.unAckedActions_.remove(new L2OPair<>(pos, action));
         int x = BlockPos.getX(pos);
         int y = BlockPos.getY(pos);
         int z = BlockPos.getZ(pos);
         BlockState stateAtPos = level.getBlockState_(x, y, z);
-        if ((position == null || !allGood || action != ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK && stateAtPos != state) &&
-            stateAtPos != state) {
+        if ((position == null || !allGood || action != ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK && stateAtPos != state) && stateAtPos != state) {
             level.setKnownState_(x, y, z, state);
             Player player = this.minecraft.player;
             if (position != null) {
@@ -257,14 +253,7 @@ public abstract class Mixin_CFM_MultiPlayerGameMode implements PatchMultiPlayerG
     }
 
     @Unique
-    private void sendBlockAction(ServerboundPlayerActionPacket.Action action,
-                                 int x,
-                                 int y,
-                                 int z,
-                                 Direction direction,
-                                 double hitX,
-                                 double hitY,
-                                 double hitZ) {
+    private void sendBlockAction(ServerboundPlayerActionPacket.Action action, int x, int y, int z, Direction direction, double hitX, double hitY, double hitZ) {
         LocalPlayer player = this.minecraft.player;
         assert player != null;
         long pos = BlockPos.asLong(x, y, z);
@@ -289,17 +278,19 @@ public abstract class Mixin_CFM_MultiPlayerGameMode implements PatchMultiPlayerG
 
     @Override
     public boolean startDestroyBlock_(BlockHitResult hitResult) {
-        assert this.minecraft.player != null;
-        assert this.minecraft.level != null;
+        LocalPlayer player = this.minecraft.player;
+        ClientLevel level = this.minecraft.level;
+        assert player != null;
+        assert level != null;
         int x = hitResult.posX();
         int y = hitResult.posY();
         int z = hitResult.posZ();
         Direction face = hitResult.getDirection();
         this.creativeCooldownOff = 0;
-        if (this.minecraft.player.blockActionRestricted_(this.minecraft.level, x, y, z, this.localPlayerMode)) {
+        if (player.blockActionRestricted_(level, x, y, z, this.localPlayerMode)) {
             return false;
         }
-        if (!this.minecraft.level.getWorldBorder().isWithinBounds_(x, z)) {
+        if (!level.getWorldBorder().isWithinBounds_(x, z)) {
             return false;
         }
         if (this.localPlayerMode.isCreative()) {
@@ -309,27 +300,36 @@ public abstract class Mixin_CFM_MultiPlayerGameMode implements PatchMultiPlayerG
         }
         else if (!this.isDestroying || !this.sameDestroyTarget(x, y, z)) {
             if (this.isDestroying) {
+                this.destroyProgress = 0;
                 this.sendBlockAction(ServerboundPlayerActionPacket.Action.ABORT_DESTROY_BLOCK, this.destroyBlockPos.getX(), this.destroyBlockPos.getY(), this.destroyBlockPos.getZ(), face);
-                this.minecraft.level.destroyBlockProgress(this.minecraft.player.getId(), this.destroyBlockPos.asLong(), -1);
+                level.destroyBlockProgress(player.getId(), this.destroyBlockPos.asLong(), -1);
             }
             ((BlockPos.MutableBlockPos) this.destroyBlockPos).set(x, y, z);
-            BlockState state = this.minecraft.level.getBlockState_(x, y, z);
+            BlockState state = level.getBlockState_(x, y, z);
             this.sendBlockAction(ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, x, y, z, face, hitResult.x(), hitResult.y(), hitResult.z());
             boolean notAir = !state.isAir();
+            InteractionResult result = InteractionResult.PASS;
             if (notAir && this.destroyProgress == 0.0F) {
-                state.attack_(this.minecraft.level, x, y, z, face, hitResult.x(), hitResult.y(), hitResult.z(), this.minecraft.player);
+                result = state.attack_(level, x, y, z, face, hitResult.x(), hitResult.y(), hitResult.z(), player);
             }
-            if (notAir && state.getDestroyProgress_(this.minecraft.player, this.minecraft.player.level, x, y, z) >= 1.0F) {
-                this.destroyBlock_(x, y, z);
+            if (result.consumesAction()) {
+                this.isDestroying = false;
                 this.destroyProgress = 0;
-                this.destroyTicks = 0.0F;
+                ((BlockPos.MutableBlockPos) this.destroyBlockPos).set(x + 16, y + 16, z + 16);
             }
             else {
-                this.isDestroying = true;
-                this.destroyingItem = this.minecraft.player.getMainHandItem();
-                this.destroyProgress = 0;
-                this.destroyTicks = 0.0F;
-                this.minecraft.level.destroyBlockProgress(this.minecraft.player.getId(), this.destroyBlockPos.asLong(), this.getBlockBreakingProgress());
+                if (notAir && state.getDestroyProgress_(player, player.level, x, y, z) >= 1.0F) {
+                    this.destroyBlock_(x, y, z);
+                    this.destroyProgress = 0;
+                    this.destroyTicks = 0.0F;
+                }
+                else {
+                    this.isDestroying = true;
+                    this.destroyingItem = player.getMainHandItem();
+                    this.destroyProgress = 0;
+                    this.destroyTicks = 0.0F;
+                    level.destroyBlockProgress(player.getId(), this.destroyBlockPos.asLong(), this.getBlockBreakingProgress());
+                }
             }
         }
         return true;
@@ -342,13 +342,14 @@ public abstract class Mixin_CFM_MultiPlayerGameMode implements PatchMultiPlayerG
     @Overwrite
     public void stopDestroyBlock() {
         if (this.isDestroying) {
+            LocalPlayer player = this.minecraft.player;
             assert this.minecraft.level != null;
-            assert this.minecraft.player != null;
+            assert player != null;
             this.sendBlockAction(ServerboundPlayerActionPacket.Action.ABORT_DESTROY_BLOCK, this.destroyBlockPos.getX(), this.destroyBlockPos.getY(), this.destroyBlockPos.getZ(), Direction.DOWN);
             this.isDestroying = false;
             this.destroyProgress = 0.0F;
-            this.minecraft.level.destroyBlockProgress(this.minecraft.player.getId(), this.destroyBlockPos.asLong(), -1);
-            this.minecraft.player.resetAttackStrengthTicker();
+            this.minecraft.level.destroyBlockProgress(player.getId(), this.destroyBlockPos.asLong(), -1);
+            player.resetAttackStrengthTicker();
         }
     }
 

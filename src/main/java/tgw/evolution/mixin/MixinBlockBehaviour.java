@@ -54,7 +54,8 @@ public abstract class MixinBlockBehaviour implements PatchBlockBehaviour {
     }
 
     @Override
-    public void attack_(BlockState state, Level level, int x, int y, int z, Direction face, double hitX, double hitY, double hitZ, Player player) {
+    public InteractionResult attack_(BlockState state, Level level, int x, int y, int z, Direction face, double hitX, double hitY, double hitZ, Player player) {
+        return InteractionResult.PASS;
     }
 
     @Override

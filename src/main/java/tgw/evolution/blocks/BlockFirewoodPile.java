@@ -5,6 +5,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -41,9 +42,9 @@ public class BlockFirewoodPile extends BlockPhysics implements IReplaceable, Ent
     }
 
     @Override
-    public void attack_(BlockState state, Level level, int x, int y, int z, Direction face, double hitX, double hitY, double hitZ, Player player) {
+    public InteractionResult attack_(BlockState state, Level level, int x, int y, int z, Direction face, double hitX, double hitY, double hitZ, Player player) {
         if (level.isClientSide) {
-            return;
+            return InteractionResult.PASS;
         }
         if (Math.abs(x + 0.5 - player.getX()) < 1.75 &&
             Math.abs(y - player.getY()) < 1.75 &&
@@ -57,10 +58,12 @@ public class BlockFirewoodPile extends BlockPhysics implements IReplaceable, Ent
             }
             if (state.getValue(FIREWOOD_COUNT) == 1) {
                 level.removeBlock_(x, y, z, false);
-                return;
+                return InteractionResult.SUCCESS;
             }
             level.setBlockAndUpdate_(x, y, z, state.setValue(FIREWOOD_COUNT, state.getValue(FIREWOOD_COUNT) - 1));
+            return InteractionResult.SUCCESS;
         }
+        return InteractionResult.PASS;
     }
 
     @Override

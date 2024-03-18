@@ -90,7 +90,7 @@ public class BlockClimbingStake extends BlockGeneric implements IReplaceable, IR
     }
 
     @Override
-    public void attack_(BlockState state, Level level, int x, int y, int z, Direction face, double hitX, double hitY, double hitZ, Player player) {
+    public InteractionResult attack_(BlockState state, Level level, int x, int y, int z, Direction face, double hitX, double hitY, double hitZ, Player player) {
 //        ItemStack mainhandStack = player.getMainHandItem();
 //        if (player.isOnGround() && ItemUtils.isHammer(mainhandStack)) {
 //            if (!state.getValue(HIT)) {
@@ -112,6 +112,7 @@ public class BlockClimbingStake extends BlockGeneric implements IReplaceable, IR
 //        level.removeBlock(pos, true);
 //        dropResources(state, level, pos);
 //        level.playSound(player, pos, SoundEvents.METAL_BREAK, SoundSource.BLOCKS, 1.0f, 1.0f);
+        return InteractionResult.PASS;
     }
 
     @Override

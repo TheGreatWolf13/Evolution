@@ -22,7 +22,7 @@ import java.util.function.Consumer;
 
 public interface PatchBlockBehaviour {
 
-    default void attack_(BlockState state, Level level, int x, int y, int z, Direction face, double hitX, double hitY, double hitZ, Player player) {
+    default InteractionResult attack_(BlockState state, Level level, int x, int y, int z, Direction face, double hitX, double hitY, double hitZ, Player player) {
         throw new AbstractMethodError();
     }
 

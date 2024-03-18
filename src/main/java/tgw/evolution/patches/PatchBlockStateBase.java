@@ -3,6 +3,7 @@ package tgw.evolution.patches;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
@@ -22,7 +23,7 @@ import java.util.function.Consumer;
 
 public interface PatchBlockStateBase {
 
-    default void attack_(Level level, int x, int y, int z, Direction face, double hitX, double hitY, double hitZ, Player player) {
+    default InteractionResult attack_(Level level, int x, int y, int z, Direction face, double hitX, double hitY, double hitZ, Player player) {
         throw new AbstractMethodError();
     }
 

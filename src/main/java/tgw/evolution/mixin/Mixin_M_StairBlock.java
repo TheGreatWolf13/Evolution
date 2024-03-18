@@ -82,8 +82,8 @@ public abstract class Mixin_M_StairBlock extends Block implements SimpleWaterlog
     }
 
     @Override
-    public void attack_(BlockState state, Level level, int x, int y, int z, Direction face, double hitX, double hitY, double hitZ, Player player) {
-        this.baseState.attack_(level, x, y, z, face, hitX, hitY, hitZ, player);
+    public InteractionResult attack_(BlockState state, Level level, int x, int y, int z, Direction face, double hitX, double hitY, double hitZ, Player player) {
+        return this.baseState.attack_(level, x, y, z, face, hitX, hitY, hitZ, player);
     }
 
     /**

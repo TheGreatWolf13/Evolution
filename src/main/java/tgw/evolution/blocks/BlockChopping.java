@@ -44,9 +44,9 @@ public class BlockChopping extends BlockPhysics implements IReplaceable, ISittab
     }
 
     @Override
-    public void attack_(BlockState state, Level level, int x, int y, int z, Direction face, double hitX, double hitY, double hitZ, Player player) {
+    public InteractionResult attack_(BlockState state, Level level, int x, int y, int z, Direction face, double hitX, double hitY, double hitZ, Player player) {
         if (!(level.getBlockEntity_(x, y, z) instanceof TEChopping chopping)) {
-            return;
+            return InteractionResult.PASS;
         }
         if (chopping.hasLog()) {
             if (ItemUtils.isAxe(player.getMainHandItem())) {
@@ -57,8 +57,10 @@ public class BlockChopping extends BlockPhysics implements IReplaceable, ISittab
                 else {
                     level.playSound(player, x + 0.5, y + 0.5, z + 0.5, SoundEvents.WOOD_HIT, SoundSource.PLAYERS, 1.0f, 1.0f);
                 }
+                return InteractionResult.SUCCESS;
             }
         }
+        return InteractionResult.PASS;
     }
 
     @Override
@@ -94,11 +96,11 @@ public class BlockChopping extends BlockPhysics implements IReplaceable, ISittab
 
     @Override
     public int getHarvestLevel(BlockState state, Level level, int x, int y, int z) {
-        if (level.getBlockEntity_(x, y, z) instanceof TEChopping te) {
-            if (te.hasLog()) {
-                return HarvestLevel.UNBREAKABLE;
-            }
-        }
+//        if (level.getBlockEntity_(x, y, z) instanceof TEChopping te) {
+//            if (te.hasLog()) {
+//                return HarvestLevel.UNBREAKABLE;
+//            }
+//        }
         return HarvestLevel.STONE;
     }
 

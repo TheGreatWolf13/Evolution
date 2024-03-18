@@ -115,9 +115,10 @@ public abstract class Mixin_M_RedStoneOreBlock extends Block {
     }
 
     @Override
-    public void attack_(BlockState state, Level level, int x, int y, int z, Direction face, double hitX, double hitY, double hitZ, Player player) {
+    public InteractionResult attack_(BlockState state, Level level, int x, int y, int z, Direction face, double hitX, double hitY, double hitZ, Player player) {
         interact(state, level, x, y, z);
         super.attack_(state, level, x, y, z, face, hitX, hitY, hitZ, player);
+        return InteractionResult.PASS;
     }
 
     /**

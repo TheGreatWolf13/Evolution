@@ -2,9 +2,9 @@ package tgw.evolution.blocks;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -17,7 +17,6 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Material;
-import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +28,9 @@ import tgw.evolution.init.EvolutionShapes;
 import tgw.evolution.items.ItemRock;
 import tgw.evolution.util.constants.RockVariant;
 import tgw.evolution.util.math.MathHelper;
+
+import java.util.Random;
+import java.util.function.Consumer;
 
 public class BlockKnapping extends BlockPhysics implements IReplaceable, IRockVariant, EntityBlock, IPoppable, IAir {
 
@@ -42,6 +44,26 @@ public class BlockKnapping extends BlockPhysics implements IReplaceable, IRockVa
     @Override
     public boolean allowsFrom(BlockState state, Direction from) {
         return from != Direction.DOWN;
+    }
+
+    @Override
+    public InteractionResult attack_(BlockState state, Level level, int x, int y, int z, Direction face, double hitX, double hitY, double hitZ, Player player) {
+        if (!(player.getMainHandItem().getItem() instanceof ItemRock)) {
+            return InteractionResult.PASS;
+        }
+        if (level.getBlockEntity_(x, y, z) instanceof TEKnapping tile) {
+            int partX = MathHelper.getIndex(8, 0, 16, MathHelper.hitOffset(Direction.Axis.X, (hitX - x) * 16, face));
+            int partZ = MathHelper.getIndex(8, 0, 16, MathHelper.hitOffset(Direction.Axis.Z, (hitZ - z) * 16, face));
+            if (!tile.getPart(partX, partZ) || tile.type.getPatternPart(partX, partZ)) {
+                return InteractionResult.CONSUME;
+            }
+            level.playSound(player, x + 0.5, y + 0.5, z + 0.5, SoundEvents.STONE_BREAK, SoundSource.BLOCKS, 1.0F, 0.75F);
+            tile.clearPart(partX, partZ);
+            tile.sendRenderUpdate();
+            tile.checkParts(player);
+            return InteractionResult.SUCCESS;
+        }
+        return InteractionResult.PASS;
     }
 
     @Override
@@ -61,6 +83,11 @@ public class BlockKnapping extends BlockPhysics implements IReplaceable, IRockVa
             return false;
         }
         return BlockUtils.hasSolidFace(level, x, y - 1, z, Direction.UP);
+    }
+
+    @Override
+    public void dropLoot(BlockState state, ServerLevel level, int x, int y, int z, ItemStack tool, @Nullable BlockEntity tile, @Nullable Entity entity, Random random, Consumer<ItemStack> consumer) {
+        consumer.accept(new ItemStack(this.variant.get(EvolutionItems.ROCKS)));
     }
 
     @Override
@@ -99,27 +126,5 @@ public class BlockKnapping extends BlockPhysics implements IReplaceable, IRockVa
     @Override
     public RockVariant rockVariant() {
         return this.variant;
-    }
-
-    @Override
-    public InteractionResult use_(BlockState state, Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hit) {
-        if (!(player.getItemInHand(hand).getItem() instanceof ItemRock)) {
-            return InteractionResult.PASS;
-        }
-        if (level.getBlockEntity_(x, y, z) instanceof TEKnapping tile) {
-            double hitX = (hit.x() - x) * 16;
-            double hitZ = (hit.z() - z) * 16;
-            int partX = MathHelper.getIndex(8, 0, 16, MathHelper.hitOffset(Direction.Axis.X, hitX, hit.getDirection()));
-            int partZ = MathHelper.getIndex(8, 0, 16, MathHelper.hitOffset(Direction.Axis.Z, hitZ, hit.getDirection()));
-            if (!tile.getPart(partX, partZ) || tile.type.getPatternPart(partX, partZ)) {
-                return InteractionResult.FAIL;
-            }
-            level.playSound(player, x + 0.5, y + 0.5, z + 0.5, SoundEvents.STONE_BREAK, SoundSource.BLOCKS, 1.0F, 0.75F);
-            tile.clearPart(partX, partZ);
-            tile.sendRenderUpdate();
-            tile.checkParts(player);
-            return InteractionResult.SUCCESS;
-        }
-        return InteractionResult.PASS;
     }
 }

@@ -122,13 +122,7 @@ public abstract class MixinServerPlayerGameMode implements PatchServerPlayerGame
     }
 
     @Override
-    public void handleBlockBreakAction_(long pos,
-                                        ServerboundPlayerActionPacket.Action action,
-                                        Direction direction,
-                                        double hitX,
-                                        double hitY,
-                                        double hitZ,
-                                        int buildHeight) {
+    public void handleBlockBreakAction_(long pos, ServerboundPlayerActionPacket.Action action, Direction direction, double hitX, double hitY, double hitZ, int buildHeight) {
         int x = BlockPos.getX(pos);
         int y = BlockPos.getY(pos);
         int z = BlockPos.getZ(pos);
@@ -138,11 +132,7 @@ public abstract class MixinServerPlayerGameMode implements PatchServerPlayerGame
         double distSqr = dx * dx + dy * dy + dz * dz;
         if (distSqr > 9 * 9 || distSqr > 6 * 6 && !this.player.isCreative()) {
             BlockState state;
-            if (this.player.level.getServer() != null &&
-                BlockPosUtil.getChessBoardDistance(this.player.chunkPosition(),
-                                                   SectionPos.blockToSectionCoord(x),
-                                                   SectionPos.blockToSectionCoord(z)) <
-                this.player.level.getServer().getPlayerList().getViewDistance()) {
+            if (this.player.level.getServer() != null && BlockPosUtil.getChessBoardDistance(this.player.chunkPosition(), SectionPos.blockToSectionCoord(x), SectionPos.blockToSectionCoord(z)) < this.player.level.getServer().getPlayerList().getViewDistance()) {
                 state = this.level.getBlockState_(x, y, z);
             }
             else {
@@ -170,28 +160,32 @@ public abstract class MixinServerPlayerGameMode implements PatchServerPlayerGame
                         return;
                     }
                     this.destroyProgressStart = this.gameTicks;
-                    float h = 1.0F;
+                    float destroyProgress = 1.0F;
                     stateAtPos = this.level.getBlockState_(x, y, z);
+                    InteractionResult result = InteractionResult.PASS;
                     if (!stateAtPos.isAir()) {
                         assert !Double.isNaN(hitX) && !Double.isNaN(hitY) && !Double.isNaN(hitZ) : "Received invalid hit pos!";
-                        stateAtPos.attack_(this.level, x, y, z, direction, hitX, hitY, hitZ, this.player);
-                        h = stateAtPos.getDestroyProgress_(this.player, this.player.level, x, y, z);
+                        result = stateAtPos.attack_(this.level, x, y, z, direction, hitX, hitY, hitZ, this.player);
+                        destroyProgress = stateAtPos.getDestroyProgress_(this.player, this.player.level, x, y, z);
                     }
-                    if (!stateAtPos.isAir() && h >= 1.0F) {
-                        this.destroyAndAck_(pos, action);
+                    if (result.consumesAction()) {
+                        this.isDestroyingBlock = false;
                     }
                     else {
-                        if (this.isDestroyingBlock) {
-                            this.player.connection.send(
-                                    new PacketSCBlockBreakAck(this.destroyPos.asLong(), this.level.getBlockState_(this.destroyPos),
-                                                              ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, false));
+                        if (!stateAtPos.isAir() && destroyProgress >= 1.0F) {
+                            this.destroyAndAck_(pos, action);
                         }
-                        this.isDestroyingBlock = true;
-                        ((BlockPos.MutableBlockPos) this.destroyPos).set(x, y, z);
-                        int j = (int) (h * 10.0F);
-                        this.level.destroyBlockProgress(this.player.getId(), pos, j);
-                        this.player.connection.send(new PacketSCBlockBreakAck(pos, this.level.getBlockState_(x, y, z), action, true));
-                        this.lastSentState = j;
+                        else {
+                            if (this.isDestroyingBlock) {
+                                this.player.connection.send(new PacketSCBlockBreakAck(this.destroyPos.asLong(), this.level.getBlockState_(this.destroyPos), ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, false));
+                            }
+                            this.isDestroyingBlock = true;
+                            ((BlockPos.MutableBlockPos) this.destroyPos).set(x, y, z);
+                            int j = (int) (destroyProgress * 10.0F);
+                            this.level.destroyBlockProgress(this.player.getId(), pos, j);
+                            this.player.connection.send(new PacketSCBlockBreakAck(pos, this.level.getBlockState_(x, y, z), action, true));
+                            this.lastSentState = j;
+                        }
                     }
                 }
                 case STOP_DESTROY_BLOCK -> {
@@ -221,8 +215,7 @@ public abstract class MixinServerPlayerGameMode implements PatchServerPlayerGame
                     if (x != this.destroyPos.getX() || y != this.destroyPos.getY() || z != this.destroyPos.getZ()) {
                         LOGGER.warn("Mismatch in destroy block pos: {} [{}, {}, {}]", this.destroyPos, x, y, z);
                         this.level.destroyBlockProgress(this.player.getId(), this.destroyPos, -1);
-                        this.player.connection.send(
-                                new PacketSCBlockBreakAck(this.destroyPos.asLong(), this.level.getBlockState_(this.destroyPos), action, true));
+                        this.player.connection.send(new PacketSCBlockBreakAck(this.destroyPos.asLong(), this.level.getBlockState_(this.destroyPos), action, true));
                     }
                     this.level.destroyBlockProgress(this.player.getId(), pos, -1);
                     this.player.connection.send(new PacketSCBlockBreakAck(pos, this.level.getBlockState_(x, y, z), action, true));

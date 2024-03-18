@@ -42,8 +42,9 @@ public abstract class Mixin_M_DragonEggBlock extends FallingBlock {
     }
 
     @Override
-    public void attack_(BlockState state, Level level, int x, int y, int z, Direction face, double hitX, double hitY, double hitZ, Player player) {
+    public InteractionResult attack_(BlockState state, Level level, int x, int y, int z, Direction face, double hitX, double hitY, double hitZ, Player player) {
         this.teleport(state, level, new BlockPos(x, y, z));
+        return InteractionResult.SUCCESS;
     }
 
     /**

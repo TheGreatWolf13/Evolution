@@ -3,6 +3,7 @@ package tgw.evolution.blocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -58,7 +59,7 @@ public class BlockClimbingHook extends BlockGeneric implements IReplaceable, IRo
     }
 
     @Override
-    public void attack_(BlockState state, Level level, int x, int y, int z, Direction face, double hitX, double hitY, double hitZ, Player player) {
+    public InteractionResult attack_(BlockState state, Level level, int x, int y, int z, Direction face, double hitX, double hitY, double hitZ, Player player) {
 //        int x = hitResult.posX();
 //        int y = hitResult.posY();
 //        int z = hitResult.posZ();
@@ -69,6 +70,7 @@ public class BlockClimbingHook extends BlockGeneric implements IReplaceable, IRo
 //        level.removeBlock(x, y, z, true);
 //        dropResources(state, level, x, y, z);
 //        level.playSound(player, x + 0.5, y + 0.5, z + 0.5, SoundEvents.METAL_BREAK, SoundSource.BLOCKS, 1.0f, 1.0f);
+        return InteractionResult.PASS;
     }
 
     @Override
