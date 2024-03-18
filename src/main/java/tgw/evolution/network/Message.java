@@ -6,6 +6,8 @@ public final class Message {
     }
 
     public enum C2S {
+        CRAWL_END,
+        CRAWL_START,
         OPEN_INVENTORY,
         STOP_USING_ITEM
     }

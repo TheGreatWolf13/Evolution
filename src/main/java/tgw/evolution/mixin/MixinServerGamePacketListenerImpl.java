@@ -229,12 +229,6 @@ public abstract class MixinServerGamePacketListenerImpl implements ServerGamePac
     }
 
     @Override
-    public void handleSetCrawling(PacketCSSetCrawling packet) {
-        PacketUtils.ensureRunningOnSameThread(packet, this, this.player.getLevel());
-        this.player.setCrawling(packet.crawling);
-    }
-
-    @Override
     public void handleSetKnappingType(PacketCSSetKnappingType packet) {
         PacketUtils.ensureRunningOnSameThread(packet, this, this.player.getLevel());
         long pos = packet.pos;
@@ -266,6 +260,8 @@ public abstract class MixinServerGamePacketListenerImpl implements ServerGamePac
     public void handleSimpleMessage(PacketCSSimpleMessage packet) {
         PacketUtils.ensureRunningOnSameThread(packet, this, this.player.getLevel());
         switch (packet.message) {
+            case CRAWL_END -> this.player.setCrawling(false);
+            case CRAWL_START -> this.player.setCrawling(true);
             case OPEN_INVENTORY -> this.player.openMenu(new ContainerInventoryProvider());
             case STOP_USING_ITEM -> this.player.stopUsingItem();
             default -> throw new IllegalStateException("Unhandled Simple Message: " + packet.message);

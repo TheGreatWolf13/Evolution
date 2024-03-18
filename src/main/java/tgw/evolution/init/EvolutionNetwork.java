@@ -46,7 +46,6 @@ public final class EvolutionNetwork {
     public static ConnectionProtocol.PacketSet<ServerGamePacketListener> registerC2S(ConnectionProtocol.PacketSet<ServerGamePacketListener> set) {
         return set.addPacket(PacketCSSimpleMessage.class, PacketCSSimpleMessage::new)
                   .addPacket(PacketCSSetKnappingType.class, PacketCSSetKnappingType::new)
-                  .addPacket(PacketCSSetCrawling.class, PacketCSSetCrawling::new)
                   .addPacket(PacketCSUpdatePuzzle.class, PacketCSUpdatePuzzle::new)
                   .addPacket(PacketCSSetMoldingType.class, PacketCSSetMoldingType::new)
                   .addPacket(PacketCSUpdateSchematicBlock.class, PacketCSUpdateSchematicBlock::new)

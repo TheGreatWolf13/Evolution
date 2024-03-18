@@ -17,9 +17,7 @@ public interface PatchServerPacketListener {
     void handlePlayerAction(PacketCSPlayerAction packet);
 
     void handlePlayerFall(PacketCSPlayerFall packet);
-
-    void handleSetCrawling(PacketCSSetCrawling packet);
-
+    
     void handleSetKnappingType(PacketCSSetKnappingType packet);
 
     void handleSetMoldingType(PacketCSSetMoldingType packet);

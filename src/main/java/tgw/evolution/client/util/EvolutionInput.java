@@ -12,7 +12,8 @@ import net.minecraft.world.phys.Vec3;
 import tgw.evolution.EvolutionClient;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.init.EvolutionEffects;
-import tgw.evolution.network.PacketCSSetCrawling;
+import tgw.evolution.network.Message;
+import tgw.evolution.network.PacketCSSimpleMessage;
 
 public class EvolutionInput extends Input {
 
@@ -58,11 +59,11 @@ public class EvolutionInput extends Input {
         MobEffectInstance dizziness = player.getEffect(EvolutionEffects.DIZZINESS);
         if (dizziness != null) {
             if (this.forwardImpulse != 0) {
-                this.leftImpulse += 1.5 * Mth.cos(this.tick * Mth.TWO_PI / (32 << dizziness.getAmplifier()));
+                this.leftImpulse += 1.5f * Mth.cos(this.tick * Mth.TWO_PI / (32 << dizziness.getAmplifier()));
                 this.tick++;
             }
             else if (this.leftImpulse != 0) {
-                this.forwardImpulse += 1.5 * Mth.cos(this.tick * Mth.TWO_PI / (32 << dizziness.getAmplifier()));
+                this.forwardImpulse += 1.5f * Mth.cos(this.tick * Mth.TWO_PI / (32 << dizziness.getAmplifier()));
                 this.tick++;
             }
         }
@@ -117,7 +118,7 @@ public class EvolutionInput extends Input {
             }
         }
         if (shouldCrawl != player.isCrawling()) {
-            player.connection.send(new PacketCSSetCrawling(shouldCrawl));
+            player.connection.send(new PacketCSSimpleMessage(shouldCrawl ? Message.C2S.CRAWL_START : Message.C2S.CRAWL_END));
             player.setCrawling(shouldCrawl);
         }
     }
