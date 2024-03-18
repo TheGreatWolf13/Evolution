@@ -120,7 +120,7 @@ public final class EntityEvents {
                 for (double lastTemperature : LAST_TEMPERATURES) {
                     sum += lastTemperature;
                 }
-                Evolution.info("Average Temperature at {} is {}\u00B0C", time, Metric.TWO_PLACES.format(sum / 20.0));
+                Evolution.info("Average Temperature at {} is {}°C", time, Metric.TWO_PLACES.format(sum / 20.0));
             }
             //Ticks Player systems
             if (!player.isCreative() && !player.isSpectator()) {
