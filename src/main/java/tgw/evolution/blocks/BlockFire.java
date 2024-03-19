@@ -12,6 +12,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.*;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LevelEvent;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
@@ -48,22 +49,8 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
     private final R2IMap<Block> flameOdds = new R2IHashMap<>();
 
     public BlockFire() {
-        super(Properties.of(Material.FIRE)
-                        .noCollission()
-                        .randomTicks()
-                        .strength(0)
-                        .lightLevel(BlockUtils.LIGHT_15)
-                        .sound(FIRE)
-                        .noDrops()
-        );
-        this.registerDefaultState(this.defaultBlockState()
-                                      .setValue(AGE_0_15, 0)
-                                      .setValue(NORTH, false)
-                                      .setValue(EAST, false)
-                                      .setValue(SOUTH, false)
-                                      .setValue(WEST, false)
-                                      .setValue(UP, false)
-        );
+        super(Properties.of(Material.FIRE).noCollission().randomTicks().strength(0).lightLevel(BlockUtils.LIGHT_15).sound(FIRE).noDrops());
+        this.registerDefaultState(this.defaultBlockState().setValue(AGE_0_15, 0).setValue(NORTH, false).setValue(EAST, false).setValue(SOUTH, false).setValue(WEST, false).setValue(UP, false));
     }
 
     private static int getTickCooldown(RandomGenerator random) {
@@ -78,26 +65,9 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
             fire.setFireInfo(variant.get(EvolutionBlocks.CHOPPING_BLOCKS), 5, 5);
             fire.setFireInfo(variant.get(EvolutionBlocks.LEAVES), 30, 60);
         }
-        //        fire.setFireInfo(Blocks.OAK_SLAB, 5, 20);
-        //        fire.setFireInfo(Blocks.OAK_FENCE_GATE, 5, 20);
-        //        fire.setFireInfo(Blocks.OAK_FENCE, 5, 20);
-        //        fire.setFireInfo(Blocks.OAK_STAIRS, 5, 20);
-        //        fire.setFireInfo(Blocks.BOOKSHELF, 30, 20);
-        //        fire.setFireInfo(Blocks.TNT, 15, 100);
         fire.setFireInfo(EvolutionBlocks.FIREWOOD_PILE, 5, 5);
         fire.setFireInfo(EvolutionBlocks.TALLGRASS, 60, 100);
         fire.setFireInfo(EvolutionBlocks.TALLGRASS_HIGH, 60, 100);
-        //        fire.setFireInfo(Blocks.WHITE_WOOL, 30, 60);
-        //        fire.setFireInfo(Blocks.VINE, 15, 100);
-        //        fire.setFireInfo(Blocks.COAL_BLOCK, 5, 5);
-        //        fire.setFireInfo(Blocks.HAY_BLOCK, 60, 20);
-        //        fire.setFireInfo(Blocks.WHITE_CARPET, 60, 20);
-        //        fire.setFireInfo(Blocks.DRIED_KELP_BLOCK, 30, 60);
-        //        fire.setFireInfo(Blocks.BAMBOO, 60, 60);
-        //        fire.setFireInfo(Blocks.SCAFFOLDING, 60, 60);
-        //        fire.setFireInfo(Blocks.LECTERN, 30, 20);
-        //        fire.setFireInfo(Blocks.COMPOSTER, 5, 20);
-        //        fire.setFireInfo(Blocks.SWEET_BERRY_BUSH, 60, 100);
     }
 
     @Override
@@ -187,10 +157,6 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
             else {
                 level.removeBlock_(x, y, z, false);
             }
-//            Block block = state.getBlock();
-//            if (block instanceof TntBlock) {
-//                TntBlock.explode(level, pos);
-//            }
         }
     }
 
@@ -320,12 +286,25 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
         }
     }
 
+    @Override
+    public void playerWillDestroy_(Level level, int x, int y, int z, BlockState state, Player player) {
+        if (!level.isClientSide()) {
+            level.levelEvent_(LevelEvent.SOUND_EXTINGUISH_FIRE, x, y, z, 0);
+        }
+        super.playerWillDestroy_(level, x, y, z, state, player);
+    }
+
     public void setFireInfo(Block block, int encouragement, int flammability) {
         if (block == Blocks.AIR) {
             throw new IllegalArgumentException("Tried to set air on fire... This is bad.");
         }
         this.flameOdds.put(block, encouragement);
         this.burnOdds.put(block, flammability);
+    }
+
+    @Override
+    public void spawnDestroyParticles_(Level level, Player player, int x, int y, int z, BlockState state) {
+        //Do nothing
     }
 
     @Override
