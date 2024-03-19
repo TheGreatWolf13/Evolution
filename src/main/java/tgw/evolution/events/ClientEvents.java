@@ -17,7 +17,6 @@ import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.players.GameProfileCache;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.util.profiling.ProfilerFiller;
@@ -1040,9 +1039,6 @@ public class ClientEvents {
                 if (this.ticksToLoseConcious > 0) {
                     --this.ticksToLoseConcious;
                 }
-            }
-            if (this.ticks % 10 == 0) {
-                level.playSound(player, player.xOld, player.yOld, player.zOld, SoundEvents.TRIDENT_HIT, SoundSource.PLAYERS, 1.0f, 1.0f);
             }
             profiler.push("dimension");
             assert this.dimension != null;
