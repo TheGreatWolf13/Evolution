@@ -523,6 +523,7 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
         Entity entity = this.level.getEntity(packet.getPlayerId());
         if (entity == this.minecraft.player) {
             if (this.minecraft.player.shouldShowDeathScreen()) {
+                ClientEvents.getInstance().startToLoseConscious();
                 this.minecraft.setScreen(new DeathScreen(packet.getMessage(), this.level.getLevelData().isHardcore()).setTimeAlive(packet.getTimeAlive()));
             }
             else {

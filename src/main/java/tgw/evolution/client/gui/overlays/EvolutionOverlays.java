@@ -12,6 +12,7 @@ import tgw.evolution.init.EvolutionResources;
 public final class EvolutionOverlays {
 
     public static final ResourceLocation CROSSHAIR = Evolution.getResource("crosshair");
+    public static final ResourceLocation DEATH = Evolution.getResource("death");
     public static final ResourceLocation EFFECTS = Evolution.getResource("effects");
     public static final ResourceLocation FOOD_AND_THIRST = Evolution.getResource("food_and_thirst");
     public static final ResourceLocation HEALTH = Evolution.getResource("health");
@@ -28,6 +29,10 @@ public final class EvolutionOverlays {
         gui.setupOverlayRenderState(Blending.DEFAULT_1_0, false, EvolutionResources.GUI_ICONS);
         gui.setBlitOffset(-90);
         ClientRenderer.getInstance().renderCrosshair(matrices, partialTicks, width, height);
+    }
+
+    private static void death(Minecraft mc, EvolutionGui gui, PoseStack matrices, float partialTicks, int width, int height) {
+        ClientRenderer.getInstance().renderDeathOverlay(matrices, partialTicks, width, height);
     }
 
     private static void effects(Minecraft mc, EvolutionGui gui, PoseStack matrices, float partialTicks, int width, int height) {
@@ -68,6 +73,7 @@ public final class EvolutionOverlays {
         Overlays.registerHudOverlayBelow(VanillaOverlays.AIR_LEVEL, FOOD_AND_THIRST, EvolutionOverlays::foodAndThirst);
         Overlays.registerHudOverlayAbove(VanillaOverlays.FPS_GRAPH, EFFECTS, EvolutionOverlays::effects);
         Overlays.registerHudOverlayBelow(VanillaOverlays.JUMP_BAR, TEMPERATURE, EvolutionOverlays::temperature);
+        Overlays.registerGameOverlayBottom(DEATH, EvolutionOverlays::death);
         Evolution.info("Registered Evolution Overlays");
     }
 

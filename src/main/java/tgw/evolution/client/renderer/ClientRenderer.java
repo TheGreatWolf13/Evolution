@@ -478,6 +478,19 @@ public class ClientRenderer {
         }
     }
 
+    public void renderDeathOverlay(PoseStack matrices, float partialTicks, int width, int height) {
+        assert this.mc.player != null;
+        if (this.mc.player.isDeadOrDying()) {
+            float ticks = (this.client.ticksToLoseConcious - partialTicks) / 80.0f;
+            if (ticks < 0) {
+                ticks = 0;
+            }
+            float f = 1.0f - Mth.cos(Mth.HALF_PI * ticks);
+            int alpha = (int) ((1.0f - f * f) * 255);
+            GUIUtils.fill(matrices.last().pose(), 0, 0, width, height, alpha << 24, true);
+        }
+    }
+
     public void renderEffectIcons(PoseStack matrices, float partialTicks, int width, int height) {
         MobEffectTextureManager effectTextures = this.mc.getMobEffectTextures();
         ClientEffectInstance movingInstance = null;

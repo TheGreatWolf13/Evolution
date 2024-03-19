@@ -17,7 +17,9 @@ import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.players.GameProfileCache;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffect;
@@ -110,6 +112,7 @@ public class ClientEvents {
     public @Nullable EntityHitResult leftRayTrace;
     public @Nullable Entity rightPointedEntity;
     public @Nullable EntityHitResult rightRayTrace;
+    public int ticksToLoseConcious;
     private @Nullable IMelee.IAttackType cachedAttackType;
     private int cameraId = -1;
     private @Nullable DimensionOverworld dimension;
@@ -205,6 +208,36 @@ public class ClientEvents {
 
     public static @Nullable ClientEvents getInstanceNullable() {
         return instance;
+    }
+
+    public static float getPitchMul() {
+        if (instance == null) {
+            return 1.0f;
+        }
+        if (!instance.isInitialized()) {
+            return 1.0f;
+        }
+        assert instance.mc.player != null;
+        if (instance.mc.player.isDeadOrDying()) {
+            float f = 1.0f - Mth.cos(Mth.HALF_PI * instance.ticksToLoseConcious / 80.0f);
+            return f * f * 0.5f + 0.5f;
+        }
+        return 1.0f;
+    }
+
+    public static float getVolumeMultiplier() {
+        if (instance == null) {
+            return 1.0f;
+        }
+        if (!instance.isInitialized()) {
+            return 1.0f;
+        }
+        assert instance.mc.player != null;
+        if (instance.mc.player.isDeadOrDying()) {
+            float f = 1.0f - Mth.cos(Mth.HALF_PI * instance.ticksToLoseConcious / 80.0f);
+            return f * f;
+        }
+        return 1.0f;
     }
 
     public static void onGuiOpen(@Nullable Screen newScreen) {
@@ -946,17 +979,20 @@ public class ClientEvents {
         if (this.tickStart()) {
             return;
         }
-        assert this.mc.level != null;
-        assert this.mc.player != null;
+        Minecraft mc = this.mc;
+        ClientLevel level = mc.level;
+        LocalPlayer player = mc.player;
+        assert level != null;
+        assert player != null;
         assert this.dynamicLights != null;
-        ProfilerFiller profiler = this.mc.getProfiler();
+        ProfilerFiller profiler = mc.getProfiler();
         //Camera
         profiler.push("camera");
         if (this.cameraId != -1) {
-            Entity entity = this.mc.level.getEntity(this.cameraId);
+            Entity entity = level.getEntity(this.cameraId);
             if (entity != null) {
                 this.cameraId = -1;
-                this.mc.setCameraEntity(entity);
+                mc.setCameraEntity(entity);
             }
         }
         //Apply shaders
@@ -967,7 +1003,7 @@ public class ClientEvents {
         if (desiredShaders.isEmpty()) {
             if (!currentShaders.isEmpty()) {
                 currentShaders.clear();
-                this.mc.gameRenderer.shutdownAllShaders();
+                mc.gameRenderer.shutdownAllShaders();
             }
         }
         else {
@@ -977,7 +1013,7 @@ public class ClientEvents {
                     @Shader int shader = e.get();
                     if (!desiredShaders.contains(shader)) {
                         currentShaders.remove(shader);
-                        this.mc.gameRenderer.shutdownShader(shader);
+                        mc.gameRenderer.shutdownShader(shader);
                     }
                 }
             }
@@ -988,7 +1024,7 @@ public class ClientEvents {
                     if (currentShaders.add(shader)) {
                         ResourceLocation shaderLoc = this.getShader(shader);
                         if (shaderLoc != null) {
-                            this.mc.gameRenderer.loadShader(shader, shaderLoc);
+                            mc.gameRenderer.loadShader(shader, shaderLoc);
                         }
                         else {
                             Evolution.warn("Unregistered shader id: {}", shader);
@@ -998,8 +1034,16 @@ public class ClientEvents {
             }
         }
         profiler.pop();
-        if (!this.mc.isPaused()) {
+        if (!mc.isPaused()) {
             ++this.ticks;
+            if (player.isDeadOrDying()) {
+                if (this.ticksToLoseConcious > 0) {
+                    --this.ticksToLoseConcious;
+                }
+            }
+            if (this.ticks % 10 == 0) {
+                level.playSound(player, player.xOld, player.yOld, player.zOld, SoundEvents.TRIDENT_HIT, SoundSource.PLAYERS, 1.0f, 1.0f);
+            }
             profiler.push("dimension");
             assert this.dimension != null;
             this.dimension.tick();
@@ -1010,24 +1054,24 @@ public class ClientEvents {
             this.updateBackItem();
             //Handle two-handed items
             profiler.popPush("twoHanded");
-            ItemStack mainHandStack = this.mc.player.getMainHandItem();
+            ItemStack mainHandStack = player.getMainHandItem();
             if (mainHandStack.getItem() instanceof ITwoHanded twoHanded &&
                 twoHanded.isTwoHanded(mainHandStack) &&
-                !this.mc.player.getOffhandItem().isEmpty()) {
+                !player.getOffhandItem().isEmpty()) {
                 this.mainhandCooldownTime = 0;
-                this.mc.missTime = Integer.MAX_VALUE;
-                this.mc.player.displayClientMessage(EvolutionTexts.ACTION_TWO_HANDED, true);
+                mc.missTime = Integer.MAX_VALUE;
+                player.displayClientMessage(EvolutionTexts.ACTION_TWO_HANDED, true);
             }
             //Prevents the player from attacking if on cooldown
             profiler.popPush("cooldown");
-            boolean isSpecialAttacking = this.mc.player.shouldRenderSpecialAttack();
+            boolean isSpecialAttacking = player.shouldRenderSpecialAttack();
             if (this.wasSpecialAttacking && !isSpecialAttacking) {
                 this.resetCooldown(InteractionHand.MAIN_HAND);
             }
             if (this.getMainhandIndicatorPercentage(0.0F) != 1 &&
-                this.mc.hitResult != null &&
-                this.mc.hitResult.getType() != HitResult.Type.BLOCK) {
-                this.mc.missTime = Integer.MAX_VALUE;
+                mc.hitResult != null &&
+                mc.hitResult.getType() != HitResult.Type.BLOCK) {
+                mc.missTime = Integer.MAX_VALUE;
             }
             this.wasSpecialAttacking = isSpecialAttacking;
             if (EvolutionConfig.DL_ENABLED.get() && this.ticks > 20) {
@@ -1037,7 +1081,7 @@ public class ClientEvents {
                     this.dynamicLights.tickStart();
                     boolean items = EvolutionConfig.DL_ITEMS.get();
                     boolean entities = EvolutionConfig.DL_ENTITIES.get();
-                    for (Entity entity : this.mc.level.entitiesForRendering()) {
+                    for (Entity entity : level.entitiesForRendering()) {
                         if (updateDynamicLight(entity, items, entities)) {
                             this.dynamicLights.update(entity);
                         }
@@ -1146,6 +1190,10 @@ public class ClientEvents {
                 player.startSpecialAttack(type);
             }
         }
+    }
+
+    public void startToLoseConscious() {
+        this.ticksToLoseConcious = 80;
     }
 
     /**
