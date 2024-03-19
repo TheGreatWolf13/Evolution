@@ -267,7 +267,13 @@ public abstract class Mixin_FS_Block extends BlockBehaviour implements PatchBloc
         if (this.properties.drops == BuiltInLootTables.EMPTY) {
             return;
         }
-        consumer.accept(new ItemStack(this));
+        ItemStack stack = new ItemStack(this);
+        if (!stack.isEmpty()) {
+            consumer.accept(stack);
+        }
+        else {
+            Evolution.warn("{} dropped nothing!", state);
+        }
     }
 
     @Override
