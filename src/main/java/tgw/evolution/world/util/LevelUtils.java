@@ -81,15 +81,13 @@ public final class LevelUtils {
         if (j <= i && j > levelchunk.getHeight(Heightmap.Types.OCEAN_FLOOR, posX & 15, posZ & 15)) {
             return null;
         }
-        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
         for (int k = i + 1; k >= level.getMinBuildHeight(); --k) {
-            mutablePos.set(posX, k, posZ);
-            BlockState blockstate = level.getBlockState(mutablePos);
+            BlockState blockstate = level.getBlockState_(posX, k, posZ);
             if (!blockstate.getFluidState().isEmpty()) {
                 break;
             }
-            if (Block.isFaceFull(blockstate.getCollisionShape(level, mutablePos), Direction.UP)) {
-                return mutablePos.above().immutable();
+            if (Block.isFaceFull(blockstate.getCollisionShape_(level, posX, k, posZ), Direction.UP)) {
+                return new BlockPos(posX, k + 1, posZ);
             }
         }
         return null;
