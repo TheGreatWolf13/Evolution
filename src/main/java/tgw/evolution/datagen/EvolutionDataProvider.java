@@ -60,6 +60,7 @@ public interface EvolutionDataProvider<T> extends DataProvider {
 
     default <R> void save(HashCache cache, JsonElement json, Path path, R key, Function<R, String> pathMaker) {
         try {
+            DataGenerators.submitPath(pathMaker.apply(key));
             Gson gson = path.toString().contains("blockstates") ? BLOCKSTATE_GSON : GSON;
             String jsonString = gson.toJson(json);
             String hash = SHA1.hashUnencodedChars(jsonString).toString();

@@ -240,8 +240,7 @@ public class ItemModelProvider extends ModelProvider<ItemModelBuilder> {
 
     protected ItemModelBuilder simpleItemFolder(Item item, String folder, String post) {
         String path = Registry.ITEM.getKey(item).getPath();
-        return this.withExistingParent(path, new ResourceLocation("item/generated"))
-                   .texture("layer0", new ResourceLocation(this.modId, folder + "/" + path + post));
+        return this.withExistingParent(path, new ResourceLocation("item/generated")).texture("layer0", new ResourceLocation(this.modId, folder + "/" + path + post));
     }
 
     @Override

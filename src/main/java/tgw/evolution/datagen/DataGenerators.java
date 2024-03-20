@@ -6,12 +6,17 @@ import tgw.evolution.Evolution;
 import tgw.evolution.datagen.util.ExistingFileHelper;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
+import tgw.evolution.util.collection.sets.OHashSet;
+import tgw.evolution.util.collection.sets.OSet;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
 public final class DataGenerators {
+
+    private static final OSet<String> FOUND_FILES = new OHashSet<>();
 
     private DataGenerators() {
     }
@@ -66,12 +71,58 @@ public final class DataGenerators {
         return list;
     }
 
+    private static void recordAllExistingFiles(OList<Path> existingPaths) {
+        for (int i = 0, len = existingPaths.size(); i < len; ++i) {
+            Path path = existingPaths.get(i);
+            File file = path.toFile();
+            if (file.isDirectory()) {
+                String fileName = file.getAbsolutePath() + "\\";
+                recordSubfolder(path, fileName, "assets/evolution/blockstates");
+                recordSubfolder(path, fileName, "assets/evolution/models/block");
+                recordSubfolder(path, fileName, "assets/evolution/models/item");
+                recordSubfolder(path, fileName, "data/evolution/tags/blocks");
+                recordSubfolder(path, fileName, "data/evolution/tags/items");
+                recordSubfolder(path, fileName, "data/evolution/tags/fluids");
+                recordSubfolder(path, fileName, "data/evolution/advancements");
+                recordSubfolder(path, fileName, "data/evolution/recipes");
+            }
+        }
+    }
+
+    private static void recordSubfolder(Path basePath, String baseName, String subfolderName) {
+        Path subfolderPath = basePath.resolve(subfolderName);
+        File subfolder = subfolderPath.toFile();
+        if (subfolder.isDirectory()) {
+            //noinspection DataFlowIssue
+            for (File file : subfolder.listFiles()) {
+                recursivelyRecord(file, FOUND_FILES, baseName);
+            }
+        }
+    }
+
+    private static void recursivelyRecord(File file, OSet<String> set, String name) {
+        if (file.isDirectory()) {
+            //noinspection DataFlowIssue
+            for (File f : file.listFiles()) {
+                recursivelyRecord(f, set, name);
+            }
+        }
+        else {
+            if (file.getName().endsWith(".json")) {
+                String fullName = file.getAbsolutePath();
+                int index = fullName.indexOf(name);
+                set.add(fullName.substring(index + name.length()).replace('\\', '/'));
+            }
+        }
+    }
+
     public static void run() {
         String out = System.clearProperty("evolution.datagen.out");
         if (out == null) {
             throw new NullPointerException("Datagen output cannot be null. Set it using -Devolution.datagen.out=\"path\\to\\location\"");
         }
         OList<Path> existingPaths = readPaths(System.clearProperty("evolution.datagen.existing"));
+        recordAllExistingFiles(existingPaths);
         DataGenerator generator = new DataGenerator(Path.of(out), List.of());
         generator.addProvider(new RecipeProvider(generator, existingPaths));
         generator.addProvider(new AdvancementProvider(generator, existingPaths));
@@ -90,5 +141,17 @@ public final class DataGenerators {
         catch (IOException e) {
             Evolution.error("Exception while running DataGenerators!", e);
         }
+        if (!FOUND_FILES.isEmpty()) {
+            Evolution.warn("The following files were found in the existing directories and are probably unused: ");
+            OList<String> list = new OArrayList<>(FOUND_FILES);
+            list.sort(null);
+            for (int i = 0, len = list.size(); i < len; ++i) {
+                Evolution.warn(list.get(i));
+            }
+        }
+    }
+
+    public static void submitPath(String path) {
+        FOUND_FILES.remove(path);
     }
 }
