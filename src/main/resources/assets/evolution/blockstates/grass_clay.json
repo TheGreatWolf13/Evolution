@@ -1,6 +1,6 @@
 {
   "variants": {
-    "snowy=false": [
+    "": [
       {
         "model": "evolution:block/grass_clay"
       },
@@ -16,9 +16,6 @@
         "model": "evolution:block/grass_clay",
         "y": 270
       }
-    ],
-    "snowy=true": {
-      "model": "evolution:block/grass_clay_snow"
-    }
+    ]
   }
 }

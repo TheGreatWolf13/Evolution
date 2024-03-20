@@ -17,6 +17,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import tgw.evolution.init.IVariant;
 import tgw.evolution.util.collection.lists.OList;
+import tgw.evolution.util.constants.NutrientVariant;
 import tgw.evolution.util.constants.RockVariant;
 import tgw.evolution.util.constants.WoodVariant;
 
@@ -154,6 +155,9 @@ public class CommandVariantDebug implements Command<CommandSourceStack> {
                                     .then(Commands.literal("wood")
                                                   .executes(CMD)
                                     )
+                                    .then(Commands.literal("nutrient")
+                                                  .executes(CMD)
+                                    )
         );
     }
 
@@ -170,8 +174,9 @@ public class CommandVariantDebug implements Command<CommandSourceStack> {
             return 0;
         }
         switch (context.getInput()) {
-            case "/variant_debug rock" -> placeVariant(level, pos.getX(), y - 1, pos.getZ(), player.getDirection(), RockVariant.VALUES_STONE);
+            case "/variant_debug rock" -> placeVariant(level, pos.getX(), y - 1, pos.getZ(), player.getDirection(), RockVariant.VALUES);
             case "/variant_debug wood" -> placeVariant(level, pos.getX(), y - 1, pos.getZ(), player.getDirection(), WoodVariant.VALUES);
+            case "/variant_debug nutrient" -> placeVariant(level, pos.getX(), y - 1, pos.getZ(), player.getDirection(), NutrientVariant.VALUES);
         }
         return SINGLE_SUCCESS;
     }

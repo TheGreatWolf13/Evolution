@@ -9,13 +9,13 @@ import net.minecraft.world.level.material.Material;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionSounds;
-import tgw.evolution.util.constants.RockVariant;
+import tgw.evolution.util.constants.NutrientVariant;
 
-public class BlockDirt extends BlockPhysics implements IRockVariant, ISloppable, IFillable {
+public class BlockDirt extends BlockPhysics implements INutrientVariant, ISloppable, IFillable, IGrassSpreadable {
 
-    private final RockVariant variant;
+    private final NutrientVariant variant;
 
-    public BlockDirt(RockVariant variant) {
+    public BlockDirt(NutrientVariant variant) {
         super(Properties.of(Material.DIRT).strength(2.0F, 0.5F).sound(SoundType.GRAVEL));
         this.variant = variant;
     }
@@ -40,7 +40,12 @@ public class BlockDirt extends BlockPhysics implements IRockVariant, ISloppable,
     }
 
     @Override
-    public RockVariant rockVariant() {
+    public BlockGenericSpreadable getGrass() {
+        return this.variant.get(EvolutionBlocks.GRASSES);
+    }
+
+    @Override
+    public NutrientVariant nutrientVariant() {
         return this.variant;
     }
 

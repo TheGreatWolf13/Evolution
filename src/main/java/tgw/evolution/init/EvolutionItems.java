@@ -10,6 +10,7 @@ import tgw.evolution.Evolution;
 import tgw.evolution.items.*;
 import tgw.evolution.items.modular.ItemModularTool;
 import tgw.evolution.items.modular.part.*;
+import tgw.evolution.util.constants.NutrientVariant;
 import tgw.evolution.util.constants.RockVariant;
 import tgw.evolution.util.constants.WoodVariant;
 
@@ -58,6 +59,7 @@ public final class EvolutionItems {
     public static final Item CLIMBING_STAKE;
     public static final Item CRUCIBLE_CLAY;
     public static final Item FIRE_STARTER;
+    public static final Item GRASS_CLAY;
     public static final Item TALLGRASS;
     public static final Item INGOT_COPPER;
     public static final ItemModularTool MODULAR_TOOL;
@@ -91,10 +93,9 @@ public final class EvolutionItems {
     //Collection
     public static final Map<WoodVariant, Item> CHOPPING_BLOCKS;
     public static final Map<RockVariant, Item> COBBLESTONES;
-    public static final Map<RockVariant, Item> DIRTS;
-    public static final Map<RockVariant, Item> DRY_GRASSES;
+    public static final Map<NutrientVariant, Item> DIRTS;
     public static final Map<WoodVariant, Item> FIREWOODS;
-    public static final Map<RockVariant, Item> GRASSES;
+    public static final Map<NutrientVariant, Item> GRASSES;
     public static final Map<RockVariant, Item> GRAVELS;
     public static final Map<WoodVariant, Item> LEAVES;
     public static final Map<WoodVariant, Item> LOGS;
@@ -148,6 +149,7 @@ public final class EvolutionItems {
         CLIMBING_STAKE = makeBlock(EvolutionBlocks.CLIMBING_STAKE, itemBlock(EvolutionBlocks.CLIMBING_STAKE));
         CRUCIBLE_CLAY = makeBlock(EvolutionBlocks.CRUCIBLE_CLAY, new ItemClayMolded(EvolutionBlocks.CRUCIBLE_CLAY, true));
         FIRE_STARTER = register("fire_starter", new ItemFireStarter());
+        GRASS_CLAY = makeBlock(EvolutionBlocks.GRASS_CLAY, itemBlock(EvolutionBlocks.GRASS_CLAY));
         INGOT_COPPER = register("ingot_copper", new ItemIngot(propMetal()));
         MODULAR_TOOL = register("modular_tool", new ItemModularTool(propPartTool()));
         MOLD_CLAY_AXE = makeBlock(EvolutionBlocks.MOLD_CLAY_AXE, new ItemClayMolded(EvolutionBlocks.MOLD_CLAY_AXE));
@@ -181,17 +183,16 @@ public final class EvolutionItems {
         //Collection
         CHOPPING_BLOCKS = makeBlock(WoodVariant.class, EvolutionBlocks.CHOPPING_BLOCKS, e -> woodBlock(e.get(EvolutionBlocks.CHOPPING_BLOCKS)));
         COBBLESTONES = makeBlock(RockVariant.class, EvolutionBlocks.COBBLESTONES, e -> itemBlock(e.get(EvolutionBlocks.COBBLESTONES)));
-        DIRTS = makeBlock(RockVariant.class, EvolutionBlocks.DIRTS, e -> itemBlock(e.get(EvolutionBlocks.DIRTS)));
-        DRY_GRASSES = makeBlock(RockVariant.class, EvolutionBlocks.DRY_GRASSES, e -> itemBlock(e.get(EvolutionBlocks.DRY_GRASSES)));
+        DIRTS = makeBlock(NutrientVariant.class, EvolutionBlocks.DIRTS, e -> itemBlock(e.get(EvolutionBlocks.DIRTS)));
         FIREWOODS = make(WoodVariant.class, WoodVariant.VALUES, "firewood_", ItemFirewood::new);
-        GRASSES = makeBlock(RockVariant.class, EvolutionBlocks.GRASSES, e -> itemBlock(e.get(EvolutionBlocks.GRASSES)));
+        GRASSES = makeBlock(NutrientVariant.class, EvolutionBlocks.GRASSES, e -> itemBlock(e.get(EvolutionBlocks.GRASSES)));
         GRAVELS = makeBlock(RockVariant.class, EvolutionBlocks.GRAVELS, e -> itemBlock(e.get(EvolutionBlocks.GRAVELS)));
         LEAVES = makeBlock(WoodVariant.class, EvolutionBlocks.LEAVES, e -> woodBlock(e.get(EvolutionBlocks.LEAVES)));
         LOGS = makeBlock(WoodVariant.class, EvolutionBlocks.LOGS, e -> new ItemLog(e, e.get(EvolutionBlocks.LOGS), propTreesAndWood()));
         PLANK = make(WoodVariant.class, WoodVariant.VALUES, "plank_", e -> wood());
         PLANKS = makeBlock(WoodVariant.class, EvolutionBlocks.PLANKS, e -> woodBlock(e.get(EvolutionBlocks.PLANKS)));
         POLISHED_STONES = makeBlock(RockVariant.class, EvolutionBlocks.POLISHED_STONES, e -> itemBlock(e.get(EvolutionBlocks.POLISHED_STONES)));
-        PRIMITIVE_KNIVES = make(RockVariant.class, RockVariant.VALUES_STONE, "primitive_knife_", e -> new ItemGeneric(propPartTool()));
+        PRIMITIVE_KNIVES = make(RockVariant.class, RockVariant.VALUES, "primitive_knife_", e -> new ItemGeneric(propPartTool()));
         ROCKS = makeBlock(RockVariant.class, EvolutionBlocks.ROCKS, e -> new ItemRock(e.get(EvolutionBlocks.ROCKS), propMisc(), e));
         SANDS = makeBlock(RockVariant.class, EvolutionBlocks.SANDS, e -> itemBlock(e.get(EvolutionBlocks.SANDS)));
         SAPLINGS = makeBlock(WoodVariant.class, EvolutionBlocks.SAPLINGS, e -> woodBlock(e.get(EvolutionBlocks.SAPLINGS)));

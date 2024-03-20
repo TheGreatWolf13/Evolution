@@ -22,7 +22,6 @@ import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.collection.maps.B2RHashMap;
 import tgw.evolution.util.collection.maps.B2RMap;
 
-import java.util.Arrays;
 import java.util.Map;
 
 import static tgw.evolution.util.constants.RockType.*;
@@ -42,12 +41,9 @@ public enum RockVariant implements IVariant<RockVariant> {
     SANDSTONE(11, SEDIMENTARY, "sandstone"),
     SCHIST(12, METAMORPHIC, "schist"),
     SHALE(13, SEDIMENTARY, "shale"),
-    SLATE(14, METAMORPHIC, "slate"),
-    //    PEAT(15, null, "peat", 1_156, 0),
-    CLAY(15, null, "clay");
+    SLATE(14, METAMORPHIC, "slate");
 
     public static final RockVariant[] VALUES = values();
-    public static final RockVariant[] VALUES_STONE = Arrays.stream(VALUES).filter(v -> v != CLAY).toArray(RockVariant[]::new);
     private static final Byte2ReferenceMap<RockVariant> REGISTRY;
     private static final OList<Map<RockVariant, ? extends Block>> BLOCKS = new OArrayList<>();
 
@@ -83,10 +79,8 @@ public enum RockVariant implements IVariant<RockVariant> {
     @Contract(pure = true)
     public Block fromEnumVanillaRep(VanillaRockVariant vanilla) {
         return switch (vanilla) {
-            case DIRT -> this.get(EvolutionBlocks.DIRTS);
             case COBBLESTONE -> this.get(EvolutionBlocks.COBBLESTONES);
             case GRAVEL -> this.get(EvolutionBlocks.GRAVELS);
-            case GRASS -> this.get(EvolutionBlocks.GRASSES);
             case SAND -> this.get(EvolutionBlocks.SANDS);
             case STONE -> this.get(EvolutionBlocks.STONES);
             case STONE_BRICKS -> this.get(EvolutionBlocks.STONEBRICKS);
@@ -118,7 +112,6 @@ public enum RockVariant implements IVariant<RockVariant> {
 
     private EvolutionMaterials getMaterial() {
         return switch (this) {
-            case CLAY -> throw new IllegalStateException("This variant is not a valid material!");
             case ANDESITE -> EvolutionMaterials.ANDESITE;
             case BASALT -> EvolutionMaterials.BASALT;
             case CHERT -> EvolutionMaterials.CHERT;

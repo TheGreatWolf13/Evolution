@@ -48,15 +48,11 @@ public enum RenderLayer {
 
     public static void setup() {
         set(EvolutionBlocks.ATM, CUTOUT);
-//        set(EvolutionFluids.FRESH_WATER, TRANSLUCENT);
-//        set(EvolutionFluids.SALT_WATER, TRANSLUCENT);
         set(EvolutionBlocks.CLIMBING_HOOK, CUTOUT);
         set(EvolutionBlocks.CLIMBING_STAKE, CUTOUT);
-        for (Block block : EvolutionBlocks.DRY_GRASSES.values()) {
-            set(block, CUTOUT);
-        }
         set(EvolutionBlocks.FIRE, CUTOUT);
         set(EvolutionBlocks.TALLGRASS, CUTOUT);
+        set(EvolutionBlocks.GRASS_CLAY, CUTOUT_MIPPED);
         for (Block block : EvolutionBlocks.GRASSES.values()) {
             set(block, CUTOUT_MIPPED);
         }

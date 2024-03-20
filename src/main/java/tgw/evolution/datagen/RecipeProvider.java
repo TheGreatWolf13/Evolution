@@ -63,7 +63,7 @@ public class RecipeProvider implements EvolutionDataProvider<FinishedRecipe> {
                                   .group("evolution:chopping_blocks")
                                   .save(consumer);
         }
-        for (RockVariant variant : RockVariant.VALUES_STONE) {
+        for (RockVariant variant : RockVariant.VALUES) {
             Item rock = variant.get(EvolutionItems.ROCKS);
             ShapedRecipeBuilder.shaped(variant.get(EvolutionItems.COBBLESTONES))
                                .define('#', Ingredient.of(new ItemStack(rock, 2)))

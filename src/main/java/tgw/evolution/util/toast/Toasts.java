@@ -35,7 +35,7 @@ public final class Toasts {
 
     public static void register() {
         ItemStack knapping = new ItemStack(RockVariant.ANDESITE.get(EvolutionItems.ROCKS));
-        for (RockVariant variant : RockVariant.VALUES_STONE) {
+        for (RockVariant variant : RockVariant.VALUES) {
             Item rockItem = variant.get(EvolutionItems.ROCKS);
             //noinspection ObjectAllocationInLoop
             OList<ToastHolderRecipe> rockRecipes = new OArrayList<>(KnappingRecipe.VALUES.length - 1);

@@ -11,7 +11,6 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.*;
 import tgw.evolution.Evolution;
-import tgw.evolution.blocks.BlockDryGrass;
 import tgw.evolution.blocks.BlockGrass;
 import tgw.evolution.client.renderer.chunk.EvLevelRenderer;
 import tgw.evolution.hooks.asm.DeleteField;
@@ -42,7 +41,7 @@ public abstract class Mixin_CF_TerrainParticle extends TextureSheetParticle impl
         this.posY = Mth.floor(y);
         this.posZ = Mth.floor(z);
         Block block = state.getBlock();
-        if (block != Blocks.GRASS_BLOCK && !(block instanceof BlockGrass) && !(block instanceof BlockDryGrass)) {
+        if (block != Blocks.GRASS_BLOCK && !(block instanceof BlockGrass)) {
             int color = Minecraft.getInstance().getBlockColors().getColor_(state, level, this.posX, this.posY, this.posZ, 0);
             this.rCol *= (color >> 16 & 255) / 255.0F;
             this.gCol *= (color >> 8 & 255) / 255.0F;

@@ -1,10 +1,10 @@
 {
   "parent": "evolution:block/grass",
   "textures": {
-    "side": "evolution:block/clay",
+    "side": "evolution:block/dirt_poor",
     "overlay": "evolution:block/grass_side_overlay",
-    "bottom": "evolution:block/clay",
+    "bottom": "evolution:block/dirt_poor",
     "top": "evolution:block/grass_top",
-    "particle": "evolution:block/clay"
+    "particle": "evolution:block/dirt_poor"
   }
 }

@@ -92,7 +92,7 @@ public final class EvolutionResources {
 
     static {
         BLOCK_KNAPPING = new ResourceLocation[RockVariant.VALUES.length];
-        for (RockVariant variant : RockVariant.VALUES_STONE) {
+        for (RockVariant variant : RockVariant.VALUES) {
             //noinspection ObjectAllocationInLoop
             BLOCK_KNAPPING[variant.getId()] = Evolution.getResource("block/stone_" + variant.getName());
         }

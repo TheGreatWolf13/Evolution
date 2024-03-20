@@ -717,6 +717,20 @@ public final class MathHelper {
         return hitResult;
     }
 
+    public static int getRandomSetBitFrom(RandomGenerator random, int bitset, int bitCount) {
+        assert bitCount > 0;
+        int chosen = random.nextInt(bitCount);
+        int count = 0;
+        for (int i = 0; i < Integer.SIZE; ++i) {
+            if ((bitset & 1 << i) != 0) {
+                if (chosen == count++) {
+                    return i;
+                }
+            }
+        }
+        throw new IllegalStateException("Should never reach here");
+    }
+
     /**
      * Calculates the relative strength of a throw based on the charge.
      *

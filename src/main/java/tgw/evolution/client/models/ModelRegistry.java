@@ -24,7 +24,7 @@ public final class ModelRegistry {
     }
 
     public static void register(Map<ResourceLocation, BakedModel> models) {
-        for (RockVariant variant : RockVariant.VALUES_STONE) {
+        for (RockVariant variant : RockVariant.VALUES) {
             Block block = variant.get(EvolutionBlocks.KNAPPING_BLOCKS);
             registerModel(models, block, variant, BakedModelKnapping::new);
         }

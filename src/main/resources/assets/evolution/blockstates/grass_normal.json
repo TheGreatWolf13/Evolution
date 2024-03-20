@@ -1,0 +1,21 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "evolution:block/grass_normal"
+      },
+      {
+        "model": "evolution:block/grass_normal",
+        "y": 90
+      },
+      {
+        "model": "evolution:block/grass_normal",
+        "y": 180
+      },
+      {
+        "model": "evolution:block/grass_normal",
+        "y": 270
+      }
+    ]
+  }
+}

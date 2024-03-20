@@ -10,10 +10,7 @@ import net.minecraft.world.level.material.Material;
 import org.jetbrains.annotations.Contract;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.*;
-import tgw.evolution.util.constants.MetalVariant;
-import tgw.evolution.util.constants.Oxidation;
-import tgw.evolution.util.constants.RockVariant;
-import tgw.evolution.util.constants.WoodVariant;
+import tgw.evolution.util.constants.*;
 
 import java.util.EnumMap;
 import java.util.Map;
@@ -44,6 +41,7 @@ public final class EvolutionBlocks {
     public static final Block CRUCIBLE_CLAY;
     public static final BlockFire FIRE;
     public static final Block FIREWOOD_PILE;
+    public static final BlockGrassClay GRASS_CLAY;
     public static final Block MOLD_CLAY_AXE;
     public static final Block MOLD_CLAY_GUARD;
     public static final Block MOLD_CLAY_HAMMER;
@@ -68,9 +66,8 @@ public final class EvolutionBlocks {
     //Collections
     public static final Map<WoodVariant, Block> CHOPPING_BLOCKS;
     public static final Map<RockVariant, Block> COBBLESTONES;
-    public static final Map<RockVariant, Block> DIRTS;
-    public static final Map<RockVariant, Block> DRY_GRASSES;
-    public static final Map<RockVariant, Block> GRASSES;
+    public static final Map<NutrientVariant, Block> DIRTS;
+    public static final Map<NutrientVariant, BlockGrass> GRASSES;
     public static final Map<RockVariant, Block> GRAVELS;
     public static final Map<RockVariant, Block> KNAPPING_BLOCKS;
     public static final Map<WoodVariant, Block> LEAVES;
@@ -109,6 +106,7 @@ public final class EvolutionBlocks {
         CRUCIBLE_CLAY = register("crucible_clay", new BlockMoldClay(5));
         FIRE = register("fire", new BlockFire());
         FIREWOOD_PILE = register("firewood_pile", new BlockFirewoodPile());
+        GRASS_CLAY = register("grass_clay", new BlockGrassClay());
         MOLD_CLAY_AXE = register("mold_clay_axe", new BlockMoldClay(1));
         MOLD_CLAY_GUARD = register("mold_clay_guard", new BlockMoldClay(1));
         MOLD_CLAY_HAMMER = register("mold_clay_hammer", new BlockMoldClay(1));
@@ -132,21 +130,20 @@ public final class EvolutionBlocks {
         TORCH_WALL = register("torch_wall", new BlockTorchWall());
         //Collection
         CHOPPING_BLOCKS = make(WoodVariant.class, WoodVariant.VALUES, "chopping_block_", BlockChopping::new, false);
-        COBBLESTONES = make(RockVariant.class, RockVariant.VALUES_STONE, "cobblestone_", BlockCobblestone::new, true);
-        DIRTS = make(RockVariant.class, RockVariant.VALUES_STONE, "dirt_", BlockDirt::new, true);
-        DRY_GRASSES = make(RockVariant.class, RockVariant.VALUES_STONE, "dry_grass_", BlockDryGrass::new, true);
-        GRASSES = make(RockVariant.class, RockVariant.VALUES, "grass_", BlockGrass::new, true);
-        GRAVELS = make(RockVariant.class, RockVariant.VALUES_STONE, "gravel_", BlockGravel::new, true);
-        KNAPPING_BLOCKS = make(RockVariant.class, RockVariant.VALUES_STONE, "knapping_block_", BlockKnapping::new, false);
+        COBBLESTONES = make(RockVariant.class, RockVariant.VALUES, "cobblestone_", BlockCobblestone::new, true);
+        DIRTS = make(NutrientVariant.class, NutrientVariant.VALUES, "dirt_", BlockDirt::new, true);
+        GRASSES = make(NutrientVariant.class, NutrientVariant.VALUES, "grass_", BlockGrass::new, true);
+        GRAVELS = make(RockVariant.class, RockVariant.VALUES, "gravel_", BlockGravel::new, true);
+        KNAPPING_BLOCKS = make(RockVariant.class, RockVariant.VALUES, "knapping_block_", BlockKnapping::new, false);
         LEAVES = make(WoodVariant.class, WoodVariant.VALUES, "leaves_", e -> new BlockLeaves(), true);
         LOGS = make(WoodVariant.class, WoodVariant.VALUES, "log_", BlockLog::new, true);
         PLANKS = make(WoodVariant.class, WoodVariant.VALUES, "planks_", BlockPlanks::new, true);
-        POLISHED_STONES = make(RockVariant.class, RockVariant.VALUES_STONE, "polished_stone_", BlockPolishedStone::new, true);
-        ROCKS = make(RockVariant.class, RockVariant.VALUES_STONE, "rock_", e -> new BlockPlaceableRock(), true);
-        SANDS = make(RockVariant.class, RockVariant.VALUES_STONE, "sand_", BlockSand::new, true);
+        POLISHED_STONES = make(RockVariant.class, RockVariant.VALUES, "polished_stone_", BlockPolishedStone::new, true);
+        ROCKS = make(RockVariant.class, RockVariant.VALUES, "rock_", e -> new BlockPlaceableRock(), true);
+        SANDS = make(RockVariant.class, RockVariant.VALUES, "sand_", BlockSand::new, true);
         SAPLINGS = make(WoodVariant.class, WoodVariant.VALUES, "sapling_", e -> new BlockSapling(null), false);
-        STONEBRICKS = make(RockVariant.class, RockVariant.VALUES_STONE, "stonebricks_", BlockStoneBricks::new, true);
-        STONES = make(RockVariant.class, RockVariant.VALUES_STONE, "stone_", BlockStone::new, true);
+        STONEBRICKS = make(RockVariant.class, RockVariant.VALUES, "stonebricks_", BlockStoneBricks::new, true);
+        STONES = make(RockVariant.class, RockVariant.VALUES, "stone_", BlockStone::new, true);
         //Fluids
 //        FRESH_WATER = register("fresh_water", new BlockFreshWater());
 //        SALT_WATER = register("salt_water", new BlockSaltWater());

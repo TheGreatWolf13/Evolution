@@ -29,7 +29,7 @@ public class BlockBush extends BlockPhysics implements IReplaceable, IPoppable {
     @Override
     public boolean canSurvive_(BlockState state, LevelReader level, int x, int y, int z) {
         Block blockBelow = level.getBlockState_(x, y - 1, z).getBlock();
-        return blockBelow instanceof BlockGrass || blockBelow instanceof BlockDirt || blockBelow instanceof BlockDryGrass;
+        return blockBelow instanceof INutrientVariant;
     }
 
     @Override

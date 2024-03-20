@@ -1,0 +1,21 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "evolution:block/grass_poor"
+      },
+      {
+        "model": "evolution:block/grass_poor",
+        "y": 90
+      },
+      {
+        "model": "evolution:block/grass_poor",
+        "y": 180
+      },
+      {
+        "model": "evolution:block/grass_poor",
+        "y": 270
+      }
+    ]
+  }
+}

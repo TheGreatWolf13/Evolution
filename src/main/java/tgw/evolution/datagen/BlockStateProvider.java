@@ -38,6 +38,7 @@ import tgw.evolution.datagen.util.ItemModelBuilder;
 import tgw.evolution.datagen.util.ModelFile;
 import tgw.evolution.init.EvolutionBStates;
 import tgw.evolution.init.EvolutionBlocks;
+import tgw.evolution.util.constants.NutrientVariant;
 import tgw.evolution.util.constants.RockVariant;
 import tgw.evolution.util.constants.WoodVariant;
 
@@ -268,7 +269,6 @@ public class BlockStateProvider implements EvolutionDataProvider<ResourceLocatio
         return this.blockModels;
     }
 
-    @SuppressWarnings("ObjectAllocationInLoop")
     protected void registerStatesAndModels() {
         //Temporary
         this.simpleBlock(EvolutionBlocks.GLASS);
@@ -421,24 +421,15 @@ public class BlockStateProvider implements EvolutionDataProvider<ResourceLocatio
             .end();
         Block firewoodPile = EvolutionBlocks.FIREWOOD_PILE;
         this.simpleBlockNoItem(firewoodPile, this.models().builtin(name(firewoodPile), blockTexture(WoodVariant.OAK.get(EvolutionBlocks.LOGS))));
+        Block clayGrass = EvolutionBlocks.GRASS_CLAY;
+        this.simpleBlockWithRandomRotation(clayGrass, this.models().withExistingParent(name(clayGrass), "evolution:block/grass")
+                                                          .texture("side", blockTexture(clay))
+                                                          .texture("overlay", "evolution:block/grass_side_overlay")
+                                                          .texture("bottom", blockTexture(clay))
+                                                          .texture("top", "evolution:block/grass_top")
+                                                          .texture("particle", blockTexture(clay))
+        );
         //Collections
-        Block clayGrass = RockVariant.CLAY.get(EvolutionBlocks.GRASSES);
-        this.blockBooleanPropertyRandomRotation(clayGrass, EvolutionBStates.SNOWY, snowy -> !snowy, snowy -> {
-            if (!snowy) {
-                return this.models().withExistingParent(name(clayGrass), "evolution:block/grass")
-                           .texture("side", blockTexture(clay))
-                           .texture("overlay", "evolution:block/grass_side_overlay")
-                           .texture("bottom", blockTexture(clay))
-                           .texture("top", "evolution:block/grass_top")
-                           .texture("particle", blockTexture(clay));
-            }
-            return this.models().withExistingParent(name(clayGrass, "_snow"), "evolution:block/grass_snow")
-                       .texture("side", blockTexture(clay))
-                       .texture("overlay", "evolution:block/grass_side_overlay_snow")
-                       .texture("bottom", blockTexture(clay))
-                       .texture("top", "evolution:block/grass_top")
-                       .texture("particle", blockTexture(clay));
-        });
         Block tallgrass = EvolutionBlocks.TALLGRASS;
         this.simpleBlockNoItem(tallgrass,
                                this.models().withExistingParent(name(tallgrass), "block/tinted_cross").texture("cross", blockTexture(tallgrass)));
@@ -446,47 +437,22 @@ public class BlockStateProvider implements EvolutionDataProvider<ResourceLocatio
         this.blockEnumProperty(tallgrassHigh, EvolutionBStates.HALF, DoubleBlockHalf.values(), half ->
                 this.models()
                     .withExistingParent(name(tallgrassHigh, half == DoubleBlockHalf.UPPER ? "_top" : "_bottom"), "block/tinted_cross")
-                    .texture("cross", blockTexture(tallgrassHigh, half == DoubleBlockHalf.UPPER ? "_top" : "_bottom")));
-        for (RockVariant variant : RockVariant.VALUES_STONE) {
-            Block cobblestone = variant.get(EvolutionBlocks.COBBLESTONES);
-            this.simpleBlock(cobblestone);
+                    .texture("cross", blockTexture(tallgrassHigh, half == DoubleBlockHalf.UPPER ? "_top" : "_bottom"))
+        );
+        for (NutrientVariant variant : NutrientVariant.VALUES) {
             Block dirt = variant.get(EvolutionBlocks.DIRTS);
             this.simpleBlockWithRandomRotation(dirt);
-            Block dryGrass = variant.get(EvolutionBlocks.DRY_GRASSES);
-            this.blockBooleanPropertyRandomRotation(dryGrass, EvolutionBStates.SNOWY, snowy -> !snowy, snowy -> {
-                if (!snowy) {
-                    return this.models().withExistingParent(name(dryGrass), "evolution:block/dry_grass")
-                               .texture("side", blockTexture(dirt))
-                               .texture("upover", "evolution:block/dry_grass_top")
-                               .texture("overlay", "evolution:block/dry_grass_side_overlay")
-                               .texture("bottom", blockTexture(dirt))
-                               .texture("top", blockTexture(dirt))
-                               .texture("particle", blockTexture(dirt));
-                }
-                return this.models().withExistingParent(name(dryGrass, "_snow"), "evolution:block/dry_grass_snow")
-                           .texture("side", blockTexture(dirt))
-                           .texture("top", "evolution:block/dry_grass_top")
-                           .texture("overlay", "evolution:block/dry_grass_side_overlay_snow")
-                           .texture("bottom", blockTexture(dirt))
-                           .texture("particle", blockTexture(dirt));
-            });
             Block grass = variant.get(EvolutionBlocks.GRASSES);
-            this.blockBooleanPropertyRandomRotation(grass, EvolutionBStates.SNOWY, snowy -> !snowy, snowy -> {
-                if (!snowy) {
-                    return this.models().withExistingParent(name(grass), "evolution:block/grass")
-                               .texture("side", blockTexture(dirt))
-                               .texture("overlay", "evolution:block/grass_side_overlay")
-                               .texture("bottom", blockTexture(dirt))
-                               .texture("top", "evolution:block/grass_top")
-                               .texture("particle", blockTexture(dirt));
-                }
-                return this.models().withExistingParent(name(grass, "_snow"), "evolution:block/grass_snow")
-                           .texture("side", blockTexture(dirt))
-                           .texture("overlay", "evolution:block/grass_side_overlay_snow")
-                           .texture("bottom", blockTexture(dirt))
-                           .texture("top", "evolution:block/grass_top")
-                           .texture("particle", blockTexture(dirt));
-            });
+            this.simpleBlockWithRandomRotation(grass, this.models().withExistingParent(name(grass), "evolution:block/grass")
+                                                          .texture("side", blockTexture(dirt))
+                                                          .texture("overlay", "evolution:block/grass_side_overlay")
+                                                          .texture("bottom", blockTexture(dirt))
+                                                          .texture("top", "evolution:block/grass_top")
+                                                          .texture("particle", blockTexture(dirt)));
+        }
+        for (RockVariant variant : RockVariant.VALUES) {
+            Block cobblestone = variant.get(EvolutionBlocks.COBBLESTONES);
+            this.simpleBlock(cobblestone);
             this.simpleBlock(variant.get(EvolutionBlocks.GRAVELS));
             Block knappingBlock = variant.get(EvolutionBlocks.KNAPPING_BLOCKS);
             this.simpleBlock(knappingBlock, this.models().builtin(name(knappingBlock), blockTexture(cobblestone)));
