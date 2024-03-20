@@ -19,6 +19,21 @@ public abstract class MixinDirection {
     @Shadow @Final private int oppositeIndex;
 
     /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public static Direction from2DDataValue(int i) {
+        return switch (i) {
+            case 0 -> Direction.SOUTH;
+            case 1 -> Direction.WEST;
+            case 2 -> Direction.NORTH;
+            case 3 -> Direction.EAST;
+            default -> throw new IllegalArgumentException("No horizontal direction with id: " + i);
+        };
+    }
+
+    /**
      * @reason _
      * @author TheGreatWolf
      */
