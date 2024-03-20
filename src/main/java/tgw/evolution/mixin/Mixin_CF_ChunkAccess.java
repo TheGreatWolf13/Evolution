@@ -189,7 +189,7 @@ public abstract class Mixin_CF_ChunkAccess implements PatchChunkAccess, BlockGet
      */
     @Overwrite
     public void markPosForPostprocessing(BlockPos pos) {
-        Evolution.warn("markPosForPostprocessing(BlockPos) should not be called!");
+        Evolution.deprecatedMethod();
         this.markPosForPostprocessing_(pos.getX(), pos.getY(), pos.getZ());
     }
 
