@@ -13,6 +13,7 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -46,7 +47,7 @@ public final class LevelUtils {
     public static boolean containsAnyLiquid(LevelReader level, int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
         int cachedX = Integer.MAX_VALUE;
         int cachedZ = Integer.MAX_VALUE;
-        LevelChunk cachedChunk = null;
+        ChunkAccess cachedChunk = null;
         for (int x = minX; x < maxX; ++x) {
             int chunkX = SectionPos.blockToSectionCoord(x);
             for (int z = minZ; z < maxZ; ++z) {
@@ -54,11 +55,11 @@ public final class LevelUtils {
                 if (chunkX != cachedX || chunkZ != cachedZ) {
                     cachedX = chunkX;
                     cachedZ = chunkZ;
-                    cachedChunk = (LevelChunk) level.getChunk(chunkX, chunkZ);
+                    cachedChunk = level.getChunk(chunkX, chunkZ);
                 }
                 assert cachedChunk != null;
                 for (int y = minY; y < maxY; ++y) {
-                    if (!cachedChunk.getFluidState(x, y, z).isEmpty()) {
+                    if (!cachedChunk.getFluidState_(x, y, z).isEmpty()) {
                         return true;
                     }
                 }
