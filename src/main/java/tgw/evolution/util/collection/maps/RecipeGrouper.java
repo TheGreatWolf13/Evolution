@@ -7,7 +7,7 @@ import tgw.evolution.util.collection.lists.OList;
 
 public class RecipeGrouper {
 
-    private @Nullable O2OMap<String, OList<Recipe<?>>>[] maps;
+    private O2OMap<String, OList<Recipe<?>>> @Nullable [] maps;
 
     public @Nullable OList<Recipe<?>> get(RecipeCategory category, String group) {
         if (this.maps == null) {
