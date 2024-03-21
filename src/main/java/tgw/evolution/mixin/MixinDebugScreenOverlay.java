@@ -135,7 +135,7 @@ public abstract class MixinDebugScreenOverlay extends GuiComponent {
             this.gameInfo.add(pct);
             this.gameInfo.add(this.minecraft.lvlRenderer().getChunkStatistics());
             this.gameInfo.add(this.minecraft.lvlRenderer().getEntityStatistics());
-            this.gameInfo.add("P: " + this.minecraft.particleEngine.countParticles() + ". T: " + this.minecraft.level.getEntityCount());
+            this.gameInfo.add("P: " + this.minecraft.particleEngine.getRenderedParticles() + "/" + this.minecraft.particleEngine.countParticles());
             this.gameInfo.add(this.minecraft.level.gatherChunkSourceStats());
             this.gameInfo.add("");
             this.gameInfo.add("Chunk-relative: " + (pos.getX() & 15) + " " + (pos.getY() & 15) + " " + (pos.getZ() & 15));
