@@ -39,7 +39,7 @@ public abstract class MixinEmptyBlockGetter implements BlockGetter {
     @Override
     @Overwrite
     public BlockState getBlockState(BlockPos pos) {
-        Evolution.warn("getBlockState(BlockPos) should not be called!");
+        Evolution.deprecatedMethod();
         return Blocks.AIR.defaultBlockState();
     }
 
@@ -60,7 +60,7 @@ public abstract class MixinEmptyBlockGetter implements BlockGetter {
     @Override
     @Overwrite
     public FluidState getFluidState(BlockPos pos) {
-        Evolution.warn("getFluidState(BlockPos) should not be called!");
+        Evolution.deprecatedMethod();
         return Fluids.EMPTY.defaultFluidState();
     }
 

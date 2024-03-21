@@ -119,7 +119,7 @@ public abstract class Mixin_CF_ChunkAccess implements PatchChunkAccess, BlockGet
      */
     @Overwrite
     public Set<BlockPos> getBlockEntitiesPos() {
-        Evolution.warn("getBlockEntitiesPos() should not be called!");
+        Evolution.deprecatedMethod();
         OSet<BlockPos> set = new OHashSet<>(this.pendingBlockEntities_.size() + this.blockEntities_.size());
         LongIterator it = this.pendingBlockEntities_.keySet().longIterator();
         while (it.hasNext()) {
@@ -140,7 +140,7 @@ public abstract class Mixin_CF_ChunkAccess implements PatchChunkAccess, BlockGet
      */
     @Overwrite
     public @Nullable CompoundTag getBlockEntityNbt(BlockPos pos) {
-        Evolution.warn("getBlockEntityNbt(BlockPos) should not be called!");
+        Evolution.deprecatedMethod();
         return this.getBlockEntityNbt_(pos.getX(), pos.getY(), pos.getZ());
     }
 

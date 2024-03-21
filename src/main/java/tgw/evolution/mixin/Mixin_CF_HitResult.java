@@ -41,7 +41,7 @@ public abstract class Mixin_CF_HitResult implements PatchHitResult {
      */
     @Overwrite
     public Vec3 getLocation() {
-        Evolution.warn("getLocation() should not be called!");
+        Evolution.deprecatedMethod();
         return Vec3.ZERO;
     }
 

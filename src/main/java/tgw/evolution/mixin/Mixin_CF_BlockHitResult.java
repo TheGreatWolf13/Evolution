@@ -53,7 +53,7 @@ public abstract class Mixin_CF_BlockHitResult extends HitResult implements Patch
      */
     @Overwrite
     public BlockPos getBlockPos() {
-        Evolution.warn("getBlockPos() should not be called!");
+        Evolution.deprecatedMethod();
         return BlockPos.ZERO;
     }
 
