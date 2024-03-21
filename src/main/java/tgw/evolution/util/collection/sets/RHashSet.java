@@ -5,6 +5,7 @@ import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import it.unimi.dsi.fastutil.objects.ReferenceCollection;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnmodifiableView;
 import tgw.evolution.Evolution;
 
 import java.util.Collection;
@@ -19,6 +20,7 @@ public class RHashSet<K> extends ReferenceOpenHashSet<K> implements RSet<K> {
      */
     protected byte flags = 0b01;
     protected int lastPos = -1;
+    protected @Nullable View<K> view;
 
     public RHashSet(ReferenceCollection<? extends K> c) {
         super(c);
@@ -153,5 +155,13 @@ public class RHashSet<K> extends ReferenceOpenHashSet<K> implements RSet<K> {
         if (needed > this.n) {
             this.rehash(needed);
         }
+    }
+
+    @Override
+    public @UnmodifiableView RSet<K> view() {
+        if (this.view == null) {
+            this.view = new View<>(this);
+        }
+        return this.view;
     }
 }

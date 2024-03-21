@@ -3,6 +3,7 @@ package tgw.evolution.util.collection.sets;
 import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnmodifiableView;
 import tgw.evolution.Evolution;
 
 import java.util.AbstractSet;
@@ -15,6 +16,7 @@ public class SimpleEnumSet<E extends Enum<E>> extends AbstractSet<E> implements 
     protected final E[] values;
     protected long data;
     protected int lastPos = -1;
+    protected @Nullable View<E> view;
 
     public SimpleEnumSet(Class<E> clazz, E[] values) {
         if (!clazz.isEnum()) {
@@ -200,6 +202,14 @@ public class SimpleEnumSet<E extends Enum<E>> extends AbstractSet<E> implements 
     @Override
     public void trimCollection() {
         //Nothing to do
+    }
+
+    @Override
+    public @UnmodifiableView RSet<E> view() {
+        if (this.view == null) {
+            this.view = new View<>(this);
+        }
+        return this.view;
     }
 
     private class EnumIterator implements ObjectIterator<E> {

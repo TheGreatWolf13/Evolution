@@ -52,6 +52,8 @@ public interface RSet<K> extends ReferenceSet<K>, ICollectionExtension {
 
     void resetIteration();
 
+    @UnmodifiableView RSet<K> view();
+
     class EmptySet<K> extends ReferenceSets.EmptySet<K> implements RSet<K> {
 
         protected static final EmptySet EMPTY = new EmptySet();
@@ -90,6 +92,46 @@ public interface RSet<K> extends ReferenceSet<K>, ICollectionExtension {
 
         @Override
         public void trimCollection() {
+        }
+
+        @Override
+        public @UnmodifiableView RSet<K> view() {
+            return this;
+        }
+    }
+
+    class View<K> extends ReferenceSets.UnmodifiableSet<K> implements RSet<K> {
+
+        protected final RSet<K> s;
+
+        protected View(RSet<K> s) {
+            super(s);
+            this.s = s;
+        }
+
+        @Override
+        public @Nullable K fastEntries() {
+            return this.s.fastEntries();
+        }
+
+        @Override
+        public @Nullable K getElement() {
+            return this.s.getElement();
+        }
+
+        @Override
+        public void resetIteration() {
+            this.s.resetIteration();
+        }
+
+        @Override
+        public void trimCollection() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public @UnmodifiableView RSet<K> view() {
+            return this;
         }
     }
 }
