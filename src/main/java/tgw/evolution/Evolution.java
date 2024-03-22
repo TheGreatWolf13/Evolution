@@ -21,15 +21,14 @@ public final class Evolution implements ModInitializer {
 
     public static final String MODID = "evolution";
     private static final Logger LOGGER = LogUtils.getLogger();
+    private static final EvolutionSecurityManager SECURITY_MANAGER = new EvolutionSecurityManager();
 
     public static void debug(String message, Object... objects) {
-        String clazz = Thread.currentThread().getStackTrace()[2].getClassName();
-        LOGGER.debug("[" + clazz + "]: " + message, objects);
+        LOGGER.debug("[" + SECURITY_MANAGER.getCallerClassName(2) + "]: " + message, objects);
     }
 
     public static void debug(String message) {
-        String clazz = Thread.currentThread().getStackTrace()[2].getClassName();
-        LOGGER.debug("[{}]: {}", clazz, message);
+        LOGGER.debug("[{}]: {}", SECURITY_MANAGER.getCallerClassName(2), message);
     }
 
     public static void deprecatedConstructor() {
@@ -41,13 +40,11 @@ public final class Evolution implements ModInitializer {
     }
 
     public static void error(String message, Object... objects) {
-        String clazz = Thread.currentThread().getStackTrace()[2].getClassName();
-        LOGGER.error("[" + clazz + "]: " + message, objects);
+        LOGGER.error("[" + SECURITY_MANAGER.getCallerClassName(2) + "]: " + message, objects);
     }
 
     public static void error(String message) {
-        String clazz = Thread.currentThread().getStackTrace()[2].getClassName();
-        LOGGER.error("[{}]: {}", clazz, message);
+        LOGGER.error("[{}]: {}", SECURITY_MANAGER.getCallerClassName(2), message);
     }
 
     public static void error(String message, Throwable t) {
@@ -61,13 +58,11 @@ public final class Evolution implements ModInitializer {
     }
 
     public static void info(String message, Object... objects) {
-        String clazz = Thread.currentThread().getStackTrace()[2].getClassName();
-        LOGGER.info("[" + clazz + "]: " + message, objects);
+        LOGGER.info("[" + SECURITY_MANAGER.getCallerClassName(2) + "]: " + message, objects);
     }
 
     public static void info(String message) {
-        String clazz = Thread.currentThread().getStackTrace()[2].getClassName();
-        LOGGER.info("[{}]: {}", clazz, message);
+        LOGGER.info("[{}]: {}", SECURITY_MANAGER.getCallerClassName(2), message);
     }
 
     public static void usingPlaceholder(Player player, String obj) {
@@ -75,8 +70,7 @@ public final class Evolution implements ModInitializer {
     }
 
     public static void warn(String message) {
-        String clazz = Thread.currentThread().getStackTrace()[2].getClassName();
-        LOGGER.warn("[{}]: {}", clazz, message);
+        LOGGER.warn("[{}]: {}", SECURITY_MANAGER.getCallerClassName(2), message);
     }
 
     public static void warn(String message, Throwable t) {
@@ -85,8 +79,7 @@ public final class Evolution implements ModInitializer {
     }
 
     public static void warn(String message, Object... objects) {
-        String clazz = Thread.currentThread().getStackTrace()[2].getClassName();
-        LOGGER.warn("[" + clazz + "]: " + message, objects);
+        LOGGER.warn("[" + SECURITY_MANAGER.getCallerClassName(2) + "]: " + message, objects);
     }
 
     @Override
@@ -100,5 +93,13 @@ public final class Evolution implements ModInitializer {
         EvolutionEntities.registerEntityWorldSpawns();
         EvolutionNetwork.registerEntitySpawnData();
         info("Evolution Mod initialized");
+    }
+
+    @SuppressWarnings("removal")
+    private static class EvolutionSecurityManager extends SecurityManager {
+
+        public String getCallerClassName(int callStackDepth) {
+            return this.getClassContext()[callStackDepth].getName();
+        }
     }
 }
