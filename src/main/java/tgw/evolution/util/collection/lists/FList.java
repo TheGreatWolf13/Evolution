@@ -34,7 +34,7 @@ public interface FList extends FloatList, ICollectionExtension {
     }
 
     static @UnmodifiableView FList singleton(float k) {
-        return new Singleton(k).view();
+        return new Singleton(k);
     }
 
     default boolean addAll(FloatIterable it) {

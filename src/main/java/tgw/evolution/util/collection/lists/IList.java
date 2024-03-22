@@ -34,7 +34,7 @@ public interface IList extends IntList, ICollectionExtension {
     }
 
     static @UnmodifiableView IList singleton(int k) {
-        return new Singleton(k).view();
+        return new Singleton(k);
     }
 
     default boolean addAll(IntIterable it) {

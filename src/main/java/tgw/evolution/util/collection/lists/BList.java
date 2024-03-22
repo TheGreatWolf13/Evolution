@@ -34,7 +34,7 @@ public interface BList extends ByteList, ICollectionExtension {
     }
 
     static @UnmodifiableView BList singleton(byte k) {
-        return new Singleton(k).view();
+        return new Singleton(k);
     }
 
     default boolean addAll(ByteIterable it) {

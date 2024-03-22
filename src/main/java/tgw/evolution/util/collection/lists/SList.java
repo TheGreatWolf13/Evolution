@@ -34,7 +34,7 @@ public interface SList extends ShortList, ICollectionExtension {
     }
 
     static @UnmodifiableView SList singleton(short k) {
-        return new Singleton(k).view();
+        return new Singleton(k);
     }
 
     default boolean addAll(ShortIterable it) {

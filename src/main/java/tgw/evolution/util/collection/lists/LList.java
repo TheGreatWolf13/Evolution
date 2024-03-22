@@ -34,7 +34,7 @@ public interface LList extends LongList, ICollectionExtension {
     }
 
     static @UnmodifiableView LList singleton(long k) {
-        return new Singleton(k).view();
+        return new Singleton(k);
     }
 
     default boolean addAll(LongIterable it) {

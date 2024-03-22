@@ -34,7 +34,7 @@ public interface DList extends DoubleList, ICollectionExtension {
     }
 
     static @UnmodifiableView DList singleton(double k) {
-        return new Singleton(k).view();
+        return new Singleton(k);
     }
 
     default boolean addAll(DoubleIterable it) {

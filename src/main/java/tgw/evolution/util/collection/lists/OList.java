@@ -34,7 +34,7 @@ public interface OList<K> extends ObjectList<K>, ICollectionExtension {
     }
 
     static @UnmodifiableView <K> OList<K> singleton(K k) {
-        return new Singleton<>(k).view();
+        return new Singleton<>(k);
     }
 
     default boolean addAll(ObjectIterable<? extends K> it) {
