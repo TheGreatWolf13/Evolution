@@ -18,6 +18,7 @@ import java.util.Set;
 public class CoreModLoader implements IMixinConfigPlugin {
 
     public static final Logger LOGGER = LogUtils.getLogger();
+    public static final boolean DEBUG = false;
 
     @Override
     public void acceptTargets(Set<String> myTargets, Set<String> otherTargets) {}

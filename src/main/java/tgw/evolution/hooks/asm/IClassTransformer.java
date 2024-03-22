@@ -29,7 +29,9 @@ public interface IClassTransformer {
     boolean handlesClass(String name, String mixinName);
 
     default void log(String message) {
-        CoreModLoader.LOGGER.debug(this.name() + ": " + message);
+        if (CoreModLoader.DEBUG) {
+            CoreModLoader.LOGGER.debug(this.name() + ": " + message);
+        }
     }
 
     default MethodInsnNode method(MethodReference method) {
