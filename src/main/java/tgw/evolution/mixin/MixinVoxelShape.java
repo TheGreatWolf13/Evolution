@@ -22,6 +22,7 @@ import tgw.evolution.util.math.DirectionUtil;
 import tgw.evolution.util.math.Vec3d;
 import tgw.evolution.util.math.VectorUtil;
 
+import java.util.List;
 import java.util.Optional;
 
 @Mixin(VoxelShape.class)
@@ -230,9 +231,7 @@ public abstract class MixinVoxelShape implements PatchVoxelShape {
         }
         else {
             OList<AABB> list = new OArrayList<>();
-            this.forAllBoxes((x0, y0, z0, x1, y1, z1) -> {
-                list.add(new AABB(x0, y0, z0, x1, y1, z1));
-            });
+            this.forAllBoxes((x0, y0, z0, x1, y1, z1) -> list.add(new AABB(x0, y0, z0, x1, y1, z1)));
             list.trimCollection();
             this.cachedBoxes = list.view();
         }
@@ -260,5 +259,15 @@ public abstract class MixinVoxelShape implements PatchVoxelShape {
         int j = this.findIndex(DirectionUtil.backward(axis), secondaryPos);
         int k = this.shape.firstFull(axis, i, j);
         return k >= this.shape.getSize(axis) ? Double.POSITIVE_INFINITY : this.get(axis, k);
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public List<AABB> toAabbs() {
+        Evolution.deprecatedMethod();
+        return this.cachedBoxes();
     }
 }

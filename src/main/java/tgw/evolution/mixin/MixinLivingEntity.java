@@ -422,7 +422,7 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
             if (this.isInWall()) {
                 this.hurt(EvolutionDamage.IN_WALL, 5.0F);
             }
-            else if (isPlayer && !this.level.getWorldBorder().isWithinBounds(this.getBoundingBox())) {
+            else if (isPlayer && !this.level.getWorldBorder().isWithinBounds_(this.getBoundingBox())) {
                 double dist = this.level.getWorldBorder().getDistanceToBorder(this) + this.level.getWorldBorder().getDamageSafeZone();
                 if (dist < 0) {
                     double dpB = this.level.getWorldBorder().getDamagePerBlock();

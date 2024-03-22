@@ -112,7 +112,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
     private static final ResourceLocation FORCEFIELD_LOCATION = new ResourceLocation("textures/misc/forcefield.png");
     private static final ResourceLocation RAIN_LOCATION = new ResourceLocation("textures/environment/rain.png");
     private static final ResourceLocation SNOW_LOCATION = new ResourceLocation("textures/environment/snow.png");
-    private static final List<ResourceLocation> DEPENDENCY = List.of(ReloadListernerKeys.TEXTURES);
+    private static final OList<ResourceLocation> DEPENDENCY = OList.of(ReloadListernerKeys.TEXTURES);
     private static final ThreadLocal<OArrayFIFOQueue<RenderChunkInfo>> QUEUE_CACHE = ThreadLocal.withInitial(OArrayFIFOQueue::new);
     private final BlockEntityRenderDispatcher blockEntityRenderDispatcher;
     private final BufferHolder bufferHolder;
@@ -920,7 +920,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
     }
 
     @Override
-    public Collection<ResourceLocation> getDependencies() {
+    public OList<ResourceLocation> getDependencies() {
         return DEPENDENCY;
     }
 

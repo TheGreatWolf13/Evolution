@@ -52,13 +52,12 @@ import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.math.DirectionUtil;
 import tgw.evolution.util.math.XoRoShiRoRandom;
 
-import java.util.Collection;
 import java.util.List;
 
 @Mixin(ItemRenderer.class)
 public abstract class Mixin_M_ItemRenderer implements IKeyedReloadListener, PatchItemRenderer {
 
-    @Unique private static final List<ResourceLocation> DEPENDENCY = List.of(ReloadListernerKeys.MODELS);
+    @Unique private static final OList<ResourceLocation> DEPENDENCY = OList.of(ReloadListernerKeys.MODELS);
     @Unique private final MultiBufferSource.BufferSource bufferForCount = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
     @Unique private final PoseStack matricesForCount = new PoseStack();
     @Unique private final PoseStack matricesForGuiItems = new PoseStack();
@@ -151,7 +150,7 @@ public abstract class Mixin_M_ItemRenderer implements IKeyedReloadListener, Patc
     protected abstract void fillRect(BufferBuilder bufferBuilder, int i, int j, int k, int l, int m, int n, int o, int p);
 
     @Override
-    public Collection<ResourceLocation> getDependencies() {
+    public OList<ResourceLocation> getDependencies() {
         return DEPENDENCY;
     }
 

@@ -27,17 +27,16 @@ import tgw.evolution.hooks.asm.RestoreFinal;
 import tgw.evolution.patches.PatchBlockRenderDispatcher;
 import tgw.evolution.resources.IKeyedReloadListener;
 import tgw.evolution.resources.ReloadListernerKeys;
+import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.math.FastRandom;
 import tgw.evolution.util.math.IRandom;
 
-import java.util.Collection;
-import java.util.List;
 import java.util.Random;
 
 @Mixin(BlockRenderDispatcher.class)
 public abstract class Mixin_CF_BlockRenderDispatcher implements PatchBlockRenderDispatcher, IKeyedReloadListener {
 
-    @Unique private static final List<ResourceLocation> DEPENDENCY = List.of(ReloadListernerKeys.MODELS);
+    @Unique private static final OList<ResourceLocation> DEPENDENCY = OList.of(ReloadListernerKeys.MODELS);
     @Unique private final IRandom random_;
     @Mutable @Shadow @Final @RestoreFinal private BlockColors blockColors;
     @Mutable @Shadow @Final @RestoreFinal private BlockEntityWithoutLevelRenderer blockEntityRenderer;
@@ -60,7 +59,7 @@ public abstract class Mixin_CF_BlockRenderDispatcher implements PatchBlockRender
     public abstract BakedModel getBlockModel(BlockState blockState);
 
     @Override
-    public Collection<ResourceLocation> getDependencies() {
+    public OList<ResourceLocation> getDependencies() {
         return DEPENDENCY;
     }
 

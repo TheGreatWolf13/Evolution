@@ -145,4 +145,8 @@ public interface PatchEntity {
     default void playStepSound(int x, int y, int z, BlockState state) {
         throw new AbstractMethodError();
     }
+
+    default void setBoundingBox(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
+        throw new AbstractMethodError();
+    }
 }

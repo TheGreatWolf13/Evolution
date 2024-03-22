@@ -341,6 +341,25 @@ public abstract class MixinLocalPlayer extends AbstractClientPlayer {
     @Shadow
     public abstract void onUpdateAbilities();
 
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public void resetPos() {
+        this.setPose(Pose.STANDING);
+        for (double y = this.getY(); y > this.level.getMinBuildHeight() && y < this.level.getMaxBuildHeight(); ++y) {
+            this.setPos(this.getX(), y, this.getZ());
+            if (this.level.noCollision(this)) {
+                break;
+            }
+        }
+        this.setDeltaMovement(0, 0, 0);
+        this.setXRot(0.0F);
+        this.setHealth(this.getMaxHealth());
+        this.deathTime = 0;
+    }
+
     @Shadow
     protected abstract void sendRidingJump();
 

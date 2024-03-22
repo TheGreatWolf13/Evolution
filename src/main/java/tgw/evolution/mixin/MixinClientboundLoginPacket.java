@@ -33,7 +33,9 @@ public abstract class MixinClientboundLoginPacket implements PatchClientboundLog
     @Shadow @Final private boolean isFlat;
     @Shadow @Final private Set<ResourceKey<Level>> levels;
     @Shadow @Final private int maxPlayers;
-    @Unique private Vec3 motion = Vec3.ZERO;
+    @Unique private double motionX;
+    @Unique private double motionY;
+    @Unique private double motionZ;
     @Shadow @Final private int playerId;
     @Shadow @Final @Nullable private GameType previousGameType;
     @Shadow @Final private boolean reducedDebugInfo;
@@ -48,24 +50,40 @@ public abstract class MixinClientboundLoginPacket implements PatchClientboundLog
     }
 
     @Override
-    public Vec3 getMotion() {
-        return this.motion;
+    public double getMotionX() {
+        return this.motionX;
+    }
+
+    @Override
+    public double getMotionY() {
+        return this.motionY;
+    }
+
+    @Override
+    public double getMotionZ() {
+        return this.motionZ;
     }
 
     @Inject(method = "<init>(Lnet/minecraft/network/FriendlyByteBuf;)V", at = @At(value = "TAIL"))
     private void onRead(FriendlyByteBuf buffer, CallbackInfo ci) {
         this.daytime = buffer.readLong();
-        this.motion = new Vec3(buffer.readDouble(), buffer.readDouble(), buffer.readDouble());
+        this.motionX = buffer.readDouble();
+        this.motionY = buffer.readDouble();
+        this.motionZ = buffer.readDouble();
     }
 
     @Override
-    public void setDaytime(long daytime) {
+    public ClientboundLoginPacket setDaytime(long daytime) {
         this.daytime = daytime;
+        return (ClientboundLoginPacket) (Object) this;
     }
 
     @Override
-    public void setMotion(Vec3 motion) {
-        this.motion = motion;
+    public ClientboundLoginPacket setMotion(Vec3 motion) {
+        this.motionX = motion.x;
+        this.motionY = motion.y;
+        this.motionZ = motion.z;
+        return (ClientboundLoginPacket) (Object) this;
     }
 
     /**
@@ -96,8 +114,8 @@ public abstract class MixinClientboundLoginPacket implements PatchClientboundLog
         buffer.writeBoolean(this.isDebug);
         buffer.writeBoolean(this.isFlat);
         buffer.writeLong(this.daytime);
-        buffer.writeDouble(this.motion.x);
-        buffer.writeDouble(this.motion.y);
-        buffer.writeDouble(this.motion.z);
+        buffer.writeDouble(this.motionX);
+        buffer.writeDouble(this.motionY);
+        buffer.writeDouble(this.motionZ);
     }
 }

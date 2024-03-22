@@ -49,24 +49,25 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.IClimbable;
+import tgw.evolution.entities.EntityUtils;
 import tgw.evolution.hooks.LivingHooks;
+import tgw.evolution.hooks.asm.DeleteMethod;
 import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.init.EvolutionBlockTags;
 import tgw.evolution.init.EvolutionDamage;
+import tgw.evolution.init.EvolutionShapes;
 import tgw.evolution.patches.PatchEntity;
 import tgw.evolution.util.OptionalMutableBlockPos;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.collection.sets.OHashSet;
 import tgw.evolution.util.collection.sets.OSet;
-import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 import tgw.evolution.util.math.*;
 import tgw.evolution.util.physics.Physics;
 import tgw.evolution.util.physics.SI;
 import tgw.evolution.world.util.LevelUtils;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 
@@ -142,16 +143,50 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
         if (!list.isEmpty()) {
             shapes.addAll(list);
         }
-        WorldBorder worldBorder = level.getWorldBorder();
-        boolean closeToBorder = entity != null && worldBorder.isInsideCloseToBorder_(entity, bb.getXsize() + delta.x, bb.getZsize() + delta.z);
-        if (closeToBorder) {
-            shapes.add(worldBorder.getCollisionShape());
+        double dx = delta.x;
+        double dz = delta.z;
+        if (entity != null) {
+            WorldBorder worldBorder = level.getWorldBorder();
+            if (worldBorder.isInsideCloseToBorder_(entity, bb.getXsize() + dx, bb.getZsize() + dz)) {
+                shapes.add(worldBorder.getCollisionShape());
+            }
         }
         shapes.addAll(level.getBlockCollisions(entity, bb.expandTowards(delta)));
-        return collideWithShapes(delta, bb, shapes);
+        if (shapes.isEmpty()) {
+            return delta;
+        }
+        double dy = delta.y;
+        if (dy != 0) {
+            dy = EvolutionShapes.collide(Direction.Axis.Y, bb, shapes, dy);
+            if (dy != 0) {
+                bb = bb.move(0, dy, 0);
+            }
+        }
+        boolean bl = Math.abs(dx) < Math.abs(dz);
+        if (bl && dz != 0) {
+            dz = EvolutionShapes.collide(Direction.Axis.Z, bb, shapes, dz);
+            if (dz != 0) {
+                bb = bb.move(0, 0, dz);
+            }
+        }
+        if (dx != 0) {
+            dx = EvolutionShapes.collide(Direction.Axis.X, bb, shapes, dx);
+            if (!bl && dx != 0) {
+                bb = bb.move(dx, 0, 0);
+            }
+        }
+        if (!bl && dz != 0) {
+            dz = EvolutionShapes.collide(Direction.Axis.Z, bb, shapes, dz);
+        }
+        return new Vec3(dx, dy, dz);
     }
 
-    @Shadow
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    @DeleteMethod
     private static Vec3 collideWithShapes(Vec3 vec3, AABB aABB, List<VoxelShape> list) {
         throw new AbstractMethodError();
     }
@@ -366,11 +401,6 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
     }
 
     @Override
-    public double getBaseMass() {
-        return 1;
-    }
-
-    @Override
     public double getBaseWalkForce() {
         return 1_000 * SI.NEWTON;
     }
@@ -525,28 +555,13 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
     public abstract @Nullable GameEventListenerRegistrar getGameEventListenerRegistrar();
 
     @Override
-    public @Nullable HitboxEntity<? extends Entity> getHitboxes() {
-        return null;
-    }
-
-    @Override
     public @Nullable Pose getLastPose() {
         return this.lastPose;
     }
 
     @Override
-    public double getLegSlowdown() {
-        return 0;
-    }
-
-    @Override
     public long getLightEmissionPos() {
         return this.blockPosition.asLong();
-    }
-
-    @Override
-    public double getLungCapacity() {
-        return 0;
     }
 
     @Shadow
@@ -905,7 +920,7 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
             double dx = allowedMovement.x;
             double dy = allowedMovement.y;
             double dz = allowedMovement.z;
-            this.flyDist += allowedMovement.length() * 0.6;
+            this.flyDist += (float) (allowedMovement.length() * 0.6);
             long steppingPos = this.getSteppingPos();
             int stepX = BlockPos.getX(steppingPos);
             int stepY = BlockPos.getY(steppingPos);
@@ -915,13 +930,13 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
             if (!canClimb) {
                 dy = 0.0;
             }
-            this.walkDist += allowedMovement.horizontalDistance() * 0.5;
-            this.moveDist += Math.sqrt(dx * dx + dy * dy + dz * dz) * 0.5;
+            this.walkDist += (float) (allowedMovement.horizontalDistance() * 0.5);
+            this.moveDist += (float) (Math.sqrt(dx * dx + dy * dy + dz * dz) * 0.5);
             if (this.moveDist > this.nextStep && !steppingState.isAir()) {
                 boolean landingIsStepping = landX == stepX && landY == stepY && landZ == stepZ;
-                boolean stepOnBlock = this.stepOnBlock(landX, landY, landZ, landingState, movementEmission.emitsSounds(), landingIsStepping, deltaMovement);
+                boolean stepOnBlock = this.stepOnBlock(landX, landY, landZ, landingState, movementEmission.emitsSounds(), deltaMovement);
                 if (!landingIsStepping) {
-                    stepOnBlock |= this.stepOnBlock(stepX, stepY, stepZ, steppingState, false, movementEmission.emitsEvents(), deltaMovement);
+                    stepOnBlock |= this.stepOnBlock(stepX, stepY, stepZ, steppingState, false, deltaMovement);
                 }
                 if (stepOnBlock) {
                     this.moveDist -= this.nextStep;
@@ -1200,22 +1215,24 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
         EntityDimensions newDims = this.getDimensions(pose);
         this.dimensions = newDims;
         this.eyeHeight = this.getEyeHeight(pose, newDims);
-        boolean isSmall = newDims.width <= 4 && newDims.height <= 4;
         this.refreshBoundingBox();
+        float newHeight = newDims.height;
+        float newWidth = newDims.width;
         if (!this.level.isClientSide &&
             !this.firstTick &&
             !this.noPhysics &&
-            isSmall &&
-            (newDims.width > oldDims.width || newDims.height > oldDims.height) &&
+            newWidth <= 4 && newHeight <= 4 &&
+            (newWidth > oldDims.width || newHeight > oldDims.height) &&
             !((Object) this instanceof Player)) {
-            Vec3 center = this.position().add(0, oldDims.height / 2, 0);
-            double dWidth = Math.max(0.0F, newDims.width - oldDims.width) + 1.0E-6;
-            double dHeight = Math.max(0.0F, newDims.height - oldDims.height) + 1.0E-6;
-            VoxelShape shape = Shapes.create(AABB.ofSize(center, dWidth, dHeight, dWidth));
-            Optional<Vec3> freePosition = this.level.findFreePosition((Entity) (Object) this, shape, center, newDims.width, newDims.height,
-                                                                      newDims.width);
-            if (freePosition.isPresent()) {
-                this.setPos(freePosition.get().add(0, -newDims.height / 2, 0));
+            double centerX = this.position.x;
+            double centerY = this.position.y + oldDims.height / 2;
+            double centerZ = this.position.z;
+            double dWidth = Math.max(0.0F, newWidth - oldDims.width) + 1.0E-6;
+            double dHeight = Math.max(0.0F, newHeight - oldDims.height) + 1.0E-6;
+            VoxelShape shape = Shapes.create(centerX - dWidth * 0.5, centerY - dHeight * 0.5, centerZ - dWidth * 0.5, centerX + dWidth * 0.5, centerY + dHeight * 0.5, centerZ + dWidth * 0.5);
+            Vec3 freePosition = EntityUtils.findFreePosition(this.level, (Entity) (Object) this, shape, centerX, centerY, centerZ, newWidth, newHeight, newWidth);
+            if (freePosition != null) {
+                this.setPos(freePosition.x, freePosition.y - newHeight * 0.5, freePosition.z);
             }
         }
     }
@@ -1229,11 +1246,12 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
      */
     @Overwrite
     public final void setBoundingBox(AABB bb) {
-        ((AABBMutable) this.bb).set(bb);
+        Evolution.deprecatedMethod();
+        this.setBoundingBox(bb.minX, bb.minY, bb.minZ, bb.maxX, bb.maxY, bb.maxZ);
     }
 
-    @Unique
-    private void setBoundingBox(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
+    @Override
+    public void setBoundingBox(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
         ((AABBMutable) this.bb).set(minX, minY, minZ, maxX, maxY, maxZ);
     }
 
@@ -1243,10 +1261,8 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
      */
     @Overwrite
     public void setDeltaMovement(Vec3 motion) {
-        if (false && motion != Vec3.ZERO) {
-            Evolution.deprecatedMethod();
-        }
-        ((Vec3d) this.deltaMovement).set(motion);
+        Evolution.deprecatedMethod();
+        this.setDeltaMovement(motion.x, motion.y, motion.z);
     }
 
     /**
@@ -1278,8 +1294,15 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
         this.refreshBoundingBox();
     }
 
-    @Shadow
-    public abstract void setPos(Vec3 pPos);
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public final void setPos(Vec3 pos) {
+        Evolution.deprecatedMethod();
+        this.setPos(pos.x, pos.y, pos.z);
+    }
 
     /**
      * @author TheGreatWolf
@@ -1306,7 +1329,7 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
             }
         }
         if (this.isAddedToWorld() && !this.level.isClientSide && !this.isRemoved()) {
-            this.level.getChunk((int) Math.floor(x) >> 4, (int) Math.floor(z) >> 4); // Forge - ensure target chunk is loaded.
+            this.level.getChunk((int) Math.floor(x) >> 4, (int) Math.floor(z) >> 4);
         }
     }
 
@@ -1375,7 +1398,7 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
     }
 
     @Unique
-    private boolean stepOnBlock(int x, int y, int z, BlockState state, boolean playSound, boolean emitEvent, Vec3 movement) {
+    private boolean stepOnBlock(int x, int y, int z, BlockState state, boolean playSound, Vec3 movement) {
         if (state.isAir()) {
             return false;
         }

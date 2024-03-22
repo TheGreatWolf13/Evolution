@@ -6,17 +6,15 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import tgw.evolution.resources.IKeyedReloadListener;
 import tgw.evolution.resources.ReloadListernerKeys;
-
-import java.util.Collection;
-import java.util.List;
+import tgw.evolution.util.collection.lists.OList;
 
 @Mixin(LootTables.class)
 public abstract class MixinLootTables implements IKeyedReloadListener {
 
-    @Unique private static final List<ResourceLocation> DEPENDENCY = List.of(ReloadListernerKeys.TAGS);
+    @Unique private static final OList<ResourceLocation> DEPENDENCY = OList.of(ReloadListernerKeys.TAGS);
 
     @Override
-    public Collection<ResourceLocation> getDependencies() {
+    public OList<ResourceLocation> getDependencies() {
         return DEPENDENCY;
     }
 

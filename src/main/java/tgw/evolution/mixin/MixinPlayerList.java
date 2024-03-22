@@ -156,19 +156,25 @@ public abstract class MixinPlayerList {
         GameRules gameRules = level.getGameRules();
         boolean noDeathScreen = gameRules.getBoolean(GameRules.RULE_DO_IMMEDIATE_RESPAWN);
         boolean reducedDebug = gameRules.getBoolean(GameRules.RULE_REDUCEDDEBUGINFO);
-        ClientboundLoginPacket packet = new ClientboundLoginPacket(player.getId(), levelData.isHardcore(),
-                                                                   player.gameMode.getGameModeForPlayer(),
-                                                                   player.gameMode.getPreviousGameModeForPlayer(),
-                                                                   this.server.levelKeys(),
-                                                                   this.registryHolder, level.dimensionTypeRegistration(),
-                                                                   level.dimension(), BiomeManager.obfuscateSeed(level.getSeed()),
-                                                                   this.getMaxPlayers(), this.viewDistance, this.simulationDistance,
-                                                                   reducedDebug, !noDeathScreen,
-                                                                   level.isDebug(), level.isFlat()
+        listener.send(new ClientboundLoginPacket(player.getId(),
+                                                 levelData.isHardcore(),
+                                                 player.gameMode.getGameModeForPlayer(),
+                                                 player.gameMode.getPreviousGameModeForPlayer(),
+                                                 this.server.levelKeys(),
+                                                 this.registryHolder,
+                                                 level.dimensionTypeRegistration(),
+                                                 level.dimension(),
+                                                 BiomeManager.obfuscateSeed(level.getSeed()),
+                                                 this.getMaxPlayers(),
+                                                 this.viewDistance,
+                                                 this.simulationDistance,
+                                                 reducedDebug,
+                                                 !noDeathScreen,
+                                                 level.isDebug(),
+                                                 level.isFlat())
+                              .setDaytime(level.getDayTime())
+                              .setMotion(player.getDeltaMovement())
         );
-        packet.setDaytime(level.getDayTime());
-        packet.setMotion(player.getDeltaMovement());
-        listener.send(packet);
         listener.send(new ClientboundCustomPayloadPacket(ClientboundCustomPayloadPacket.BRAND, new FriendlyByteBuf(Unpooled.buffer()).writeUtf(this.getServer().getServerModName())));
         listener.send(new ClientboundChangeDifficultyPacket(levelData.getDifficulty(), levelData.isDifficultyLocked()));
         listener.send(new ClientboundPlayerAbilitiesPacket(player.getAbilities()));

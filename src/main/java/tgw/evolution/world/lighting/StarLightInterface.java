@@ -528,11 +528,11 @@ public final class StarLightInterface {
         BlockStarLightEngine blockEngine = this.getBlockLightEngine();
         assert this.lightAccess != null;
         try {
-            LightQueue.ChunkTasks task;
-            while ((task = this.lightQueue.removeFirstTask()) != null) {
-                if (task.lightTasks != null) {
-                    for (Runnable run : task.lightTasks) {
-                        run.run();
+            for (LightQueue.ChunkTasks task = this.lightQueue.removeFirstTask(); task != null; task = this.lightQueue.removeFirstTask()) {
+                OList<Runnable> lightTasks = task.lightTasks;
+                if (lightTasks != null) {
+                    for (int i = 0, len = lightTasks.size(); i < len; ++i) {
+                        lightTasks.get(i).run();
                     }
                 }
                 long coordinate = task.chunkCoordinate;

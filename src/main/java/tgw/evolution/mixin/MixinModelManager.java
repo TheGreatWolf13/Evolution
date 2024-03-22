@@ -16,15 +16,14 @@ import org.spongepowered.asm.mixin.*;
 import tgw.evolution.client.models.ModelRegistry;
 import tgw.evolution.resources.IKeyedReloadListener;
 import tgw.evolution.resources.ReloadListernerKeys;
+import tgw.evolution.util.collection.lists.OList;
 
-import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 @Mixin(ModelManager.class)
 public abstract class MixinModelManager implements IKeyedReloadListener {
 
-    @Unique private static final List<ResourceLocation> DEPENDENCY = List.of(ReloadListernerKeys.TEXTURES);
+    @Unique private static final OList<ResourceLocation> DEPENDENCY = OList.of(ReloadListernerKeys.TEXTURES);
     @Shadow private @Nullable AtlasSet atlases;
     @Shadow private Map<ResourceLocation, BakedModel> bakedRegistry;
     @Shadow @Final private BlockModelShaper blockModelShaper;
@@ -55,7 +54,7 @@ public abstract class MixinModelManager implements IKeyedReloadListener {
     }
 
     @Override
-    public Collection<ResourceLocation> getDependencies() {
+    public OList<ResourceLocation> getDependencies() {
         return DEPENDENCY;
     }
 

@@ -8,15 +8,23 @@ public interface PatchClientboundLoginPacket {
         throw new AbstractMethodError();
     }
 
-    default Vec3 getMotion() {
+    default double getMotionX() {
         throw new AbstractMethodError();
     }
 
-    default void setDaytime(long daytime) {
+    default double getMotionY() {
         throw new AbstractMethodError();
     }
 
-    default void setMotion(Vec3 motion) {
+    default double getMotionZ() {
+        throw new AbstractMethodError();
+    }
+
+    default <T extends PatchClientboundLoginPacket> T setDaytime(long daytime) {
+        throw new AbstractMethodError();
+    }
+
+    default <T extends PatchClientboundLoginPacket> T setMotion(Vec3 motion) {
         throw new AbstractMethodError();
     }
 }

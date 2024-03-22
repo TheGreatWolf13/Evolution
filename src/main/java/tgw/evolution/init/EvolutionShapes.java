@@ -2,8 +2,10 @@ package tgw.evolution.init;
 
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.math.MathHelper;
 
 public final class EvolutionShapes {
@@ -99,5 +101,15 @@ public final class EvolutionShapes {
     }
 
     private EvolutionShapes() {
+    }
+
+    public static double collide(Direction.Axis axis, AABB bb, OList<VoxelShape> list, double value) {
+        for (int i = 0, len = list.size(); i < len; ++i) {
+            if (Math.abs(value) < 1.0E-7) {
+                return 0;
+            }
+            value = list.get(i).collide(axis, bb, value);
+        }
+        return value;
     }
 }

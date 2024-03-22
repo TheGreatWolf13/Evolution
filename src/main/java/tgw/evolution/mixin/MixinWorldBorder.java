@@ -58,8 +58,23 @@ public abstract class MixinWorldBorder implements PatchWorldBorder {
     @Shadow
     public abstract boolean isWithinBounds(double d, double e, double f);
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Overwrite
+    public boolean isWithinBounds(AABB bb) {
+        Evolution.deprecatedMethod();
+        return this.isWithinBounds_(bb.minX, bb.minZ, bb.maxX, bb.maxZ);
+    }
+
     @Override
     public boolean isWithinBounds_(int x, int z) {
         return x + 1 > this.getMinX() && x < this.getMaxX() && z + 1 > this.getMinZ() && z < this.getMaxZ();
+    }
+
+    @Override
+    public boolean isWithinBounds_(double minX, double minZ, double maxX, double maxZ) {
+        return maxX > this.getMinX() && minX < this.getMaxX() && maxZ > this.getMinZ() && minZ < this.getMaxZ();
     }
 }

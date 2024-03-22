@@ -21,10 +21,10 @@ import tgw.evolution.hooks.asm.DeleteMethod;
 import tgw.evolution.patches.PatchRecipeManager;
 import tgw.evolution.resources.IKeyedReloadListener;
 import tgw.evolution.resources.ReloadListernerKeys;
+import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.collection.maps.O2OHashMap;
 import tgw.evolution.util.collection.maps.O2OMap;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -32,7 +32,7 @@ import java.util.Optional;
 @Mixin(RecipeManager.class)
 public abstract class MixinRecipeManager extends SimpleJsonResourceReloadListener implements PatchRecipeManager, IKeyedReloadListener {
 
-    @Unique private static final List<ResourceLocation> DEPENDENCY = List.of(ReloadListernerKeys.TAGS);
+    @Unique private static final OList<ResourceLocation> DEPENDENCY = OList.of(ReloadListernerKeys.TAGS);
     @Shadow @Final private static Logger LOGGER;
     @Shadow private Map<ResourceLocation, Recipe<?>> byName;
     @Shadow private boolean hasErrors;
@@ -112,7 +112,7 @@ public abstract class MixinRecipeManager extends SimpleJsonResourceReloadListene
     }
 
     @Override
-    public Collection<ResourceLocation> getDependencies() {
+    public OList<ResourceLocation> getDependencies() {
         return DEPENDENCY;
     }
 

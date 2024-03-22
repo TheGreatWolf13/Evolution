@@ -369,7 +369,7 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
         }
         this.minecraft.debugRenderer.clear();
         this.minecraft.player.resetPos();
-        this.minecraft.player.setDeltaMovement(packet.getMotion());
+        this.minecraft.player.setDeltaMovement(packet.getMotionX(), packet.getMotionY(), packet.getMotionZ());
         this.minecraft.player.fallDistance = 1.0f;
         assert this.minecraft.getConnection() != null;
         int id = packet.playerId();

@@ -5,8 +5,19 @@ import it.unimi.dsi.fastutil.objects.ObjectSets;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 import tgw.evolution.util.collection.ICollectionExtension;
+import tgw.evolution.util.collection.lists.OList;
 
 public interface OSet<K> extends ObjectSet<K>, ICollectionExtension {
+
+    default boolean addAll(OList<? extends K> list) {
+        boolean modified = false;
+        for (int i = 0, len = list.size(); i < len; ++i) {
+            if (this.add(list.get(i))) {
+                modified = true;
+            }
+        }
+        return modified;
+    }
 
     @Nullable K fastEntries();
 

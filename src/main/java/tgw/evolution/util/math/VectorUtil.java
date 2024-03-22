@@ -17,6 +17,13 @@ public final class VectorUtil {
         return Math.sqrt(dx * dx + dy * dy + dz * dz);
     }
 
+    public static double distSqr(double x1, double y1, double z1, double x2, double y2, double z2) {
+        double dx = x1 - x2;
+        double dy = y1 - y2;
+        double dz = z1 - z2;
+        return dx * dx + dy * dy + dz * dz;
+    }
+
     public static double distSqr(Vec3i vec, int x, int y, int z) {
         double dx = vec.getX() + 0.5 - x;
         double dy = vec.getY() + 0.5 - y;
