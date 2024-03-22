@@ -1,15 +1,19 @@
 package tgw.evolution.util.collection.lists;
 
+import it.unimi.dsi.fastutil.objects.ObjectIterable;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.UnmodifiableView;
 import tgw.evolution.util.collection.ICollectionExtension;
 
 public interface OList<K> extends ObjectList<K>, ICollectionExtension {
 
     static <K> @UnmodifiableView OList<K> emptyList() {
-        return EmptyList.EMPTY_LIST.view();
+        return EmptyList.EMPTY_LIST;
+    }
+
+    static @UnmodifiableView <K> OList<K> of() {
+        return emptyList();
     }
 
     static @UnmodifiableView <K> OList<K> of(K k) {
@@ -33,7 +37,14 @@ public interface OList<K> extends ObjectList<K>, ICollectionExtension {
         return new Singleton<>(k).view();
     }
 
-    @Contract(mutates = "this")
+    default boolean addAll(ObjectIterable<? extends K> it) {
+        boolean added = false;
+        for (K k : it) {
+            added |= this.add(k);
+        }
+        return added;
+    }
+
     default boolean addAll(Iterable<? extends K> it) {
         boolean added = false;
         for (K k : it) {
@@ -42,13 +53,14 @@ public interface OList<K> extends ObjectList<K>, ICollectionExtension {
         return added;
     }
 
-    @Contract(mutates = "this")
+    /**
+     * Add many ({@code length}) equal elements ({@code value}) to the list efficiently.
+     */
     void addMany(K value, int length);
 
     /**
      * Start is inclusive, end is exclusive
      */
-    @Contract(mutates = "this")
     void setMany(K value, int start, int end);
 
     @UnmodifiableView OList<K> view();
@@ -114,6 +126,11 @@ public interface OList<K> extends ObjectList<K>, ICollectionExtension {
 
         @Override
         public boolean addAll(Iterable<? extends K> it) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean addAll(ObjectIterable<? extends K> it) {
             throw new UnsupportedOperationException();
         }
 

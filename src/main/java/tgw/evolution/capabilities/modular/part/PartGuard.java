@@ -7,7 +7,7 @@ import net.minecraft.world.item.ItemStack;
 import tgw.evolution.capabilities.modular.MaterialInstance;
 import tgw.evolution.init.EvolutionMaterials;
 import tgw.evolution.items.modular.part.ItemPartGuard;
-import tgw.evolution.util.collection.lists.EitherList;
+import tgw.evolution.util.collection.lists.custom.EitherList;
 import tgw.evolution.util.constants.HarvestLevel;
 
 public class PartGuard implements IPart<PartTypes.Guard, ItemPartGuard, PartGuard> {

@@ -33,7 +33,7 @@ import tgw.evolution.client.tooltip.TooltipStructuralIntegrity;
 import tgw.evolution.client.tooltip.TooltipStructureType;
 import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.init.EvolutionTexts;
-import tgw.evolution.util.collection.lists.EitherList;
+import tgw.evolution.util.collection.lists.custom.EitherList;
 import tgw.evolution.util.collection.sets.RSet;
 import tgw.evolution.util.collection.sets.SimpleEnumSet;
 import tgw.evolution.util.constants.BlockFlags;

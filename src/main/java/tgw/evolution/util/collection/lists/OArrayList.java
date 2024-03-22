@@ -5,7 +5,6 @@ import it.unimi.dsi.fastutil.objects.ObjectCollection;
 import it.unimi.dsi.fastutil.objects.ObjectListIterator;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
-import tgw.evolution.Evolution;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -50,11 +49,8 @@ public class OArrayList<K> extends ObjectArrayList<K> implements OList<K> {
     }
 
     @Override
-    @Deprecated(forRemoval = true)
     public ObjectListIterator<K> listIterator() {
-        if (CHECKS) {
-            Evolution.warn("Allocating memory for an iterator");
-        }
+        this.deprecatedListMethod();
         return super.listIterator();
     }
 

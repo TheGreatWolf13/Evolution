@@ -1,19 +1,55 @@
 package tgw.evolution.util.collection.lists;
 
-import it.unimi.dsi.fastutil.bytes.ByteArrayList;
-import it.unimi.dsi.fastutil.bytes.ByteListIterator;
+import it.unimi.dsi.fastutil.bytes.*;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnmodifiableView;
 import tgw.evolution.Evolution;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
 
 public class BArrayList extends ByteArrayList implements BList {
+
+    protected @Nullable View view;
 
     public BArrayList() {
         super();
     }
 
+    public BArrayList(Collection<? extends Byte> c) {
+        super(c);
+    }
+
+    public BArrayList(ByteCollection c) {
+        super(c);
+    }
+
+    public BArrayList(ByteList l) {
+        super(l);
+    }
+
+    public BArrayList(byte[] a) {
+        super(a);
+    }
+
+    public BArrayList(byte[] a, int offset, int length) {
+        super(a, offset, length);
+    }
+
+    public BArrayList(byte[] a, boolean wrapped) {
+        super(a, wrapped);
+    }
+
+    public BArrayList(int capacity) {
+        super(capacity);
+    }
+
     public BArrayList(Iterator<? extends Byte> i) {
+        super(i);
+    }
+
+    public BArrayList(ByteIterator i) {
         super(i);
     }
 
@@ -40,14 +76,28 @@ public class BArrayList extends ByteArrayList implements BList {
 
     @Override
     public ByteListIterator listIterator() {
-        if (CHECKS) {
-            Evolution.info("Allocating memory for an iterator");
-        }
+        this.deprecatedListMethod();
         return super.listIterator();
+    }
+
+    @Override
+    public void setMany(byte value, int start, int end) {
+        if (start == end) {
+            return;
+        }
+        Arrays.fill(this.a, start, end, value);
     }
 
     @Override
     public void trimCollection() {
         this.trim();
+    }
+
+    @Override
+    public @UnmodifiableView BList view() {
+        if (this.view == null) {
+            this.view = new View(this);
+        }
+        return this.view;
     }
 }

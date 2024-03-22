@@ -1,6 +1,6 @@
 package tgw.evolution.util.collection.lists;
 
-import it.unimi.dsi.fastutil.floats.*;
+import it.unimi.dsi.fastutil.doubles.*;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 import tgw.evolution.Evolution;
@@ -9,52 +9,52 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 
-public class FArrayList extends FloatArrayList implements FList {
+public class DArrayList extends DoubleArrayList implements DList {
 
     protected @Nullable View view;
 
-    public FArrayList() {
+    public DArrayList() {
         super();
     }
 
-    public FArrayList(Collection<? extends Float> c) {
+    public DArrayList(Collection<? extends Double> c) {
         super(c);
     }
 
-    public FArrayList(final FloatCollection c) {
+    public DArrayList(DoubleCollection c) {
         super(c);
     }
 
-    public FArrayList(FloatList l) {
+    public DArrayList(DoubleList l) {
         super(l);
     }
 
-    public FArrayList(float[] a) {
+    public DArrayList(double[] a) {
         super(a);
     }
 
-    public FArrayList(float[] a, int offset, int length) {
+    public DArrayList(double[] a, int offset, int length) {
         super(a, offset, length);
     }
 
-    public FArrayList(Iterator<? extends Float> i) {
-        super(i);
-    }
-
-    public FArrayList(FloatIterator i) {
-        super(i);
-    }
-
-    public FArrayList(float[] a, boolean wrapped) {
+    public DArrayList(double[] a, boolean wrapped) {
         super(a, wrapped);
     }
 
-    public FArrayList(int capacity) {
+    public DArrayList(int capacity) {
         super(capacity);
     }
 
+    public DArrayList(Iterator<? extends Double> i) {
+        super(i);
+    }
+
+    public DArrayList(DoubleIterator i) {
+        super(i);
+    }
+
     @Override
-    public void addMany(float value, int length) {
+    public void addMany(double value, int length) {
         if (length < 0) {
             throw new NegativeArraySizeException("Length should be >= 0");
         }
@@ -69,19 +69,19 @@ public class FArrayList extends FloatArrayList implements FList {
     }
 
     @Override
-    public Float get(int index) {
+    public Double get(int index) {
         Evolution.deprecatedMethod();
         return super.get(index);
     }
 
     @Override
-    public FloatListIterator listIterator() {
+    public DoubleListIterator listIterator() {
         this.deprecatedListMethod();
         return super.listIterator();
     }
 
     @Override
-    public void setMany(float value, int start, int end) {
+    public void setMany(double value, int start, int end) {
         if (start == end) {
             return;
         }
@@ -94,7 +94,7 @@ public class FArrayList extends FloatArrayList implements FList {
     }
 
     @Override
-    public @UnmodifiableView FList view() {
+    public @UnmodifiableView DList view() {
         if (this.view == null) {
             this.view = new View(this);
         }

@@ -11,9 +11,9 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.ShapedRecipe;
 import org.jetbrains.annotations.Nullable;
-import tgw.evolution.util.collection.lists.BiIIArrayList;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
+import tgw.evolution.util.collection.lists.custom.BiIIArrayList;
 
 public final class ServerPlaceRecipeEv {
 

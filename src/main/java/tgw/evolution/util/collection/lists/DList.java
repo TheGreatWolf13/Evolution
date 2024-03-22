@@ -1,47 +1,47 @@
 package tgw.evolution.util.collection.lists;
 
-import it.unimi.dsi.fastutil.longs.LongIterable;
-import it.unimi.dsi.fastutil.longs.LongIterator;
-import it.unimi.dsi.fastutil.longs.LongList;
-import it.unimi.dsi.fastutil.longs.LongLists;
+import it.unimi.dsi.fastutil.doubles.DoubleIterable;
+import it.unimi.dsi.fastutil.doubles.DoubleIterator;
+import it.unimi.dsi.fastutil.doubles.DoubleList;
+import it.unimi.dsi.fastutil.doubles.DoubleLists;
 import org.jetbrains.annotations.UnmodifiableView;
 import tgw.evolution.util.collection.ICollectionExtension;
 
-public interface LList extends LongList, ICollectionExtension {
+public interface DList extends DoubleList, ICollectionExtension {
 
-    static @UnmodifiableView LList emptyList() {
+    static @UnmodifiableView DList emptyList() {
         return EmptyList.EMPTY_LIST;
     }
 
-    static @UnmodifiableView LList of() {
+    static @UnmodifiableView DList of() {
         return emptyList();
     }
 
-    static @UnmodifiableView LList of(long k) {
+    static @UnmodifiableView DList of(double k) {
         return singleton(k);
     }
 
-    static @UnmodifiableView LList of(long... ks) {
+    static @UnmodifiableView DList of(double... ks) {
         return switch (ks.length) {
             case 0 -> emptyList();
             case 1 -> singleton(ks[0]);
             default -> {
-                LList list = new LArrayList(ks);
+                DList list = new DArrayList(ks);
                 list.trimCollection();
                 yield list.view();
             }
         };
     }
 
-    static @UnmodifiableView LList singleton(long k) {
+    static @UnmodifiableView DList singleton(double k) {
         return new Singleton(k).view();
     }
 
-    default boolean addAll(LongIterable it) {
+    default boolean addAll(DoubleIterable it) {
         boolean added = false;
-        LongIterator iterator = it.iterator();
+        DoubleIterator iterator = it.iterator();
         while (iterator.hasNext()) {
-            added |= this.add(iterator.nextLong());
+            added |= this.add(iterator.nextDouble());
         }
         return added;
     }
@@ -49,33 +49,33 @@ public interface LList extends LongList, ICollectionExtension {
     /**
      * Add many ({@code length}) equal elements ({@code value}) to the list efficiently.
      */
-    void addMany(long value, int length);
+    void addMany(double value, int length);
 
     /**
      * Start is inclusive, end is exclusive
      */
-    void setMany(long value, int start, int end);
+    void setMany(double value, int start, int end);
 
-    @UnmodifiableView LList view();
+    @UnmodifiableView DList view();
 
-    class Singleton extends LongLists.Singleton implements LList {
+    class Singleton extends DoubleLists.Singleton implements DList {
 
-        public Singleton(long element) {
+        public Singleton(double element) {
             super(element);
         }
 
         @Override
-        public boolean addAll(LongIterable it) {
+        public boolean addAll(DoubleIterable it) {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public void addMany(long value, int length) {
+        public void addMany(double value, int length) {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public void setMany(long value, int start, int end) {
+        public void setMany(double value, int start, int end) {
             throw new UnsupportedOperationException();
         }
 
@@ -84,29 +84,29 @@ public interface LList extends LongList, ICollectionExtension {
         }
 
         @Override
-        public @UnmodifiableView LList view() {
+        public @UnmodifiableView DList view() {
             return this;
         }
     }
 
-    class View extends LongLists.UnmodifiableList implements LList {
+    class View extends DoubleLists.UnmodifiableList implements DList {
 
-        protected View(LList l) {
+        protected View(DList l) {
             super(l);
         }
 
         @Override
-        public boolean addAll(LongIterable it) {
+        public boolean addAll(DoubleIterable it) {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public void addMany(long value, int length) {
+        public void addMany(double value, int length) {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public void setMany(long value, int start, int end) {
+        public void setMany(double value, int start, int end) {
             throw new UnsupportedOperationException();
         }
 
@@ -115,12 +115,12 @@ public interface LList extends LongList, ICollectionExtension {
         }
 
         @Override
-        public @UnmodifiableView LList view() {
+        public @UnmodifiableView DList view() {
             return this;
         }
     }
 
-    class EmptyList extends LongLists.EmptyList implements LList {
+    class EmptyList extends DoubleLists.EmptyList implements DList {
 
         protected static final EmptyList EMPTY_LIST = new EmptyList();
 
@@ -128,17 +128,17 @@ public interface LList extends LongList, ICollectionExtension {
         }
 
         @Override
-        public boolean addAll(LongIterable it) {
+        public boolean addAll(DoubleIterable it) {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public void addMany(long value, int length) {
+        public void addMany(double value, int length) {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public void setMany(long value, int start, int end) {
+        public void setMany(double value, int start, int end) {
             throw new UnsupportedOperationException();
         }
 
@@ -147,7 +147,7 @@ public interface LList extends LongList, ICollectionExtension {
         }
 
         @Override
-        public @UnmodifiableView LList view() {
+        public @UnmodifiableView DList view() {
             return this;
         }
     }

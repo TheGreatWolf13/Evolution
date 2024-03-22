@@ -14,7 +14,11 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import tgw.evolution.inventory.StackedContentsEv;
 import tgw.evolution.util.RecipeMatcher;
-import tgw.evolution.util.collection.lists.*;
+import tgw.evolution.util.collection.lists.IArrayList;
+import tgw.evolution.util.collection.lists.IList;
+import tgw.evolution.util.collection.lists.OArrayList;
+import tgw.evolution.util.collection.lists.OList;
+import tgw.evolution.util.collection.lists.custom.BiIIArrayList;
 
 @Mixin(ShapelessRecipe.class)
 public abstract class MixinShapelessRecipe implements CraftingRecipe {

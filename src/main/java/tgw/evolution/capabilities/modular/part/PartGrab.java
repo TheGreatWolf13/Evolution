@@ -8,7 +8,7 @@ import tgw.evolution.capabilities.modular.IGrabType;
 import tgw.evolution.capabilities.modular.MaterialInstance;
 import tgw.evolution.init.EvolutionMaterials;
 import tgw.evolution.items.modular.part.ItemPart;
-import tgw.evolution.util.collection.lists.EitherList;
+import tgw.evolution.util.collection.lists.custom.EitherList;
 import tgw.evolution.util.constants.HarvestLevel;
 
 public abstract class PartGrab<T extends IGrabType<T, I, P>, I extends ItemPart<T, I, P>, P extends IPart<T, I, P>> implements IPart<T, I, P> {

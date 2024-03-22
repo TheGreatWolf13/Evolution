@@ -1,4 +1,4 @@
-package tgw.evolution.util.collection.lists;
+package tgw.evolution.util.collection.lists.custom;
 
 import it.unimi.dsi.fastutil.Arrays;
 import it.unimi.dsi.fastutil.ints.IntArrays;

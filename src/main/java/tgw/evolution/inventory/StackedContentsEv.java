@@ -5,7 +5,11 @@ import net.minecraft.world.entity.player.StackedContents;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import org.jetbrains.annotations.Nullable;
-import tgw.evolution.util.collection.lists.*;
+import tgw.evolution.util.collection.lists.IArrayList;
+import tgw.evolution.util.collection.lists.IList;
+import tgw.evolution.util.collection.lists.OArrayList;
+import tgw.evolution.util.collection.lists.OList;
+import tgw.evolution.util.collection.lists.custom.BiIIArrayList;
 import tgw.evolution.util.collection.maps.I2IHashMap;
 import tgw.evolution.util.collection.maps.I2IMap;
 

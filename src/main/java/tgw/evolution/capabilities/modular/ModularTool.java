@@ -20,7 +20,7 @@ import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionMaterials;
 import tgw.evolution.items.IMelee;
 import tgw.evolution.items.modular.ItemModular;
-import tgw.evolution.util.collection.lists.EitherList;
+import tgw.evolution.util.collection.lists.custom.EitherList;
 import tgw.evolution.util.constants.HarvestLevel;
 
 public class ModularTool implements IModular {

@@ -13,7 +13,7 @@ import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.items.modular.ItemModular;
-import tgw.evolution.util.collection.lists.EitherList;
+import tgw.evolution.util.collection.lists.custom.EitherList;
 import tgw.evolution.util.constants.HarvestLevel;
 
 public interface IModular {

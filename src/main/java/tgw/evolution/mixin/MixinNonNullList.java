@@ -17,7 +17,6 @@ import java.util.List;
 public abstract class MixinNonNullList<E> extends AbstractList<E> {
 
     @Shadow @Final private @Nullable E defaultValue;
-
     @Shadow @Final private List<E> list;
 
     /**
@@ -26,7 +25,7 @@ public abstract class MixinNonNullList<E> extends AbstractList<E> {
      */
     @Overwrite
     public static <E> NonNullList<E> create() {
-        return new NonNullList(new OArrayList(), null);
+        return new NonNullList<>(new OArrayList(), null);
     }
 
     /**
@@ -35,7 +34,7 @@ public abstract class MixinNonNullList<E> extends AbstractList<E> {
      */
     @Overwrite
     public static <E> NonNullList<E> createWithCapacity(int i) {
-        return new NonNullList(new OArrayList(i), null);
+        return new NonNullList<>(new OArrayList(i), null);
     }
 
     /**
@@ -46,7 +45,7 @@ public abstract class MixinNonNullList<E> extends AbstractList<E> {
     @SuppressWarnings("OverwriteModifiers")
     @Overwrite
     public static <E> NonNullList<E> of(E object, E... objects) {
-        return new NonNullList(new OArrayList(objects), object);
+        return new NonNullList<>(new OArrayList(objects), object);
     }
 
     /**
@@ -58,7 +57,7 @@ public abstract class MixinNonNullList<E> extends AbstractList<E> {
         Validate.notNull(object);
         OList list = new OArrayList(i);
         list.addMany(object, i);
-        return new NonNullList(list, object);
+        return new NonNullList<>(list, object);
     }
 
     /**

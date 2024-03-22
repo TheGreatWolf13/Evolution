@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.client.models.data.IModelData;
 import tgw.evolution.util.collection.lists.OList;
-import tgw.evolution.util.collection.lists.WeightedList;
+import tgw.evolution.util.collection.lists.custom.WeightedList;
 import tgw.evolution.util.math.IRandom;
 
 import java.util.List;

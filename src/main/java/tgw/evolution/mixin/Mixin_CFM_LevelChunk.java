@@ -404,7 +404,7 @@ public abstract class Mixin_CFM_LevelChunk extends ChunkAccess implements PatchL
             }
         }
         if (list == null) {
-            return LList.EMPTY_LIST;
+            return LList.emptyList();
         }
         return list;
     }

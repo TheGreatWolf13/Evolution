@@ -11,7 +11,7 @@ import tgw.evolution.capabilities.modular.MaterialInstance;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionMaterials;
 import tgw.evolution.items.modular.part.ItemPartHalfHead;
-import tgw.evolution.util.collection.lists.EitherList;
+import tgw.evolution.util.collection.lists.custom.EitherList;
 import tgw.evolution.util.constants.HarvestLevel;
 
 public class PartHalfHead implements IPartHit<PartTypes.HalfHead, ItemPartHalfHead, PartHalfHead> {

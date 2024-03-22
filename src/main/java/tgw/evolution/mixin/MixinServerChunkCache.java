@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.*;
 import tgw.evolution.Evolution;
 import tgw.evolution.patches.PatchServerChunkCache;
-import tgw.evolution.util.collection.lists.BiArrayList;
+import tgw.evolution.util.collection.lists.custom.BiArrayList;
 import tgw.evolution.util.math.FastRandom;
 
 import java.util.concurrent.CompletableFuture;

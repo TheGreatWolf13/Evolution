@@ -29,9 +29,9 @@ import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.items.*;
 import tgw.evolution.items.modular.ItemModular;
 import tgw.evolution.items.modular.part.ItemPart;
-import tgw.evolution.util.collection.lists.EitherList;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
+import tgw.evolution.util.collection.lists.custom.EitherList;
 import tgw.evolution.util.constants.HarvestLevel;
 
 import java.util.List;

@@ -1,6 +1,7 @@
-package tgw.evolution.util.collection.lists;
+package tgw.evolution.util.collection.lists.custom;
 
 import net.minecraft.client.gui.components.AbstractSelectionList;
+import tgw.evolution.util.collection.lists.OArrayList;
 
 public final class TrackedList<E extends AbstractSelectionList.Entry<E>> extends OArrayList<E> {
 

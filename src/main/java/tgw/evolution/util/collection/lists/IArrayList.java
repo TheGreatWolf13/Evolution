@@ -1,16 +1,40 @@
 package tgw.evolution.util.collection.lists;
 
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntListIterator;
+import it.unimi.dsi.fastutil.ints.*;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnmodifiableView;
 import tgw.evolution.Evolution;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
 
 public class IArrayList extends IntArrayList implements IList {
 
+    protected @Nullable View view;
+
     public IArrayList() {
         super();
+    }
+
+    public IArrayList(Collection<? extends Integer> c) {
+        super(c);
+    }
+
+    public IArrayList(IntCollection c) {
+        super(c);
+    }
+
+    public IArrayList(IntList l) {
+        super(l);
+    }
+
+    public IArrayList(int[] a) {
+        super(a);
+    }
+
+    public IArrayList(int[] a, int offset, int length) {
+        super(a, offset, length);
     }
 
     public IArrayList(int capacity) {
@@ -19,6 +43,14 @@ public class IArrayList extends IntArrayList implements IList {
 
     public IArrayList(Iterator<? extends Integer> i) {
         super(i);
+    }
+
+    public IArrayList(IntIterator i) {
+        super(i);
+    }
+
+    public IArrayList(int[] a, boolean wrapped) {
+        super(a, wrapped);
     }
 
     @Override
@@ -46,14 +78,28 @@ public class IArrayList extends IntArrayList implements IList {
 
     @Override
     public IntListIterator listIterator() {
-        if (CHECKS) {
-            Evolution.info("Allocating memory for an iterator");
-        }
+        this.deprecatedListMethod();
         return super.listIterator();
+    }
+
+    @Override
+    public void setMany(int value, int start, int end) {
+        if (start == end) {
+            return;
+        }
+        Arrays.fill(this.a, start, end, value);
     }
 
     @Override
     public void trimCollection() {
         this.trim();
+    }
+
+    @Override
+    public @UnmodifiableView IList view() {
+        if (this.view == null) {
+            this.view = new View(this);
+        }
+        return this.view;
     }
 }

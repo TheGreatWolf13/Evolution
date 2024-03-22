@@ -19,7 +19,7 @@ import tgw.evolution.inventory.SlotType;
 import tgw.evolution.items.IDurability;
 import tgw.evolution.items.IMass;
 import tgw.evolution.items.ItemGeneric;
-import tgw.evolution.util.collection.lists.EitherList;
+import tgw.evolution.util.collection.lists.custom.EitherList;
 
 import java.util.Random;
 

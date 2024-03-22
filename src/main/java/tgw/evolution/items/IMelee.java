@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import tgw.evolution.client.tooltip.*;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionTexts;
-import tgw.evolution.util.collection.lists.EitherList;
+import tgw.evolution.util.collection.lists.custom.EitherList;
 import tgw.evolution.util.hitbox.ColliderHitbox;
 import tgw.evolution.util.hitbox.HitboxType;
 

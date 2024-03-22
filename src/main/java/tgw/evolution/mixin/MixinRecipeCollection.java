@@ -11,9 +11,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import tgw.evolution.inventory.StackedContentsEv;
 import tgw.evolution.patches.PatchRecipeCollection;
-import tgw.evolution.util.collection.lists.BiIIArrayList;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
+import tgw.evolution.util.collection.lists.custom.BiIIArrayList;
 import tgw.evolution.util.collection.sets.OHashSet;
 
 import java.util.HashSet;
