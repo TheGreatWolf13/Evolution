@@ -9,6 +9,7 @@ accessible class net/minecraft/client/particle/ParticleEngine$SpriteParticleRegi
 accessible class net/minecraft/client/renderer/block/ModelBlockRenderer$Cache
 accessible class net/minecraft/client/renderer/RenderStateShard$OutputStateShard
 accessible class net/minecraft/client/resources/model/ModelBakery$BlockStateDefinitionException
+accessible class net/minecraft/commands/arguments/selector/options/EntitySelectorOptions$Option
 accessible class net/minecraft/server/commands/CloneCommands$Mode
 accessible class net/minecraft/server/commands/FillCommand$Mode
 accessible class net/minecraft/server/commands/TeleportCommand$LookAt
@@ -22,6 +23,7 @@ accessible class net/minecraft/world/inventory/MenuType$MenuSupplier
 accessible class net/minecraft/world/item/crafting/Ingredient$Value
 accessible class net/minecraft/world/level/block/entity/BlockEntityType$BlockEntitySupplier
 accessible class net/minecraft/world/level/entity/PersistentEntitySectionManager$ChunkLoadStatus
+accessible class net/minecraft/world/level/levelgen/structure/pools/JigsawPlacement$Placer
 accessible class net/minecraft/world/level/levelgen/SurfaceRules$SurfaceRule
 accessible class net/minecraft/world/level/lighting/BlockLightSectionStorage$BlockDataLayerStorageMap
 
@@ -67,6 +69,9 @@ accessible field net/minecraft/client/gui/screens/TitleScreen$Warning32Bit label
 accessible field net/minecraft/client/gui/screens/TitleScreen$Warning32Bit x I
 accessible field net/minecraft/client/gui/screens/TitleScreen$Warning32Bit y I
 accessible field net/minecraft/client/gui/screens/TitleScreen$Warning32Bit realmsSubscriptionFuture Ljava/util/concurrent/CompletableFuture;
+accessible field net/minecraft/client/gui/screens/worldselection/WorldPreset DEBUG Lnet/minecraft/client/gui/screens/worldselection/WorldPreset;
+accessible field net/minecraft/client/gui/screens/worldselection/WorldPreset FLAT Lnet/minecraft/client/gui/screens/worldselection/WorldPreset;
+accessible field net/minecraft/client/gui/screens/worldselection/WorldPreset PRESETS Ljava/util/List;
 accessible field net/minecraft/client/KeyMapping category Ljava/lang/String;
 accessible field net/minecraft/client/KeyMapping clickCount I
 accessible field net/minecraft/client/KeyMapping key Lcom/mojang/blaze3d/platform/InputConstants$Key;
@@ -203,6 +208,7 @@ accessible method net/minecraft/client/gui/screens/inventory/AbstractContainerSc
 accessible method net/minecraft/client/gui/screens/MenuScreens register (Lnet/minecraft/world/inventory/MenuType;Lnet/minecraft/client/gui/screens/MenuScreens$ScreenConstructor;)V
 accessible method net/minecraft/client/gui/screens/PopupScreen <init> (Lnet/minecraft/network/chat/Component;Ljava/util/List;Lcom/google/common/collect/ImmutableList;)V
 accessible method net/minecraft/client/gui/screens/TitleScreen$Warning32Bit <init> (Lnet/minecraft/client/gui/components/MultiLineLabel;IILjava/util/concurrent/CompletableFuture;)V
+accessible method net/minecraft/client/gui/screens/worldselection/CreateWorldScreen <init> (Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/world/level/DataPackConfig;Lnet/minecraft/client/gui/screens/worldselection/WorldGenSettingsComponent;)V
 accessible method net/minecraft/client/KeyMapping release ()V
 accessible method net/minecraft/client/Minecraft addCustomNbtData (Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/level/block/entity/BlockEntity;)Lnet/minecraft/world/item/ItemStack;
 accessible method net/minecraft/client/model/geom/builders/CubeDefinition <init> (Ljava/lang/String;FFFFFFFFLnet/minecraft/client/model/geom/builders/CubeDeformation;ZFF)V
@@ -377,6 +383,7 @@ accessible method net/minecraft/world/level/Level isOutsideSpawnableHeight (I)Z
 accessible method net/minecraft/world/level/levelgen/Beardifier <init> (Lnet/minecraft/world/level/StructureFeatureManager;Lnet/minecraft/world/level/chunk/ChunkAccess;)V
 accessible method net/minecraft/world/level/levelgen/Heightmap setHeight (III)V
 accessible method net/minecraft/world/level/levelgen/NoiseChunk getInterpolatedState ()Lnet/minecraft/world/level/block/state/BlockState;
+accessible method net/minecraft/world/level/levelgen/structure/pools/JigsawPlacement$PieceState <init> (Lnet/minecraft/world/level/levelgen/structure/PoolElementStructurePiece;Lorg/apache/commons/lang3/mutable/MutableObject;I)V
 accessible method net/minecraft/world/level/levelgen/SurfaceRules$Context <init> (Lnet/minecraft/world/level/levelgen/SurfaceSystem;Lnet/minecraft/world/level/chunk/ChunkAccess;Lnet/minecraft/world/level/levelgen/NoiseChunk;Ljava/util/function/Function;Lnet/minecraft/core/Registry;Lnet/minecraft/world/level/levelgen/WorldGenerationContext;)V
 accessible method net/minecraft/world/level/levelgen/SurfaceRules$Context getMinSurfaceLevel ()I
 accessible method net/minecraft/world/level/levelgen/SurfaceRules$Context updateXZ (II)V
@@ -387,6 +394,9 @@ accessible method net/minecraft/world/level/lighting/LayerLightSectionStorage en
 accessible method net/minecraft/world/level/lighting/LayerLightSectionStorage getLightValue (J)I
 accessible method net/minecraft/world/level/lighting/LayerLightSectionStorage runAllUpdates ()V
 accessible method net/minecraft/world/level/lighting/LayerLightSectionStorage updateSectionStatus (JZ)V
+accessible method net/minecraft/world/level/storage/loot/functions/CopyBlockState <init> ([Lnet/minecraft/world/level/storage/loot/predicates/LootItemCondition;Lnet/minecraft/world/level/block/Block;Ljava/util/Set;)V
+accessible method net/minecraft/world/level/storage/loot/functions/SetPotionFunction <init> ([Lnet/minecraft/world/level/storage/loot/predicates/LootItemCondition;Lnet/minecraft/world/item/alchemy/Potion;)V
+accessible method net/minecraft/world/level/storage/loot/predicates/LootItemBlockStatePropertyCondition <init> (Lnet/minecraft/world/level/block/Block;Lnet/minecraft/advancements/critereon/StatePropertiesPredicate;)V
 accessible method net/minecraft/world/phys/AABB clipPoint ([DLnet/minecraft/core/Direction;DDDDDDDDLnet/minecraft/core/Direction;DDD)Lnet/minecraft/core/Direction;
 accessible method net/minecraft/world/phys/BlockHitResult <init> (ZLnet/minecraft/world/phys/Vec3;Lnet/minecraft/core/Direction;Lnet/minecraft/core/BlockPos;Z)V
 accessible method net/minecraft/world/phys/shapes/SubShape <init> (Lnet/minecraft/world/phys/shapes/DiscreteVoxelShape;IIIIII)V

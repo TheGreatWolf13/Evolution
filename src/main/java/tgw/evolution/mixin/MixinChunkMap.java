@@ -4,6 +4,9 @@ import com.mojang.datafixers.DataFixer;
 import com.mojang.datafixers.util.Either;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.longs.LongIterator;
+import it.unimi.dsi.fastutil.longs.LongSet;
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import net.minecraft.CrashReport;
 import net.minecraft.CrashReportCategory;
 import net.minecraft.ReportedException;
@@ -15,6 +18,7 @@ import net.minecraft.network.protocol.game.*;
 import net.minecraft.server.level.*;
 import net.minecraft.server.level.progress.ChunkProgressListener;
 import net.minecraft.util.Mth;
+import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.util.thread.BlockableEventLoop;
 import net.minecraft.util.thread.ProcessorHandle;
 import net.minecraft.world.entity.Entity;
@@ -45,6 +49,7 @@ import tgw.evolution.util.collection.sets.LSet;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -61,16 +66,20 @@ public abstract class MixinChunkMap extends ChunkStorage implements PatchChunkMa
     @Shadow @Final public BlockableEventLoop<Runnable> mainThreadExecutor;
     @Shadow public int viewDistance;
     @Shadow @Final ServerLevel level;
+    @Shadow @Final LongSet toDrop;
     @Shadow @Final private ChunkMap.DistanceManager distanceManager;
     @Shadow @Final private Int2ObjectMap<ChunkMap.TrackedEntity> entityMap;
     @Shadow private ChunkGenerator generator;
     @Shadow @Final private ThreadedLevelLightEngine lightEngine;
     @Shadow @Final private ProcessorHandle<ChunkTaskPriorityQueueSorter.Message<Runnable>> mainThreadMailbox;
+    @Shadow private boolean modified;
+    @Shadow @Final private Long2ObjectLinkedOpenHashMap<ChunkHolder> pendingUnloads;
     @Shadow @Final private PlayerMap playerMap;
     @Shadow @Final private PoiManager poiManager;
     @Shadow @Final private ChunkProgressListener progressListener;
     @Shadow @Final private StructureManager structureManager;
     @Shadow @Final private AtomicInteger tickingGenerated;
+    @Shadow @Final private Queue<Runnable> unloadQueue;
     @Shadow @Final private Long2ObjectLinkedOpenHashMap<ChunkHolder> updatingChunkMap;
     @Shadow private volatile Long2ObjectLinkedOpenHashMap<ChunkHolder> visibleChunkMap;
     @Shadow @Final private ProcessorHandle<ChunkTaskPriorityQueueSorter.Message<Runnable>> worldgenMailbox;
@@ -489,8 +498,42 @@ public abstract class MixinChunkMap extends ChunkStorage implements PatchChunkMa
         return processingFuture;
     }
 
-    @Shadow
-    protected abstract void processUnloads(BooleanSupplier pHasMoreTime);
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    private void processUnloads(BooleanSupplier hasTime) {
+        ProfilerFiller profiler = this.level.getProfiler();
+        profiler.push("scheduleUnload");
+        LongIterator longIterator = this.toDrop.iterator();
+        for (int i = 0; longIterator.hasNext() && (hasTime.getAsBoolean() || i < 200 || this.toDrop.size() > 2_000); longIterator.remove()) {
+            long l = longIterator.nextLong();
+            ChunkHolder chunkHolder = this.updatingChunkMap.remove(l);
+            if (chunkHolder != null) {
+                this.pendingUnloads.put(l, chunkHolder);
+                this.modified = true;
+                ++i;
+                this.scheduleUnload(l, chunkHolder);
+            }
+        }
+        profiler.popPush("processUnloads");
+        int j = Math.max(0, this.unloadQueue.size() - 2_000);
+        Runnable runnable;
+        while ((hasTime.getAsBoolean() || j > 0) && (runnable = this.unloadQueue.poll()) != null) {
+            --j;
+            runnable.run();
+        }
+        profiler.popPush("saveChunks");
+        int k = 0;
+        ObjectIterator<ChunkHolder> objectIterator = this.visibleChunkMap.values().iterator();
+        while (k < 20 && hasTime.getAsBoolean() && objectIterator.hasNext()) {
+            if (this.saveChunkIfNeeded(objectIterator.next())) {
+                ++k;
+            }
+        }
+        profiler.pop();
+    }
 
     @Shadow
     protected abstract CompletableFuture<Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure>> protoChunkToFullChunk(ChunkHolder chunkHolder);
@@ -646,6 +689,9 @@ public abstract class MixinChunkMap extends ChunkStorage implements PatchChunkMa
 
     @Shadow
     protected abstract CompletableFuture<Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure>> scheduleChunkLoad(ChunkPos chunkPos);
+
+    @Shadow
+    protected abstract void scheduleUnload(long l, ChunkHolder chunkHolder);
 
     /**
      * @author TheGreatWolf

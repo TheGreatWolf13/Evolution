@@ -6,6 +6,7 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.ToggleKeyMapping;
 import net.minecraft.client.gui.screens.MenuScreens;
+import net.minecraft.client.gui.screens.worldselection.WorldPreset;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.resources.language.I18n;
@@ -30,6 +31,7 @@ import tgw.evolution.util.collection.maps.O2OHashMap;
 import tgw.evolution.util.collection.maps.O2OMap;
 import tgw.evolution.util.constants.SkinType;
 
+import java.util.List;
 import java.util.Locale;
 
 public final class EvolutionClient implements ClientModInitializer {
@@ -68,20 +70,6 @@ public final class EvolutionClient implements ClientModInitializer {
 //        event.addSprite(EvolutionResources.SLOT_OFFHAND);
 //    }
 
-    public static void changeWorldOrders() {
-        Evolution.warn("Change world order");
-//        int evId = 0;
-//        for (WorldType worldType : WorldType.WORLD_TYPES) {
-//            if (worldType != null && "ev_default".equals(worldType.getName())) {
-//                evId = worldType.getId();
-//                break;
-//            }
-//        }
-//        WorldType evWorld = WorldType.WORLD_TYPES[evId];
-//        System.arraycopy(WorldType.WORLD_TYPES, 0, WorldType.WORLD_TYPES, 1, evId);
-//        WorldType.WORLD_TYPES[0] = evWorld;
-    }
-
     private static void fixInputMappings() {
         ((AccessorInputConstants_Type) (Object) InputConstants.Type.KEYSYM).setDisplayTextSupplier((keyCode, translationKey) -> {
             String formattedString = I18n.get(translationKey);
@@ -95,14 +83,14 @@ public final class EvolutionClient implements ClientModInitializer {
         });
     }
 
+    public static Component getAttackKeyText() {
+        return mc.options.keyAttack.getTranslatedKeyMessage();
+    }
+
 //    private static void registerKeyBinds() {
 //        ClientRegistry.registerKeyBinding(KEY_CRAWL);
 //        ClientRegistry.registerKeyBinding(KEY_BUILDING_ASSIST);
 //    }
-
-    public static Component getAttackKeyText() {
-        return mc.options.keyAttack.getTranslatedKeyMessage();
-    }
 
     public static ClientLevel getClientLevel() {
         assert mc.level != null;
@@ -125,14 +113,6 @@ public final class EvolutionClient implements ClientModInitializer {
         return "default".equals(getClientPlayer().getModelName()) ? SkinType.STEVE : SkinType.ALEX;
     }
 
-//    private static void registerModels(ModelRegistryEvent event) {
-//        for (int i = 0, l = EvolutionResources.MODULAR_MODELS.size(); i < l; i++) {
-//            ForgeModelBakery.addSpecialModel(EvolutionResources.MODULAR_MODELS.get(i));
-//        }
-//        //Clear and trim since we are not using it anymore
-//        EvolutionResources.MODULAR_MODELS.reset();
-//    }
-
     public static void init(Minecraft minecraft) {
         mc = minecraft;
         mc.getMainRenderTarget().enableStencil();
@@ -142,9 +122,24 @@ public final class EvolutionClient implements ClientModInitializer {
         Evolution.info("Client initialized");
     }
 
+//    private static void registerModels(ModelRegistryEvent event) {
+//        for (int i = 0, l = EvolutionResources.MODULAR_MODELS.size(); i < l; i++) {
+//            ForgeModelBakery.addSpecialModel(EvolutionResources.MODULAR_MODELS.get(i));
+//        }
+//        //Clear and trim since we are not using it anymore
+//        EvolutionResources.MODULAR_MODELS.reset();
+//    }
+
     private static void registerScreens() {
         MenuScreens.register(EvolutionContainers.EXTENDED_INVENTORY, ScreenInventory::new);
         MenuScreens.register(EvolutionContainers.CORPSE, ScreenCorpse::new);
+    }
+
+    public static void removeVanillaLevelGenerators() {
+        List<WorldPreset> presets = WorldPreset.PRESETS;
+        presets.clear();
+        presets.add(WorldPreset.FLAT);
+        presets.add(WorldPreset.DEBUG);
     }
 
     public static void sendToServer(Packet<ServerGamePacketListener> packet) {
@@ -160,7 +155,7 @@ public final class EvolutionClient implements ClientModInitializer {
         RenderLayer.setup();
         fixInputMappings();
         TooltipManager.registerTooltipFactories();
-        changeWorldOrders();
+        removeVanillaLevelGenerators();
         VanillaOverlays.register();
         EvolutionOverlays.register();
 //        registerModels(event);

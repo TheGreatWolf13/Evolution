@@ -44,6 +44,7 @@ import tgw.evolution.blocks.tileentities.TEUtils;
 import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.capabilities.chunk.CapabilityChunkStorage;
 import tgw.evolution.hooks.asm.DeleteField;
+import tgw.evolution.hooks.asm.DeleteMethod;
 import tgw.evolution.hooks.asm.ModifyConstructor;
 import tgw.evolution.hooks.asm.RestoreFinal;
 import tgw.evolution.patches.PatchLevelChunk;
@@ -66,7 +67,7 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 @Mixin(LevelChunk.class)
-public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLevelChunk {
+public abstract class Mixin_CFM_LevelChunk extends ChunkAccess implements PatchLevelChunk {
 
     @Unique private static final ThreadLocal<IList> TO_UPDATE = ThreadLocal.withInitial(IArrayList::new);
     @Unique private static final ThreadLocal<ChunkHolder> HOLDER = ThreadLocal.withInitial(ChunkHolder::new);
@@ -83,15 +84,15 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
     @Shadow @Final @DeleteField private Map<BlockPos, LevelChunk.RebindableTickingBlockEntityWrapper> tickersInLevel;
 
     @ModifyConstructor
-    public Mixin_CF_LevelChunk(Level level,
-                               ChunkPos chunkPos,
-                               UpgradeData upgradeData,
-                               LevelChunkTicks<Block> blockTicks,
-                               LevelChunkTicks<Fluid> fluidTicks,
-                               long inhabitedTime,
-                               @Nullable LevelChunkSection[] sections,
-                               @Nullable LevelChunk.PostLoadProcessor processor,
-                               @Nullable BlendingData blendingData) {
+    public Mixin_CFM_LevelChunk(Level level,
+                                ChunkPos chunkPos,
+                                UpgradeData upgradeData,
+                                LevelChunkTicks<Block> blockTicks,
+                                LevelChunkTicks<Fluid> fluidTicks,
+                                long inhabitedTime,
+                                @Nullable LevelChunkSection[] sections,
+                                @Nullable LevelChunk.PostLoadProcessor processor,
+                                @Nullable BlendingData blendingData) {
         super(chunkPos, upgradeData, level, level.registryAccess().registryOrThrow(Registry.BIOME_REGISTRY), inhabitedTime, sections, blendingData);
         this.tickersInLevel_ = new L2OHashMap<>();
         this.clientLightReady = false;
@@ -112,7 +113,7 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
     }
 
     @ModifyConstructor
-    public Mixin_CF_LevelChunk(ServerLevel level, ProtoChunk protoChunk, @Nullable LevelChunk.PostLoadProcessor processor) {
+    public Mixin_CFM_LevelChunk(ServerLevel level, ProtoChunk protoChunk, @Nullable LevelChunk.PostLoadProcessor processor) {
         this(level, protoChunk.getPos(), protoChunk.getUpgradeData(), protoChunk.unpackBlockTicks(), protoChunk.unpackFluidTicks(),
              protoChunk.getInhabitedTime(), protoChunk.getSections(), processor, protoChunk.getBlendingData());
         L2OMap<BlockEntity> tes = protoChunk.blockEntities_();
@@ -165,12 +166,12 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
 
     /**
      * @author TheGreatWolf
-     * @reason Use non-BlockPos version
+     * @reason _
      */
     @Overwrite
+    @DeleteMethod
     private @Nullable BlockEntity createBlockEntity(BlockPos pos) {
-        Evolution.deprecatedMethod();
-        return this.createBlockEntity_(pos.getX(), pos.getY(), pos.getZ());
+        throw new AbstractMethodError();
     }
 
     @Unique
@@ -190,7 +191,7 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
      */
     @Overwrite
     public Map<BlockPos, BlockEntity> getBlockEntities() {
-        Evolution.warn("getBlockEntities() should not be called!");
+        Evolution.deprecatedMethod();
         return Map.of();
     }
 
@@ -198,6 +199,7 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
      * @author TheGreatWolf
      * @reason Use non-BlockPos version
      */
+    @SuppressWarnings("removal")
     @Overwrite
     @Override
     public @Nullable BlockEntity getBlockEntity(BlockPos pos) {
@@ -219,6 +221,7 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
      * @author TheGreatWolf
      * @reason Call non-BlockPos version
      */
+    @SuppressWarnings("removal")
     @Overwrite
     @Override
     public @Nullable CompoundTag getBlockEntityNbtForSaving(BlockPos pos) {
@@ -278,6 +281,7 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
      * @author TheGreatWolf
      * @reason Use non-BlockPos version
      */
+    @SuppressWarnings("removal")
     @Overwrite
     @Override
     public BlockState getBlockState(BlockPos pos) {
@@ -323,6 +327,7 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
      * @author TheGreatWolf
      * @reason Use non-BlockPos version.
      */
+    @SuppressWarnings("removal")
     @Overwrite
     @Override
     public FluidState getFluidState(BlockPos pos) {
@@ -366,6 +371,7 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
      * @reason _
      * @author TheGreatWolf
      */
+    @SuppressWarnings("removal")
     @Override
     @Overwrite
     public Stream<BlockPos> getLights() {
@@ -530,12 +536,12 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
 
     /**
      * @author TheGreatWolf
-     * @reason Use non-BlockPos version
+     * @reason _
      */
     @Overwrite
+    @DeleteMethod
     private @Nullable BlockEntity promotePendingBlockEntity(BlockPos pos, CompoundTag tag) {
-        Evolution.deprecatedMethod();
-        return this.promotePendingBlockEntity_(pos.getX(), pos.getY(), pos.getZ(), tag);
+        throw new AbstractMethodError();
     }
 
     @Unique
@@ -581,6 +587,7 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
      * @reason _
      * @author TheGreatWolf
      */
+    @SuppressWarnings("removal")
     @Overwrite
     @Override
     public void removeBlockEntity(BlockPos pos) {
@@ -653,6 +660,7 @@ public abstract class Mixin_CF_LevelChunk extends ChunkAccess implements PatchLe
      * @reason _
      * @author TheGreatWolf
      */
+    @SuppressWarnings("removal")
     @Override
     @Overwrite
     public @Nullable BlockState setBlockState(BlockPos pos, BlockState state, boolean isMoving) {

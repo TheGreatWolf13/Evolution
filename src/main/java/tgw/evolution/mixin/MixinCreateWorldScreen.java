@@ -3,6 +3,8 @@ package tgw.evolution.mixin;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.worldselection.CreateWorldScreen;
+import net.minecraft.client.gui.screens.worldselection.WorldGenSettingsComponent;
+import net.minecraft.client.gui.screens.worldselection.WorldPreset;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.packs.PackType;
@@ -10,17 +12,19 @@ import net.minecraft.server.packs.repository.PackRepository;
 import net.minecraft.world.level.DataPackConfig;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import tgw.evolution.resources.ModResourcePackUtil;
 import tgw.evolution.resources.ModdedPackSource;
+import tgw.evolution.util.math.FastRandom;
 
 import java.io.File;
-import java.util.function.Supplier;
+import java.util.Optional;
+import java.util.OptionalLong;
 
 @Mixin(CreateWorldScreen.class)
 public abstract class MixinCreateWorldScreen extends Screen {
@@ -31,14 +35,20 @@ public abstract class MixinCreateWorldScreen extends Screen {
         super(component);
     }
 
-    @Redirect(method = "createFresh", at = @At(value = "INVOKE", target = "Ljava/util/function/Supplier;get()Ljava/lang/Object;"))
-    private static <T> T loadDynamicRegistry(Supplier<T> instance) {
-        RegistryAccess.Writable dynamicRegistryManager = RegistryAccess.builtinCopy();
-        ModResourcePackUtil.loadDynamicRegistry(dynamicRegistryManager);
-        return (T) dynamicRegistryManager.freeze();
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public static CreateWorldScreen createFresh(@Nullable Screen screen) {
+        RegistryAccess.Writable writable = RegistryAccess.builtinCopy();
+        ModResourcePackUtil.loadDynamicRegistry(writable);
+        RegistryAccess.Frozen frozen = writable.freeze();
+        WorldPreset preset = WorldPreset.FLAT;
+        return new CreateWorldScreen(screen, ModResourcePackUtil.createDefaultDataPackSettings(), new WorldGenSettingsComponent(frozen, preset.create(frozen, new FastRandom().nextLong(), true, false), Optional.of(preset), OptionalLong.empty()));
     }
 
-    @ModifyArg(method = {"createFresh", "createFromExisting"}, at = @At(value = "INVOKE", target =
+    @ModifyArg(method = {"createFromExisting"}, at = @At(value = "INVOKE", target =
             "Lnet/minecraft/client/gui/screens/worldselection/CreateWorldScreen;" +
             "<init>(Lnet/minecraft/client/gui/screens/Screen;" +
             "Lnet/minecraft/world/level/DataPackConfig;" +

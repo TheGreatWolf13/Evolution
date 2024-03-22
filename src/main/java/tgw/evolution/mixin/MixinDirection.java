@@ -17,7 +17,7 @@ public abstract class MixinDirection {
     @Unique private int offsetY;
     @Unique private int offsetZ;
     @Shadow @Final private int oppositeIndex;
-
+    
     /**
      * @author TheGreatWolf
      * @reason _

@@ -387,6 +387,15 @@
       ],
       "net/minecraft/client/gui/screens/DeathScreen": [
         "tgw/evolution/patches/PatchDeathScreen"
+      ],
+      "net/minecraft/world/level/levelgen/structure/BoundingBox": [
+        "tgw/evolution/patches/PatchBoundingBox"
+      ],
+      "net/minecraft/core/DefaultedRegistry": [
+        "tgw/evolution/patches/PatchDefaultedRegistry"
+      ],
+      "net/minecraft/world/level/levelgen/blockpredicates/BlockPredicate": [
+        "tgw/evolution/patches/PatchBlockPredicate"
       ]
     }
   }
