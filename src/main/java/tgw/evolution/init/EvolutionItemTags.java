@@ -1,7 +1,5 @@
 package tgw.evolution.init;
 
-import it.unimi.dsi.fastutil.objects.ObjectList;
-import it.unimi.dsi.fastutil.objects.ObjectLists;
 import net.minecraft.core.Registry;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
@@ -11,15 +9,15 @@ import tgw.evolution.util.collection.lists.OList;
 
 public final class EvolutionItemTags {
 
-    public static final ObjectList<TagKey<Item>> ALL;
+    public static final OList<TagKey<Item>> ALL;
 
     public static final TagKey<Item> ROCKS;
 
     static {
         OList<TagKey<Item>> list = new OArrayList<>();
         ROCKS = register(list, "rocks");
-        list.trimCollection();
-        ALL = ObjectLists.unmodifiable(list);
+        list.trim();
+        ALL = list.view();
     }
 
     private EvolutionItemTags() {}

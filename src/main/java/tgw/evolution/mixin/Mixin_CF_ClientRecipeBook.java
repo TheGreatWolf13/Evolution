@@ -189,7 +189,7 @@ public abstract class Mixin_CF_ClientRecipeBook extends RecipeBook implements Pa
                 allRecipes.add(recipeCollection);
                 list.add(recipeCollection);
             }
-            list.trimCollection();
+            list.trim();
             byTab.put(e.key(), list.view());
         }
         R2OMap<RecipeCategory, OList<RecipeCategory>> aggregate = RecipeCategory.AGGREGATE_CATEGORIES;
@@ -204,12 +204,12 @@ public abstract class Mixin_CF_ClientRecipeBook extends RecipeBook implements Pa
                     list.addAll(collections);
                 }
             }
-            list.trimCollection();
+            list.trim();
             byTab.put(e.key(), list.view());
         }
         byTab.trimCollection();
         this.recipesByTab = byTab.view();
-        allRecipes.trimCollection();
+        allRecipes.trim();
         this.allRecipes = allRecipes.view();
     }
 }

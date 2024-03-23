@@ -213,29 +213,10 @@ public abstract class MixinVoxelShape implements PatchVoxelShape {
     }
 
     @Shadow
-    protected abstract int findIndex(Direction.Axis pAxis, double pPosition);
-
-    @Shadow
     public abstract void forAllBoxes(Shapes.DoubleLineConsumer pAction);
 
     @Shadow
-    protected abstract double get(Direction.Axis pAxis, int pIndex);
-
-    @Shadow
     public abstract boolean isEmpty();
-
-    @Unique
-    private void makeCache() {
-        if (this.isEmpty()) {
-            this.cachedBoxes = OList.emptyList();
-        }
-        else {
-            OList<AABB> list = new OArrayList<>();
-            this.forAllBoxes((x0, y0, z0, x1, y1, z1) -> list.add(new AABB(x0, y0, z0, x1, y1, z1)));
-            list.trimCollection();
-            this.cachedBoxes = list.view();
-        }
-    }
 
     /**
      * @author TheGreatWolf
@@ -269,5 +250,24 @@ public abstract class MixinVoxelShape implements PatchVoxelShape {
     public List<AABB> toAabbs() {
         Evolution.deprecatedMethod();
         return this.cachedBoxes();
+    }
+
+    @Shadow
+    protected abstract int findIndex(Direction.Axis pAxis, double pPosition);
+
+    @Shadow
+    protected abstract double get(Direction.Axis pAxis, int pIndex);
+
+    @Unique
+    private void makeCache() {
+        if (this.isEmpty()) {
+            this.cachedBoxes = OList.emptyList();
+        }
+        else {
+            OList<AABB> list = new OArrayList<>();
+            this.forAllBoxes((x0, y0, z0, x1, y1, z1) -> list.add(new AABB(x0, y0, z0, x1, y1, z1)));
+            list.trim();
+            this.cachedBoxes = list.view();
+        }
     }
 }

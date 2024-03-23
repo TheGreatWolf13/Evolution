@@ -93,7 +93,7 @@ public class SimpleWeightedModel implements IDynamicBakedModel {
             if (this.list.size() == 1) {
                 return this.list.get(0);
             }
-            this.list.trimCollection();
+            this.list.trim();
             return new SimpleWeightedModel(this.list);
         }
     }

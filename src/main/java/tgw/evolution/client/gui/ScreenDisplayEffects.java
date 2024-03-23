@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.Comparator;
 
 public abstract class ScreenDisplayEffects<T extends AbstractContainerMenu> extends AbstractContainerScreen<T> {
+    protected boolean hasActivePotionEffects;
     protected final Inventory inventory;
     private final Comparator<MobEffectInstance> comparator = (a, b) -> String.CASE_INSENSITIVE_ORDER.compare(a.getEffect()
                                                                                                               .getDisplayName()
@@ -35,7 +36,6 @@ public abstract class ScreenDisplayEffects<T extends AbstractContainerMenu> exte
                                                                                                              b.getEffect()
                                                                                                               .getDisplayName()
                                                                                                               .getString());
-    protected boolean hasActivePotionEffects;
     private int effectHeight;
     private @Nullable OList<MobEffectInstance> effects;
     private boolean full;
@@ -69,6 +69,74 @@ public abstract class ScreenDisplayEffects<T extends AbstractContainerMenu> exte
         int i = Mth.floor(effect.getDuration() * durationFactor);
         return StringUtil.formatTickDuration(i);
     }
+
+    public void drawActivePotionEffectsTooltips(PoseStack matrices, int mouseX, int mouseY, int leftOffset) {
+        if (this.effects == null) {
+            return;
+        }
+        int height = this.initialHeight;
+        for (int ef = 0, l = this.effects.size(); ef < l; ef++) {
+            MobEffectInstance effect = this.effects.get(ef);
+            int h = this.effectHeight;
+            if (this.full) {
+                h -= 1;
+            }
+            if (ef == this.effects.size() - 1) {
+                h = 32;
+            }
+            if (MathHelper.isMouseInRange(mouseX, mouseY, 2, height, Math.min(158, leftOffset), height + h)) {
+                if (this.tooltips == null) {
+                    this.tooltips = new OArrayList<>();
+                }
+                else {
+                    this.tooltips.clear();
+                }
+                String amp = getFixedAmplifier(effect) > 0 ? " " + MathHelper.getRomanNumber(getFixedAmplifier(effect) + 1) : "";
+                this.tooltips.add(new TranslatableComponent(effect.getEffect().getDescriptionId()).append(new TextComponent(amp)).withStyle(EvolutionStyles.DARK_AQUA));
+                EvolutionEffects.getEffectDescription(this.tooltips, effect.getEffect(), getFixedAmplifier(effect));
+                if (this.lines == null) {
+                    this.lines = new OArrayList<>();
+                }
+                else {
+                    this.lines.clear();
+                }
+                for (int i = 0, l1 = this.tooltips.size(); i < l1; i++) {
+                    this.lines.addAll(this.font.split(this.tooltips.get(i), 250));
+                }
+                this.renderTooltip(matrices, this.lines, mouseX, mouseY);
+                break;
+            }
+            height += this.effectHeight;
+        }
+    }
+
+    @Override
+    public void render(PoseStack matrices, int mouseX, int mouseY, float partialTicks) {
+        if (this.hasActivePotionEffects && this.shouldDrawPotionEffects()) {
+            this.drawActivePotionEffects(matrices);
+        }
+        super.render(matrices, mouseX, mouseY, partialTicks);
+    }
+
+    public void updateActivePotionEffects() {
+        assert this.minecraft != null;
+        assert this.minecraft.player != null;
+        if (this.minecraft.player.getActiveEffects().isEmpty()) {
+            this.leftPos = (this.width - this.imageWidth) / 2;
+            this.hasActivePotionEffects = false;
+        }
+        else {
+            this.hasActivePotionEffects = true;
+        }
+    }
+
+    @Override
+    protected void init() {
+        super.init();
+        this.updateActivePotionEffects();
+    }
+
+    protected abstract boolean shouldDrawPotionEffects();
 
     private void drawActivePotionEffects(PoseStack matrices) {
         assert this.minecraft != null;
@@ -153,75 +221,6 @@ public abstract class ScreenDisplayEffects<T extends AbstractContainerMenu> exte
                 this.font.drawShadow(matrices, getPotionDurationString(effect, 1.0F), 30, height + 16, 0x7f_7f7f);
                 height += this.effectHeight;
             }
-        }
-    }
-
-    public void drawActivePotionEffectsTooltips(PoseStack matrices, int mouseX, int mouseY, int leftOffset) {
-        if (this.effects == null) {
-            return;
-        }
-        int height = this.initialHeight;
-        for (int ef = 0, l = this.effects.size(); ef < l; ef++) {
-            MobEffectInstance effect = this.effects.get(ef);
-            int h = this.effectHeight;
-            if (this.full) {
-                h -= 1;
-            }
-            if (ef == this.effects.size() - 1) {
-                h = 32;
-            }
-            if (MathHelper.isMouseInRange(mouseX, mouseY, 2, height, Math.min(158, leftOffset), height + h)) {
-                if (this.tooltips == null) {
-                    this.tooltips = new OArrayList<>();
-                }
-                else {
-                    this.tooltips.clear();
-                }
-                String amp = getFixedAmplifier(effect) > 0 ? " " + MathHelper.getRomanNumber(getFixedAmplifier(effect) + 1) : "";
-                this.tooltips.add(new TranslatableComponent(effect.getEffect().getDescriptionId()).append(new TextComponent(amp))
-                                                                                                  .withStyle(EvolutionStyles.DARK_AQUA));
-                EvolutionEffects.getEffectDescription(this.tooltips, effect.getEffect(), getFixedAmplifier(effect));
-                if (this.lines == null) {
-                    this.lines = new OArrayList<>();
-                }
-                else {
-                    this.lines.clear();
-                }
-                for (int i = 0, l1 = this.tooltips.size(); i < l1; i++) {
-                    this.lines.addAll(this.font.split(this.tooltips.get(i), 250));
-                }
-                this.renderTooltip(matrices, this.lines, mouseX, mouseY);
-                break;
-            }
-            height += this.effectHeight;
-        }
-    }
-
-    @Override
-    protected void init() {
-        super.init();
-        this.updateActivePotionEffects();
-    }
-
-    @Override
-    public void render(PoseStack matrices, int mouseX, int mouseY, float partialTicks) {
-        if (this.hasActivePotionEffects && this.shouldDrawPotionEffects()) {
-            this.drawActivePotionEffects(matrices);
-        }
-        super.render(matrices, mouseX, mouseY, partialTicks);
-    }
-
-    protected abstract boolean shouldDrawPotionEffects();
-
-    public void updateActivePotionEffects() {
-        assert this.minecraft != null;
-        assert this.minecraft.player != null;
-        if (this.minecraft.player.getActiveEffects().isEmpty()) {
-            this.leftPos = (this.width - this.imageWidth) / 2;
-            this.hasActivePotionEffects = false;
-        }
-        else {
-            this.hasActivePotionEffects = true;
         }
     }
 }

@@ -42,7 +42,7 @@ public abstract class MixinResetChunksCommand {
         list.add(ChunkStatus.CARVERS);
         list.add(ChunkStatus.LIQUID_CARVERS);
         list.add(ChunkStatus.FEATURES);
-        list.trimCollection();
+        list.trim();
         STATUSES = list.view();
     }
 

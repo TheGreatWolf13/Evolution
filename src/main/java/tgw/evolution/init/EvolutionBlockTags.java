@@ -1,7 +1,5 @@
 package tgw.evolution.init;
 
-import it.unimi.dsi.fastutil.objects.ObjectList;
-import it.unimi.dsi.fastutil.objects.ObjectLists;
 import net.minecraft.core.Registry;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.block.Block;
@@ -11,7 +9,7 @@ import tgw.evolution.util.collection.lists.OList;
 
 public final class EvolutionBlockTags {
 
-    public static final ObjectList<TagKey<Block>> ALL;
+    public static final OList<TagKey<Block>> ALL;
 
     public static final TagKey<Block> BLOCKS_COMBINED_STEP_PARTICLE;
     public static final TagKey<Block> BLOCKS_COMBINED_STEP_SOUND;
@@ -24,8 +22,8 @@ public final class EvolutionBlockTags {
         BLOCKS_COMBINED_STEP_SOUND = register(list, "blocks_combined_step_sound");
         COBBLESTONES = register(list, "cobblestones");
         ROCKS = register(list, "rocks");
-        list.trimCollection();
-        ALL = ObjectLists.unmodifiable(list);
+        list.trim();
+        ALL = list.view();
     }
 
     private EvolutionBlockTags() {

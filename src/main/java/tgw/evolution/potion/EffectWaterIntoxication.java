@@ -32,13 +32,11 @@ public class EffectWaterIntoxication extends EffectGeneric {
     public OList<ChanceEffectHolder> mayCauseEffect() {
         if (this.mayCause == null) {
             this.mayCause = new OArrayList<>();
-            this.mayCause.add(new ChanceEffectHolder(0, MobEffects.CONFUSION, a -> a > 0 ? 0.15f * a : 0.001f,
-                                                     a -> new MobEffectInstance(MobEffects.CONFUSION, 200 * (a + 1), 0, true, false, false)));
-            this.mayCause.add(new ChanceEffectHolder(0, MobEffects.WEAKNESS, a -> a > 0 ? 0.15f * a : 0.001f,
-                                                     a -> new MobEffectInstance(MobEffects.WEAKNESS, 200 * (a + 1), a, true, false, false)));
-            this.mayCause.trimCollection();
+            this.mayCause.add(new ChanceEffectHolder(0, MobEffects.CONFUSION, a -> a > 0 ? 0.15f * a : 0.001f, a -> new MobEffectInstance(MobEffects.CONFUSION, 200 * (a + 1), 0, true, false, false)));
+            this.mayCause.add(new ChanceEffectHolder(0, MobEffects.WEAKNESS, a -> a > 0 ? 0.15f * a : 0.001f, a -> new MobEffectInstance(MobEffects.WEAKNESS, 200 * (a + 1), a, true, false, false)));
+            this.mayCause.trim();
         }
-        return this.mayCause;
+        return this.mayCause.view();
     }
 
     @Override

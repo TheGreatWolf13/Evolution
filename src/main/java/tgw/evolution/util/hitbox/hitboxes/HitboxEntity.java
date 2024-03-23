@@ -20,19 +20,13 @@ import tgw.evolution.util.hitbox.hrs.HR;
 import tgw.evolution.util.hitbox.hrs.HREntity;
 import tgw.evolution.util.math.Vec3d;
 
-import java.util.List;
-
 public abstract class HitboxEntity<T extends Entity> implements HMEntity<T>, HREntity<T>, HR, IHitboxAccess<T>, IRoot {
 
+    protected float ageInTicks;
+    protected float attackTime;
     protected final Matrix4d helperColliderTransform = new Matrix4d();
     protected final Vec3d helperOffset = new Vec3d();
     protected final Matrix4d helperTransform = new Matrix4d();
-    private final OList<Hitbox> boxes;
-    private final Vec3d cachedRenderOffset = new Vec3d();
-    private final Matrix4d colliderTransform = new Matrix4d();
-    private final Matrix4d transform = new Matrix4d();
-    protected float ageInTicks;
-    protected float attackTime;
     protected float pivotX;
     protected float pivotY;
     protected float pivotZ;
@@ -42,6 +36,10 @@ public abstract class HitboxEntity<T extends Entity> implements HMEntity<T>, HRE
     protected float scaleZ = 1.0f;
     protected boolean young;
     private @Nullable Hitbox activeEquip;
+    private final OList<Hitbox> boxes;
+    private final Vec3d cachedRenderOffset = new Vec3d();
+    private final Matrix4d colliderTransform = new Matrix4d();
+    private final Matrix4d transform = new Matrix4d();
 
     public HitboxEntity() {
         this.boxes = new OArrayList<>();
@@ -51,44 +49,10 @@ public abstract class HitboxEntity<T extends Entity> implements HMEntity<T>, HRE
         return new AABB(minX / 16, minY / 16, minZ / 16, (minX + dimX) / 16, (minY + dimY) / 16, (minZ + dimZ) / 16);
     }
 
-    protected final Hitbox addBox(HitboxType part, AABB aabb, float x, float y, float z, IRoot parent) {
-        Hitbox box = new Hitbox(part, aabb, parent);
-        this.boxes.add(box);
-        box.setPivotX(x);
-        box.setPivotY(y);
-        box.setPivotZ(z);
-        return box;
-    }
-
-    protected final Hitbox addBox(HitboxType part, AABB aabb, IRoot parent) {
-        return this.addBox(part, aabb, 0, 0, 0, parent);
-    }
-
-    protected final HitboxAttachable addBoxAttachable(HitboxType part,
-                                                      AABB aabb,
-                                                      float x,
-                                                      float y,
-                                                      float z,
-                                                      double localOriginX,
-                                                      double localOriginY,
-                                                      double localOriginZ,
-                                                      IRoot parent) {
-        HitboxAttachable box = new HitboxAttachable(part, aabb, parent, localOriginX / 16.0, localOriginY / 16.0, localOriginZ / 16.0);
-        this.boxes.add(box);
-        box.setPivotX(x);
-        box.setPivotY(y);
-        box.setPivotZ(z);
-        return box;
-    }
-
     @Override
     public float attackTime() {
         return this.attackTime;
     }
-
-    protected abstract @Nullable Hitbox childGetEquipFor(T entity, IMelee.IAttackType type, HumanoidArm arm);
-
-    protected abstract void childInit(T entity, float partialTicks);
 
     public final void drawAllBoxes(T entity,
                                    float partialTicks,
@@ -124,11 +88,7 @@ public abstract class HitboxEntity<T extends Entity> implements HMEntity<T>, HRE
         hitbox.drawEdges(hitbox.adjustedTransform(), buffer, pose, normal, x, y, z, red, green, blue, alpha);
     }
 
-    protected final void finish() {
-        this.boxes.trimCollection();
-    }
-
-    public final List<Hitbox> getBoxes() {
+    public final OList<Hitbox> getBoxes() {
         return this.boxes;
     }
 
@@ -159,8 +119,6 @@ public abstract class HitboxEntity<T extends Entity> implements HMEntity<T>, HRE
         double z = transform.transformZ(x0, y0, z0);
         return this.helperOffset.set(this.transformX(x, y, z), this.transformY(x, y, z), this.transformZ(x, y, z));
     }
-
-    protected abstract Hitbox headOrRoot();
 
     @Override
     public final Matrix4d helperColliderTransform() {
@@ -212,12 +170,6 @@ public abstract class HitboxEntity<T extends Entity> implements HMEntity<T>, HRE
         return this.transform.preUntransformZ(z);
     }
 
-    protected abstract double relativeHeadOrRootX();
-
-    protected abstract double relativeHeadOrRootY();
-
-    protected abstract double relativeHeadOrRootZ();
-
     @Override
     public boolean riding() {
         return this.riding;
@@ -263,16 +215,6 @@ public abstract class HitboxEntity<T extends Entity> implements HMEntity<T>, HRE
     @Override
     public void setAttackTime(float attackTime) {
         this.attackTime = attackTime;
-    }
-
-    protected void setPivot(float x, float y, float z, float scale) {
-        this.setPivot(x * scale, y * scale, z * scale);
-    }
-
-    protected void setPivot(float x, float y, float z) {
-        this.pivotX = x;
-        this.pivotY = y;
-        this.pivotZ = z;
     }
 
     @Override
@@ -327,5 +269,61 @@ public abstract class HitboxEntity<T extends Entity> implements HMEntity<T>, HRE
     @Override
     public boolean young() {
         return this.young;
+    }
+
+    protected final Hitbox addBox(HitboxType part, AABB aabb, float x, float y, float z, IRoot parent) {
+        Hitbox box = new Hitbox(part, aabb, parent);
+        this.boxes.add(box);
+        box.setPivotX(x);
+        box.setPivotY(y);
+        box.setPivotZ(z);
+        return box;
+    }
+
+    protected final Hitbox addBox(HitboxType part, AABB aabb, IRoot parent) {
+        return this.addBox(part, aabb, 0, 0, 0, parent);
+    }
+
+    protected final HitboxAttachable addBoxAttachable(HitboxType part,
+                                                      AABB aabb,
+                                                      float x,
+                                                      float y,
+                                                      float z,
+                                                      double localOriginX,
+                                                      double localOriginY,
+                                                      double localOriginZ,
+                                                      IRoot parent) {
+        HitboxAttachable box = new HitboxAttachable(part, aabb, parent, localOriginX / 16.0, localOriginY / 16.0, localOriginZ / 16.0);
+        this.boxes.add(box);
+        box.setPivotX(x);
+        box.setPivotY(y);
+        box.setPivotZ(z);
+        return box;
+    }
+
+    protected abstract @Nullable Hitbox childGetEquipFor(T entity, IMelee.IAttackType type, HumanoidArm arm);
+
+    protected abstract void childInit(T entity, float partialTicks);
+
+    protected final void finish() {
+        this.boxes.trim();
+    }
+
+    protected abstract Hitbox headOrRoot();
+
+    protected abstract double relativeHeadOrRootX();
+
+    protected abstract double relativeHeadOrRootY();
+
+    protected abstract double relativeHeadOrRootZ();
+
+    protected void setPivot(float x, float y, float z, float scale) {
+        this.setPivot(x * scale, y * scale, z * scale);
+    }
+
+    protected void setPivot(float x, float y, float z) {
+        this.pivotX = x;
+        this.pivotY = y;
+        this.pivotZ = z;
     }
 }

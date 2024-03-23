@@ -54,7 +54,6 @@ import java.util.function.Predicate;
 @Mixin(EntitySelectorOptions.class)
 public abstract class MixinEntitySelectorOptions {
 
-    @Unique private static final OList<String> SORT_SUGGESTIONS;
     @Shadow @Final public static DynamicCommandExceptionType ERROR_ENTITY_TYPE_INVALID;
     @Shadow @Final public static DynamicCommandExceptionType ERROR_GAME_MODE_INVALID;
     @Shadow @Final public static DynamicCommandExceptionType ERROR_SORT_UNKNOWN;
@@ -62,6 +61,7 @@ public abstract class MixinEntitySelectorOptions {
     @Shadow @Final public static SimpleCommandExceptionType ERROR_LEVEL_NEGATIVE;
     @Shadow @Final public static SimpleCommandExceptionType ERROR_RANGE_NEGATIVE;
     @Shadow @Final public static DynamicCommandExceptionType ERROR_INAPPLICABLE_OPTION;
+    @Unique private static final OList<String> SORT_SUGGESTIONS;
     @Shadow @Final private static Map<String, EntitySelectorOptions.Option> OPTIONS;
 
     static {
@@ -70,7 +70,7 @@ public abstract class MixinEntitySelectorOptions {
         list.add("furthest");
         list.add("random");
         list.add("arbitrary");
-        list.trimCollection();
+        list.trim();
         SORT_SUGGESTIONS = list.view();
     }
 

@@ -50,6 +50,14 @@ public class ResourceManagerHelperImpl implements ResourceManagerHelper {
         }
     }
 
+    public static OList<PreparableReloadListener> sort(@Nullable PackType type, List<PreparableReloadListener> listeners) {
+        ResourceManagerHelperImpl instance = get(type);
+        OList<PreparableReloadListener> mutable = new OArrayList<>(listeners);
+        instance.sort(mutable);
+        mutable.trim();
+        return mutable.view();
+    }
+
     @Override
     public void registerReloadListener(IKeyedReloadListener listener) {
         if (!this.addedListenerIds.add(listener.getKey())) {
@@ -59,14 +67,6 @@ public class ResourceManagerHelperImpl implements ResourceManagerHelper {
         if (!this.addedListeners.add(listener)) {
             throw new RuntimeException("Listener with previously unknown ID " + listener.getKey() + " already in listener set!");
         }
-    }
-
-    public static OList<PreparableReloadListener> sort(@Nullable PackType type, List<PreparableReloadListener> listeners) {
-        ResourceManagerHelperImpl instance = get(type);
-        OList<PreparableReloadListener> mutable = new OArrayList<>(listeners);
-        instance.sort(mutable);
-        mutable.trimCollection();
-        return mutable.view();
     }
 
     protected void sort(OList<PreparableReloadListener> listeners) {

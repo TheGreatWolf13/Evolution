@@ -49,7 +49,7 @@ public class ModelPlayer<T extends LivingEntity> extends ModelHumanoid<T> implem
         this.cape = root.getChild("cape");
         this.parts = root.getAllParts().collect(OArrayList::new, OArrayList::add, OArrayList::addAll);
         this.bodyParts.add(this.clothesBody);
-        this.bodyParts.trimCollection();
+        this.bodyParts.trim();
     }
 
     public static MeshDefinition createMesh(CubeDeformation def, boolean slim) {

@@ -27,6 +27,7 @@ public class ModelHumanoid<T extends LivingEntity> extends ModelAgeableList<T> i
     public final ModelPart armL;
     public final ModelPart armR;
     public final ModelPart body;
+    public boolean crouching;
     public final ModelPart forearmL;
     public final ModelPart forearmR;
     public final ModelPart forelegL;
@@ -35,14 +36,13 @@ public class ModelHumanoid<T extends LivingEntity> extends ModelAgeableList<T> i
     public final ModelPart head;
     public final ModelPart itemL;
     public final ModelPart itemR;
+    public ArmPose leftArmPose = ArmPose.EMPTY;
     public final ModelPart legL;
     public final ModelPart legR;
-    protected final OList<ModelPart> bodyParts = new OArrayList<>();
-    protected final OList<ModelPart> headParts = new OArrayList<>();
-    public boolean crouching;
-    public ArmPose leftArmPose = ArmPose.EMPTY;
     public ArmPose rightArmPose = ArmPose.EMPTY;
     public float swimAmount;
+    protected final OList<ModelPart> bodyParts = new OArrayList<>();
+    protected final OList<ModelPart> headParts = new OArrayList<>();
     protected boolean shouldCancelLeft;
     protected boolean shouldCancelRight;
 
@@ -67,9 +67,9 @@ public class ModelHumanoid<T extends LivingEntity> extends ModelAgeableList<T> i
         this.forelegL = this.legL.getChild("foreleg_l");
         this.headParts.add(this.head);
         this.headParts.add(this.hat);
-        this.headParts.trimCollection();
+        this.headParts.trim();
         this.bodyParts.add(this.body);
-        this.bodyParts.trimCollection();
+        this.bodyParts.trim();
         this.itemR.visible = false;
         this.itemL.visible = false;
     }
@@ -146,11 +146,6 @@ public class ModelHumanoid<T extends LivingEntity> extends ModelAgeableList<T> i
         return (HM) (Object) this.body;
     }
 
-    @Override
-    protected OList<ModelPart> bodyParts() {
-        return this.bodyParts;
-    }
-
     public void copyPropertiesTo(ModelHumanoid<T> model) {
         super.copyPropertiesTo(model);
         model.leftArmPose = this.leftArmPose;
@@ -192,21 +187,9 @@ public class ModelHumanoid<T extends LivingEntity> extends ModelAgeableList<T> i
         return (HM) (Object) this.forelegR;
     }
 
-    protected ModelPart getArm(HumanoidArm arm) {
-        return arm == HumanoidArm.LEFT ? this.armL : this.armR;
-    }
-
-    protected ModelPart getForearm(HumanoidArm arm) {
-        return arm == HumanoidArm.LEFT ? this.forearmL : this.forearmR;
-    }
-
     @Override
     public ModelPart getHead() {
         return this.head;
-    }
-
-    protected ModelPart getItem(HumanoidArm arm) {
-        return arm == HumanoidArm.LEFT ? this.itemL : this.itemR;
     }
 
     @Override
@@ -217,11 +200,6 @@ public class ModelHumanoid<T extends LivingEntity> extends ModelAgeableList<T> i
     @Override
     public HM head() {
         return (HM) (Object) this.head;
-    }
-
-    @Override
-    protected OList<ModelPart> headParts() {
-        return this.headParts;
     }
 
     @Override
@@ -349,5 +327,27 @@ public class ModelHumanoid<T extends LivingEntity> extends ModelAgeableList<T> i
     @Override
     public boolean young() {
         return this.young;
+    }
+
+    @Override
+    protected OList<ModelPart> bodyParts() {
+        return this.bodyParts;
+    }
+
+    protected ModelPart getArm(HumanoidArm arm) {
+        return arm == HumanoidArm.LEFT ? this.armL : this.armR;
+    }
+
+    protected ModelPart getForearm(HumanoidArm arm) {
+        return arm == HumanoidArm.LEFT ? this.forearmL : this.forearmR;
+    }
+
+    protected ModelPart getItem(HumanoidArm arm) {
+        return arm == HumanoidArm.LEFT ? this.itemL : this.itemR;
+    }
+
+    @Override
+    protected OList<ModelPart> headParts() {
+        return this.headParts;
     }
 }

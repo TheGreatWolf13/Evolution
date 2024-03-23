@@ -1,6 +1,5 @@
 package tgw.evolution.init;
 
-import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.minecraft.core.Registry;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.effect.MobEffect;
@@ -12,8 +11,7 @@ import tgw.evolution.patches.PatchMobEffect;
 import tgw.evolution.potion.*;
 import tgw.evolution.util.collection.ChanceEffectHolder;
 import tgw.evolution.util.collection.EffectHolder;
-
-import java.util.List;
+import tgw.evolution.util.collection.lists.OList;
 
 public final class EvolutionEffects {
 
@@ -48,21 +46,7 @@ public final class EvolutionEffects {
     private EvolutionEffects() {
     }
 
-    @Contract("_, _, _ -> true")
-    private static boolean addCause(List<Component> tooltips, Component text, boolean addedCausesHeader) {
-        if (!addedCausesHeader) {
-            tooltips.add(EvolutionTexts.EMPTY);
-            tooltips.add(EvolutionTexts.TOOLTIP_EFFECT_CAUSES);
-        }
-        tooltips.add(text);
-        return true;
-    }
-
-    private static Component getEffectComp(MobEffect effect, int lvl) {
-        return ((PatchMobEffect) effect).getDescription(lvl);
-    }
-
-    public static void getEffectDescription(List<Component> tooltips, MobEffect effect, int lvl) {
+    public static void getEffectDescription(OList<Component> tooltips, MobEffect effect, int lvl) {
         tooltips.add(getEffectComp(effect, lvl));
         PatchMobEffect patch = (PatchMobEffect) effect;
         boolean addedCausesHeader = false;
@@ -124,7 +108,7 @@ public final class EvolutionEffects {
         if (i != 0) {
             addedCausesHeader = addCause(tooltips, EvolutionTexts.effectLuck(i), addedCausesHeader);
         }
-        ObjectList<EffectHolder> causes = patch.causesEffect();
+        OList<EffectHolder> causes = patch.causesEffect();
         for (int index = 0, l = causes.size(); index < l; index++) {
             MobEffectInstance instance = causes.get(index).getInstance(lvl);
             if (instance != null) {
@@ -135,7 +119,7 @@ public final class EvolutionEffects {
         if (mayCauseAnything) {
             tooltips.add(EvolutionTexts.EMPTY);
             tooltips.add(EvolutionTexts.TOOLTIP_EFFECT_MAY_CAUSE);
-            ObjectList<ChanceEffectHolder> mayCause = patch.mayCauseEffect();
+            OList<ChanceEffectHolder> mayCause = patch.mayCauseEffect();
             for (int index = 0, l = mayCause.size(); index < l; index++) {
                 MobEffectInstance instance = mayCause.get(index).getInstance(lvl);
                 if (instance != null) {
@@ -160,11 +144,25 @@ public final class EvolutionEffects {
         return instance;
     }
 
-    private static <E extends MobEffect> E register(String name, E effect) {
-        return Registry.register(Registry.MOB_EFFECT, Evolution.getResource(name), effect);
-    }
-
     public static void register() {
         //Effects are registered via class-loading.
+    }
+
+    @Contract("_, _, _ -> true")
+    private static boolean addCause(OList<Component> tooltips, Component text, boolean addedCausesHeader) {
+        if (!addedCausesHeader) {
+            tooltips.add(EvolutionTexts.EMPTY);
+            tooltips.add(EvolutionTexts.TOOLTIP_EFFECT_CAUSES);
+        }
+        tooltips.add(text);
+        return true;
+    }
+
+    private static Component getEffectComp(MobEffect effect, int lvl) {
+        return ((PatchMobEffect) effect).getDescription(lvl);
+    }
+
+    private static <E extends MobEffect> E register(String name, E effect) {
+        return Registry.register(Registry.MOB_EFFECT, Evolution.getResource(name), effect);
     }
 }

@@ -1,7 +1,6 @@
 package tgw.evolution.blocks.util;
 
 import it.unimi.dsi.fastutil.ints.IntSet;
-import it.unimi.dsi.fastutil.ints.IntSets;
 import net.minecraft.world.level.block.state.properties.Property;
 import tgw.evolution.util.collection.sets.IHashSet;
 import tgw.evolution.util.collection.sets.ISet;
@@ -30,8 +29,8 @@ public class IntProperty extends Property<Integer> {
         for (int i = min; i <= max; ++i) {
             set.add(i);
         }
-        set.trimCollection();
-        this.values = IntSets.unmodifiable(set);
+        set.trim();
+        this.values = set.view();
     }
 
     public static IntProperty create(String name, int min, int max) {

@@ -24,15 +24,15 @@ import java.util.Map;
 @Mixin(SimpleBakedModel.Builder.class)
 public abstract class Mixin_CF_SimpleBakedModel_Builder {
 
-    @Unique private final Map<Direction, OList<BakedQuad>> culledFaces_;
-    @Unique private final OList<BakedQuad> unculledFaces_;
     @Shadow @Final @DeleteField private Map<Direction, List<BakedQuad>> culledFaces;
+    @Unique private final Map<Direction, OList<BakedQuad>> culledFaces_;
     @Mutable @Shadow @Final @RestoreFinal private boolean hasAmbientOcclusion;
     @Mutable @Shadow @Final @RestoreFinal private boolean isGui3d;
     @Mutable @Shadow @Final @RestoreFinal private ItemOverrides overrides;
     @Shadow private @Nullable TextureAtlasSprite particleIcon;
     @Mutable @Shadow @Final @RestoreFinal private ItemTransforms transforms;
     @Shadow @Final @DeleteField private List<BakedQuad> unculledFaces;
+    @Unique private final OList<BakedQuad> unculledFaces_;
     @Mutable @Shadow @Final @RestoreFinal private boolean usesBlockLight;
 
     @ModifyConstructor
@@ -87,7 +87,7 @@ public abstract class Mixin_CF_SimpleBakedModel_Builder {
             unculled = OList.emptyList();
         }
         else {
-            unculled.trimCollection();
+            unculled.trim();
         }
         if (map.isEmpty()) {
             map = Map.of();
@@ -99,7 +99,7 @@ public abstract class Mixin_CF_SimpleBakedModel_Builder {
                     this.culledFaces_.put(direction, OList.emptyList());
                 }
                 else {
-                    list.trimCollection();
+                    list.trim();
                 }
             }
         }
