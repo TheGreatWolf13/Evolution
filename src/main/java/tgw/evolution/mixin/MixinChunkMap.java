@@ -88,6 +88,29 @@ public abstract class MixinChunkMap extends ChunkStorage implements PatchChunkMa
         super(pRegionFolder, pFixerUpper, pSync);
     }
 
+    @Contract(value = "_, _, _, _, _ -> _")
+    @Shadow
+    public static boolean isChunkInRange(int p_200879_, int p_200880_, int p_200881_, int p_200882_, int p_200883_) {
+        //noinspection Contract
+        throw new AbstractMethodError();
+    }
+
+    @Contract(value = "_, _, _, _, _ -> _")
+    @Shadow
+    private static boolean isChunkOnRangeBorder(int p_183829_, int p_183830_, int p_183831_, int p_183832_, int p_183833_) {
+        //noinspection Contract
+        throw new AbstractMethodError();
+    }
+
+    @Unique
+    private static void updatePlayerPos_(ServerPlayer player) {
+        BlockPos pos = player.blockPosition();
+        int secX = SectionPos.blockToSectionCoord(pos.getX());
+        int secZ = SectionPos.blockToSectionCoord(pos.getZ());
+        player.setLastChunkPos_(secX, secZ);
+        player.connection.send(new ClientboundSetChunkCacheCenterPacket(secX, secZ));
+    }
+
     /**
      * @reason _
      * @author TheGreatWolf
@@ -145,13 +168,6 @@ public abstract class MixinChunkMap extends ChunkStorage implements PatchChunkMa
 
     @Shadow
     public abstract @Nullable ChunkHolder getVisibleChunkIfPresent(long p_140328_);
-
-    @Contract(value = "_, _, _, _, _ -> _")
-    @Shadow
-    public static boolean isChunkInRange(int p_200879_, int p_200880_, int p_200881_, int p_200882_, int p_200883_) {
-        //noinspection Contract
-        throw new AbstractMethodError();
-    }
 
     /**
      * @author TheGreatWolf
@@ -383,10 +399,10 @@ public abstract class MixinChunkMap extends ChunkStorage implements PatchChunkMa
         if (shouldAddCameraTicket) {
             this.distanceManager.addPlayer_(currCamSecX, currCamSecZ, player);
         }
-        for (long it = chunksToUnload.beginIteration(); (it & 0xFFFF_FFFFL) != 0; it = chunksToUnload.nextEntry(it)) {
+        for (long it = chunksToUnload.beginIteration(); chunksToUnload.hasNextIteration(it); it = chunksToUnload.nextEntry(it)) {
             this.updateChunkTrackingNoPkt(player, chunksToUnload.getIteration(it), true, false);
         }
-        for (long it = chunksToLoad.beginIteration(); (it & 0xFFFF_FFFFL) != 0; it = chunksToLoad.nextEntry(it)) {
+        for (long it = chunksToLoad.beginIteration(); chunksToLoad.hasNextIteration(it); it = chunksToLoad.nextEntry(it)) {
             this.updateChunkTrackingNoPkt(player, chunksToLoad.getIteration(it), false, true);
         }
     }
@@ -609,13 +625,6 @@ public abstract class MixinChunkMap extends ChunkStorage implements PatchChunkMa
     @Shadow
     protected abstract void updateChunkTracking(ServerPlayer pPlayer, ChunkPos pChunkPos, MutableObject<ClientboundLevelChunkWithLightPacket> pPacketCache, boolean pWasLoaded, boolean pLoad);
 
-    @Contract(value = "_, _, _, _, _ -> _")
-    @Shadow
-    private static boolean isChunkOnRangeBorder(int p_183829_, int p_183830_, int p_183831_, int p_183832_, int p_183833_) {
-        //noinspection Contract
-        throw new AbstractMethodError();
-    }
-
     @Unique
     private void playerLoadedChunkNoPkt(ServerPlayer player, LevelChunk chunk) {
         player.trackChunk(chunk.getPos(), new ClientboundLevelChunkWithLightPacket(chunk, this.lightEngine, null, null, true));
@@ -788,14 +797,5 @@ public abstract class MixinChunkMap extends ChunkStorage implements PatchChunkMa
     @DeleteMethod
     private SectionPos updatePlayerPos(ServerPlayer player) {
         throw new AbstractMethodError();
-    }
-
-    @Unique
-    private static void updatePlayerPos_(ServerPlayer player) {
-        BlockPos pos = player.blockPosition();
-        int secX = SectionPos.blockToSectionCoord(pos.getX());
-        int secZ = SectionPos.blockToSectionCoord(pos.getZ());
-        player.setLastChunkPos_(secX, secZ);
-        player.connection.send(new ClientboundSetChunkCacheCenterPacket(secX, secZ));
     }
 }

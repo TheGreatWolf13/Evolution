@@ -44,7 +44,7 @@ public interface FSet extends FloatSet, SetEv {
 
     long nextEntry(long it);
 
-    void removeIteration(long it);
+    long removeIteration(long it);
 
     @UnmodifiableView FSet view();
 
@@ -71,12 +71,17 @@ public interface FSet extends FloatSet, SetEv {
         }
 
         @Override
+        public boolean hasNextIteration(long it) {
+            return false;
+        }
+
+        @Override
         public long nextEntry(long it) {
             return 0;
         }
 
         @Override
-        public void removeIteration(long it) {
+        public long removeIteration(long it) {
             throw new UnsupportedOperationException();
         }
 
@@ -121,7 +126,7 @@ public interface FSet extends FloatSet, SetEv {
         }
 
         @Override
-        public void removeIteration(long it) {
+        public long removeIteration(long it) {
             throw new UnsupportedOperationException();
         }
 
@@ -161,12 +166,17 @@ public interface FSet extends FloatSet, SetEv {
         }
 
         @Override
+        public boolean hasNextIteration(long it) {
+            return this.set.hasNextIteration(it);
+        }
+
+        @Override
         public long nextEntry(long it) {
             return this.set.nextEntry(it);
         }
 
         @Override
-        public void removeIteration(long it) {
+        public long removeIteration(long it) {
             throw new UnsupportedOperationException();
         }
 

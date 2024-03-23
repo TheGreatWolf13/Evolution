@@ -16,6 +16,10 @@ public interface SetEv {
         }
     }
 
+    default boolean hasNextIteration(long it) {
+        return (it & 0xFFFF_FFFFL) != 0;
+    }
+
     default void reset() {
         this.clear();
         this.trim();

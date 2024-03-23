@@ -101,11 +101,6 @@ public class ClientEvents {
     private static boolean canDoLMBDrag;
     private static boolean canDoRMBDrag;
     private static float fov;
-    private final ISet currentShaders = new IHashSet();
-    private final ISet desiredShaders = new IHashSet();
-    private final ISet forcedShaders = new IHashSet();
-    private final Minecraft mc;
-    private final ClientRenderer renderer;
     public int effectToAddTicks;
     public @Nullable Entity leftPointedEntity;
     public @Nullable EntityHitResult leftRayTrace;
@@ -114,12 +109,17 @@ public class ClientEvents {
     public int ticksToLoseConcious;
     private @Nullable IMelee.IAttackType cachedAttackType;
     private int cameraId = -1;
+    private final ISet currentShaders = new IHashSet();
+    private final ISet desiredShaders = new IHashSet();
     private @Nullable DimensionOverworld dimension;
     private @Nullable DynamicLights dynamicLights;
+    private final ISet forcedShaders = new IHashSet();
     private boolean initialized;
     private @Range(from = 0, to = 1) int lastInventoryTab;
     private int mainhandCooldownTime;
+    private final Minecraft mc;
     private int offhandCooldownTime;
+    private final ClientRenderer renderer;
     private @Nullable SkyRenderer skyRenderer;
     private int ticks;
     private float tps = 20.0f;
@@ -131,10 +131,6 @@ public class ClientEvents {
         this.renderer = new ClientRenderer(mc, this);
     }
 
-    private static boolean areStacksCompatible(ItemStack a, ItemStack b) {
-        return a.isEmpty() || b.isEmpty() || a.sameItem(b) && ItemStack.tagMatches(a, b);
-    }
-
     public static boolean containsEffect(OList<ClientEffectInstance> list, MobEffect effect) {
         for (int i = 0, l = list.size(); i < l; i++) {
             if (list.get(i).getEffect() == effect) {
@@ -142,16 +138,6 @@ public class ClientEvents {
             }
         }
         return false;
-    }
-
-    private static @Nullable IGuiScreenHandler findHandler(Screen currentScreen) {
-        if (currentScreen instanceof CreativeModeInventoryScreen creativeScreen) {
-            return new GuiContainerCreativeHandler(creativeScreen);
-        }
-        if (currentScreen instanceof AbstractContainerScreen containerScreen) {
-            return new GuiContainerHandler(containerScreen);
-        }
-        return null;
     }
 
     public static @Nullable Direction getDirectionFromInput(Direction facing, Input input) {
@@ -185,17 +171,6 @@ public class ClientEvents {
             return movement;
         }
         return DirectionUtil.fromLocalToAbs(movement, facing);
-    }
-
-    private static int getIndexAndRemove(MobEffect effect) {
-        for (int i = 0; i < EFFECTS_TO_ADD.size(); i++) {
-            ClientEffectInstance c = EFFECTS_TO_ADD.get(i);
-            if (c.getEffect() == effect) {
-                EFFECTS_TO_ADD.remove(i);
-                return i;
-            }
-        }
-        return -1;
     }
 
     public static ClientEvents getInstance() {
@@ -280,6 +255,43 @@ public class ClientEvents {
         return PROJ_MATRIX;
     }
 
+    public static void storeFov(float fov) {
+        ClientEvents.fov = fov;
+    }
+
+    public static void storeModelViewMatrix(Matrix4f modelViewMatrix) {
+        MODEL_VIEW_MATRIX.load(modelViewMatrix);
+    }
+
+    public static void storeProjMatrix(Matrix4f projectionMatrix) {
+        PROJ_MATRIX.load(projectionMatrix);
+    }
+
+    private static boolean areStacksCompatible(ItemStack a, ItemStack b) {
+        return a.isEmpty() || b.isEmpty() || a.sameItem(b) && ItemStack.tagMatches(a, b);
+    }
+
+    private static @Nullable IGuiScreenHandler findHandler(Screen currentScreen) {
+        if (currentScreen instanceof CreativeModeInventoryScreen creativeScreen) {
+            return new GuiContainerCreativeHandler(creativeScreen);
+        }
+        if (currentScreen instanceof AbstractContainerScreen containerScreen) {
+            return new GuiContainerHandler(containerScreen);
+        }
+        return null;
+    }
+
+    private static int getIndexAndRemove(MobEffect effect) {
+        for (int i = 0; i < EFFECTS_TO_ADD.size(); i++) {
+            ClientEffectInstance c = EFFECTS_TO_ADD.get(i);
+            if (c.getEffect() == effect) {
+                EFFECTS_TO_ADD.remove(i);
+                return i;
+            }
+        }
+        return -1;
+    }
+
     private static void rmbTweakNewSlot(Slot selectedSlot, ItemStack stackOnMouse) {
         assert handler != null;
         if (handler.isIgnored(selectedSlot)) {
@@ -296,18 +308,6 @@ public class ClientEvents {
             return;
         }
         handler.clickSlot(selectedSlot, GLFW.GLFW_MOUSE_BUTTON_2, false);
-    }
-
-    public static void storeFov(float fov) {
-        ClientEvents.fov = fov;
-    }
-
-    public static void storeModelViewMatrix(Matrix4f modelViewMatrix) {
-        MODEL_VIEW_MATRIX.load(modelViewMatrix);
-    }
-
-    public static void storeProjMatrix(Matrix4f projectionMatrix) {
-        PROJ_MATRIX.load(projectionMatrix);
     }
 
     private static boolean updateDynamicLight(Entity entity, boolean items, boolean entities) {
@@ -377,124 +377,6 @@ public class ClientEvents {
             }
             this.dimension = null;
         }
-    }
-
-    private @Nullable Slot findPullSlot(List<Slot> slots, Slot selectedSlot) {
-        int startIndex = 0;
-        int endIndex = slots.size();
-        int direction = 1;
-        ItemStack selectedSlotStack = selectedSlot.getItem();
-        assert this.mc.player != null;
-        boolean findInPlayerInventory = selectedSlot.container != this.mc.player.getInventory();
-        for (int i = startIndex; i != endIndex; i += direction) {
-            Slot slot = slots.get(i);
-            assert handler != null;
-            if (handler.isIgnored(slot)) {
-                continue;
-            }
-            boolean slotInPlayerInventory = slot.container == this.mc.player.getInventory();
-            if (findInPlayerInventory != slotInPlayerInventory) {
-                continue;
-            }
-            ItemStack stack = slot.getItem();
-            if (stack.isEmpty()) {
-                continue;
-            }
-            if (!areStacksCompatible(selectedSlotStack, stack)) {
-                continue;
-            }
-            return slot;
-        }
-        return null;
-    }
-
-    private @Nullable OList<Slot> findPushSlots(List<Slot> slots, Slot selectedSlot, int itemCount, boolean mustDistributeAll) {
-        ItemStack selectedSlotStack = selectedSlot.getItem();
-        assert this.mc.player != null;
-        boolean findInPlayerInventory = selectedSlot.container != this.mc.player.getInventory();
-        OList<Slot> rv = new OArrayList<>();
-        OList<Slot> goodEmptySlots = new OArrayList<>();
-        for (int i = 0; i != slots.size() && itemCount > 0; i++) {
-            Slot slot = slots.get(i);
-            assert handler != null;
-            if (handler.isIgnored(slot)) {
-                continue;
-            }
-            boolean slotInPlayerInventory = slot.container == this.mc.player.getInventory();
-            if (findInPlayerInventory != slotInPlayerInventory) {
-                continue;
-            }
-            if (handler.isCraftingOutput(slot)) {
-                continue;
-            }
-            ItemStack stack = slot.getItem();
-            if (stack.isEmpty()) {
-                if (slot.mayPlace(selectedSlotStack)) {
-                    goodEmptySlots.add(slot);
-                }
-            }
-            else {
-                if (areStacksCompatible(selectedSlotStack, stack) && stack.getCount() < stack.getMaxStackSize()) {
-                    rv.add(slot);
-                    itemCount -= Math.min(itemCount, stack.getMaxStackSize() - stack.getCount());
-                }
-            }
-        }
-        for (int i = 0; i != goodEmptySlots.size() && itemCount > 0; i++) {
-            Slot slot = goodEmptySlots.get(i);
-            rv.add(slot);
-            itemCount -= Math.min(itemCount, slot.getItem().getMaxStackSize() - slot.getItem().getCount());
-        }
-        if (mustDistributeAll && itemCount > 0) {
-            return null;
-        }
-        return rv;
-    }
-
-    private ItemStack getBeltStack() {
-        assert this.mc.player != null;
-        ItemStack beltStack = ItemStack.EMPTY;
-        int priority = Integer.MAX_VALUE;
-        int chosen = -1;
-        for (int i = 0; i < 9; i++) {
-            ItemStack stack = this.mc.player.getInventory().items.get(i);
-            if (stack.getItem() instanceof IBeltWeapon beltWeapon) {
-                int stackPriority = beltWeapon.getPriority();
-                if (priority > stackPriority) {
-                    beltStack = stack;
-                    priority = stackPriority;
-                    chosen = i;
-                    if (priority == 0) {
-                        break;
-                    }
-                }
-            }
-        }
-        if (chosen == this.mc.player.getInventory().selected) {
-            return ItemStack.EMPTY;
-        }
-        return beltStack;
-    }
-
-    private ISet getDesiredShaders() {
-        assert this.mc.player != null;
-        ISet desiredShaders = this.desiredShaders;
-        desiredShaders.clear();
-        if (this.mc.options.getCameraType() == CameraType.FIRST_PERSON) {
-            if (!this.mc.player.isCreative() && !this.mc.player.isSpectator() && this.mc.player.equals(this.mc.getCameraEntity())) {
-                float health = this.mc.player.getHealth();
-                if (health <= 12.5f) {
-                    desiredShaders.add(Shader.DESATURATE_25);
-                }
-                else if (health <= 25) {
-                    desiredShaders.add(Shader.DESATURATE_50);
-                }
-                else if (health <= 50) {
-                    desiredShaders.add(Shader.DESATURATE_75);
-                }
-            }
-        }
-        return desiredShaders;
     }
 
     public @Nullable DimensionOverworld getDimension() {
@@ -1011,7 +893,7 @@ public class ClientEvents {
                     //noinspection MagicConstant
                     @Shader int shader = currentShaders.getIteration(it);
                     if (!desiredShaders.contains(shader)) {
-                        currentShaders.removeIteration(it);
+                        it = currentShaders.removeIteration(it);
                         mc.gameRenderer.shutdownShader(shader);
                     }
                 }
@@ -1192,6 +1074,133 @@ public class ClientEvents {
         this.ticksToLoseConcious = 80;
     }
 
+    public void updateClientTickrate(float tickrate) {
+        if (this.tps == tickrate) {
+            return;
+        }
+        Evolution.info("Updating client tickrate to " + tickrate);
+        this.tps = tickrate;
+        this.mc.timer.msPerTick = 1_000.0f / tickrate;
+    }
+
+    private @Nullable Slot findPullSlot(List<Slot> slots, Slot selectedSlot) {
+        int startIndex = 0;
+        int endIndex = slots.size();
+        int direction = 1;
+        ItemStack selectedSlotStack = selectedSlot.getItem();
+        assert this.mc.player != null;
+        boolean findInPlayerInventory = selectedSlot.container != this.mc.player.getInventory();
+        for (int i = startIndex; i != endIndex; i += direction) {
+            Slot slot = slots.get(i);
+            assert handler != null;
+            if (handler.isIgnored(slot)) {
+                continue;
+            }
+            boolean slotInPlayerInventory = slot.container == this.mc.player.getInventory();
+            if (findInPlayerInventory != slotInPlayerInventory) {
+                continue;
+            }
+            ItemStack stack = slot.getItem();
+            if (stack.isEmpty()) {
+                continue;
+            }
+            if (!areStacksCompatible(selectedSlotStack, stack)) {
+                continue;
+            }
+            return slot;
+        }
+        return null;
+    }
+
+    private @Nullable OList<Slot> findPushSlots(List<Slot> slots, Slot selectedSlot, int itemCount, boolean mustDistributeAll) {
+        ItemStack selectedSlotStack = selectedSlot.getItem();
+        assert this.mc.player != null;
+        boolean findInPlayerInventory = selectedSlot.container != this.mc.player.getInventory();
+        OList<Slot> rv = new OArrayList<>();
+        OList<Slot> goodEmptySlots = new OArrayList<>();
+        for (int i = 0; i != slots.size() && itemCount > 0; i++) {
+            Slot slot = slots.get(i);
+            assert handler != null;
+            if (handler.isIgnored(slot)) {
+                continue;
+            }
+            boolean slotInPlayerInventory = slot.container == this.mc.player.getInventory();
+            if (findInPlayerInventory != slotInPlayerInventory) {
+                continue;
+            }
+            if (handler.isCraftingOutput(slot)) {
+                continue;
+            }
+            ItemStack stack = slot.getItem();
+            if (stack.isEmpty()) {
+                if (slot.mayPlace(selectedSlotStack)) {
+                    goodEmptySlots.add(slot);
+                }
+            }
+            else {
+                if (areStacksCompatible(selectedSlotStack, stack) && stack.getCount() < stack.getMaxStackSize()) {
+                    rv.add(slot);
+                    itemCount -= Math.min(itemCount, stack.getMaxStackSize() - stack.getCount());
+                }
+            }
+        }
+        for (int i = 0; i != goodEmptySlots.size() && itemCount > 0; i++) {
+            Slot slot = goodEmptySlots.get(i);
+            rv.add(slot);
+            itemCount -= Math.min(itemCount, slot.getItem().getMaxStackSize() - slot.getItem().getCount());
+        }
+        if (mustDistributeAll && itemCount > 0) {
+            return null;
+        }
+        return rv;
+    }
+
+    private ItemStack getBeltStack() {
+        assert this.mc.player != null;
+        ItemStack beltStack = ItemStack.EMPTY;
+        int priority = Integer.MAX_VALUE;
+        int chosen = -1;
+        for (int i = 0; i < 9; i++) {
+            ItemStack stack = this.mc.player.getInventory().items.get(i);
+            if (stack.getItem() instanceof IBeltWeapon beltWeapon) {
+                int stackPriority = beltWeapon.getPriority();
+                if (priority > stackPriority) {
+                    beltStack = stack;
+                    priority = stackPriority;
+                    chosen = i;
+                    if (priority == 0) {
+                        break;
+                    }
+                }
+            }
+        }
+        if (chosen == this.mc.player.getInventory().selected) {
+            return ItemStack.EMPTY;
+        }
+        return beltStack;
+    }
+
+    private ISet getDesiredShaders() {
+        assert this.mc.player != null;
+        ISet desiredShaders = this.desiredShaders;
+        desiredShaders.clear();
+        if (this.mc.options.getCameraType() == CameraType.FIRST_PERSON) {
+            if (!this.mc.player.isCreative() && !this.mc.player.isSpectator() && this.mc.player.equals(this.mc.getCameraEntity())) {
+                float health = this.mc.player.getHealth();
+                if (health <= 12.5f) {
+                    desiredShaders.add(Shader.DESATURATE_25);
+                }
+                else if (health <= 25) {
+                    desiredShaders.add(Shader.DESATURATE_50);
+                }
+                else if (health <= 50) {
+                    desiredShaders.add(Shader.DESATURATE_75);
+                }
+            }
+        }
+        return desiredShaders;
+    }
+
     /**
      * @return Whether the main tick method should return prematurely.
      */
@@ -1256,14 +1265,5 @@ public class ClientEvents {
             BELT_ITEMS.put(this.mc.player.getId(), beltStack);
             this.mc.player.connection.send(new PacketCSUpdateBeltBackItem(beltStack, false));
         }
-    }
-
-    public void updateClientTickrate(float tickrate) {
-        if (this.tps == tickrate) {
-            return;
-        }
-        Evolution.info("Updating client tickrate to " + tickrate);
-        this.tps = tickrate;
-        this.mc.timer.msPerTick = 1_000.0f / tickrate;
     }
 }

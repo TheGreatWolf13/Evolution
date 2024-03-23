@@ -118,7 +118,7 @@ public class OHashSet<K> extends ObjectOpenHashSet<K> implements OSet<K> {
     }
 
     @Override
-    public ObjectIterator iterator() {
+    public ObjectIterator<K> iterator() {
         this.deprecatedMethod();
         return super.iterator();
     }
@@ -145,7 +145,7 @@ public class OHashSet<K> extends ObjectOpenHashSet<K> implements OSet<K> {
     }
 
     @Override
-    public void removeIteration(long it) {
+    public long removeIteration(long it) {
         int pos = (int) (it >> 32);
         if (pos == this.n) {
             this.containsNull = false;
@@ -164,9 +164,10 @@ public class OHashSet<K> extends ObjectOpenHashSet<K> implements OSet<K> {
                 throw new ConcurrentModificationException(e);
             }
             this.remove(wrappedEntry);
-            return;
+            return it;
         }
         --this.size;
+        return it;
     }
 
     @Override

@@ -176,9 +176,10 @@ public class SimpleEnumSet<E extends Enum<E>> extends AbstractSet<E> implements 
     }
 
     @Override
-    public void removeIteration(long it) {
+    public long removeIteration(long it) {
         int pos = (int) (it >> 32);
         this.remove(this.values[pos]);
+        return it;
     }
 
     @Override

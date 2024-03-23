@@ -35,6 +35,74 @@ public final class CommandLoadFactor {
     private CommandLoadFactor() {
     }
 
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        dispatcher.register(Commands.literal("loadfactor")
+                                    .requires(cs -> cs.hasPermission(2))
+                                    .then(Commands.literal("clear")
+                                                  .executes(CommandLoadFactor::clear)
+                                    )
+                                    .then(Commands.literal("leave")
+                                                  .requires(cs -> cs.getEntity() instanceof Player)
+                                                  .executes(CommandLoadFactor::leave)
+                                    )
+                                    .then(Commands.literal("join")
+                                                  .requires(cs -> cs.getEntity() instanceof Player)
+                                                  .executes(CommandLoadFactor::join)
+                                    )
+                                    .then(Commands.literal("add")
+                                                  .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                                                .executes(CommandLoadFactor::add)
+                                                  )
+                                    )
+                                    .then(Commands.literal("remove")
+                                                  .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                                                .executes(CommandLoadFactor::remove)
+                                                  )
+                                    )
+        );
+    }
+
+    public static void tick(PlayerList playerList) {
+        if (PLAYERS.isEmpty() || SECTIONS.isEmpty()) {
+            return;
+        }
+        List<ServerPlayer> players = playerList.getPlayers();
+        for (int i = 0, len = players.size(); i < len; ++i) {
+            HELPER_SET.add(players.get(i).getId());
+        }
+        for (long it = PLAYERS.beginIteration(); (it & 0xFFFF_FFFFL) != 0; it = PLAYERS.nextEntry(it)) {
+            int i = PLAYERS.getIteration(it);
+            if (!HELPER_SET.contains(i)) {
+                it = PLAYERS.removeIteration(it);
+            }
+        }
+        HELPER_SET.clear();
+        if (PLAYERS.isEmpty()) {
+            return;
+        }
+        for (L2OMap.Entry<WeakReference<LevelChunkSection>> e = SECTIONS.fastEntries(); e != null; e = SECTIONS.fastEntries()) {
+            long pos = e.key();
+            LevelChunkSection section = e.value().get();
+            if (section == null) {
+                //noinspection ObjectAllocationInLoop
+                sendToPlayers(playerList, new PacketSCLoadFactor(pos));
+                SECTIONS.remove(pos);
+            }
+            else {
+                IntegrityStorage loadFactorStorage = section.getLoadFactorStorage();
+                IntegrityStorage integrityStorage = section.getIntegrityStorage();
+                StabilityStorage stabilityStorage = section.getStabilityStorage();
+                boolean loadChanged = loadFactorStorage.hadChanges();
+                boolean intChanged = integrityStorage.hadChanges();
+                boolean stabChanged = stabilityStorage.hadChanges();
+                if (loadChanged || intChanged || stabChanged) {
+                    //noinspection ObjectAllocationInLoop
+                    sendToPlayers(playerList, new PacketSCLoadFactor(pos, loadFactorStorage, integrityStorage, stabilityStorage));
+                }
+            }
+        }
+    }
+
     private static int add(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         BlockPos pos = BlockPosArgument.getLoadedBlockPos(context, "pos");
         CommandSourceStack source = context.getSource();
@@ -90,33 +158,6 @@ public final class CommandLoadFactor {
         return 0;
     }
 
-    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(Commands.literal("loadfactor")
-                                    .requires(cs -> cs.hasPermission(2))
-                                    .then(Commands.literal("clear")
-                                                  .executes(CommandLoadFactor::clear)
-                                    )
-                                    .then(Commands.literal("leave")
-                                                  .requires(cs -> cs.getEntity() instanceof Player)
-                                                  .executes(CommandLoadFactor::leave)
-                                    )
-                                    .then(Commands.literal("join")
-                                                  .requires(cs -> cs.getEntity() instanceof Player)
-                                                  .executes(CommandLoadFactor::join)
-                                    )
-                                    .then(Commands.literal("add")
-                                                  .then(Commands.argument("pos", BlockPosArgument.blockPos())
-                                                                .executes(CommandLoadFactor::add)
-                                                  )
-                                    )
-                                    .then(Commands.literal("remove")
-                                                  .then(Commands.argument("pos", BlockPosArgument.blockPos())
-                                                                .executes(CommandLoadFactor::remove)
-                                                  )
-                                    )
-        );
-    }
-
     private static int remove(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         long sec = SectionPos.asLong(BlockPosArgument.getLoadedBlockPos(context, "pos"));
         sendToPlayers(context.getSource().getServer().getPlayerList(), new PacketSCLoadFactor(sec));
@@ -130,47 +171,6 @@ public final class CommandLoadFactor {
             ServerPlayer p = players.get(i);
             if (PLAYERS.contains(p.getId())) {
                 p.connection.send(packet);
-            }
-        }
-    }
-
-    public static void tick(PlayerList playerList) {
-        if (PLAYERS.isEmpty() || SECTIONS.isEmpty()) {
-            return;
-        }
-        List<ServerPlayer> players = playerList.getPlayers();
-        for (int i = 0, len = players.size(); i < len; ++i) {
-            HELPER_SET.add(players.get(i).getId());
-        }
-        for (long it = PLAYERS.beginIteration(); (it & 0xFFFF_FFFFL) != 0; it = PLAYERS.nextEntry(it)) {
-            int i = PLAYERS.getIteration(it);
-            if (!HELPER_SET.contains(i)) {
-                PLAYERS.removeIteration(it);
-            }
-        }
-        HELPER_SET.clear();
-        if (PLAYERS.isEmpty()) {
-            return;
-        }
-        for (L2OMap.Entry<WeakReference<LevelChunkSection>> e = SECTIONS.fastEntries(); e != null; e = SECTIONS.fastEntries()) {
-            long pos = e.key();
-            LevelChunkSection section = e.value().get();
-            if (section == null) {
-                //noinspection ObjectAllocationInLoop
-                sendToPlayers(playerList, new PacketSCLoadFactor(pos));
-                SECTIONS.remove(pos);
-            }
-            else {
-                IntegrityStorage loadFactorStorage = section.getLoadFactorStorage();
-                IntegrityStorage integrityStorage = section.getIntegrityStorage();
-                StabilityStorage stabilityStorage = section.getStabilityStorage();
-                boolean loadChanged = loadFactorStorage.hadChanges();
-                boolean intChanged = integrityStorage.hadChanges();
-                boolean stabChanged = stabilityStorage.hadChanges();
-                if (loadChanged || intChanged || stabChanged) {
-                    //noinspection ObjectAllocationInLoop
-                    sendToPlayers(playerList, new PacketSCLoadFactor(pos, loadFactorStorage, integrityStorage, stabilityStorage));
-                }
             }
         }
     }

@@ -40,7 +40,7 @@ public abstract class MixinLayerLightSectionStorage<M extends DataLayerStorageMa
     public void markNewInconsistencies(LayerLightEngine<M, ?> lightEngine, boolean bl, boolean bl2) {
         if (this.hasInconsistencies() || !this.queuedSections.isEmpty()) {
             LSet toRemove = (LSet) this.toRemove;
-            for (long it = toRemove.beginIteration(); (it & 0xFFFF_FFFFL) != 0; it = toRemove.nextEntry(it)) {
+            for (long it = toRemove.beginIteration(); toRemove.hasNextIteration(it); it = toRemove.nextEntry(it)) {
                 long l = toRemove.getIteration(it);
                 this.clearQueuedSectionBlocks(lightEngine, l);
                 if (this.columnsToRetainQueuedDataFor.contains(SectionPos.getZeroNode(l))) {
@@ -57,7 +57,7 @@ public abstract class MixinLayerLightSectionStorage<M extends DataLayerStorageMa
                 }
             }
             this.updatingSectionData.clearCache();
-            for (long it = toRemove.beginIteration(); (it & 0xFFFF_FFFFL) != 0; it = toRemove.nextEntry(it)) {
+            for (long it = toRemove.beginIteration(); toRemove.hasNextIteration(it); it = toRemove.nextEntry(it)) {
                 this.onNodeRemoved(toRemove.getIteration(it));
             }
             toRemove.clear();
@@ -82,7 +82,7 @@ public abstract class MixinLayerLightSectionStorage<M extends DataLayerStorageMa
             }
             else {
                 LSet untrustedSections = (LSet) this.untrustedSections;
-                for (long it = untrustedSections.beginIteration(); (it & 0xFFFF_FFFFL) != 0; it = untrustedSections.nextEntry(it)) {
+                for (long it = untrustedSections.beginIteration(); untrustedSections.hasNextIteration(it); it = untrustedSections.nextEntry(it)) {
                     this.checkEdgesForSection(lightEngine, untrustedSections.getIteration(it));
                 }
             }

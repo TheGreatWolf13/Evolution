@@ -152,7 +152,7 @@ public class LHashSet extends LongOpenHashSet implements LSet {
     }
 
     @Override
-    public void removeIteration(long it) {
+    public long removeIteration(long it) {
         int pos = (int) (it >> 32);
         if (pos == this.n) {
             this.containsNull = false;
@@ -171,9 +171,10 @@ public class LHashSet extends LongOpenHashSet implements LSet {
                 throw new ConcurrentModificationException(e);
             }
             this.remove(wrappedEntry);
-            return;
+            return it;
         }
         --this.size;
+        return it;
     }
 
     @Override
@@ -200,8 +201,8 @@ public class LHashSet extends LongOpenHashSet implements LSet {
             pos = (last = pos) + 1 & this.mask;
             long curr;
             while (true) {
-                if ((curr = key[pos]) == 0) {
-                    key[last] = 0;
+                if ((curr = key[pos]) == 0L) {
+                    key[last] = 0L;
                     return;
                 }
                 int slot = (int) HashCommon.mix(curr) & this.mask;

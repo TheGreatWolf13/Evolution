@@ -152,7 +152,7 @@ public class IHashSet extends IntOpenHashSet implements ISet {
     }
 
     @Override
-    public void removeIteration(long it) {
+    public long removeIteration(long it) {
         int pos = (int) (it >> 32);
         if (pos == this.n) {
             this.containsNull = false;
@@ -171,9 +171,10 @@ public class IHashSet extends IntOpenHashSet implements ISet {
                 throw new ConcurrentModificationException(e);
             }
             this.remove(wrappedEntry);
-            return;
+            return it;
         }
         --this.size;
+        return it;
     }
 
     @Override
