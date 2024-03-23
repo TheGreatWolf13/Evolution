@@ -3,11 +3,10 @@ package tgw.evolution.util.collection.sets;
 import it.unimi.dsi.fastutil.doubles.DoubleSet;
 import it.unimi.dsi.fastutil.doubles.DoubleSets;
 import org.jetbrains.annotations.UnmodifiableView;
-import tgw.evolution.util.collection.ICollectionExtension;
 
 import java.util.NoSuchElementException;
 
-public interface DSet extends DoubleSet, ICollectionExtension {
+public interface DSet extends DoubleSet, SetEv {
 
     static @UnmodifiableView DSet emptySet() {
         return EmptySet.EMPTY;
@@ -27,7 +26,7 @@ public interface DSet extends DoubleSet, ICollectionExtension {
             case 1 -> singleton(ks[0]);
             default -> {
                 DSet set = new DHashSet(ks);
-                set.trimCollection();
+                set.trim();
                 yield set.view();
             }
         };
@@ -48,6 +47,49 @@ public interface DSet extends DoubleSet, ICollectionExtension {
     void removeIteration(long it);
 
     @UnmodifiableView DSet view();
+
+    class EmptySet extends DoubleSets.EmptySet implements DSet {
+
+        protected static final EmptySet EMPTY = new EmptySet();
+
+        protected EmptySet() {
+        }
+
+        @Override
+        public long beginIteration() {
+            return 0;
+        }
+
+        @Override
+        public double getIteration(long it) {
+            throw new NoSuchElementException("Empty set");
+        }
+
+        @Override
+        public double getSampleElement() {
+            throw new NoSuchElementException("Empty set");
+        }
+
+        @Override
+        public long nextEntry(long it) {
+            return 0;
+        }
+
+        @Override
+        public void removeIteration(long it) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean trim() {
+            return false;
+        }
+
+        @Override
+        public @UnmodifiableView DSet view() {
+            return this;
+        }
+    }
 
     class Singleton extends DoubleSets.Singleton implements DSet {
 
@@ -84,49 +126,8 @@ public interface DSet extends DoubleSet, ICollectionExtension {
         }
 
         @Override
-        public void trimCollection() {
-        }
-
-        @Override
-        public @UnmodifiableView DSet view() {
-            return this;
-        }
-    }
-
-    class EmptySet extends DoubleSets.EmptySet implements DSet {
-
-        protected static final EmptySet EMPTY = new EmptySet();
-
-        protected EmptySet() {
-        }
-
-        @Override
-        public long beginIteration() {
-            return 0;
-        }
-
-        @Override
-        public double getIteration(long it) {
-            throw new NoSuchElementException("Empty set");
-        }
-
-        @Override
-        public double getSampleElement() {
-            throw new NoSuchElementException("Empty set");
-        }
-
-        @Override
-        public long nextEntry(long it) {
-            return 0;
-        }
-
-        @Override
-        public void removeIteration(long it) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void trimCollection() {
+        public boolean trim() {
+            return false;
         }
 
         @Override
@@ -170,7 +171,7 @@ public interface DSet extends DoubleSet, ICollectionExtension {
         }
 
         @Override
-        public void trimCollection() {
+        public boolean trim() {
             throw new UnsupportedOperationException();
         }
 

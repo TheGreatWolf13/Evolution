@@ -5,20 +5,11 @@ import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntLists;
 import org.jetbrains.annotations.UnmodifiableView;
-import tgw.evolution.util.collection.ICollectionExtension;
 
-public interface IList extends IntList, ICollectionExtension {
+public interface IList extends IntList, ListEv {
 
     static @UnmodifiableView IList emptyList() {
         return EmptyList.EMPTY_LIST;
-    }
-
-    static @UnmodifiableView IList of() {
-        return emptyList();
-    }
-
-    static @UnmodifiableView IList of(int k) {
-        return singleton(k);
     }
 
     static @UnmodifiableView IList of(int... ks) {
@@ -27,10 +18,18 @@ public interface IList extends IntList, ICollectionExtension {
             case 1 -> singleton(ks[0]);
             default -> {
                 IList list = new IArrayList(ks);
-                list.trimCollection();
+                list.trim();
                 yield list.view();
             }
         };
+    }
+
+    static @UnmodifiableView IList of() {
+        return emptyList();
+    }
+
+    static @UnmodifiableView IList of(int k) {
+        return singleton(k);
     }
 
     static @UnmodifiableView IList singleton(int k) {
@@ -58,6 +57,38 @@ public interface IList extends IntList, ICollectionExtension {
 
     @UnmodifiableView IList view();
 
+    class EmptyList extends IntLists.EmptyList implements IList {
+
+        protected static final EmptyList EMPTY_LIST = new EmptyList();
+
+        protected EmptyList() {
+        }
+
+        @Override
+        public boolean addAll(IntIterable it) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void addMany(int value, int length) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void setMany(int value, int start, int end) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void trim() {
+        }
+
+        @Override
+        public @UnmodifiableView IList view() {
+            return this;
+        }
+    }
+
     class Singleton extends IntLists.Singleton implements IList {
 
         public Singleton(int element) {
@@ -80,7 +111,7 @@ public interface IList extends IntList, ICollectionExtension {
         }
 
         @Override
-        public void trimCollection() {
+        public void trim() {
         }
 
         @Override
@@ -111,39 +142,7 @@ public interface IList extends IntList, ICollectionExtension {
         }
 
         @Override
-        public void trimCollection() {
-        }
-
-        @Override
-        public @UnmodifiableView IList view() {
-            return this;
-        }
-    }
-
-    class EmptyList extends IntLists.EmptyList implements IList {
-
-        protected static final EmptyList EMPTY_LIST = new EmptyList();
-
-        protected EmptyList() {
-        }
-
-        @Override
-        public boolean addAll(IntIterable it) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void addMany(int value, int length) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void setMany(int value, int start, int end) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void trimCollection() {
+        public void trim() {
         }
 
         @Override

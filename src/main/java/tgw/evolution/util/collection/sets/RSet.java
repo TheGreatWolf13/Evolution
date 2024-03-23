@@ -3,11 +3,10 @@ package tgw.evolution.util.collection.sets;
 import it.unimi.dsi.fastutil.objects.ReferenceSet;
 import it.unimi.dsi.fastutil.objects.ReferenceSets;
 import org.jetbrains.annotations.UnmodifiableView;
-import tgw.evolution.util.collection.ICollectionExtension;
 
 import java.util.NoSuchElementException;
 
-public interface RSet<K> extends ReferenceSet<K>, ICollectionExtension {
+public interface RSet<K> extends ReferenceSet<K>, SetEv {
 
     static <K> @UnmodifiableView RSet<K> emptySet() {
         return EmptySet.EMPTY;
@@ -28,7 +27,7 @@ public interface RSet<K> extends ReferenceSet<K>, ICollectionExtension {
             case 1 -> singleton(ks[0]);
             default -> {
                 RSet<K> set = new RHashSet<>(ks);
-                set.trimCollection();
+                set.trim();
                 yield set.view();
             }
         };
@@ -49,6 +48,49 @@ public interface RSet<K> extends ReferenceSet<K>, ICollectionExtension {
     void removeIteration(long it);
 
     @UnmodifiableView RSet<K> view();
+
+    class EmptySet<K> extends ReferenceSets.EmptySet<K> implements RSet<K> {
+
+        protected static final EmptySet EMPTY = new EmptySet();
+
+        protected EmptySet() {
+        }
+
+        @Override
+        public long beginIteration() {
+            return 0;
+        }
+
+        @Override
+        public K getIteration(long it) {
+            throw new NoSuchElementException("Empty set");
+        }
+
+        @Override
+        public K getSampleElement() {
+            throw new NoSuchElementException("Empty set");
+        }
+
+        @Override
+        public long nextEntry(long it) {
+            return 0;
+        }
+
+        @Override
+        public void removeIteration(long it) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean trim() {
+            return false;
+        }
+
+        @Override
+        public @UnmodifiableView RSet<K> view() {
+            return this;
+        }
+    }
 
     class Singleton<K> extends ReferenceSets.Singleton<K> implements RSet<K> {
 
@@ -85,49 +127,8 @@ public interface RSet<K> extends ReferenceSet<K>, ICollectionExtension {
         }
 
         @Override
-        public void trimCollection() {
-        }
-
-        @Override
-        public @UnmodifiableView RSet<K> view() {
-            return this;
-        }
-    }
-
-    class EmptySet<K> extends ReferenceSets.EmptySet<K> implements RSet<K> {
-
-        protected static final EmptySet EMPTY = new EmptySet();
-
-        protected EmptySet() {
-        }
-
-        @Override
-        public long beginIteration() {
-            return 0;
-        }
-
-        @Override
-        public K getIteration(long it) {
-            throw new NoSuchElementException("Empty set");
-        }
-
-        @Override
-        public K getSampleElement() {
-            throw new NoSuchElementException("Empty set");
-        }
-
-        @Override
-        public long nextEntry(long it) {
-            return 0;
-        }
-
-        @Override
-        public void removeIteration(long it) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void trimCollection() {
+        public boolean trim() {
+            return false;
         }
 
         @Override
@@ -171,7 +172,7 @@ public interface RSet<K> extends ReferenceSet<K>, ICollectionExtension {
         }
 
         @Override
-        public void trimCollection() {
+        public boolean trim() {
             throw new UnsupportedOperationException();
         }
 

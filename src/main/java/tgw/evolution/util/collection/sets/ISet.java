@@ -3,11 +3,10 @@ package tgw.evolution.util.collection.sets;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.ints.IntSets;
 import org.jetbrains.annotations.UnmodifiableView;
-import tgw.evolution.util.collection.ICollectionExtension;
 
 import java.util.NoSuchElementException;
 
-public interface ISet extends IntSet, ICollectionExtension {
+public interface ISet extends IntSet, SetEv {
 
     static @UnmodifiableView ISet emptySet() {
         return ISet.EmptySet.EMPTY;
@@ -27,7 +26,7 @@ public interface ISet extends IntSet, ICollectionExtension {
             case 1 -> singleton(ks[0]);
             default -> {
                 ISet set = new IHashSet(ks);
-                set.trimCollection();
+                set.trim();
                 yield set.view();
             }
         };
@@ -48,6 +47,49 @@ public interface ISet extends IntSet, ICollectionExtension {
     void removeIteration(long it);
 
     @UnmodifiableView ISet view();
+
+    class EmptySet extends IntSets.EmptySet implements ISet {
+
+        protected static final EmptySet EMPTY = new EmptySet();
+
+        protected EmptySet() {
+        }
+
+        @Override
+        public long beginIteration() {
+            return 0;
+        }
+
+        @Override
+        public int getIteration(long it) {
+            throw new NoSuchElementException("Empty set");
+        }
+
+        @Override
+        public int getSampleElement() {
+            throw new NoSuchElementException("Empty set");
+        }
+
+        @Override
+        public long nextEntry(long it) {
+            return 0;
+        }
+
+        @Override
+        public void removeIteration(long it) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean trim() {
+            return false;
+        }
+
+        @Override
+        public @UnmodifiableView ISet view() {
+            return this;
+        }
+    }
 
     class Singleton extends IntSets.Singleton implements ISet {
 
@@ -84,49 +126,8 @@ public interface ISet extends IntSet, ICollectionExtension {
         }
 
         @Override
-        public void trimCollection() {
-        }
-
-        @Override
-        public @UnmodifiableView ISet view() {
-            return this;
-        }
-    }
-
-    class EmptySet extends IntSets.EmptySet implements ISet {
-
-        protected static final EmptySet EMPTY = new EmptySet();
-
-        protected EmptySet() {
-        }
-
-        @Override
-        public long beginIteration() {
-            return 0;
-        }
-
-        @Override
-        public int getIteration(long it) {
-            throw new NoSuchElementException("Empty set");
-        }
-
-        @Override
-        public int getSampleElement() {
-            throw new NoSuchElementException("Empty set");
-        }
-
-        @Override
-        public long nextEntry(long it) {
-            return 0;
-        }
-
-        @Override
-        public void removeIteration(long it) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void trimCollection() {
+        public boolean trim() {
+            return false;
         }
 
         @Override
@@ -170,7 +171,7 @@ public interface ISet extends IntSet, ICollectionExtension {
         }
 
         @Override
-        public void trimCollection() {
+        public boolean trim() {
             throw new UnsupportedOperationException();
         }
 

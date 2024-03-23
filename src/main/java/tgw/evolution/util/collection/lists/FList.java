@@ -5,20 +5,11 @@ import it.unimi.dsi.fastutil.floats.FloatIterator;
 import it.unimi.dsi.fastutil.floats.FloatList;
 import it.unimi.dsi.fastutil.floats.FloatLists;
 import org.jetbrains.annotations.UnmodifiableView;
-import tgw.evolution.util.collection.ICollectionExtension;
 
-public interface FList extends FloatList, ICollectionExtension {
+public interface FList extends FloatList, ListEv {
 
     static @UnmodifiableView FList emptyList() {
         return EmptyList.EMPTY_LIST;
-    }
-
-    static @UnmodifiableView FList of() {
-        return emptyList();
-    }
-
-    static @UnmodifiableView FList of(float k) {
-        return singleton(k);
     }
 
     static @UnmodifiableView FList of(float... ks) {
@@ -27,10 +18,18 @@ public interface FList extends FloatList, ICollectionExtension {
             case 1 -> singleton(ks[0]);
             default -> {
                 FList list = new FArrayList(ks);
-                list.trimCollection();
+                list.trim();
                 yield list.view();
             }
         };
+    }
+
+    static @UnmodifiableView FList of() {
+        return emptyList();
+    }
+
+    static @UnmodifiableView FList of(float k) {
+        return singleton(k);
     }
 
     static @UnmodifiableView FList singleton(float k) {
@@ -58,6 +57,38 @@ public interface FList extends FloatList, ICollectionExtension {
 
     @UnmodifiableView FList view();
 
+    class EmptyList extends FloatLists.EmptyList implements FList {
+
+        protected static final EmptyList EMPTY_LIST = new EmptyList();
+
+        protected EmptyList() {
+        }
+
+        @Override
+        public boolean addAll(FloatIterable it) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void addMany(float value, int length) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void setMany(float value, int start, int end) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void trim() {
+        }
+
+        @Override
+        public @UnmodifiableView FList view() {
+            return this;
+        }
+    }
+
     class Singleton extends FloatLists.Singleton implements FList {
 
         public Singleton(float element) {
@@ -80,7 +111,7 @@ public interface FList extends FloatList, ICollectionExtension {
         }
 
         @Override
-        public void trimCollection() {
+        public void trim() {
         }
 
         @Override
@@ -111,39 +142,7 @@ public interface FList extends FloatList, ICollectionExtension {
         }
 
         @Override
-        public void trimCollection() {
-        }
-
-        @Override
-        public @UnmodifiableView FList view() {
-            return this;
-        }
-    }
-
-    class EmptyList extends FloatLists.EmptyList implements FList {
-
-        protected static final EmptyList EMPTY_LIST = new EmptyList();
-
-        protected EmptyList() {
-        }
-
-        @Override
-        public boolean addAll(FloatIterable it) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void addMany(float value, int length) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void setMany(float value, int start, int end) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void trimCollection() {
+        public void trim() {
         }
 
         @Override

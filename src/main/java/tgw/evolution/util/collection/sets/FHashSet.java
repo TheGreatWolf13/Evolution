@@ -124,37 +124,9 @@ public class FHashSet extends FloatOpenHashSet implements FSet {
         throw new IllegalStateException("Should never reach here");
     }
 
-    protected void iterationShiftKeys(int pos) {
-        // Shift entries with the same hash.
-        final float[] key = this.key;
-        while (true) {
-            int last;
-            pos = (last = pos) + 1 & this.mask;
-            float curr;
-            while (true) {
-                if (Float.floatToIntBits(curr = key[pos]) == 0) {
-                    key[last] = 0.0f;
-                    return;
-                }
-                int slot = HashCommon.mix(HashCommon.float2int(curr)) & this.mask;
-                if (last <= pos ? last >= slot || slot > pos : last >= slot && slot > pos) {
-                    break;
-                }
-                pos = pos + 1 & this.mask;
-            }
-            if (pos < last) {
-                if (this.wrappedEntries == null) {
-                    this.wrappedEntries = new FArrayList(2);
-                }
-                this.wrappedEntries.add(key[pos]);
-            }
-            key[last] = curr;
-        }
-    }
-
     @Override
     public FloatIterator iterator() {
-        this.deprecatedSetMethod();
+        this.deprecatedMethod();
         return super.iterator();
     }
 
@@ -205,11 +177,11 @@ public class FHashSet extends FloatOpenHashSet implements FSet {
     }
 
     @Override
-    public void trimCollection() {
-        this.trim();
+    public boolean trim() {
         if (this.wrappedEntries != null) {
             this.wrappedEntries.trim();
         }
+        return super.trim();
     }
 
     @Override
@@ -218,5 +190,33 @@ public class FHashSet extends FloatOpenHashSet implements FSet {
             this.view = new View(this);
         }
         return this.view;
+    }
+
+    protected void iterationShiftKeys(int pos) {
+        // Shift entries with the same hash.
+        final float[] key = this.key;
+        while (true) {
+            int last;
+            pos = (last = pos) + 1 & this.mask;
+            float curr;
+            while (true) {
+                if (Float.floatToIntBits(curr = key[pos]) == 0) {
+                    key[last] = 0.0f;
+                    return;
+                }
+                int slot = HashCommon.mix(HashCommon.float2int(curr)) & this.mask;
+                if (last <= pos ? last >= slot || slot > pos : last >= slot && slot > pos) {
+                    break;
+                }
+                pos = pos + 1 & this.mask;
+            }
+            if (pos < last) {
+                if (this.wrappedEntries == null) {
+                    this.wrappedEntries = new FArrayList(2);
+                }
+                this.wrappedEntries.add(key[pos]);
+            }
+            key[last] = curr;
+        }
     }
 }

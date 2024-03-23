@@ -76,7 +76,7 @@ public class FArrayList extends FloatArrayList implements FList {
 
     @Override
     public FloatListIterator listIterator() {
-        this.deprecatedListMethod();
+        this.deprecatedMethod();
         return super.listIterator();
     }
 
@@ -86,11 +86,6 @@ public class FArrayList extends FloatArrayList implements FList {
             return;
         }
         Arrays.fill(this.a, start, end, value);
-    }
-
-    @Override
-    public void trimCollection() {
-        this.trim();
     }
 
     @Override

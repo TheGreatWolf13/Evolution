@@ -50,7 +50,7 @@ public class OArrayList<K> extends ObjectArrayList<K> implements OList<K> {
 
     @Override
     public ObjectListIterator<K> listIterator() {
-        this.deprecatedListMethod();
+        this.deprecatedMethod();
         return super.listIterator();
     }
 
@@ -60,11 +60,6 @@ public class OArrayList<K> extends ObjectArrayList<K> implements OList<K> {
             return;
         }
         Arrays.fill(this.a, start, end, value);
-    }
-
-    @Override
-    public void trimCollection() {
-        this.trim();
     }
 
     @Override

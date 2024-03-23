@@ -124,37 +124,9 @@ public class BHashSet extends ByteOpenHashSet implements BSet {
         throw new IllegalStateException("Should never reach here");
     }
 
-    protected void iterationShiftKeys(int pos) {
-        // Shift entries with the same hash.
-        final byte[] key = this.key;
-        while (true) {
-            int last;
-            pos = (last = pos) + 1 & this.mask;
-            byte curr;
-            while (true) {
-                if ((curr = key[pos]) == 0) {
-                    key[last] = 0;
-                    return;
-                }
-                int slot = HashCommon.mix(curr) & this.mask;
-                if (last <= pos ? last >= slot || slot > pos : last >= slot && slot > pos) {
-                    break;
-                }
-                pos = pos + 1 & this.mask;
-            }
-            if (pos < last) {
-                if (this.wrappedEntries == null) {
-                    this.wrappedEntries = new BArrayList(2);
-                }
-                this.wrappedEntries.add(key[pos]);
-            }
-            key[last] = curr;
-        }
-    }
-
     @Override
     public ByteIterator iterator() {
-        this.deprecatedSetMethod();
+        this.deprecatedMethod();
         return super.iterator();
     }
 
@@ -205,11 +177,11 @@ public class BHashSet extends ByteOpenHashSet implements BSet {
     }
 
     @Override
-    public void trimCollection() {
-        this.trim();
+    public boolean trim() {
         if (this.wrappedEntries != null) {
             this.wrappedEntries.trim();
         }
+        return super.trim();
     }
 
     @Override
@@ -218,5 +190,33 @@ public class BHashSet extends ByteOpenHashSet implements BSet {
             this.view = new View(this);
         }
         return this.view;
+    }
+
+    protected void iterationShiftKeys(int pos) {
+        // Shift entries with the same hash.
+        final byte[] key = this.key;
+        while (true) {
+            int last;
+            pos = (last = pos) + 1 & this.mask;
+            byte curr;
+            while (true) {
+                if ((curr = key[pos]) == 0) {
+                    key[last] = 0;
+                    return;
+                }
+                int slot = HashCommon.mix(curr) & this.mask;
+                if (last <= pos ? last >= slot || slot > pos : last >= slot && slot > pos) {
+                    break;
+                }
+                pos = pos + 1 & this.mask;
+            }
+            if (pos < last) {
+                if (this.wrappedEntries == null) {
+                    this.wrappedEntries = new BArrayList(2);
+                }
+                this.wrappedEntries.add(key[pos]);
+            }
+            key[last] = curr;
+        }
     }
 }

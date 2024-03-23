@@ -3,11 +3,10 @@ package tgw.evolution.util.collection.sets;
 import it.unimi.dsi.fastutil.shorts.ShortSet;
 import it.unimi.dsi.fastutil.shorts.ShortSets;
 import org.jetbrains.annotations.UnmodifiableView;
-import tgw.evolution.util.collection.ICollectionExtension;
 
 import java.util.NoSuchElementException;
 
-public interface SSet extends ShortSet, ICollectionExtension {
+public interface SSet extends ShortSet, SetEv {
 
     static @UnmodifiableView SSet emptySet() {
         return EmptySet.EMPTY;
@@ -27,7 +26,7 @@ public interface SSet extends ShortSet, ICollectionExtension {
             case 1 -> singleton(ks[0]);
             default -> {
                 SSet set = new SHashSet(ks);
-                set.trimCollection();
+                set.trim();
                 yield set.view();
             }
         };
@@ -48,6 +47,49 @@ public interface SSet extends ShortSet, ICollectionExtension {
     void removeIteration(long it);
 
     @UnmodifiableView SSet view();
+
+    class EmptySet extends ShortSets.EmptySet implements SSet {
+
+        protected static final EmptySet EMPTY = new EmptySet();
+
+        protected EmptySet() {
+        }
+
+        @Override
+        public long beginIteration() {
+            return 0;
+        }
+
+        @Override
+        public short getIteration(long it) {
+            throw new NoSuchElementException("Empty set");
+        }
+
+        @Override
+        public short getSampleElement() {
+            throw new NoSuchElementException("Empty set");
+        }
+
+        @Override
+        public long nextEntry(long it) {
+            return 0;
+        }
+
+        @Override
+        public void removeIteration(long it) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean trim() {
+            return false;
+        }
+
+        @Override
+        public @UnmodifiableView SSet view() {
+            return this;
+        }
+    }
 
     class Singleton extends ShortSets.Singleton implements SSet {
 
@@ -84,49 +126,8 @@ public interface SSet extends ShortSet, ICollectionExtension {
         }
 
         @Override
-        public void trimCollection() {
-        }
-
-        @Override
-        public @UnmodifiableView SSet view() {
-            return this;
-        }
-    }
-
-    class EmptySet extends ShortSets.EmptySet implements SSet {
-
-        protected static final EmptySet EMPTY = new EmptySet();
-
-        protected EmptySet() {
-        }
-
-        @Override
-        public long beginIteration() {
-            return 0;
-        }
-
-        @Override
-        public short getIteration(long it) {
-            throw new NoSuchElementException("Empty set");
-        }
-
-        @Override
-        public short getSampleElement() {
-            throw new NoSuchElementException("Empty set");
-        }
-
-        @Override
-        public long nextEntry(long it) {
-            return 0;
-        }
-
-        @Override
-        public void removeIteration(long it) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void trimCollection() {
+        public boolean trim() {
+            return false;
         }
 
         @Override
@@ -170,7 +171,7 @@ public interface SSet extends ShortSet, ICollectionExtension {
         }
 
         @Override
-        public void trimCollection() {
+        public boolean trim() {
             throw new UnsupportedOperationException();
         }
 

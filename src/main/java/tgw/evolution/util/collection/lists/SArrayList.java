@@ -76,7 +76,7 @@ public class SArrayList extends ShortArrayList implements SList {
 
     @Override
     public ShortListIterator listIterator() {
-        this.deprecatedListMethod();
+        this.deprecatedMethod();
         return super.listIterator();
     }
 
@@ -86,11 +86,6 @@ public class SArrayList extends ShortArrayList implements SList {
             return;
         }
         Arrays.fill(this.a, start, end, value);
-    }
-
-    @Override
-    public void trimCollection() {
-        this.trim();
     }
 
     @Override

@@ -76,7 +76,7 @@ public class BArrayList extends ByteArrayList implements BList {
 
     @Override
     public ByteListIterator listIterator() {
-        this.deprecatedListMethod();
+        this.deprecatedMethod();
         return super.listIterator();
     }
 
@@ -86,11 +86,6 @@ public class BArrayList extends ByteArrayList implements BList {
             return;
         }
         Arrays.fill(this.a, start, end, value);
-    }
-
-    @Override
-    public void trimCollection() {
-        this.trim();
     }
 
     @Override

@@ -3,11 +3,10 @@ package tgw.evolution.util.collection.sets;
 import it.unimi.dsi.fastutil.floats.FloatSet;
 import it.unimi.dsi.fastutil.floats.FloatSets;
 import org.jetbrains.annotations.UnmodifiableView;
-import tgw.evolution.util.collection.ICollectionExtension;
 
 import java.util.NoSuchElementException;
 
-public interface FSet extends FloatSet, ICollectionExtension {
+public interface FSet extends FloatSet, SetEv {
 
     static @UnmodifiableView FSet emptySet() {
         return EmptySet.EMPTY;
@@ -27,7 +26,7 @@ public interface FSet extends FloatSet, ICollectionExtension {
             case 1 -> singleton(ks[0]);
             default -> {
                 FSet set = new FHashSet(ks);
-                set.trimCollection();
+                set.trim();
                 yield set.view();
             }
         };
@@ -48,6 +47,49 @@ public interface FSet extends FloatSet, ICollectionExtension {
     void removeIteration(long it);
 
     @UnmodifiableView FSet view();
+
+    class EmptySet extends FloatSets.EmptySet implements FSet {
+
+        protected static final EmptySet EMPTY = new EmptySet();
+
+        protected EmptySet() {
+        }
+
+        @Override
+        public long beginIteration() {
+            return 0;
+        }
+
+        @Override
+        public float getIteration(long it) {
+            throw new NoSuchElementException("Empty set");
+        }
+
+        @Override
+        public float getSampleElement() {
+            throw new NoSuchElementException("Empty set");
+        }
+
+        @Override
+        public long nextEntry(long it) {
+            return 0;
+        }
+
+        @Override
+        public void removeIteration(long it) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean trim() {
+            return false;
+        }
+
+        @Override
+        public @UnmodifiableView FSet view() {
+            return this;
+        }
+    }
 
     class Singleton extends FloatSets.Singleton implements FSet {
 
@@ -84,49 +126,8 @@ public interface FSet extends FloatSet, ICollectionExtension {
         }
 
         @Override
-        public void trimCollection() {
-        }
-
-        @Override
-        public @UnmodifiableView FSet view() {
-            return this;
-        }
-    }
-
-    class EmptySet extends FloatSets.EmptySet implements FSet {
-
-        protected static final EmptySet EMPTY = new EmptySet();
-
-        protected EmptySet() {
-        }
-
-        @Override
-        public long beginIteration() {
-            return 0;
-        }
-
-        @Override
-        public float getIteration(long it) {
-            throw new NoSuchElementException("Empty set");
-        }
-
-        @Override
-        public float getSampleElement() {
-            throw new NoSuchElementException("Empty set");
-        }
-
-        @Override
-        public long nextEntry(long it) {
-            return 0;
-        }
-
-        @Override
-        public void removeIteration(long it) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void trimCollection() {
+        public boolean trim() {
+            return false;
         }
 
         @Override
@@ -170,7 +171,7 @@ public interface FSet extends FloatSet, ICollectionExtension {
         }
 
         @Override
-        public void trimCollection() {
+        public boolean trim() {
             throw new UnsupportedOperationException();
         }
 

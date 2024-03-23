@@ -78,7 +78,7 @@ public class IArrayList extends IntArrayList implements IList {
 
     @Override
     public IntListIterator listIterator() {
-        this.deprecatedListMethod();
+        this.deprecatedMethod();
         return super.listIterator();
     }
 
@@ -88,11 +88,6 @@ public class IArrayList extends IntArrayList implements IList {
             return;
         }
         Arrays.fill(this.a, start, end, value);
-    }
-
-    @Override
-    public void trimCollection() {
-        this.trim();
     }
 
     @Override

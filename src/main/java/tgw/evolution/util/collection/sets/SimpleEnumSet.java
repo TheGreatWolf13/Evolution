@@ -12,9 +12,9 @@ import java.util.NoSuchElementException;
 public class SimpleEnumSet<E extends Enum<E>> extends AbstractSet<E> implements RSet<E> {
 
     protected final Class<E> clazz;
-    protected final E[] values;
     protected long data;
     protected int lastPos = -1;
+    protected final E[] values;
     protected @Nullable View<E> view;
 
     public SimpleEnumSet(Class<E> clazz, E[] values) {
@@ -129,7 +129,7 @@ public class SimpleEnumSet<E extends Enum<E>> extends AbstractSet<E> implements 
 
     @Override
     public ObjectIterator<E> iterator() {
-        this.deprecatedSetMethod();
+        this.deprecatedMethod();
         return new EnumIterator();
     }
 
@@ -203,8 +203,8 @@ public class SimpleEnumSet<E extends Enum<E>> extends AbstractSet<E> implements 
     }
 
     @Override
-    public void trimCollection() {
-        //Nothing to do
+    public boolean trim() {
+        return false;
     }
 
     @Override

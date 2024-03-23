@@ -76,7 +76,7 @@ public class LArrayList extends LongArrayList implements LList {
 
     @Override
     public LongListIterator listIterator() {
-        this.deprecatedListMethod();
+        this.deprecatedMethod();
         return super.listIterator();
     }
 
@@ -86,11 +86,6 @@ public class LArrayList extends LongArrayList implements LList {
             return;
         }
         Arrays.fill(this.a, start, end, value);
-    }
-
-    @Override
-    public void trimCollection() {
-        this.trim();
     }
 
     @Override

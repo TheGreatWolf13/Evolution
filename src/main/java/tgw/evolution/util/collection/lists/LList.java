@@ -5,20 +5,11 @@ import it.unimi.dsi.fastutil.longs.LongIterator;
 import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.longs.LongLists;
 import org.jetbrains.annotations.UnmodifiableView;
-import tgw.evolution.util.collection.ICollectionExtension;
 
-public interface LList extends LongList, ICollectionExtension {
+public interface LList extends LongList, ListEv {
 
     static @UnmodifiableView LList emptyList() {
         return EmptyList.EMPTY_LIST;
-    }
-
-    static @UnmodifiableView LList of() {
-        return emptyList();
-    }
-
-    static @UnmodifiableView LList of(long k) {
-        return singleton(k);
     }
 
     static @UnmodifiableView LList of(long... ks) {
@@ -27,10 +18,18 @@ public interface LList extends LongList, ICollectionExtension {
             case 1 -> singleton(ks[0]);
             default -> {
                 LList list = new LArrayList(ks);
-                list.trimCollection();
+                list.trim();
                 yield list.view();
             }
         };
+    }
+
+    static @UnmodifiableView LList of() {
+        return emptyList();
+    }
+
+    static @UnmodifiableView LList of(long k) {
+        return singleton(k);
     }
 
     static @UnmodifiableView LList singleton(long k) {
@@ -58,6 +57,38 @@ public interface LList extends LongList, ICollectionExtension {
 
     @UnmodifiableView LList view();
 
+    class EmptyList extends LongLists.EmptyList implements LList {
+
+        protected static final EmptyList EMPTY_LIST = new EmptyList();
+
+        protected EmptyList() {
+        }
+
+        @Override
+        public boolean addAll(LongIterable it) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void addMany(long value, int length) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void setMany(long value, int start, int end) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void trim() {
+        }
+
+        @Override
+        public @UnmodifiableView LList view() {
+            return this;
+        }
+    }
+
     class Singleton extends LongLists.Singleton implements LList {
 
         public Singleton(long element) {
@@ -80,7 +111,7 @@ public interface LList extends LongList, ICollectionExtension {
         }
 
         @Override
-        public void trimCollection() {
+        public void trim() {
         }
 
         @Override
@@ -111,39 +142,7 @@ public interface LList extends LongList, ICollectionExtension {
         }
 
         @Override
-        public void trimCollection() {
-        }
-
-        @Override
-        public @UnmodifiableView LList view() {
-            return this;
-        }
-    }
-
-    class EmptyList extends LongLists.EmptyList implements LList {
-
-        protected static final EmptyList EMPTY_LIST = new EmptyList();
-
-        protected EmptyList() {
-        }
-
-        @Override
-        public boolean addAll(LongIterable it) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void addMany(long value, int length) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void setMany(long value, int start, int end) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void trimCollection() {
+        public void trim() {
         }
 
         @Override

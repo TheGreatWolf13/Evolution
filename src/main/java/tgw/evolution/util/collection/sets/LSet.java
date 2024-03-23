@@ -3,11 +3,10 @@ package tgw.evolution.util.collection.sets;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import it.unimi.dsi.fastutil.longs.LongSets;
 import org.jetbrains.annotations.UnmodifiableView;
-import tgw.evolution.util.collection.ICollectionExtension;
 
 import java.util.NoSuchElementException;
 
-public interface LSet extends LongSet, ICollectionExtension {
+public interface LSet extends LongSet, SetEv {
 
     static @UnmodifiableView LSet emptySet() {
         return EmptySet.EMPTY;
@@ -27,7 +26,7 @@ public interface LSet extends LongSet, ICollectionExtension {
             case 1 -> singleton(ks[0]);
             default -> {
                 LSet set = new LHashSet(ks);
-                set.trimCollection();
+                set.trim();
                 yield set.view();
             }
         };
@@ -48,6 +47,49 @@ public interface LSet extends LongSet, ICollectionExtension {
     void removeIteration(long it);
 
     @UnmodifiableView LSet view();
+
+    class EmptySet extends LongSets.EmptySet implements LSet {
+
+        protected static final EmptySet EMPTY = new EmptySet();
+
+        protected EmptySet() {
+        }
+
+        @Override
+        public long beginIteration() {
+            return 0;
+        }
+
+        @Override
+        public long getIteration(long it) {
+            throw new NoSuchElementException("Empty set");
+        }
+
+        @Override
+        public long getSampleElement() {
+            throw new NoSuchElementException("Empty set");
+        }
+
+        @Override
+        public long nextEntry(long it) {
+            return 0;
+        }
+
+        @Override
+        public void removeIteration(long it) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean trim() {
+            return false;
+        }
+
+        @Override
+        public @UnmodifiableView LSet view() {
+            return this;
+        }
+    }
 
     class Singleton extends LongSets.Singleton implements LSet {
 
@@ -84,49 +126,8 @@ public interface LSet extends LongSet, ICollectionExtension {
         }
 
         @Override
-        public void trimCollection() {
-        }
-
-        @Override
-        public @UnmodifiableView LSet view() {
-            return this;
-        }
-    }
-
-    class EmptySet extends LongSets.EmptySet implements LSet {
-
-        protected static final EmptySet EMPTY = new EmptySet();
-
-        protected EmptySet() {
-        }
-
-        @Override
-        public long beginIteration() {
-            return 0;
-        }
-
-        @Override
-        public long getIteration(long it) {
-            throw new NoSuchElementException("Empty set");
-        }
-
-        @Override
-        public long getSampleElement() {
-            throw new NoSuchElementException("Empty set");
-        }
-
-        @Override
-        public long nextEntry(long it) {
-            return 0;
-        }
-
-        @Override
-        public void removeIteration(long it) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void trimCollection() {
+        public boolean trim() {
+            return false;
         }
 
         @Override
@@ -170,7 +171,7 @@ public interface LSet extends LongSet, ICollectionExtension {
         }
 
         @Override
-        public void trimCollection() {
+        public boolean trim() {
             throw new UnsupportedOperationException();
         }
 

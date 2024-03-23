@@ -4,9 +4,8 @@ import it.unimi.dsi.fastutil.objects.ObjectIterable;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
 import org.jetbrains.annotations.UnmodifiableView;
-import tgw.evolution.util.collection.ICollectionExtension;
 
-public interface OList<K> extends ObjectList<K>, ICollectionExtension {
+public interface OList<K> extends ObjectList<K>, ListEv {
 
     static <K> @UnmodifiableView OList<K> emptyList() {
         return EmptyList.EMPTY_LIST;
@@ -27,7 +26,7 @@ public interface OList<K> extends ObjectList<K>, ICollectionExtension {
             case 1 -> singleton(ks[0]);
             default -> {
                 OList<K> list = new OArrayList<>(ks);
-                list.trimCollection();
+                list.trim();
                 yield list.view();
             }
         };
@@ -65,58 +64,6 @@ public interface OList<K> extends ObjectList<K>, ICollectionExtension {
 
     @UnmodifiableView OList<K> view();
 
-    class Singleton<K> extends ObjectLists.Singleton<K> implements OList<K> {
-
-        public Singleton(K element) {
-            super(element);
-        }
-
-        @Override
-        public void addMany(K value, int length) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void setMany(K value, int start, int end) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void trimCollection() {
-        }
-
-        @Override
-        public @UnmodifiableView OList<K> view() {
-            return this;
-        }
-    }
-
-    class View<K> extends ObjectLists.UnmodifiableList<K> implements OList<K> {
-
-        protected View(OList<K> l) {
-            super(l);
-        }
-
-        @Override
-        public void addMany(K value, int length) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void setMany(K value, int start, int end) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void trimCollection() {
-        }
-
-        @Override
-        public @UnmodifiableView OList<K> view() {
-            return this;
-        }
-    }
-
     class EmptyList<K> extends ObjectLists.EmptyList<K> implements OList<K> {
 
         protected static final EmptyList EMPTY_LIST = new EmptyList();
@@ -145,7 +92,59 @@ public interface OList<K> extends ObjectList<K>, ICollectionExtension {
         }
 
         @Override
-        public void trimCollection() {
+        public void trim() {
+        }
+
+        @Override
+        public @UnmodifiableView OList<K> view() {
+            return this;
+        }
+    }
+
+    class Singleton<K> extends ObjectLists.Singleton<K> implements OList<K> {
+
+        public Singleton(K element) {
+            super(element);
+        }
+
+        @Override
+        public void addMany(K value, int length) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void setMany(K value, int start, int end) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void trim() {
+        }
+
+        @Override
+        public @UnmodifiableView OList<K> view() {
+            return this;
+        }
+    }
+
+    class View<K> extends ObjectLists.UnmodifiableList<K> implements OList<K> {
+
+        protected View(OList<K> l) {
+            super(l);
+        }
+
+        @Override
+        public void addMany(K value, int length) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void setMany(K value, int start, int end) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void trim() {
         }
 
         @Override

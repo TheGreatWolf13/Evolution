@@ -5,20 +5,11 @@ import it.unimi.dsi.fastutil.shorts.ShortIterator;
 import it.unimi.dsi.fastutil.shorts.ShortList;
 import it.unimi.dsi.fastutil.shorts.ShortLists;
 import org.jetbrains.annotations.UnmodifiableView;
-import tgw.evolution.util.collection.ICollectionExtension;
 
-public interface SList extends ShortList, ICollectionExtension {
+public interface SList extends ShortList, ListEv {
 
     static @UnmodifiableView SList emptyList() {
         return EmptyList.EMPTY_LIST;
-    }
-
-    static @UnmodifiableView SList of() {
-        return emptyList();
-    }
-
-    static @UnmodifiableView SList of(short k) {
-        return singleton(k);
     }
 
     static @UnmodifiableView SList of(short... ks) {
@@ -27,10 +18,18 @@ public interface SList extends ShortList, ICollectionExtension {
             case 1 -> singleton(ks[0]);
             default -> {
                 SList list = new SArrayList(ks);
-                list.trimCollection();
+                list.trim();
                 yield list.view();
             }
         };
+    }
+
+    static @UnmodifiableView SList of() {
+        return emptyList();
+    }
+
+    static @UnmodifiableView SList of(short k) {
+        return singleton(k);
     }
 
     static @UnmodifiableView SList singleton(short k) {
@@ -58,6 +57,38 @@ public interface SList extends ShortList, ICollectionExtension {
 
     @UnmodifiableView SList view();
 
+    class EmptyList extends ShortLists.EmptyList implements SList {
+
+        protected static final EmptyList EMPTY_LIST = new EmptyList();
+
+        protected EmptyList() {
+        }
+
+        @Override
+        public boolean addAll(ShortIterable it) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void addMany(short value, int length) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void setMany(short value, int start, int end) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void trim() {
+        }
+
+        @Override
+        public @UnmodifiableView SList view() {
+            return this;
+        }
+    }
+
     class Singleton extends ShortLists.Singleton implements SList {
 
         public Singleton(short element) {
@@ -80,7 +111,7 @@ public interface SList extends ShortList, ICollectionExtension {
         }
 
         @Override
-        public void trimCollection() {
+        public void trim() {
         }
 
         @Override
@@ -111,39 +142,7 @@ public interface SList extends ShortList, ICollectionExtension {
         }
 
         @Override
-        public void trimCollection() {
-        }
-
-        @Override
-        public @UnmodifiableView SList view() {
-            return this;
-        }
-    }
-
-    class EmptyList extends ShortLists.EmptyList implements SList {
-
-        protected static final EmptyList EMPTY_LIST = new EmptyList();
-
-        protected EmptyList() {
-        }
-
-        @Override
-        public boolean addAll(ShortIterable it) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void addMany(short value, int length) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void setMany(short value, int start, int end) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void trimCollection() {
+        public void trim() {
         }
 
         @Override

@@ -5,20 +5,11 @@ import it.unimi.dsi.fastutil.bytes.ByteIterator;
 import it.unimi.dsi.fastutil.bytes.ByteList;
 import it.unimi.dsi.fastutil.bytes.ByteLists;
 import org.jetbrains.annotations.UnmodifiableView;
-import tgw.evolution.util.collection.ICollectionExtension;
 
-public interface BList extends ByteList, ICollectionExtension {
+public interface BList extends ByteList, ListEv {
 
     static @UnmodifiableView BList emptyList() {
         return EmptyList.EMPTY_LIST;
-    }
-
-    static @UnmodifiableView BList of() {
-        return emptyList();
-    }
-
-    static @UnmodifiableView BList of(byte k) {
-        return singleton(k);
     }
 
     static @UnmodifiableView BList of(byte... ks) {
@@ -27,10 +18,18 @@ public interface BList extends ByteList, ICollectionExtension {
             case 1 -> singleton(ks[0]);
             default -> {
                 BList list = new BArrayList(ks);
-                list.trimCollection();
+                list.trim();
                 yield list.view();
             }
         };
+    }
+
+    static @UnmodifiableView BList of() {
+        return emptyList();
+    }
+
+    static @UnmodifiableView BList of(byte k) {
+        return singleton(k);
     }
 
     static @UnmodifiableView BList singleton(byte k) {
@@ -58,6 +57,38 @@ public interface BList extends ByteList, ICollectionExtension {
 
     @UnmodifiableView BList view();
 
+    class EmptyList extends ByteLists.EmptyList implements BList {
+
+        protected static final EmptyList EMPTY_LIST = new EmptyList();
+
+        protected EmptyList() {
+        }
+
+        @Override
+        public boolean addAll(ByteIterable it) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void addMany(byte value, int length) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void setMany(byte value, int start, int end) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void trim() {
+        }
+
+        @Override
+        public @UnmodifiableView BList view() {
+            return this;
+        }
+    }
+
     class Singleton extends ByteLists.Singleton implements BList {
 
         public Singleton(byte element) {
@@ -80,7 +111,7 @@ public interface BList extends ByteList, ICollectionExtension {
         }
 
         @Override
-        public void trimCollection() {
+        public void trim() {
         }
 
         @Override
@@ -111,39 +142,7 @@ public interface BList extends ByteList, ICollectionExtension {
         }
 
         @Override
-        public void trimCollection() {
-        }
-
-        @Override
-        public @UnmodifiableView BList view() {
-            return this;
-        }
-    }
-
-    class EmptyList extends ByteLists.EmptyList implements BList {
-
-        protected static final EmptyList EMPTY_LIST = new EmptyList();
-
-        protected EmptyList() {
-        }
-
-        @Override
-        public boolean addAll(ByteIterable it) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void addMany(byte value, int length) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void setMany(byte value, int start, int end) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void trimCollection() {
+        public void trim() {
         }
 
         @Override

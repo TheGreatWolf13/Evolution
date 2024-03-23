@@ -3,11 +3,10 @@ package tgw.evolution.util.collection.sets;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import it.unimi.dsi.fastutil.objects.ObjectSets;
 import org.jetbrains.annotations.UnmodifiableView;
-import tgw.evolution.util.collection.ICollectionExtension;
 
 import java.util.NoSuchElementException;
 
-public interface OSet<K> extends ObjectSet<K>, ICollectionExtension {
+public interface OSet<K> extends ObjectSet<K>, SetEv {
 
     static <K> @UnmodifiableView OSet<K> emptySet() {
         return EmptySet.EMPTY;
@@ -28,7 +27,7 @@ public interface OSet<K> extends ObjectSet<K>, ICollectionExtension {
             case 1 -> singleton(ks[0]);
             default -> {
                 OSet<K> set = new OHashSet<>(ks);
-                set.trimCollection();
+                set.trim();
                 yield set.view();
             }
         };
@@ -49,6 +48,49 @@ public interface OSet<K> extends ObjectSet<K>, ICollectionExtension {
     void removeIteration(long it);
 
     @UnmodifiableView OSet<K> view();
+
+    class EmptySet<K> extends ObjectSets.EmptySet<K> implements OSet<K> {
+
+        protected static final EmptySet EMPTY = new EmptySet();
+
+        protected EmptySet() {
+        }
+
+        @Override
+        public long beginIteration() {
+            return 0;
+        }
+
+        @Override
+        public K getIteration(long it) {
+            throw new NoSuchElementException("Empty set");
+        }
+
+        @Override
+        public K getSampleElement() {
+            throw new NoSuchElementException("Empty set");
+        }
+
+        @Override
+        public long nextEntry(long it) {
+            return 0;
+        }
+
+        @Override
+        public void removeIteration(long it) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean trim() {
+            return false;
+        }
+
+        @Override
+        public @UnmodifiableView OSet<K> view() {
+            return this;
+        }
+    }
 
     class Singleton<K> extends ObjectSets.Singleton<K> implements OSet<K> {
 
@@ -85,49 +127,8 @@ public interface OSet<K> extends ObjectSet<K>, ICollectionExtension {
         }
 
         @Override
-        public void trimCollection() {
-        }
-
-        @Override
-        public @UnmodifiableView OSet<K> view() {
-            return this;
-        }
-    }
-
-    class EmptySet<K> extends ObjectSets.EmptySet<K> implements OSet<K> {
-
-        protected static final EmptySet EMPTY = new EmptySet();
-
-        protected EmptySet() {
-        }
-
-        @Override
-        public long beginIteration() {
-            return 0;
-        }
-
-        @Override
-        public K getIteration(long it) {
-            throw new NoSuchElementException("Empty set");
-        }
-
-        @Override
-        public K getSampleElement() {
-            throw new NoSuchElementException("Empty set");
-        }
-
-        @Override
-        public long nextEntry(long it) {
-            return 0;
-        }
-
-        @Override
-        public void removeIteration(long it) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void trimCollection() {
+        public boolean trim() {
+            return false;
         }
 
         @Override
@@ -171,7 +172,7 @@ public interface OSet<K> extends ObjectSet<K>, ICollectionExtension {
         }
 
         @Override
-        public void trimCollection() {
+        public boolean trim() {
             throw new UnsupportedOperationException();
         }
 

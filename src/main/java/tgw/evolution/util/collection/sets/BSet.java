@@ -3,11 +3,10 @@ package tgw.evolution.util.collection.sets;
 import it.unimi.dsi.fastutil.bytes.ByteSet;
 import it.unimi.dsi.fastutil.bytes.ByteSets;
 import org.jetbrains.annotations.UnmodifiableView;
-import tgw.evolution.util.collection.ICollectionExtension;
 
 import java.util.NoSuchElementException;
 
-public interface BSet extends ByteSet, ICollectionExtension {
+public interface BSet extends ByteSet, SetEv {
 
     static @UnmodifiableView BSet emptySet() {
         return EmptySet.EMPTY;
@@ -27,7 +26,7 @@ public interface BSet extends ByteSet, ICollectionExtension {
             case 1 -> singleton(ks[0]);
             default -> {
                 BSet set = new BHashSet(ks);
-                set.trimCollection();
+                set.trim();
                 yield set.view();
             }
         };
@@ -48,6 +47,49 @@ public interface BSet extends ByteSet, ICollectionExtension {
     void removeIteration(long it);
 
     @UnmodifiableView BSet view();
+
+    class EmptySet extends ByteSets.EmptySet implements BSet {
+
+        protected static final EmptySet EMPTY = new EmptySet();
+
+        protected EmptySet() {
+        }
+
+        @Override
+        public long beginIteration() {
+            return 0;
+        }
+
+        @Override
+        public byte getIteration(long it) {
+            throw new NoSuchElementException("Empty set");
+        }
+
+        @Override
+        public byte getSampleElement() {
+            throw new NoSuchElementException("Empty set");
+        }
+
+        @Override
+        public long nextEntry(long it) {
+            return 0;
+        }
+
+        @Override
+        public void removeIteration(long it) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean trim() {
+            return false;
+        }
+
+        @Override
+        public @UnmodifiableView BSet view() {
+            return this;
+        }
+    }
 
     class Singleton extends ByteSets.Singleton implements BSet {
 
@@ -84,49 +126,8 @@ public interface BSet extends ByteSet, ICollectionExtension {
         }
 
         @Override
-        public void trimCollection() {
-        }
-
-        @Override
-        public @UnmodifiableView BSet view() {
-            return this;
-        }
-    }
-
-    class EmptySet extends ByteSets.EmptySet implements BSet {
-
-        protected static final EmptySet EMPTY = new EmptySet();
-
-        protected EmptySet() {
-        }
-
-        @Override
-        public long beginIteration() {
-            return 0;
-        }
-
-        @Override
-        public byte getIteration(long it) {
-            throw new NoSuchElementException("Empty set");
-        }
-
-        @Override
-        public byte getSampleElement() {
-            throw new NoSuchElementException("Empty set");
-        }
-
-        @Override
-        public long nextEntry(long it) {
-            return 0;
-        }
-
-        @Override
-        public void removeIteration(long it) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void trimCollection() {
+        public boolean trim() {
+            return false;
         }
 
         @Override
@@ -170,7 +171,7 @@ public interface BSet extends ByteSet, ICollectionExtension {
         }
 
         @Override
-        public void trimCollection() {
+        public boolean trim() {
             throw new UnsupportedOperationException();
         }
 
