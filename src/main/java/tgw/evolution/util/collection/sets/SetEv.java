@@ -17,7 +17,7 @@ public interface SetEv {
     }
 
     default boolean hasNextIteration(long it) {
-        return (it & 0xFFFF_FFFFL) != 0;
+        return (it & ITERATION_END) != 0;
     }
 
     default void reset() {
