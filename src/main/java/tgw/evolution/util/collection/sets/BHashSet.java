@@ -1,79 +1,79 @@
 package tgw.evolution.util.collection.sets;
 
 import it.unimi.dsi.fastutil.HashCommon;
-import it.unimi.dsi.fastutil.longs.LongCollection;
-import it.unimi.dsi.fastutil.longs.LongIterator;
-import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.bytes.ByteCollection;
+import it.unimi.dsi.fastutil.bytes.ByteIterator;
+import it.unimi.dsi.fastutil.bytes.ByteOpenHashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
-import tgw.evolution.util.collection.lists.LArrayList;
+import tgw.evolution.util.collection.lists.BArrayList;
 
 import java.util.Collection;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-public class LHashSet extends LongOpenHashSet implements LSet {
+public class BHashSet extends ByteOpenHashSet implements BSet {
 
     protected @Nullable View view;
-    protected @Nullable LArrayList wrappedEntries;
+    protected @Nullable BArrayList wrappedEntries;
 
-    public LHashSet(int expected, float f) {
+    public BHashSet(int expected, float f) {
         super(expected, f);
     }
 
-    public LHashSet(int expected) {
+    public BHashSet(int expected) {
         super(expected);
     }
 
-    public LHashSet() {
+    public BHashSet() {
     }
 
-    public LHashSet(Collection<? extends Long> c, float f) {
+    public BHashSet(Collection<? extends Byte> c, float f) {
         super(c, f);
     }
 
-    public LHashSet(Collection<? extends Long> c) {
+    public BHashSet(Collection<? extends Byte> c) {
         super(c);
     }
 
-    public LHashSet(LongCollection c, float f) {
+    public BHashSet(ByteCollection c, float f) {
         super(c, f);
     }
 
-    public LHashSet(LongCollection c) {
+    public BHashSet(ByteCollection c) {
         super(c);
     }
 
-    public LHashSet(LongIterator i, float f) {
+    public BHashSet(ByteIterator i, float f) {
         super(i, f);
     }
 
-    public LHashSet(LongIterator i) {
+    public BHashSet(ByteIterator i) {
         super(i);
     }
 
-    public LHashSet(Iterator<?> i, float f) {
+    public BHashSet(Iterator<?> i, float f) {
         super(i, f);
     }
 
-    public LHashSet(Iterator<?> i) {
+    public BHashSet(Iterator<?> i) {
         super(i);
     }
 
-    public LHashSet(long[] a, int offset, int length, float f) {
+    public BHashSet(byte[] a, int offset, int length, float f) {
         super(a, offset, length, f);
     }
 
-    public LHashSet(long[] a, int offset, int length) {
+    public BHashSet(byte[] a, int offset, int length) {
         super(a, offset, length);
     }
 
-    public LHashSet(long[] a, float f) {
+    public BHashSet(byte[] a, float f) {
         super(a, f);
     }
 
-    public LHashSet(long[] a) {
+    public BHashSet(byte[] a) {
         super(a);
     }
 
@@ -89,7 +89,7 @@ public class LHashSet extends LongOpenHashSet implements LSet {
             return (long) this.n << 32 | this.size;
         }
         for (int pos = this.n; pos-- != 0; ) {
-            long k = this.key[pos];
+            byte k = this.key[pos];
             if (k != 0) {
                 return (long) pos << 32 | this.size;
             }
@@ -98,7 +98,7 @@ public class LHashSet extends LongOpenHashSet implements LSet {
     }
 
     @Override
-    public long getIteration(long it) {
+    public byte getIteration(long it) {
         int pos = (int) (it >> 32);
         if (pos >= 0) {
             return this.key[pos];
@@ -108,7 +108,7 @@ public class LHashSet extends LongOpenHashSet implements LSet {
     }
 
     @Override
-    public long getSampleElement() {
+    public byte getSampleElement() {
         if (this.isEmpty()) {
             throw new NoSuchElementException("Empty set");
         }
@@ -116,7 +116,7 @@ public class LHashSet extends LongOpenHashSet implements LSet {
             return this.key[this.n];
         }
         for (int pos = this.n; pos-- != 0; ) {
-            long k = this.key[pos];
+            byte k = this.key[pos];
             if (k != 0) {
                 return k;
             }
@@ -126,17 +126,17 @@ public class LHashSet extends LongOpenHashSet implements LSet {
 
     protected void iterationShiftKeys(int pos) {
         // Shift entries with the same hash.
-        final long[] key = this.key;
+        final byte[] key = this.key;
         while (true) {
             int last;
             pos = (last = pos) + 1 & this.mask;
-            long curr;
+            byte curr;
             while (true) {
                 if ((curr = key[pos]) == 0) {
                     key[last] = 0;
                     return;
                 }
-                int slot = (int) HashCommon.mix(curr) & this.mask;
+                int slot = HashCommon.mix(curr) & this.mask;
                 if (last <= pos ? last >= slot || slot > pos : last >= slot && slot > pos) {
                     break;
                 }
@@ -144,7 +144,7 @@ public class LHashSet extends LongOpenHashSet implements LSet {
             }
             if (pos < last) {
                 if (this.wrappedEntries == null) {
-                    this.wrappedEntries = new LArrayList(2);
+                    this.wrappedEntries = new BArrayList(2);
                 }
                 this.wrappedEntries.add(key[pos]);
             }
@@ -153,7 +153,7 @@ public class LHashSet extends LongOpenHashSet implements LSet {
     }
 
     @Override
-    public LongIterator iterator() {
+    public ByteIterator iterator() {
         this.deprecatedSetMethod();
         return super.iterator();
     }
@@ -168,7 +168,7 @@ public class LHashSet extends LongOpenHashSet implements LSet {
             return 0;
         }
         int pos = (int) (it >> 32);
-        final long[] key = this.key;
+        final byte[] key = this.key;
         while (true) {
             if (--pos < 0) {
                 return (long) pos << 32 | size;
@@ -191,9 +191,9 @@ public class LHashSet extends LongOpenHashSet implements LSet {
         }
         else {
             assert this.wrappedEntries != null;
-            long wrappedEntry;
+            byte wrappedEntry;
             try {
-                wrappedEntry = this.wrappedEntries.getLong(-pos - 1);
+                wrappedEntry = this.wrappedEntries.getByte(-pos - 1);
             }
             catch (IndexOutOfBoundsException e) {
                 throw new ConcurrentModificationException(e);
@@ -213,7 +213,7 @@ public class LHashSet extends LongOpenHashSet implements LSet {
     }
 
     @Override
-    public @UnmodifiableView LSet view() {
+    public @UnmodifiableView BSet view() {
         if (this.view == null) {
             this.view = new View(this);
         }

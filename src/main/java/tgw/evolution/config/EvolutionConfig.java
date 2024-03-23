@@ -80,13 +80,14 @@ public final class EvolutionConfig {
     }
 
     public static void discardDirty() {
-        for (IConfigItem e = DIRTY.fastEntries(); e != null; e = DIRTY.fastEntries()) {
-            e.discardDirty();
-            if (e.isDefault()) {
-                NEEDS_RESTORATION.remove(e);
+        for (long it = DIRTY.beginIteration(); (it & 0xFFFF_FFFFL) != 0; it = DIRTY.nextEntry(it)) {
+            IConfigItem item = DIRTY.getIteration(it);
+            item.discardDirty();
+            if (item.isDefault()) {
+                NEEDS_RESTORATION.remove(item);
             }
             else {
-                NEEDS_RESTORATION.add(e);
+                NEEDS_RESTORATION.add(item);
             }
         }
         DIRTY.clear();
@@ -171,8 +172,8 @@ public final class EvolutionConfig {
 
     public static void save() {
         if (isDirty) {
-            for (IConfigItem e = DIRTY.fastEntries(); e != null; e = DIRTY.fastEntries()) {
-                e.save();
+            for (long it = DIRTY.beginIteration(); (it & 0xFFFF_FFFFL) != 0; it = DIRTY.nextEntry(it)) {
+                DIRTY.getIteration(it).save();
             }
             DIRTY.clear();
             isDirty = false;

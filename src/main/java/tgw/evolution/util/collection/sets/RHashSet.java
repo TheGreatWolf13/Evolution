@@ -6,94 +6,107 @@ import it.unimi.dsi.fastutil.objects.ReferenceCollection;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
-import tgw.evolution.Evolution;
+import tgw.evolution.util.collection.lists.OArrayList;
 
 import java.util.Collection;
-
-import static it.unimi.dsi.fastutil.HashCommon.arraySize;
+import java.util.ConcurrentModificationException;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 public class RHashSet<K> extends ReferenceOpenHashSet<K> implements RSet<K> {
 
-    /**
-     * Bit 0: shouldRehash; <br>
-     * Bit 1: askedToRehash; <br>
-     */
-    protected byte flags = 0b01;
-    protected int lastPos = -1;
     protected @Nullable View<K> view;
+    protected @Nullable OArrayList<K> wrappedEntries;
+
+    public RHashSet(int expected, float f) {
+        super(expected, f);
+    }
+
+    public RHashSet(int expected) {
+        super(expected);
+    }
+
+    public RHashSet() {
+    }
+
+    public RHashSet(Collection<? extends K> c, float f) {
+        super(c, f);
+    }
+
+    public RHashSet(Collection<? extends K> c) {
+        super(c);
+    }
+
+    public RHashSet(ReferenceCollection<? extends K> c, float f) {
+        super(c, f);
+    }
 
     public RHashSet(ReferenceCollection<? extends K> c) {
         super(c);
     }
 
-    public RHashSet() {
-        super();
+    public RHashSet(Iterator<? extends K> i, float f) {
+        super(i, f);
+    }
+
+    public RHashSet(Iterator<? extends K> i) {
+        super(i);
+    }
+
+    public RHashSet(K[] a, int offset, int length, float f) {
+        super(a, offset, length, f);
+    }
+
+    public RHashSet(K[] a, int offset, int length) {
+        super(a, offset, length);
+    }
+
+    public RHashSet(K[] a, float f) {
+        super(a, f);
+    }
+
+    public RHashSet(K[] a) {
+        super(a);
     }
 
     @Override
-    public boolean addAll(Collection<? extends K> c) {
-        if (c instanceof RSet) {
-            return this.addAll((RSet<? extends K>) c);
+    public long beginIteration() {
+        if (this.wrappedEntries != null) {
+            this.wrappedEntries.clear();
         }
-        Evolution.warn("Default addAll");
-        return super.addAll(c);
-    }
-
-    @Override
-    public boolean addAll(RSet<? extends K> set) {
-        if (this.f <= 0.5) {
-            this.ensureCapacity(set.size());
-        }
-        else {
-            this.tryCapacity(this.size() + set.size());
-        }
-        return RSet.super.addAll(set);
-    }
-
-    @Override
-    public boolean containsAll(Collection<?> c) {
-        if (c instanceof RSet<?> set) {
-            return this.containsAll(set);
-        }
-        Evolution.warn("Default containsAll");
-        return super.containsAll(c);
-    }
-
-    private void ensureCapacity(final int capacity) {
-        final int needed = arraySize(capacity, this.f);
-        if (needed > this.n) {
-            this.rehash(needed);
-        }
-    }
-
-    @Override
-    public @Nullable K fastEntries() {
         if (this.isEmpty()) {
-            this.handleRehash();
-            return null;
+            return 0;
         }
-        if (this.lastPos == -1) {
-            //Begin iteration
-            this.lastPos = this.n;
-            this.flags &= ~1;
+        if (this.containsNull) {
+            return (long) this.n << 32 | this.size;
         }
-        for (int pos = this.lastPos; pos-- != 0; ) {
+        for (int pos = this.n; pos-- != 0; ) {
             K k = this.key[pos];
+            //noinspection VariableNotUsedInsideIf
             if (k != null) {
-                //Remember last pos
-                this.lastPos = pos;
-                return k;
+                return (long) pos << 32 | this.size;
             }
         }
-        this.lastPos = -1;
-        this.handleRehash();
-        return null;
+        throw new IllegalStateException("Should never reach here");
     }
 
     @Override
-    public @Nullable K getElement() {
+    public K getIteration(long it) {
+        int pos = (int) (it >> 32);
+        if (pos >= 0) {
+            return this.key[pos];
+        }
+        assert this.wrappedEntries != null;
+        return this.wrappedEntries.get(-pos - 1);
+    }
+
+    @Override
+    public K getSampleElement() {
         if (this.isEmpty()) {
-            return null;
+            throw new NoSuchElementException("Empty set");
+        }
+        if (this.containsNull) {
+            return this.key[this.n];
         }
         for (int pos = this.n; pos-- != 0; ) {
             K k = this.key[pos];
@@ -101,59 +114,94 @@ public class RHashSet<K> extends ReferenceOpenHashSet<K> implements RSet<K> {
                 return k;
             }
         }
-        return null;
+        throw new IllegalStateException("Should never reach here");
     }
 
-    protected void handleRehash() {
-        byte oldFlags = this.flags;
-        this.flags = 0b01;
-        if ((oldFlags & 2) != 0) {
-            this.trim();
+    protected void iterationShiftKeys(int pos) {
+        // Shift entries with the same hash.
+        final K[] key = this.key;
+        while (true) {
+            int last;
+            pos = (last = pos) + 1 & this.mask;
+            K curr;
+            while (true) {
+                if ((curr = key[pos]) == null) {
+                    key[last] = null;
+                    return;
+                }
+                int slot = HashCommon.mix(System.identityHashCode(curr)) & this.mask;
+                if (last <= pos ? last >= slot || slot > pos : last >= slot && slot > pos) {
+                    break;
+                }
+                pos = pos + 1 & this.mask;
+            }
+            if (pos < last) {
+                if (this.wrappedEntries == null) {
+                    this.wrappedEntries = new OArrayList<>(2);
+                }
+                this.wrappedEntries.add(key[pos]);
+            }
+            key[last] = curr;
         }
     }
 
     @Override
     public ObjectIterator<K> iterator() {
-        if (CHECKS) {
-            Evolution.info("Allocating memory for an iterator!");
-        }
+        this.deprecatedSetMethod();
         return super.iterator();
     }
 
     @Override
-    protected void rehash(int newN) {
-        if ((this.flags & 1) != 0) {
-            super.rehash(newN);
+    public long nextEntry(long it) {
+        if (this.isEmpty()) {
+            return 0;
+        }
+        int size = (int) (it & ITERATION_END);
+        if (--size == 0) {
+            return 0;
+        }
+        int pos = (int) (it >> 32);
+        final K[] key = this.key;
+        while (true) {
+            if (--pos < 0) {
+                return (long) pos << 32 | size;
+            }
+            if (key[pos] != null) {
+                return (long) pos << 32 | size;
+            }
+        }
+    }
+
+    @Override
+    public void removeIteration(long it) {
+        int pos = (int) (it >> 32);
+        if (pos == this.n) {
+            this.containsNull = false;
+            this.key[this.n] = null;
+        }
+        else if (pos >= 0) {
+            this.iterationShiftKeys(pos);
         }
         else {
-            this.flags |= 2;
+            assert this.wrappedEntries != null;
+            K wrappedEntry;
+            try {
+                wrappedEntry = this.wrappedEntries.set(-pos - 1, null);
+            }
+            catch (IndexOutOfBoundsException e) {
+                throw new ConcurrentModificationException(e);
+            }
+            this.remove(wrappedEntry);
+            return;
         }
-    }
-
-    @Override
-    public boolean removeAll(Collection<?> c) {
-        if (c instanceof RSet<?> set) {
-            return this.removeAll(set);
-        }
-        Evolution.warn("Default removeAll");
-        return super.removeAll(c);
-    }
-
-    @Override
-    public void resetIteration() {
-        this.flags = 0b01;
-        this.lastPos = -1;
+        --this.size;
     }
 
     @Override
     public void trimCollection() {
         this.trim();
-    }
-
-    private void tryCapacity(final long capacity) {
-        final int needed = (int) Math.min(1 << 30, Math.max(2, HashCommon.nextPowerOfTwo((long) Math.ceil(capacity / this.f))));
-        if (needed > this.n) {
-            this.rehash(needed);
+        if (this.wrappedEntries != null) {
+            this.wrappedEntries.trim();
         }
     }
 

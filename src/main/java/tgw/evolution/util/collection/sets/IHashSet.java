@@ -5,133 +5,218 @@ import it.unimi.dsi.fastutil.ints.IntCollection;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import org.jetbrains.annotations.Nullable;
-import tgw.evolution.Evolution;
+import org.jetbrains.annotations.UnmodifiableView;
+import tgw.evolution.util.collection.lists.IArrayList;
 
-import static it.unimi.dsi.fastutil.HashCommon.arraySize;
+import java.util.Collection;
+import java.util.ConcurrentModificationException;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 public class IHashSet extends IntOpenHashSet implements ISet {
 
-    protected final ISet.Entry fast = new ISet.Entry();
-    /**
-     * Bit 0: shouldRehash; <br>
-     * Bit 1: askedToRehash; <br>
-     */
-    protected byte flags = 0b01;
-    protected int lastPos = -1;
+    protected @Nullable View view;
+    protected @Nullable IArrayList wrappedEntries;
 
-    @Override
-    public boolean addAll(ISet set) {
-        if (this.f <= 0.5f) {
-            this.ensureCapacity(set.size());
-        }
-        else {
-            this.tryCapacity(this.size() + set.size());
-        }
-        return ISet.super.addAll(set);
+    public IHashSet(int expected, float f) {
+        super(expected, f);
+    }
+
+    public IHashSet(int expected) {
+        super(expected);
+    }
+
+    public IHashSet() {
+    }
+
+    public IHashSet(Collection<? extends Integer> c, float f) {
+        super(c, f);
+    }
+
+    public IHashSet(Collection<? extends Integer> c) {
+        super(c);
+    }
+
+    public IHashSet(IntCollection c, float f) {
+        super(c, f);
+    }
+
+    public IHashSet(IntCollection c) {
+        super(c);
+    }
+
+    public IHashSet(IntIterator i, float f) {
+        super(i, f);
+    }
+
+    public IHashSet(IntIterator i) {
+        super(i);
+    }
+
+    public IHashSet(Iterator<?> i, float f) {
+        super(i, f);
+    }
+
+    public IHashSet(Iterator<?> i) {
+        super(i);
+    }
+
+    public IHashSet(int[] a, int offset, int length, float f) {
+        super(a, offset, length, f);
+    }
+
+    public IHashSet(int[] a, int offset, int length) {
+        super(a, offset, length);
+    }
+
+    public IHashSet(int[] a, float f) {
+        super(a, f);
+    }
+
+    public IHashSet(int[] a) {
+        super(a);
     }
 
     @Override
-    public boolean addAll(IntCollection c) {
-        if (c instanceof ISet set) {
-            return this.addAll(set);
+    public long beginIteration() {
+        if (this.wrappedEntries != null) {
+            this.wrappedEntries.clear();
         }
-        Evolution.warn("Default addAll");
-        return super.addAll(c);
-    }
-
-    @Override
-    public boolean containsAll(IntCollection c) {
-        if (c instanceof ISet set) {
-            return this.containsAll(set);
-        }
-        Evolution.warn("Default containsAll");
-        return super.containsAll(c);
-    }
-
-    private void ensureCapacity(final int capacity) {
-        final int needed = arraySize(capacity, this.f);
-        if (needed > this.n) {
-            this.rehash(needed);
-        }
-    }
-
-    @Override
-    public @Nullable ISet.Entry fastEntries() {
         if (this.isEmpty()) {
-            this.handleRehash();
-            return null;
+            return 0;
         }
-        if (this.lastPos == -1) {
-            //Begin iteration
-            this.lastPos = this.n;
-            this.flags &= ~1;
-            if (this.containsNull) {
-                return this.fast.set(0);
-            }
+        if (this.containsNull) {
+            return (long) this.n << 32 | this.size;
         }
-        for (int pos = this.lastPos; pos-- != 0; ) {
+        for (int pos = this.n; pos-- != 0; ) {
             int k = this.key[pos];
             if (k != 0) {
-                //Remember last pos
-                this.lastPos = pos;
-                return this.fast.set(k);
+                return (long) pos << 32 | this.size;
             }
         }
-        this.lastPos = -1;
-        this.handleRehash();
-        return null;
+        throw new IllegalStateException("Should never reach here");
     }
 
-    protected void handleRehash() {
-        byte oldFlags = this.flags;
-        this.flags = 0b01;
-        if ((oldFlags & 2) != 0) {
-            this.trim();
+    @Override
+    public int getIteration(long it) {
+        int pos = (int) (it >> 32);
+        if (pos >= 0) {
+            return this.key[pos];
+        }
+        assert this.wrappedEntries != null;
+        return this.wrappedEntries.get(-pos - 1);
+    }
+
+    @Override
+    public int getSampleElement() {
+        if (this.isEmpty()) {
+            throw new NoSuchElementException("Empty set");
+        }
+        if (this.containsNull) {
+            return this.key[this.n];
+        }
+        for (int pos = this.n; pos-- != 0; ) {
+            int k = this.key[pos];
+            if (k != 0) {
+                return k;
+            }
+        }
+        throw new IllegalStateException("Should never reach here");
+    }
+
+    protected void iterationShiftKeys(int pos) {
+        // Shift entries with the same hash.
+        final int[] key = this.key;
+        while (true) {
+            int last;
+            pos = (last = pos) + 1 & this.mask;
+            int curr;
+            while (true) {
+                if ((curr = key[pos]) == 0) {
+                    key[last] = 0;
+                    return;
+                }
+                int slot = HashCommon.mix(curr) & this.mask;
+                if (last <= pos ? last >= slot || slot > pos : last >= slot && slot > pos) {
+                    break;
+                }
+                pos = pos + 1 & this.mask;
+            }
+            if (pos < last) {
+                if (this.wrappedEntries == null) {
+                    this.wrappedEntries = new IArrayList(2);
+                }
+                this.wrappedEntries.add(key[pos]);
+            }
+            key[last] = curr;
         }
     }
 
     @Override
-    public IntIterator intIterator() {
-        if (CHECKS) {
-            Evolution.info("Allocating memory for an iterator!");
-        }
-        return super.intIterator();
+    public IntIterator iterator() {
+        this.deprecatedSetMethod();
+        return super.iterator();
     }
 
     @Override
-    protected void rehash(int newN) {
-        if ((this.flags & 1) != 0) {
-            super.rehash(newN);
+    public long nextEntry(long it) {
+        if (this.isEmpty()) {
+            return 0;
+        }
+        int size = (int) (it & ITERATION_END);
+        if (--size == 0) {
+            return 0;
+        }
+        int pos = (int) (it >> 32);
+        final int[] key = this.key;
+        while (true) {
+            if (--pos < 0) {
+                return (long) pos << 32 | size;
+            }
+            if (key[pos] != 0) {
+                return (long) pos << 32 | size;
+            }
+        }
+    }
+
+    @Override
+    public void removeIteration(long it) {
+        int pos = (int) (it >> 32);
+        if (pos == this.n) {
+            this.containsNull = false;
+            this.key[this.n] = 0;
+        }
+        else if (pos >= 0) {
+            this.iterationShiftKeys(pos);
         }
         else {
-            this.flags |= 2;
+            assert this.wrappedEntries != null;
+            int wrappedEntry;
+            try {
+                wrappedEntry = this.wrappedEntries.getInt(-pos - 1);
+            }
+            catch (IndexOutOfBoundsException e) {
+                throw new ConcurrentModificationException(e);
+            }
+            this.remove(wrappedEntry);
+            return;
         }
-    }
-
-    @Override
-    public boolean removeAll(IntCollection c) {
-        if (c instanceof ISet set) {
-            return this.removeAll(set);
-        }
-        Evolution.warn("Default removeAll");
-        return super.removeAll(c);
-    }
-
-    @Override
-    public void resetIteration() {
-        this.flags = 0b01;
-        this.lastPos = -1;
+        --this.size;
     }
 
     @Override
     public void trimCollection() {
         this.trim();
+        if (this.wrappedEntries != null) {
+            this.wrappedEntries.trim();
+        }
     }
 
-    private void tryCapacity(final long capacity) {
-        final int needed = (int) Math.min(1 << 30, Math.max(2, HashCommon.nextPowerOfTwo((long) Math.ceil(capacity / this.f))));
-        if (needed > this.n) {
-            this.rehash(needed);
+    @Override
+    public @UnmodifiableView ISet view() {
+        if (this.view == null) {
+            this.view = new View(this);
         }
+        return this.view;
     }
 }

@@ -157,8 +157,8 @@ public class DynamicLights {
         }
         lights.clear();
         LevelLightEngine lightEngine = this.level.getLightEngine();
-        for (LSet.Entry e = removed.fastEntries(); e != null; e = removed.fastEntries()) {
-            lightEngine.checkBlock_(e.get());
+        for (long it = removed.beginIteration(); (it & 0xFFFF_FFFFL) != 0; it = removed.nextEntry(it)) {
+            lightEngine.checkBlock_(removed.getIteration(it));
         }
         removed.clear();
     }
@@ -206,18 +206,19 @@ public class DynamicLights {
     public void tickEnd() {
         ISet notTicked = this.notTicked;
         LSet removed = this.removed;
-        for (ISet.Entry e = notTicked.fastEntries(); e != null; e = notTicked.fastEntries()) {
-            int index = this.entityEmission.getIndexFor(e.get());
+        for (long it = notTicked.beginIteration(); (it & 0xFFFF_FFFFL) != 0; it = notTicked.nextEntry(it)) {
+            int id = notTicked.getIteration(it);
+            int index = this.entityEmission.getIndexFor(id);
             long oldPos = this.entityEmission.getLongByIndex(index);
             short oldLight = this.entityEmission.getShortByIndex(index);
-            this.entityEmission.remove(e.get());
+            this.entityEmission.remove(id);
             this.handleRemove(oldPos, oldLight);
         }
         notTicked.clear();
         L2SMap added = this.added;
         LSet modified = this.modified;
-        for (LSet.Entry e = removed.fastEntries(); e != null; e = removed.fastEntries()) {
-            long pos = e.get();
+        for (long it = removed.beginIteration(); (it & 0xFFFF_FFFFL) != 0; it = removed.nextEntry(it)) {
+            long pos = removed.getIteration(it);
             short maxAdded = added.get(pos);
             if (maxAdded == 0) {
                 this.lights.remove(pos);
@@ -230,8 +231,8 @@ public class DynamicLights {
         added.clear();
         removed.clear();
         LevelLightEngine lightEngine = this.level.getLightEngine();
-        for (LSet.Entry e = modified.fastEntries(); e != null; e = modified.fastEntries()) {
-            lightEngine.checkBlock_(e.get());
+        for (long it = modified.beginIteration(); (it & 0xFFFF_FFFFL) != 0; it = modified.nextEntry(it)) {
+            lightEngine.checkBlock_(modified.getIteration(it));
         }
         modified.clear();
     }

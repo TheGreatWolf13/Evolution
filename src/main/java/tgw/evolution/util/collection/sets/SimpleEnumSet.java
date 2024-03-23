@@ -4,7 +4,6 @@ import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
-import tgw.evolution.Evolution;
 
 import java.util.AbstractSet;
 import java.util.Collection;
@@ -60,6 +59,20 @@ public class SimpleEnumSet<E extends Enum<E>> extends AbstractSet<E> implements 
     }
 
     @Override
+    public long beginIteration() {
+        int size = this.size();
+        if (size == 0) {
+            return 0;
+        }
+        for (int i = 0, len = this.values.length; i < len; i++) {
+            if ((this.data & 1L << i) != 0) {
+                return (long) i << 32 | size;
+            }
+        }
+        throw new IllegalStateException("Should never reach here");
+    }
+
+    @Override
     public void clear() {
         this.data = 0;
     }
@@ -90,36 +103,22 @@ public class SimpleEnumSet<E extends Enum<E>> extends AbstractSet<E> implements 
     }
 
     @Override
-    public @Nullable E fastEntries() {
-        if (this.isEmpty()) {
-            return null;
-        }
-        if (this.lastPos == -1) {
-            //Begin iteration
-            this.lastPos = this.values.length;
-        }
-        for (int pos = this.lastPos; pos-- != 0; ) {
-            if ((this.data & 1L << pos) != 0) {
-                //Remember last pos
-                this.lastPos = pos;
-                return this.values[pos];
-            }
-        }
-        this.lastPos = -1;
-        return null;
+    public E getIteration(long it) {
+        int pos = (int) (it >> 32);
+        return this.values[pos];
     }
 
     @Override
-    public @Nullable E getElement() {
+    public E getSampleElement() {
         if (this.isEmpty()) {
-            return null;
+            throw new NoSuchElementException("Empty set");
         }
-        for (int i = 0; i < 64; ++i) {
+        for (int i = 0, len = this.values.length; i < len; i++) {
             if ((this.data & 1L << i) != 0) {
                 return this.values[i];
             }
         }
-        return null;
+        throw new IllegalStateException("Should never reach here");
     }
 
     @Contract(pure = true)
@@ -130,10 +129,26 @@ public class SimpleEnumSet<E extends Enum<E>> extends AbstractSet<E> implements 
 
     @Override
     public ObjectIterator<E> iterator() {
-        if (CHECKS) {
-            Evolution.info("Allocating memory for an iterator!");
-        }
+        this.deprecatedSetMethod();
         return new EnumIterator();
+    }
+
+    @Override
+    public long nextEntry(long it) {
+        if (this.isEmpty()) {
+            return 0;
+        }
+        int size = (int) (it & ITERATION_END);
+        if (--size == 0) {
+            return 0;
+        }
+        int pos = (int) (it >> 32) + 1;
+        for (int i = pos, len = this.values.length; i < len; i++) {
+            if ((this.data & 1L << i) != 0) {
+                return (long) i << 32 | size;
+            }
+        }
+        throw new IllegalStateException("Should never reach here");
     }
 
     @Override
@@ -144,19 +159,6 @@ public class SimpleEnumSet<E extends Enum<E>> extends AbstractSet<E> implements 
         }
         long oldData = this.data;
         this.data &= ~(1L << this.clazz.cast(o).ordinal());
-        return this.data != oldData;
-    }
-
-    @Override
-    public boolean removeAll(RSet<?> set) {
-        if (!(set instanceof SimpleEnumSet<?> es)) {
-            return RSet.super.removeAll(set);
-        }
-        if (es.clazz != this.clazz) {
-            return false;
-        }
-        long oldData = this.data;
-        this.data &= ~es.data;
         return this.data != oldData;
     }
 
@@ -174,8 +176,9 @@ public class SimpleEnumSet<E extends Enum<E>> extends AbstractSet<E> implements 
     }
 
     @Override
-    public void resetIteration() {
-        this.lastPos = -1;
+    public void removeIteration(long it) {
+        int pos = (int) (it >> 32);
+        this.remove(this.values[pos]);
     }
 
     @Override

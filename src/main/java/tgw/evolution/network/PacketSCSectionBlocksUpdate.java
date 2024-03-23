@@ -7,7 +7,6 @@ import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunkSection;
-import tgw.evolution.patches.PatchClientGamePacketListener;
 import tgw.evolution.util.collection.sets.SSet;
 
 public class PacketSCSectionBlocksUpdate implements Packet<ClientGamePacketListener> {
@@ -24,12 +23,10 @@ public class PacketSCSectionBlocksUpdate implements Packet<ClientGamePacketListe
         this.positions = new short[size];
         this.states = new BlockState[size];
         int j = 0;
-        for (SSet.Entry e = set.fastEntries(); e != null; e = set.fastEntries(), ++j) {
-            short relative = e.get();
+        for (long it = set.beginIteration(); (it & 0xFFFF_FFFFL) != 0; it = set.nextEntry(it)) {
+            short relative = set.getIteration(it);
             this.positions[j] = relative;
-            this.states[j] = section.getBlockState(SectionPos.sectionRelativeX(relative),
-                                                   SectionPos.sectionRelativeY(relative),
-                                                   SectionPos.sectionRelativeZ(relative));
+            this.states[j] = section.getBlockState(SectionPos.sectionRelativeX(relative), SectionPos.sectionRelativeY(relative), SectionPos.sectionRelativeZ(relative));
         }
     }
 

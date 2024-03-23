@@ -32,15 +32,6 @@ public abstract class MixinLayerLightSectionStorage<M extends DataLayerStorageMa
         super(i, j, k);
     }
 
-    @Shadow
-    protected abstract void checkEdgesForSection(LayerLightEngine<M, ?> layerLightEngine, long l);
-
-    @Shadow
-    protected abstract void clearQueuedSectionBlocks(LayerLightEngine<?, ?> layerLightEngine, long l);
-
-    @Shadow
-    protected abstract boolean hasInconsistencies();
-
     /**
      * @reason _
      * @author TheGreatWolf
@@ -49,8 +40,8 @@ public abstract class MixinLayerLightSectionStorage<M extends DataLayerStorageMa
     public void markNewInconsistencies(LayerLightEngine<M, ?> lightEngine, boolean bl, boolean bl2) {
         if (this.hasInconsistencies() || !this.queuedSections.isEmpty()) {
             LSet toRemove = (LSet) this.toRemove;
-            for (LSet.Entry e = toRemove.fastEntries(); e != null; e = toRemove.fastEntries()) {
-                long l = e.get();
+            for (long it = toRemove.beginIteration(); (it & 0xFFFF_FFFFL) != 0; it = toRemove.nextEntry(it)) {
+                long l = toRemove.getIteration(it);
                 this.clearQueuedSectionBlocks(lightEngine, l);
                 if (this.columnsToRetainQueuedDataFor.contains(SectionPos.getZeroNode(l))) {
                     DataLayer queued = this.queuedSections.remove(l);
@@ -66,8 +57,8 @@ public abstract class MixinLayerLightSectionStorage<M extends DataLayerStorageMa
                 }
             }
             this.updatingSectionData.clearCache();
-            for (LSet.Entry e = toRemove.fastEntries(); e != null; e = toRemove.fastEntries()) {
-                this.onNodeRemoved(e.get());
+            for (long it = toRemove.beginIteration(); (it & 0xFFFF_FFFFL) != 0; it = toRemove.nextEntry(it)) {
+                this.onNodeRemoved(toRemove.getIteration(it));
             }
             toRemove.clear();
             this.hasToRemove = false;
@@ -91,8 +82,8 @@ public abstract class MixinLayerLightSectionStorage<M extends DataLayerStorageMa
             }
             else {
                 LSet untrustedSections = (LSet) this.untrustedSections;
-                for (LSet.Entry e = untrustedSections.fastEntries(); e != null; e = untrustedSections.fastEntries()) {
-                    this.checkEdgesForSection(lightEngine, e.get());
+                for (long it = untrustedSections.beginIteration(); (it & 0xFFFF_FFFFL) != 0; it = untrustedSections.nextEntry(it)) {
+                    this.checkEdgesForSection(lightEngine, untrustedSections.getIteration(it));
                 }
             }
             this.untrustedSections.clear();
@@ -105,29 +96,34 @@ public abstract class MixinLayerLightSectionStorage<M extends DataLayerStorageMa
         }
     }
 
-    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/world/level/lighting/LayerLightSectionStorage;" +
-                                                                    "toRemove:Lit/unimi/dsi/fastutil/longs/LongSet;", opcode = Opcodes.PUTFIELD))
-    private void onInit0(LayerLightSectionStorage instance, LongSet value) {
-        this.toRemove = new LHashSet();
-    }
+    @Shadow
+    protected abstract void checkEdgesForSection(LayerLightEngine<M, ?> layerLightEngine, long l);
 
-    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/world/level/lighting/LayerLightSectionStorage;" +
-                                                                    "untrustedSections:Lit/unimi/dsi/fastutil/longs/LongSet;", opcode =
-            Opcodes.PUTFIELD))
-    private void onInit1(LayerLightSectionStorage instance, LongSet value) {
-        this.untrustedSections = new LHashSet();
-    }
+    @Shadow
+    protected abstract void clearQueuedSectionBlocks(LayerLightEngine<?, ?> layerLightEngine, long l);
 
-    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/world/level/lighting/LayerLightSectionStorage;" +
-                                                                    "queuedSections:Lit/unimi/dsi/fastutil/longs/Long2ObjectMap;", opcode =
-            Opcodes.PUTFIELD))
-    private void onInit2(LayerLightSectionStorage instance, Long2ObjectMap<DataLayer> value) {
-        this.queuedSections = L2OMap.synchronize(new L2OHashMap<>());
-    }
+    @Shadow
+    protected abstract boolean hasInconsistencies();
 
     @Shadow
     protected abstract void onNodeRemoved(long l);
 
     @Shadow
     protected abstract boolean storingLightForSection(long l);
+
+    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/world/level/lighting/LayerLightSectionStorage;" +
+                                                                    "toRemove:Lit/unimi/dsi/fastutil/longs/LongSet;", opcode = Opcodes.PUTFIELD))
+    private void onInit0(LayerLightSectionStorage instance, LongSet value) {
+        this.toRemove = new LHashSet();
+    }
+
+    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/world/level/lighting/LayerLightSectionStorage;untrustedSections:Lit/unimi/dsi/fastutil/longs/LongSet;", opcode = Opcodes.PUTFIELD))
+    private void onInit1(LayerLightSectionStorage instance, LongSet value) {
+        this.untrustedSections = new LHashSet();
+    }
+
+    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/world/level/lighting/LayerLightSectionStorage;queuedSections:Lit/unimi/dsi/fastutil/longs/Long2ObjectMap;", opcode = Opcodes.PUTFIELD))
+    private void onInit2(LayerLightSectionStorage instance, Long2ObjectMap<DataLayer> value) {
+        this.queuedSections = L2OMap.synchronize(new L2OHashMap<>());
+    }
 }

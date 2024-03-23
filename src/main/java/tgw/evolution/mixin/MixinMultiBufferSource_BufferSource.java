@@ -51,6 +51,15 @@ public abstract class MixinMultiBufferSource_BufferSource implements ICrashReset
     @Shadow
     public abstract VertexConsumer getBuffer(RenderType pRenderType);
 
+    @Override
+    public void resetAfterCrash() {
+        ((ICrashReset) this.builder).resetAfterCrash();
+        OSet<BufferBuilder> startedBuffers = (OSet<BufferBuilder>) this.startedBuffers;
+        for (long it = startedBuffers.beginIteration(); (it & 0xFFFF_FFFFL) != 0; it = startedBuffers.nextEntry(it)) {
+            ((ICrashReset) startedBuffers.getIteration(it)).resetAfterCrash();
+        }
+    }
+
     @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;" +
                                                                     "startedBuffers:Ljava/util/Set;", opcode = Opcodes.PUTFIELD))
     private void onInit(MultiBufferSource.BufferSource instance, Set<BufferBuilder> value) {
@@ -61,14 +70,5 @@ public abstract class MixinMultiBufferSource_BufferSource implements ICrashReset
             at = @At(value = "INVOKE", target = "Lcom/google/common/collect/Sets;newHashSet()Ljava/util/HashSet;", remap = false))
     private @Nullable HashSet onInitRemoveSet() {
         return null;
-    }
-
-    @Override
-    public void resetAfterCrash() {
-        ((ICrashReset) this.builder).resetAfterCrash();
-        OSet<BufferBuilder> startedBuffers = (OSet<BufferBuilder>) this.startedBuffers;
-        for (BufferBuilder e = startedBuffers.fastEntries(); e != null; e = startedBuffers.fastEntries()) {
-            ((ICrashReset) e).resetAfterCrash();
-        }
     }
 }

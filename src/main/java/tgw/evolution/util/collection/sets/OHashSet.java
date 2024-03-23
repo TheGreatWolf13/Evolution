@@ -6,86 +6,107 @@ import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
-import tgw.evolution.Evolution;
-import tgw.evolution.util.collection.lists.OList;
+import tgw.evolution.util.collection.lists.OArrayList;
 
 import java.util.Collection;
+import java.util.ConcurrentModificationException;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 public class OHashSet<K> extends ObjectOpenHashSet<K> implements OSet<K> {
 
-    protected int lastPos = -1;
-    protected @Nullable View view;
-
-    public OHashSet(ObjectCollection<? extends K> c) {
-        super(c);
-    }
+    protected @Nullable View<K> view;
+    protected @Nullable OArrayList<K> wrappedEntries;
 
     public OHashSet(int expected, float f) {
         super(expected, f);
-    }
-
-    public OHashSet(OList<? extends K> c) {
-        this(c.size(), 0.75f);
-        this.addAll(c);
     }
 
     public OHashSet(int expected) {
         super(expected);
     }
 
+    public OHashSet() {
+    }
+
+    public OHashSet(Collection<? extends K> c, float f) {
+        super(c, f);
+    }
+
     public OHashSet(Collection<? extends K> c) {
         super(c);
     }
 
-    public OHashSet() {
+    public OHashSet(ObjectCollection<? extends K> c, float f) {
+        super(c, f);
+    }
+
+    public OHashSet(ObjectCollection<? extends K> c) {
+        super(c);
+    }
+
+    public OHashSet(Iterator<? extends K> i, float f) {
+        super(i, f);
+    }
+
+    public OHashSet(Iterator<? extends K> i) {
+        super(i);
+    }
+
+    public OHashSet(K[] a, int offset, int length, float f) {
+        super(a, offset, length, f);
+    }
+
+    public OHashSet(K[] a, int offset, int length) {
+        super(a, offset, length);
+    }
+
+    public OHashSet(K[] a, float f) {
+        super(a, f);
+    }
+
+    public OHashSet(K[] a) {
+        super(a);
     }
 
     @Override
-    public boolean addAll(OList<? extends K> list) {
-        this.preSize(list.size());
-        return OSet.super.addAll(list);
-    }
-
-    @Override
-    public boolean addAll(Collection<? extends K> c) {
-        if (c instanceof OList<? extends K> list) {
-            return this.addAll(list);
+    public long beginIteration() {
+        if (this.wrappedEntries != null) {
+            this.wrappedEntries.clear();
         }
-        return super.addAll(c);
-    }
-
-    private void ensureCapacity(int capacity) {
-        int needed = HashCommon.arraySize(capacity, this.f);
-        if (needed > this.n) {
-            this.rehash(needed);
-        }
-    }
-
-    @Override
-    public @Nullable K fastEntries() {
         if (this.isEmpty()) {
-            return null;
+            return 0;
         }
-        if (this.lastPos == -1) {
-            //Begin iteration
-            this.lastPos = this.n;
+        if (this.containsNull) {
+            return (long) this.n << 32 | this.size;
         }
-        for (int pos = this.lastPos; pos-- != 0; ) {
+        for (int pos = this.n; pos-- != 0; ) {
             K k = this.key[pos];
+            //noinspection VariableNotUsedInsideIf
             if (k != null) {
-                //Remember last pos
-                this.lastPos = pos;
-                return k;
+                return (long) pos << 32 | this.size;
             }
         }
-        this.lastPos = -1;
-        return null;
+        throw new IllegalStateException("Should never reach here");
     }
 
     @Override
-    public @Nullable K getElement() {
+    public K getIteration(long it) {
+        int pos = (int) (it >> 32);
+        if (pos >= 0) {
+            return this.key[pos];
+        }
+        assert this.wrappedEntries != null;
+        return this.wrappedEntries.get(-pos - 1);
+    }
+
+    @Override
+    public K getSampleElement() {
         if (this.isEmpty()) {
-            return null;
+            throw new NoSuchElementException("Empty set");
+        }
+        if (this.containsNull) {
+            return this.key[this.n];
         }
         for (int pos = this.n; pos-- != 0; ) {
             K k = this.key[pos];
@@ -93,42 +114,101 @@ public class OHashSet<K> extends ObjectOpenHashSet<K> implements OSet<K> {
                 return k;
             }
         }
-        return null;
+        throw new IllegalStateException("Should never reach here");
+    }
+
+    protected void iterationShiftKeys(int pos) {
+        // Shift entries with the same hash.
+        final K[] key = this.key;
+        while (true) {
+            int last;
+            pos = (last = pos) + 1 & this.mask;
+            K curr;
+            while (true) {
+                if ((curr = key[pos]) == null) {
+                    key[last] = null;
+                    return;
+                }
+                int slot = HashCommon.mix(curr.hashCode()) & this.mask;
+                if (last <= pos ? last >= slot || slot > pos : last >= slot && slot > pos) {
+                    break;
+                }
+                pos = pos + 1 & this.mask;
+            }
+            if (pos < last) {
+                if (this.wrappedEntries == null) {
+                    this.wrappedEntries = new OArrayList<>(2);
+                }
+                this.wrappedEntries.add(key[pos]);
+            }
+            key[last] = curr;
+        }
     }
 
     @Override
-    public ObjectIterator<K> iterator() {
-        if (CHECKS) {
-            Evolution.info("Allocating memory for an iterator!");
-        }
+    public ObjectIterator iterator() {
+        this.deprecatedSetMethod();
         return super.iterator();
     }
 
-    private void preSize(int size) {
-        if (this.f <= 0.5) {
-            this.ensureCapacity(size);
+    @Override
+    public long nextEntry(long it) {
+        if (this.isEmpty()) {
+            return 0;
+        }
+        int size = (int) (it & ITERATION_END);
+        if (--size == 0) {
+            return 0;
+        }
+        int pos = (int) (it >> 32);
+        final K[] key = this.key;
+        while (true) {
+            if (--pos < 0) {
+                return (long) pos << 32 | size;
+            }
+            if (key[pos] != null) {
+                return (long) pos << 32 | size;
+            }
+        }
+    }
+
+    @Override
+    public void removeIteration(long it) {
+        int pos = (int) (it >> 32);
+        if (pos == this.n) {
+            this.containsNull = false;
+            this.key[this.n] = null;
+        }
+        else if (pos >= 0) {
+            this.iterationShiftKeys(pos);
         }
         else {
-            this.tryCapacity(this.size() + size);
+            assert this.wrappedEntries != null;
+            K wrappedEntry;
+            try {
+                wrappedEntry = this.wrappedEntries.set(-pos - 1, null);
+            }
+            catch (IndexOutOfBoundsException e) {
+                throw new ConcurrentModificationException(e);
+            }
+            this.remove(wrappedEntry);
+            return;
         }
+        --this.size;
     }
 
     @Override
     public void trimCollection() {
         this.trim();
-    }
-
-    private void tryCapacity(long capacity) {
-        int needed = (int) Math.min(0x4000_0000L, Math.max(2L, HashCommon.nextPowerOfTwo((long) Math.ceil(capacity / this.f))));
-        if (needed > this.n) {
-            this.rehash(needed);
+        if (this.wrappedEntries != null) {
+            this.wrappedEntries.trim();
         }
     }
 
     @Override
     public @UnmodifiableView OSet<K> view() {
         if (this.view == null) {
-            this.view = new View(this);
+            this.view = new View<>(this);
         }
         return this.view;
     }

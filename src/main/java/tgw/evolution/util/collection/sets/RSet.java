@@ -2,9 +2,10 @@ package tgw.evolution.util.collection.sets;
 
 import it.unimi.dsi.fastutil.objects.ReferenceSet;
 import it.unimi.dsi.fastutil.objects.ReferenceSets;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 import tgw.evolution.util.collection.ICollectionExtension;
+
+import java.util.NoSuchElementException;
 
 public interface RSet<K> extends ReferenceSet<K>, ICollectionExtension {
 
@@ -12,47 +13,86 @@ public interface RSet<K> extends ReferenceSet<K>, ICollectionExtension {
         return EmptySet.EMPTY;
     }
 
-    default boolean addAll(RSet<? extends K> set) {
-        boolean modified = false;
-        for (K e = set.fastEntries(); e != null; e = set.fastEntries()) {
-            if (this.add(e)) {
-                modified = true;
-            }
-        }
-        return modified;
+    static <K> @UnmodifiableView RSet<K> of() {
+        return emptySet();
     }
 
-    default boolean containsAll(RSet<?> set) {
-        for (Object e = set.fastEntries(); e != null; e = set.fastEntries()) {
-            if (!this.contains(e)) {
-                set.resetIteration();
-                return false;
-            }
-        }
-        return true;
+    static <K> @UnmodifiableView RSet<K> of(K k) {
+        return singleton(k);
     }
 
-    @Nullable K fastEntries();
-
-    /**
-     * Gets the "first" element of this set. Used when collection size is 1.
-     */
-    @Nullable K getElement();
-
-    default boolean removeAll(RSet<?> set) {
-        boolean modified = false;
-        for (K e = this.fastEntries(); e != null; e = this.fastEntries()) {
-            if (set.contains(e)) {
-                this.remove(e);
-                modified = true;
+    @SafeVarargs
+    static <K> @UnmodifiableView RSet<K> of(K... ks) {
+        return switch (ks.length) {
+            case 0 -> emptySet();
+            case 1 -> singleton(ks[0]);
+            default -> {
+                RSet<K> set = new RHashSet<>(ks);
+                set.trimCollection();
+                yield set.view();
             }
-        }
-        return modified;
+        };
     }
 
-    void resetIteration();
+    static <K> @UnmodifiableView RSet<K> singleton(K k) {
+        return new Singleton<>(k);
+    }
+
+    long beginIteration();
+
+    K getIteration(long it);
+
+    K getSampleElement();
+
+    long nextEntry(long it);
+
+    void removeIteration(long it);
 
     @UnmodifiableView RSet<K> view();
+
+    class Singleton<K> extends ReferenceSets.Singleton<K> implements RSet<K> {
+
+        protected Singleton(K element) {
+            super(element);
+        }
+
+        @Override
+        public long beginIteration() {
+            return 1;
+        }
+
+        @Override
+        public K getIteration(long it) {
+            if (it != 1) {
+                throw new NoSuchElementException();
+            }
+            return this.element;
+        }
+
+        @Override
+        public K getSampleElement() {
+            return this.element;
+        }
+
+        @Override
+        public long nextEntry(long it) {
+            return 0;
+        }
+
+        @Override
+        public void removeIteration(long it) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void trimCollection() {
+        }
+
+        @Override
+        public @UnmodifiableView RSet<K> view() {
+            return this;
+        }
+    }
 
     class EmptySet<K> extends ReferenceSets.EmptySet<K> implements RSet<K> {
 
@@ -62,32 +102,28 @@ public interface RSet<K> extends ReferenceSet<K>, ICollectionExtension {
         }
 
         @Override
-        public boolean addAll(RSet<? extends K> set) {
+        public long beginIteration() {
+            return 0;
+        }
+
+        @Override
+        public K getIteration(long it) {
+            throw new NoSuchElementException("Empty set");
+        }
+
+        @Override
+        public K getSampleElement() {
+            throw new NoSuchElementException("Empty set");
+        }
+
+        @Override
+        public long nextEntry(long it) {
+            return 0;
+        }
+
+        @Override
+        public void removeIteration(long it) {
             throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public boolean containsAll(RSet<?> set) {
-            return false;
-        }
-
-        @Override
-        public @Nullable K fastEntries() {
-            return null;
-        }
-
-        @Override
-        public @Nullable K getElement() {
-            return null;
-        }
-
-        @Override
-        public boolean removeAll(RSet<?> set) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void resetIteration() {
         }
 
         @Override
@@ -102,26 +138,36 @@ public interface RSet<K> extends ReferenceSet<K>, ICollectionExtension {
 
     class View<K> extends ReferenceSets.UnmodifiableSet<K> implements RSet<K> {
 
-        protected final RSet<K> s;
+        protected final RSet<K> set;
 
         protected View(RSet<K> s) {
             super(s);
-            this.s = s;
+            this.set = s;
         }
 
         @Override
-        public @Nullable K fastEntries() {
-            return this.s.fastEntries();
+        public long beginIteration() {
+            return this.set.beginIteration();
         }
 
         @Override
-        public @Nullable K getElement() {
-            return this.s.getElement();
+        public K getIteration(long it) {
+            return this.set.getIteration(it);
         }
 
         @Override
-        public void resetIteration() {
-            this.s.resetIteration();
+        public K getSampleElement() {
+            return this.set.getSampleElement();
+        }
+
+        @Override
+        public long nextEntry(long it) {
+            return this.set.nextEntry(it);
+        }
+
+        @Override
+        public void removeIteration(long it) {
+            throw new UnsupportedOperationException();
         }
 
         @Override

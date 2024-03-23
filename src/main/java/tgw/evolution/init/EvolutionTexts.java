@@ -112,10 +112,6 @@ public final class EvolutionTexts {
     private EvolutionTexts() {
     }
 
-    private static MutableComponent arrow(MobEffectCategory category) {
-        return new TextComponent(" ► ").withStyle(category == BENEFICIAL ? DARK_GREEN : category == HARMFUL ? RED : DARK_YELLOW);
-    }
-
     public static FormattedText basicAttack() {
         return new TranslatableComponent("evolution.tooltip.basicAttack", Minecraft.getInstance().options.keyAttack.getTranslatedKeyMessage());
     }
@@ -160,6 +156,10 @@ public final class EvolutionTexts {
         return new TranslatableComponent(damage, TWO_PLACES.format(amount)).setStyle(DARK_RED);
     }
 
+    public static Component dmgMultiplier(double mult) {
+        return new TranslatableComponent("evolution.tooltip.damageMultiplier", TWO_PLACES.format(mult)).setStyle(AQUA);
+    }
+
 //    public static Component container(IItemFluidContainer container, ItemStack stack) {
 //        return new TranslatableComponent("evolution.tooltip.containerAmount",
 //                                         VOLUME.format(container.getAmount(stack) / 100.0f),
@@ -167,10 +167,6 @@ public final class EvolutionTexts {
 //                                         ((FluidGeneric) container.getFluid()).getTextComp() :
 //                                         "null").setStyle(BLUE);
 //    }
-
-    public static Component dmgMultiplier(double mult) {
-        return new TranslatableComponent("evolution.tooltip.damageMultiplier", TWO_PLACES.format(mult)).setStyle(AQUA);
-    }
 
     public static Component drink(int amount) {
         return new TextComponent(DRINK.format(amount));
@@ -335,7 +331,7 @@ public final class EvolutionTexts {
             return EMPTY;
         }
         if (set.size() == 1) {
-            return new TranslatableComponent("evolution.tooltip.structuralType", BEAM_TYPES.get(set.getElement())).setStyle(LIGHT_GREY);
+            return new TranslatableComponent("evolution.tooltip.structuralType", BEAM_TYPES.get(set.getSampleElement())).setStyle(LIGHT_GREY);
         }
         return new TranslatableComponent("evolution.tooltip.structuralType", set.stream().map(BEAM_TYPES::get).map(Component::getString).collect(Collectors.joining(", "))).setStyle(LIGHT_GREY);
     }
@@ -362,5 +358,9 @@ public final class EvolutionTexts {
 
     public static MutableComponent transl(String text) {
         return new TranslatableComponent(text);
+    }
+
+    private static MutableComponent arrow(MobEffectCategory category) {
+        return new TextComponent(" ► ").withStyle(category == BENEFICIAL ? DARK_GREEN : category == HARMFUL ? RED : DARK_YELLOW);
     }
 }

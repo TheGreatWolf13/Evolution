@@ -1,57 +1,57 @@
 package tgw.evolution.util.collection.sets;
 
-import it.unimi.dsi.fastutil.longs.LongSet;
-import it.unimi.dsi.fastutil.longs.LongSets;
+import it.unimi.dsi.fastutil.bytes.ByteSet;
+import it.unimi.dsi.fastutil.bytes.ByteSets;
 import org.jetbrains.annotations.UnmodifiableView;
 import tgw.evolution.util.collection.ICollectionExtension;
 
 import java.util.NoSuchElementException;
 
-public interface LSet extends LongSet, ICollectionExtension {
+public interface BSet extends ByteSet, ICollectionExtension {
 
-    static @UnmodifiableView LSet emptySet() {
+    static @UnmodifiableView BSet emptySet() {
         return EmptySet.EMPTY;
     }
 
-    static @UnmodifiableView LSet of() {
+    static @UnmodifiableView BSet of() {
         return emptySet();
     }
 
-    static @UnmodifiableView LSet of(long k) {
+    static @UnmodifiableView BSet of(byte k) {
         return singleton(k);
     }
 
-    static @UnmodifiableView LSet of(long... ks) {
+    static @UnmodifiableView BSet of(byte... ks) {
         return switch (ks.length) {
             case 0 -> emptySet();
             case 1 -> singleton(ks[0]);
             default -> {
-                LSet set = new LHashSet(ks);
+                BSet set = new BHashSet(ks);
                 set.trimCollection();
                 yield set.view();
             }
         };
     }
 
-    static @UnmodifiableView LSet singleton(long k) {
+    static @UnmodifiableView BSet singleton(byte k) {
         return new Singleton(k);
     }
 
     long beginIteration();
 
-    long getIteration(long it);
+    byte getIteration(long it);
 
-    long getSampleElement();
+    byte getSampleElement();
 
     long nextEntry(long it);
 
     void removeIteration(long it);
 
-    @UnmodifiableView LSet view();
+    @UnmodifiableView BSet view();
 
-    class Singleton extends LongSets.Singleton implements LSet {
+    class Singleton extends ByteSets.Singleton implements BSet {
 
-        protected Singleton(long element) {
+        protected Singleton(byte element) {
             super(element);
         }
 
@@ -61,7 +61,7 @@ public interface LSet extends LongSet, ICollectionExtension {
         }
 
         @Override
-        public long getIteration(long it) {
+        public byte getIteration(long it) {
             if (it != 1) {
                 throw new NoSuchElementException();
             }
@@ -69,7 +69,7 @@ public interface LSet extends LongSet, ICollectionExtension {
         }
 
         @Override
-        public long getSampleElement() {
+        public byte getSampleElement() {
             return this.element;
         }
 
@@ -88,12 +88,12 @@ public interface LSet extends LongSet, ICollectionExtension {
         }
 
         @Override
-        public @UnmodifiableView LSet view() {
+        public @UnmodifiableView BSet view() {
             return this;
         }
     }
 
-    class EmptySet extends LongSets.EmptySet implements LSet {
+    class EmptySet extends ByteSets.EmptySet implements BSet {
 
         protected static final EmptySet EMPTY = new EmptySet();
 
@@ -106,12 +106,12 @@ public interface LSet extends LongSet, ICollectionExtension {
         }
 
         @Override
-        public long getIteration(long it) {
+        public byte getIteration(long it) {
             throw new NoSuchElementException("Empty set");
         }
 
         @Override
-        public long getSampleElement() {
+        public byte getSampleElement() {
             throw new NoSuchElementException("Empty set");
         }
 
@@ -130,16 +130,16 @@ public interface LSet extends LongSet, ICollectionExtension {
         }
 
         @Override
-        public @UnmodifiableView LSet view() {
+        public @UnmodifiableView BSet view() {
             return this;
         }
     }
 
-    class View extends LongSets.UnmodifiableSet implements LSet {
+    class View extends ByteSets.UnmodifiableSet implements BSet {
 
-        protected final LSet set;
+        protected final BSet set;
 
-        protected View(LSet s) {
+        protected View(BSet s) {
             super(s);
             this.set = s;
         }
@@ -150,12 +150,12 @@ public interface LSet extends LongSet, ICollectionExtension {
         }
 
         @Override
-        public long getIteration(long it) {
+        public byte getIteration(long it) {
             return this.set.getIteration(it);
         }
 
         @Override
-        public long getSampleElement() {
+        public byte getSampleElement() {
             return this.set.getSampleElement();
         }
 
@@ -175,7 +175,7 @@ public interface LSet extends LongSet, ICollectionExtension {
         }
 
         @Override
-        public @UnmodifiableView LSet view() {
+        public @UnmodifiableView BSet view() {
             return this;
         }
     }

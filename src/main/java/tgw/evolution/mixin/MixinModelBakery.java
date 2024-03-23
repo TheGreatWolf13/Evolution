@@ -52,7 +52,7 @@ public abstract class MixinModelBakery {
         this.loadingStack.add(location);
         UnbakedModel unbakedmodel = this.unbakedCache.get(MISSING_MODEL_LOCATION);
         while (!this.loadingStack.isEmpty()) {
-            ResourceLocation loc = ((OSet<ResourceLocation>) this.loadingStack).getElement();
+            ResourceLocation loc = ((OSet<ResourceLocation>) this.loadingStack).getSampleElement();
             assert loc != null;
             try {
                 if (!this.unbakedCache.containsKey(loc)) {

@@ -1,57 +1,57 @@
 package tgw.evolution.util.collection.sets;
 
-import it.unimi.dsi.fastutil.longs.LongSet;
-import it.unimi.dsi.fastutil.longs.LongSets;
+import it.unimi.dsi.fastutil.doubles.DoubleSet;
+import it.unimi.dsi.fastutil.doubles.DoubleSets;
 import org.jetbrains.annotations.UnmodifiableView;
 import tgw.evolution.util.collection.ICollectionExtension;
 
 import java.util.NoSuchElementException;
 
-public interface LSet extends LongSet, ICollectionExtension {
+public interface DSet extends DoubleSet, ICollectionExtension {
 
-    static @UnmodifiableView LSet emptySet() {
+    static @UnmodifiableView DSet emptySet() {
         return EmptySet.EMPTY;
     }
 
-    static @UnmodifiableView LSet of() {
+    static @UnmodifiableView DSet of() {
         return emptySet();
     }
 
-    static @UnmodifiableView LSet of(long k) {
+    static @UnmodifiableView DSet of(double k) {
         return singleton(k);
     }
 
-    static @UnmodifiableView LSet of(long... ks) {
+    static @UnmodifiableView DSet of(double... ks) {
         return switch (ks.length) {
             case 0 -> emptySet();
             case 1 -> singleton(ks[0]);
             default -> {
-                LSet set = new LHashSet(ks);
+                DSet set = new DHashSet(ks);
                 set.trimCollection();
                 yield set.view();
             }
         };
     }
 
-    static @UnmodifiableView LSet singleton(long k) {
+    static @UnmodifiableView DSet singleton(double k) {
         return new Singleton(k);
     }
 
     long beginIteration();
 
-    long getIteration(long it);
+    double getIteration(long it);
 
-    long getSampleElement();
+    double getSampleElement();
 
     long nextEntry(long it);
 
     void removeIteration(long it);
 
-    @UnmodifiableView LSet view();
+    @UnmodifiableView DSet view();
 
-    class Singleton extends LongSets.Singleton implements LSet {
+    class Singleton extends DoubleSets.Singleton implements DSet {
 
-        protected Singleton(long element) {
+        protected Singleton(double element) {
             super(element);
         }
 
@@ -61,7 +61,7 @@ public interface LSet extends LongSet, ICollectionExtension {
         }
 
         @Override
-        public long getIteration(long it) {
+        public double getIteration(long it) {
             if (it != 1) {
                 throw new NoSuchElementException();
             }
@@ -69,7 +69,7 @@ public interface LSet extends LongSet, ICollectionExtension {
         }
 
         @Override
-        public long getSampleElement() {
+        public double getSampleElement() {
             return this.element;
         }
 
@@ -88,12 +88,12 @@ public interface LSet extends LongSet, ICollectionExtension {
         }
 
         @Override
-        public @UnmodifiableView LSet view() {
+        public @UnmodifiableView DSet view() {
             return this;
         }
     }
 
-    class EmptySet extends LongSets.EmptySet implements LSet {
+    class EmptySet extends DoubleSets.EmptySet implements DSet {
 
         protected static final EmptySet EMPTY = new EmptySet();
 
@@ -106,12 +106,12 @@ public interface LSet extends LongSet, ICollectionExtension {
         }
 
         @Override
-        public long getIteration(long it) {
+        public double getIteration(long it) {
             throw new NoSuchElementException("Empty set");
         }
 
         @Override
-        public long getSampleElement() {
+        public double getSampleElement() {
             throw new NoSuchElementException("Empty set");
         }
 
@@ -130,16 +130,16 @@ public interface LSet extends LongSet, ICollectionExtension {
         }
 
         @Override
-        public @UnmodifiableView LSet view() {
+        public @UnmodifiableView DSet view() {
             return this;
         }
     }
 
-    class View extends LongSets.UnmodifiableSet implements LSet {
+    class View extends DoubleSets.UnmodifiableSet implements DSet {
 
-        protected final LSet set;
+        protected final DSet set;
 
-        protected View(LSet s) {
+        protected View(DSet s) {
             super(s);
             this.set = s;
         }
@@ -150,12 +150,12 @@ public interface LSet extends LongSet, ICollectionExtension {
         }
 
         @Override
-        public long getIteration(long it) {
+        public double getIteration(long it) {
             return this.set.getIteration(it);
         }
 
         @Override
-        public long getSampleElement() {
+        public double getSampleElement() {
             return this.set.getSampleElement();
         }
 
@@ -175,7 +175,7 @@ public interface LSet extends LongSet, ICollectionExtension {
         }
 
         @Override
-        public @UnmodifiableView LSet view() {
+        public @UnmodifiableView DSet view() {
             return this;
         }
     }

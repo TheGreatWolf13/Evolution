@@ -142,9 +142,10 @@ public final class EvolutionStats {
     public static final StatType<Block> BLOCK_PLACED;
 
     static {
-        for (String e = EvolutionDamage.ALL_SOURCES.fastEntries(); e != null; e = EvolutionDamage.ALL_SOURCES.fastEntries()) {
+        for (long it = EvolutionDamage.ALL_SOURCES.beginIteration(); (it & 0xFFFF_FFFFL) != 0; it = EvolutionDamage.ALL_SOURCES.nextEntry(it)) {
+            String name = EvolutionDamage.ALL_SOURCES.getIteration(it);
             //noinspection ObjectAllocationInLoop
-            DEATH_SOURCE.put(e, registerCustom("death_" + e, DEFAULT));
+            DEATH_SOURCE.put(name, registerCustom("death_" + name, DEFAULT));
         }
         DEATH_SOURCE.trimCollection();
         DAMAGE_DEALT = Registry.register(Registry.STAT_TYPE, Evolution.getResource("damage_dealt"), new StatType<>(Registry.ENTITY_TYPE));

@@ -1,79 +1,79 @@
 package tgw.evolution.util.collection.sets;
 
 import it.unimi.dsi.fastutil.HashCommon;
-import it.unimi.dsi.fastutil.longs.LongCollection;
-import it.unimi.dsi.fastutil.longs.LongIterator;
-import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.doubles.DoubleCollection;
+import it.unimi.dsi.fastutil.doubles.DoubleIterator;
+import it.unimi.dsi.fastutil.doubles.DoubleOpenHashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
-import tgw.evolution.util.collection.lists.LArrayList;
+import tgw.evolution.util.collection.lists.DArrayList;
 
 import java.util.Collection;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-public class LHashSet extends LongOpenHashSet implements LSet {
+public class DHashSet extends DoubleOpenHashSet implements DSet {
 
     protected @Nullable View view;
-    protected @Nullable LArrayList wrappedEntries;
+    protected @Nullable DArrayList wrappedEntries;
 
-    public LHashSet(int expected, float f) {
+    public DHashSet(int expected, float f) {
         super(expected, f);
     }
 
-    public LHashSet(int expected) {
+    public DHashSet(int expected) {
         super(expected);
     }
 
-    public LHashSet() {
+    public DHashSet() {
     }
 
-    public LHashSet(Collection<? extends Long> c, float f) {
+    public DHashSet(Collection<? extends Double> c, float f) {
         super(c, f);
     }
 
-    public LHashSet(Collection<? extends Long> c) {
+    public DHashSet(Collection<? extends Double> c) {
         super(c);
     }
 
-    public LHashSet(LongCollection c, float f) {
+    public DHashSet(DoubleCollection c, float f) {
         super(c, f);
     }
 
-    public LHashSet(LongCollection c) {
+    public DHashSet(DoubleCollection c) {
         super(c);
     }
 
-    public LHashSet(LongIterator i, float f) {
+    public DHashSet(DoubleIterator i, float f) {
         super(i, f);
     }
 
-    public LHashSet(LongIterator i) {
+    public DHashSet(DoubleIterator i) {
         super(i);
     }
 
-    public LHashSet(Iterator<?> i, float f) {
+    public DHashSet(Iterator<?> i, float f) {
         super(i, f);
     }
 
-    public LHashSet(Iterator<?> i) {
+    public DHashSet(Iterator<?> i) {
         super(i);
     }
 
-    public LHashSet(long[] a, int offset, int length, float f) {
+    public DHashSet(double[] a, int offset, int length, float f) {
         super(a, offset, length, f);
     }
 
-    public LHashSet(long[] a, int offset, int length) {
+    public DHashSet(double[] a, int offset, int length) {
         super(a, offset, length);
     }
 
-    public LHashSet(long[] a, float f) {
+    public DHashSet(double[] a, float f) {
         super(a, f);
     }
 
-    public LHashSet(long[] a) {
+    public DHashSet(double[] a) {
         super(a);
     }
 
@@ -89,8 +89,8 @@ public class LHashSet extends LongOpenHashSet implements LSet {
             return (long) this.n << 32 | this.size;
         }
         for (int pos = this.n; pos-- != 0; ) {
-            long k = this.key[pos];
-            if (k != 0) {
+            double k = this.key[pos];
+            if (Double.doubleToLongBits(k) != 0L) {
                 return (long) pos << 32 | this.size;
             }
         }
@@ -98,7 +98,7 @@ public class LHashSet extends LongOpenHashSet implements LSet {
     }
 
     @Override
-    public long getIteration(long it) {
+    public double getIteration(long it) {
         int pos = (int) (it >> 32);
         if (pos >= 0) {
             return this.key[pos];
@@ -108,7 +108,7 @@ public class LHashSet extends LongOpenHashSet implements LSet {
     }
 
     @Override
-    public long getSampleElement() {
+    public double getSampleElement() {
         if (this.isEmpty()) {
             throw new NoSuchElementException("Empty set");
         }
@@ -116,8 +116,8 @@ public class LHashSet extends LongOpenHashSet implements LSet {
             return this.key[this.n];
         }
         for (int pos = this.n; pos-- != 0; ) {
-            long k = this.key[pos];
-            if (k != 0) {
+            double k = this.key[pos];
+            if (Double.doubleToLongBits(k) != 0L) {
                 return k;
             }
         }
@@ -126,17 +126,17 @@ public class LHashSet extends LongOpenHashSet implements LSet {
 
     protected void iterationShiftKeys(int pos) {
         // Shift entries with the same hash.
-        final long[] key = this.key;
+        final double[] key = this.key;
         while (true) {
             int last;
             pos = (last = pos) + 1 & this.mask;
-            long curr;
+            double curr;
             while (true) {
-                if ((curr = key[pos]) == 0) {
-                    key[last] = 0;
+                if (Double.doubleToLongBits(curr = key[pos]) == 0L) {
+                    key[last] = 0.0;
                     return;
                 }
-                int slot = (int) HashCommon.mix(curr) & this.mask;
+                int slot = HashCommon.mix(HashCommon.double2int(curr)) & this.mask;
                 if (last <= pos ? last >= slot || slot > pos : last >= slot && slot > pos) {
                     break;
                 }
@@ -144,7 +144,7 @@ public class LHashSet extends LongOpenHashSet implements LSet {
             }
             if (pos < last) {
                 if (this.wrappedEntries == null) {
-                    this.wrappedEntries = new LArrayList(2);
+                    this.wrappedEntries = new DArrayList(2);
                 }
                 this.wrappedEntries.add(key[pos]);
             }
@@ -153,7 +153,7 @@ public class LHashSet extends LongOpenHashSet implements LSet {
     }
 
     @Override
-    public LongIterator iterator() {
+    public DoubleIterator iterator() {
         this.deprecatedSetMethod();
         return super.iterator();
     }
@@ -168,12 +168,12 @@ public class LHashSet extends LongOpenHashSet implements LSet {
             return 0;
         }
         int pos = (int) (it >> 32);
-        final long[] key = this.key;
+        final double[] key = this.key;
         while (true) {
             if (--pos < 0) {
                 return (long) pos << 32 | size;
             }
-            if (key[pos] != 0) {
+            if (Double.doubleToLongBits(key[pos]) != 0L) {
                 return (long) pos << 32 | size;
             }
         }
@@ -184,16 +184,16 @@ public class LHashSet extends LongOpenHashSet implements LSet {
         int pos = (int) (it >> 32);
         if (pos == this.n) {
             this.containsNull = false;
-            this.key[this.n] = 0;
+            this.key[this.n] = 0.0;
         }
         else if (pos >= 0) {
             this.iterationShiftKeys(pos);
         }
         else {
             assert this.wrappedEntries != null;
-            long wrappedEntry;
+            double wrappedEntry;
             try {
-                wrappedEntry = this.wrappedEntries.getLong(-pos - 1);
+                wrappedEntry = this.wrappedEntries.getDouble(-pos - 1);
             }
             catch (IndexOutOfBoundsException e) {
                 throw new ConcurrentModificationException(e);
@@ -213,7 +213,7 @@ public class LHashSet extends LongOpenHashSet implements LSet {
     }
 
     @Override
-    public @UnmodifiableView LSet view() {
+    public @UnmodifiableView DSet view() {
         if (this.view == null) {
             this.view = new View(this);
         }

@@ -34,8 +34,8 @@ public abstract class MixinChunkMap_TrackedEntity {
     @Overwrite
     public void broadcast(Packet<?> packet) {
         RSet<ServerPlayerConnection> seenBy = (RSet<ServerPlayerConnection>) this.seenBy;
-        for (ServerPlayerConnection e = seenBy.fastEntries(); e != null; e = seenBy.fastEntries()) {
-            e.send(packet);
+        for (long it = seenBy.beginIteration(); (it & 0xFFFF_FFFFL) != 0; it = seenBy.nextEntry(it)) {
+            seenBy.getIteration(it).send(packet);
         }
     }
 
@@ -46,21 +46,9 @@ public abstract class MixinChunkMap_TrackedEntity {
     @Overwrite
     public void broadcastRemoved() {
         RSet<ServerPlayerConnection> seenBy = (RSet<ServerPlayerConnection>) this.seenBy;
-        for (ServerPlayerConnection e = seenBy.fastEntries(); e != null; e = seenBy.fastEntries()) {
-            this.serverEntity.removePairing(e.getPlayer());
+        for (long it = seenBy.beginIteration(); (it & 0xFFFF_FFFFL) != 0; it = seenBy.nextEntry(it)) {
+            this.serverEntity.removePairing(seenBy.getIteration(it).getPlayer());
         }
-    }
-
-    @Shadow
-    protected abstract int getEffectiveRange();
-
-    /**
-     * Uses less memory, and will cache the returned iterator.
-     */
-    @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lcom/google/common/collect/Sets;newIdentityHashSet()" +
-                                                                     "Ljava/util/Set;", remap = false))
-    private Set<ServerPlayerConnection> onInit() {
-        return new RHashSet<>();
     }
 
     /**
@@ -119,5 +107,13 @@ public abstract class MixinChunkMap_TrackedEntity {
                 this.serverEntity.removePairing(player);
             }
         }
+    }
+
+    @Shadow
+    protected abstract int getEffectiveRange();
+    
+    @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lcom/google/common/collect/Sets;newIdentityHashSet()Ljava/util/Set;", remap = false))
+    private Set<ServerPlayerConnection> onInit() {
+        return new RHashSet<>();
     }
 }

@@ -1007,19 +1007,19 @@ public class ClientEvents {
         }
         else {
             if (!desiredShaders.containsAll(currentShaders)) {
-                for (ISet.Entry e = currentShaders.fastEntries(); e != null; e = currentShaders.fastEntries()) {
+                for (long it = currentShaders.beginIteration(); (it & 0xFFFF_FFFFL) != 0; it = currentShaders.nextEntry(it)) {
                     //noinspection MagicConstant
-                    @Shader int shader = e.get();
+                    @Shader int shader = currentShaders.getIteration(it);
                     if (!desiredShaders.contains(shader)) {
-                        currentShaders.remove(shader);
+                        currentShaders.removeIteration(it);
                         mc.gameRenderer.shutdownShader(shader);
                     }
                 }
             }
             if (!currentShaders.containsAll(desiredShaders)) {
-                for (ISet.Entry e = desiredShaders.fastEntries(); e != null; e = desiredShaders.fastEntries()) {
+                for (long it = desiredShaders.beginIteration(); (it & 0xFFFF_FFFFL) != 0; it = desiredShaders.nextEntry(it)) {
                     //noinspection MagicConstant
-                    @Shader int shader = e.get();
+                    @Shader int shader = desiredShaders.getIteration(it);
                     if (currentShaders.add(shader)) {
                         ResourceLocation shaderLoc = this.getShader(shader);
                         if (shaderLoc != null) {

@@ -36,7 +36,8 @@ public class ResourceManagerHelperImpl implements ResourceManagerHelper {
     @SuppressWarnings("ObjectAllocationInLoop")
     public static void registerBuiltinResourcePacks(PackType resourceType, Consumer<Pack> consumer, Pack.PackConstructor factory) {
         // Loop through each registered built-in resource packs and add them if valid.
-        for (Pair<String, ModPackResources> e = BUILTIN_RESOURCE_PACKS.fastEntries(); e != null; e = BUILTIN_RESOURCE_PACKS.fastEntries()) {
+        for (long it = BUILTIN_RESOURCE_PACKS.beginIteration(); (it & 0xFFFF_FFFFL) != 0; it = BUILTIN_RESOURCE_PACKS.nextEntry(it)) {
+            Pair<String, ModPackResources> e = BUILTIN_RESOURCE_PACKS.getIteration(it);
             ModPackResources pack = e.getSecond();
             // Add the built-in pack only if namespaces for the specified resource type are present.
             if (!pack.getNamespaces(resourceType).isEmpty()) {
@@ -49,14 +50,6 @@ public class ResourceManagerHelperImpl implements ResourceManagerHelper {
         }
     }
 
-    public static OList<PreparableReloadListener> sort(@Nullable PackType type, List<PreparableReloadListener> listeners) {
-        ResourceManagerHelperImpl instance = get(type);
-        OList<PreparableReloadListener> mutable = new OArrayList<>(listeners);
-        instance.sort(mutable);
-        mutable.trimCollection();
-        return mutable.view();
-    }
-
     @Override
     public void registerReloadListener(IKeyedReloadListener listener) {
         if (!this.addedListenerIds.add(listener.getKey())) {
@@ -66,6 +59,14 @@ public class ResourceManagerHelperImpl implements ResourceManagerHelper {
         if (!this.addedListeners.add(listener)) {
             throw new RuntimeException("Listener with previously unknown ID " + listener.getKey() + " already in listener set!");
         }
+    }
+
+    public static OList<PreparableReloadListener> sort(@Nullable PackType type, List<PreparableReloadListener> listeners) {
+        ResourceManagerHelperImpl instance = get(type);
+        OList<PreparableReloadListener> mutable = new OArrayList<>(listeners);
+        instance.sort(mutable);
+        mutable.trimCollection();
+        return mutable.view();
     }
 
     protected void sort(OList<PreparableReloadListener> listeners) {
