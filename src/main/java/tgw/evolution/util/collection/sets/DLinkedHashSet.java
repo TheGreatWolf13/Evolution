@@ -1,17 +1,80 @@
 package tgw.evolution.util.collection.sets;
 
 import it.unimi.dsi.fastutil.HashCommon;
+import it.unimi.dsi.fastutil.doubles.DoubleCollection;
+import it.unimi.dsi.fastutil.doubles.DoubleIterator;
 import it.unimi.dsi.fastutil.doubles.DoubleLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.doubles.DoubleListIterator;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 import tgw.evolution.Evolution;
 
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 public class DLinkedHashSet extends DoubleLinkedOpenHashSet implements DSet {
 
     protected @Nullable View view;
+
+    public DLinkedHashSet(int expected, float f) {
+        super(expected, f);
+    }
+
+    public DLinkedHashSet(int expected) {
+        super(expected);
+    }
+
+    public DLinkedHashSet() {
+    }
+
+    public DLinkedHashSet(Collection<? extends Double> c, float f) {
+        super(c, f);
+    }
+
+    public DLinkedHashSet(Collection<? extends Double> c) {
+        super(c);
+    }
+
+    public DLinkedHashSet(DoubleCollection c, float f) {
+        super(c, f);
+    }
+
+    public DLinkedHashSet(DoubleCollection c) {
+        super(c);
+    }
+
+    public DLinkedHashSet(DoubleIterator i, float f) {
+        super(i, f);
+    }
+
+    public DLinkedHashSet(DoubleIterator i) {
+        super(i);
+    }
+
+    public DLinkedHashSet(Iterator<?> i, float f) {
+        super(i, f);
+    }
+
+    public DLinkedHashSet(Iterator<?> i) {
+        super(i);
+    }
+
+    public DLinkedHashSet(double[] a, int offset, int length, float f) {
+        super(a, offset, length, f);
+    }
+
+    public DLinkedHashSet(double[] a, int offset, int length) {
+        super(a, offset, length);
+    }
+
+    public DLinkedHashSet(double[] a, float f) {
+        super(a, f);
+    }
+
+    public DLinkedHashSet(double[] a) {
+        super(a);
+    }
 
     @Override
     public long beginIteration() {

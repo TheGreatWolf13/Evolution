@@ -1,17 +1,80 @@
 package tgw.evolution.util.collection.sets;
 
 import it.unimi.dsi.fastutil.HashCommon;
+import it.unimi.dsi.fastutil.bytes.ByteCollection;
+import it.unimi.dsi.fastutil.bytes.ByteIterator;
 import it.unimi.dsi.fastutil.bytes.ByteLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.bytes.ByteListIterator;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 import tgw.evolution.Evolution;
 
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 public class BLinkedHashSet extends ByteLinkedOpenHashSet implements BSet {
 
     protected @Nullable View view;
+
+    public BLinkedHashSet(int expected, float f) {
+        super(expected, f);
+    }
+
+    public BLinkedHashSet(int expected) {
+        super(expected);
+    }
+
+    public BLinkedHashSet() {
+    }
+
+    public BLinkedHashSet(Collection<? extends Byte> c, float f) {
+        super(c, f);
+    }
+
+    public BLinkedHashSet(Collection<? extends Byte> c) {
+        super(c);
+    }
+
+    public BLinkedHashSet(ByteCollection c, float f) {
+        super(c, f);
+    }
+
+    public BLinkedHashSet(ByteCollection c) {
+        super(c);
+    }
+
+    public BLinkedHashSet(ByteIterator i, float f) {
+        super(i, f);
+    }
+
+    public BLinkedHashSet(ByteIterator i) {
+        super(i);
+    }
+
+    public BLinkedHashSet(Iterator<?> i, float f) {
+        super(i, f);
+    }
+
+    public BLinkedHashSet(Iterator<?> i) {
+        super(i);
+    }
+
+    public BLinkedHashSet(byte[] a, int offset, int length, float f) {
+        super(a, offset, length, f);
+    }
+
+    public BLinkedHashSet(byte[] a, int offset, int length) {
+        super(a, offset, length);
+    }
+
+    public BLinkedHashSet(byte[] a, float f) {
+        super(a, f);
+    }
+
+    public BLinkedHashSet(byte[] a) {
+        super(a);
+    }
 
     @Override
     public long beginIteration() {

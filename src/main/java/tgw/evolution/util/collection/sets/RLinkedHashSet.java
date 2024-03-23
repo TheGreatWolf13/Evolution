@@ -2,16 +2,70 @@ package tgw.evolution.util.collection.sets;
 
 import it.unimi.dsi.fastutil.HashCommon;
 import it.unimi.dsi.fastutil.objects.ObjectListIterator;
+import it.unimi.dsi.fastutil.objects.ReferenceCollection;
 import it.unimi.dsi.fastutil.objects.ReferenceLinkedOpenHashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 import tgw.evolution.Evolution;
 
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 public class RLinkedHashSet<K> extends ReferenceLinkedOpenHashSet<K> implements RSet<K> {
 
     protected @Nullable View<K> view;
+
+    public RLinkedHashSet(int expected, float f) {
+        super(expected, f);
+    }
+
+    public RLinkedHashSet(int expected) {
+        super(expected);
+    }
+
+    public RLinkedHashSet() {
+    }
+
+    public RLinkedHashSet(Collection<? extends K> c, float f) {
+        super(c, f);
+    }
+
+    public RLinkedHashSet(Collection<? extends K> c) {
+        super(c);
+    }
+
+    public RLinkedHashSet(ReferenceCollection<? extends K> c, float f) {
+        super(c, f);
+    }
+
+    public RLinkedHashSet(ReferenceCollection<? extends K> c) {
+        super(c);
+    }
+
+    public RLinkedHashSet(Iterator<? extends K> i, float f) {
+        super(i, f);
+    }
+
+    public RLinkedHashSet(Iterator<? extends K> i) {
+        super(i);
+    }
+
+    public RLinkedHashSet(K[] a, int offset, int length, float f) {
+        super(a, offset, length, f);
+    }
+
+    public RLinkedHashSet(K[] a, int offset, int length) {
+        super(a, offset, length);
+    }
+
+    public RLinkedHashSet(K[] a, float f) {
+        super(a, f);
+    }
+
+    public RLinkedHashSet(K[] a) {
+        super(a);
+    }
 
     @Override
     public long beginIteration() {

@@ -1,17 +1,80 @@
 package tgw.evolution.util.collection.sets;
 
 import it.unimi.dsi.fastutil.HashCommon;
+import it.unimi.dsi.fastutil.shorts.ShortCollection;
+import it.unimi.dsi.fastutil.shorts.ShortIterator;
 import it.unimi.dsi.fastutil.shorts.ShortLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.shorts.ShortListIterator;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 import tgw.evolution.Evolution;
 
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 public class SLinkedHashSet extends ShortLinkedOpenHashSet implements SSet {
 
     protected @Nullable View view;
+
+    public SLinkedHashSet(int expected, float f) {
+        super(expected, f);
+    }
+
+    public SLinkedHashSet(int expected) {
+        super(expected);
+    }
+
+    public SLinkedHashSet() {
+    }
+
+    public SLinkedHashSet(Collection<? extends Short> c, float f) {
+        super(c, f);
+    }
+
+    public SLinkedHashSet(Collection<? extends Short> c) {
+        super(c);
+    }
+
+    public SLinkedHashSet(ShortCollection c, float f) {
+        super(c, f);
+    }
+
+    public SLinkedHashSet(ShortCollection c) {
+        super(c);
+    }
+
+    public SLinkedHashSet(ShortIterator i, float f) {
+        super(i, f);
+    }
+
+    public SLinkedHashSet(ShortIterator i) {
+        super(i);
+    }
+
+    public SLinkedHashSet(Iterator<?> i, float f) {
+        super(i, f);
+    }
+
+    public SLinkedHashSet(Iterator<?> i) {
+        super(i);
+    }
+
+    public SLinkedHashSet(short[] a, int offset, int length, float f) {
+        super(a, offset, length, f);
+    }
+
+    public SLinkedHashSet(short[] a, int offset, int length) {
+        super(a, offset, length);
+    }
+
+    public SLinkedHashSet(short[] a, float f) {
+        super(a, f);
+    }
+
+    public SLinkedHashSet(short[] a) {
+        super(a);
+    }
 
     @Override
     public long beginIteration() {

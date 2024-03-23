@@ -1,17 +1,71 @@
 package tgw.evolution.util.collection.sets;
 
 import it.unimi.dsi.fastutil.HashCommon;
+import it.unimi.dsi.fastutil.objects.ObjectCollection;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectListIterator;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 import tgw.evolution.Evolution;
 
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 public class OLinkedHashSet<K> extends ObjectLinkedOpenHashSet<K> implements OSet<K> {
 
     protected @Nullable View<K> view;
+
+    public OLinkedHashSet(int expected, float f) {
+        super(expected, f);
+    }
+
+    public OLinkedHashSet(int expected) {
+        super(expected);
+    }
+
+    public OLinkedHashSet() {
+    }
+
+    public OLinkedHashSet(Collection<? extends K> c, float f) {
+        super(c, f);
+    }
+
+    public OLinkedHashSet(Collection<? extends K> c) {
+        super(c);
+    }
+
+    public OLinkedHashSet(ObjectCollection<? extends K> c, float f) {
+        super(c, f);
+    }
+
+    public OLinkedHashSet(ObjectCollection<? extends K> c) {
+        super(c);
+    }
+
+    public OLinkedHashSet(Iterator<? extends K> i, float f) {
+        super(i, f);
+    }
+
+    public OLinkedHashSet(Iterator<? extends K> i) {
+        super(i);
+    }
+
+    public OLinkedHashSet(K[] a, int offset, int length, float f) {
+        super(a, offset, length, f);
+    }
+
+    public OLinkedHashSet(K[] a, int offset, int length) {
+        super(a, offset, length);
+    }
+
+    public OLinkedHashSet(K[] a, float f) {
+        super(a, f);
+    }
+
+    public OLinkedHashSet(K[] a) {
+        super(a);
+    }
 
     @Override
     public long beginIteration() {

@@ -1,17 +1,80 @@
 package tgw.evolution.util.collection.sets;
 
 import it.unimi.dsi.fastutil.HashCommon;
+import it.unimi.dsi.fastutil.longs.LongCollection;
+import it.unimi.dsi.fastutil.longs.LongIterator;
 import it.unimi.dsi.fastutil.longs.LongLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongListIterator;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 import tgw.evolution.Evolution;
 
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 public class LLinkedHashSet extends LongLinkedOpenHashSet implements LSet {
 
     protected @Nullable View view;
+
+    public LLinkedHashSet(int expected, float f) {
+        super(expected, f);
+    }
+
+    public LLinkedHashSet(int expected) {
+        super(expected);
+    }
+
+    public LLinkedHashSet() {
+    }
+
+    public LLinkedHashSet(Collection<? extends Long> c, float f) {
+        super(c, f);
+    }
+
+    public LLinkedHashSet(Collection<? extends Long> c) {
+        super(c);
+    }
+
+    public LLinkedHashSet(LongCollection c, float f) {
+        super(c, f);
+    }
+
+    public LLinkedHashSet(LongCollection c) {
+        super(c);
+    }
+
+    public LLinkedHashSet(LongIterator i, float f) {
+        super(i, f);
+    }
+
+    public LLinkedHashSet(LongIterator i) {
+        super(i);
+    }
+
+    public LLinkedHashSet(Iterator<?> i, float f) {
+        super(i, f);
+    }
+
+    public LLinkedHashSet(Iterator<?> i) {
+        super(i);
+    }
+
+    public LLinkedHashSet(long[] a, int offset, int length, float f) {
+        super(a, offset, length, f);
+    }
+
+    public LLinkedHashSet(long[] a, int offset, int length) {
+        super(a, offset, length);
+    }
+
+    public LLinkedHashSet(long[] a, float f) {
+        super(a, f);
+    }
+
+    public LLinkedHashSet(long[] a) {
+        super(a);
+    }
 
     @Override
     public long beginIteration() {

@@ -1,17 +1,80 @@
 package tgw.evolution.util.collection.sets;
 
 import it.unimi.dsi.fastutil.HashCommon;
+import it.unimi.dsi.fastutil.floats.FloatCollection;
+import it.unimi.dsi.fastutil.floats.FloatIterator;
 import it.unimi.dsi.fastutil.floats.FloatLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.floats.FloatListIterator;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 import tgw.evolution.Evolution;
 
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 public class FLinkedHashSet extends FloatLinkedOpenHashSet implements FSet {
 
     protected @Nullable View view;
+
+    public FLinkedHashSet(int expected, float f) {
+        super(expected, f);
+    }
+
+    public FLinkedHashSet(int expected) {
+        super(expected);
+    }
+
+    public FLinkedHashSet() {
+    }
+
+    public FLinkedHashSet(Collection<? extends Float> c, float f) {
+        super(c, f);
+    }
+
+    public FLinkedHashSet(Collection<? extends Float> c) {
+        super(c);
+    }
+
+    public FLinkedHashSet(FloatCollection c, float f) {
+        super(c, f);
+    }
+
+    public FLinkedHashSet(FloatCollection c) {
+        super(c);
+    }
+
+    public FLinkedHashSet(FloatIterator i, float f) {
+        super(i, f);
+    }
+
+    public FLinkedHashSet(FloatIterator i) {
+        super(i);
+    }
+
+    public FLinkedHashSet(Iterator<?> i, float f) {
+        super(i, f);
+    }
+
+    public FLinkedHashSet(Iterator<?> i) {
+        super(i);
+    }
+
+    public FLinkedHashSet(float[] a, int offset, int length, float f) {
+        super(a, offset, length, f);
+    }
+
+    public FLinkedHashSet(float[] a, int offset, int length) {
+        super(a, offset, length);
+    }
+
+    public FLinkedHashSet(float[] a, float f) {
+        super(a, f);
+    }
+
+    public FLinkedHashSet(float[] a) {
+        super(a);
+    }
 
     @Override
     public long beginIteration() {
