@@ -3,7 +3,9 @@ package tgw.evolution.util.collection.sets;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import it.unimi.dsi.fastutil.objects.ObjectSets;
 import org.jetbrains.annotations.UnmodifiableView;
+import tgw.evolution.util.collection.lists.OList;
 
+import java.util.Collection;
 import java.util.NoSuchElementException;
 
 public interface OSet<K> extends ObjectSet<K>, SetEv {
@@ -37,6 +39,26 @@ public interface OSet<K> extends ObjectSet<K>, SetEv {
         return new Singleton<>(k);
     }
 
+    @Override
+    default boolean addAll(Collection<? extends K> c) {
+        if (c instanceof OList<? extends K> list) {
+            boolean modified = false;
+            for (int i = 0, len = list.size(); i < len; ++i) {
+                if (this.add(list.get(i))) {
+                    modified = true;
+                }
+            }
+            return modified;
+        }
+        boolean modified = false;
+        for (K e : c) {
+            if (this.add(e)) {
+                modified = true;
+            }
+        }
+        return modified;
+    }
+
     long beginIteration();
 
     K getIteration(long it);
@@ -54,6 +76,11 @@ public interface OSet<K> extends ObjectSet<K>, SetEv {
         protected static final EmptySet EMPTY = new EmptySet();
 
         protected EmptySet() {
+        }
+
+        @Override
+        public boolean addAll(Collection<? extends K> c) {
+            throw new UnsupportedOperationException();
         }
 
         @Override
@@ -104,6 +131,11 @@ public interface OSet<K> extends ObjectSet<K>, SetEv {
         }
 
         @Override
+        public boolean addAll(Collection<? extends K> c) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
         public long beginIteration() {
             return 1;
         }
@@ -149,6 +181,11 @@ public interface OSet<K> extends ObjectSet<K>, SetEv {
         protected View(OSet<K> s) {
             super(s);
             this.set = s;
+        }
+
+        @Override
+        public boolean addAll(Collection<? extends K> c) {
+            throw new UnsupportedOperationException();
         }
 
         @Override

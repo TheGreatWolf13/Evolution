@@ -68,6 +68,17 @@ public class OLinkedHashSet<K> extends ObjectLinkedOpenHashSet<K> implements OSe
     }
 
     @Override
+    public boolean addAll(Collection<? extends K> c) {
+        if (this.f <= 0.5) {
+            this.ensureCapacity(c.size());
+        }
+        else {
+            this.tryCapacity(this.size() + c.size());
+        }
+        return OSet.super.addAll(c);
+    }
+
+    @Override
     public long beginIteration() {
         if (this.isEmpty()) {
             return -1;
@@ -187,5 +198,19 @@ public class OLinkedHashSet<K> extends ObjectLinkedOpenHashSet<K> implements OSe
             this.view = new View<>(this);
         }
         return this.view;
+    }
+
+    private void ensureCapacity(int capacity) {
+        int needed = HashCommon.arraySize(capacity, this.f);
+        if (needed > this.n) {
+            this.rehash(needed);
+        }
+    }
+
+    private void tryCapacity(long capacity) {
+        int needed = (int) Math.min(0x4000_0000L, Math.max(2L, HashCommon.nextPowerOfTwo((long) Math.ceil(capacity / this.f))));
+        if (needed > this.n) {
+            this.rehash(needed);
+        }
     }
 }
