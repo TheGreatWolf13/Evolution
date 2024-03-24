@@ -4,7 +4,9 @@ import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
+import tgw.evolution.util.collection.ArrayHelper;
 
+import java.lang.reflect.Array;
 import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.NoSuchElementException;
@@ -13,24 +15,43 @@ public class SimpleEnumSet<E extends Enum<E>> extends AbstractSet<E> implements 
 
     protected final Class<E> clazz;
     protected long data;
-    protected int lastPos = -1;
     protected final E[] values;
     protected @Nullable View<E> view;
 
-    public SimpleEnumSet(Class<E> clazz, E[] values) {
+    public SimpleEnumSet(Class<E> clazz) {
         if (!clazz.isEnum()) {
             throw new IllegalStateException("Class is not an Enum!");
         }
-        if (values.length > 64) {
+        E[] enums = ArrayHelper.getOrCacheArray(clazz);
+        if (enums.length > 64) {
             throw new IllegalStateException("Maximum supported size is 64!");
         }
-        this.values = values;
+        this.values = enums;
         this.clazz = clazz;
     }
 
     @Contract("_, _ -> new")
-    public static <E extends Enum<E>> SimpleEnumSet<E> of(E[] values, E e) {
-        SimpleEnumSet<E> set = new SimpleEnumSet<>((Class<E>) e.getClass(), values);
+    public static <E extends Enum<E>> SimpleEnumSet<E> of(Class<E> clazz, Collection<E> collection) {
+        SimpleEnumSet<E> set = new SimpleEnumSet<>(clazz);
+        for (E e : collection) {
+            //noinspection UseBulkOperation
+            set.add(e);
+        }
+        return set;
+    }
+
+    @Contract("_ -> new")
+    public static <E extends Enum<E>> SimpleEnumSet<E> of(E[] e) {
+        SimpleEnumSet<E> set = new SimpleEnumSet<>((Class<E>) e.getClass().getComponentType());
+        for (E e1 : e) {
+            set.add(e1);
+        }
+        return set;
+    }
+
+    @Contract("_ -> new")
+    public static <E extends Enum<E>> SimpleEnumSet<E> of(E e) {
+        SimpleEnumSet<E> set = new SimpleEnumSet<>((Class<E>) e.getClass());
         set.add(e);
         return set;
     }
@@ -84,7 +105,7 @@ public class SimpleEnumSet<E extends Enum<E>> extends AbstractSet<E> implements 
             return false;
         }
         Class<?> oClass = o.getClass();
-        if (oClass != this.clazz) {
+        if (oClass != this.clazz && oClass.getSuperclass() != this.clazz) {
             return false;
         }
         return (this.data & 1L << this.clazz.cast(o).ordinal()) != 0;
@@ -154,7 +175,7 @@ public class SimpleEnumSet<E extends Enum<E>> extends AbstractSet<E> implements 
     @Override
     public boolean remove(Object o) {
         Class<?> oClass = o.getClass();
-        if (oClass != this.clazz) {
+        if (oClass != this.clazz && oClass.getSuperclass() != this.clazz) {
             return false;
         }
         long oldData = this.data;
@@ -201,6 +222,17 @@ public class SimpleEnumSet<E extends Enum<E>> extends AbstractSet<E> implements 
     @Contract(pure = true)
     public int size() {
         return Long.bitCount(this.data);
+    }
+
+    @Override
+    public <T> T[] toArray(T[] a) {
+        int size = this.size();
+        T[] r = a.length >= size ? a : (T[]) Array.newInstance(a.getClass().getComponentType(), size);
+        int i = 0;
+        for (long it = this.beginIteration(); this.hasNextIteration(it); it = this.nextEntry(it)) {
+            r[i++] = (T) this.getIteration(it);
+        }
+        return r;
     }
 
     @Override

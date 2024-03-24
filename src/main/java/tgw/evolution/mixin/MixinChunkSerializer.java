@@ -68,75 +68,8 @@ public abstract class MixinChunkSerializer {
     }
 
     @Shadow
-    private static @Nullable ListTag getListOfCompoundsOrNull(CompoundTag compoundTag, String string) {
-        throw new AbstractMethodError();
-    }
-
-    @Shadow
-    private static void logErrors(ChunkPos pChunkPos, int pChunkSectionY, String pErrorMessage) {
-        throw new AbstractMethodError();
-    }
-
-    @Shadow
-    private static Codec<PalettedContainer<Holder<Biome>>> makeBiomeCodec(Registry<Biome> pBiomeRegistry) {
-        throw new AbstractMethodError();
-    }
-
-    /**
-     * @reason _
-     * @author TheGreatWolf
-     */
-    @Overwrite
-    private static void method_39797(@Nullable ListTag entities, ServerLevel level, @Nullable ListTag blockEntities, LevelChunk chunk) {
-        if (entities != null) {
-            level.addLegacyChunkEntities(EntityType.loadEntitiesRecursive(entities, level));
-        }
-        if (blockEntities != null) {
-            for (int i = 0, len = blockEntities.size(); i < len; ++i) {
-                CompoundTag nbt = blockEntities.getCompound(i);
-                boolean keepPacked = nbt.getBoolean("keepPacked");
-                if (keepPacked) {
-                    chunk.setBlockEntityNbt(nbt);
-                }
-                else {
-                    int x = nbt.getInt("x");
-                    int y = nbt.getInt("y");
-                    int z = nbt.getInt("z");
-                    BlockEntity blockEntity = TEUtils.loadStatic(x, y, z, chunk.getBlockState_(x, y, z), nbt);
-                    if (blockEntity != null) {
-                        chunk.setBlockEntity(blockEntity);
-                    }
-                }
-            }
-        }
-    }
-
-    @Shadow
     public static ListTag packOffsets(ShortList[] pList) {
         throw new AbstractMethodError();
-    }
-
-    @Shadow
-    private static CompoundTag packStructureData(StructurePieceSerializationContext pContext,
-                                                 ChunkPos pPos,
-                                                 Map<ConfiguredStructureFeature<?, ?>, StructureStart> pStructureMap,
-                                                 Map<ConfiguredStructureFeature<?, ?>, LongSet> pReferenceMap) {
-        throw new AbstractMethodError();
-    }
-
-    /**
-     * @reason _
-     * @author TheGreatWolf
-     */
-    @SuppressWarnings("ConstantConditions")
-    @Overwrite
-    private static @Nullable LevelChunk.PostLoadProcessor postLoadChunk(ServerLevel level, CompoundTag compoundTag) {
-        ListTag entities = getListOfCompoundsOrNull(compoundTag, "entities");
-        ListTag blockEntities = getListOfCompoundsOrNull(compoundTag, "block_entities");
-        if (entities == null && blockEntities == null) {
-            return null;
-        }
-        return chunk -> method_39797(entities, level, blockEntities, chunk);
     }
 
     /**
@@ -272,7 +205,7 @@ public abstract class MixinChunkSerializer {
         }
         chunkAccess.setLightCorrect(isLightOn);
         CompoundTag heightmaps = tag.getCompound("Heightmaps");
-        RSet<Heightmap.Types> types = new SimpleEnumSet<>(Heightmap.Types.class, ArrayHelper.HEIGHTMAP);
+        RSet<Heightmap.Types> types = new SimpleEnumSet<>(Heightmap.Types.class);
         for (Heightmap.Types type : chunkAccess.getStatus().heightmapsAfter()) {
             String s = type.getSerializationKey();
             if (heightmaps.contains(s, Tag.TAG_LONG_ARRAY)) {
@@ -289,7 +222,7 @@ public abstract class MixinChunkSerializer {
         if (tag.getBoolean("shouldSave")) {
             chunkAccess.setUnsaved(true);
         }
-        ListTag postProcessing = tag.getList("PostProcessing", 9);
+        ListTag postProcessing = tag.getList("PostProcessing", Tag.TAG_LIST);
         for (int i = 0; i < postProcessing.size(); ++i) {
             ListTag list = postProcessing.getList(i);
             for (int j = 0; j < list.size(); ++j) {
@@ -303,16 +236,16 @@ public abstract class MixinChunkSerializer {
             return new ImposterProtoChunk((LevelChunk) chunkAccess, false);
         }
         ProtoChunk protoChunk = (ProtoChunk) chunkAccess;
-        ListTag entities = tag.getList("entities", 10);
+        ListTag entities = tag.getList("entities", Tag.TAG_COMPOUND);
         for (int i = 0; i < entities.size(); ++i) {
             protoChunk.addEntity(entities.getCompound(i));
         }
-        ListTag blockEntities = tag.getList("block_entities", 10);
+        ListTag blockEntities = tag.getList("block_entities", Tag.TAG_COMPOUND);
         for (int i = 0; i < blockEntities.size(); ++i) {
             CompoundTag compound = blockEntities.getCompound(i);
             chunkAccess.setBlockEntityNbt(compound);
         }
-        ListTag lights = tag.getList("Lights", 9);
+        ListTag lights = tag.getList("Lights", Tag.TAG_LIST);
         for (int i = 0; i < lights.size(); ++i) {
             ListTag list = lights.getList(i);
             for (int j = 0; j < list.size(); ++j) {
@@ -329,22 +262,6 @@ public abstract class MixinChunkSerializer {
         protoChunk.setSkyNibbles(skyNibbles);
         //Load event
         return protoChunk;
-    }
-
-    @Shadow
-    private static void saveTicks(ServerLevel pLevel, CompoundTag pTag, ChunkAccess.TicksToSave pTicksToSave) {
-        throw new AbstractMethodError();
-    }
-
-    @Shadow
-    private static Map<ConfiguredStructureFeature<?, ?>, LongSet> unpackStructureReferences(RegistryAccess pReigstryAccess, ChunkPos pPos, CompoundTag pTag) {
-        throw new AbstractMethodError();
-    }
-
-    @Shadow
-    private static Map<ConfiguredStructureFeature<?, ?>, StructureStart> unpackStructureStart(
-            StructurePieceSerializationContext pContext, CompoundTag pTag, long pSeed) {
-        throw new AbstractMethodError();
     }
 
     /**
@@ -468,5 +385,88 @@ public abstract class MixinChunkSerializer {
         tag.put("Heightmaps", heightmaps);
         tag.put("structures", packStructureData(StructurePieceSerializationContext.fromLevel(level), pos, chunk.getAllStarts(), chunk.getAllReferences()));
         return tag;
+    }
+
+    @Shadow
+    private static @Nullable ListTag getListOfCompoundsOrNull(CompoundTag compoundTag, String string) {
+        throw new AbstractMethodError();
+    }
+
+    @Shadow
+    private static void logErrors(ChunkPos pChunkPos, int pChunkSectionY, String pErrorMessage) {
+        throw new AbstractMethodError();
+    }
+
+    @Shadow
+    private static Codec<PalettedContainer<Holder<Biome>>> makeBiomeCodec(Registry<Biome> pBiomeRegistry) {
+        throw new AbstractMethodError();
+    }
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Overwrite
+    private static void method_39797(@Nullable ListTag entities, ServerLevel level, @Nullable ListTag blockEntities, LevelChunk chunk) {
+        if (entities != null) {
+            level.addLegacyChunkEntities(EntityType.loadEntitiesRecursive(entities, level));
+        }
+        if (blockEntities != null) {
+            for (int i = 0, len = blockEntities.size(); i < len; ++i) {
+                CompoundTag nbt = blockEntities.getCompound(i);
+                boolean keepPacked = nbt.getBoolean("keepPacked");
+                if (keepPacked) {
+                    chunk.setBlockEntityNbt(nbt);
+                }
+                else {
+                    int x = nbt.getInt("x");
+                    int y = nbt.getInt("y");
+                    int z = nbt.getInt("z");
+                    BlockEntity blockEntity = TEUtils.loadStatic(x, y, z, chunk.getBlockState_(x, y, z), nbt);
+                    if (blockEntity != null) {
+                        chunk.setBlockEntity(blockEntity);
+                    }
+                }
+            }
+        }
+    }
+
+    @Shadow
+    private static CompoundTag packStructureData(StructurePieceSerializationContext pContext,
+                                                 ChunkPos pPos,
+                                                 Map<ConfiguredStructureFeature<?, ?>, StructureStart> pStructureMap,
+                                                 Map<ConfiguredStructureFeature<?, ?>, LongSet> pReferenceMap) {
+        throw new AbstractMethodError();
+    }
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @SuppressWarnings("ConstantConditions")
+    @Overwrite
+    private static @Nullable LevelChunk.PostLoadProcessor postLoadChunk(ServerLevel level, CompoundTag compoundTag) {
+        ListTag entities = getListOfCompoundsOrNull(compoundTag, "entities");
+        ListTag blockEntities = getListOfCompoundsOrNull(compoundTag, "block_entities");
+        if (entities == null && blockEntities == null) {
+            return null;
+        }
+        return chunk -> method_39797(entities, level, blockEntities, chunk);
+    }
+
+    @Shadow
+    private static void saveTicks(ServerLevel pLevel, CompoundTag pTag, ChunkAccess.TicksToSave pTicksToSave) {
+        throw new AbstractMethodError();
+    }
+
+    @Shadow
+    private static Map<ConfiguredStructureFeature<?, ?>, LongSet> unpackStructureReferences(RegistryAccess pReigstryAccess, ChunkPos pPos, CompoundTag pTag) {
+        throw new AbstractMethodError();
+    }
+
+    @Shadow
+    private static Map<ConfiguredStructureFeature<?, ?>, StructureStart> unpackStructureStart(
+            StructurePieceSerializationContext pContext, CompoundTag pTag, long pSeed) {
+        throw new AbstractMethodError();
     }
 }

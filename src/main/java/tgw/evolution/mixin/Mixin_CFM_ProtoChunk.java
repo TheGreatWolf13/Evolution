@@ -41,13 +41,13 @@ import java.util.stream.Stream;
 @Mixin(ProtoChunk.class)
 public abstract class Mixin_CFM_ProtoChunk extends ChunkAccess {
 
-    @Unique private final LList lights_;
     @Mutable @Shadow @Final @RestoreFinal private ProtoChunkTicks<Block> blockTicks;
     @Mutable @Shadow @Final @RestoreFinal private Map<GenerationStep.Carving, CarvingMask> carvingMasks;
     @Mutable @Shadow @Final @RestoreFinal private List<CompoundTag> entities;
     @Mutable @Shadow @Final @RestoreFinal private ProtoChunkTicks<Fluid> fluidTicks;
     @Shadow private volatile @Nullable LevelLightEngine lightEngine;
     @Shadow @Final @DeleteField private List<BlockPos> lights;
+    @Unique private final LList lights_;
     @Shadow private volatile ChunkStatus status;
 
     @DummyConstructor
@@ -303,7 +303,7 @@ public abstract class Mixin_CFM_ProtoChunk extends ChunkAccess {
                     Heightmap heightmap = this.heightmaps.get(type);
                     if (heightmap == null) {
                         if (toPrime == null) {
-                            toPrime = new SimpleEnumSet<>(Heightmap.Types.class, ArrayHelper.HEIGHTMAP);
+                            toPrime = new SimpleEnumSet<>(Heightmap.Types.class);
                         }
                         toPrime.add(type);
                     }

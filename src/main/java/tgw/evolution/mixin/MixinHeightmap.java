@@ -84,7 +84,7 @@ public abstract class MixinHeightmap {
                         ms.length +
                         ", got: " +
                         ls.length);
-            primeHeightmaps(chunkAccess, SimpleEnumSet.of(ArrayHelper.HEIGHTMAP, types));
+            primeHeightmaps(chunkAccess, SimpleEnumSet.of(types));
         }
     }
 
