@@ -33,10 +33,7 @@ public class SimpleEnumSet<E extends Enum<E>> extends AbstractSet<E> implements 
     @Contract("_, _ -> new")
     public static <E extends Enum<E>> SimpleEnumSet<E> of(Class<E> clazz, Collection<E> collection) {
         SimpleEnumSet<E> set = new SimpleEnumSet<>(clazz);
-        for (E e : collection) {
-            //noinspection UseBulkOperation
-            set.add(e);
-        }
+        set.addAll(collection);
         return set;
     }
 
@@ -140,6 +137,16 @@ public class SimpleEnumSet<E extends Enum<E>> extends AbstractSet<E> implements 
             }
         }
         throw new IllegalStateException("Should never reach here");
+    }
+
+    @Override
+    public int hashCode() {
+        int h = this.size();
+        for (long it = this.beginIteration(); this.hasNextIteration(it); it = this.nextEntry(it)) {
+            E e = this.getIteration(it);
+            h = h * 31 + e.hashCode();
+        }
+        return h;
     }
 
     @Contract(pure = true)

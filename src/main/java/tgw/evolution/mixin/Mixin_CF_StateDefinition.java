@@ -9,6 +9,9 @@ import com.mojang.serialization.Encoder;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.StateHolder;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.level.block.state.properties.Property;
 import org.spongepowered.asm.mixin.*;
 import tgw.evolution.Evolution;
@@ -16,10 +19,12 @@ import tgw.evolution.hooks.asm.DeleteField;
 import tgw.evolution.hooks.asm.ModifyConstructor;
 import tgw.evolution.hooks.asm.RestoreFinal;
 import tgw.evolution.patches.PatchStateDefinition;
+import tgw.evolution.util.UnregisteredFeatureException;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
+import tgw.evolution.util.collection.sets.ISet;
+import tgw.evolution.util.collection.sets.RSet;
 
-import java.util.Collection;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -54,24 +59,77 @@ public abstract class Mixin_CF_StateDefinition<O, S extends StateHolder<O, S>> i
         }
         int computedPossibilities = 1;
         for (Property<?> property : this.propertiesByName.values()) {
-            Collection<Comparable<?>> possibleValues = (Collection<Comparable<?>>) property.getPossibleValues();
-            int possibilities = possibleValues.size();
-            int repeat = numStates / possibilities;
-            int groupSize = repeat / computedPossibilities;
-            int groupNum = repeat / groupSize;
-            int spacing = (possibilities - 1) * groupSize;
-            int computedValues = 0;
-            for (Comparable<?> value : possibleValues) {
+            if (property instanceof IntegerProperty p) {
+                ISet values = p.values();
+                int possibilities = values.size();
+                int repeat = numStates / possibilities;
+                int groupSize = repeat / computedPossibilities;
+                int groupNum = repeat / groupSize;
+                int spacing = (possibilities - 1) * groupSize;
+                int computedValues = 0;
+                for (long it = values.beginIteration(); values.hasNextIteration(it); it = values.nextEntry(it)) {
+                    Integer value = values.getIteration(it);
+                    int index = groupSize * computedValues;
+                    for (int i = 0; i < groupNum; ++i) {
+                        for (int j = 0; j < groupSize; ++j) {
+                            listOfMapsOfPropertiesOfEveryState.get(index++).put(property, value);
+                        }
+                        index += spacing;
+                    }
+                    ++computedValues;
+                }
+                computedPossibilities *= possibilities;
+            }
+            else if (property instanceof EnumProperty p) {
+                RSet<Comparable<?>> values = p.values();
+                int possibilities = values.size();
+                int repeat = numStates / possibilities;
+                int groupSize = repeat / computedPossibilities;
+                int groupNum = repeat / groupSize;
+                int spacing = (possibilities - 1) * groupSize;
+                int computedValues = 0;
+                for (long it = values.beginIteration(); values.hasNextIteration(it); it = values.nextEntry(it)) {
+                    Comparable<?> value = values.getIteration(it);
+                    int index = groupSize * computedValues;
+                    for (int i = 0; i < groupNum; ++i) {
+                        for (int j = 0; j < groupSize; ++j) {
+                            listOfMapsOfPropertiesOfEveryState.get(index++).put(property, value);
+                        }
+                        index += spacing;
+                    }
+                    ++computedValues;
+                }
+                computedPossibilities *= possibilities;
+            }
+            else if (property instanceof BooleanProperty) {
+                //noinspection ConstantValue
+                int repeat = numStates / 2;
+                //noinspection ConstantValue
+                int groupSize = repeat / computedPossibilities;
+                //noinspection divzero
+                int groupNum = repeat / groupSize;
+                int computedValues = 0;
                 int index = groupSize * computedValues;
                 for (int i = 0; i < groupNum; ++i) {
                     for (int j = 0; j < groupSize; ++j) {
-                        listOfMapsOfPropertiesOfEveryState.get(index++).put(property, value);
+                        listOfMapsOfPropertiesOfEveryState.get(index++).put(property, Boolean.FALSE);
                     }
-                    index += spacing;
+                    index += groupSize;
                 }
                 ++computedValues;
+                index = groupSize * computedValues;
+                for (int i = 0; i < groupNum; ++i) {
+                    for (int j = 0; j < groupSize; ++j) {
+                        listOfMapsOfPropertiesOfEveryState.get(index++).put(property, Boolean.TRUE);
+                    }
+                    index += groupSize;
+                }
+                ++computedValues;
+                computedPossibilities *= 2;
             }
-            computedPossibilities *= possibilities;
+            else {
+                throw new UnregisteredFeatureException("Property not registered for StateDefinition: " + property.getName());
+            }
         }
         Map<Map<Property<?>, Comparable<?>>, S> mapToPopulate = Maps.newLinkedHashMap();
         for (int i = 0, len = listOfMapsOfPropertiesOfEveryState.size(); i < len; ++i) {

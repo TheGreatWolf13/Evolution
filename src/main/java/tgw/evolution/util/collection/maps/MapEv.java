@@ -5,7 +5,7 @@ import tgw.evolution.Evolution;
 
 public interface MapEv {
 
-    boolean CHECKS = false;
+    boolean CHECKS = true;
 
     void clear();
 
