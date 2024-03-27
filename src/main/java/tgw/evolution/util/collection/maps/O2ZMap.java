@@ -2,69 +2,199 @@ package tgw.evolution.util.collection.maps;
 
 import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
 import it.unimi.dsi.fastutil.objects.Object2BooleanMaps;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
-import tgw.evolution.util.collection.ICollectionExtension;
 
-public interface O2ZMap<K> extends Object2BooleanMap<K>, ICollectionExtension {
+import java.util.NoSuchElementException;
+
+public interface O2ZMap<K> extends Object2BooleanMap<K>, MapEv {
+
+    long beginIteration();
 
     @Override
     void clear();
 
-    /**
-     * @return An entry to be used in very fast, efficient iteration.<br>
-     * {@code null} means the iteration has finished. <br>
-     * The Entry itself is mutable and should not be cached anywhere. <br>
-     * Entries from the map can be removed during iteration by calling the {@link O2ZMap#remove(Object)} method as usual, however, the map will not
-     * rehash during iteration. If the map was asked to rehash during iteration, it will do so at the end of the process. Any other modification of
-     * the map during this process will probably break it, and no checks will be made. You have
-     * been warned. <br>
-     * The implementation is, of course, NOT thread-safe.
-     */
-    @Nullable Entry<K> fastEntries();
+    K getIterationKey(long it);
+
+    boolean getIterationValue(long it);
+
+    K getSampleKey();
+
+    boolean getSampleValue();
+
+    long nextEntry(long it);
+
+    long removeIteration(long it);
 
     @UnmodifiableView O2ZMap<K> view();
 
-    class Entry<K> {
-        protected @Nullable K k;
-        protected boolean v;
+    class EmptyMap<K> extends Object2BooleanMaps.EmptyMap<K> implements O2ZMap<K> {
 
-        @Contract(pure = true)
-        public K key() {
-            assert this.k != null;
-            return this.k;
+        @Override
+        public long beginIteration() {
+            return 0;
         }
 
-        @Contract(mutates = "this")
-        protected Entry<K> set(@Nullable K k, boolean v) {
-            this.k = k;
-            this.v = v;
+        @Override
+        public K getIterationKey(long it) {
+            throw new NoSuchElementException();
+        }
+
+        @Override
+        public boolean getIterationValue(long it) {
+            throw new NoSuchElementException();
+        }
+
+        @Override
+        public K getSampleKey() {
+            throw new NoSuchElementException();
+        }
+
+        @Override
+        public boolean getSampleValue() {
+            throw new NoSuchElementException();
+        }
+
+        @Override
+        public boolean hasNextIteration(long it) {
+            return false;
+        }
+
+        @Override
+        public long nextEntry(long it) {
+            throw new NoSuchElementException();
+        }
+
+        @Override
+        public long removeIteration(long it) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean trim() {
+            return false;
+        }
+
+        @Override
+        public @UnmodifiableView O2ZMap<K> view() {
             return this;
         }
+    }
 
-        @Contract(pure = true)
-        public boolean value() {
-            return this.v;
+    class Singleton<K> extends Object2BooleanMaps.Singleton<K> implements O2ZMap<K> {
+
+        protected Singleton(K key, boolean value) {
+            super(key, value);
+        }
+
+        @Override
+        public long beginIteration() {
+            return 1;
+        }
+
+        @Override
+        public void clear() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public K getIterationKey(long it) {
+            if (it != 1) {
+                throw new NoSuchElementException();
+            }
+            return this.key;
+        }
+
+        @Override
+        public boolean getIterationValue(long it) {
+            if (it != 1) {
+                throw new NoSuchElementException();
+            }
+            return this.value;
+        }
+
+        @Override
+        public K getSampleKey() {
+            return this.key;
+        }
+
+        @Override
+        public boolean getSampleValue() {
+            return this.value;
+        }
+
+        @Override
+        public long nextEntry(long it) {
+            return 0;
+        }
+
+        @Override
+        public long removeIteration(long it) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean trim() {
+            return false;
+        }
+
+        @Override
+        public @UnmodifiableView O2ZMap<K> view() {
+            return this;
         }
     }
 
     class View<K> extends Object2BooleanMaps.UnmodifiableMap<K> implements O2ZMap<K> {
 
-        protected final O2ZMap<K> map;
+        protected final O2ZMap<K> m;
 
-        protected View(O2ZMap<K> m) {
+        public View(O2ZMap<K> m) {
             super(m);
-            this.map = m;
+            this.m = m;
         }
 
         @Override
-        public @Nullable O2ZMap.Entry<K> fastEntries() {
-            return this.map.fastEntries();
+        public long beginIteration() {
+            return this.m.beginIteration();
         }
 
         @Override
-        public void trimCollection() {
+        public K getIterationKey(long it) {
+            return this.m.getIterationKey(it);
+        }
+
+        @Override
+        public boolean getIterationValue(long it) {
+            return this.m.getIterationValue(it);
+        }
+
+        @Override
+        public K getSampleKey() {
+            return this.m.getSampleKey();
+        }
+
+        @Override
+        public boolean getSampleValue() {
+            return this.m.getSampleValue();
+        }
+
+        @Override
+        public boolean hasNextIteration(long it) {
+            return this.m.hasNextIteration(it);
+        }
+
+        @Override
+        public long nextEntry(long it) {
+            return this.m.nextEntry(it);
+        }
+
+        @Override
+        public long removeIteration(long it) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean trim() {
+            throw new UnsupportedOperationException();
         }
 
         @Override

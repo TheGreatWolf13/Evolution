@@ -6,7 +6,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 import tgw.evolution.util.collection.lists.OList;
-import tgw.evolution.util.collection.maps.R2OEnumMap;
+import tgw.evolution.util.collection.maps.Enum2OMap;
 import tgw.evolution.util.collection.maps.R2OMap;
 
 public enum RecipeCategory {
@@ -32,12 +32,12 @@ public enum RecipeCategory {
     public static final R2OMap<RecipeCategory, OList<RecipeCategory>> AGGREGATE_CATEGORIES;
 
     static {
-        R2OMap<RecipeCategory, OList<RecipeCategory>> map = new R2OEnumMap<>(VALUES);
+        R2OMap<RecipeCategory, OList<RecipeCategory>> map = new Enum2OMap<>(RecipeCategory.class);
         map.put(CRAFTING_SEARCH, OList.of(CRAFTING_EQUIPMENT, CRAFTING_BUILDING_BLOCKS, CRAFTING_MISC));
         map.put(FURNACE_SEARCH, OList.of(FURNACE_FOOD, FURNACE_BLOCKS, FURNACE_MISC));
         map.put(BLAST_FURNACE_SEARCH, OList.of(BLAST_FURNACE_BLOCKS, BLAST_FURNACE_MISC));
         map.put(SMOKER_SEARCH, OList.of(SMOKER_FOOD));
-        map.trimCollection();
+        map.trim();
         AGGREGATE_CATEGORIES = map.view();
     }
 

@@ -1,7 +1,5 @@
 package tgw.evolution.capabilities.modular.part;
 
-import it.unimi.dsi.fastutil.bytes.Byte2ReferenceMap;
-import it.unimi.dsi.fastutil.bytes.Byte2ReferenceMaps;
 import it.unimi.dsi.fastutil.objects.ReferenceSet;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TranslatableComponent;
@@ -12,8 +10,8 @@ import tgw.evolution.capabilities.modular.IToolType;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionMaterials;
 import tgw.evolution.items.modular.part.*;
-import tgw.evolution.util.collection.maps.B2RHashMap;
-import tgw.evolution.util.collection.maps.B2RMap;
+import tgw.evolution.util.collection.maps.B2OHashMap;
+import tgw.evolution.util.collection.maps.B2OMap;
 import tgw.evolution.util.math.MathHelper;
 
 import java.util.random.RandomGenerator;
@@ -34,17 +32,17 @@ public final class PartTypes {
         KNIFE(2, "knife");
 
         public static final Blade[] VALUES = values();
-        private static final Byte2ReferenceMap<Blade> REGISTRY;
+        private static final B2OMap<Blade> REGISTRY;
 
         static {
-            B2RMap<Blade> map = new B2RHashMap<>();
+            B2OMap<Blade> map = new B2OHashMap<>();
             for (Blade blade : VALUES) {
                 if (map.put(blade.id, blade) != null) {
                     throw new IllegalStateException("Blade " + blade + " has duplicate id: " + blade.id);
                 }
             }
-            map.trimCollection();
-            REGISTRY = Byte2ReferenceMaps.unmodifiable(map);
+            map.trim();
+            REGISTRY = map.view();
         }
 
         private final Component component;
@@ -126,17 +124,17 @@ public final class PartTypes {
         CROSSGUARD(1, "crossguard");
 
         public static final Guard[] VALUES = values();
-        private static final Byte2ReferenceMap<Guard> REGISTRY;
+        private static final B2OMap<Guard> REGISTRY;
 
         static {
-            B2RMap<Guard> map = new B2RHashMap<>();
+            B2OMap<Guard> map = new B2OHashMap<>();
             for (Guard guard : VALUES) {
                 if (map.put(guard.id, guard) != null) {
                     throw new IllegalStateException("Guard " + guard + " has duplicate id: " + guard.id);
                 }
             }
-            map.trimCollection();
-            REGISTRY = Byte2ReferenceMaps.unmodifiable(map);
+            map.trim();
+            REGISTRY = map.view();
         }
 
         private final Component component;
@@ -219,17 +217,17 @@ public final class PartTypes {
         PICKAXE(3, "pickaxe", ReferenceSet.of(Material.STONE, Material.METAL));
 
         public static final HalfHead[] VALUES = values();
-        private static final Byte2ReferenceMap<HalfHead> REGISTRY;
+        private static final B2OMap<HalfHead> REGISTRY;
 
         static {
-            B2RMap<HalfHead> map = new B2RHashMap<>();
+            B2OMap<HalfHead> map = new B2OHashMap<>();
             for (HalfHead halfHead : VALUES) {
                 if (map.put(halfHead.id, halfHead) != null) {
                     throw new IllegalStateException("HalfHead " + halfHead + " has duplicate id: " + halfHead.id);
                 }
             }
-            map.trimCollection();
-            REGISTRY = Byte2ReferenceMaps.unmodifiable(map);
+            map.trim();
+            REGISTRY = map.view();
         }
 
         private final Component component;
@@ -316,17 +314,17 @@ public final class PartTypes {
         TWO_HANDED(2, "two_handed");
 
         public static final Handle[] VALUES = values();
-        private static final Byte2ReferenceMap<Handle> REGISTRY;
+        private static final B2OMap<Handle> REGISTRY;
 
         static {
-            B2RMap<Handle> map = new B2RHashMap<>();
+            B2OMap<Handle> map = new B2OHashMap<>();
             for (Handle handle : VALUES) {
                 if (map.put(handle.id, handle) != null) {
                     throw new IllegalStateException("Handle " + handle + " has duplicate id: " + handle.id);
                 }
             }
-            map.trimCollection();
-            REGISTRY = Byte2ReferenceMaps.unmodifiable(map);
+            map.trim();
+            REGISTRY = map.view();
         }
 
         private final Component component;
@@ -432,17 +430,17 @@ public final class PartTypes {
         SPEAR(7, "spear", ReferenceSet.of());
 
         public static final Head[] VALUES = values();
-        private static final Byte2ReferenceMap<Head> REGISTRY;
+        private static final B2OMap<Head> REGISTRY;
 
         static {
-            B2RMap<Head> map = new B2RHashMap<>();
+            B2OMap<Head> map = new B2OHashMap<>();
             for (Head head : VALUES) {
                 if (map.put(head.id, head) != null) {
                     throw new IllegalStateException("Head " + head + " has duplicate id: " + head.id);
                 }
             }
-            map.trimCollection();
-            REGISTRY = Byte2ReferenceMaps.unmodifiable(map);
+            map.trim();
+            REGISTRY = map.view();
         }
 
         private final Component component;
@@ -549,17 +547,17 @@ public final class PartTypes {
         ONE_HANDED(1, "one_handed");
 
         public static final Hilt[] VALUES = values();
-        private static final Byte2ReferenceMap<Hilt> REGISTRY;
+        private static final B2OMap<Hilt> REGISTRY;
 
         static {
-            B2RMap<Hilt> map = new B2RHashMap<>();
+            B2OMap<Hilt> map = new B2OHashMap<>();
             for (Hilt hilt : VALUES) {
                 if (map.put(hilt.id, hilt) != null) {
                     throw new IllegalStateException("Hilt " + hilt + " has duplicate id: " + hilt.id);
                 }
             }
-            map.trimCollection();
-            REGISTRY = Byte2ReferenceMaps.unmodifiable(map);
+            map.trim();
+            REGISTRY = map.view();
         }
 
         private final Component component;
@@ -653,17 +651,17 @@ public final class PartTypes {
         POLE(1, "pole");
 
         public static final Pole[] VALUES = values();
-        private static final Byte2ReferenceMap<Pole> REGISTRY;
+        private static final B2OMap<Pole> REGISTRY;
 
         static {
-            B2RMap<Pole> map = new B2RHashMap<>();
+            B2OMap<Pole> map = new B2OHashMap<>();
             for (Pole pole : VALUES) {
                 if (map.put(pole.id, pole) != null) {
                     throw new IllegalStateException("Pole " + pole + " has duplicate id: " + pole.id);
                 }
             }
-            map.trimCollection();
-            REGISTRY = Byte2ReferenceMaps.unmodifiable(map);
+            map.trim();
+            REGISTRY = map.view();
         }
 
         private final Component component;
@@ -754,17 +752,17 @@ public final class PartTypes {
         POMMEL(1, "pommel");
 
         public static final Pommel[] VALUES = values();
-        private static final Byte2ReferenceMap<Pommel> REGISTRY;
+        private static final B2OMap<Pommel> REGISTRY;
 
         static {
-            B2RMap<Pommel> map = new B2RHashMap<>();
+            B2OMap<Pommel> map = new B2OHashMap<>();
             for (Pommel pommel : VALUES) {
                 if (map.put(pommel.id, pommel) != null) {
                     throw new IllegalStateException("Pommel " + pommel + " has duplicate id: " + pommel.id);
                 }
             }
-            map.trimCollection();
-            REGISTRY = Byte2ReferenceMaps.unmodifiable(map);
+            map.trim();
+            REGISTRY = map.view();
         }
 
         private final Component component;

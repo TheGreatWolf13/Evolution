@@ -135,7 +135,7 @@ public class FHashSet extends FloatOpenHashSet implements FSet {
         if (this.isEmpty()) {
             return 0;
         }
-        int size = (int) (it & ITERATION_END);
+        int size = (int) it;
         if (--size == 0) {
             return 0;
         }

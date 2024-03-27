@@ -5,7 +5,10 @@ import tgw.evolution.Evolution;
 import tgw.evolution.util.UnregisteredFeatureException;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
-import tgw.evolution.util.collection.maps.*;
+import tgw.evolution.util.collection.maps.R2BHashMap;
+import tgw.evolution.util.collection.maps.R2BMap;
+import tgw.evolution.util.collection.maps.R2OHashMap;
+import tgw.evolution.util.collection.maps.R2OMap;
 import tgw.evolution.util.collection.sets.RHashSet;
 import tgw.evolution.util.collection.sets.RSet;
 
@@ -21,21 +24,20 @@ public final class HitboxRegistry {
         DUMMY = new HitboxRegistry(list);
     }
 
-    private final B2RMap<HitboxType> deserializer;
+    private final HitboxType[] deserializer;
     private final R2BMap<HitboxType> serializer;
 
     private HitboxRegistry(OList<HitboxType> list) {
         int size = list.size();
-        this.deserializer = new B2RHashMap<>();
+        this.deserializer = new HitboxType[size];
         this.serializer = new R2BHashMap<>();
         this.serializer.defaultReturnValue((byte) -1);
         for (byte b = 0; b < size; b++) {
             HitboxType type = list.get(b);
-            this.deserializer.put(b, type);
+            this.deserializer[b] = type;
             this.serializer.put(type, b);
         }
-        this.deserializer.trimCollection();
-        this.serializer.trimCollection();
+        this.serializer.trim();
     }
 
     public static long append(EntityType entity, HitboxType hitbox, long set) {
@@ -52,24 +54,11 @@ public final class HitboxRegistry {
             Evolution.warn("EntityType {} doesn't have registered hitboxes!", type);
             registry = DUMMY;
         }
-        final HitboxType hitboxType = registry.deserializer.get((byte) index);
+        final HitboxType hitboxType = registry.deserializer[index];
         if (hitboxType == null) {
             throw new UnregisteredFeatureException("EntityType " + type + " doesn't have HitboxType with id " + index + " registered!");
         }
         return hitboxType;
-    }
-
-    private static int getIndex(EntityType entity, HitboxType hitbox) {
-        HitboxRegistry hitboxRegistry = REGISTRY.get(entity);
-        if (hitboxRegistry == null) {
-            Evolution.warn("EntityType {} doesn't have registered hitboxes!", entity);
-            hitboxRegistry = DUMMY;
-        }
-        byte index = hitboxRegistry.serializer.getByte(hitbox);
-        if (index == -1) {
-            throw new UnregisteredFeatureException("EntityType " + entity + " doesn't have HitboxType " + hitbox + " registered!");
-        }
-        return index;
     }
 
     public static void register() {
@@ -115,10 +104,23 @@ public final class HitboxRegistry {
         spider.register(EntityType.CAVE_SPIDER);
     }
 
+    private static int getIndex(EntityType entity, HitboxType hitbox) {
+        HitboxRegistry hitboxRegistry = REGISTRY.get(entity);
+        if (hitboxRegistry == null) {
+            Evolution.warn("EntityType {} doesn't have registered hitboxes!", entity);
+            hitboxRegistry = DUMMY;
+        }
+        byte index = hitboxRegistry.serializer.getByte(hitbox);
+        if (index == -1) {
+            throw new UnregisteredFeatureException("EntityType " + entity + " doesn't have HitboxType " + hitbox + " registered!");
+        }
+        return index;
+    }
+
     public static final class Builder {
+        private int counter;
         private final OList<HitboxType> list = new OArrayList<>();
         private final RSet<HitboxType> set = new RHashSet<>();
-        private int counter;
 
         public Builder() {
             this.add(HitboxType.ALL);

@@ -1,30 +1,28 @@
 package tgw.evolution.util.constants;
 
-import it.unimi.dsi.fastutil.bytes.Byte2ReferenceMap;
-import it.unimi.dsi.fastutil.bytes.Byte2ReferenceMaps;
 import net.minecraft.world.level.block.Block;
 import tgw.evolution.Evolution;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.util.UnregisteredFeatureException;
-import tgw.evolution.util.collection.maps.B2RHashMap;
-import tgw.evolution.util.collection.maps.B2RMap;
+import tgw.evolution.util.collection.maps.B2OHashMap;
+import tgw.evolution.util.collection.maps.B2OMap;
 import tgw.evolution.util.math.MathHelper;
 
 public enum MetalVariant {
     COPPER(0, 8_920, HarvestLevel.LOW_METAL, 30.0F, 10.0F, 1.6f, true);
 
     public static final MetalVariant[] VALUES = values();
-    public static final Byte2ReferenceMap<MetalVariant> REGISTRY;
+    public static final B2OMap<MetalVariant> REGISTRY;
 
     static {
-        B2RMap<MetalVariant> map = new B2RHashMap<>();
+        B2OMap<MetalVariant> map = new B2OHashMap<>();
         for (MetalVariant variant : VALUES) {
             if (map.put(variant.id, variant) != null) {
                 throw new IllegalStateException("MetalVariant " + variant + " has duplicate id: " + variant.id);
             }
         }
-        map.trimCollection();
-        REGISTRY = Byte2ReferenceMaps.unmodifiable(map);
+        map.trim();
+        REGISTRY = map.view();
     }
 
     private final int density;

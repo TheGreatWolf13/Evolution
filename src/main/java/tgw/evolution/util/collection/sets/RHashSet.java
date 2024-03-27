@@ -81,9 +81,7 @@ public class RHashSet<K> extends ReferenceOpenHashSet<K> implements RSet<K> {
             return (long) this.n << 32 | this.size;
         }
         for (int pos = this.n; pos-- != 0; ) {
-            K k = this.key[pos];
-            //noinspection VariableNotUsedInsideIf
-            if (k != null) {
+            if (this.key[pos] != null) {
                 return (long) pos << 32 | this.size;
             }
         }
@@ -128,7 +126,7 @@ public class RHashSet<K> extends ReferenceOpenHashSet<K> implements RSet<K> {
         if (this.isEmpty()) {
             return 0;
         }
-        int size = (int) (it & ITERATION_END);
+        int size = (int) it;
         if (--size == 0) {
             return 0;
         }

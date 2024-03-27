@@ -24,9 +24,9 @@ import tgw.evolution.items.ItemBlock;
 import tgw.evolution.patches.PatchClientRecipeBook;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
-import tgw.evolution.util.collection.maps.R2OEnumMap;
+import tgw.evolution.util.collection.maps.Enum2OMap;
 import tgw.evolution.util.collection.maps.R2OMap;
-import tgw.evolution.util.collection.maps.RecipeGrouper;
+import tgw.evolution.util.collection.maps.custom.RecipeGrouper;
 
 import java.util.List;
 import java.util.Map;
@@ -58,7 +58,7 @@ public abstract class Mixin_CF_ClientRecipeBook extends RecipeBook implements Pa
 
     @Unique
     private static R2OMap<RecipeCategory, OList<OList<Recipe<?>>>> categorizeAndGroupRecipes_(Iterable<Recipe<?>> recipes) {
-        R2OMap<RecipeCategory, OList<OList<Recipe<?>>>> recipeLists = new R2OEnumMap<>(RecipeCategory.VALUES);
+        R2OMap<RecipeCategory, OList<OList<Recipe<?>>>> recipeLists = new Enum2OMap<>(RecipeCategory.class);
         RecipeGrouper table = new RecipeGrouper();
         for (Recipe<?> recipe : recipes) {
             if (!recipe.isSpecial()) {
@@ -176,10 +176,10 @@ public abstract class Mixin_CF_ClientRecipeBook extends RecipeBook implements Pa
     @Overwrite
     public void setupCollections(Iterable<Recipe<?>> recipes) {
         R2OMap<RecipeCategory, OList<OList<Recipe<?>>>> recipeLists = categorizeAndGroupRecipes_(recipes);
-        R2OMap<RecipeCategory, OList<RecipeCollection>> byTab = new R2OEnumMap<>(RecipeCategory.VALUES);
+        R2OMap<RecipeCategory, OList<RecipeCollection>> byTab = new Enum2OMap<>(RecipeCategory.class);
         OList<RecipeCollection> allRecipes = new OArrayList<>();
-        for (R2OMap.Entry<RecipeCategory, OList<OList<Recipe<?>>>> e = recipeLists.fastEntries(); e != null; e = recipeLists.fastEntries()) {
-            OList<OList<Recipe<?>>> value = e.value();
+        for (long it = recipeLists.beginIteration(); recipeLists.hasNextIteration(it); it = recipeLists.nextEntry(it)) {
+            OList<OList<Recipe<?>>> value = recipeLists.getIterationValue(it);
             int len = value.size();
             //noinspection ObjectAllocationInLoop
             OList<RecipeCollection> list = new OArrayList<>(len);
@@ -190,11 +190,11 @@ public abstract class Mixin_CF_ClientRecipeBook extends RecipeBook implements Pa
                 list.add(recipeCollection);
             }
             list.trim();
-            byTab.put(e.key(), list.view());
+            byTab.put(recipeLists.getIterationKey(it), list.view());
         }
         R2OMap<RecipeCategory, OList<RecipeCategory>> aggregate = RecipeCategory.AGGREGATE_CATEGORIES;
-        for (R2OMap.Entry<RecipeCategory, OList<RecipeCategory>> e = aggregate.fastEntries(); e != null; e = aggregate.fastEntries()) {
-            OList<RecipeCategory> value = e.value();
+        for (long it = aggregate.beginIteration(); aggregate.hasNextIteration(it); it = aggregate.nextEntry(it)) {
+            OList<RecipeCategory> value = aggregate.getIterationValue(it);
             //noinspection ObjectAllocationInLoop
             OList<RecipeCollection> list = new OArrayList<>();
             for (int i = 0, len = value.size(); i < len; ++i) {
@@ -205,9 +205,9 @@ public abstract class Mixin_CF_ClientRecipeBook extends RecipeBook implements Pa
                 }
             }
             list.trim();
-            byTab.put(e.key(), list.view());
+            byTab.put(aggregate.getIterationKey(it), list.view());
         }
-        byTab.trimCollection();
+        byTab.trim();
         this.recipesByTab = byTab.view();
         allRecipes.trim();
         this.allRecipes = allRecipes.view();

@@ -396,6 +396,21 @@
       ],
       "net/minecraft/world/level/levelgen/blockpredicates/BlockPredicate": [
         "tgw/evolution/patches/PatchBlockPredicate"
+      ],
+      "net/minecraft/world/level/block/state/properties/IntegerProperty": [
+        "tgw/evolution/patches/PatchIntegerProperty"
+      ],
+      "net/minecraft/world/level/block/state/properties/BooleanProperty": [
+        "tgw/evolution/patches/PatchBooleanProperty"
+      ],
+      "net/minecraft/world/level/block/state/properties/EnumProperty": [
+        "tgw/evolution/patches/PatchEnumProperty"
+      ],
+      "net/minecraft/world/level/block/state/StateDefinition": [
+        "tgw/evolution/patches/PatchStateDefinition"
+      ],
+      "net/minecraft/world/level/block/state/properties/Property": [
+        "tgw/evolution/patches/PatchProperty"
       ]
     }
   }

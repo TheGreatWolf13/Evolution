@@ -69,19 +69,19 @@ import java.util.stream.Stream;
 @Mixin(LevelChunk.class)
 public abstract class Mixin_CFM_LevelChunk extends ChunkAccess implements PatchLevelChunk {
 
+    @Shadow @Final static Logger LOGGER;
     @Unique private static final ThreadLocal<IList> TO_UPDATE = ThreadLocal.withInitial(IArrayList::new);
     @Unique private static final ThreadLocal<ChunkHolder> HOLDER = ThreadLocal.withInitial(ChunkHolder::new);
-    @Shadow @Final static Logger LOGGER;
     @Shadow @Final private static TickingBlockEntity NULL_TICKER;
-    @Unique private final CapabilityChunkStorage chunkStorage;
-    @Unique private final L2OMap<LevelChunk.RebindableTickingBlockEntityWrapper> tickersInLevel_;
     @Mutable @Shadow @Final @RestoreFinal public Level level;
     @Mutable @Shadow @Final @RestoreFinal private LevelChunkTicks<Block> blockTicks;
+    @Unique private final CapabilityChunkStorage chunkStorage;
     @Shadow private boolean clientLightReady;
     @Mutable @Shadow @Final @RestoreFinal private LevelChunkTicks<Fluid> fluidTicks;
     @Mutable @Shadow @Final @RestoreFinal private Int2ObjectMap<GameEventDispatcher> gameEventDispatcherSections;
     @Shadow private @Nullable LevelChunk.PostLoadProcessor postLoad;
     @Shadow @Final @DeleteField private Map<BlockPos, LevelChunk.RebindableTickingBlockEntityWrapper> tickersInLevel;
+    @Unique private final L2OMap<LevelChunk.RebindableTickingBlockEntityWrapper> tickersInLevel_;
 
     @ModifyConstructor
     public Mixin_CFM_LevelChunk(Level level,
@@ -117,8 +117,8 @@ public abstract class Mixin_CFM_LevelChunk extends ChunkAccess implements PatchL
         this(level, protoChunk.getPos(), protoChunk.getUpgradeData(), protoChunk.unpackBlockTicks(), protoChunk.unpackFluidTicks(),
              protoChunk.getInhabitedTime(), protoChunk.getSections(), processor, protoChunk.getBlendingData());
         L2OMap<BlockEntity> tes = protoChunk.blockEntities_();
-        for (L2OMap.Entry<BlockEntity> e = tes.fastEntries(); e != null; e = tes.fastEntries()) {
-            this.setBlockEntity(e.value());
+        for (long it = tes.beginIteration(); tes.hasNextIteration(it); it = tes.nextEntry(it)) {
+            this.setBlockEntity(tes.getIterationValue(it));
         }
         this.pendingBlockEntities_().putAll(protoChunk.pendingBlockEntities_());
         for (int i = 0; i < protoChunk.getPostProcessing().length; ++i) {
@@ -143,9 +143,6 @@ public abstract class Mixin_CFM_LevelChunk extends ChunkAccess implements PatchL
     @Shadow
     public abstract void addAndRegisterBlockEntity(BlockEntity pBlockEntity);
 
-    @Shadow
-    protected abstract <T extends BlockEntity> void addGameEventListener(T blockEntity);
-
     /**
      * @author TheGreatWolf
      * @reason Replace maps
@@ -153,37 +150,16 @@ public abstract class Mixin_CFM_LevelChunk extends ChunkAccess implements PatchL
     @Overwrite
     public void clearAllBlockEntities() {
         L2OMap<BlockEntity> tes = this.blockEntities_();
-        for (L2OMap.Entry<BlockEntity> e = tes.fastEntries(); e != null; e = tes.fastEntries()) {
-            e.value().setRemoved();
+        for (long it = tes.beginIteration(); tes.hasNextIteration(it); it = tes.nextEntry(it)) {
+            tes.getIterationValue(it).setRemoved();
         }
         tes.clear();
         L2OMap<LevelChunk.RebindableTickingBlockEntityWrapper> tickers = this.tickersInLevel_;
-        for (L2OMap.Entry<LevelChunk.RebindableTickingBlockEntityWrapper> e = tickers.fastEntries(); e != null; e = tickers.fastEntries()) {
-            e.value().rebind(NULL_TICKER);
+        for (long it = tickers.beginIteration(); tickers.hasNextIteration(it); it = tickers.nextEntry(it)) {
+            tickers.getIterationValue(it).rebind(NULL_TICKER);
         }
         tickers.clear();
     }
-
-    /**
-     * @author TheGreatWolf
-     * @reason _
-     */
-    @Overwrite
-    @DeleteMethod
-    private @Nullable BlockEntity createBlockEntity(BlockPos pos) {
-        throw new AbstractMethodError();
-    }
-
-    @Unique
-    private @Nullable BlockEntity createBlockEntity_(int x, int y, int z) {
-        BlockState state = this.getBlockState_(x, y, z);
-        //It's fine to allocate here, since this BlockPos will be saved to the BlockEntity itself
-        return !state.hasBlockEntity() ? null : ((EntityBlock) state.getBlock()).newBlockEntity(new BlockPos(x, y, z), state);
-    }
-
-    @Shadow
-    protected abstract <T extends BlockEntity> TickingBlockEntity createTicker(T blockEntity,
-                                                                               BlockEntityTicker<T> blockEntityTicker);
 
     /**
      * @author TheGreatWolf
@@ -409,9 +385,6 @@ public abstract class Mixin_CFM_LevelChunk extends ChunkAccess implements PatchL
         return list;
     }
 
-    @Shadow
-    protected abstract boolean isInLevel();
-
     /**
      * @reason _
      * @author TheGreatWolf
@@ -458,8 +431,8 @@ public abstract class Mixin_CFM_LevelChunk extends ChunkAccess implements PatchL
             }
         }
         L2OMap<CompoundTag> pendingBlockEntities = this.pendingBlockEntities_();
-        for (L2OMap.Entry<CompoundTag> e = pendingBlockEntities.fastEntries(); e != null; e = pendingBlockEntities.fastEntries()) {
-            long pos = e.key();
+        for (long it = pendingBlockEntities.beginIteration(); pendingBlockEntities.hasNextIteration(it); it = pendingBlockEntities.nextEntry(it)) {
+            long pos = pendingBlockEntities.getIterationKey(it);
             this.getBlockEntity_(BlockPos.getX(pos), BlockPos.getY(pos), BlockPos.getZ(pos));
         }
         pendingBlockEntities.clear();
@@ -536,43 +509,6 @@ public abstract class Mixin_CFM_LevelChunk extends ChunkAccess implements PatchL
 
     /**
      * @author TheGreatWolf
-     * @reason _
-     */
-    @Overwrite
-    @DeleteMethod
-    private @Nullable BlockEntity promotePendingBlockEntity(BlockPos pos, CompoundTag tag) {
-        throw new AbstractMethodError();
-    }
-
-    @Unique
-    private @Nullable BlockEntity promotePendingBlockEntity_(int x, int y, int z, CompoundTag tag) {
-        BlockState state = this.getBlockState_(x, y, z);
-        BlockEntity blockEntity;
-        if ("DUMMY".equals(tag.getString("id"))) {
-            if (state.hasBlockEntity()) {
-                //It's fine to allocate here, since this BlockPos will be saved to the BlockEntity itself
-                blockEntity = ((EntityBlock) state.getBlock()).newBlockEntity(new BlockPos(x, y, z), state);
-            }
-            else {
-                blockEntity = null;
-                LOGGER.warn("Tried to load a DUMMY block entity at [{}, {}, {}] but found not block entity block {} at location", x, y, z, state);
-            }
-        }
-        else {
-            blockEntity = TEUtils.loadStatic(x, y, z, state, tag);
-        }
-        if (blockEntity != null) {
-            blockEntity.setLevel(this.level);
-            this.addAndRegisterBlockEntity(blockEntity);
-        }
-        else {
-            LOGGER.warn("Tried to load a block entity for block {} but failed at location [{}, {}, {}]", state, x, y, z);
-        }
-        return blockEntity;
-    }
-
-    /**
-     * @author TheGreatWolf
      * @reason Replace maps
      */
     @Overwrite
@@ -595,14 +531,6 @@ public abstract class Mixin_CFM_LevelChunk extends ChunkAccess implements PatchL
         this.removeBlockEntity_(pos.asLong());
     }
 
-    @Unique
-    private void removeBlockEntityTicker_(long pos) {
-        LevelChunk.RebindableTickingBlockEntityWrapper w = this.tickersInLevel_.remove(pos);
-        if (w != null) {
-            w.rebind(NULL_TICKER);
-        }
-    }
-
     @Override
     public void removeBlockEntity_(long pos) {
         if (this.isInLevel()) {
@@ -614,9 +542,6 @@ public abstract class Mixin_CFM_LevelChunk extends ChunkAccess implements PatchL
         }
         this.removeBlockEntityTicker_(pos);
     }
-
-    @Shadow
-    protected abstract <T extends BlockEntity> void removeGameEventListener(T blockEntity);
 
     @Override
     public void replaceWithPacketData_(FriendlyByteBuf buf, CompoundTag tag, Consumer<IBlockEntityTagOutput> consumer) {
@@ -731,6 +656,81 @@ public abstract class Mixin_CFM_LevelChunk extends ChunkAccess implements PatchL
 
     @Shadow
     public abstract void setClientLightReady(boolean bl);
+
+    @Shadow
+    protected abstract <T extends BlockEntity> void addGameEventListener(T blockEntity);
+
+    @Shadow
+    protected abstract <T extends BlockEntity> TickingBlockEntity createTicker(T blockEntity,
+                                                                               BlockEntityTicker<T> blockEntityTicker);
+
+    @Shadow
+    protected abstract boolean isInLevel();
+
+    @Shadow
+    protected abstract <T extends BlockEntity> void removeGameEventListener(T blockEntity);
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    @DeleteMethod
+    private @Nullable BlockEntity createBlockEntity(BlockPos pos) {
+        throw new AbstractMethodError();
+    }
+
+    @Unique
+    private @Nullable BlockEntity createBlockEntity_(int x, int y, int z) {
+        BlockState state = this.getBlockState_(x, y, z);
+        //It's fine to allocate here, since this BlockPos will be saved to the BlockEntity itself
+        return !state.hasBlockEntity() ? null : ((EntityBlock) state.getBlock()).newBlockEntity(new BlockPos(x, y, z), state);
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    @DeleteMethod
+    private @Nullable BlockEntity promotePendingBlockEntity(BlockPos pos, CompoundTag tag) {
+        throw new AbstractMethodError();
+    }
+
+    @Unique
+    private @Nullable BlockEntity promotePendingBlockEntity_(int x, int y, int z, CompoundTag tag) {
+        BlockState state = this.getBlockState_(x, y, z);
+        BlockEntity blockEntity;
+        if ("DUMMY".equals(tag.getString("id"))) {
+            if (state.hasBlockEntity()) {
+                //It's fine to allocate here, since this BlockPos will be saved to the BlockEntity itself
+                blockEntity = ((EntityBlock) state.getBlock()).newBlockEntity(new BlockPos(x, y, z), state);
+            }
+            else {
+                blockEntity = null;
+                LOGGER.warn("Tried to load a DUMMY block entity at [{}, {}, {}] but found not block entity block {} at location", x, y, z, state);
+            }
+        }
+        else {
+            blockEntity = TEUtils.loadStatic(x, y, z, state, tag);
+        }
+        if (blockEntity != null) {
+            blockEntity.setLevel(this.level);
+            this.addAndRegisterBlockEntity(blockEntity);
+        }
+        else {
+            LOGGER.warn("Tried to load a block entity for block {} but failed at location [{}, {}, {}]", state, x, y, z);
+        }
+        return blockEntity;
+    }
+
+    @Unique
+    private void removeBlockEntityTicker_(long pos) {
+        LevelChunk.RebindableTickingBlockEntityWrapper w = this.tickersInLevel_.remove(pos);
+        if (w != null) {
+            w.rebind(NULL_TICKER);
+        }
+    }
 
     /**
      * The last part of the Atm Priming. Here, we will propagate all the pending updates within this chunk.

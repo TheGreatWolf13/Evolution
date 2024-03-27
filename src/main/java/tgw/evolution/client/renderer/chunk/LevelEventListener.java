@@ -42,9 +42,9 @@ import static net.minecraft.world.level.block.LevelEvent.*;
 
 public class LevelEventListener {
 
+    private @Nullable ClientLevel level;
     private final Minecraft mc;
     private final L2OMap<SoundInstance> playingRecords = new L2OHashMap<>();
-    private @Nullable ClientLevel level;
 
     public LevelEventListener(Minecraft mc) {
         this.mc = mc;
@@ -83,60 +83,6 @@ public class LevelEventListener {
             category.setDetail("Position", () -> CrashReportCategory.formatLocation(this.level, x, y, z));
             throw new ReportedException(crash);
         }
-    }
-
-    private <T extends ParticleOptions> void addParticle(T particle, double x, double y, double z, double velX, double velY, double velZ) {
-        this.addParticle(particle, particle.getType().getOverrideLimiter(), false, x, y, z, velX, velY, velZ);
-    }
-
-    /**
-     * @param force if {@code true}, the particle will be created regardless of its distance from the camera and the
-     *              {@linkplain #calculateParticleLevel(boolean) calculated particle level}
-     * @param decr  if {@code true}, and the {@linkplain net.minecraft.client.Options#particles particles option} is set to minimal, attempts to
-     *              spawn the particle at a decreased level
-     */
-    private @Nullable Particle addParticleInternal(ParticleOptions particle,
-                                                   boolean force,
-                                                   boolean decr,
-                                                   double x,
-                                                   double y,
-                                                   double z,
-                                                   double velX,
-                                                   double velY,
-                                                   double velZ) {
-        Camera camera = this.mc.gameRenderer.getMainCamera();
-        if (camera.isInitialized()) {
-            if (force) {
-                return this.mc.particleEngine.createParticle(particle, x, y, z, velX, velY, velZ);
-            }
-            if (camera.getPosition().distanceToSqr(x, y, z) > 1_024) {
-                return null;
-            }
-            return this.calculateParticleLevel(decr) == ParticleStatus.MINIMAL ?
-                   null :
-                   this.mc.particleEngine.createParticle(particle, x, y, z, velX, velY, velZ);
-        }
-        return null;
-    }
-
-    /**
-     * Calculates the level of particles to use based on the {@linkplain net.minecraft.client.Options#particles particles
-     * option} and the specified {@code decreased} parameter. This leads to randomly generating more or less particles
-     * than the set option.
-     *
-     * @param decr if {@code true}, and the {@linkplain net.minecraft.client.Options#particles particles option} is
-     *             set to minimal, has a 1 in 10 chance to return a decreased level and a further 1 in 3 chance to minimise it
-     */
-    private ParticleStatus calculateParticleLevel(boolean decr) {
-        assert this.level != null;
-        ParticleStatus particleStatus = this.mc.options.particles;
-        if (decr && particleStatus == ParticleStatus.MINIMAL && this.level.random.nextInt(10) == 0) {
-            particleStatus = ParticleStatus.DECREASED;
-        }
-        if (particleStatus == ParticleStatus.DECREASED && this.level.random.nextInt(3) == 0) {
-            return ParticleStatus.MINIMAL;
-        }
-        return particleStatus;
     }
 
     public void levelEvent(@LvlEvent int type, int x, int y, int z, int data) {
@@ -361,11 +307,6 @@ public class LevelEventListener {
         }
     }
 
-    private void playLocalSound(int x, int y, int z, SoundEvent sound, SoundSource source, float volume, float pitch) {
-        assert this.level != null;
-        this.level.playLocalSound(x + 0.5, y + 0.5, z + 0.5, sound, source, volume, pitch, false);
-    }
-
     public void playStreamingMusic(@Nullable SoundEvent soundEvent, BlockPos pos, @Nullable RecordItem disc) {
         long packed = pos.asLong();
         assert this.level != null;
@@ -389,7 +330,66 @@ public class LevelEventListener {
         this.level = level;
         if (level == null) {
             this.playingRecords.clear();
-            this.playingRecords.trimCollection();
+            this.playingRecords.trim();
         }
+    }
+
+    private <T extends ParticleOptions> void addParticle(T particle, double x, double y, double z, double velX, double velY, double velZ) {
+        this.addParticle(particle, particle.getType().getOverrideLimiter(), false, x, y, z, velX, velY, velZ);
+    }
+
+    /**
+     * @param force if {@code true}, the particle will be created regardless of its distance from the camera and the
+     *              {@linkplain #calculateParticleLevel(boolean) calculated particle level}
+     * @param decr  if {@code true}, and the {@linkplain net.minecraft.client.Options#particles particles option} is set to minimal, attempts to
+     *              spawn the particle at a decreased level
+     */
+    private @Nullable Particle addParticleInternal(ParticleOptions particle,
+                                                   boolean force,
+                                                   boolean decr,
+                                                   double x,
+                                                   double y,
+                                                   double z,
+                                                   double velX,
+                                                   double velY,
+                                                   double velZ) {
+        Camera camera = this.mc.gameRenderer.getMainCamera();
+        if (camera.isInitialized()) {
+            if (force) {
+                return this.mc.particleEngine.createParticle(particle, x, y, z, velX, velY, velZ);
+            }
+            if (camera.getPosition().distanceToSqr(x, y, z) > 1_024) {
+                return null;
+            }
+            return this.calculateParticleLevel(decr) == ParticleStatus.MINIMAL ?
+                   null :
+                   this.mc.particleEngine.createParticle(particle, x, y, z, velX, velY, velZ);
+        }
+        return null;
+    }
+
+    /**
+     * Calculates the level of particles to use based on the {@linkplain net.minecraft.client.Options#particles particles
+     * option} and the specified {@code decreased} parameter. This leads to randomly generating more or less particles
+     * than the set option.
+     *
+     * @param decr if {@code true}, and the {@linkplain net.minecraft.client.Options#particles particles option} is
+     *             set to minimal, has a 1 in 10 chance to return a decreased level and a further 1 in 3 chance to minimise it
+     */
+    private ParticleStatus calculateParticleLevel(boolean decr) {
+        assert this.level != null;
+        ParticleStatus particleStatus = this.mc.options.particles;
+        if (decr && particleStatus == ParticleStatus.MINIMAL && this.level.random.nextInt(10) == 0) {
+            particleStatus = ParticleStatus.DECREASED;
+        }
+        if (particleStatus == ParticleStatus.DECREASED && this.level.random.nextInt(3) == 0) {
+            return ParticleStatus.MINIMAL;
+        }
+        return particleStatus;
+    }
+
+    private void playLocalSound(int x, int y, int z, SoundEvent sound, SoundSource source, float volume, float pitch) {
+        assert this.level != null;
+        this.level.playLocalSound(x + 0.5, y + 0.5, z + 0.5, sound, source, volume, pitch, false);
     }
 }

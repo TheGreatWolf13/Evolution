@@ -1,13 +1,11 @@
 package tgw.evolution.init;
 
-import it.unimi.dsi.fastutil.bytes.Byte2ReferenceMap;
-import it.unimi.dsi.fastutil.bytes.Byte2ReferenceMaps;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.sounds.SoundEvent;
 import tgw.evolution.capabilities.modular.part.PartTypes;
-import tgw.evolution.util.collection.maps.B2RHashMap;
-import tgw.evolution.util.collection.maps.B2RMap;
+import tgw.evolution.util.collection.maps.B2OHashMap;
+import tgw.evolution.util.collection.maps.B2OMap;
 import tgw.evolution.util.constants.HarvestLevel;
 import tgw.evolution.util.math.MathHelper;
 
@@ -46,17 +44,17 @@ public enum EvolutionMaterials {
     WOOD(23, "wood", Type.WOOD, HarvestLevel.HAND, 1_500, 4, 10, 105, false);
 
     public static final EvolutionMaterials[] VALUES = values();
-    private static final Byte2ReferenceMap<EvolutionMaterials> REGISTRY;
+    private static final B2OMap<EvolutionMaterials> REGISTRY;
 
     static {
-        B2RMap<EvolutionMaterials> map = new B2RHashMap<>();
+        B2OMap<EvolutionMaterials> map = new B2OHashMap<>();
         for (EvolutionMaterials material : VALUES) {
             if (map.put(material.id, material) != null) {
                 throw new IllegalStateException("EvolutionMaterials " + material + " has duplicate id: " + material.id);
             }
         }
-        map.trimCollection();
-        REGISTRY = Byte2ReferenceMaps.unmodifiable(map);
+        map.trim();
+        REGISTRY = map.view();
     }
 
     private final boolean brittle;

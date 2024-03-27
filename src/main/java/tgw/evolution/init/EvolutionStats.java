@@ -147,13 +147,17 @@ public final class EvolutionStats {
             //noinspection ObjectAllocationInLoop
             DEATH_SOURCE.put(name, registerCustom("death_" + name, DEFAULT));
         }
-        DEATH_SOURCE.trimCollection();
+        DEATH_SOURCE.trim();
         DAMAGE_DEALT = Registry.register(Registry.STAT_TYPE, Evolution.getResource("damage_dealt"), new StatType<>(Registry.ENTITY_TYPE));
         DAMAGE_TAKEN = Registry.register(Registry.STAT_TYPE, Evolution.getResource("damage_taken"), new StatType<>(Registry.ENTITY_TYPE));
         BLOCK_PLACED = Registry.register(Registry.STAT_TYPE, Evolution.getResource("block_placed"), new StatType<>(Registry.BLOCK));
     }
 
     private EvolutionStats() {
+    }
+
+    public static void register() {
+        //This is called on the <clinit> of Stats.
     }
 
     private static Map<EvolutionDamage.Type, ResourceLocation> genDamage(String pattern, EvolutionDamage.Type[] types) {
@@ -164,10 +168,6 @@ public final class EvolutionStats {
             map.put(dmgType, registerCustom("damage_" + dmgType.getName() + "_" + pattern, DAMAGE));
         }
         return map;
-    }
-
-    public static void register() {
-        //This is called on the <clinit> of Stats.
     }
 
     private static ResourceLocation registerCustom(String key, StatFormatter formatter) {

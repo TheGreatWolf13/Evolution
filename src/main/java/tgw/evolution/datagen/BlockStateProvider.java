@@ -23,11 +23,11 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.BlockLog;
 import tgw.evolution.blocks.BlockXYZAxis;
 import tgw.evolution.blocks.tileentities.SchematicMode;
-import tgw.evolution.blocks.util.IntProperty;
 import tgw.evolution.datagen.blockstates.ConfiguredModel;
 import tgw.evolution.datagen.blockstates.IGeneratedBlockstate;
 import tgw.evolution.datagen.blockstates.MultiPartBlockStateBuilder;
@@ -183,8 +183,8 @@ public class BlockStateProvider implements EvolutionDataProvider<ResourceLocatio
         }
     }
 
-    public void blockIntegerProperty(Block block, IntProperty property, Int2ObjectFunction<ModelFile> modelMaker) {
-        for (int i = property.getMinValue(); i <= property.getMaxValue(); i++) {
+    public void blockIntegerProperty(Block block, IntegerProperty property, Int2ObjectFunction<ModelFile> modelMaker) {
+        for (int i = property.minValue(); i <= property.maxValue(); i++) {
             //noinspection ObjectAllocationInLoop
             this.getVariantBuilder(block).partialState().with(property, i).setModels(new ConfiguredModel(modelMaker.get(i)));
         }
@@ -267,6 +267,58 @@ public class BlockStateProvider implements EvolutionDataProvider<ResourceLocatio
 
     public BlockModelProvider models() {
         return this.blockModels;
+    }
+
+    @Override
+    public void run(HashCache cache) throws IOException {
+        this.models().clear();
+        this.itemModels().clear();
+        this.registeredBlocks.clear();
+        this.registerStatesAndModels();
+        this.models().generateAll(cache);
+        this.itemModels().generateAll(cache);
+        for (Reference2ObjectMap.Entry<Block, IGeneratedBlockstate> entry : this.registeredBlocks.reference2ObjectEntrySet()) {
+            this.saveBlockState(cache, entry.getValue().toJson(), entry.getKey());
+        }
+    }
+
+    public void simpleBlock(Block block, ModelFile model) {
+        this.simpleBlock(block, new ConfiguredModel(model));
+    }
+
+    public void simpleBlock(Block block, ConfiguredModel... models) {
+        if (Registry.ITEM.get(Registry.BLOCK.getKey(block)) != Items.AIR) {
+            this.itemModels().simpleBlock(block);
+        }
+        this.getVariantBuilder(block).partialState().setModels(models);
+    }
+
+    public void simpleBlock(Block block) {
+        this.simpleBlock(block, this.cubeAll(block));
+    }
+
+    public void simpleBlockNoItem(Block block, ModelFile model) {
+        this.simpleBlockNoItem(block, new ConfiguredModel(model));
+    }
+
+    public void simpleBlockNoItem(Block block, ConfiguredModel... models) {
+        this.getVariantBuilder(block).partialState().setModels(models);
+    }
+
+    public void simpleBlockWithRandomRotation(Block block) {
+        this.simpleBlockWithRandomRotation(block, this.cubeAll(block));
+    }
+
+    public void simpleBlockWithRandomRotation(Block block, ModelFile model) {
+        this.simpleBlock(block, new ConfiguredModel(model),
+                         new ConfiguredModel(model, 0, 90, false),
+                         new ConfiguredModel(model, 0, 180, false),
+                         new ConfiguredModel(model, 0, 270, false));
+    }
+
+    @Override
+    public String type() {
+        return "BlockState";
     }
 
     protected void registerStatesAndModels() {
@@ -480,62 +532,10 @@ public class BlockStateProvider implements EvolutionDataProvider<ResourceLocatio
         }
     }
 
-    @Override
-    public void run(HashCache cache) throws IOException {
-        this.models().clear();
-        this.itemModels().clear();
-        this.registeredBlocks.clear();
-        this.registerStatesAndModels();
-        this.models().generateAll(cache);
-        this.itemModels().generateAll(cache);
-        for (Reference2ObjectMap.Entry<Block, IGeneratedBlockstate> entry : this.registeredBlocks.reference2ObjectEntrySet()) {
-            this.saveBlockState(cache, entry.getValue().toJson(), entry.getKey());
-        }
-    }
-
     private void saveBlockState(HashCache cache, JsonObject stateJson, Block owner) {
         ResourceLocation blockName = Registry.BLOCK.getKey(owner);
         Path path = this.generator.getOutputFolder().resolve(this.makePath(blockName));
         this.save(cache, stateJson, path, blockName);
-    }
-
-    public void simpleBlock(Block block, ModelFile model) {
-        this.simpleBlock(block, new ConfiguredModel(model));
-    }
-
-    public void simpleBlock(Block block, ConfiguredModel... models) {
-        if (Registry.ITEM.get(Registry.BLOCK.getKey(block)) != Items.AIR) {
-            this.itemModels().simpleBlock(block);
-        }
-        this.getVariantBuilder(block).partialState().setModels(models);
-    }
-
-    public void simpleBlock(Block block) {
-        this.simpleBlock(block, this.cubeAll(block));
-    }
-
-    public void simpleBlockNoItem(Block block, ModelFile model) {
-        this.simpleBlockNoItem(block, new ConfiguredModel(model));
-    }
-
-    public void simpleBlockNoItem(Block block, ConfiguredModel... models) {
-        this.getVariantBuilder(block).partialState().setModels(models);
-    }
-
-    public void simpleBlockWithRandomRotation(Block block) {
-        this.simpleBlockWithRandomRotation(block, this.cubeAll(block));
-    }
-
-    public void simpleBlockWithRandomRotation(Block block, ModelFile model) {
-        this.simpleBlock(block, new ConfiguredModel(model),
-                         new ConfiguredModel(model, 0, 90, false),
-                         new ConfiguredModel(model, 0, 180, false),
-                         new ConfiguredModel(model, 0, 270, false));
-    }
-
-    @Override
-    public String type() {
-        return "BlockState";
     }
 
     public static class ConfiguredModelList {

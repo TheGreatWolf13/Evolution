@@ -339,16 +339,16 @@ public abstract class MixinChunkSerializer {
         }
         ListTag blockEntities = new ListTag();
         L2OMap<CompoundTag> pendingBlockEntities = chunk.pendingBlockEntities_();
-        for (L2OMap.Entry<CompoundTag> e = pendingBlockEntities.fastEntries(); e != null; e = pendingBlockEntities.fastEntries()) {
-            long p = e.key();
+        for (long it = pendingBlockEntities.beginIteration(); pendingBlockEntities.hasNextIteration(it); it = pendingBlockEntities.nextEntry(it)) {
+            long p = pendingBlockEntities.getIterationKey(it);
             CompoundTag teTag = chunk.getBlockEntityNbtForSaving_(BlockPos.getX(p), BlockPos.getY(p), BlockPos.getZ(p));
             if (teTag != null) {
                 blockEntities.add(teTag);
             }
         }
         L2OMap<BlockEntity> blockEntitiess = chunk.blockEntities_();
-        for (L2OMap.Entry<BlockEntity> e = blockEntitiess.fastEntries(); e != null; e = blockEntitiess.fastEntries()) {
-            long p = e.key();
+        for (long it = blockEntitiess.beginIteration(); blockEntitiess.hasNextIteration(it); it = blockEntitiess.nextEntry(it)) {
+            long p = blockEntitiess.getIterationKey(it);
             CompoundTag teTag = chunk.getBlockEntityNbtForSaving_(BlockPos.getX(p), BlockPos.getY(p), BlockPos.getZ(p));
             if (teTag != null) {
                 blockEntities.add(teTag);

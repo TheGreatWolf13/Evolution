@@ -9,6 +9,7 @@ accessible class net/minecraft/client/particle/ParticleEngine$SpriteParticleRegi
 accessible class net/minecraft/client/renderer/block/ModelBlockRenderer$Cache
 accessible class net/minecraft/client/renderer/RenderStateShard$OutputStateShard
 accessible class net/minecraft/client/resources/model/ModelBakery$BlockStateDefinitionException
+accessible class net/minecraft/client/resources/model/ModelBakery$ModelGroupKey
 accessible class net/minecraft/commands/arguments/selector/options/EntitySelectorOptions$Option
 accessible class net/minecraft/server/commands/CloneCommands$Mode
 accessible class net/minecraft/server/commands/FillCommand$Mode
@@ -27,6 +28,7 @@ accessible class net/minecraft/world/level/entity/PersistentEntitySectionManager
 accessible class net/minecraft/world/level/levelgen/structure/pools/JigsawPlacement$Placer
 accessible class net/minecraft/world/level/levelgen/SurfaceRules$SurfaceRule
 accessible class net/minecraft/world/level/lighting/BlockLightSectionStorage$BlockDataLayerStorageMap
+accessible class net/minecraft/world/level/lighting/SkyLightSectionStorage$SkyDataLayerStorageMap
 
 #Fields
 accessible field com/mojang/blaze3d/platform/NativeImage pixels J
@@ -173,6 +175,7 @@ mutable field net/minecraft/world/level/block/state/pattern/BlockInWorld loadChu
 accessible field net/minecraft/world/level/block/state/pattern/BlockInWorld pos Lnet/minecraft/core/BlockPos;
 mutable field net/minecraft/world/level/block/state/pattern/BlockInWorld pos Lnet/minecraft/core/BlockPos;
 accessible field net/minecraft/world/level/block/state/pattern/BlockInWorld state Lnet/minecraft/world/level/block/state/BlockState;
+accessible field net/minecraft/world/level/block/state/StateDefinition NAME_PATTERN Ljava/util/regex/Pattern;
 accessible field net/minecraft/world/level/chunk/LevelChunkSection states Lnet/minecraft/world/level/chunk/PalettedContainer;
 accessible field net/minecraft/world/level/dimension/DimensionType brightnessRamp [F
 accessible field net/minecraft/world/level/GameRules rules Ljava/util/Map;
@@ -190,8 +193,11 @@ accessible field net/minecraft/world/level/block/state/BlockBehaviour$BlockState
 accessible field net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase$Cache lightBlock I
 accessible field net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase$Cache occlusionShapes [Lnet/minecraft/world/phys/shapes/VoxelShape;
 accessible field net/minecraft/world/level/chunk/LevelChunk level Lnet/minecraft/world/level/Level;
+accessible field net/minecraft/world/level/levelgen/DebugLevelSource biomes Lnet/minecraft/core/Registry;
 accessible field net/minecraft/world/level/levelgen/Heightmap isOpaque Ljava/util/function/Predicate;
 accessible field net/minecraft/world/level/lighting/LayerLightEngine storage Lnet/minecraft/world/level/lighting/LayerLightSectionStorage;
+accessible field net/minecraft/world/level/lighting/SkyLightSectionStorage$SkyDataLayerStorageMap currentLowestY I
+accessible field net/minecraft/world/level/lighting/SkyLightSectionStorage$SkyDataLayerStorageMap topSections Lit/unimi/dsi/fastutil/longs/Long2IntOpenHashMap;
 
 #Methods
 accessible method com/mojang/blaze3d/platform/InputConstants$Key <init> (Ljava/lang/String;Lcom/mojang/blaze3d/platform/InputConstants$Type;I)V
@@ -316,6 +322,7 @@ accessible method net/minecraft/world/level/block/EndPortalBlock <init> (Lnet/mi
 accessible method net/minecraft/world/level/block/EndRodBlock <init> (Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
 accessible method net/minecraft/world/level/block/entity/BlockEntityType$Builder <init> (Lnet/minecraft/world/level/block/entity/BlockEntityType$BlockEntitySupplier;Ljava/util/Set;)V
 accessible method net/minecraft/world/level/block/FarmBlock <init> (Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+accessible method net/minecraft/world/level/block/FireBlock calculateShape (Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/phys/shapes/VoxelShape;
 accessible method net/minecraft/world/level/block/FletchingTableBlock <init> (Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
 accessible method net/minecraft/world/level/block/FungusBlock <init> (Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;Ljava/util/function/Supplier;)V
 accessible method net/minecraft/world/level/block/FurnaceBlock <init> (Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
@@ -366,6 +373,7 @@ accessible method net/minecraft/world/level/block/SugarCaneBlock <init> (Lnet/mi
 accessible method net/minecraft/world/level/block/TallGrassBlock <init> (Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
 accessible method net/minecraft/world/level/block/TorchBlock <init> (Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;Lnet/minecraft/core/particles/ParticleOptions;)V
 accessible method net/minecraft/world/level/block/TrapDoorBlock <init> (Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+accessible method net/minecraft/world/level/block/VineBlock calculateShape (Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/phys/shapes/VoxelShape;
 accessible method net/minecraft/world/level/block/WallSkullBlock <init> (Lnet/minecraft/world/level/block/SkullBlock$Type;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
 accessible method net/minecraft/world/level/block/WallTorchBlock <init> (Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;Lnet/minecraft/core/particles/ParticleOptions;)V
 accessible method net/minecraft/world/level/block/WaterlilyBlock <init> (Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
@@ -396,6 +404,9 @@ accessible method net/minecraft/world/level/levelgen/SurfaceRules$Context getMin
 accessible method net/minecraft/world/level/levelgen/SurfaceRules$Context updateXZ (II)V
 accessible method net/minecraft/world/level/levelgen/SurfaceRules$Context updateY (IIIIII)V
 accessible method net/minecraft/world/level/lighting/BlockLightSectionStorage <init> (Lnet/minecraft/world/level/chunk/LightChunkGetter;)V
+accessible method net/minecraft/world/level/lighting/DynamicGraphMinFixedPoint checkEdge (JJIZ)V
+accessible method net/minecraft/world/level/lighting/LayerLightEngine computeLevelFromNeighbor (JJI)I
+accessible method net/minecraft/world/level/lighting/LayerLightEngine getLevel (J)I
 accessible method net/minecraft/world/level/lighting/LayerLightEngine queueSectionData (JLnet/minecraft/world/level/chunk/DataLayer;Z)V
 accessible method net/minecraft/world/level/lighting/LayerLightSectionStorage enableLightSources (JZ)V
 accessible method net/minecraft/world/level/lighting/LayerLightSectionStorage getLightValue (J)I

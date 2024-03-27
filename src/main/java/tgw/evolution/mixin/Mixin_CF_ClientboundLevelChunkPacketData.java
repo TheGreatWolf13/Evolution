@@ -52,10 +52,15 @@ public abstract class Mixin_CF_ClientboundLevelChunkPacketData implements PatchC
         extractChunkData(new FriendlyByteBuf(this.getWriteBuffer()), chunk);
         this.blockEntitiesData = new OArrayList<>();
         L2OMap<BlockEntity> tes = chunk.blockEntities_();
-        for (L2OMap.Entry<BlockEntity> e = tes.fastEntries(); e != null; e = tes.fastEntries()) {
+        for (long it = tes.beginIteration(); tes.hasNextIteration(it); it = tes.nextEntry(it)) {
             //noinspection ObjectAllocationInLoop
-            this.blockEntitiesData.add(ClientboundLevelChunkPacketData.BlockEntityInfo.create(e.value()));
+            this.blockEntitiesData.add(ClientboundLevelChunkPacketData.BlockEntityInfo.create(tes.getIterationValue(it)));
         }
+    }
+
+    @Shadow
+    public static void extractChunkData(FriendlyByteBuf friendlyByteBuf, LevelChunk levelChunk) {
+        throw new AbstractMethodError();
     }
 
     @Shadow
@@ -63,10 +68,13 @@ public abstract class Mixin_CF_ClientboundLevelChunkPacketData implements PatchC
         throw new AbstractMethodError();
     }
 
-    @Shadow
-    public static void extractChunkData(FriendlyByteBuf friendlyByteBuf, LevelChunk levelChunk) {
-        throw new AbstractMethodError();
+    @Override
+    public Consumer<IBlockEntityTagOutput> getBlockEntitiesTagsConsumer_(int i, int j) {
+        return tag -> this.getBlockEntitiesTags(tag, i, j);
     }
+
+    @Shadow
+    protected abstract ByteBuf getWriteBuffer();
 
     @Unique
     private void getBlockEntitiesTags(IBlockEntityTagOutput tag, int secX, int secZ) {
@@ -79,14 +87,4 @@ public abstract class Mixin_CF_ClientboundLevelChunkPacketData implements PatchC
             tag.accept(x, info.y, z, info.type, info.tag);
         }
     }
-
-    @Override
-    public Consumer<IBlockEntityTagOutput> getBlockEntitiesTagsConsumer_(int i, int j) {
-        return tag -> {
-            this.getBlockEntitiesTags(tag, i, j);
-        };
-    }
-
-    @Shadow
-    protected abstract ByteBuf getWriteBuffer();
 }

@@ -62,7 +62,7 @@ public final class EvolutionDamage {
         m.add("hook");
         m.add("player");
         m.add("spear");
-        ALL_SOURCES = m.view();
+        ALL_SOURCES = m;
         BORDER = createSrc(new DamageSourceEv("border", Type.SUFFOCATION).bypassArmor());
         DEHYDRATION = createSrc(new DamageSourceEv("dehydration", Type.SICKNESS).bypassArmor().absolute());
         DROWN = createSrc(new DamageSourceEv("drown", Type.DROWNING).bypassArmor());
@@ -81,6 +81,7 @@ public final class EvolutionDamage {
         WALL_IMPACT = createSrc(new DamageSourceEv("wall_impact", Type.IMPACT).bypassArmor());
         WATER_IMPACT = createSrc(new DamageSourceEv("water_impact", Type.IMPACT).bypassArmor());
         WATER_INTOXICATION = createSrc(new DamageSourceEv("water_intoxication", Type.SICKNESS).bypassArmor().absolute());
+        m.trim();
     }
 
     private EvolutionDamage() {

@@ -1,14 +1,12 @@
 package tgw.evolution.blocks.tileentities;
 
-import it.unimi.dsi.fastutil.bytes.Byte2ReferenceMap;
-import it.unimi.dsi.fastutil.bytes.Byte2ReferenceMaps;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionShapes;
-import tgw.evolution.util.collection.maps.B2RHashMap;
-import tgw.evolution.util.collection.maps.B2RMap;
+import tgw.evolution.util.collection.maps.B2OHashMap;
+import tgw.evolution.util.collection.maps.B2OMap;
 import tgw.evolution.util.math.MathHelper;
 
 public enum EnumMolding {
@@ -21,15 +19,15 @@ public enum EnumMolding {
 //            new ItemStack(EvolutionItems.mold_clay_pickaxe.get()));
 
     public static final EnumMolding[] VALUES = values();
-    private static final Byte2ReferenceMap<EnumMolding> REGISTRY;
+    private static final B2OMap<EnumMolding> REGISTRY;
 
     static {
-        B2RMap<EnumMolding> map = new B2RHashMap<>();
+        B2OMap<EnumMolding> map = new B2OHashMap<>();
         for (EnumMolding molding : VALUES) {
             map.put(molding.id, molding);
         }
-        map.trimCollection();
-        REGISTRY = Byte2ReferenceMaps.unmodifiable(map);
+        map.trim();
+        REGISTRY = map.view();
     }
 
     private final byte id;

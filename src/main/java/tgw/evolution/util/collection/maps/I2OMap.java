@@ -1,47 +1,205 @@
 package tgw.evolution.util.collection.maps;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nullable;
-import tgw.evolution.util.collection.ICollectionExtension;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
+import org.jetbrains.annotations.UnmodifiableView;
 
-public interface I2OMap<V> extends Int2ObjectMap<V>, ICollectionExtension {
+import java.util.NoSuchElementException;
+
+public interface I2OMap<V> extends Int2ObjectMap<V>, MapEv {
+
+    long beginIteration();
 
     @Override
     void clear();
 
-    /**
-     * @return An entry to be used in very fast, efficient iteration.<br>
-     * {@code null} means the iteration has finished. <br>
-     * The Entry itself is mutable and should not be cached anywhere. <br>
-     * Entries from the map can be removed during iteration by calling the {@link I2OMap#remove(int)} method as usual, however, the map will not
-     * rehash during iteration. If the map was asked to rehash during iteration, it will do so at the end of the process. Any other modification of
-     * the map during this process will probably break it, and no checks will be made. You have
-     * been warned. <br>
-     * The implementation is, of course, NOT thread-safe.
-     */
-    @Nullable I2OMap.Entry<V> fastEntries();
+    int getIterationKey(long it);
 
-    class Entry<V> {
-        protected int k;
-        protected @Nullable V v;
+    V getIterationValue(long it);
 
-        @Contract(pure = true)
-        public int key() {
-            return this.k;
+    int getSampleKey();
+
+    V getSampleValue();
+
+    long nextEntry(long it);
+
+    long removeIteration(long it);
+
+    @UnmodifiableView I2OMap<V> view();
+
+    class EmptyMap<V> extends Int2ObjectMaps.EmptyMap<V> implements I2OMap<V> {
+
+        @Override
+        public long beginIteration() {
+            return 0;
         }
 
-        @Contract(mutates = "this")
-        protected Entry<V> set(int k, @Nullable V v) {
-            this.k = k;
-            this.v = v;
+        @Override
+        public int getIterationKey(long it) {
+            throw new NoSuchElementException();
+        }
+
+        @Override
+        public V getIterationValue(long it) {
+            throw new NoSuchElementException();
+        }
+
+        @Override
+        public int getSampleKey() {
+            throw new NoSuchElementException();
+        }
+
+        @Override
+        public V getSampleValue() {
+            throw new NoSuchElementException();
+        }
+
+        @Override
+        public boolean hasNextIteration(long it) {
+            return false;
+        }
+
+        @Override
+        public long nextEntry(long it) {
+            throw new NoSuchElementException();
+        }
+
+        @Override
+        public long removeIteration(long it) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean trim() {
+            return false;
+        }
+
+        @Override
+        public @UnmodifiableView I2OMap<V> view() {
             return this;
         }
+    }
 
-        @Contract(pure = true)
-        public V value() {
-            assert this.v != null;
-            return this.v;
+    class Singleton<V> extends Int2ObjectMaps.Singleton<V> implements I2OMap<V> {
+
+        protected Singleton(int key, V value) {
+            super(key, value);
+        }
+
+        @Override
+        public long beginIteration() {
+            return 1;
+        }
+
+        @Override
+        public void clear() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public int getIterationKey(long it) {
+            if (it != 1) {
+                throw new NoSuchElementException();
+            }
+            return this.key;
+        }
+
+        @Override
+        public V getIterationValue(long it) {
+            if (it != 1) {
+                throw new NoSuchElementException();
+            }
+            return this.value;
+        }
+
+        @Override
+        public int getSampleKey() {
+            return this.key;
+        }
+
+        @Override
+        public V getSampleValue() {
+            return this.value;
+        }
+
+        @Override
+        public long nextEntry(long it) {
+            return 0;
+        }
+
+        @Override
+        public long removeIteration(long it) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean trim() {
+            return false;
+        }
+
+        @Override
+        public @UnmodifiableView I2OMap view() {
+            return this;
+        }
+    }
+
+    class View<V> extends Int2ObjectMaps.UnmodifiableMap<V> implements I2OMap<V> {
+
+        protected final I2OMap<V> m;
+
+        public View(I2OMap<V> m) {
+            super(m);
+            this.m = m;
+        }
+
+        @Override
+        public long beginIteration() {
+            return this.m.beginIteration();
+        }
+
+        @Override
+        public int getIterationKey(long it) {
+            return this.m.getIterationKey(it);
+        }
+
+        @Override
+        public V getIterationValue(long it) {
+            return this.m.getIterationValue(it);
+        }
+
+        @Override
+        public int getSampleKey() {
+            return this.m.getSampleKey();
+        }
+
+        @Override
+        public V getSampleValue() {
+            return this.m.getSampleValue();
+        }
+
+        @Override
+        public boolean hasNextIteration(long it) {
+            return this.m.hasNextIteration(it);
+        }
+
+        @Override
+        public long nextEntry(long it) {
+            return this.m.nextEntry(it);
+        }
+
+        @Override
+        public long removeIteration(long it) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean trim() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public @UnmodifiableView I2OMap<V> view() {
+            return this;
         }
     }
 }

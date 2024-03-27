@@ -12,6 +12,7 @@ import tgw.evolution.Evolution;
 import tgw.evolution.client.models.tile.BakedModelFirewoodPile;
 import tgw.evolution.client.models.tile.BakedModelKnapping;
 import tgw.evolution.init.EvolutionBlocks;
+import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.constants.RockVariant;
 
 import java.util.Map;
@@ -47,9 +48,10 @@ public final class ModelRegistry {
     }
 
     private static void registerModel(Map<ResourceLocation, BakedModel> models, Block block, Function<BakedModel, BakedModel> newModel) {
-        for (BlockState state : block.getStateDefinition().getPossibleStates()) {
+        OList<BlockState> possibleStates = block.getStateDefinition().getPossibleStates_();
+        for (int i = 0, len = possibleStates.size(); i < len; ++i) {
             //noinspection ObjectAllocationInLoop
-            ModelResourceLocation modelResLoc = BlockModelShaper.stateToModelLocation(state);
+            ModelResourceLocation modelResLoc = BlockModelShaper.stateToModelLocation(possibleStates.get(i));
             BakedModel existingModel = models.get(modelResLoc);
             if (existingModel == null) {
                 Evolution.warn("Did not find the expected vanilla baked model(s) for {} in registry", block);
@@ -61,9 +63,10 @@ public final class ModelRegistry {
     }
 
     private static <T> void registerModel(Map<ResourceLocation, BakedModel> models, Block block, T t, BiFunction<BakedModel, T, BakedModel> newModel) {
-        for (BlockState state : block.getStateDefinition().getPossibleStates()) {
+        OList<BlockState> possibleStates = block.getStateDefinition().getPossibleStates_();
+        for (int i = 0, len = possibleStates.size(); i < len; ++i) {
             //noinspection ObjectAllocationInLoop
-            ModelResourceLocation modelResLoc = BlockModelShaper.stateToModelLocation(state);
+            ModelResourceLocation modelResLoc = BlockModelShaper.stateToModelLocation(possibleStates.get(i));
             BakedModel existingModel = models.get(modelResLoc);
             if (existingModel == null) {
                 Evolution.warn("Did not find the expected vanilla baked model(s) for {} in registry", block);

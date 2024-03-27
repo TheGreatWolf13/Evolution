@@ -2,227 +2,146 @@ package tgw.evolution.util.collection.maps;
 
 import it.unimi.dsi.fastutil.objects.*;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnmodifiableView;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Objects;
-import java.util.Spliterator;
+import java.util.*;
 import java.util.function.Consumer;
 
 public class O2OArrayMap<K, V> extends AbstractObject2ObjectMap<K, V> implements O2OMap<K, V> {
 
-    protected final O2OMap.Entry<K, V> entry = new O2OMap.Entry<>();
-    /**
-     * The keys (valid up to {@link #size}, excluded).
-     */
-    protected Object[] key;
-    protected int lastPos = -1;
-    /**
-     * The number of valid entries in {@link #key} and {@link #value}.
-     */
+    protected @Nullable Object2ObjectMap.FastEntrySet<K, V> entries;
+    protected K[] key;
+    protected @Nullable ObjectSet<K> keys;
     protected int size;
-    /**
-     * The values (parallel to {@link #key}).
-     */
-    protected transient Object[] value;
-    /**
-     * Cached set of entries.
-     */
-    private @Nullable FastEntrySet<K, V> entries;
-    /**
-     * Cached set of keys.
-     */
-    private @Nullable ObjectSet<K> keys;
-    /**
-     * Cached collection of values.
-     */
-    private transient @Nullable ObjectCollection<V> values;
+    protected V[] value;
+    protected @Nullable ObjectCollection<V> values;
+    protected @Nullable View<K, V> view;
 
-    /**
-     * Creates a new empty array map with given key and value backing arrays. The
-     * resulting map will have as many entries as the given arrays.
-     *
-     * <p>
-     * It is responsibility of the caller that the elements of {@code key} are
-     * distinct.
-     *
-     * @param key   the key array.
-     * @param value the value array (it <em>must</em> have the same length as
-     *              {@code key}).
-     */
-    public O2OArrayMap(final Object[] key, final Object[] value) {
+    public O2OArrayMap(K[] key, V[] value) {
         this.key = key;
         this.value = value;
         this.size = key.length;
         if (key.length != value.length) {
-            throw new IllegalArgumentException(
-                    "Keys and values have different lengths (" + key.length + ", " + value.length + ")");
+            throw new IllegalArgumentException("Keys and values have different lengths (" + key.length + ", " + value.length + ")");
         }
     }
 
-    /**
-     * Creates a new empty array map.
-     */
     public O2OArrayMap() {
-        this.key = ObjectArrays.EMPTY_ARRAY;
-        this.value = ObjectArrays.EMPTY_ARRAY;
+        this.key = (K[]) ObjectArrays.EMPTY_ARRAY;
+        this.value = (V[]) ObjectArrays.EMPTY_ARRAY;
     }
 
-    /**
-     * Creates a new empty array map of given capacity.
-     *
-     * @param capacity the initial capacity.
-     */
-    public O2OArrayMap(final int capacity) {
-        this.key = new Object[capacity];
-        this.value = new Object[capacity];
+    public O2OArrayMap(int capacity) {
+        this.key = (K[]) new Object[capacity];
+        this.value = (V[]) new Object[capacity];
     }
 
-    /**
-     * Creates a new empty array map copying the entries of a given map.
-     *
-     * @param m a map.
-     */
-    public O2OArrayMap(final O2OMap<K, V> m) {
+    public O2OArrayMap(O2OMap<K, V> m) {
         this(m.size());
         int i = 0;
-        for (O2OMap.Entry<K, V> e = m.fastEntries(); e != null; e = m.fastEntries(), ++i) {
-            this.key[i] = e.key();
-            this.value[i] = e.value();
-        }
-        this.size = i;
-    }
-
-    /**
-     * Creates a new empty array map copying the entries of a given map.
-     *
-     * @param m a map.
-     */
-    public O2OArrayMap(final Map<? extends K, ? extends V> m) {
-        this(m.size());
-        int i = 0;
-        for (Map.Entry<? extends K, ? extends V> e : m.entrySet()) {
+        for (ObjectIterator<Entry<K, V>> it = m.object2ObjectEntrySet().iterator(); it.hasNext(); ++i) {
+            Entry<K, V> e = it.next();
             this.key[i] = e.getKey();
             this.value[i] = e.getValue();
-            i++;
         }
         this.size = i;
     }
 
-    /**
-     * Creates a new array map with given key and value backing arrays, using the
-     * given number of elements.
-     *
-     * <p>
-     * It is responsibility of the caller that the first {@code size} elements of
-     * {@code key} are distinct.
-     *
-     * @param key   the key array.
-     * @param value the value array (it <em>must</em> have the same length as
-     *              {@code key}).
-     * @param size  the number of valid elements in {@code key} and {@code value}.
-     */
-    public O2OArrayMap(final Object[] key, final Object[] value, final int size) {
+    public O2OArrayMap(Map<? extends K, ? extends V> m) {
+        this(m.size());
+        int i = 0;
+        for (var it = m.entrySet().iterator(); it.hasNext(); ++i) {
+            Map.Entry<? extends K, ? extends V> e = it.next();
+            this.key[i] = e.getKey();
+            this.value[i] = e.getValue();
+        }
+        this.size = i;
+    }
+
+    public O2OArrayMap(K[] key, V[] value, int size) {
         this.key = key;
         this.value = value;
         this.size = size;
         if (key.length != value.length) {
-            throw new IllegalArgumentException(
-                    "Keys and values have different lengths (" + key.length + ", " + value.length + ")");
+            throw new IllegalArgumentException("Keys and values have different lengths (" + key.length + ", " + value.length + ")");
         }
         if (size > key.length) {
-            throw new IllegalArgumentException("The provided size (" + size
-                                               + ") is larger than or equal to the backing-arrays size (" + key.length + ")");
+            throw new IllegalArgumentException("The provided size (" + size + ") is larger than or equal to the backing-arrays size (" + key.length + ")");
         }
+    }
+
+    @Override
+    public long beginIteration() {
+        return this.size;
     }
 
     @Override
     public void clear() {
-        for (int i = this.size; i-- != 0; ) {
-            this.key[i] = null;
-            this.value[i] = null;
-        }
+        Arrays.fill(this.key, 0, this.size, null);
+        Arrays.fill(this.value, 0, this.size, null);
         this.size = 0;
     }
 
-    /**
-     * Returns a deep copy of this map.
-     *
-     * <p>
-     * This method performs a deep copy of this hash map; the data stored in the
-     * map, however, is not cloned. Note that this makes a difference only for
-     * object keys.
-     *
-     * @return a deep copy of this map.
-     */
     @Override
-    public O2OArrayMap<K, V> clone() {
-        O2OArrayMap<K, V> c;
-        try {
-            c = (O2OArrayMap<K, V>) super.clone();
-        }
-        catch (CloneNotSupportedException cantHappen) {
-            throw new InternalError();
-        }
-        c.key = this.key.clone();
-        c.value = this.value.clone();
-        c.entries = null;
-        c.keys = null;
-        c.values = null;
-        return c;
-    }
-
-    @Override
-    public boolean containsKey(final Object k) {
+    public boolean containsKey(Object k) {
         return this.findKey(k) != -1;
     }
 
     @Override
     public boolean containsValue(Object v) {
-        for (int i = this.size; i-- != 0; ) {
-            if (Objects.equals(this.value[i], v)) {
-                return true;
+        int i = this.size;
+        if (i == 0) {
+            return false;
+        }
+        while (!Objects.equals(this.value[--i], v)) {
+            if (i == 0) {
+                return false;
             }
         }
-        return false;
+        return true;
     }
 
     @Override
-    public O2OMap.@Nullable Entry<K, V> fastEntries() {
+    public @Nullable V get(Object k) {
+        K[] key = this.key;
+        int i = this.size;
+        if (i == 0) {
+            return this.defRetValue;
+        }
+        while (!Objects.equals(key[--i], k)) {
+            if (i == 0) {
+                return this.defRetValue;
+            }
+        }
+        return this.value[i];
+    }
+
+    @Override
+    public K getIterationKey(long it) {
+        int pos = (int) (it >> 32);
+        return this.key[pos];
+    }
+
+    @Override
+    public V getIterationValue(long it) {
+        int pos = (int) (it >> 32);
+        return this.value[pos];
+    }
+
+    @Override
+    public K getSampleKey() {
         if (this.isEmpty()) {
-            this.lastPos = -1;
-            return null;
+            throw new NoSuchElementException("Map is empty!");
         }
-        if (++this.lastPos < this.size) {
-            return this.entry.set((K) this.key[this.lastPos], (V) this.value[this.lastPos]);
-        }
-        this.lastPos = -1;
-        this.entry.set(null, null);
-        return null;
-    }
-
-    private int findKey(final Object k) {
-        final Object[] key = this.key;
-        for (int i = this.size; i-- != 0; ) {
-            if (Objects.equals(key[i], k)) {
-                return i;
-            }
-        }
-        return -1;
+        return this.key[0];
     }
 
     @Override
-    public @Nullable V get(final Object k) {
-        final Object[] key = this.key;
-        for (int i = this.size; i-- != 0; ) {
-            if (Objects.equals(key[i], k)) {
-                return (V) this.value[i];
-            }
+    public V getSampleValue() {
+        if (this.isEmpty()) {
+            throw new NoSuchElementException("Map is empty!");
         }
-        return this.defRetValue;
+        return this.value[0];
     }
 
     @Override
@@ -233,70 +152,83 @@ public class O2OArrayMap<K, V> extends AbstractObject2ObjectMap<K, V> implements
     @Override
     public ObjectSet<K> keySet() {
         if (this.keys == null) {
-            this.keys = new O2OArrayMap.KeySet();
+            this.keys = new KeySet();
         }
         return this.keys;
     }
 
     @Override
-    public FastEntrySet<K, V> object2ObjectEntrySet() {
-        if (this.entries == null) {
-            this.entries = new O2OArrayMap.EntrySet();
+    public long nextEntry(long it) {
+        if (this.isEmpty()) {
+            return 0;
         }
+        int size = (int) it;
+        if (--size == 0) {
+            return 0;
+        }
+        int pos = (int) (it >> 32) + 1;
+        return (long) pos << 32 | size;
+    }
+
+    @Override
+    public Object2ObjectMap.FastEntrySet<K, V> object2ObjectEntrySet() {
+        if (this.entries == null) {
+            this.entries = new EntrySet();
+        }
+
         return this.entries;
     }
 
     @Override
     public V put(K k, V v) {
-        final int oldKey = this.findKey(k);
+        int oldKey = this.findKey(k);
         if (oldKey != -1) {
-            final V oldValue = (V) this.value[oldKey];
+            V oldValue = this.value[oldKey];
             this.value[oldKey] = v;
             return oldValue;
         }
         if (this.size == this.key.length) {
-            final Object[] newKey = new Object[this.size == 0 ? 2 : this.size * 2];
-            final Object[] newValue = new Object[this.size == 0 ? 2 : this.size * 2];
-            for (int i = this.size; i-- != 0; ) {
+            K[] newKey = (K[]) new Object[this.size == 0 ? 2 : this.size * 2];
+            V[] newValue = (V[]) new Object[this.size == 0 ? 2 : this.size * 2];
+            for (int i = this.size; i-- != 0; newValue[i] = this.value[i]) {
                 newKey[i] = this.key[i];
-                newValue[i] = this.value[i];
             }
             this.key = newKey;
             this.value = newValue;
         }
         this.key[this.size] = k;
         this.value[this.size] = v;
-        this.size++;
+        ++this.size;
         return this.defRetValue;
     }
 
-    private void readObject(ObjectInputStream s) throws IOException, ClassNotFoundException {
-        s.defaultReadObject();
-        this.key = new Object[this.size];
-        this.value = new Object[this.size];
-        for (int i = 0; i < this.size; i++) {
-            this.key[i] = s.readObject();
-            this.value[i] = s.readObject();
-        }
-    }
-
     @Override
-    public V remove(final Object k) {
-        final int oldPos = this.findKey(k);
+    public V remove(Object k) {
+        int oldPos = this.findKey(k);
         if (oldPos == -1) {
             return this.defRetValue;
         }
-        if (oldPos == this.lastPos) {
-            --this.lastPos;
-        }
-        final V oldValue = (V) this.value[oldPos];
-        final int tail = this.size - oldPos - 1;
+        V oldValue = this.value[oldPos];
+        int tail = this.size - oldPos - 1;
         System.arraycopy(this.key, oldPos + 1, this.key, oldPos, tail);
         System.arraycopy(this.value, oldPos + 1, this.value, oldPos, tail);
-        this.size--;
+        --this.size;
         this.key[this.size] = null;
         this.value[this.size] = null;
         return oldValue;
+    }
+
+    @Override
+    public long removeIteration(long it) {
+        int pos = (int) (it >> 32);
+        int size = (int) it;
+        int tail = this.size - pos - 1;
+        System.arraycopy(this.key, pos + 1, this.key, pos, tail);
+        System.arraycopy(this.value, pos + 1, this.value, pos, tail);
+        --this.size;
+        this.key[this.size] = null;
+        this.value[this.size] = null;
+        return (long) --pos << 32 | size;
     }
 
     @Override
@@ -305,57 +237,120 @@ public class O2OArrayMap<K, V> extends AbstractObject2ObjectMap<K, V> implements
     }
 
     @Override
-    public void trimCollection() {
-        if (this.size == 0) {
-            this.key = ObjectArrays.EMPTY_ARRAY;
-            this.value = ObjectArrays.EMPTY_ARRAY;
-        }
-        else if (this.size != this.key.length) {
-            Object[] newKey = new Object[this.size];
+    public boolean trim() {
+        if (this.key.length > this.size) {
+            K[] newKey = (K[]) new Object[this.size];
+            V[] newValue = (V[]) new Object[this.size];
             System.arraycopy(this.key, 0, newKey, 0, this.size);
-            Object[] newValue = new Object[this.size];
             System.arraycopy(this.value, 0, newValue, 0, this.size);
             this.key = newKey;
             this.value = newValue;
+            return true;
         }
+        return false;
     }
 
     @Override
     public ObjectCollection<V> values() {
         if (this.values == null) {
-            this.values = new O2OArrayMap.ValuesCollection();
+            this.values = new ValuesCollection();
         }
         return this.values;
     }
 
-    private void writeObject(ObjectOutputStream s) throws IOException {
-        s.defaultWriteObject();
-        for (int i = 0, max = this.size; i < max; i++) {
-            s.writeObject(this.key[i]);
-            s.writeObject(this.value[i]);
+    @Override
+    public @UnmodifiableView O2OMap<K, V> view() {
+        if (this.view == null) {
+            this.view = new View<>(this);
+        }
+        return this.view;
+    }
+
+    private int findKey(Object k) {
+        K[] key = this.key;
+        int i = this.size;
+        if (i == 0) {
+            return -1;
+        }
+        while (!Objects.equals(key[--i], k)) {
+            if (i == 0) {
+                return -1;
+            }
+        }
+        return i;
+    }
+
+    public static class BasicEntry<K, V> implements Object2ObjectMap.Entry<K, V> {
+        protected @Nullable K key;
+        protected @Nullable V value;
+
+        public BasicEntry() {
+        }
+
+        public BasicEntry(K key, V value) {
+            this.key = key;
+            this.value = value;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (!(o instanceof Map.Entry)) {
+                return false;
+            }
+            if (o instanceof Object2ObjectMap.Entry) {
+                Entry<K, V> e = (Entry) o;
+                return Objects.equals(this.key, e.getKey()) && Objects.equals(this.value, e.getValue());
+            }
+            Map.Entry<?, ?> e = (Map.Entry) o;
+            Object key = e.getKey();
+            Object value = e.getValue();
+            return Objects.equals(this.key, key) && Objects.equals(this.value, value);
+        }
+
+        @Override
+        public @Nullable K getKey() {
+            return this.key;
+        }
+
+        @Override
+        public @Nullable V getValue() {
+            return this.value;
+        }
+
+        @Override
+        public int hashCode() {
+            //noinspection NonFinalFieldReferencedInHashCode
+            return (this.key == null ? 0 : this.key.hashCode()) ^ (this.value == null ? 0 : this.value.hashCode());
+        }
+
+        @Override
+        public V setValue(V value) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public String toString() {
+            return this.key + "->" + this.value;
         }
     }
 
-    private final class EntrySet extends AbstractObjectSet<Object2ObjectMap.Entry<K, V>> implements FastEntrySet<K, V> {
+    private final class EntrySet extends AbstractObjectSet<Object2ObjectMap.Entry<K, V>> implements Object2ObjectMap.FastEntrySet<K, V> {
+
         @Override
         public boolean contains(Object o) {
-            if (!(o instanceof final Map.Entry<?, ?> e)) {
+            if (!(o instanceof Map.Entry e)) {
                 return false;
             }
-            final K k = (K) e.getKey();
-            return O2OArrayMap.this.containsKey(k) && Objects.equals(O2OArrayMap.this.get(k), e.getValue());
+            return O2OArrayMap.this.containsKey(e.getKey()) && Objects.equals(O2OArrayMap.this.get(e.getKey()), e.getValue());
         }
 
-        /**
-         * {@inheritDoc}
-         */
         @Override
-        public void fastForEach(final Consumer<? super Object2ObjectMap.Entry<K, V>> action) {
-            final O2OMap.BasicEntry<K, V> entry = new O2OMap.BasicEntry<>();
-            // Hoist containing class field ref into local
-            for (int i = 0, max = O2OArrayMap.this.size; i < max; ++i) {
-                entry.key = (K) O2OArrayMap.this.key[i];
-                entry.value = (V) O2OArrayMap.this.value[i];
+        public void fastForEach(Consumer<? super Object2ObjectMap.Entry<K, V>> action) {
+            BasicEntry<K, V> entry = new BasicEntry<>();
+            int i = 0;
+            for (int max = O2OArrayMap.this.size; i < max; ++i) {
+                entry.key = O2OArrayMap.this.key[i];
+                entry.value = O2OArrayMap.this.value[i];
                 action.accept(entry);
             }
         }
@@ -363,17 +358,16 @@ public class O2OArrayMap<K, V> extends AbstractObject2ObjectMap<K, V> implements
         @Override
         public ObjectIterator<Object2ObjectMap.Entry<K, V>> fastIterator() {
             return new ObjectIterator<>() {
-                final O2OMap.BasicEntry<K, V> entry = new O2OMap.BasicEntry<>();
                 int curr = -1;
+                final BasicEntry<K, V> entry = new BasicEntry<>();
                 int next;
 
                 @Override
-                public void forEachRemaining(final Consumer<? super Object2ObjectMap.Entry<K, V>> action) {
-                    // Hoist containing class field ref into local
-                    final int max = O2OArrayMap.this.size;
+                public void forEachRemaining(Consumer<? super Object2ObjectMap.Entry<K, V>> action) {
+                    int max = O2OArrayMap.this.size;
                     while (this.next < max) {
-                        this.entry.key = (K) O2OArrayMap.this.key[this.curr = this.next];
-                        this.entry.value = (V) O2OArrayMap.this.value[this.next++];
+                        this.entry.key = O2OArrayMap.this.key[this.curr = this.next];
+                        this.entry.value = O2OArrayMap.this.value[this.next++];
                         action.accept(this.entry);
                     }
                 }
@@ -388,8 +382,8 @@ public class O2OArrayMap<K, V> extends AbstractObject2ObjectMap<K, V> implements
                     if (!this.hasNext()) {
                         throw new NoSuchElementException();
                     }
-                    this.entry.key = (K) O2OArrayMap.this.key[this.curr = this.next];
-                    this.entry.value = (V) O2OArrayMap.this.value[this.next++];
+                    this.entry.key = O2OArrayMap.this.key[this.curr = this.next];
+                    this.entry.value = O2OArrayMap.this.value[this.next++];
                     return this.entry;
                 }
 
@@ -399,7 +393,7 @@ public class O2OArrayMap<K, V> extends AbstractObject2ObjectMap<K, V> implements
                         throw new IllegalStateException();
                     }
                     this.curr = -1;
-                    final int tail = O2OArrayMap.this.size-- - this.next--;
+                    int tail = O2OArrayMap.this.size-- - this.next--;
                     System.arraycopy(O2OArrayMap.this.key, this.next + 1, O2OArrayMap.this.key, this.next, tail);
                     System.arraycopy(O2OArrayMap.this.value, this.next + 1, O2OArrayMap.this.value, this.next, tail);
                     O2OArrayMap.this.key[O2OArrayMap.this.size] = null;
@@ -408,19 +402,15 @@ public class O2OArrayMap<K, V> extends AbstractObject2ObjectMap<K, V> implements
             };
         }
 
-        /**
-         * {@inheritDoc}
-         */
         @Override
-        public void forEach(final Consumer<? super Object2ObjectMap.Entry<K, V>> action) {
-            // Hoist containing class field ref into local
-            for (int i = 0, max = O2OArrayMap.this.size; i < max; ++i) {
+        public void forEach(Consumer<? super Object2ObjectMap.Entry<K, V>> action) {
+            int i = 0;
+            for (int max = O2OArrayMap.this.size; i < max; ++i) {
                 //noinspection ObjectAllocationInLoop
-                action.accept(new O2OMap.BasicEntry<>((K) O2OArrayMap.this.key[i], (V) O2OArrayMap.this.value[i]));
+                action.accept(new BasicEntry<>(O2OArrayMap.this.key[i], O2OArrayMap.this.value[i]));
             }
         }
 
-        // (same for other collection view types)
         @Override
         public ObjectIterator<Object2ObjectMap.Entry<K, V>> iterator() {
             return new ObjectIterator<>() {
@@ -428,13 +418,10 @@ public class O2OArrayMap<K, V> extends AbstractObject2ObjectMap<K, V> implements
                 int next;
 
                 @Override
-                public void forEachRemaining(final Consumer<? super Object2ObjectMap.Entry<K, V>> action) {
-                    // Hoist containing class field ref into local
-                    final int max = O2OArrayMap.this.size;
+                public void forEachRemaining(Consumer<? super Entry<K, V>> action) {
+                    int max = O2OArrayMap.this.size;
                     while (this.next < max) {
-                        action.accept(
-                                new AbstractObject2ObjectMap.BasicEntry<>((K) O2OArrayMap.this.key[this.curr = this.next],
-                                                                          (V) O2OArrayMap.this.value[this.next++]));
+                        action.accept(new BasicEntry<>(O2OArrayMap.this.key[this.curr = this.next], O2OArrayMap.this.value[this.next++]));
                     }
                 }
 
@@ -448,8 +435,7 @@ public class O2OArrayMap<K, V> extends AbstractObject2ObjectMap<K, V> implements
                     if (!this.hasNext()) {
                         throw new NoSuchElementException();
                     }
-                    return new AbstractObject2ObjectMap.BasicEntry<>((K) O2OArrayMap.this.key[this.curr = this.next],
-                                                                     (V) O2OArrayMap.this.value[this.next++]);
+                    return new BasicEntry<>(O2OArrayMap.this.key[this.curr = this.next], O2OArrayMap.this.value[this.next++]);
                 }
 
                 @Override
@@ -458,7 +444,7 @@ public class O2OArrayMap<K, V> extends AbstractObject2ObjectMap<K, V> implements
                         throw new IllegalStateException();
                     }
                     this.curr = -1;
-                    final int tail = O2OArrayMap.this.size-- - this.next--;
+                    int tail = O2OArrayMap.this.size-- - this.next--;
                     System.arraycopy(O2OArrayMap.this.key, this.next + 1, O2OArrayMap.this.key, this.next, tail);
                     System.arraycopy(O2OArrayMap.this.value, this.next + 1, O2OArrayMap.this.value, this.next, tail);
                     O2OArrayMap.this.key[O2OArrayMap.this.size] = null;
@@ -468,23 +454,22 @@ public class O2OArrayMap<K, V> extends AbstractObject2ObjectMap<K, V> implements
         }
 
         @Override
-        public boolean remove(final Object o) {
-            if (!(o instanceof final Map.Entry<?, ?> e)) {
+        public boolean remove(Object o) {
+            if (!(o instanceof Map.Entry)) {
                 return false;
             }
-            final K k = (K) e.getKey();
-            final V v = (V) e.getValue();
-            final int oldPos = O2OArrayMap.this.findKey(k);
-            if (oldPos == -1 || !Objects.equals(v, O2OArrayMap.this.value[oldPos])) {
-                return false;
+            Map.Entry<?, ?> e = (Map.Entry) o;
+            int oldPos = O2OArrayMap.this.findKey(e.getKey());
+            if (oldPos != -1 && Objects.equals(e.getValue(), O2OArrayMap.this.value[oldPos])) {
+                int tail = O2OArrayMap.this.size - oldPos - 1;
+                System.arraycopy(O2OArrayMap.this.key, oldPos + 1, O2OArrayMap.this.key, oldPos, tail);
+                System.arraycopy(O2OArrayMap.this.value, oldPos + 1, O2OArrayMap.this.value, oldPos, tail);
+                O2OArrayMap.this.size--;
+                O2OArrayMap.this.key[O2OArrayMap.this.size] = null;
+                O2OArrayMap.this.value[O2OArrayMap.this.size] = null;
+                return true;
             }
-            final int tail = O2OArrayMap.this.size - oldPos - 1;
-            System.arraycopy(O2OArrayMap.this.key, oldPos + 1, O2OArrayMap.this.key, oldPos, tail);
-            System.arraycopy(O2OArrayMap.this.value, oldPos + 1, O2OArrayMap.this.value, oldPos, tail);
-            O2OArrayMap.this.size--;
-            O2OArrayMap.this.key[O2OArrayMap.this.size] = null;
-            O2OArrayMap.this.value[O2OArrayMap.this.size] = null;
-            return true;
+            return false;
         }
 
         @Override
@@ -494,12 +479,9 @@ public class O2OArrayMap<K, V> extends AbstractObject2ObjectMap<K, V> implements
 
         @Override
         public ObjectSpliterator<Object2ObjectMap.Entry<K, V>> spliterator() {
-            return new O2OArrayMap.EntrySet.EntrySetSpliterator(0, O2OArrayMap.this.size);
+            return new EntrySetSpliterator(0, O2OArrayMap.this.size);
         }
 
-        // We already have to create an Entry object for each iteration, so the overhead
-        // from having
-        // skeletal implementations isn't significant.
         final class EntrySetSpliterator extends ObjectSpliterators.EarlyBindingSizeIndexBasedSpliterator<Object2ObjectMap.Entry<K, V>> {
             EntrySetSpliterator(int pos, int maxPos) {
                 super(pos, maxPos);
@@ -507,37 +489,38 @@ public class O2OArrayMap<K, V> extends AbstractObject2ObjectMap<K, V> implements
 
             @Override
             public int characteristics() {
-                return ObjectSpliterators.SET_SPLITERATOR_CHARACTERISTICS | Spliterator.SUBSIZED | Spliterator.ORDERED;
+                return Spliterator.ORDERED | Spliterator.DISTINCT | Spliterator.SIZED | Spliterator.SUBSIZED;
             }
 
             @Override
             protected Object2ObjectMap.Entry<K, V> get(int location) {
-                return new AbstractObject2ObjectMap.BasicEntry<>((K) O2OArrayMap.this.key[location], (V) O2OArrayMap.this.value[location]);
+                return new BasicEntry<>(O2OArrayMap.this.key[location], O2OArrayMap.this.value[location]);
             }
 
             @Override
-            protected O2OArrayMap.EntrySet.EntrySetSpliterator makeForSplit(int pos, int maxPos) {
-                return new O2OArrayMap.EntrySet.EntrySetSpliterator(pos, maxPos);
+            protected EntrySetSpliterator makeForSplit(int pos, int maxPos) {
+                return EntrySet.this.new EntrySetSpliterator(pos, maxPos);
             }
         }
     }
 
     private final class KeySet extends AbstractObjectSet<K> {
+
         @Override
         public void clear() {
             O2OArrayMap.this.clear();
         }
 
         @Override
-        public boolean contains(final Object k) {
+        public boolean contains(Object k) {
             return O2OArrayMap.this.findKey(k) != -1;
         }
 
         @Override
         public void forEach(Consumer<? super K> action) {
-            // Hoist containing class field ref into local
-            for (int i = 0, max = O2OArrayMap.this.size; i < max; ++i) {
-                action.accept((K) O2OArrayMap.this.key[i]);
+            int i = 0;
+            for (int max = O2OArrayMap.this.size; i < max; ++i) {
+                action.accept(O2OArrayMap.this.key[i]);
             }
         }
 
@@ -547,11 +530,10 @@ public class O2OArrayMap<K, V> extends AbstractObject2ObjectMap<K, V> implements
                 int pos;
 
                 @Override
-                public void forEachRemaining(final Consumer<? super K> action) {
-                    // Hoist containing class field ref into local
-                    final int max = O2OArrayMap.this.size;
+                public void forEachRemaining(Consumer<? super K> action) {
+                    int max = O2OArrayMap.this.size;
                     while (this.pos < max) {
-                        action.accept((K) O2OArrayMap.this.key[this.pos++]);
+                        action.accept(O2OArrayMap.this.key[this.pos++]);
                     }
                 }
 
@@ -565,7 +547,7 @@ public class O2OArrayMap<K, V> extends AbstractObject2ObjectMap<K, V> implements
                     if (!this.hasNext()) {
                         throw new NoSuchElementException();
                     }
-                    return (K) O2OArrayMap.this.key[this.pos++];
+                    return O2OArrayMap.this.key[this.pos++];
                 }
 
                 @Override
@@ -573,11 +555,11 @@ public class O2OArrayMap<K, V> extends AbstractObject2ObjectMap<K, V> implements
                     if (this.pos == 0) {
                         throw new IllegalStateException();
                     }
-                    final int tail = O2OArrayMap.this.size - this.pos;
+                    int tail = O2OArrayMap.this.size - this.pos;
                     System.arraycopy(O2OArrayMap.this.key, this.pos, O2OArrayMap.this.key, this.pos - 1, tail);
                     System.arraycopy(O2OArrayMap.this.value, this.pos, O2OArrayMap.this.value, this.pos - 1, tail);
                     O2OArrayMap.this.size--;
-                    this.pos--;
+                    --this.pos;
                     O2OArrayMap.this.key[O2OArrayMap.this.size] = null;
                     O2OArrayMap.this.value[O2OArrayMap.this.size] = null;
                 }
@@ -585,12 +567,12 @@ public class O2OArrayMap<K, V> extends AbstractObject2ObjectMap<K, V> implements
         }
 
         @Override
-        public boolean remove(final Object k) {
-            final int oldPos = O2OArrayMap.this.findKey(k);
+        public boolean remove(Object k) {
+            int oldPos = O2OArrayMap.this.findKey(k);
             if (oldPos == -1) {
                 return false;
             }
-            final int tail = O2OArrayMap.this.size - oldPos - 1;
+            int tail = O2OArrayMap.this.size - oldPos - 1;
             System.arraycopy(O2OArrayMap.this.key, oldPos + 1, O2OArrayMap.this.key, oldPos, tail);
             System.arraycopy(O2OArrayMap.this.value, oldPos + 1, O2OArrayMap.this.value, oldPos, tail);
             O2OArrayMap.this.size--;
@@ -606,7 +588,7 @@ public class O2OArrayMap<K, V> extends AbstractObject2ObjectMap<K, V> implements
 
         @Override
         public ObjectSpliterator<K> spliterator() {
-            return new O2OArrayMap.KeySet.KeySetSpliterator(0, O2OArrayMap.this.size);
+            return new KeySetSpliterator(0, O2OArrayMap.this.size);
         }
 
         final class KeySetSpliterator extends ObjectSpliterators.EarlyBindingSizeIndexBasedSpliterator<K> {
@@ -616,47 +598,46 @@ public class O2OArrayMap<K, V> extends AbstractObject2ObjectMap<K, V> implements
 
             @Override
             public int characteristics() {
-                return ObjectSpliterators.SET_SPLITERATOR_CHARACTERISTICS | java.util.Spliterator.SUBSIZED
-                       | java.util.Spliterator.ORDERED;
+                return Spliterator.ORDERED | Spliterator.DISTINCT | Spliterator.SIZED | Spliterator.SUBSIZED;
             }
 
             @Override
-            public void forEachRemaining(final Consumer<? super K> action) {
-                // Hoist containing class field ref into local
-                final int max = O2OArrayMap.this.size;
+            public void forEachRemaining(Consumer<? super K> action) {
+                int max = O2OArrayMap.this.size;
                 while (this.pos < max) {
-                    action.accept((K) O2OArrayMap.this.key[this.pos++]);
+                    action.accept(O2OArrayMap.this.key[this.pos++]);
                 }
             }
 
             @Override
             protected K get(int location) {
-                return (K) O2OArrayMap.this.key[location];
+                return O2OArrayMap.this.key[location];
             }
 
             @Override
-            protected O2OArrayMap.KeySet.KeySetSpliterator makeForSplit(int pos, int maxPos) {
-                return new O2OArrayMap.KeySet.KeySetSpliterator(pos, maxPos);
+            protected KeySetSpliterator makeForSplit(int pos, int maxPos) {
+                return KeySet.this.new KeySetSpliterator(pos, maxPos);
             }
         }
     }
 
     private final class ValuesCollection extends AbstractObjectCollection<V> {
+
         @Override
         public void clear() {
             O2OArrayMap.this.clear();
         }
 
         @Override
-        public boolean contains(final Object v) {
+        public boolean contains(Object v) {
             return O2OArrayMap.this.containsValue(v);
         }
 
         @Override
         public void forEach(Consumer<? super V> action) {
-            // Hoist containing class field ref into local
-            for (int i = 0, max = O2OArrayMap.this.size; i < max; ++i) {
-                action.accept((V) O2OArrayMap.this.value[i]);
+            int i = 0;
+            for (int max = O2OArrayMap.this.size; i < max; ++i) {
+                action.accept(O2OArrayMap.this.value[i]);
             }
         }
 
@@ -666,11 +647,10 @@ public class O2OArrayMap<K, V> extends AbstractObject2ObjectMap<K, V> implements
                 int pos;
 
                 @Override
-                public void forEachRemaining(final Consumer<? super V> action) {
-                    // Hoist containing class field ref into local
-                    final int max = O2OArrayMap.this.size;
+                public void forEachRemaining(Consumer<? super V> action) {
+                    int max = O2OArrayMap.this.size;
                     while (this.pos < max) {
-                        action.accept((V) O2OArrayMap.this.value[this.pos++]);
+                        action.accept(O2OArrayMap.this.value[this.pos++]);
                     }
                 }
 
@@ -684,7 +664,7 @@ public class O2OArrayMap<K, V> extends AbstractObject2ObjectMap<K, V> implements
                     if (!this.hasNext()) {
                         throw new NoSuchElementException();
                     }
-                    return (V) O2OArrayMap.this.value[this.pos++];
+                    return O2OArrayMap.this.value[this.pos++];
                 }
 
                 @Override
@@ -692,11 +672,11 @@ public class O2OArrayMap<K, V> extends AbstractObject2ObjectMap<K, V> implements
                     if (this.pos == 0) {
                         throw new IllegalStateException();
                     }
-                    final int tail = O2OArrayMap.this.size - this.pos;
+                    int tail = O2OArrayMap.this.size - this.pos;
                     System.arraycopy(O2OArrayMap.this.key, this.pos, O2OArrayMap.this.key, this.pos - 1, tail);
                     System.arraycopy(O2OArrayMap.this.value, this.pos, O2OArrayMap.this.value, this.pos - 1, tail);
                     O2OArrayMap.this.size--;
-                    this.pos--;
+                    --this.pos;
                     O2OArrayMap.this.key[O2OArrayMap.this.size] = null;
                     O2OArrayMap.this.value[O2OArrayMap.this.size] = null;
                 }
@@ -710,37 +690,35 @@ public class O2OArrayMap<K, V> extends AbstractObject2ObjectMap<K, V> implements
 
         @Override
         public ObjectSpliterator<V> spliterator() {
-            return new O2OArrayMap.ValuesCollection.ValuesSpliterator(0, O2OArrayMap.this.size);
+            return new ValuesSpliterator(0, O2OArrayMap.this.size);
         }
 
         final class ValuesSpliterator extends ObjectSpliterators.EarlyBindingSizeIndexBasedSpliterator<V> {
-
             ValuesSpliterator(int pos, int maxPos) {
                 super(pos, maxPos);
             }
 
             @Override
             public int characteristics() {
-                return ObjectSpliterators.COLLECTION_SPLITERATOR_CHARACTERISTICS | Spliterator.SUBSIZED | Spliterator.ORDERED;
+                return Spliterator.ORDERED | Spliterator.SIZED | Spliterator.SUBSIZED;
             }
 
             @Override
-            public void forEachRemaining(final Consumer<? super V> action) {
-                // Hoist containing class field ref into local
-                final int max = O2OArrayMap.this.size;
+            public void forEachRemaining(Consumer<? super V> action) {
+                int max = O2OArrayMap.this.size;
                 while (this.pos < max) {
-                    action.accept((V) O2OArrayMap.this.value[this.pos++]);
+                    action.accept(O2OArrayMap.this.value[this.pos++]);
                 }
             }
 
             @Override
             protected V get(int location) {
-                return (V) O2OArrayMap.this.value[location];
+                return O2OArrayMap.this.value[location];
             }
 
             @Override
-            protected O2OArrayMap.ValuesCollection.ValuesSpliterator makeForSplit(int pos, int maxPos) {
-                return new O2OArrayMap.ValuesCollection.ValuesSpliterator(pos, maxPos);
+            protected ValuesSpliterator makeForSplit(int pos, int maxPos) {
+                return ValuesCollection.this.new ValuesSpliterator(pos, maxPos);
             }
         }
     }

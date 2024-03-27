@@ -1,7 +1,5 @@
 package tgw.evolution.util.constants;
 
-import it.unimi.dsi.fastutil.bytes.Byte2ReferenceMap;
-import it.unimi.dsi.fastutil.bytes.Byte2ReferenceMaps;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import org.jetbrains.annotations.Contract;
@@ -19,8 +17,8 @@ import tgw.evolution.items.modular.part.ItemPart;
 import tgw.evolution.util.UnregisteredFeatureException;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
-import tgw.evolution.util.collection.maps.B2RHashMap;
-import tgw.evolution.util.collection.maps.B2RMap;
+import tgw.evolution.util.collection.maps.B2OHashMap;
+import tgw.evolution.util.collection.maps.B2OMap;
 
 import java.util.Map;
 
@@ -44,18 +42,18 @@ public enum RockVariant implements IVariant<RockVariant> {
     SLATE(14, METAMORPHIC, "slate");
 
     public static final RockVariant[] VALUES = values();
-    private static final Byte2ReferenceMap<RockVariant> REGISTRY;
+    private static final B2OMap<RockVariant> REGISTRY;
     private static final OList<Map<RockVariant, ? extends Block>> BLOCKS = new OArrayList<>();
 
     static {
-        B2RMap<RockVariant> map = new B2RHashMap<>();
+        B2OMap<RockVariant> map = new B2OHashMap<>();
         for (RockVariant variant : VALUES) {
             if (map.put(variant.id, variant) != null) {
                 throw new IllegalStateException("RockVariant " + variant + " has duplicate id: " + variant.id);
             }
         }
-        map.trimCollection();
-        REGISTRY = Byte2ReferenceMaps.unmodifiable(map);
+        map.trim();
+        REGISTRY = map.view();
     }
 
     private final byte id;
@@ -110,6 +108,23 @@ public enum RockVariant implements IVariant<RockVariant> {
         };
     }
 
+    @Override
+    public String getName() {
+        return this.name;
+    }
+
+    public RockType getRockType() {
+        if (this.rockType == null) {
+            throw new IllegalStateException("RockVariant " + this + " does not have a RockType");
+        }
+        return this.rockType;
+    }
+
+    @Override
+    public void registerBlocks(Map<RockVariant, ? extends Block> blocks) {
+        BLOCKS.add(blocks);
+    }
+
     private EvolutionMaterials getMaterial() {
         return switch (this) {
             case ANDESITE -> EvolutionMaterials.ANDESITE;
@@ -130,25 +145,8 @@ public enum RockVariant implements IVariant<RockVariant> {
         };
     }
 
-    @Override
-    public String getName() {
-        return this.name;
-    }
-
     @Contract(pure = true, value = "_ -> new")
     private <T extends IPartType<T, I, P>, I extends ItemPart<T, I, P>, P extends IPart<T, I, P>> ItemStack getPart(T type) {
         return type.partItem().newStack(type, this.getMaterial());
-    }
-
-    public RockType getRockType() {
-        if (this.rockType == null) {
-            throw new IllegalStateException("RockVariant " + this + " does not have a RockType");
-        }
-        return this.rockType;
-    }
-
-    @Override
-    public void registerBlocks(Map<RockVariant, ? extends Block> blocks) {
-        BLOCKS.add(blocks);
     }
 }

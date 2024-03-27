@@ -80,9 +80,9 @@ public final class CommandLoadFactor {
         if (PLAYERS.isEmpty()) {
             return;
         }
-        for (L2OMap.Entry<WeakReference<LevelChunkSection>> e = SECTIONS.fastEntries(); e != null; e = SECTIONS.fastEntries()) {
-            long pos = e.key();
-            LevelChunkSection section = e.value().get();
+        for (long it = SECTIONS.beginIteration(); SECTIONS.hasNextIteration(it); it = SECTIONS.nextEntry(it)) {
+            long pos = SECTIONS.getIterationKey(it);
+            LevelChunkSection section = SECTIONS.getIterationValue(it).get();
             if (section == null) {
                 //noinspection ObjectAllocationInLoop
                 sendToPlayers(playerList, new PacketSCLoadFactor(pos));
@@ -133,9 +133,9 @@ public final class CommandLoadFactor {
     private static int join(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
         if (PLAYERS.add(player.getId())) {
-            for (L2OMap.Entry<WeakReference<LevelChunkSection>> e = SECTIONS.fastEntries(); e != null; e = SECTIONS.fastEntries()) {
-                long pos = e.key();
-                LevelChunkSection value = e.value().get();
+            for (long it = SECTIONS.beginIteration(); SECTIONS.hasNextIteration(it); it = SECTIONS.nextEntry(it)) {
+                long pos = SECTIONS.getIterationKey(it);
+                LevelChunkSection value = SECTIONS.getIterationValue(it).get();
                 if (value != null) {
                     //noinspection ObjectAllocationInLoop
                     player.connection.send(new PacketSCLoadFactor(pos, value.getLoadFactorStorage(), value.getIntegrityStorage(), value.getStabilityStorage()));

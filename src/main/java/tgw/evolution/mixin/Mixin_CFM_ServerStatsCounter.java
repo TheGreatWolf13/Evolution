@@ -40,11 +40,11 @@ import java.util.Set;
 @Mixin(ServerStatsCounter.class)
 public abstract class Mixin_CFM_ServerStatsCounter extends StatsCounter {
     @Shadow @Final private static Logger LOGGER;
-    @Unique private final OSet<Stat<?>> dirtyData;
-    @Unique private final O2SMap<Stat<?>> partialData;
     @Shadow @Final @DeleteField private Set<Stat<?>> dirty;
+    @Unique private final OSet<Stat<?>> dirtyData;
     @Mutable @Shadow @Final @RestoreFinal private File file;
     @Unique private int lastStatRequest;
+    @Unique private final O2SMap<Stat<?>> partialData;
     @Mutable @Shadow @Final @RestoreFinal private MinecraftServer server;
 
     @DummyConstructor
@@ -112,33 +112,6 @@ public abstract class Mixin_CFM_ServerStatsCounter extends StatsCounter {
             return null;
         }
         return statType.get(t);
-    }
-
-    /**
-     * @author TheGreatWolf
-     * @reason _
-     */
-    @Overwrite
-    @DeleteMethod
-    private Set<Stat<?>> getDirty() {
-        throw new AbstractMethodError();
-    }
-
-    @Unique
-    private OSet<Stat<?>> getDirtyData() {
-        OSet<Stat<?>> set = new OHashSet<>(this.dirtyData);
-        this.dirtyData.clear();
-        return set;
-    }
-
-    /**
-     * @author TheGreatWolf
-     * @reason _
-     */
-    @Overwrite
-    @DeleteMethod
-    private <T> Optional<Stat<T>> getStat(StatType<T> statType, String string) {
-        throw new AbstractMethodError();
     }
 
     @Override
@@ -316,34 +289,34 @@ public abstract class Mixin_CFM_ServerStatsCounter extends StatsCounter {
         synchronized (this) {
             O2LMap<Stat<?>> statsData = this._getMap();
             R2OMap<StatType<?>, JsonObject> dataMap = new R2OHashMap<>();
-            for (O2LMap.Entry<Stat<?>> e = statsData.fastEntries(); e != null; e = statsData.fastEntries()) {
-                Stat<?> stat = e.key();
+            for (long it = statsData.beginIteration(); statsData.hasNextIteration(it); it = statsData.nextEntry(it)) {
+                Stat<?> stat = statsData.getIterationKey(it);
                 JsonObject json = dataMap.get(stat.getType());
                 if (json == null) {
                     json = new JsonObject();
                     dataMap.put(stat.getType(), json);
                 }
-                json.addProperty(getKey(stat).toString(), e.value());
+                json.addProperty(getKey(stat).toString(), statsData.getIterationValue(it));
             }
             JsonObject data = new JsonObject();
-            for (R2OMap.Entry<StatType<?>, JsonObject> e = dataMap.fastEntries(); e != null; e = dataMap.fastEntries()) {
+            for (long it = dataMap.beginIteration(); dataMap.hasNextIteration(it); it = dataMap.nextEntry(it)) {
                 //noinspection ConstantConditions
-                data.add(Registry.STAT_TYPE.getKey(e.key()).toString(), e.value());
+                data.add(Registry.STAT_TYPE.getKey(dataMap.getIterationKey(it)).toString(), dataMap.getIterationValue(it));
             }
             R2OMap<StatType<?>, JsonObject> partialDataMap = new R2OHashMap<>();
-            for (O2SMap.Entry<Stat<?>> e = this.partialData.fastEntries(); e != null; e = this.partialData.fastEntries()) {
-                Stat<?> stat = e.key();
+            for (long it = this.partialData.beginIteration(); this.partialData.hasNextIteration(it); it = this.partialData.nextEntry(it)) {
+                Stat<?> stat = this.partialData.getIterationKey(it);
                 JsonObject json = partialDataMap.get(stat.getType());
                 if (json == null) {
                     json = new JsonObject();
                     partialDataMap.put(stat.getType(), json);
                 }
-                json.addProperty(getKey(stat).toString(), e.value());
+                json.addProperty(getKey(stat).toString(), this.partialData.getIterationValue(it));
             }
             JsonObject partialData = new JsonObject();
-            for (R2OMap.Entry<StatType<?>, JsonObject> e = partialDataMap.fastEntries(); e != null; e = partialDataMap.fastEntries()) {
+            for (long it = partialDataMap.beginIteration(); partialDataMap.hasNextIteration(it); it = partialDataMap.nextEntry(it)) {
                 //noinspection ConstantConditions
-                partialData.add(Registry.STAT_TYPE.getKey(e.key()).toString(), e.value());
+                partialData.add(Registry.STAT_TYPE.getKey(partialDataMap.getIterationKey(it)).toString(), partialDataMap.getIterationValue(it));
             }
             JsonObject finalObj = new JsonObject();
             finalObj.add("stats", data);
@@ -351,5 +324,32 @@ public abstract class Mixin_CFM_ServerStatsCounter extends StatsCounter {
             finalObj.addProperty("DataVersion", SharedConstants.getCurrentVersion().getWorldVersion());
             return finalObj.toString();
         }
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    @DeleteMethod
+    private Set<Stat<?>> getDirty() {
+        throw new AbstractMethodError();
+    }
+
+    @Unique
+    private OSet<Stat<?>> getDirtyData() {
+        OSet<Stat<?>> set = new OHashSet<>(this.dirtyData);
+        this.dirtyData.clear();
+        return set;
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    @DeleteMethod
+    private <T> Optional<Stat<T>> getStat(StatType<T> statType, String string) {
+        throw new AbstractMethodError();
     }
 }

@@ -11,13 +11,10 @@ import tgw.evolution.items.IFireAspect;
 import tgw.evolution.items.IHeavyAttack;
 import tgw.evolution.items.IItemFluidContainer;
 import tgw.evolution.items.IKnockback;
-import tgw.evolution.util.collection.maps.R2OEnumMap;
-import tgw.evolution.util.collection.maps.R2OMap;
 import tgw.evolution.util.collection.sets.RSet;
 import tgw.evolution.util.math.MathHelper;
 
 import java.util.Locale;
-import java.util.stream.Collectors;
 
 import static net.minecraft.world.effect.MobEffectCategory.*;
 import static tgw.evolution.init.EvolutionFormatter.*;
@@ -98,15 +95,16 @@ public final class EvolutionTexts {
     public static final Component TOOLTIP_TORCH_RELIT = transl("evolution.tooltip.torchRelit").setStyle(BLUE);
     public static final Component TOOLTIP_TWO_HANDED = transl("evolution.tooltip.twoHanded").setStyle(GOLD);
     public static final Component TOOLTIP_UNBREAKABLE = transl("evolution.tooltip.unbreakable").setStyle(BLUE);
-    private static final R2OMap<IStructural.BeamType, Component> BEAM_TYPES;
+    private static final Component[] BEAM_TYPES;
 
     static {
-        R2OMap<IStructural.BeamType, Component> map = new R2OEnumMap<>(IStructural.BeamType.VALUES);
-        for (IStructural.BeamType value : IStructural.BeamType.VALUES) {
+        IStructural.BeamType[] values = IStructural.BeamType.VALUES;
+        Component[] beamTypes = new Component[values.length];
+        for (int i = 0, len = values.length; i < len; i++) {
             //noinspection ObjectAllocationInLoop
-            map.put(value, transl("evolution.tooltip.structuralType." + value.name().toLowerCase(Locale.ROOT)));
+            beamTypes[i] = transl("evolution.tooltip.structuralType." + values[i].name().toLowerCase(Locale.ROOT));
         }
-        BEAM_TYPES = map.view();
+        BEAM_TYPES = beamTypes;
     }
 
     private EvolutionTexts() {
@@ -331,9 +329,15 @@ public final class EvolutionTexts {
             return EMPTY;
         }
         if (set.size() == 1) {
-            return new TranslatableComponent("evolution.tooltip.structuralType", BEAM_TYPES.get(set.getSampleElement())).setStyle(LIGHT_GREY);
+            return new TranslatableComponent("evolution.tooltip.structuralType", BEAM_TYPES[set.getSampleElement().ordinal()]).setStyle(LIGHT_GREY);
         }
-        return new TranslatableComponent("evolution.tooltip.structuralType", set.stream().map(BEAM_TYPES::get).map(Component::getString).collect(Collectors.joining(", "))).setStyle(LIGHT_GREY);
+        StringBuilder builder = new StringBuilder(BEAM_TYPES[set.getSampleElement().ordinal()].getString());
+        long it = set.beginIteration();
+        for (it = set.nextEntry(it); set.hasNextIteration(it); it = set.nextEntry(it)) {
+            builder.append(", ");
+            builder.append(BEAM_TYPES[set.getIteration(it).ordinal()].getString());
+        }
+        return new TranslatableComponent("evolution.tooltip.structuralType", builder.toString()).setStyle(LIGHT_GREY);
     }
 
     public static FormattedText throwAttack() {

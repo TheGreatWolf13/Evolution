@@ -56,8 +56,8 @@ public class ClientIntegrityStorage {
         L2OMap<byte @Nullable []> loadFactor = this.loadFactor;
         L2OMap<byte @Nullable []> integrity = this.integrity;
         L2OMap<byte @Nullable []> stability = this.stability;
-        for (L2OMap.Entry<byte[]> e = loadFactor.fastEntries(); e != null; e = loadFactor.fastEntries()) {
-            long pos = e.key();
+        for (long it = loadFactor.beginIteration(); loadFactor.hasNextIteration(it); it = loadFactor.nextEntry(it)) {
+            long pos = loadFactor.getIterationKey(it);
             int x0 = SectionPos.sectionToBlockCoord(SectionPos.x(pos));
             if (Math.abs(camX - (x0 + 8)) > 32) {
                 continue;
@@ -73,7 +73,7 @@ public class ClientIntegrityStorage {
             int endX = x0 + 16;
             int endY = y0 + 16;
             int endZ = z0 + 16;
-            byte[] loadF = e.value();
+            byte[] loadF = loadFactor.getIterationValue(it);
             byte[] integ = integrity.get(pos);
             byte[] stab = stability.get(pos);
             assert integ != null;

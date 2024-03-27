@@ -40,10 +40,6 @@ public class CapabilityInventory extends BasicContainer {
     }
 
     @Override
-    protected void onContentsChanged(int slot) {
-    }
-
-    @Override
     public void onTake(int slot, Player player, ItemStack stackTaken, ItemStack newStack) {
         //TODO implementation
 
@@ -56,10 +52,11 @@ public class CapabilityInventory extends BasicContainer {
             Item item = stack.getItem();
             if (item instanceof IAdditionalEquipment additionalEquipment) {
                 R2OMap<Attribute, AttributeModifier> attributes = additionalEquipment.getAttributes(stack);
-                for (R2OMap.Entry<Attribute, AttributeModifier> e = attributes.fastEntries(); e != null; e = attributes.fastEntries()) {
-                    AttributeInstance instance = living.getAttribute(e.key());
+                for (long it = attributes.beginIteration(); attributes.hasNextIteration(it); it = attributes.nextEntry(it)) {
+                    //noinspection DataFlowIssue
+                    AttributeInstance instance = living.getAttribute(attributes.getIterationKey(it));
                     assert instance != null;
-                    instance.removeModifier(e.value());
+                    instance.removeModifier(attributes.getIterationValue(it));
                 }
             }
         }
@@ -79,10 +76,11 @@ public class CapabilityInventory extends BasicContainer {
             Item item = stack.getItem();
             if (item instanceof IAdditionalEquipment additionalEquipment && this.entity instanceof LivingEntity living) {
                 R2OMap<Attribute, AttributeModifier> attributes = additionalEquipment.getAttributes(stack);
-                for (R2OMap.Entry<Attribute, AttributeModifier> e = attributes.fastEntries(); e != null; e = attributes.fastEntries()) {
-                    AttributeInstance instance = living.getAttribute(e.key());
+                for (long it = attributes.beginIteration(); attributes.hasNextIteration(it); it = attributes.nextEntry(it)) {
+                    //noinspection DataFlowIssue
+                    AttributeInstance instance = living.getAttribute(attributes.getIterationKey(it));
                     assert instance != null;
-                    instance.addPermanentModifier(e.value());
+                    instance.addPermanentModifier(attributes.getIterationValue(it));
                 }
             }
         }

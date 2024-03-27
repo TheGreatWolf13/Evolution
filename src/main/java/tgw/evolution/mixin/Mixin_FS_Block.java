@@ -3,6 +3,7 @@ package tgw.evolution.mixin;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ImmutableMap;
 import com.mojang.logging.LogUtils;
 import it.unimi.dsi.fastutil.objects.Object2ByteLinkedOpenHashMap;
 import net.minecraft.core.BlockPos;
@@ -22,6 +23,7 @@ import net.minecraft.world.level.block.LevelEvent;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.storage.loot.BuiltInLootTables;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
@@ -40,12 +42,14 @@ import tgw.evolution.hooks.asm.DeleteField;
 import tgw.evolution.hooks.asm.ModifyStatic;
 import tgw.evolution.hooks.asm.RestoreFinal;
 import tgw.evolution.patches.PatchBlock;
+import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.constants.BlockFlags;
 import tgw.evolution.util.constants.HarvestLevel;
 
 import java.util.List;
 import java.util.Random;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.random.RandomGenerator;
 
 @Mixin(Block.class)
@@ -55,6 +59,7 @@ public abstract class Mixin_FS_Block extends BlockBehaviour implements PatchBloc
     @Shadow @Final @DeleteField private static ThreadLocal<Object2ByteLinkedOpenHashMap<Block.BlockStatePairKey>> OCCLUSION_CACHE;
     @Mutable @Shadow @Final @RestoreFinal private static Logger LOGGER;
     @Mutable @Shadow @Final @RestoreFinal private static LoadingCache<VoxelShape, Boolean> SHAPE_FULL_BLOCK_CACHE;
+    @Shadow @Final protected StateDefinition<Block, BlockState> stateDefinition;
 
     public Mixin_FS_Block(Properties properties) {
         super(properties);
@@ -78,19 +83,6 @@ public abstract class Mixin_FS_Block extends BlockBehaviour implements PatchBloc
     public static boolean canSupportRigidBlock(BlockGetter level, BlockPos pos) {
         Evolution.deprecatedMethod();
         return BlockUtils.canSupportRigidBlock(level, pos.getX(), pos.getY(), pos.getZ());
-    }
-
-    @ModifyStatic
-    @Unique
-    private static void clinit() {
-        LOGGER = LogUtils.getLogger();
-        BLOCK_STATE_REGISTRY = new IdMapper<>();
-        SHAPE_FULL_BLOCK_CACHE = CacheBuilder.newBuilder().maximumSize(512L).weakKeys().build(new CacheLoader<>() {
-            @Override
-            public Boolean load(VoxelShape shape) {
-                return !Shapes.joinIsNotEmpty(Shapes.block(), shape, BooleanOp.NOT_SAME);
-            }
-        });
     }
 
     /**
@@ -231,6 +223,19 @@ public abstract class Mixin_FS_Block extends BlockBehaviour implements PatchBloc
         BlockUtils.updateOrDestroy(state, updatedState, level, pos.getX(), pos.getY(), pos.getZ(), flags, limit);
     }
 
+    @ModifyStatic
+    @Unique
+    private static void clinit() {
+        LOGGER = LogUtils.getLogger();
+        BLOCK_STATE_REGISTRY = new IdMapper<>();
+        SHAPE_FULL_BLOCK_CACHE = CacheBuilder.newBuilder().maximumSize(512L).weakKeys().build(new CacheLoader<>() {
+            @Override
+            public Boolean load(VoxelShape shape) {
+                return !Shapes.joinIsNotEmpty(Shapes.block(), shape, BooleanOp.NOT_SAME);
+            }
+        });
+    }
+
     /**
      * @reason _
      * @author TheGreatWolf
@@ -289,6 +294,21 @@ public abstract class Mixin_FS_Block extends BlockBehaviour implements PatchBloc
     @Override
     public int getHarvestLevel(BlockState state, @Nullable Level level, int x, int y, int z) {
         return HarvestLevel.HAND;
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public ImmutableMap<BlockState, VoxelShape> getShapeForEachState(Function<BlockState, VoxelShape> function) {
+        ImmutableMap.Builder<BlockState, VoxelShape> builder = new ImmutableMap.Builder<>();
+        OList<BlockState> possibleStates = this.stateDefinition.getPossibleStates_();
+        for (int i = 0, len = possibleStates.size(); i < len; ++i) {
+            BlockState state = possibleStates.get(i);
+            builder.put(state, function.apply(state));
+        }
+        return builder.build();
     }
 
     @Override

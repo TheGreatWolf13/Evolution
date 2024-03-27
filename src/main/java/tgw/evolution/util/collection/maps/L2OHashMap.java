@@ -1,114 +1,201 @@
 package tgw.evolution.util.collection.maps;
 
 import it.unimi.dsi.fastutil.HashCommon;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.longs.LongSet;
+import it.unimi.dsi.fastutil.objects.ObjectCollection;
 import org.jetbrains.annotations.Nullable;
-import tgw.evolution.Evolution;
+import org.jetbrains.annotations.UnmodifiableView;
+import tgw.evolution.util.collection.lists.LArrayList;
 
-import java.util.Map;
-
-import static it.unimi.dsi.fastutil.HashCommon.arraySize;
+import java.util.ConcurrentModificationException;
+import java.util.NoSuchElementException;
 
 public class L2OHashMap<V> extends Long2ObjectOpenHashMap<V> implements L2OMap<V> {
 
-    protected final L2OMap.Entry<V> entry = new L2OMap.Entry<>();
-    /**
-     * Bit 0: shouldRehash; <br>
-     * Bit 1: askedToRehash; <br>
-     */
-    protected byte flags = 0b01;
-    protected int lastPos = -1;
-
-    private void ensureCapacity(final int capacity) {
-        final int needed = arraySize(capacity, this.f);
-        if (needed > this.n) {
-            this.rehash(needed);
-        }
-    }
+    protected @Nullable View<V> view;
+    protected @Nullable LArrayList wrappedEntries;
 
     @Override
-    public L2OMap.@Nullable Entry<V> fastEntries() {
+    public long beginIteration() {
+        if (this.wrappedEntries != null) {
+            this.wrappedEntries.clear();
+        }
         if (this.isEmpty()) {
-            this.lastPos = -1;
-            this.handleRehash();
-            return null;
+            return 0;
         }
-        if (this.lastPos == -1) {
-            //Begin iteration
-            this.lastPos = this.n;
-            this.flags &= ~1;
-            if (this.containsNullKey) {
-                return this.entry.set(0L, this.value[this.n]);
-            }
+        if (this.containsNullKey) {
+            return (long) this.n << 32 | this.size;
         }
-        for (int pos = this.lastPos; pos-- != 0; ) {
+        for (int pos = this.n; pos-- != 0; ) {
             long k = this.key[pos];
             if (k != 0) {
-                //Remember last pos
-                this.lastPos = pos;
-                return this.entry.set(k, this.value[pos]);
+                return (long) pos << 32 | this.size;
             }
         }
-        this.lastPos = -1;
-        this.entry.set(0L, null);
-        this.handleRehash();
-        return null;
-    }
-
-    protected void handleRehash() {
-        byte oldFlags = this.flags;
-        this.flags = 0b01;
-        if ((oldFlags & 2) != 0) {
-            this.trim();
-        }
+        throw new IllegalStateException("Should never reach here");
     }
 
     @Override
-    public FastEntrySet<V> long2ObjectEntrySet() {
-        if (CHECKS) {
-            Evolution.info("Allocating entry set!");
+    public long getIterationKey(long it) {
+        int pos = (int) (it >> 32);
+        if (pos >= 0) {
+            return this.key[pos];
         }
+        assert this.wrappedEntries != null;
+        return this.wrappedEntries.get(-pos - 1);
+    }
+
+    @Override
+    public V getIterationValue(long it) {
+        int pos = (int) (it >> 32);
+        if (pos >= 0) {
+            return this.value[pos];
+        }
+        assert this.wrappedEntries != null;
+        long k = this.wrappedEntries.get(-pos - 1);
+        int p = (int) HashCommon.mix(k) & this.mask;
+        while (k != this.key[p]) {
+            p = p + 1 & this.mask;
+        }
+        return this.value[p];
+    }
+
+    @Override
+    public long getSampleKey() {
+        if (this.isEmpty()) {
+            throw new NoSuchElementException("Empty set");
+        }
+        if (this.containsNullKey) {
+            return this.key[this.n];
+        }
+        for (int pos = this.n; pos-- != 0; ) {
+            long k = this.key[pos];
+            if (k != 0) {
+                return k;
+            }
+        }
+        throw new IllegalStateException("Should never reach here");
+    }
+
+    @Override
+    public V getSampleValue() {
+        if (this.isEmpty()) {
+            throw new NoSuchElementException("Empty set");
+        }
+        if (this.containsNullKey) {
+            return this.value[this.n];
+        }
+        for (int pos = this.n; pos-- != 0; ) {
+            long k = this.key[pos];
+            if (k != 0) {
+                return this.value[pos];
+            }
+        }
+        throw new IllegalStateException("Should never reach here");
+    }
+
+    @Override
+    public LongSet keySet() {
+        this.deprecatedMethod();
+        return super.keySet();
+    }
+
+    @Override
+    public Long2ObjectMap.FastEntrySet<V> long2ObjectEntrySet() {
+        this.deprecatedMethod();
         return super.long2ObjectEntrySet();
     }
 
     @Override
-    public void putAll(Map<? extends Long, ? extends V> m) {
-        if (m instanceof L2OMap) {
-            if (this.f <= 0.5f) {
-                this.ensureCapacity(m.size());
-            }
-            else {
-                this.tryCapacity(this.size() + m.size());
-            }
-            L2OMap<? extends V> map = (L2OMap<? extends V>) m;
-            for (L2OMap.Entry<? extends V> e = map.fastEntries(); e != null; e = map.fastEntries()) {
-                this.put(e.k, e.v);
-            }
+    public long nextEntry(long it) {
+        if (this.isEmpty()) {
+            return 0;
         }
-        else {
-            super.putAll(m);
+        int size = (int) it;
+        if (--size == 0) {
+            return 0;
+        }
+        int pos = (int) (it >> 32);
+        final long[] key = this.key;
+        while (true) {
+            if (--pos < 0) {
+                return (long) pos << 32 | size;
+            }
+            if (key[pos] != 0) {
+                return (long) pos << 32 | size;
+            }
         }
     }
 
     @Override
-    protected void rehash(int newN) {
-        if ((this.flags & 1) != 0) {
-            super.rehash(newN);
+    public long removeIteration(long it) {
+        int pos = (int) (it >> 32);
+        if (pos == this.n) {
+            this.containsNullKey = false;
+            this.key[this.n] = 0;
+            this.value[this.n] = null;
+        }
+        else if (pos >= 0) {
+            this.iterationShiftKeys(pos);
         }
         else {
-            this.flags |= 2;
+            assert this.wrappedEntries != null;
+            long wrappedEntry;
+            try {
+                wrappedEntry = this.wrappedEntries.getLong(-pos - 1);
+            }
+            catch (IndexOutOfBoundsException e) {
+                throw new ConcurrentModificationException(e);
+            }
+            this.remove(wrappedEntry);
+            return it;
         }
+        --this.size;
+        return it;
     }
 
     @Override
-    public void trimCollection() {
-        this.trim();
+    public ObjectCollection<V> values() {
+        this.deprecatedMethod();
+        return super.values();
     }
 
-    private void tryCapacity(final long capacity) {
-        final int needed = (int) Math.min(1 << 30, Math.max(2, HashCommon.nextPowerOfTwo((long) Math.ceil(capacity / this.f))));
-        if (needed > this.n) {
-            this.rehash(needed);
+    @Override
+    public @UnmodifiableView L2OMap<V> view() {
+        if (this.view == null) {
+            this.view = new View<>(this);
+        }
+        return this.view;
+    }
+
+    protected void iterationShiftKeys(int pos) {
+        final long[] key = this.key;
+        while (true) {
+            int last = pos;
+            pos = pos + 1 & this.mask;
+            long curr;
+            while (true) {
+                if ((curr = key[pos]) == 0) {
+                    key[last] = 0;
+                    this.value[last] = null;
+                    return;
+                }
+                int slot = (int) HashCommon.mix(curr) & this.mask;
+                if (last <= pos ? last >= slot || slot > pos : last >= slot && slot > pos) {
+                    break;
+                }
+                pos = pos + 1 & this.mask;
+            }
+            if (pos < last) {
+                if (this.wrappedEntries == null) {
+                    this.wrappedEntries = new LArrayList(2);
+                }
+                this.wrappedEntries.add(key[pos]);
+            }
+            key[last] = curr;
+            this.value[last] = this.value[pos];
         }
     }
 }

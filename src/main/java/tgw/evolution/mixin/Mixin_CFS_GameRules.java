@@ -70,13 +70,18 @@ public abstract class Mixin_CFS_GameRules {
         for (Map.Entry<GameRules.Key<?>, GameRules.Type<?>> entry : GAME_RULE_TYPES.entrySet()) {
             map.put(entry.getKey(), entry.getValue().createRule());
         }
-        map.trimCollection();
+        map.trim();
         this.rules = map;
     }
 
     @ModifyConstructor
     private Mixin_CFS_GameRules(Map<GameRules.Key<?>, GameRules.Value<?>> map) {
         this.rules = map;
+    }
+
+    @Shadow
+    public static <T extends GameRules.Value<T>> GameRules.Key<T> register(String string, GameRules.Category category, GameRules.Type<T> type) {
+        throw new AbstractMethodError();
     }
 
     @Unique
@@ -136,14 +141,6 @@ public abstract class Mixin_CFS_GameRules {
         EvolutionGameRules.register();
     }
 
-    @Shadow
-    public static <T extends GameRules.Value<T>> GameRules.Key<T> register(String string, GameRules.Category category, GameRules.Type<T> type) {
-        throw new AbstractMethodError();
-    }
-
-    @Shadow
-    protected abstract <T extends GameRules.Value<T>> void assignCap(GameRules.Key<T> key, GameRules gameRules, @Nullable MinecraftServer minecraftServer);
-
     /**
      * @reason _
      * @author TheGreatWolf
@@ -151,8 +148,8 @@ public abstract class Mixin_CFS_GameRules {
     @Overwrite
     public void assignFrom(GameRules gameRules, @Nullable MinecraftServer minecraftServer) {
         O2OMap<GameRules.Key<?>, GameRules.Value<?>> rules = (O2OMap<GameRules.Key<?>, GameRules.Value<?>>) gameRules.rules;
-        for (O2OMap.Entry<GameRules.Key<?>, GameRules.Value<?>> e = rules.fastEntries(); e != null; e = rules.fastEntries()) {
-            this.assignCap(e.key(), gameRules, minecraftServer);
+        for (long it = rules.beginIteration(); rules.hasNextIteration(it); it = rules.nextEntry(it)) {
+            this.assignCap(rules.getIterationKey(it), gameRules, minecraftServer);
         }
     }
 
@@ -164,10 +161,10 @@ public abstract class Mixin_CFS_GameRules {
     public GameRules copy() {
         O2OMap<GameRules.Key<?>, GameRules.Value<?>> map = new O2OHashMap<>();
         O2OMap<GameRules.Key<?>, GameRules.Value<?>> rules = (O2OMap<GameRules.Key<?>, GameRules.Value<?>>) this.rules;
-        for (O2OMap.Entry<GameRules.Key<?>, GameRules.Value<?>> e = rules.fastEntries(); e != null; e = rules.fastEntries()) {
-            map.put(e.key(), e.value().copy());
+        for (long it = rules.beginIteration(); rules.hasNextIteration(it); it = rules.nextEntry(it)) {
+            map.put(rules.getIterationKey(it), rules.getIterationValue(it).copy());
         }
-        map.trimCollection();
+        map.trim();
         return new GameRules(map);
     }
 
@@ -179,11 +176,14 @@ public abstract class Mixin_CFS_GameRules {
     public CompoundTag createTag() {
         CompoundTag tag = new CompoundTag();
         O2OMap<GameRules.Key<?>, GameRules.Value<?>> rules = (O2OMap<GameRules.Key<?>, GameRules.Value<?>>) this.rules;
-        for (O2OMap.Entry<GameRules.Key<?>, GameRules.Value<?>> e = rules.fastEntries(); e != null; e = rules.fastEntries()) {
-            tag.putString(e.key().getId(), e.value().serialize());
+        for (long it = rules.beginIteration(); rules.hasNextIteration(it); it = rules.nextEntry(it)) {
+            tag.putString(rules.getIterationKey(it).getId(), rules.getIterationValue(it).serialize());
         }
         return tag;
     }
+
+    @Shadow
+    protected abstract <T extends GameRules.Value<T>> void assignCap(GameRules.Key<T> key, GameRules gameRules, @Nullable MinecraftServer minecraftServer);
 
     /**
      * @reason _
@@ -192,10 +192,10 @@ public abstract class Mixin_CFS_GameRules {
     @Overwrite
     private void loadFromTag(DynamicLike<?> dynamicLike) {
         O2OMap<GameRules.Key<?>, GameRules.Value<?>> rules = (O2OMap<GameRules.Key<?>, GameRules.Value<?>>) this.rules;
-        for (O2OMap.Entry<GameRules.Key<?>, GameRules.Value<?>> e = rules.fastEntries(); e != null; e = rules.fastEntries()) {
-            Optional<String> result = dynamicLike.get(e.key().getId()).asString().result();
+        for (long it = rules.beginIteration(); rules.hasNextIteration(it); it = rules.nextEntry(it)) {
+            Optional<String> result = dynamicLike.get(rules.getIterationKey(it).getId()).asString().result();
             if (result.isPresent()) {
-                e.value().deserialize(result.get());
+                rules.getIterationValue(it).deserialize(result.get());
             }
         }
     }

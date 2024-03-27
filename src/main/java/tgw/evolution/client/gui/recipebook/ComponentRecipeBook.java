@@ -48,10 +48,23 @@ import java.util.Set;
 
 public class ComponentRecipeBook extends GuiComponent implements IRecipeBook, GuiEventListener, NarratableEntry, PlaceRecipe<Ingredient> {
 
+    protected int cornerX;
+    protected int cornerY;
+    protected StateSwitchingButton filterButton;
     protected final GhostRecipe ghostRecipe = new GhostRecipe();
+    protected RecipeBookMenu<?> menu;
+    protected Minecraft minecraft;
     protected final ResourceLocation resBackground;
+    protected int xOffset;
+    private ClientRecipeBook book;
+    private @Nullable ButtonTabRecipeBook focusedTab;
+    private int height;
+    private boolean ignoreTextInput;
+    private String lastSearch = "";
     private final PageRecipeBook recipeBookPage;
     private final Screen screen;
+    private @Nullable AdvEditBox searchBox;
+    private @Nullable ButtonTabRecipeBook selectedTab;
     private final StackedContentsEv stackedContents = new StackedContentsEv();
     private final List<ButtonTabRecipeBook> tabButtons = new OArrayList<>();
     private final int texHeight;
@@ -59,19 +72,6 @@ public class ComponentRecipeBook extends GuiComponent implements IRecipeBook, Gu
     private final Component textSearch = new TranslatableComponent("evolution.gui.recipebook.search").withStyle(ChatFormatting.ITALIC).withStyle(ChatFormatting.GRAY);
     private final Component textToggleAll = new TranslatableComponent("evolution.gui.recipebook.showingAll");
     private final Component textToggleCraftable = new TranslatableComponent("evolution.gui.recipebook.showingCraftable");
-    protected int cornerX;
-    protected int cornerY;
-    protected StateSwitchingButton filterButton;
-    protected RecipeBookMenu<?> menu;
-    protected Minecraft minecraft;
-    protected int xOffset;
-    private ClientRecipeBook book;
-    private @Nullable ButtonTabRecipeBook focusedTab;
-    private int height;
-    private boolean ignoreTextInput;
-    private String lastSearch = "";
-    private @Nullable AdvEditBox searchBox;
-    private @Nullable ButtonTabRecipeBook selectedTab;
     private int timesInventoryChanged;
     private boolean visible;
     private int width;
@@ -98,15 +98,6 @@ public class ComponentRecipeBook extends GuiComponent implements IRecipeBook, Gu
         }
     }
 
-    protected boolean areTabsOnTheRight() {
-        return false;
-    }
-
-    @Override
-    public boolean changeFocus(boolean focus) {
-        return false;
-    }
-
     @Override
     public boolean charTyped(char c, @Modifiers int mod) {
         if (this.ignoreTextInput) {
@@ -122,35 +113,6 @@ public class ComponentRecipeBook extends GuiComponent implements IRecipeBook, Gu
             return GuiEventListener.super.charTyped(c, mod);
         }
         return false;
-    }
-
-    private void checkSearchStringUpdate() {
-        assert this.searchBox != null;
-        String s = this.searchBox.getValue().toLowerCase(Locale.ROOT);
-        if (!s.equals(this.lastSearch)) {
-            this.updateCollections(false);
-            this.lastSearch = s;
-        }
-    }
-
-    private Component getFilterButtonTooltip() {
-        return this.filterButton.isStateTriggered() ? this.getRecipeFilterName() : this.textToggleAll;
-    }
-
-    protected final int getHeight() {
-        return this.height;
-    }
-
-    protected Component getRecipeFilterName() {
-        return this.textToggleCraftable;
-    }
-
-    protected int getTabsDx() {
-        return -30;
-    }
-
-    protected final int getWidth() {
-        return this.width;
     }
 
     public boolean hasClickedOutside(double mouseX, double mouseY) {
@@ -182,74 +144,8 @@ public class ComponentRecipeBook extends GuiComponent implements IRecipeBook, Gu
         mc.keyboardHandler.setSendRepeatsToGui(true);
     }
 
-    protected void initCoordinates() {
-        this.xOffset = this.widthTooNarrow ? 0 : 86;
-        this.cornerX = (this.width - this.texWidth) / 2 - this.xOffset;
-        this.cornerY = (this.height - this.texHeight) / 2;
-    }
-
-    protected void initFilterButtonTextures() {
-        this.filterButton.initTextureValues(152, 41, 28, 18, this.resBackground);
-    }
-
-    protected void initVisuals() {
-        this.stackedContents.clear();
-        assert this.minecraft.player != null;
-        this.minecraft.player.getInventory().fillStackedContents(this.stackedContents);
-        this.menu.fillCraftSlotsStackedContents(this.stackedContents);
-        String s = this.searchBox != null ? this.searchBox.getValue() : "";
-        this.searchBox = new AdvEditBox(this.minecraft.font, this.cornerX + 25, this.cornerY + 14, 80, 9 + 5, EvolutionTexts.EMPTY);
-        this.searchBox.setMaxLength(50);
-        this.searchBox.setBordered(false);
-        this.searchBox.setVisible(true);
-        this.searchBox.setTextColor(0xff_ffff);
-        this.searchBox.setValue(s);
-        this.recipeBookPage.init(this.minecraft, this.cornerX, this.cornerY, this.resBackground);
-        this.recipeBookPage.addListener(this);
-        this.filterButton = new StateSwitchingButton(this.cornerX + 110, this.cornerY + 12, 26, 16, this.book.isFiltering(this.menu));
-        this.initFilterButtonTextures();
-        this.tabButtons.clear();
-        OList<RecipeCategory> categories = this.menu.recipeCategories();
-        for (int i = 0, len = categories.size(); i < len; ++i) {
-            //noinspection ObjectAllocationInLoop
-            ButtonTabRecipeBook tab = new ButtonTabRecipeBook(this, categories.get(i), this.resBackground, this.areTabsOnTheRight());
-            tab.setScreen(this.screen);
-            this.tabButtons.add(tab);
-        }
-        if (this.selectedTab != null) {
-            ButtonTabRecipeBook r = null;
-            for (int i = 0, l = this.tabButtons.size(); i < l; i++) {
-                ButtonTabRecipeBook t = this.tabButtons.get(i);
-                if (t.getCategory() == this.selectedTab.getCategory()) {
-                    r = t;
-                    break;
-                }
-            }
-            this.selectedTab = r;
-        }
-        if (this.selectedTab == null) {
-            this.selectedTab = this.tabButtons.get(0);
-        }
-        this.selectedTab.setStateTriggered(true);
-        this.updateCollections(false);
-        this.updateTabs();
-    }
-
-    @Override
-    public boolean isMouseOver(double mouseX, double mouseY) {
-        return false;
-    }
-
     public boolean isVisible() {
         return this.visible;
-    }
-
-    private boolean isVisibleAccordingToBookData() {
-        return this.book.isOpen(this.menu.getRecipeBookType());
-    }
-
-    protected final boolean isWidthTooNarrow() {
-        return this.widthTooNarrow;
     }
 
     @Override
@@ -386,21 +282,6 @@ public class ComponentRecipeBook extends GuiComponent implements IRecipeBook, Gu
         this.ghostRecipe.render(matrices, this.minecraft, leftPos, topPos, bigResultSlot, partialTicks);
     }
 
-    private void renderGhostRecipeTooltip(PoseStack matrices, int renderX, int renderY, int mouseX, int mouseY) {
-        ItemStack stack = null;
-        for (int i = 0; i < this.ghostRecipe.size(); i++) {
-            GhostRecipe.GhostIngredient ingredient = this.ghostRecipe.get(i);
-            int x = ingredient.getX() + renderX;
-            int y = ingredient.getY() + renderY;
-            if (mouseX >= x && mouseY >= y && mouseX < x + 16 && mouseY < y + 16) {
-                stack = ingredient.getItem();
-            }
-        }
-        if (stack != null && this.minecraft.screen != null) {
-            this.minecraft.screen.renderComponentTooltip(matrices, this.minecraft.screen.getTooltipFromItem(stack), mouseX, mouseY/*, stack*/);
-        }
-    }
-
     public void renderTooltip(PoseStack matrices, int renderX, int renderY, int mouseX, int mouseY) {
         if (this.isVisible()) {
             this.recipeBookPage.renderTooltip(matrices, mouseX, mouseY);
@@ -416,29 +297,8 @@ public class ComponentRecipeBook extends GuiComponent implements IRecipeBook, Gu
         }
     }
 
-    protected void sendUpdateSettings() {
-        if (this.minecraft.getConnection() != null) {
-            RecipeBookType bookType = this.menu.getRecipeBookType();
-            boolean isOpen = this.book.getBookSettings().isOpen(bookType);
-            boolean isFiltering = this.book.getBookSettings().isFiltering(bookType);
-            this.minecraft.getConnection().send(new ServerboundRecipeBookChangeSettingsPacket(bookType, isOpen, isFiltering));
-        }
-    }
-
     public void setFocused(@Nullable ButtonTabRecipeBook tab) {
         this.focusedTab = tab;
-    }
-
-    protected void setVisible(boolean visible) {
-        if (visible) {
-            this.initVisuals();
-        }
-        this.visible = visible;
-        this.book.setOpen(this.menu.getRecipeBookType(), visible);
-        if (!visible) {
-            this.recipeBookPage.setInvisible();
-        }
-        this.sendUpdateSettings();
     }
 
     @Override
@@ -477,6 +337,164 @@ public class ComponentRecipeBook extends GuiComponent implements IRecipeBook, Gu
         }
     }
 
+    public void toggleVisibility() {
+        this.setVisible(!this.visible);
+    }
+
+    @Override
+    public void updateNarration(NarrationElementOutput pNarrationElementOutput) {
+        List<NarratableEntry> list = new OArrayList<>();
+        this.recipeBookPage.listButtons(b -> {
+            if (b.isActive()) {
+                list.add(b);
+            }
+        });
+        list.add(this.searchBox);
+        list.add(this.filterButton);
+        list.addAll(this.tabButtons);
+        Screen.NarratableSearchResult result = Screen.findNarratableWidget(list, null);
+        if (result != null) {
+            result.entry.updateNarration(pNarrationElementOutput.nest());
+        }
+    }
+
+    public int updateScreenPosition(int width, int imageWidth) {
+        if (this.visible && !this.widthTooNarrow) {
+            return 177 + (width - imageWidth - 200) / 2;
+        }
+        return (width - imageWidth) / 2;
+    }
+
+    protected boolean areTabsOnTheRight() {
+        return false;
+    }
+
+    protected final int getHeight() {
+        return this.height;
+    }
+
+    protected Component getRecipeFilterName() {
+        return this.textToggleCraftable;
+    }
+
+    protected int getTabsDx() {
+        return -30;
+    }
+
+    protected final int getWidth() {
+        return this.width;
+    }
+
+    protected void initCoordinates() {
+        this.xOffset = this.widthTooNarrow ? 0 : 86;
+        this.cornerX = (this.width - this.texWidth) / 2 - this.xOffset;
+        this.cornerY = (this.height - this.texHeight) / 2;
+    }
+
+    protected void initFilterButtonTextures() {
+        this.filterButton.initTextureValues(152, 41, 28, 18, this.resBackground);
+    }
+
+    protected void initVisuals() {
+        this.stackedContents.clear();
+        assert this.minecraft.player != null;
+        this.minecraft.player.getInventory().fillStackedContents(this.stackedContents);
+        this.menu.fillCraftSlotsStackedContents(this.stackedContents);
+        String s = this.searchBox != null ? this.searchBox.getValue() : "";
+        this.searchBox = new AdvEditBox(this.minecraft.font, this.cornerX + 25, this.cornerY + 14, 80, 9 + 5, EvolutionTexts.EMPTY);
+        this.searchBox.setMaxLength(50);
+        this.searchBox.setBordered(false);
+        this.searchBox.setVisible(true);
+        this.searchBox.setTextColor(0xff_ffff);
+        this.searchBox.setValue(s);
+        this.recipeBookPage.init(this.minecraft, this.cornerX, this.cornerY, this.resBackground);
+        this.recipeBookPage.addListener(this);
+        this.filterButton = new StateSwitchingButton(this.cornerX + 110, this.cornerY + 12, 26, 16, this.book.isFiltering(this.menu));
+        this.initFilterButtonTextures();
+        this.tabButtons.clear();
+        OList<RecipeCategory> categories = this.menu.recipeCategories();
+        for (int i = 0, len = categories.size(); i < len; ++i) {
+            //noinspection ObjectAllocationInLoop
+            ButtonTabRecipeBook tab = new ButtonTabRecipeBook(this, categories.get(i), this.resBackground, this.areTabsOnTheRight());
+            tab.setScreen(this.screen);
+            this.tabButtons.add(tab);
+        }
+        if (this.selectedTab != null) {
+            ButtonTabRecipeBook r = null;
+            for (int i = 0, l = this.tabButtons.size(); i < l; i++) {
+                ButtonTabRecipeBook t = this.tabButtons.get(i);
+                if (t.getCategory() == this.selectedTab.getCategory()) {
+                    r = t;
+                    break;
+                }
+            }
+            this.selectedTab = r;
+        }
+        if (this.selectedTab == null) {
+            this.selectedTab = this.tabButtons.get(0);
+        }
+        this.selectedTab.setStateTriggered(true);
+        this.updateCollections(false);
+        this.updateTabs();
+    }
+
+    protected final boolean isWidthTooNarrow() {
+        return this.widthTooNarrow;
+    }
+
+    protected void sendUpdateSettings() {
+        if (this.minecraft.getConnection() != null) {
+            RecipeBookType bookType = this.menu.getRecipeBookType();
+            boolean isOpen = this.book.getBookSettings().isOpen(bookType);
+            boolean isFiltering = this.book.getBookSettings().isFiltering(bookType);
+            this.minecraft.getConnection().send(new ServerboundRecipeBookChangeSettingsPacket(bookType, isOpen, isFiltering));
+        }
+    }
+
+    protected void setVisible(boolean visible) {
+        if (visible) {
+            this.initVisuals();
+        }
+        this.visible = visible;
+        this.book.setOpen(this.menu.getRecipeBookType(), visible);
+        if (!visible) {
+            this.recipeBookPage.setInvisible();
+        }
+        this.sendUpdateSettings();
+    }
+
+    private void checkSearchStringUpdate() {
+        assert this.searchBox != null;
+        String s = this.searchBox.getValue().toLowerCase(Locale.ROOT);
+        if (!s.equals(this.lastSearch)) {
+            this.updateCollections(false);
+            this.lastSearch = s;
+        }
+    }
+
+    private Component getFilterButtonTooltip() {
+        return this.filterButton.isStateTriggered() ? this.getRecipeFilterName() : this.textToggleAll;
+    }
+
+    private boolean isVisibleAccordingToBookData() {
+        return this.book.isOpen(this.menu.getRecipeBookType());
+    }
+
+    private void renderGhostRecipeTooltip(PoseStack matrices, int renderX, int renderY, int mouseX, int mouseY) {
+        ItemStack stack = null;
+        for (int i = 0; i < this.ghostRecipe.size(); i++) {
+            GhostRecipe.GhostIngredient ingredient = this.ghostRecipe.get(i);
+            int x = ingredient.getX() + renderX;
+            int y = ingredient.getY() + renderY;
+            if (mouseX >= x && mouseY >= y && mouseX < x + 16 && mouseY < y + 16) {
+                stack = ingredient.getItem();
+            }
+        }
+        if (stack != null && this.minecraft.screen != null) {
+            this.minecraft.screen.renderComponentTooltip(matrices, this.minecraft.screen.getTooltipFromItem(stack), mouseX, mouseY/*, stack*/);
+        }
+    }
+
     private boolean toggleFiltering() {
         RecipeBookType recipebooktype = this.menu.getRecipeBookType();
         boolean flag = !this.book.isFiltering(recipebooktype);
@@ -484,17 +502,13 @@ public class ComponentRecipeBook extends GuiComponent implements IRecipeBook, Gu
         return flag;
     }
 
-    public void toggleVisibility() {
-        this.setVisible(!this.visible);
-    }
-
     private void updateCollections(boolean p_100383_) {
         assert this.selectedTab != null;
-        List<RecipeCollection> collection = this.book.getCollection(this.selectedTab.getCategory());
-        for (RecipeCollection recipeCollection : collection) {
-            recipeCollection.canCraft(this.stackedContents, this.menu.getGridWidth(), this.menu.getGridHeight(), this.book);
+        OList<RecipeCollection> collection = this.book.getCollection(this.selectedTab.getCategory());
+        for (int i = 0, len = collection.size(); i < len; ++i) {
+            collection.get(i).canCraft(this.stackedContents, this.menu.getGridWidth(), this.menu.getGridHeight(), this.book);
         }
-        List<RecipeCollection> newList = new OArrayList<>(collection);
+        OList<RecipeCollection> newList = new OArrayList<>(collection);
         for (int i = 0; i < newList.size(); i++) {
             RecipeCollection c = newList.get(i);
             if (!c.hasKnownRecipes()) {
@@ -523,30 +537,6 @@ public class ComponentRecipeBook extends GuiComponent implements IRecipeBook, Gu
             }
         }
         this.recipeBookPage.updateCollections(newList, p_100383_);
-    }
-
-    @Override
-    public void updateNarration(NarrationElementOutput pNarrationElementOutput) {
-        List<NarratableEntry> list = new OArrayList<>();
-        this.recipeBookPage.listButtons(b -> {
-            if (b.isActive()) {
-                list.add(b);
-            }
-        });
-        list.add(this.searchBox);
-        list.add(this.filterButton);
-        list.addAll(this.tabButtons);
-        Screen.NarratableSearchResult result = Screen.findNarratableWidget(list, null);
-        if (result != null) {
-            result.entry.updateNarration(pNarrationElementOutput.nest());
-        }
-    }
-
-    public int updateScreenPosition(int width, int imageWidth) {
-        if (this.visible && !this.widthTooNarrow) {
-            return 177 + (width - imageWidth - 200) / 2;
-        }
-        return (width - imageWidth) / 2;
     }
 
     private void updateStackedContents() {

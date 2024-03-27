@@ -34,8 +34,8 @@ public abstract class MixinOptions {
         KeyMapping[] a = new KeyMapping[allKeymapping.size()];
         this.keyMappings = a;
         int i = 0;
-        for (O2OMap.Entry<String, KeyMapping> e = allKeymapping.fastEntries(); e != null; e = allKeymapping.fastEntries()) {
-            a[i++] = e.value();
+        for (long it = allKeymapping.beginIteration(); allKeymapping.hasNextIteration(it); it = allKeymapping.nextEntry(it)) {
+            a[i++] = allKeymapping.getIterationValue(it);
         }
         return a;
     }

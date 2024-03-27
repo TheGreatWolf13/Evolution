@@ -121,8 +121,8 @@ public abstract class MixinChunkMap extends ChunkStorage implements PatchChunkMa
             return false;
         }
         O2ZMap<ServerPlayer> playerMap = this.playerMap.getPlayerMap();
-        for (O2ZMap.Entry<ServerPlayer> e = playerMap.fastEntries(); e != null; e = playerMap.fastEntries()) {
-            if (this.playerIsCloseEnoughForSpawning(e.key(), chunkPos)) {
+        for (long it = playerMap.beginIteration(); playerMap.hasNextIteration(it); it = playerMap.nextEntry(it)) {
+            if (this.playerIsCloseEnoughForSpawning(playerMap.getIterationKey(it), chunkPos)) {
                 return true;
             }
         }

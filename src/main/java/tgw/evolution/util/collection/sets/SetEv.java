@@ -5,8 +5,7 @@ import tgw.evolution.Evolution;
 
 public interface SetEv {
 
-    boolean CHECKS = true;
-    long ITERATION_END = 0xFFFF_FFFFL;
+    boolean CHECKS = false;
 
     void clear();
 
@@ -17,7 +16,7 @@ public interface SetEv {
     }
 
     default boolean hasNextIteration(long it) {
-        return (it & ITERATION_END) != 0;
+        return (int) it != 0;
     }
 
     default void reset() {

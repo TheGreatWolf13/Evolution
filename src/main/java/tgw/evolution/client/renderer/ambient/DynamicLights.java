@@ -3,9 +3,9 @@ package tgw.evolution.client.renderer.ambient;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.lighting.LevelLightEngine;
-import tgw.evolution.util.collection.maps.I2LSHashMap;
 import tgw.evolution.util.collection.maps.L2SHashMap;
 import tgw.evolution.util.collection.maps.L2SMap;
+import tgw.evolution.util.collection.maps.custom.EntityLightEmissionMap;
 import tgw.evolution.util.collection.sets.IHashSet;
 import tgw.evolution.util.collection.sets.ISet;
 import tgw.evolution.util.collection.sets.LHashSet;
@@ -17,7 +17,7 @@ public class DynamicLights {
     public static final int FULL_LIGHTMAP = 31 | 31 << 5 | 15 << 16 | 31 << 20;
     public static final int FULL_LIGHTMAP_NO_SKY = 31 | 31 << 5 | 31 << 20;
     private final L2SMap added = new L2SHashMap();
-    private final I2LSHashMap entityEmission = new I2LSHashMap();
+    private final EntityLightEmissionMap entityEmission = new EntityLightEmissionMap();
     private final ClientLevel level;
     private final L2SMap lights = new L2SHashMap();
     private final LSet modified = new LHashSet();
@@ -152,8 +152,8 @@ public class DynamicLights {
         L2SMap lights = this.lights;
         LSet removed = this.removed;
         removed.clear();
-        for (L2SMap.Entry e = lights.fastEntries(); e != null; e = lights.fastEntries()) {
-            removed.add(e.key());
+        for (long it = lights.beginIteration(); lights.hasNextIteration(it); it = lights.nextEntry(it)) {
+            removed.add(lights.getIterationKey(it));
         }
         lights.clear();
         LevelLightEngine lightEngine = this.level.getLightEngine();

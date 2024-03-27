@@ -38,6 +38,7 @@ import tgw.evolution.hooks.asm.ModifyStatic;
 import tgw.evolution.hooks.asm.RestoreFinal;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.patches.obj.IStatePredicate;
+import tgw.evolution.util.collection.lists.OList;
 
 import java.util.function.ToIntFunction;
 
@@ -3428,99 +3429,52 @@ public abstract class Mixin_FS_Blocks {
                                                                                 .strength(3.0F, 6.0F)
                                                                                 .sound(SoundType.COPPER)
                                                                                 .noOcclusion()));
-        POINTED_DRIPSTONE = register("pointed_dripstone", new PointedDripstoneBlock(
-                of(Material.STONE, MaterialColor.TERRACOTTA_BROWN)
-                        .noOcclusion()
-                        .sound(SoundType.POINTED_DRIPSTONE)
-                        .randomTicks()
-                        .strength(1.5F, 3.0F)
-                        .dynamicShape()));
-        DRIPSTONE_BLOCK = register("dripstone_block", new Block(of(Material.STONE, MaterialColor.TERRACOTTA_BROWN)
-                                                                        .sound(SoundType.DRIPSTONE_BLOCK)
-                                                                        .requiresCorrectToolForDrops()
-                                                                        .strength(1.5F, 1.0F)));
-        CAVE_VINES = register("cave_vines", new CaveVinesBlock(of(Material.PLANT)
-                                                                       .randomTicks()
-                                                                       .noCollission()
-                                                                       .lightLevel(CaveVines.emission(14))
-                                                                       .instabreak()
-                                                                       .sound(SoundType.CAVE_VINES)));
-        CAVE_VINES_PLANT = register("cave_vines_plant", new CaveVinesPlantBlock(of(Material.PLANT)
-                                                                                        .noCollission()
-                                                                                        .lightLevel(CaveVines.emission(14))
-                                                                                        .instabreak()
-                                                                                        .sound(SoundType.CAVE_VINES)));
-        SPORE_BLOSSOM = register("spore_blossom", new SporeBlossomBlock(
-                of(Material.PLANT).instabreak().noCollission().sound(SoundType.SPORE_BLOSSOM)));
+        POINTED_DRIPSTONE = register("pointed_dripstone", new PointedDripstoneBlock(of(Material.STONE, MaterialColor.TERRACOTTA_BROWN).noOcclusion().sound(SoundType.POINTED_DRIPSTONE).randomTicks().strength(1.5F, 3.0F).dynamicShape()));
+        DRIPSTONE_BLOCK = register("dripstone_block", new Block(of(Material.STONE, MaterialColor.TERRACOTTA_BROWN).sound(SoundType.DRIPSTONE_BLOCK).requiresCorrectToolForDrops().strength(1.5F, 1.0F)));
+        CAVE_VINES = register("cave_vines", new CaveVinesBlock(of(Material.PLANT).randomTicks().noCollission().lightLevel(CaveVines.emission(14)).instabreak().sound(SoundType.CAVE_VINES)));
+        CAVE_VINES_PLANT = register("cave_vines_plant", new CaveVinesPlantBlock(of(Material.PLANT).noCollission().lightLevel(CaveVines.emission(14)).instabreak().sound(SoundType.CAVE_VINES)));
+        SPORE_BLOSSOM = register("spore_blossom", new SporeBlossomBlock(of(Material.PLANT).instabreak().noCollission().sound(SoundType.SPORE_BLOSSOM)));
         AZALEA = register("azalea", new AzaleaBlock(of(Material.PLANT).instabreak().sound(SoundType.AZALEA).noOcclusion()));
-        FLOWERING_AZALEA = register("flowering_azalea", new AzaleaBlock(
-                of(Material.PLANT).instabreak().sound(SoundType.FLOWERING_AZALEA).noOcclusion()));
-        MOSS_CARPET = register("moss_carpet", new CarpetBlock(
-                of(Material.PLANT, MaterialColor.COLOR_GREEN).strength(0.1F).sound(SoundType.MOSS_CARPET)));
-        MOSS_BLOCK = register("moss_block", new MossBlock(
-                of(Material.MOSS, MaterialColor.COLOR_GREEN).strength(0.1F).sound(SoundType.MOSS)));
-        BIG_DRIPLEAF = register("big_dripleaf",
-                                new BigDripleafBlock(of(Material.PLANT).strength(0.1F).sound(SoundType.BIG_DRIPLEAF)));
-        BIG_DRIPLEAF_STEM = register("big_dripleaf_stem", new BigDripleafStemBlock(
-                of(Material.PLANT).noCollission().strength(0.1F).sound(SoundType.BIG_DRIPLEAF)));
-        SMALL_DRIPLEAF = register("small_dripleaf", new SmallDripleafBlock(
-                of(Material.PLANT).noCollission().instabreak().sound(SoundType.SMALL_DRIPLEAF)));
-        HANGING_ROOTS = register("hanging_roots", new HangingRootsBlock(of(Material.REPLACEABLE_PLANT, MaterialColor.DIRT)
-                                                                                .noCollission()
-                                                                                .instabreak()
-                                                                                .sound(SoundType.HANGING_ROOTS)));
-        ROOTED_DIRT = register("rooted_dirt", new RootedDirtBlock(
-                of(Material.DIRT, MaterialColor.DIRT).strength(0.5F).sound(SoundType.ROOTED_DIRT)));
-        DEEPSLATE = register("deepslate", new RotatedPillarBlock(of(Material.STONE, MaterialColor.DEEPSLATE)
-                                                                         .requiresCorrectToolForDrops()
-                                                                         .strength(3.0F, 6.0F)
-                                                                         .sound(SoundType.DEEPSLATE)));
+        FLOWERING_AZALEA = register("flowering_azalea", new AzaleaBlock(of(Material.PLANT).instabreak().sound(SoundType.FLOWERING_AZALEA).noOcclusion()));
+        MOSS_CARPET = register("moss_carpet", new CarpetBlock(of(Material.PLANT, MaterialColor.COLOR_GREEN).strength(0.1F).sound(SoundType.MOSS_CARPET)));
+        MOSS_BLOCK = register("moss_block", new MossBlock(of(Material.MOSS, MaterialColor.COLOR_GREEN).strength(0.1F).sound(SoundType.MOSS)));
+        BIG_DRIPLEAF = register("big_dripleaf", new BigDripleafBlock(of(Material.PLANT).strength(0.1F).sound(SoundType.BIG_DRIPLEAF)));
+        BIG_DRIPLEAF_STEM = register("big_dripleaf_stem", new BigDripleafStemBlock(of(Material.PLANT).noCollission().strength(0.1F).sound(SoundType.BIG_DRIPLEAF)));
+        SMALL_DRIPLEAF = register("small_dripleaf", new SmallDripleafBlock(of(Material.PLANT).noCollission().instabreak().sound(SoundType.SMALL_DRIPLEAF)));
+        HANGING_ROOTS = register("hanging_roots", new HangingRootsBlock(of(Material.REPLACEABLE_PLANT, MaterialColor.DIRT).noCollission().instabreak().sound(SoundType.HANGING_ROOTS)));
+        ROOTED_DIRT = register("rooted_dirt", new RootedDirtBlock(of(Material.DIRT, MaterialColor.DIRT).strength(0.5F).sound(SoundType.ROOTED_DIRT)));
+        DEEPSLATE = register("deepslate", new RotatedPillarBlock(of(Material.STONE, MaterialColor.DEEPSLATE).requiresCorrectToolForDrops().strength(3.0F, 6.0F).sound(SoundType.DEEPSLATE)));
         COBBLED_DEEPSLATE = register("cobbled_deepslate", new Block(BlockBehaviour.Properties.copy(DEEPSLATE).strength(3.5F, 6.0F)));
-        COBBLED_DEEPSLATE_STAIRS = register("cobbled_deepslate_stairs",
-                                            new StairBlock(COBBLED_DEEPSLATE.defaultBlockState(), BlockBehaviour.Properties.copy(COBBLED_DEEPSLATE)));
+        COBBLED_DEEPSLATE_STAIRS = register("cobbled_deepslate_stairs", new StairBlock(COBBLED_DEEPSLATE.defaultBlockState(), BlockBehaviour.Properties.copy(COBBLED_DEEPSLATE)));
         COBBLED_DEEPSLATE_SLAB = register("cobbled_deepslate_slab", new SlabBlock(BlockBehaviour.Properties.copy(COBBLED_DEEPSLATE)));
         COBBLED_DEEPSLATE_WALL = register("cobbled_deepslate_wall", new WallBlock(BlockBehaviour.Properties.copy(COBBLED_DEEPSLATE)));
-        POLISHED_DEEPSLATE = register("polished_deepslate",
-                                      new Block(BlockBehaviour.Properties.copy(COBBLED_DEEPSLATE).sound(SoundType.POLISHED_DEEPSLATE)));
-        POLISHED_DEEPSLATE_STAIRS = register("polished_deepslate_stairs", new StairBlock(POLISHED_DEEPSLATE.defaultBlockState(),
-                                                                                         BlockBehaviour.Properties.copy(POLISHED_DEEPSLATE)));
+        POLISHED_DEEPSLATE = register("polished_deepslate", new Block(BlockBehaviour.Properties.copy(COBBLED_DEEPSLATE).sound(SoundType.POLISHED_DEEPSLATE)));
+        POLISHED_DEEPSLATE_STAIRS = register("polished_deepslate_stairs", new StairBlock(POLISHED_DEEPSLATE.defaultBlockState(), BlockBehaviour.Properties.copy(POLISHED_DEEPSLATE)));
         POLISHED_DEEPSLATE_SLAB = register("polished_deepslate_slab", new SlabBlock(BlockBehaviour.Properties.copy(POLISHED_DEEPSLATE)));
         POLISHED_DEEPSLATE_WALL = register("polished_deepslate_wall", new WallBlock(BlockBehaviour.Properties.copy(POLISHED_DEEPSLATE)));
         DEEPSLATE_TILES = register("deepslate_tiles", new Block(BlockBehaviour.Properties.copy(COBBLED_DEEPSLATE).sound(SoundType.DEEPSLATE_TILES)));
-        DEEPSLATE_TILE_STAIRS = register("deepslate_tile_stairs",
-                                         new StairBlock(DEEPSLATE_TILES.defaultBlockState(), BlockBehaviour.Properties.copy(DEEPSLATE_TILES)));
+        DEEPSLATE_TILE_STAIRS = register("deepslate_tile_stairs", new StairBlock(DEEPSLATE_TILES.defaultBlockState(), BlockBehaviour.Properties.copy(DEEPSLATE_TILES)));
         DEEPSLATE_TILE_SLAB = register("deepslate_tile_slab", new SlabBlock(BlockBehaviour.Properties.copy(DEEPSLATE_TILES)));
         DEEPSLATE_TILE_WALL = register("deepslate_tile_wall", new WallBlock(BlockBehaviour.Properties.copy(DEEPSLATE_TILES)));
-        DEEPSLATE_BRICKS = register("deepslate_bricks",
-                                    new Block(BlockBehaviour.Properties.copy(COBBLED_DEEPSLATE).sound(SoundType.DEEPSLATE_BRICKS)));
-        DEEPSLATE_BRICK_STAIRS = register("deepslate_brick_stairs",
-                                          new StairBlock(DEEPSLATE_BRICKS.defaultBlockState(), BlockBehaviour.Properties.copy(DEEPSLATE_BRICKS)));
+        DEEPSLATE_BRICKS = register("deepslate_bricks", new Block(BlockBehaviour.Properties.copy(COBBLED_DEEPSLATE).sound(SoundType.DEEPSLATE_BRICKS)));
+        DEEPSLATE_BRICK_STAIRS = register("deepslate_brick_stairs", new StairBlock(DEEPSLATE_BRICKS.defaultBlockState(), BlockBehaviour.Properties.copy(DEEPSLATE_BRICKS)));
         DEEPSLATE_BRICK_SLAB = register("deepslate_brick_slab", new SlabBlock(BlockBehaviour.Properties.copy(DEEPSLATE_BRICKS)));
         DEEPSLATE_BRICK_WALL = register("deepslate_brick_wall", new WallBlock(BlockBehaviour.Properties.copy(DEEPSLATE_BRICKS)));
-        CHISELED_DEEPSLATE = register("chiseled_deepslate",
-                                      new Block(BlockBehaviour.Properties.copy(COBBLED_DEEPSLATE).sound(SoundType.DEEPSLATE_BRICKS)));
+        CHISELED_DEEPSLATE = register("chiseled_deepslate", new Block(BlockBehaviour.Properties.copy(COBBLED_DEEPSLATE).sound(SoundType.DEEPSLATE_BRICKS)));
         CRACKED_DEEPSLATE_BRICKS = register("cracked_deepslate_bricks", new Block(BlockBehaviour.Properties.copy(DEEPSLATE_BRICKS)));
         CRACKED_DEEPSLATE_TILES = register("cracked_deepslate_tiles", new Block(BlockBehaviour.Properties.copy(DEEPSLATE_TILES)));
-        INFESTED_DEEPSLATE = register("infested_deepslate", new InfestedRotatedPillarBlock(DEEPSLATE, of(Material.CLAY,
-                                                                                                         MaterialColor.DEEPSLATE)
-                .sound(SoundType.DEEPSLATE)));
+        INFESTED_DEEPSLATE = register("infested_deepslate", new InfestedRotatedPillarBlock(DEEPSLATE, of(Material.CLAY, MaterialColor.DEEPSLATE).sound(SoundType.DEEPSLATE)));
         SMOOTH_BASALT = register("smooth_basalt", new Block(BlockBehaviour.Properties.copy(BASALT)));
-        RAW_IRON_BLOCK = register("raw_iron_block", new Block(
-                of(Material.STONE, MaterialColor.RAW_IRON).requiresCorrectToolForDrops().strength(5.0F, 6.0F)));
-        RAW_COPPER_BLOCK = register("raw_copper_block", new Block(
-                of(Material.STONE, MaterialColor.COLOR_ORANGE).requiresCorrectToolForDrops().strength(5.0F, 6.0F)));
-        RAW_GOLD_BLOCK = register("raw_gold_block", new Block(
-                of(Material.STONE, MaterialColor.GOLD).requiresCorrectToolForDrops().strength(5.0F, 6.0F)));
-        POTTED_AZALEA = register("potted_azalea_bush",
-                                 new FlowerPotBlock(AZALEA, of(Material.DECORATION).instabreak().noOcclusion()));
-        POTTED_FLOWERING_AZALEA = register("potted_flowering_azalea_bush", new FlowerPotBlock(FLOWERING_AZALEA,
-                                                                                              of(Material.DECORATION)
-                                                                                                      .instabreak()
-                                                                                                      .noOcclusion()));
+        RAW_IRON_BLOCK = register("raw_iron_block", new Block(of(Material.STONE, MaterialColor.RAW_IRON).requiresCorrectToolForDrops().strength(5.0F, 6.0F)));
+        RAW_COPPER_BLOCK = register("raw_copper_block", new Block(of(Material.STONE, MaterialColor.COLOR_ORANGE).requiresCorrectToolForDrops().strength(5.0F, 6.0F)));
+        RAW_GOLD_BLOCK = register("raw_gold_block", new Block(of(Material.STONE, MaterialColor.GOLD).requiresCorrectToolForDrops().strength(5.0F, 6.0F)));
+        POTTED_AZALEA = register("potted_azalea_bush", new FlowerPotBlock(AZALEA, of(Material.DECORATION).instabreak().noOcclusion()));
+        POTTED_FLOWERING_AZALEA = register("potted_flowering_azalea_bush", new FlowerPotBlock(FLOWERING_AZALEA, of(Material.DECORATION).instabreak().noOcclusion()));
         EvolutionBlocks.register();
         for (Block block : Registry.BLOCK) {
-            for (BlockState blockState : block.getStateDefinition().getPossibleStates()) {
-                Block.BLOCK_STATE_REGISTRY.add(blockState);
+            OList<BlockState> possibleStates = block.getStateDefinition().getPossibleStates_();
+            for (int i = 0, len = possibleStates.size(); i < len; ++i) {
+                Block.BLOCK_STATE_REGISTRY.add(possibleStates.get(i));
             }
         }
     }

@@ -1,6 +1,5 @@
 package tgw.evolution.hooks;
 
-import com.google.common.collect.ImmutableMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.model.geom.ModelLayerLocation;
@@ -29,10 +28,9 @@ public final class ClientHooks {
     private ClientHooks() {
     }
 
-    public static void loadLayerDefinitions(ImmutableMap.Builder<ModelLayerLocation, LayerDefinition> builder) {
-        for (O2OMap.Entry<ModelLayerLocation, Supplier<LayerDefinition>> e = LAYER_DEFINITIONS.fastEntries(); e != null;
-             e = LAYER_DEFINITIONS.fastEntries()) {
-            builder.put(e.key(), e.value().get());
+    public static void loadLayerDefinitions(O2OMap<ModelLayerLocation, LayerDefinition> map) {
+        for (long it = LAYER_DEFINITIONS.beginIteration(); LAYER_DEFINITIONS.hasNextIteration(it); it = LAYER_DEFINITIONS.nextEntry(it)) {
+            map.put(LAYER_DEFINITIONS.getIterationKey(it), LAYER_DEFINITIONS.getIterationValue(it).get());
         }
     }
 

@@ -42,33 +42,6 @@ public abstract class MixinModelPart implements HM, PatchModelPart {
         this.zRot += dz;
     }
 
-    /**
-     * @reason _
-     * @author TheGreatWolf
-     */
-    @Overwrite
-    private void compile(PoseStack.Pose matrices, VertexConsumer vertexConsumer, int light, int overlay, float red, float green, float blue, float alpha) {
-        Matrix4f poseMat = matrices.pose();
-        Matrix3f normalMat = matrices.normal();
-        List<ModelPart.Cube> cubes = this.cubes;
-        for (int i = 0, len = cubes.size(); i < len; ++i) {
-            for (ModelPart.Polygon polygon : cubes.get(i).polygons) {
-                float normX = normalMat.transformVecX(polygon.normal);
-                float normY = normalMat.transformVecY(polygon.normal);
-                float normZ = normalMat.transformVecZ(polygon.normal);
-                for (ModelPart.Vertex vertex : polygon.vertices) {
-                    float x1 = vertex.pos.x() / 16.0F;
-                    float y1 = vertex.pos.y() / 16.0F;
-                    float z1 = vertex.pos.z() / 16.0F;
-                    float x2 = poseMat.transformVecX(x1, y1, z1);
-                    float y2 = poseMat.transformVecY(x1, y1, z1);
-                    float z2 = poseMat.transformVecZ(x1, y1, z1);
-                    vertexConsumer.vertex(x2, y2, z2, red, green, blue, alpha, vertex.u, vertex.v, overlay, light, normX, normY, normZ);
-                }
-            }
-        }
-    }
-
     @Override
     public float getPivotX() {
         return this.x;
@@ -96,8 +69,8 @@ public abstract class MixinModelPart implements HM, PatchModelPart {
                 this.translateAndRotate(matrices);
                 this.compile(matrices.last(), builder, light, overlay, r, g, b, a);
                 O2OMap<String, ModelPart> children = (O2OMap<String, ModelPart>) this.children;
-                for (O2OMap.Entry<String, ModelPart> e = children.fastEntries(); e != null; e = children.fastEntries()) {
-                    e.value().render(matrices, builder, light, overlay, r, g, b, a);
+                for (long it = children.beginIteration(); children.hasNextIteration(it); it = children.nextEntry(it)) {
+                    children.getIterationValue(it).render(matrices, builder, light, overlay, r, g, b, a);
                 }
                 matrices.popPose();
             }
@@ -106,8 +79,8 @@ public abstract class MixinModelPart implements HM, PatchModelPart {
             matrices.pushPose();
             this.translateAndRotate(matrices);
             O2OMap<String, ModelPart> children = (O2OMap<String, ModelPart>) this.children;
-            for (O2OMap.Entry<String, ModelPart> e = children.fastEntries(); e != null; e = children.fastEntries()) {
-                e.value().render(matrices, builder, light, overlay, r, g, b, a);
+            for (long it = children.beginIteration(); children.hasNextIteration(it); it = children.nextEntry(it)) {
+                children.getIterationValue(it).render(matrices, builder, light, overlay, r, g, b, a);
             }
             matrices.popPose();
         }
@@ -199,5 +172,32 @@ public abstract class MixinModelPart implements HM, PatchModelPart {
     @Override
     public float zRot() {
         return this.zRot;
+    }
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Overwrite
+    private void compile(PoseStack.Pose matrices, VertexConsumer vertexConsumer, int light, int overlay, float red, float green, float blue, float alpha) {
+        Matrix4f poseMat = matrices.pose();
+        Matrix3f normalMat = matrices.normal();
+        List<ModelPart.Cube> cubes = this.cubes;
+        for (int i = 0, len = cubes.size(); i < len; ++i) {
+            for (ModelPart.Polygon polygon : cubes.get(i).polygons) {
+                float normX = normalMat.transformVecX(polygon.normal);
+                float normY = normalMat.transformVecY(polygon.normal);
+                float normZ = normalMat.transformVecZ(polygon.normal);
+                for (ModelPart.Vertex vertex : polygon.vertices) {
+                    float x1 = vertex.pos.x() / 16.0F;
+                    float y1 = vertex.pos.y() / 16.0F;
+                    float z1 = vertex.pos.z() / 16.0F;
+                    float x2 = poseMat.transformVecX(x1, y1, z1);
+                    float y2 = poseMat.transformVecY(x1, y1, z1);
+                    float z2 = poseMat.transformVecZ(x1, y1, z1);
+                    vertexConsumer.vertex(x2, y2, z2, red, green, blue, alpha, vertex.u, vertex.v, overlay, light, normX, normY, normZ);
+                }
+            }
+        }
     }
 }

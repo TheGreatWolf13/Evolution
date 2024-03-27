@@ -64,13 +64,9 @@ import java.util.Locale;
 @Mixin(GameRenderer.class)
 public abstract class MixinGameRenderer implements PatchGameRenderer {
 
-    @Unique private static final Vector3f NAUSEA_VECTOR = new Vector3f(0.0F, Mth.SQRT_OF_TWO / 2.0F, Mth.SQRT_OF_TWO / 2.0F);
     @Shadow @Final public static int EFFECT_NONE;
+    @Unique private static final Vector3f NAUSEA_VECTOR = new Vector3f(0.0F, Mth.SQRT_OF_TWO / 2.0F, Mth.SQRT_OF_TWO / 2.0F);
     @Shadow @Final private static Logger LOGGER;
-    @Unique private final PoseStack matrices = new PoseStack();
-    @Unique private final I2OMap<PostChain> postEffects = new I2OHashMap<>();
-    @Unique private final Matrix4f projMatrix = new Matrix4f();
-    @Unique private final PoseStack projectionMatrices = new PoseStack();
     @Shadow public boolean effectActive;
     @Shadow private float darkenWorldAmount;
     @Shadow private float darkenWorldAmountO;
@@ -80,8 +76,12 @@ public abstract class MixinGameRenderer implements PatchGameRenderer {
     @Shadow private long lastActiveTime;
     @Mutable @Shadow @Final private LightTexture lightTexture;
     @Shadow @Final private Camera mainCamera;
+    @Unique private final PoseStack matrices = new PoseStack();
     @Shadow @Final private Minecraft minecraft;
     @Shadow private @Nullable PostChain postEffect;
+    @Unique private final I2OMap<PostChain> postEffects = new I2OHashMap<>();
+    @Unique private final Matrix4f projMatrix = new Matrix4f();
+    @Unique private final PoseStack projectionMatrices = new PoseStack();
     @Shadow private boolean renderBlockOutline;
     @Shadow private float renderDistance;
     @Shadow @Final private ResourceManager resourceManager;
@@ -90,35 +90,8 @@ public abstract class MixinGameRenderer implements PatchGameRenderer {
     @Shadow private float zoomX;
     @Shadow private float zoomY;
 
-    /**
-     * @reason _
-     * @author TheGreatWolf
-     */
-    @Overwrite
-    private void bobHurt(PoseStack matrices, float partialTicks) {
-        if (this.minecraft.getCameraEntity() instanceof LivingEntity entity) {
-            float hurtTime = entity.hurtTime - partialTicks;
-            if (entity.isDeadOrDying()) {
-                matrices.mulPoseZ(40.0F - 8_000.0F / (Math.min(entity.deathTime + partialTicks, 20.0F) + 200.0F));
-            }
-            if (hurtTime < 0.0F) {
-                return;
-            }
-            hurtTime /= entity.hurtDuration;
-            hurtTime = Mth.sin(hurtTime * hurtTime * hurtTime * hurtTime * Mth.PI);
-            float hurtDir = entity.hurtDir;
-            matrices.mulPoseY(-hurtDir);
-            matrices.mulPoseZ(-hurtTime * 14.0F);
-            matrices.mulPoseY(hurtDir);
-        }
-
-    }
-
     @Shadow
     public abstract float getDepthFar();
-
-    @Shadow
-    protected abstract double getFov(Camera pActiveRenderInfo, float pPartialTicks, boolean pUseFOVSetting);
 
     /**
      * @author TheGreatWolf
@@ -134,30 +107,6 @@ public abstract class MixinGameRenderer implements PatchGameRenderer {
         }
         matrix.multiplyWithPerspective(fov, this.minecraft.getWindow().getWidth() / (float) this.minecraft.getWindow().getHeight(), 0.012_5f, this.getDepthFar());
         return matrix;
-    }
-
-    /**
-     * @author TheGreatWolf
-     * @reason Remove {@code this.effectActive = false} when the shader fails to load, preventing other shaders from being unloaded.
-     */
-    @Overwrite
-    private void loadEffect(ResourceLocation resLoc) {
-        if (this.postEffect != null) {
-            this.postEffect.close();
-        }
-        try {
-            this.postEffect = new PostChain(this.minecraft.getTextureManager(), this.resourceManager, this.minecraft.getMainRenderTarget(), resLoc);
-            this.postEffect.resize(this.minecraft.getWindow().getWidth(), this.minecraft.getWindow().getHeight());
-            this.effectActive = true;
-        }
-        catch (IOException e) {
-            LOGGER.warn("Failed to load shader: {}", resLoc, e);
-            this.effectIndex = EFFECT_NONE;
-        }
-        catch (JsonSyntaxException e) {
-            LOGGER.warn("Failed to parse shader: {}", resLoc, e);
-            this.effectIndex = EFFECT_NONE;
-        }
     }
 
     @Override
@@ -176,12 +125,6 @@ public abstract class MixinGameRenderer implements PatchGameRenderer {
                 LOGGER.warn("Failed to parse shader: {}", resLoc, e);
             }
         }
-    }
-
-    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/GameRenderer;" +
-                                                                    "lightTexture:Lnet/minecraft/client/renderer/LightTexture;", opcode = Opcodes.PUTFIELD))
-    private void onConstructor(GameRenderer instance, LightTexture value) {
-        this.lightTexture = new LightTextureEv((GameRenderer) (Object) this, this.minecraft);
     }
 
     /**
@@ -219,12 +162,6 @@ public abstract class MixinGameRenderer implements PatchGameRenderer {
                 this.minecraft.getProfiler().pop();
             }
         }
-    }
-
-    @Redirect(method = "shouldRenderBlockOutline", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;getCameraEntity()" +
-                                                                                       "Lnet/minecraft/world/entity/Entity;"))
-    private @Nullable Entity proxyShouldRenderBlockOutline(Minecraft mc) {
-        return mc.player;
     }
 
     /**
@@ -279,8 +216,8 @@ public abstract class MixinGameRenderer implements PatchGameRenderer {
                         this.postEffect.process(partialTicks);
                     }
                     I2OMap<PostChain> postEffects = this.postEffects;
-                    for (I2OMap.Entry<PostChain> e = postEffects.fastEntries(); e != null; e = postEffects.fastEntries()) {
-                        e.value().process(partialTicks);
+                    for (long it = postEffects.beginIteration(); postEffects.hasNextIteration(it); it = postEffects.nextEntry(it)) {
+                        postEffects.getIterationValue(it).process(partialTicks);
                     }
                 }
                 this.minecraft.getMainRenderTarget().bindWrite(true);
@@ -356,12 +293,6 @@ public abstract class MixinGameRenderer implements PatchGameRenderer {
         }
     }
 
-    @Shadow
-    protected abstract void renderConfusionOverlay(float pScalar);
-
-    @Shadow
-    protected abstract void renderItemActivationAnimation(int pWidthsp, int pHeightScaled, float pPartialTicks);
-
     /**
      * @reason _
      * @author TheGreatWolf
@@ -427,10 +358,134 @@ public abstract class MixinGameRenderer implements PatchGameRenderer {
             this.postEffect.resize(width, height);
         }
         I2OMap<PostChain> postEffects = this.postEffects;
-        for (I2OMap.Entry<PostChain> e = postEffects.fastEntries(); e != null; e = postEffects.fastEntries()) {
-            e.value().resize(width, height);
+        for (long it = postEffects.beginIteration(); postEffects.hasNextIteration(it); it = postEffects.nextEntry(it)) {
+            postEffects.getIterationValue(it).resize(width, height);
         }
         this.minecraft.lvlRenderer().resize(width, height);
+    }
+
+    @Override
+    public void shutdownAllShaders() {
+        I2OMap<PostChain> postEffects = this.postEffects;
+        for (long it = postEffects.beginIteration(); postEffects.hasNextIteration(it); it = postEffects.nextEntry(it)) {
+            postEffects.getIterationValue(it).close();
+        }
+        postEffects.clear();
+    }
+
+    @Override
+    public void shutdownShader(@Shader int shaderId) {
+        PostChain shader = this.postEffects.remove(shaderId);
+        if (shader != null) {
+            shader.close();
+        }
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Replace LevelRenderer
+     */
+    @Overwrite
+    public void tick() {
+        this.tickFov();
+        this.lightTexture.tick();
+        if (this.minecraft.getCameraEntity() == null) {
+            assert this.minecraft.player != null;
+            this.minecraft.setCameraEntity(this.minecraft.player);
+        }
+        this.mainCamera.tick();
+        ++this.tick;
+//        this.itemInHandRenderer.tick();
+        this.minecraft.lvlRenderer().tickRain(this.mainCamera);
+        this.darkenWorldAmountO = this.darkenWorldAmount;
+        if (this.minecraft.gui.getBossOverlay().shouldDarkenScreen()) {
+            this.darkenWorldAmount += 0.05F;
+            if (this.darkenWorldAmount > 1) {
+                this.darkenWorldAmount = 1.0F;
+            }
+        }
+        else if (this.darkenWorldAmount > 0) {
+            this.darkenWorldAmount -= 0.012_5F;
+        }
+        if (this.itemActivationTicks > 0) {
+            --this.itemActivationTicks;
+            if (this.itemActivationTicks == 0) {
+                this.itemActivationItem = null;
+            }
+        }
+    }
+
+    @Shadow
+    protected abstract double getFov(Camera pActiveRenderInfo, float pPartialTicks, boolean pUseFOVSetting);
+
+    @Shadow
+    protected abstract void renderConfusionOverlay(float pScalar);
+
+    @Shadow
+    protected abstract void renderItemActivationAnimation(int pWidthsp, int pHeightScaled, float pPartialTicks);
+
+    @Shadow
+    protected abstract void tickFov();
+
+    @Shadow
+    protected abstract void tryTakeScreenshotIfNeeded();
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Overwrite
+    private void bobHurt(PoseStack matrices, float partialTicks) {
+        if (this.minecraft.getCameraEntity() instanceof LivingEntity entity) {
+            float hurtTime = entity.hurtTime - partialTicks;
+            if (entity.isDeadOrDying()) {
+                matrices.mulPoseZ(40.0F - 8_000.0F / (Math.min(entity.deathTime + partialTicks, 20.0F) + 200.0F));
+            }
+            if (hurtTime < 0.0F) {
+                return;
+            }
+            hurtTime /= entity.hurtDuration;
+            hurtTime = Mth.sin(hurtTime * hurtTime * hurtTime * hurtTime * Mth.PI);
+            float hurtDir = entity.hurtDir;
+            matrices.mulPoseY(-hurtDir);
+            matrices.mulPoseZ(-hurtTime * 14.0F);
+            matrices.mulPoseY(hurtDir);
+        }
+
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Remove {@code this.effectActive = false} when the shader fails to load, preventing other shaders from being unloaded.
+     */
+    @Overwrite
+    private void loadEffect(ResourceLocation resLoc) {
+        if (this.postEffect != null) {
+            this.postEffect.close();
+        }
+        try {
+            this.postEffect = new PostChain(this.minecraft.getTextureManager(), this.resourceManager, this.minecraft.getMainRenderTarget(), resLoc);
+            this.postEffect.resize(this.minecraft.getWindow().getWidth(), this.minecraft.getWindow().getHeight());
+            this.effectActive = true;
+        }
+        catch (IOException e) {
+            LOGGER.warn("Failed to load shader: {}", resLoc, e);
+            this.effectIndex = EFFECT_NONE;
+        }
+        catch (JsonSyntaxException e) {
+            LOGGER.warn("Failed to parse shader: {}", resLoc, e);
+            this.effectIndex = EFFECT_NONE;
+        }
+    }
+
+    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/GameRenderer;lightTexture:Lnet/minecraft/client/renderer/LightTexture;", opcode = Opcodes.PUTFIELD))
+    private void onConstructor(GameRenderer instance, LightTexture value) {
+        this.lightTexture = new LightTextureEv((GameRenderer) (Object) this, this.minecraft);
+    }
+
+    @Redirect(method = "shouldRenderBlockOutline", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;getCameraEntity()Lnet/minecraft/world/entity/Entity;"))
+    private @Nullable Entity proxyShouldRenderBlockOutline(Minecraft mc) {
+        return mc.player;
     }
 
     /**
@@ -469,23 +524,6 @@ public abstract class MixinGameRenderer implements PatchGameRenderer {
             return true;
         }
         return false;
-    }
-
-    @Override
-    public void shutdownAllShaders() {
-        I2OMap<PostChain> postEffects = this.postEffects;
-        for (I2OMap.Entry<PostChain> e = postEffects.fastEntries(); e != null; e = postEffects.fastEntries()) {
-            e.value().close();
-        }
-        postEffects.clear();
-    }
-
-    @Override
-    public void shutdownShader(@Shader int shaderId) {
-        PostChain shader = this.postEffects.remove(shaderId);
-        if (shader != null) {
-            shader.close();
-        }
     }
 
     /**
@@ -537,44 +575,4 @@ public abstract class MixinGameRenderer implements PatchGameRenderer {
             });
         }
     }
-
-    /**
-     * @author TheGreatWolf
-     * @reason Replace LevelRenderer
-     */
-    @Overwrite
-    public void tick() {
-        this.tickFov();
-        this.lightTexture.tick();
-        if (this.minecraft.getCameraEntity() == null) {
-            assert this.minecraft.player != null;
-            this.minecraft.setCameraEntity(this.minecraft.player);
-        }
-        this.mainCamera.tick();
-        ++this.tick;
-//        this.itemInHandRenderer.tick();
-        this.minecraft.lvlRenderer().tickRain(this.mainCamera);
-        this.darkenWorldAmountO = this.darkenWorldAmount;
-        if (this.minecraft.gui.getBossOverlay().shouldDarkenScreen()) {
-            this.darkenWorldAmount += 0.05F;
-            if (this.darkenWorldAmount > 1) {
-                this.darkenWorldAmount = 1.0F;
-            }
-        }
-        else if (this.darkenWorldAmount > 0) {
-            this.darkenWorldAmount -= 0.012_5F;
-        }
-        if (this.itemActivationTicks > 0) {
-            --this.itemActivationTicks;
-            if (this.itemActivationTicks == 0) {
-                this.itemActivationItem = null;
-            }
-        }
-    }
-
-    @Shadow
-    protected abstract void tickFov();
-
-    @Shadow
-    protected abstract void tryTakeScreenshotIfNeeded();
 }

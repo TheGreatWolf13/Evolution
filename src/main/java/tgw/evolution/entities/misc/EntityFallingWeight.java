@@ -46,10 +46,10 @@ import java.util.function.Consumer;
 public class EntityFallingWeight extends Entity implements IEntitySpawnData {
 
     private static final ItemDropper DROPPER = new ItemDropper();
-    private final ClipContextMutable clipContext = new ClipContextMutable();
     public int fallTime;
     protected double mass = 500;
     protected BlockState state = EvolutionBlocks.DESTROY_9.defaultBlockState();
+    private final ClipContextMutable clipContext = new ClipContextMutable();
 
     public EntityFallingWeight(EntityType<? extends EntityFallingWeight> type, Level level) {
         super(type, level);
@@ -61,16 +61,10 @@ public class EntityFallingWeight extends Entity implements IEntitySpawnData {
         this.mass = mass;
         this.blocksBuilding = true;
         this.setPos(x, y, z);
-        this.setDeltaMovement(Vec3.ZERO);
+        this.setDeltaMovement(0, 0, 0);
         this.xo = x;
         this.yo = y;
         this.zo = z;
-    }
-
-    @Override
-    protected void addAdditionalSaveData(CompoundTag tag) {
-        tag.put("BlockState", NbtUtils.writeBlockState(this.state));
-        tag.putInt("Time", this.fallTime);
     }
 
     @Override
@@ -108,10 +102,6 @@ public class EntityFallingWeight extends Entity implements IEntitySpawnData {
     }
 
     @Override
-    protected void defineSynchedData() {
-    }
-
-    @Override
     public boolean displayFireAnimation() {
         return false;
     }
@@ -139,23 +129,6 @@ public class EntityFallingWeight extends Entity implements IEntitySpawnData {
         return this.state;
     }
 
-    private @Nullable DamageSource getDamageSource() {
-        Material material = this.state.getMaterial();
-        if (material == Material.STONE || this.state.getBlock() instanceof BlockKnapping) {
-            return EvolutionDamage.FALLING_ROCK;
-        }
-        if (material == Material.DIRT || material == Material.CLAY || material == Material.SAND) {
-            return EvolutionDamage.FALLING_SOIL;
-        }
-        if (material == Material.WOOD) {
-            return EvolutionDamage.FALLING_WOOD;
-        }
-        if (material == Material.METAL) {
-            return EvolutionDamage.FALLING_METAL;
-        }
-        return null;
-    }
-
     @Override
     public float getFrictionModifier() {
         return 2.0f;
@@ -164,11 +137,6 @@ public class EntityFallingWeight extends Entity implements IEntitySpawnData {
     @Override
     public @Nullable HitboxEntity<? extends EntityFallingWeight> getHitboxes() {
         return null;
-    }
-
-    @Override
-    protected MovementEmission getMovementEmission() {
-        return MovementEmission.NONE;
     }
 
     @Override
@@ -188,12 +156,6 @@ public class EntityFallingWeight extends Entity implements IEntitySpawnData {
 
     @Override
     public void push(Entity entity) {
-    }
-
-    @Override
-    protected void readAdditionalSaveData(CompoundTag tag) {
-        this.state = NbtUtils.readBlockState(tag.getCompound("BlockState"));
-        this.fallTime = tag.getInt("Time");
     }
 
     @Override
@@ -287,26 +249,42 @@ public class EntityFallingWeight extends Entity implements IEntitySpawnData {
         }
     }
 
-    public static final class ItemDropper implements Consumer<ItemStack>, AutoCloseable {
+    @Override
+    protected void addAdditionalSaveData(CompoundTag tag) {
+        tag.put("BlockState", NbtUtils.writeBlockState(this.state));
+        tag.putInt("Time", this.fallTime);
+    }
 
-        private @Nullable EntityFallingWeight entity;
+    @Override
+    protected void defineSynchedData() {
+    }
 
-        @Override
-        public void accept(ItemStack stack) {
-            assert this.entity != null;
-            this.entity.spawnAtLocation(stack);
+    @Override
+    protected MovementEmission getMovementEmission() {
+        return MovementEmission.NONE;
+    }
+
+    @Override
+    protected void readAdditionalSaveData(CompoundTag tag) {
+        this.state = NbtUtils.readBlockState(tag.getCompound("BlockState"));
+        this.fallTime = tag.getInt("Time");
+    }
+
+    private @Nullable DamageSource getDamageSource() {
+        Material material = this.state.getMaterial();
+        if (material == Material.STONE || this.state.getBlock() instanceof BlockKnapping) {
+            return EvolutionDamage.FALLING_ROCK;
         }
-
-        @Override
-        public void close() {
-            this.entity = null;
+        if (material == Material.DIRT || material == Material.CLAY || material == Material.SAND) {
+            return EvolutionDamage.FALLING_SOIL;
         }
-
-        public ItemDropper setup(EntityFallingWeight entity) {
-            assert this.entity == null;
-            this.entity = entity;
-            return this;
+        if (material == Material.WOOD) {
+            return EvolutionDamage.FALLING_WOOD;
         }
+        if (material == Material.METAL) {
+            return EvolutionDamage.FALLING_METAL;
+        }
+        return null;
     }
 
     public static class FallingWeightData<T extends EntityFallingWeight> extends EntityData<T> {
@@ -334,6 +312,28 @@ public class EntityFallingWeight extends Entity implements IEntitySpawnData {
         public void writeToBuffer(FriendlyByteBuf buf) {
             buf.writeVarInt(Block.getId(this.state));
             buf.writeFloat(this.mass);
+        }
+    }
+
+    public static final class ItemDropper implements Consumer<ItemStack>, AutoCloseable {
+
+        private @Nullable EntityFallingWeight entity;
+
+        @Override
+        public void accept(ItemStack stack) {
+            assert this.entity != null;
+            this.entity.spawnAtLocation(stack);
+        }
+
+        @Override
+        public void close() {
+            this.entity = null;
+        }
+
+        public ItemDropper setup(EntityFallingWeight entity) {
+            assert this.entity == null;
+            this.entity = entity;
+            return this;
         }
     }
 }

@@ -16,7 +16,7 @@ import tgw.evolution.Evolution;
 import tgw.evolution.datagen.ModelProvider;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
-import tgw.evolution.util.collection.maps.R2OEnumMap;
+import tgw.evolution.util.collection.maps.Enum2OMap;
 import tgw.evolution.util.collection.maps.R2OMap;
 import tgw.evolution.util.math.DirectionUtil;
 
@@ -32,14 +32,14 @@ public class ModelBuilder<T extends ModelBuilder<T>> extends ModelFile {
     private static final Vector3f DEFAULT_ROTATION = new Vector3f(0.0F, 0.0F, 0.0F);
     private static final Vector3f DEFAULT_TRANSLATION = new Vector3f(0.0F, 0.0F, 0.0F);
     private static final Vector3f DEFAULT_SCALE = new Vector3f(1.0F, 1.0F, 1.0F);
-    protected final OList<ElementBuilder> elements = new OArrayList<>();
-    protected final ExistingFileHelper existingFileHelper;
-    protected final Map<String, String> textures = new LinkedHashMap<>();
-    protected final TransformsBuilder transforms = new TransformsBuilder();
     protected boolean ambientOcclusion = true;
     protected @Nullable CustomLoaderBuilder customLoader;
+    protected final OList<ElementBuilder> elements = new OArrayList<>();
+    protected final ExistingFileHelper existingFileHelper;
     protected @Nullable BlockModel.GuiLight guiLight;
     protected @Nullable ModelFile parent;
+    protected final Map<String, String> textures = new LinkedHashMap<>();
+    protected final TransformsBuilder transforms = new TransformsBuilder();
 
     protected ModelBuilder(ResourceLocation outputLocation, ExistingFileHelper existingFileHelper) {
         super(outputLocation);
@@ -117,11 +117,6 @@ public class ModelBuilder<T extends ModelBuilder<T>> extends ModelFile {
         return this.elements.get(index);
     }
 
-    @Override
-    protected boolean exists() {
-        return true;
-    }
-
     /**
      * Gets the number of elements in this model builder
      *
@@ -149,10 +144,6 @@ public class ModelBuilder<T extends ModelBuilder<T>> extends ModelFile {
         parent.assertExistence();
         this.parent = parent;
         return this.self();
-    }
-
-    private T self() {
-        return (T) this;
     }
 
     /**
@@ -266,7 +257,7 @@ public class ModelBuilder<T extends ModelBuilder<T>> extends ModelFile {
                     partObj.addProperty("shade", false);
                 }
                 JsonObject faces = new JsonObject();
-                for (Direction dir : Direction.values()) {
+                for (Direction dir : DirectionUtil.ALL) {
                     BlockElementFace face = part.faces.get(dir);
                     if (face == null) {
                         continue;
@@ -304,47 +295,22 @@ public class ModelBuilder<T extends ModelBuilder<T>> extends ModelFile {
         return this.transforms;
     }
 
-    public enum FaceRotation {
-        ZERO(0),
-        CLOCKWISE_90(90),
-        UPSIDE_DOWN(180),
-        COUNTERCLOCKWISE_90(270),
-        ;
-
-        final int rotation;
-
-        FaceRotation(int rotation) {
-            this.rotation = rotation;
-        }
+    @Override
+    protected boolean exists() {
+        return true;
     }
 
-    public enum Perspective {
-
-        THIRDPERSON_RIGHT(ItemTransforms.TransformType.THIRD_PERSON_RIGHT_HAND, "thirdperson_righthand"),
-        THIRDPERSON_LEFT(ItemTransforms.TransformType.THIRD_PERSON_LEFT_HAND, "thirdperson_lefthand"),
-        FIRSTPERSON_RIGHT(ItemTransforms.TransformType.FIRST_PERSON_RIGHT_HAND, "firstperson_righthand"),
-        FIRSTPERSON_LEFT(ItemTransforms.TransformType.FIRST_PERSON_LEFT_HAND, "firstperson_lefthand"),
-        HEAD(ItemTransforms.TransformType.HEAD, "head"),
-        GUI(ItemTransforms.TransformType.GUI, "gui"),
-        GROUND(ItemTransforms.TransformType.GROUND, "ground"),
-        FIXED(ItemTransforms.TransformType.FIXED, "fixed");
-
-        public final ItemTransforms.TransformType vanillaType;
-        final String name;
-
-        Perspective(ItemTransforms.TransformType vanillaType, String name) {
-            this.vanillaType = vanillaType;
-            this.name = name;
-        }
+    private T self() {
+        return (T) this;
     }
 
     public class ElementBuilder {
 
-        private final R2OMap<Direction, FaceBuilder> faces = new R2OEnumMap<>(DirectionUtil.ALL);
+        private final R2OMap<Direction, FaceBuilder> faces = new Enum2OMap<>(Direction.class);
         private final Vector3f from = new Vector3f();
-        private final Vector3f to = new Vector3f(16, 16, 16);
         private @Nullable RotationBuilder rotation;
         private boolean shade = true;
+        private final Vector3f to = new Vector3f(16, 16, 16);
 
         private static void validateCoordinate(float coord, char name) {
             Preconditions.checkArgument(!(coord < -16.0F) && !(coord > 32.0F), "Position " + name + " out of range, must be within [-16, 32]. Found: %d", coord);
@@ -354,10 +320,6 @@ public class ModelBuilder<T extends ModelBuilder<T>> extends ModelFile {
             validateCoordinate(pos.x(), 'x');
             validateCoordinate(pos.y(), 'y');
             validateCoordinate(pos.z(), 'z');
-        }
-
-        private BiConsumer<Direction, FaceBuilder> addTexture(String texture) {
-            return ($, f) -> f.texture(texture);
         }
 
         /**
@@ -373,21 +335,6 @@ public class ModelBuilder<T extends ModelBuilder<T>> extends ModelFile {
                 action.accept(dir, this.face(dir));
             }
             return this;
-        }
-
-        BlockElement build() {
-            R2OMap<Direction, BlockElementFace> faces;
-            R2OMap<Direction, FaceBuilder> thisFaces = this.faces;
-            if (thisFaces.isEmpty()) {
-                faces = R2OMap.emptyMap();
-            }
-            else {
-                faces = new R2OEnumMap<>(DirectionUtil.ALL);
-                for (var e = thisFaces.fastEntries(); e != null; e = thisFaces.fastEntries()) {
-                    faces.put(e.key(), e.value().build());
-                }
-            }
-            return new BlockElement(this.from, this.to, faces, this.rotation == null ? null : this.rotation.build(), this.shade);
         }
 
         /**
@@ -502,6 +449,25 @@ public class ModelBuilder<T extends ModelBuilder<T>> extends ModelFile {
             return this;
         }
 
+        BlockElement build() {
+            R2OMap<Direction, BlockElementFace> faces;
+            var thisFaces = this.faces;
+            if (thisFaces.isEmpty()) {
+                faces = R2OMap.emptyMap();
+            }
+            else {
+                faces = new Enum2OMap<>(Direction.class);
+                for (long it = thisFaces.beginIteration(); thisFaces.hasNextIteration(it); it = thisFaces.nextEntry(it)) {
+                    faces.put(thisFaces.getIterationKey(it), thisFaces.getIterationValue(it).build());
+                }
+            }
+            return new BlockElement(this.from, this.to, faces, this.rotation == null ? null : this.rotation.build(), this.shade);
+        }
+
+        private BiConsumer<Direction, FaceBuilder> addTexture(String texture) {
+            return ($, f) -> f.texture(texture);
+        }
+
         public class FaceBuilder {
 
             private @Nullable Direction cullface;
@@ -511,10 +477,6 @@ public class ModelBuilder<T extends ModelBuilder<T>> extends ModelFile {
             private float[] uvs;
 
             FaceBuilder() {
-            }
-
-            BlockElementFace build() {
-                return new BlockElementFace(this.cullface, this.tintindex, this.texture, new BlockFaceUV(this.uvs, this.rotation.rotation));
             }
 
             public FaceBuilder cullface(@Nullable Direction dir) {
@@ -560,6 +522,10 @@ public class ModelBuilder<T extends ModelBuilder<T>> extends ModelFile {
                 this.uvs = new float[]{u1, v1, u2, v2};
                 return this;
             }
+
+            BlockElementFace build() {
+                return new BlockElementFace(this.cullface, this.tintindex, this.texture, new BlockFaceUV(this.uvs, this.rotation.rotation));
+            }
         }
 
         public class RotationBuilder {
@@ -592,10 +558,6 @@ public class ModelBuilder<T extends ModelBuilder<T>> extends ModelFile {
                 return this;
             }
 
-            BlockElementRotation build() {
-                return new BlockElementRotation(this.origin, this.axis, this.angle, this.rescale);
-            }
-
             public ElementBuilder end() {return ElementBuilder.this;}
 
             public RotationBuilder origin(float x, float y, float z) {
@@ -607,6 +569,10 @@ public class ModelBuilder<T extends ModelBuilder<T>> extends ModelFile {
                 this.rescale = rescale;
                 return this;
             }
+
+            BlockElementRotation build() {
+                return new BlockElementRotation(this.origin, this.axis, this.angle, this.rescale);
+            }
         }
     }
 
@@ -614,40 +580,27 @@ public class ModelBuilder<T extends ModelBuilder<T>> extends ModelFile {
 
         private final Map<ItemTransforms.TransformType, TransformVecBuilder> transforms = new LinkedHashMap<>();
 
-        Map<ItemTransforms.TransformType, ItemTransform> build() {
-            return this.transforms.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().build(), (k1, k2) -> {throw new IllegalArgumentException();}, LinkedHashMap::new));
+        public T end() {
+            return ModelBuilder.this.self();
         }
 
-        public T end() {return ModelBuilder.this.self();}
-
-        /**
-         * Begin building a new transform for the given perspective.
-         *
-         * @param type the perspective to create or return the builder for
-         * @return the builder for the given perspective
-         * @throws NullPointerException if {@code type} is {@code null}
-         * @deprecated See {@link #transform(TransformType)}
-         */
-        @Deprecated(forRemoval = true, since = "1.18.2")
         public TransformVecBuilder transform(Perspective type) {
             return this.transform(type.vanillaType);
         }
 
-        /**
-         * Begin building a new transform for the given perspective.
-         *
-         * @param type the perspective to create or return the builder for
-         * @return the builder for the given perspective
-         * @throws NullPointerException if {@code type} is {@code null}
-         */
         public TransformVecBuilder transform(ItemTransforms.TransformType type) {
-            Preconditions.checkNotNull(type, "Perspective cannot be null");
             TransformVecBuilder builder = this.transforms.get(type);
             if (builder == null) {
-                builder = new TransformVecBuilder(type);
+                builder = new TransformVecBuilder();
                 this.transforms.put(type, builder);
             }
             return builder;
+        }
+
+        Map<ItemTransforms.TransformType, ItemTransform> build() {
+            return this.transforms.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().build(), (k1, k2) -> {
+                throw new IllegalArgumentException();
+            }, LinkedHashMap::new));
         }
 
         public class TransformVecBuilder {
@@ -656,15 +609,12 @@ public class ModelBuilder<T extends ModelBuilder<T>> extends ModelFile {
             private Vector3f scale = new Vector3f(1.0F, 1.0F, 1.0F);
             private Vector3f translation = new Vector3f(0.0F, 0.0F, 0.0F);
 
-            TransformVecBuilder(ItemTransforms.TransformType type) {
-                // param unused for functional match
+            TransformVecBuilder() {
             }
 
-            ItemTransform build() {
-                return new ItemTransform(this.rotation, this.translation, this.scale);
+            public TransformsBuilder end() {
+                return TransformsBuilder.this;
             }
-
-            public TransformsBuilder end() {return TransformsBuilder.this;}
 
             public TransformVecBuilder rotation(float x, float y, float z) {
                 this.rotation = new Vector3f(x, y, z);
@@ -684,6 +634,44 @@ public class ModelBuilder<T extends ModelBuilder<T>> extends ModelFile {
                 this.translation = new Vector3f(x, y, z);
                 return this;
             }
+
+            ItemTransform build() {
+                return new ItemTransform(this.rotation, this.translation, this.scale);
+            }
+        }
+    }
+
+    public enum FaceRotation {
+        ZERO(0),
+        CLOCKWISE_90(90),
+        UPSIDE_DOWN(180),
+        COUNTERCLOCKWISE_90(270),
+        ;
+
+        final int rotation;
+
+        FaceRotation(int rotation) {
+            this.rotation = rotation;
+        }
+    }
+
+    public enum Perspective {
+
+        THIRDPERSON_RIGHT(ItemTransforms.TransformType.THIRD_PERSON_RIGHT_HAND, "thirdperson_righthand"),
+        THIRDPERSON_LEFT(ItemTransforms.TransformType.THIRD_PERSON_LEFT_HAND, "thirdperson_lefthand"),
+        FIRSTPERSON_RIGHT(ItemTransforms.TransformType.FIRST_PERSON_RIGHT_HAND, "firstperson_righthand"),
+        FIRSTPERSON_LEFT(ItemTransforms.TransformType.FIRST_PERSON_LEFT_HAND, "firstperson_lefthand"),
+        HEAD(ItemTransforms.TransformType.HEAD, "head"),
+        GUI(ItemTransforms.TransformType.GUI, "gui"),
+        GROUND(ItemTransforms.TransformType.GROUND, "ground"),
+        FIXED(ItemTransforms.TransformType.FIXED, "fixed");
+
+        public final ItemTransforms.TransformType vanillaType;
+        final String name;
+
+        Perspective(ItemTransforms.TransformType vanillaType, String name) {
+            this.vanillaType = vanillaType;
+            this.name = name;
         }
     }
 }

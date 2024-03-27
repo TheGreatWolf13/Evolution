@@ -65,23 +65,6 @@ public abstract class Mixin_CFS_KeyMapping implements PatchKeyMapping, Comparabl
         }
     }
 
-    @Unique
-    @ModifyStatic
-    private static void clinit() {
-        MAP_ = new O2OHashMap<>();
-        CATEGORIES_ = new OHashSet<>();
-        O2IMap<String> map = new O2IHashMap<>();
-        map.put("key.categories.movement", 1);
-        map.put("key.categories.gameplay", 2);
-        map.put("key.categories.inventory", 3);
-        map.put("key.categories.creative", 4);
-        map.put("key.categories.multiplayer", 5);
-        map.put("key.categories.ui", 6);
-        map.put("key.categories.misc", 7);
-        map.trimCollection();
-        CATEGORY_SORT_ORDER_ = map;
-    }
-
     /**
      * @reason _
      * @author TheGreatWolf
@@ -102,8 +85,8 @@ public abstract class Mixin_CFS_KeyMapping implements PatchKeyMapping, Comparabl
     @Overwrite
     public static void releaseAll() {
         O2OMap<String, KeyMapping> allKeymapping = EvolutionClient.ALL_KEYMAPPING;
-        for (O2OMap.Entry<String, KeyMapping> e = allKeymapping.fastEntries(); e != null; e = allKeymapping.fastEntries()) {
-            e.value().release();
+        for (long it = allKeymapping.beginIteration(); allKeymapping.hasNextIteration(it); it = allKeymapping.nextEntry(it)) {
+            allKeymapping.getIterationValue(it).release();
         }
     }
 
@@ -115,8 +98,8 @@ public abstract class Mixin_CFS_KeyMapping implements PatchKeyMapping, Comparabl
     public static void resetMapping() {
         MAP_.clear();
         O2OMap<String, KeyMapping> allKeymapping = EvolutionClient.ALL_KEYMAPPING;
-        for (O2OMap.Entry<String, KeyMapping> e = allKeymapping.fastEntries(); e != null; e = allKeymapping.fastEntries()) {
-            KeyMapping keyMapping = e.value();
+        for (long it = allKeymapping.beginIteration(); allKeymapping.hasNextIteration(it); it = allKeymapping.nextEntry(it)) {
+            KeyMapping keyMapping = allKeymapping.getIterationValue(it);
             MAP_.put(keyMapping.key, keyMapping);
         }
     }
@@ -141,12 +124,29 @@ public abstract class Mixin_CFS_KeyMapping implements PatchKeyMapping, Comparabl
     public static void setAll() {
         long window = Minecraft.getInstance().getWindow().getWindow();
         O2OMap<String, KeyMapping> allKeymapping = EvolutionClient.ALL_KEYMAPPING;
-        for (O2OMap.Entry<String, KeyMapping> e = allKeymapping.fastEntries(); e != null; e = allKeymapping.fastEntries()) {
-            KeyMapping keyMapping = e.value();
+        for (long it = allKeymapping.beginIteration(); allKeymapping.hasNextIteration(it); it = allKeymapping.nextEntry(it)) {
+            KeyMapping keyMapping = allKeymapping.getIterationValue(it);
             if (keyMapping.key.getType() == InputConstants.Type.KEYSYM && keyMapping.key.getValue() != InputConstants.UNKNOWN.getValue()) {
                 keyMapping.setDown(InputConstants.isKeyDown(window, keyMapping.key.getValue()));
             }
         }
+    }
+
+    @Unique
+    @ModifyStatic
+    private static void clinit() {
+        MAP_ = new O2OHashMap<>();
+        CATEGORIES_ = new OHashSet<>();
+        O2IMap<String> map = new O2IHashMap<>();
+        map.put("key.categories.movement", 1);
+        map.put("key.categories.gameplay", 2);
+        map.put("key.categories.inventory", 3);
+        map.put("key.categories.creative", 4);
+        map.put("key.categories.multiplayer", 5);
+        map.put("key.categories.ui", 6);
+        map.put("key.categories.misc", 7);
+        map.trim();
+        CATEGORY_SORT_ORDER_ = map;
     }
 
     /**

@@ -1,15 +1,13 @@
 package tgw.evolution.util.constants;
 
-import it.unimi.dsi.fastutil.bytes.Byte2ReferenceMap;
-import it.unimi.dsi.fastutil.bytes.Byte2ReferenceMaps;
 import net.minecraft.world.level.block.Block;
 import org.jetbrains.annotations.UnmodifiableView;
 import tgw.evolution.init.IVariant;
 import tgw.evolution.util.UnregisteredFeatureException;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
-import tgw.evolution.util.collection.maps.B2RHashMap;
-import tgw.evolution.util.collection.maps.B2RMap;
+import tgw.evolution.util.collection.maps.B2OHashMap;
+import tgw.evolution.util.collection.maps.B2OMap;
 
 import java.util.Map;
 
@@ -34,18 +32,18 @@ public enum WoodVariant implements IVariant<WoodVariant> {
     WILLOW(17, "willow", 500, 7_850_000);
 
     public static final WoodVariant[] VALUES = values();
-    private static final Byte2ReferenceMap<WoodVariant> REGISTRY;
+    private static final B2OMap<WoodVariant> REGISTRY;
     private static final OList<Map<WoodVariant, ? extends Block>> BLOCKS = new OArrayList<>();
 
     static {
-        B2RMap<WoodVariant> map = new B2RHashMap<>();
+        B2OMap<WoodVariant> map = new B2OHashMap<>();
         for (WoodVariant variant : VALUES) {
             if (map.put(variant.id, variant) != null) {
                 throw new IllegalStateException("WoodVariant " + variant + " has duplicate id: " + variant.id);
             }
         }
-        map.trimCollection();
-        REGISTRY = Byte2ReferenceMaps.unmodifiable(map);
+        map.trim();
+        REGISTRY = map.view();
     }
 
     private final double density;

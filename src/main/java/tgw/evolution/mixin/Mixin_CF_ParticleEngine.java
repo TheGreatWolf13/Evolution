@@ -67,23 +67,23 @@ import java.util.stream.Stream;
 public abstract class Mixin_CF_ParticleEngine implements PreparableReloadListener, PatchParticleEngine {
 
     @Shadow @Final private static List<ParticleRenderType> RENDER_ORDER;
-    @Unique private final OList<Particle> particlesToAdd_;
-    @Unique private final R2OMap<ParticleRenderType, OArrayLimitedQueue<Particle>> particles_;
-    @Unique private final I2OMap<ParticleProvider<?>> providers_;
-    @Unique private final O2OMap<ResourceLocation, ParticleEngine.MutableSpriteSet> spriteSets_;
-    @Unique private final O2IMap<ParticleGroup> trackedParticleCounts_;
-    @Unique private final OList<TrackingEmitter> trackingEmitters_;
     @Shadow protected @Nullable ClientLevel level;
     @Shadow @Final @DeleteField private Map<ParticleRenderType, Queue<Particle>> particles;
     @Shadow @Final @DeleteField private Queue<Particle> particlesToAdd;
+    @Unique private final OList<Particle> particlesToAdd_;
+    @Unique private final R2OMap<ParticleRenderType, OArrayLimitedQueue<Particle>> particles_;
     @Shadow @Final @DeleteField private Int2ObjectMap<ParticleProvider<?>> providers;
+    @Unique private final I2OMap<ParticleProvider<?>> providers_;
     @Mutable @Shadow @Final @RestoreFinal private Random random;
     @Unique private int renderedParticles;
     @Shadow @Final @DeleteField private Map<ResourceLocation, ParticleEngine.MutableSpriteSet> spriteSets;
+    @Unique private final O2OMap<ResourceLocation, ParticleEngine.MutableSpriteSet> spriteSets_;
     @Mutable @Shadow @Final @RestoreFinal private TextureAtlas textureAtlas;
     @Mutable @Shadow @Final @RestoreFinal private TextureManager textureManager;
     @Shadow @Final @DeleteField private Object2IntOpenHashMap<ParticleGroup> trackedParticleCounts;
+    @Unique private final O2IMap<ParticleGroup> trackedParticleCounts_;
     @Shadow @Final @DeleteField private Queue<TrackingEmitter> trackingEmitters;
+    @Unique private final OList<TrackingEmitter> trackingEmitters_;
 
     @ModifyConstructor
     public Mixin_CF_ParticleEngine(ClientLevel level, TextureManager textureManager) {
@@ -121,14 +121,14 @@ public abstract class Mixin_CF_ParticleEngine implements PreparableReloadListene
 
     /**
      * @author TheGreatWolf
-     * @reason Use proper loop
+     * @reason _
      */
     @Overwrite
     public String countParticles() {
         int count = 0;
         R2OMap<ParticleRenderType, OArrayLimitedQueue<Particle>> particles = this.particles_;
-        for (R2OMap.Entry<ParticleRenderType, OArrayLimitedQueue<Particle>> e = particles.fastEntries(); e != null; e = particles.fastEntries()) {
-            count += e.value().size();
+        for (long it = particles.beginIteration(); particles.hasNextIteration(it); it = particles.nextEntry(it)) {
+            count += particles.getIterationValue(it).size();
         }
         return String.valueOf(count);
     }
@@ -241,120 +241,6 @@ public abstract class Mixin_CF_ParticleEngine implements PreparableReloadListene
     public int getRenderedParticles() {
         return this.renderedParticles;
     }
-
-    /**
-     * @reason _
-     * @author TheGreatWolf
-     */
-    @Overwrite
-    private boolean hasSpaceInParticleLimit(ParticleGroup group) {
-        return this.trackedParticleCounts_.getInt(group) < group.getLimit();
-    }
-
-    /**
-     * @reason _
-     * @author TheGreatWolf
-     */
-    @Overwrite
-    private void loadParticleDescription(ResourceManager manager, ResourceLocation resLoc, Map<ResourceLocation, List<ResourceLocation>> map) {
-        ResourceLocation jsonLoc = new ResourceLocation(resLoc.getNamespace(), "particles/" + resLoc.getPath() + ".json");
-        try {
-            Resource resource = manager.getResource(jsonLoc);
-            try {
-                InputStreamReader reader = new InputStreamReader(resource.getInputStream(), Charsets.UTF_8);
-                try {
-                    ParticleDescription particleDescription = ParticleDescription.fromJson(GsonHelper.parse(reader));
-                    List<ResourceLocation> list = particleDescription.getTextures();
-                    boolean bl = this.spriteSets_.containsKey(resLoc);
-                    if (list == null) {
-                        if (bl) {
-                            throw new IllegalStateException("Missing texture list for particle " + resLoc);
-                        }
-                    }
-                    else {
-                        if (!bl) {
-                            throw new IllegalStateException("Redundant texture list for particle " + resLoc);
-                        }
-                        OList<ResourceLocation> descList = new OArrayList<>(list.size());
-                        for (int i = 0, len = list.size(); i < len; ++i) {
-                            ResourceLocation rl = list.get(i);
-                            //noinspection ObjectAllocationInLoop
-                            descList.add(new ResourceLocation(rl.getNamespace(), "particle/" + rl.getPath()));
-                        }
-                        map.put(resLoc, descList);
-                    }
-                }
-                catch (Throwable var12) {
-                    try {
-                        reader.close();
-                    }
-                    catch (Throwable var11) {
-                        var12.addSuppressed(var11);
-                    }
-                    throw var12;
-                }
-                reader.close();
-            }
-            catch (Throwable var13) {
-                if (resource != null) {
-                    try {
-                        resource.close();
-                    }
-                    catch (Throwable var10) {
-                        var13.addSuppressed(var10);
-                    }
-                }
-                throw var13;
-            }
-            resource.close();
-        }
-        catch (IOException var14) {
-            throw new IllegalStateException("Failed to load description for particle " + resLoc, var14);
-        }
-    }
-
-    /**
-     * @reason _
-     * @author TheGreatWolf
-     */
-    @Overwrite
-    private @Nullable <T extends ParticleOptions> Particle makeParticle(T particleOptions,
-                                                                        double d,
-                                                                        double e,
-                                                                        double f,
-                                                                        double g,
-                                                                        double h,
-                                                                        double i) {
-        ParticleProvider<T> provider = (ParticleProvider<T>) this.providers_.get(Registry.PARTICLE_TYPE.getId(particleOptions.getType()));
-        if (provider == null) {
-            return null;
-        }
-        assert this.level != null;
-        return provider.createParticle(particleOptions, this.level, d, e, f, g, h, i);
-    }
-
-    /**
-     * @reason _
-     * @author TheGreatWolf
-     */
-    @Overwrite
-    private <T extends ParticleOptions> void register(ParticleType<T> particleType, ParticleProvider<T> provider) {
-        this.providers_.put(Registry.PARTICLE_TYPE.getId(particleType), provider);
-    }
-
-    /**
-     * @reason _
-     * @author TheGreatWolf
-     */
-    @Overwrite
-    private <T extends ParticleOptions> void register(ParticleType<T> particleType, ParticleEngine.SpriteParticleRegistration<T> registration) {
-        ParticleEngine.MutableSpriteSet mutableSpriteSet = new ParticleEngine.MutableSpriteSet();
-        this.spriteSets_.put(Registry.PARTICLE_TYPE.getKey(particleType), mutableSpriteSet);
-        this.providers_.put(Registry.PARTICLE_TYPE.getId(particleType), registration.create(mutableSpriteSet));
-    }
-
-    @Shadow
-    protected abstract void registerProviders();
 
     /**
      * @reason _
@@ -500,9 +386,10 @@ public abstract class Mixin_CF_ParticleEngine implements PreparableReloadListene
     public void tick() {
         assert this.level != null;
         R2OMap<ParticleRenderType, OArrayLimitedQueue<Particle>> particles = this.particles_;
-        for (R2OMap.Entry<ParticleRenderType, OArrayLimitedQueue<Particle>> e = particles.fastEntries(); e != null; e = particles.fastEntries()) {
-            this.level.getProfiler().push(e.key().toString());
-            this.tickParticleList(e.value());
+        for (long it = particles.beginIteration(); particles.hasNextIteration(it); it = particles.nextEntry(it)) {
+            //noinspection DataFlowIssue
+            this.level.getProfiler().push(particles.getIterationKey(it).toString());
+            this.tickParticleList(particles.getIterationValue(it));
             this.level.getProfiler().pop();
         }
         OList<TrackingEmitter> trackingEmitters = this.trackingEmitters_;
@@ -531,7 +418,121 @@ public abstract class Mixin_CF_ParticleEngine implements PreparableReloadListene
     }
 
     @Shadow
+    protected abstract void registerProviders();
+
+    @Shadow
     protected abstract void tickParticle(Particle pParticle);
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Overwrite
+    private boolean hasSpaceInParticleLimit(ParticleGroup group) {
+        return this.trackedParticleCounts_.getInt(group) < group.getLimit();
+    }
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Overwrite
+    private void loadParticleDescription(ResourceManager manager, ResourceLocation resLoc, Map<ResourceLocation, List<ResourceLocation>> map) {
+        ResourceLocation jsonLoc = new ResourceLocation(resLoc.getNamespace(), "particles/" + resLoc.getPath() + ".json");
+        try {
+            Resource resource = manager.getResource(jsonLoc);
+            try {
+                InputStreamReader reader = new InputStreamReader(resource.getInputStream(), Charsets.UTF_8);
+                try {
+                    ParticleDescription particleDescription = ParticleDescription.fromJson(GsonHelper.parse(reader));
+                    List<ResourceLocation> list = particleDescription.getTextures();
+                    boolean bl = this.spriteSets_.containsKey(resLoc);
+                    if (list == null) {
+                        if (bl) {
+                            throw new IllegalStateException("Missing texture list for particle " + resLoc);
+                        }
+                    }
+                    else {
+                        if (!bl) {
+                            throw new IllegalStateException("Redundant texture list for particle " + resLoc);
+                        }
+                        OList<ResourceLocation> descList = new OArrayList<>(list.size());
+                        for (int i = 0, len = list.size(); i < len; ++i) {
+                            ResourceLocation rl = list.get(i);
+                            //noinspection ObjectAllocationInLoop
+                            descList.add(new ResourceLocation(rl.getNamespace(), "particle/" + rl.getPath()));
+                        }
+                        map.put(resLoc, descList);
+                    }
+                }
+                catch (Throwable e) {
+                    try {
+                        reader.close();
+                    }
+                    catch (Throwable t) {
+                        e.addSuppressed(t);
+                    }
+                    throw e;
+                }
+                reader.close();
+            }
+            catch (Throwable e) {
+                if (resource != null) {
+                    try {
+                        resource.close();
+                    }
+                    catch (Throwable t) {
+                        e.addSuppressed(t);
+                    }
+                }
+                throw e;
+            }
+            resource.close();
+        }
+        catch (IOException e) {
+            throw new IllegalStateException("Failed to load description for particle " + resLoc, e);
+        }
+    }
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Overwrite
+    private @Nullable <T extends ParticleOptions> Particle makeParticle(T particleOptions,
+                                                                        double d,
+                                                                        double e,
+                                                                        double f,
+                                                                        double g,
+                                                                        double h,
+                                                                        double i) {
+        ParticleProvider<T> provider = (ParticleProvider<T>) this.providers_.get(Registry.PARTICLE_TYPE.getId(particleOptions.getType()));
+        if (provider == null) {
+            return null;
+        }
+        assert this.level != null;
+        return provider.createParticle(particleOptions, this.level, d, e, f, g, h, i);
+    }
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Overwrite
+    private <T extends ParticleOptions> void register(ParticleType<T> particleType, ParticleProvider<T> provider) {
+        this.providers_.put(Registry.PARTICLE_TYPE.getId(particleType), provider);
+    }
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Overwrite
+    private <T extends ParticleOptions> void register(ParticleType<T> particleType, ParticleEngine.SpriteParticleRegistration<T> registration) {
+        ParticleEngine.MutableSpriteSet mutableSpriteSet = new ParticleEngine.MutableSpriteSet();
+        this.spriteSets_.put(Registry.PARTICLE_TYPE.getKey(particleType), mutableSpriteSet);
+        this.providers_.put(Registry.PARTICLE_TYPE.getId(particleType), registration.create(mutableSpriteSet));
+    }
 
     @Unique
     private void tickParticleList(OArrayLimitedQueue<Particle> particles) {
@@ -567,6 +568,6 @@ public abstract class Mixin_CF_ParticleEngine implements PreparableReloadListene
      */
     @Overwrite
     private void updateCount(ParticleGroup group, int i) {
-        this.trackedParticleCounts_.addTo(group, i);
+        this.trackedParticleCounts_.put(group, this.trackedParticleCounts_.getInt(group) + i);
     }
 }
