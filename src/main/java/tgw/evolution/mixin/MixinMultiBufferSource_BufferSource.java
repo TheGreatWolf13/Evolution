@@ -55,7 +55,7 @@ public abstract class MixinMultiBufferSource_BufferSource implements ICrashReset
     public void resetAfterCrash() {
         ((ICrashReset) this.builder).resetAfterCrash();
         OSet<BufferBuilder> startedBuffers = (OSet<BufferBuilder>) this.startedBuffers;
-        for (long it = startedBuffers.beginIteration(); (it & 0xFFFF_FFFFL) != 0; it = startedBuffers.nextEntry(it)) {
+        for (long it = startedBuffers.beginIteration(); startedBuffers.hasNextIteration(it); it = startedBuffers.nextEntry(it)) {
             ((ICrashReset) startedBuffers.getIteration(it)).resetAfterCrash();
         }
     }

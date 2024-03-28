@@ -170,7 +170,7 @@ public class DynamicLights {
     public void tickEnd() {
         ISet notTicked = this.notTicked;
         LSet removed = this.removed;
-        for (long it = notTicked.beginIteration(); (it & 0xFFFF_FFFFL) != 0; it = notTicked.nextEntry(it)) {
+        for (long it = notTicked.beginIteration(); notTicked.hasNextIteration(it); it = notTicked.nextEntry(it)) {
             int id = notTicked.getIteration(it);
             int index = this.entityEmission.getIndexFor(id);
             long oldPos = this.entityEmission.getLongByIndex(index);

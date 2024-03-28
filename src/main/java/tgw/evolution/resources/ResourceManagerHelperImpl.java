@@ -36,7 +36,7 @@ public class ResourceManagerHelperImpl implements ResourceManagerHelper {
     @SuppressWarnings("ObjectAllocationInLoop")
     public static void registerBuiltinResourcePacks(PackType resourceType, Consumer<Pack> consumer, Pack.PackConstructor factory) {
         // Loop through each registered built-in resource packs and add them if valid.
-        for (long it = BUILTIN_RESOURCE_PACKS.beginIteration(); (it & 0xFFFF_FFFFL) != 0; it = BUILTIN_RESOURCE_PACKS.nextEntry(it)) {
+        for (long it = BUILTIN_RESOURCE_PACKS.beginIteration(); BUILTIN_RESOURCE_PACKS.hasNextIteration(it); it = BUILTIN_RESOURCE_PACKS.nextEntry(it)) {
             Pair<String, ModPackResources> e = BUILTIN_RESOURCE_PACKS.getIteration(it);
             ModPackResources pack = e.getSecond();
             // Add the built-in pack only if namespaces for the specified resource type are present.

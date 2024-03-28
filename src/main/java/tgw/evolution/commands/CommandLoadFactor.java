@@ -70,7 +70,7 @@ public final class CommandLoadFactor {
         for (int i = 0, len = players.size(); i < len; ++i) {
             HELPER_SET.add(players.get(i).getId());
         }
-        for (long it = PLAYERS.beginIteration(); (it & 0xFFFF_FFFFL) != 0; it = PLAYERS.nextEntry(it)) {
+        for (long it = PLAYERS.beginIteration(); PLAYERS.hasNextIteration(it); it = PLAYERS.nextEntry(it)) {
             int i = PLAYERS.getIteration(it);
             if (!HELPER_SET.contains(i)) {
                 it = PLAYERS.removeIteration(it);

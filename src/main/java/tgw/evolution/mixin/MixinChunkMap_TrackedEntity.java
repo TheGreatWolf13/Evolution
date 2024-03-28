@@ -34,7 +34,7 @@ public abstract class MixinChunkMap_TrackedEntity {
     @Overwrite
     public void broadcast(Packet<?> packet) {
         RSet<ServerPlayerConnection> seenBy = (RSet<ServerPlayerConnection>) this.seenBy;
-        for (long it = seenBy.beginIteration(); (it & 0xFFFF_FFFFL) != 0; it = seenBy.nextEntry(it)) {
+        for (long it = seenBy.beginIteration(); seenBy.hasNextIteration(it); it = seenBy.nextEntry(it)) {
             seenBy.getIteration(it).send(packet);
         }
     }
@@ -46,7 +46,7 @@ public abstract class MixinChunkMap_TrackedEntity {
     @Overwrite
     public void broadcastRemoved() {
         RSet<ServerPlayerConnection> seenBy = (RSet<ServerPlayerConnection>) this.seenBy;
-        for (long it = seenBy.beginIteration(); (it & 0xFFFF_FFFFL) != 0; it = seenBy.nextEntry(it)) {
+        for (long it = seenBy.beginIteration(); seenBy.hasNextIteration(it); it = seenBy.nextEntry(it)) {
             this.serverEntity.removePairing(seenBy.getIteration(it).getPlayer());
         }
     }
@@ -111,7 +111,7 @@ public abstract class MixinChunkMap_TrackedEntity {
 
     @Shadow
     protected abstract int getEffectiveRange();
-    
+
     @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lcom/google/common/collect/Sets;newIdentityHashSet()Ljava/util/Set;", remap = false))
     private Set<ServerPlayerConnection> onInit() {
         return new RHashSet<>();

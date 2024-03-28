@@ -889,7 +889,7 @@ public class ClientEvents {
         }
         else {
             if (!desiredShaders.containsAll(currentShaders)) {
-                for (long it = currentShaders.beginIteration(); (it & 0xFFFF_FFFFL) != 0; it = currentShaders.nextEntry(it)) {
+                for (long it = currentShaders.beginIteration(); currentShaders.hasNextIteration(it); it = currentShaders.nextEntry(it)) {
                     //noinspection MagicConstant
                     @Shader int shader = currentShaders.getIteration(it);
                     if (!desiredShaders.contains(shader)) {
@@ -899,7 +899,7 @@ public class ClientEvents {
                 }
             }
             if (!currentShaders.containsAll(desiredShaders)) {
-                for (long it = desiredShaders.beginIteration(); (it & 0xFFFF_FFFFL) != 0; it = desiredShaders.nextEntry(it)) {
+                for (long it = desiredShaders.beginIteration(); desiredShaders.hasNextIteration(it); it = desiredShaders.nextEntry(it)) {
                     //noinspection MagicConstant
                     @Shader int shader = desiredShaders.getIteration(it);
                     if (currentShaders.add(shader)) {

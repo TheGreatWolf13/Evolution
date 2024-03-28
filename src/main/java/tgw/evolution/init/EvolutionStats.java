@@ -142,7 +142,7 @@ public final class EvolutionStats {
     public static final StatType<Block> BLOCK_PLACED;
 
     static {
-        for (long it = EvolutionDamage.ALL_SOURCES.beginIteration(); (it & 0xFFFF_FFFFL) != 0; it = EvolutionDamage.ALL_SOURCES.nextEntry(it)) {
+        for (long it = EvolutionDamage.ALL_SOURCES.beginIteration(); EvolutionDamage.ALL_SOURCES.hasNextIteration(it); it = EvolutionDamage.ALL_SOURCES.nextEntry(it)) {
             String name = EvolutionDamage.ALL_SOURCES.getIteration(it);
             //noinspection ObjectAllocationInLoop
             DEATH_SOURCE.put(name, registerCustom("death_" + name, DEFAULT));

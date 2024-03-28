@@ -23,7 +23,7 @@ public class PacketSCSectionBlocksUpdate implements Packet<ClientGamePacketListe
         this.positions = new short[size];
         this.states = new BlockState[size];
         int j = 0;
-        for (long it = set.beginIteration(); (it & 0xFFFF_FFFFL) != 0; it = set.nextEntry(it)) {
+        for (long it = set.beginIteration(); set.hasNextIteration(it); it = set.nextEntry(it)) {
             short relative = set.getIteration(it);
             this.positions[j] = relative;
             this.states[j] = section.getBlockState(SectionPos.sectionRelativeX(relative), SectionPos.sectionRelativeY(relative), SectionPos.sectionRelativeZ(relative));

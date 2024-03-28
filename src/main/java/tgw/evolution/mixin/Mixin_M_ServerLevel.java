@@ -383,7 +383,7 @@ public abstract class Mixin_M_ServerLevel extends Level implements WorldGenLevel
     private @Nullable OList<PathNavigation> getPathNavigations(int x, int y, int z) {
         OList<PathNavigation> list = null;
         OSet<Mob> navigatingMobs = (OSet<Mob>) this.navigatingMobs;
-        for (long it = navigatingMobs.beginIteration(); (it & 0xFFFF_FFFFL) != 0; it = navigatingMobs.nextEntry(it)) {
+        for (long it = navigatingMobs.beginIteration(); navigatingMobs.hasNextIteration(it); it = navigatingMobs.nextEntry(it)) {
             Mob mob = navigatingMobs.getIteration(it);
             PathNavigation pathNavigation = mob.getNavigation();
             if (pathNavigation.shouldRecomputePath_(x, y, z)) {
