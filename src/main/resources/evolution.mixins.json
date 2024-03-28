@@ -662,6 +662,7 @@
     "MixinPlayerTabOverlay",
     "MixinPortalParticle",
     "MixinPostChain",
+    "MixinPresetFlatWorldScreen",
     "MixinReceivingLevelScreen",
     "MixinRecipeBookComponent",
     "MixinRecipeBookTabButton",
