@@ -26,7 +26,7 @@ public class PacketSCSectionBlocksUpdate implements Packet<ClientGamePacketListe
         for (long it = set.beginIteration(); set.hasNextIteration(it); it = set.nextEntry(it)) {
             short relative = set.getIteration(it);
             this.positions[j] = relative;
-            this.states[j] = section.getBlockState(SectionPos.sectionRelativeX(relative), SectionPos.sectionRelativeY(relative), SectionPos.sectionRelativeZ(relative));
+            this.states[j++] = section.getBlockState(SectionPos.sectionRelativeX(relative), SectionPos.sectionRelativeY(relative), SectionPos.sectionRelativeZ(relative));
         }
     }
 
