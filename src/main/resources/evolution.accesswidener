@@ -44,6 +44,8 @@ accessible field net/minecraft/client/gui/components/DebugScreenOverlay block Ln
 accessible field net/minecraft/client/gui/components/DebugScreenOverlay liquid Lnet/minecraft/world/phys/HitResult;
 accessible field net/minecraft/client/gui/components/OptionsList$Entry children Ljava/util/List;
 accessible field net/minecraft/client/gui/components/OptionsList$Entry options Ljava/util/Map;
+accessible field net/minecraft/client/gui/font/FontManager fontSets Ljava/util/Map;
+accessible field net/minecraft/client/gui/font/FontManager textureManager Lnet/minecraft/client/renderer/texture/TextureManager;
 accessible field net/minecraft/client/gui/Gui animateOverlayMessageColor Z
 accessible field net/minecraft/client/gui/Gui DEMO_EXPIRED_TEXT Lnet/minecraft/network/chat/Component;
 accessible field net/minecraft/client/gui/Gui minecraft Lnet/minecraft/client/Minecraft;
@@ -92,6 +94,7 @@ mutable field net/minecraft/client/Timer msPerTick F
 accessible field net/minecraft/client/model/geom/builders/CubeDeformation growX F
 accessible field net/minecraft/client/model/geom/builders/CubeDeformation growY F
 accessible field net/minecraft/client/model/geom/builders/CubeDeformation growZ F
+accessible field net/minecraft/client/model/geom/builders/PartDefinition children Ljava/util/Map;
 accessible field net/minecraft/client/model/geom/ModelPart$Cube polygons [Lnet/minecraft/client/model/geom/ModelPart$Polygon;
 accessible field net/minecraft/client/multiplayer/ClientChunkCache level Lnet/minecraft/client/multiplayer/ClientLevel;
 accessible field net/minecraft/client/multiplayer/ClientChunkCache$Storage chunkRadius I
@@ -186,6 +189,7 @@ accessible field net/minecraft/world/entity/LivingEntity swimAmountO F
 accessible field net/minecraft/world/entity/player/Player DATA_PLAYER_MODE_CUSTOMISATION Lnet/minecraft/network/syncher/EntityDataAccessor;
 accessible field net/minecraft/world/item/Item BASE_ATTACK_DAMAGE_UUID Ljava/util/UUID;
 accessible field net/minecraft/world/item/Item BASE_ATTACK_SPEED_UUID Ljava/util/UUID;
+accessible field net/minecraft/world/level/biome/MultiNoiseBiomeSource$Preset BY_NAME Ljava/util/Map;
 accessible field net/minecraft/world/level/block/CampfireBlock VIRTUAL_FENCE_POST Lnet/minecraft/world/phys/shapes/VoxelShape;
 accessible field net/minecraft/world/level/block/entity/SkullBlockEntity profileCache Lnet/minecraft/server/players/GameProfileCache;
 accessible field net/minecraft/world/level/block/entity/SkullBlockEntity sessionService Lcom/mojang/authlib/minecraft/MinecraftSessionService;
@@ -193,6 +197,9 @@ accessible field net/minecraft/world/level/block/state/BlockBehaviour$BlockState
 accessible field net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase$Cache lightBlock I
 accessible field net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase$Cache occlusionShapes [Lnet/minecraft/world/phys/shapes/VoxelShape;
 accessible field net/minecraft/world/level/chunk/LevelChunk level Lnet/minecraft/world/level/Level;
+accessible field net/minecraft/world/level/dimension/DimensionType DEFAULT_END Lnet/minecraft/world/level/dimension/DimensionType;
+accessible field net/minecraft/world/level/dimension/DimensionType DEFAULT_NETHER Lnet/minecraft/world/level/dimension/DimensionType;
+accessible field net/minecraft/world/level/dimension/DimensionType DEFAULT_OVERWORLD Lnet/minecraft/world/level/dimension/DimensionType;
 accessible field net/minecraft/world/level/levelgen/DebugLevelSource biomes Lnet/minecraft/core/Registry;
 accessible field net/minecraft/world/level/levelgen/Heightmap isOpaque Ljava/util/function/Predicate;
 accessible field net/minecraft/world/level/lighting/LayerLightEngine storage Lnet/minecraft/world/level/lighting/LayerLightSectionStorage;
@@ -223,6 +230,7 @@ accessible method net/minecraft/client/gui/screens/worldselection/CreateWorldScr
 accessible method net/minecraft/client/KeyMapping release ()V
 accessible method net/minecraft/client/Minecraft addCustomNbtData (Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/level/block/entity/BlockEntity;)Lnet/minecraft/world/item/ItemStack;
 accessible method net/minecraft/client/model/geom/builders/CubeDefinition <init> (Ljava/lang/String;FFFFFFFFLnet/minecraft/client/model/geom/builders/CubeDeformation;ZFF)V
+accessible method net/minecraft/client/model/geom/builders/PartDefinition <init> (Ljava/util/List;Lnet/minecraft/client/model/geom/PartPose;)V
 accessible method net/minecraft/client/multiplayer/ClientChunkCache$Storage <init> (Lnet/minecraft/client/multiplayer/ClientChunkCache;I)V
 accessible method net/minecraft/client/multiplayer/ClientChunkCache$Storage getChunk (I)Lnet/minecraft/world/level/chunk/LevelChunk;
 accessible method net/minecraft/client/multiplayer/ClientChunkCache$Storage getIndex (II)I
@@ -383,6 +391,7 @@ accessible method net/minecraft/world/level/block/WitherWallSkullBlock <init> (L
 accessible method net/minecraft/world/level/block/WitherSkullBlock <init> (Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
 accessible method net/minecraft/world/level/block/WoodButtonBlock <init> (Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
 accessible method net/minecraft/world/level/block/WoolCarpetBlock <init> (Lnet/minecraft/world/item/DyeColor;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+accessible method net/minecraft/world/level/border/WorldBorder$Settings <init> (DDDDIIDJD)V
 accessible method net/minecraft/world/level/chunk/LevelChunk isTicking (Lnet/minecraft/core/BlockPos;)Z
 accessible method net/minecraft/world/level/chunk/LevelChunk$RebindableTickingBlockEntityWrapper <init> (Lnet/minecraft/world/level/chunk/LevelChunk;Lnet/minecraft/world/level/block/entity/TickingBlockEntity;)V
 accessible method net/minecraft/world/level/chunk/LevelChunk$RebindableTickingBlockEntityWrapper rebind (Lnet/minecraft/world/level/block/entity/TickingBlockEntity;)V
@@ -396,6 +405,7 @@ accessible method net/minecraft/world/level/GameRules$Value copy ()Lnet/minecraf
 accessible method net/minecraft/world/level/GameRules$Value deserialize (Ljava/lang/String;)V
 accessible method net/minecraft/world/level/Level isOutsideSpawnableHeight (I)Z
 accessible method net/minecraft/world/level/levelgen/Beardifier <init> (Lnet/minecraft/world/level/StructureFeatureManager;Lnet/minecraft/world/level/chunk/ChunkAccess;)V
+accessible method net/minecraft/world/level/levelgen/flat/FlatLevelGeneratorSettings <init> (Lnet/minecraft/core/Registry;Ljava/util/Optional;Ljava/util/List;ZZLjava/util/Optional;)V
 accessible method net/minecraft/world/level/levelgen/Heightmap setHeight (III)V
 accessible method net/minecraft/world/level/levelgen/NoiseChunk getInterpolatedState ()Lnet/minecraft/world/level/block/state/BlockState;
 accessible method net/minecraft/world/level/levelgen/structure/pools/JigsawPlacement$PieceState <init> (Lnet/minecraft/world/level/levelgen/structure/PoolElementStructurePiece;Lorg/apache/commons/lang3/mutable/MutableObject;I)V
@@ -412,9 +422,12 @@ accessible method net/minecraft/world/level/lighting/LayerLightSectionStorage en
 accessible method net/minecraft/world/level/lighting/LayerLightSectionStorage getLightValue (J)I
 accessible method net/minecraft/world/level/lighting/LayerLightSectionStorage runAllUpdates ()V
 accessible method net/minecraft/world/level/lighting/LayerLightSectionStorage updateSectionStatus (JZ)V
+accessible method net/minecraft/world/level/storage/LevelVersion <init> (IJLjava/lang/String;ILjava/lang/String;Z)V
 accessible method net/minecraft/world/level/storage/loot/functions/CopyBlockState <init> ([Lnet/minecraft/world/level/storage/loot/predicates/LootItemCondition;Lnet/minecraft/world/level/block/Block;Ljava/util/Set;)V
 accessible method net/minecraft/world/level/storage/loot/functions/SetPotionFunction <init> ([Lnet/minecraft/world/level/storage/loot/predicates/LootItemCondition;Lnet/minecraft/world/item/alchemy/Potion;)V
 accessible method net/minecraft/world/level/storage/loot/predicates/LootItemBlockStatePropertyCondition <init> (Lnet/minecraft/world/level/block/Block;Lnet/minecraft/advancements/critereon/StatePropertiesPredicate;)V
+accessible method net/minecraft/world/level/storage/PrimaryLevelData <init> (Lcom/mojang/datafixers/DataFixer;ILnet/minecraft/nbt/CompoundTag;ZIIIFJJIIIZIZZZLnet/minecraft/world/level/border/WorldBorder$Settings;IILjava/util/UUID;Ljava/util/Set;Lnet/minecraft/world/level/timers/TimerQueue;Lnet/minecraft/nbt/CompoundTag;Lnet/minecraft/nbt/CompoundTag;Lnet/minecraft/world/level/LevelSettings;Lnet/minecraft/world/level/levelgen/WorldGenSettings;Lcom/mojang/serialization/Lifecycle;)V
+accessible method net/minecraft/world/level/timers/TimerQueue loadEvent (Lnet/minecraft/nbt/CompoundTag;)V
 accessible method net/minecraft/world/phys/AABB clipPoint ([DLnet/minecraft/core/Direction;DDDDDDDDLnet/minecraft/core/Direction;DDD)Lnet/minecraft/core/Direction;
 accessible method net/minecraft/world/phys/BlockHitResult <init> (ZLnet/minecraft/world/phys/Vec3;Lnet/minecraft/core/Direction;Lnet/minecraft/core/BlockPos;Z)V
 accessible method net/minecraft/world/phys/shapes/SubShape <init> (Lnet/minecraft/world/phys/shapes/DiscreteVoxelShape;IIIIII)V

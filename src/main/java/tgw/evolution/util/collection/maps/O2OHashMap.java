@@ -137,6 +137,11 @@ public class O2OHashMap<K, V> extends Object2ObjectOpenHashMap<K, V> implements 
     }
 
     @Override
+    public ObjectSet<K> keySet_() {
+        return super.keySet();
+    }
+
+    @Override
     public long nextEntry(long it) {
         if (this.isEmpty()) {
             return 0;

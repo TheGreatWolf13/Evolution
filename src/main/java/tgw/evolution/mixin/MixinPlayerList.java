@@ -133,7 +133,7 @@ public abstract class MixinPlayerList {
         String profileName = optional.isPresent() ? optional.get().getName() : gameProfile.getName();
         profileCache.add(gameProfile);
         CompoundTag tag = this.load(player);
-        ResourceKey<Level> dimension = tag != null ? NBTHelper.decodeResourceKey(Registry.DIMENSION_REGISTRY, tag.get("Dimension"), LOGGER, Level.OVERWORLD) : Level.OVERWORLD;
+        ResourceKey<Level> dimension = tag != null ? NBTHelper.parseResourceKeyOrElse(Registry.DIMENSION_REGISTRY, tag.get("Dimension"), LOGGER, Level.OVERWORLD) : Level.OVERWORLD;
         ServerLevel desiredLevel = this.server.getLevel(dimension);
         ServerLevel level;
         if (desiredLevel == null) {
@@ -370,13 +370,13 @@ public abstract class MixinPlayerList {
     }
 
     @Shadow
-    protected abstract void save(ServerPlayer serverPlayer);
-
-    @Shadow
     public abstract void sendLevelInfo(ServerPlayer pPlayer, ServerLevel pLevel);
 
     @Shadow
     public abstract void sendPlayerPermissionLevel(ServerPlayer pPlayer);
+
+    @Shadow
+    protected abstract void save(ServerPlayer serverPlayer);
 
     @Shadow
     protected abstract void updateEntireScoreboard(ServerScoreboard pScoreboard, ServerPlayer pPlayer);

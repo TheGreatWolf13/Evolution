@@ -1,6 +1,5 @@
 package tgw.evolution.mixin;
 
-import com.google.common.collect.Sets;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.math.Transformation;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
@@ -35,9 +34,7 @@ import tgw.evolution.hooks.asm.RestoreFinal;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.collection.maps.*;
-import tgw.evolution.util.collection.sets.OHashSet;
-import tgw.evolution.util.collection.sets.OLinkedHashSet;
-import tgw.evolution.util.collection.sets.OSet;
+import tgw.evolution.util.collection.sets.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,7 +43,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 @Mixin(ModelBakery.class)
 public abstract class Mixin_CF_ModelBakery {
@@ -257,17 +253,22 @@ public abstract class Mixin_CF_ModelBakery {
     @Overwrite
     public AtlasSet uploadTextures(TextureManager textureManager, ProfilerFiller profiler) {
         profiler.push("atlas");
-        for (Pair<TextureAtlas, TextureAtlas.Preparations> pair : this.atlasPreparations_.values()) {
+        O2OMap<ResourceLocation, Pair<TextureAtlas, TextureAtlas.Preparations>> atlasPreparations = this.atlasPreparations_;
+        OList<TextureAtlas> atlases = new OArrayList<>();
+        for (long it = atlasPreparations.beginIteration(); atlasPreparations.hasNextIteration(it); it = atlasPreparations.nextEntry(it)) {
+            Pair<TextureAtlas, TextureAtlas.Preparations> pair = atlasPreparations.getIterationValue(it);
             TextureAtlas textureAtlas = pair.getFirst();
             TextureAtlas.Preparations preparations = pair.getSecond();
             textureAtlas.reload(preparations);
             textureManager.register(textureAtlas.location(), textureAtlas);
             textureManager.bindForSetup(textureAtlas.location());
             textureAtlas.updateFilter(preparations);
+            atlases.add(textureAtlas);
         }
-        this.atlasSet = new AtlasSet(this.atlasPreparations_.values().stream().map(Pair::getFirst).collect(Collectors.toList()));
+        this.atlasSet = new AtlasSet(atlases);
         profiler.popPush("baking");
-        this.topLevelModels_.keySet().forEach(resourceLocation -> {
+        for (long it = this.topLevelModels_.beginIteration(); this.topLevelModels_.hasNextIteration(it); it = this.topLevelModels_.nextEntry(it)) {
+            ResourceLocation resourceLocation = this.topLevelModels_.getIterationKey(it);
             BakedModel bakedModel = null;
             try {
                 bakedModel = this.bake(resourceLocation, BlockModelRotation.X0_Y0);
@@ -278,7 +279,7 @@ public abstract class Mixin_CF_ModelBakery {
             if (bakedModel != null) {
                 this.bakedTopLevelModels_.put(resourceLocation, bakedModel);
             }
-        });
+        }
         profiler.pop();
         return this.atlasSet;
     }
@@ -336,7 +337,7 @@ public abstract class Mixin_CF_ModelBakery {
         ModelBakery.ModelGroupKey modelGroupKey = new ModelBakery.ModelGroupKey(OList.of(unbakedModel), OList.of());
         Pair<UnbakedModel, Supplier<ModelBakery.ModelGroupKey>> pair = Pair.of(unbakedModel, () -> modelGroupKey);
         boolean var25 = false;
-        O2OMap<ModelBakery.ModelGroupKey, Set<BlockState>> map5 = new O2OHashMap<>();
+        O2OMap<ModelBakery.ModelGroupKey, RSet<BlockState>> map5 = new O2OHashMap<>();
         try {
             OList<Pair<String, BlockModelDefinition>> list2;
             try {
@@ -377,34 +378,41 @@ public abstract class Mixin_CF_ModelBakery {
             catch (IOException e) {
                 LOGGER.warn("Exception loading blockstate definition: {}: {}", blockStateLocation, e);
                 var25 = false;
-                map.forEach((modelResourceLocationx, blockState) -> {
+                for (long it = map.beginIteration(); map.hasNextIteration(it); it = map.nextEntry(it)) {
+                    ModelResourceLocation modelResLoc = map.getIterationKey(it);
+                    BlockState blockState = map.getIterationValue(it);
                     Pair<UnbakedModel, Supplier<ModelBakery.ModelGroupKey>> pair2 = map2.get(blockState);
                     if (pair2 == null) {
-                        LOGGER.warn("Exception loading blockstate definition: '{}' missing model for variant: '{}'", blockStateLocation, modelResourceLocationx);
+                        LOGGER.warn("Exception loading blockstate definition: '{}' missing model for variant: '{}'", blockStateLocation, modelResourceLocation);
                         pair2 = pair;
                     }
-                    this.cacheAndQueueDependencies(modelResourceLocationx, pair2.getFirst());
+                    this.cacheAndQueueDependencies(modelResourceLocation, pair2.getFirst());
                     try {
                         ModelBakery.ModelGroupKey groupKey = pair2.getSecond().get();
-                        map5.computeIfAbsent(groupKey, modelGroupKeyx -> Sets.newIdentityHashSet()).add(blockState);
+                        RSet<BlockState> set = map5.get(groupKey);
+                        if (set == null) {
+                            set = new RHashSet<>();
+                            map5.put(groupKey, set);
+                            set.add(blockState);
+                        }
                     }
                     catch (Exception var9) {
-                        LOGGER.warn("Exception evaluating model definition: '{}'", modelResourceLocationx, var9);
+                        LOGGER.warn("Exception evaluating model definition: '{}'", modelResourceLocation, var9);
                     }
-                });
-                map5.forEach((modelGroupKeyx, set) -> {
-                    Iterator<BlockState> iterator = set.iterator();
-                    while (iterator.hasNext()) {
-                        BlockState blockState = iterator.next();
+                }
+                for (long it = map5.beginIteration(); map5.hasNextIteration(it); it = map5.nextEntry(it)) {
+                    RSet<BlockState> set = map5.getIterationValue(it);
+                    for (long it2 = set.beginIteration(); set.hasNextIteration(it2); it2 = set.nextEntry(it2)) {
+                        BlockState blockState = set.getIteration(it2);
                         if (blockState.getRenderShape() != RenderShape.MODEL) {
-                            iterator.remove();
+                            it = set.removeIteration(it);
                             this.modelGroups_.put(blockState, 0);
                         }
                     }
                     if (set.size() > 1) {
                         this.registerModelGroup(set);
                     }
-                });
+                }
                 return;
             }
             for (int i = 0, len = list2.size(); i < len; ++i) {
@@ -437,35 +445,42 @@ public abstract class Mixin_CF_ModelBakery {
                 map2.putAll(map4);
             }
             var25 = false;
-            O2OMap<ModelBakery.ModelGroupKey, Set<BlockState>> map3 = new O2OHashMap<>();
-            map.forEach((modelResourceLocationx, blockState) -> {
+            O2OMap<ModelBakery.ModelGroupKey, OSet<BlockState>> map3 = new O2OHashMap<>();
+            for (long it = map.beginIteration(); map.hasNextIteration(it); it = map.nextEntry(it)) {
+                ModelResourceLocation modelResLoc = map.getIterationKey(it);
+                BlockState blockState = map.getIterationValue(it);
                 Pair<UnbakedModel, Supplier<ModelBakery.ModelGroupKey>> pair2 = map2.get(blockState);
                 if (pair2 == null) {
-                    LOGGER.warn("Exception loading blockstate definition: '{}' missing model for variant: '{}'", blockStateLocation, modelResourceLocationx);
+                    LOGGER.warn("Exception loading blockstate definition: '{}' missing model for variant: '{}'", blockStateLocation, modelResLoc);
                     pair2 = pair;
                 }
-                this.cacheAndQueueDependencies(modelResourceLocationx, pair2.getFirst());
+                this.cacheAndQueueDependencies(modelResLoc, pair2.getFirst());
                 try {
                     ModelBakery.ModelGroupKey groupKey = pair2.getSecond().get();
-                    map5.computeIfAbsent(groupKey, modelGroupKeyx -> Sets.newIdentityHashSet()).add(blockState);
+                    RSet<BlockState> set = map5.get(groupKey);
+                    if (set == null) {
+                        set = new RHashSet<>();
+                        map5.put(groupKey, set);
+                        set.add(blockState);
+                    }
                 }
                 catch (Exception var9) {
-                    LOGGER.warn("Exception evaluating model definition: '{}'", modelResourceLocationx, var9);
+                    LOGGER.warn("Exception evaluating model definition: '{}'", modelResLoc, var9);
                 }
-            });
-            map3.forEach((modelGroupKeyx, set) -> {
-                Iterator<BlockState> iterator = set.iterator();
-                while (iterator.hasNext()) {
-                    BlockState blockState = iterator.next();
+            }
+            for (long it = map3.beginIteration(); map3.hasNextIteration(it); it = map3.nextEntry(it)) {
+                OSet<BlockState> set = map3.getIterationValue(it);
+                for (long it2 = set.beginIteration(); set.hasNextIteration(it2); it2 = set.nextEntry(it2)) {
+                    BlockState blockState = set.getIteration(it2);
                     if (blockState.getRenderShape() != RenderShape.MODEL) {
-                        iterator.remove();
+                        it2 = set.removeIteration(it2);
                         this.modelGroups_.put(blockState, 0);
                     }
                 }
                 if (set.size() > 1) {
                     this.registerModelGroup(set);
                 }
-            });
+            }
         }
         catch (ModelBakery.BlockStateDefinitionException e) {
             throw e;
@@ -475,35 +490,42 @@ public abstract class Mixin_CF_ModelBakery {
         }
         finally {
             if (var25) {
-                O2OMap<ModelBakery.ModelGroupKey, Set<BlockState>> map6 = new O2OHashMap<>();
-                map.forEach((modelResourceLocationx, blockState) -> {
+                O2OMap<ModelBakery.ModelGroupKey, OSet<BlockState>> map6 = new O2OHashMap<>();
+                for (long it = map.beginIteration(); map.hasNextIteration(it); it = map.nextEntry(it)) {
+                    ModelResourceLocation modelResLoc = map.getIterationKey(it);
+                    BlockState blockState = map.getIterationValue(it);
                     Pair<UnbakedModel, Supplier<ModelBakery.ModelGroupKey>> pair2 = map2.get(blockState);
                     if (pair2 == null) {
-                        LOGGER.warn("Exception loading blockstate definition: '{}' missing model for variant: '{}'", blockStateLocation, modelResourceLocationx);
+                        LOGGER.warn("Exception loading blockstate definition: '{}' missing model for variant: '{}'", blockStateLocation, modelResLoc);
                         pair2 = pair;
                     }
-                    this.cacheAndQueueDependencies(modelResourceLocationx, pair2.getFirst());
+                    this.cacheAndQueueDependencies(modelResLoc, pair2.getFirst());
                     try {
                         ModelBakery.ModelGroupKey groupKey = pair2.getSecond().get();
-                        map5.computeIfAbsent(groupKey, modelGroupKeyx -> Sets.newIdentityHashSet()).add(blockState);
+                        RSet<BlockState> set = map5.get(groupKey);
+                        if (set == null) {
+                            set = new RHashSet<>();
+                            map5.put(groupKey, set);
+                            set.add(blockState);
+                        }
                     }
                     catch (Exception e) {
-                        LOGGER.warn("Exception evaluating model definition: '{}'", modelResourceLocationx, e);
+                        LOGGER.warn("Exception evaluating model definition: '{}'", modelResLoc, e);
                     }
-                });
-                map6.forEach((modelGroupKeyx, set) -> {
-                    Iterator<BlockState> iterator = set.iterator();
-                    while (iterator.hasNext()) {
-                        BlockState blockState = iterator.next();
+                }
+                for (long it = map6.beginIteration(); map6.hasNextIteration(it); it = map6.nextEntry(it)) {
+                    OSet<BlockState> set = map6.getIterationValue(it);
+                    for (long it2 = set.beginIteration(); set.hasNextIteration(it2); it2 = set.nextEntry(it2)) {
+                        BlockState blockState = set.getIteration(it2);
                         if (blockState.getRenderShape() != RenderShape.MODEL) {
-                            iterator.remove();
+                            it2 = set.removeIteration(it2);
                             this.modelGroups_.put(blockState, 0);
                         }
                     }
                     if (set.size() > 1) {
                         this.registerModelGroup(set);
                     }
-                });
+                }
             }
         }
     }

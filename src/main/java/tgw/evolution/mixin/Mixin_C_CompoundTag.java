@@ -38,11 +38,16 @@ public abstract class Mixin_C_CompoundTag implements PatchCompoundTag {
      */
     @Overwrite
     public CompoundTag copy() {
-        Map<String, Tag> map = new O2OHashMap<>(this.tags.size());
+        O2OMap<String, Tag> map = new O2OHashMap<>(this.tags.size());
         O2OMap<String, Tag> tags = (O2OMap<String, Tag>) this.tags;
         for (long it = tags.beginIteration(); tags.hasNextIteration(it); it = tags.nextEntry(it)) {
             map.put(tags.getIterationKey(it), tags.getIterationValue(it).copy());
         }
         return new CompoundTag(map);
+    }
+
+    @Override
+    public O2OMap<String, Tag> tags() {
+        return ((O2OMap<String, Tag>) this.tags).view();
     }
 }

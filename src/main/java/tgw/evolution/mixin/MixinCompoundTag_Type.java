@@ -25,7 +25,7 @@ public abstract class MixinCompoundTag_Type {
         if (depth > 512) {
             throw new RuntimeException("Tried to read NBT tag with too high complexity, depth > 512");
         }
-        O2OMap<String, Tag> map = new O2OHashMap();
+        O2OMap<String, Tag> map = new O2OHashMap<>();
         for (byte b = CompoundTag.readNamedTagType(input, accounter); b != 0; b = CompoundTag.readNamedTagType(input, accounter)) {
             String string = CompoundTag.readNamedTagName(input, accounter);
             accounter.accountBits(224 + 16L * string.length());

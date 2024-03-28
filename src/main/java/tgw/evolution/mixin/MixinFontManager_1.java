@@ -1,5 +1,6 @@
 package tgw.evolution.mixin;
 
+import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -9,6 +10,8 @@ import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import net.minecraft.client.gui.font.AllMissingGlyphProvider;
+import net.minecraft.client.gui.font.FontManager;
+import net.minecraft.client.gui.font.FontSet;
 import net.minecraft.client.gui.font.providers.GlyphProviderBuilderType;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
@@ -16,13 +19,16 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.profiling.ProfilerFiller;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
+import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.Evolution;
 import tgw.evolution.resources.IKeyedReloadListener;
 import tgw.evolution.resources.ReloadListernerKeys;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.maps.O2OHashMap;
+import tgw.evolution.util.collection.maps.O2OMap;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -31,10 +37,35 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 @Mixin(targets = "net.minecraft.client.gui.font.FontManager$1")
 public abstract class MixinFontManager_1 extends SimplePreparableReloadListener<Map<ResourceLocation, List<GlyphProvider>>> implements IKeyedReloadListener {
+
+    @Shadow(aliases = "this$0") @Final FontManager field_18216;
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Override
+    @Overwrite
+    public void apply(Map<ResourceLocation, List<GlyphProvider>> map, ResourceManager resourceManager, ProfilerFiller profilerFiller) {
+        profilerFiller.startTick();
+        profilerFiller.push("closing");
+        this.field_18216.fontSets.values().forEach(FontSet::close);
+        this.field_18216.fontSets.clear();
+        profilerFiller.popPush("reloading");
+        O2OMap<ResourceLocation, List<GlyphProvider>> map_ = (O2OMap<ResourceLocation, List<GlyphProvider>>) map;
+        for (long it = map_.beginIteration(); map_.hasNextIteration(it); it = map_.nextEntry(it)) {
+            ResourceLocation resourceLocation = map_.getIterationKey(it);
+            List<GlyphProvider> list = map_.getIterationValue(it);
+            FontSet fontSet = new FontSet(this.field_18216.textureManager, resourceLocation);
+            fontSet.reload(Lists.reverse(list));
+            this.field_18216.fontSets.put(resourceLocation, fontSet);
+        }
+        profilerFiller.pop();
+        profilerFiller.endTick();
+    }
 
     @Override
     public ResourceLocation getKey() {
@@ -62,13 +93,11 @@ public abstract class MixinFontManager_1 extends SimplePreparableReloadListener<
                 list.add(new AllMissingGlyphProvider());
                 map.put(resourceLocation2, list);
             }
-            Objects.requireNonNull(resourceLocation2);
             profiler.push(resourceLocation2.toString());
             try {
                 List<Resource> resources = resourceManager.getResources(resourceLocation);
                 for (int i = 0, len = resources.size(); i < len; ++i) {
                     Resource resource = resources.get(i);
-                    Objects.requireNonNull(resource);
                     profiler.push(resource.getSourceName());
                     try {
                         InputStream inputStream = resource.getInputStream();

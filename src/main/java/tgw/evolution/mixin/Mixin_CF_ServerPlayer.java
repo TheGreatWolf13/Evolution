@@ -78,15 +78,6 @@ import java.util.List;
 public abstract class Mixin_CF_ServerPlayer extends Player implements PatchServerPlayer {
 
     @Shadow @Final private static Logger LOGGER;
-    @Unique private final CapabilityInventory extraInventory;
-    @Unique private final CapabilityHealth healthStats;
-    @Unique private final CapabilityHunger hungerStats;
-    @Unique private final OptionalMutableChunkPos lastCameraSectionPos;
-    @Unique private final ChunkPosMutable lastChunkPos;
-    @Unique private final CapabilityStamina staminaStats;
-    @Unique private final CapabilityTemperature temperatureStats;
-    @Unique private final CapabilityThirst thirstStats;
-    @Unique private final CapabilityToast toastStats;
     @Shadow public ServerGamePacketListenerImpl connection;
     @Shadow public @Nullable Vec3 enteredNetherPosition;
     @Mutable @Shadow @Final @RestoreFinal public ServerPlayerGameMode gameMode;
@@ -100,7 +91,12 @@ public abstract class Mixin_CF_ServerPlayer extends Player implements PatchServe
     @Shadow private ChatVisiblity chatVisibility;
     @Mutable @Shadow @Final @RestoreFinal private ContainerListener containerListener;
     @Mutable @Shadow @Final @RestoreFinal private ContainerSynchronizer containerSynchronizer;
+    @Unique private final CapabilityInventory extraInventory;
+    @Unique private final CapabilityHealth healthStats;
+    @Unique private final CapabilityHunger hungerStats;
     @Shadow private long lastActionTime;
+    @Unique private final OptionalMutableChunkPos lastCameraSectionPos;
+    @Unique private final ChunkPosMutable lastChunkPos;
     @Shadow private boolean lastFoodSaturationZero;
     @Shadow private int lastRecordedAirLevel;
     @Shadow private int lastRecordedArmor;
@@ -120,9 +116,13 @@ public abstract class Mixin_CF_ServerPlayer extends Player implements PatchServe
     @Shadow private boolean respawnForced;
     @Shadow private @Nullable BlockPos respawnPosition;
     @Shadow private int spawnInvulnerableTime;
+    @Unique private final CapabilityStamina staminaStats;
     @Mutable @Shadow @Final @RestoreFinal private ServerStatsCounter stats;
+    @Unique private final CapabilityTemperature temperatureStats;
     @Mutable @Shadow @Final @RestoreFinal private TextFilter textFilter;
     @Shadow private boolean textFilteringEnabled;
+    @Unique private final CapabilityThirst thirstStats;
+    @Unique private final CapabilityToast toastStats;
 
     @ModifyConstructor
     public Mixin_CF_ServerPlayer(MinecraftServer server, ServerLevel level, GameProfile profile) {
@@ -253,12 +253,6 @@ public abstract class Mixin_CF_ServerPlayer extends Player implements PatchServe
         this.awardRecipes(list);
     }
 
-    @Shadow
-    protected abstract boolean bedBlocked(BlockPos blockPos, Direction direction);
-
-    @Shadow
-    protected abstract boolean bedInRange(BlockPos blockPos, Direction direction);
-
     /**
      * @author TheGreatWolf
      * @reason Spawn Corpse
@@ -366,9 +360,6 @@ public abstract class Mixin_CF_ServerPlayer extends Player implements PatchServe
     }
 
     @Shadow
-    protected abstract void fudgeSpawnLocation(ServerLevel serverLevel);
-
-    @Shadow
     public abstract Entity getCamera();
 
     @Override
@@ -437,9 +428,6 @@ public abstract class Mixin_CF_ServerPlayer extends Player implements PatchServe
     public CapabilityToast getToastStats() {
         return this.toastStats;
     }
-
-    @Shadow
-    protected abstract void handleTeamKill(String string, String string2, ObjectiveCriteria[] objectiveCriterias);
 
     /**
      * @author TheGreatWolf
@@ -514,7 +502,7 @@ public abstract class Mixin_CF_ServerPlayer extends Player implements PatchServe
             this.respawnPosition = new BlockPos(tag.getInt("SpawnX"), tag.getInt("SpawnY"), tag.getInt("SpawnZ"));
             this.respawnForced = tag.getBoolean("SpawnForced");
             this.respawnAngle = tag.getFloat("SpawnAngle");
-            this.respawnDimension = NBTHelper.decodeResourceKey(Registry.DIMENSION_REGISTRY, tag.get("SpawnDimension"), LOGGER, Level.OVERWORLD);
+            this.respawnDimension = NBTHelper.parseResourceKeyOrElse(Registry.DIMENSION_REGISTRY, tag.get("SpawnDimension"), LOGGER, Level.OVERWORLD);
         }
         this.extraInventory.deserializeNBT(NBTHelper.getCompound(tag, "ExtraInventory"));
         this.healthStats.deserializeNBT(NBTHelper.getCompound(tag, "HealthStats"));
@@ -652,12 +640,6 @@ public abstract class Mixin_CF_ServerPlayer extends Player implements PatchServe
         return Either.left(Player.BedSleepingProblem.OTHER_PROBLEM);
     }
 
-    @Shadow
-    protected abstract void storeGameTypes(CompoundTag compoundTag);
-
-    @Shadow
-    protected abstract void tellNeutralMobsThatIDied();
-
     /**
      * @author TheGreatWolf
      * @reason Modify camera behaviour
@@ -705,4 +687,22 @@ public abstract class Mixin_CF_ServerPlayer extends Player implements PatchServe
 
     @Shadow
     public abstract void trackStartFallingPosition();
+
+    @Shadow
+    protected abstract boolean bedBlocked(BlockPos blockPos, Direction direction);
+
+    @Shadow
+    protected abstract boolean bedInRange(BlockPos blockPos, Direction direction);
+
+    @Shadow
+    protected abstract void fudgeSpawnLocation(ServerLevel serverLevel);
+
+    @Shadow
+    protected abstract void handleTeamKill(String string, String string2, ObjectiveCriteria[] objectiveCriterias);
+
+    @Shadow
+    protected abstract void storeGameTypes(CompoundTag compoundTag);
+
+    @Shadow
+    protected abstract void tellNeutralMobsThatIDied();
 }

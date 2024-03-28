@@ -2,6 +2,7 @@ package tgw.evolution.util.collection.maps;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jetbrains.annotations.UnmodifiableView;
 
 import java.util.NoSuchElementException;
@@ -29,7 +30,23 @@ public interface O2OMap<K, V> extends Object2ObjectMap<K, V>, MapEv {
 
     V getSampleValue();
 
+    default ObjectSet<K> keySet_() {
+        return this.keySet();
+    }
+
     long nextEntry(long it);
+
+    default void putAll(O2OMap<K, V> map) {
+        for (long it = map.beginIteration(); map.hasNextIteration(it); it = map.nextEntry(it)) {
+            this.put(map.getIterationKey(it), map.getIterationValue(it));
+        }
+    }
+
+    default void putAll(R2OMap<K, V> map) {
+        for (long it = map.beginIteration(); map.hasNextIteration(it); it = map.nextEntry(it)) {
+            this.put(map.getIterationKey(it), map.getIterationValue(it));
+        }
+    }
 
     long removeIteration(long it);
 
@@ -37,7 +54,7 @@ public interface O2OMap<K, V> extends Object2ObjectMap<K, V>, MapEv {
 
     class EmptyMap<K, V> extends Object2ObjectMaps.EmptyMap<K, V> implements O2OMap<K, V> {
 
-        private static final EmptyMap EMPTY = new EmptyMap();
+        private static final O2OMap EMPTY = new EmptyMap();
 
         protected EmptyMap() {
         }

@@ -17,13 +17,15 @@ import tgw.evolution.hooks.asm.ModifyConstructor;
 import tgw.evolution.hooks.asm.ModifyStatic;
 import tgw.evolution.hooks.asm.RestoreFinal;
 import tgw.evolution.init.EvolutionGameRules;
+import tgw.evolution.patches.PatchGameRules;
+import tgw.evolution.util.NBTHelper;
 import tgw.evolution.util.collection.maps.O2OHashMap;
 import tgw.evolution.util.collection.maps.O2OMap;
 
 import java.util.*;
 
 @Mixin(GameRules.class)
-public abstract class Mixin_CFS_GameRules {
+public abstract class Mixin_CFS_GameRules implements PatchGameRules {
 
     @Mutable @Shadow @Final @RestoreFinal public static GameRules.Key<GameRules.BooleanValue> RULE_DOFIRETICK;
     @Mutable @Shadow @Final @RestoreFinal public static GameRules.Key<GameRules.BooleanValue> RULE_MOBGRIEFING;
@@ -180,6 +182,17 @@ public abstract class Mixin_CFS_GameRules {
             tag.putString(rules.getIterationKey(it).getId(), rules.getIterationValue(it).serialize());
         }
         return tag;
+    }
+
+    @Override
+    public void loadFromTag(CompoundTag tag) {
+        O2OMap<GameRules.Key<?>, GameRules.Value<?>> rules = (O2OMap<GameRules.Key<?>, GameRules.Value<?>>) this.rules;
+        for (long it = rules.beginIteration(); rules.hasNextIteration(it); it = rules.nextEntry(it)) {
+            String result = NBTHelper.getString(tag, rules.getIterationKey(it).getId());
+            if (result != null) {
+                rules.getIterationValue(it).deserialize(result);
+            }
+        }
     }
 
     @Shadow

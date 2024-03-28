@@ -77,7 +77,7 @@ public abstract class GroupResourcePack implements PackResources {
 
     @Override
     public Set<String> getNamespaces(PackType type) {
-        return this.namespacedPacks.keySet();
+        return this.namespacedPacks.keySet_();
     }
 
     @Override

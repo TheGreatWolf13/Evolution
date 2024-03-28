@@ -411,6 +411,12 @@
       ],
       "net/minecraft/world/level/block/state/properties/Property": [
         "tgw/evolution/patches/PatchProperty"
+      ],
+      "net/minecraft/nbt/CompoundTag": [
+        "tgw/evolution/patches/PatchCompoundTag"
+      ],
+      "net/minecraft/world/level/GameRules": [
+        "tgw/evolution/patches/PatchGameRules"
       ]
     }
   }
