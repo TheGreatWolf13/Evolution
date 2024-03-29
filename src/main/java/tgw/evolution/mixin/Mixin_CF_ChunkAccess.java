@@ -33,6 +33,7 @@ import tgw.evolution.patches.PatchChunkAccess;
 import tgw.evolution.util.collection.maps.L2OHashMap;
 import tgw.evolution.util.collection.maps.L2OMap;
 import tgw.evolution.util.collection.maps.O2OHashMap;
+import tgw.evolution.util.collection.maps.O2OMap;
 import tgw.evolution.util.collection.sets.OHashSet;
 import tgw.evolution.util.collection.sets.OSet;
 import tgw.evolution.world.lighting.SWMRNibbleArray;
@@ -45,8 +46,6 @@ import java.util.Set;
 public abstract class Mixin_CF_ChunkAccess implements PatchChunkAccess, BlockGetter, BiomeManager.NoiseBiomeSource, FeatureAccess {
 
     @Shadow @Final private static Logger LOGGER;
-    @Unique private final L2OMap<BlockEntity> blockEntities_;
-    @Unique private final L2OMap<CompoundTag> pendingBlockEntities_;
     @Shadow protected @Nullable BlendingData blendingData;
     @Shadow @Final @DeleteField protected Map<BlockPos, BlockEntity> blockEntities;
     @Mutable @Shadow @Final @RestoreFinal protected ChunkPos chunkPos;
@@ -58,8 +57,10 @@ public abstract class Mixin_CF_ChunkAccess implements PatchChunkAccess, BlockGet
     @Mutable @Shadow @Final @RestoreFinal protected UpgradeData upgradeData;
     //TODO very inefficient
     @Unique private volatile boolean @Nullable [] blockEmptinessMap;
+    @Unique private final L2OMap<BlockEntity> blockEntities_;
     @Unique private volatile SWMRShortArray[] blockShorts;
     @Shadow private long inhabitedTime;
+    @Unique private final L2OMap<CompoundTag> pendingBlockEntities_;
     //TODO very inefficient
     @Unique private volatile boolean @Nullable [] skyEmptinessMap;
     @Unique private volatile SWMRNibbleArray[] skyNibbles;
@@ -67,13 +68,7 @@ public abstract class Mixin_CF_ChunkAccess implements PatchChunkAccess, BlockGet
     @Mutable @Shadow @Final @RestoreFinal private Map<ConfiguredStructureFeature<?, ?>, LongSet> structuresRefences;
 
     @ModifyConstructor
-    public Mixin_CF_ChunkAccess(ChunkPos chunkPos,
-                                UpgradeData upgradeData,
-                                LevelHeightAccessor levelHeightAccessor,
-                                Registry<Biome> registry,
-                                long inhabitedTime,
-                                LevelChunkSection @Nullable [] levelChunkSections,
-                                @Nullable BlendingData blendingData) {
+    public Mixin_CF_ChunkAccess(ChunkPos chunkPos, UpgradeData upgradeData, LevelHeightAccessor levelHeightAccessor, Registry<Biome> registry, long inhabitedTime, LevelChunkSection @Nullable [] levelChunkSections, @Nullable BlendingData blendingData) {
         this.heightmaps = Maps.newEnumMap(Heightmap.Types.class);
         this.structureStarts = new O2OHashMap<>();
         this.structuresRefences = new O2OHashMap<>();
@@ -108,6 +103,25 @@ public abstract class Mixin_CF_ChunkAccess implements PatchChunkAccess, BlockGet
         return this.blockEntities_;
     }
 
+    /**
+     * @author TheGreatWolf
+     * @reason Use non-BlockPos version
+     */
+    @Override
+    @Overwrite
+    public Map<ConfiguredStructureFeature<?, ?>, LongSet> getAllReferences() {
+        return ((O2OMap<ConfiguredStructureFeature<?, ?>, LongSet>) this.structuresRefences).view();
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Use non-BlockPos version
+     */
+    @Overwrite
+    public Map<ConfiguredStructureFeature<?, ?>, StructureStart> getAllStarts() {
+        return ((O2OMap<ConfiguredStructureFeature<?, ?>, StructureStart>) this.structureStarts).view();
+    }
+
     @Override
     public boolean @Nullable [] getBlockEmptinessMap() {
         return this.blockEmptinessMap;
@@ -136,7 +150,7 @@ public abstract class Mixin_CF_ChunkAccess implements PatchChunkAccess, BlockGet
 
     /**
      * @author TheGreatWolf
-     * @reason Use non-BlockPos version
+     * @reason _
      */
     @Overwrite
     public @Nullable CompoundTag getBlockEntityNbt(BlockPos pos) {

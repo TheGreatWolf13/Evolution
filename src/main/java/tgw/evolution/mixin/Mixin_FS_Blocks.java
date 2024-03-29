@@ -944,6 +944,17 @@ public abstract class Mixin_FS_Blocks {
     @Shadow @Final @Mutable @RestoreFinal public static Block POTTED_AZALEA;
     @Shadow @Final @Mutable @RestoreFinal public static Block POTTED_FLOWERING_AZALEA;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Overwrite
+    public static void rebuildCache() {
+        for (long it = Block.BLOCK_STATE_REGISTRY.beginIteration(); Block.BLOCK_STATE_REGISTRY.hasNextIteration(it); it = Block.BLOCK_STATE_REGISTRY.nextEntry(it)) {
+            ((BlockBehaviour.BlockStateBase) Block.BLOCK_STATE_REGISTRY.getIteration(it)).initCache();
+        }
+    }
+
     @Unique
     private static BlockEntityType<? extends ChestBlockEntity> _chest() {
         return BlockEntityType.CHEST;
@@ -3471,7 +3482,8 @@ public abstract class Mixin_FS_Blocks {
         POTTED_AZALEA = register("potted_azalea_bush", new FlowerPotBlock(AZALEA, of(Material.DECORATION).instabreak().noOcclusion()));
         POTTED_FLOWERING_AZALEA = register("potted_flowering_azalea_bush", new FlowerPotBlock(FLOWERING_AZALEA, of(Material.DECORATION).instabreak().noOcclusion()));
         EvolutionBlocks.register();
-        for (Block block : Registry.BLOCK) {
+        for (long it = Registry.BLOCK.beginIteration(); Registry.BLOCK.hasNextIteration(it); it = Registry.BLOCK.nextEntry(it)) {
+            Block block = (Block) Registry.BLOCK.getIteration(it);
             OList<BlockState> possibleStates = block.getStateDefinition().getPossibleStates_();
             for (int i = 0, len = possibleStates.size(); i < len; ++i) {
                 Block.BLOCK_STATE_REGISTRY.add(possibleStates.get(i));

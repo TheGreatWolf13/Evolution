@@ -203,6 +203,11 @@ public class O2OArrayMap<K, V> extends AbstractObject2ObjectMap<K, V> implements
     }
 
     @Override
+    public void putAll(Map<? extends K, ? extends V> m) {
+        O2OMap.super.putAll(m);
+    }
+
+    @Override
     public V remove(Object k) {
         int oldPos = this.findKey(k);
         if (oldPos == -1) {

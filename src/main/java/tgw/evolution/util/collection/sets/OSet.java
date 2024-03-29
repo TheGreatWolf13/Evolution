@@ -39,17 +39,23 @@ public interface OSet<K> extends ObjectSet<K>, SetEv {
         return new Singleton<>(k);
     }
 
+    default boolean addAll(OList<? extends K> list) {
+        this.preAllocate(list.size());
+        boolean modified = false;
+        for (int i = 0, len = list.size(); i < len; ++i) {
+            if (this.add(list.get(i))) {
+                modified = true;
+            }
+        }
+        return modified;
+    }
+
     @Override
     default boolean addAll(Collection<? extends K> c) {
         if (c instanceof OList<? extends K> list) {
-            boolean modified = false;
-            for (int i = 0, len = list.size(); i < len; ++i) {
-                if (this.add(list.get(i))) {
-                    modified = true;
-                }
-            }
-            return modified;
+            return this.addAll(list);
         }
+        this.preAllocate(c.size());
         boolean modified = false;
         for (K e : c) {
             if (this.add(e)) {
@@ -66,6 +72,10 @@ public interface OSet<K> extends ObjectSet<K>, SetEv {
     K getSampleElement();
 
     long nextEntry(long it);
+
+    default void preAllocate(int extraSize) {
+
+    }
 
     long removeIteration(long it);
 

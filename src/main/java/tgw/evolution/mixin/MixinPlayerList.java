@@ -33,6 +33,7 @@ import net.minecraft.stats.ServerStatsCounter;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.TagNetworkSerialization;
 import net.minecraft.util.Mth;
+import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -58,6 +59,7 @@ import tgw.evolution.network.PacketSCChangeTickrate;
 import tgw.evolution.network.PacketSCFixRotation;
 import tgw.evolution.network.PacketSCSimpleMessage;
 import tgw.evolution.util.NBTHelper;
+import tgw.evolution.util.collection.maps.R2OMap;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -211,9 +213,10 @@ public abstract class MixinPlayerList {
         if (!this.server.getResourcePack().isEmpty()) {
             player.sendTexturePack(this.server.getResourcePack(), this.server.getResourcePackHash(), this.server.isResourcePackRequired(), this.server.getResourcePackPrompt());
         }
-        for (MobEffectInstance effects : player.getActiveEffects()) {
+        R2OMap<MobEffect, MobEffectInstance> effectsMap = (R2OMap<MobEffect, MobEffectInstance>) player.getActiveEffectsMap();
+        for (long it = effectsMap.beginIteration(); effectsMap.hasNextIteration(it); it = effectsMap.nextEntry(it)) {
             //noinspection ObjectAllocationInLoop
-            listener.send(new ClientboundUpdateMobEffectPacket(player.getId(), effects));
+            listener.send(new ClientboundUpdateMobEffectPacket(player.getId(), effectsMap.getIterationValue(it)));
         }
         if (tag != null && tag.contains("RootVehicle", Tag.TAG_COMPOUND)) {
             CompoundTag vehicleTag = tag.getCompound("RootVehicle");

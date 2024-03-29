@@ -41,8 +41,8 @@ public abstract class Mixin_FS_DebugLevelSource extends ChunkGenerator {
     private static void clinit() {
         CODEC = RecordCodecBuilder.create(instance -> commonCodec(instance).and(RegistryOps.retrieveRegistry(Registry.BIOME_REGISTRY).forGetter(debugLevelSource -> debugLevelSource.biomes)).apply(instance, instance.stable(DebugLevelSource::new)));
         OList<BlockState> states = new OArrayList<>();
-        for (Block block : Registry.BLOCK) {
-            OList<BlockState> possibleStates = block.getStateDefinition().getPossibleStates_();
+        for (long it = Registry.BLOCK.beginIteration(); Registry.BLOCK.hasNextIteration(it); it = Registry.BLOCK.nextEntry(it)) {
+            OList<BlockState> possibleStates = ((Block) Registry.BLOCK.getIteration(it)).getStateDefinition().getPossibleStates_();
             for (int i = 0, len = possibleStates.size(); i < len; ++i) {
                 states.add(possibleStates.get(i));
             }

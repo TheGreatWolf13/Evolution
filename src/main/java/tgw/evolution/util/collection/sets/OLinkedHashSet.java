@@ -69,12 +69,6 @@ public class OLinkedHashSet<K> extends ObjectLinkedOpenHashSet<K> implements OSe
 
     @Override
     public boolean addAll(Collection<? extends K> c) {
-        if (this.f <= 0.5) {
-            this.ensureCapacity(c.size());
-        }
-        else {
-            this.tryCapacity(this.size() + c.size());
-        }
         return OSet.super.addAll(c);
     }
 
@@ -130,6 +124,16 @@ public class OLinkedHashSet<K> extends ObjectLinkedOpenHashSet<K> implements OSe
             return curr;
         }
         return (int) this.link[curr];
+    }
+
+    @Override
+    public void preAllocate(int extraSize) {
+        if (this.f <= 0.5) {
+            this.ensureCapacity(extraSize);
+        }
+        else {
+            this.tryCapacity(this.size() + extraSize);
+        }
     }
 
     @Override

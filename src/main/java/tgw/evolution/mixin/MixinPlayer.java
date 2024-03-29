@@ -77,7 +77,6 @@ import java.util.Optional;
 @Mixin(Player.class)
 public abstract class MixinPlayer extends LivingEntity implements PatchPlayer {
 
-    @Unique private final AABBMutable hitboxForTouching = new AABBMutable();
     @Shadow public float bob;
     @Shadow public @Nullable AbstractContainerMenu containerMenu;
     @Shadow public int experienceLevel;
@@ -91,6 +90,7 @@ public abstract class MixinPlayer extends LivingEntity implements PatchPlayer {
     @Shadow protected int jumpTriggerTime;
     @Shadow @Final private Abilities abilities;
     @Shadow @Final private ItemCooldowns cooldowns;
+    @Unique private final AABBMutable hitboxForTouching = new AABBMutable();
     @Shadow @Final private Inventory inventory;
     @Unique private boolean isCrawling;
     @Unique private boolean isMoving;
@@ -98,6 +98,7 @@ public abstract class MixinPlayer extends LivingEntity implements PatchPlayer {
     @Unique private double motionY;
     @Unique private double motionZ;
     @Shadow private int sleepCounter;
+    @Shadow private long timeEntitySatOnShoulder;
 
     protected MixinPlayer(EntityType<? extends LivingEntity> type, Level level) {
         super(type, level);
@@ -398,24 +399,6 @@ public abstract class MixinPlayer extends LivingEntity implements PatchPlayer {
     }
 
     /**
-     * @author TheGreatWolf
-     * @reason Overwrite to use Evolution Stats.
-     */
-    @Overwrite
-    private void checkRidingStatistics(double dx, double dy, double dz) {
-        //noinspection ConstantConditions
-        if ((Object) this instanceof ServerPlayer player && this.isPassenger()) {
-            float dist = MathHelper.sqrt(dx * dx + dy * dy + dz * dz) * 1_000;
-            if (dist > 0) {
-                PlayerHelper.addStat(player, EvolutionStats.TOTAL_DISTANCE_TRAVELED, dist);
-            }
-        }
-    }
-
-    @Shadow
-    protected abstract void closeContainer();
-
-    /**
      * @reason _
      * @author TheGreatWolf
      */
@@ -580,17 +563,6 @@ public abstract class MixinPlayer extends LivingEntity implements PatchPlayer {
     @Shadow
     public abstract CompoundTag getShoulderEntityRight();
 
-    @Unique
-    private float getStepHeightInternal() {
-        AttributeInstance massAttribute = this.getAttribute(EvolutionAttributes.MASS);
-        assert massAttribute != null;
-        double baseMass = massAttribute.getBaseValue();
-        double totalMass = massAttribute.getValue();
-        double equipMass = totalMass - baseMass;
-        double stepHeight = 1.062_5f - equipMass * 0.001_14f;
-        return (float) Math.max(stepHeight, 0.6);
-    }
-
     @Override
     public double getVolume() {
         return PlayerHelper.VOLUME - PlayerHelper.LUNG_CAPACITY;
@@ -673,39 +645,25 @@ public abstract class MixinPlayer extends LivingEntity implements PatchPlayer {
     @Shadow
     public abstract boolean mayBuild();
 
-    @Shadow
-    protected abstract void moveCloak();
-
-    @Inject(method = "startSleepInBed", at = @At("TAIL"))
-    private void onStartSleepInBed(BlockPos pos, CallbackInfoReturnable<Either<Player.BedSleepingProblem, Unit>> cir) {
-        if (!this.level.isClientSide) {
-            //noinspection ConstantConditions
-            ((ServerPlayer) (Object) this).connection.send(new PacketSCMovement(0, 0, 0));
-        }
-    }
-
     /**
      * @author TheGreatWolf
-     * @reason Avoid most allocations, check for empty tag to not perform a ton of calculations when no entity is on the shoulder.
+     * @reason _
      */
     @Overwrite
-    private void playShoulderEntityAmbientSound(@Nullable CompoundTag tag) {
-        if (tag != null && !tag.isEmpty() && (!tag.contains("Silent") || !tag.getBoolean("Silent")) && this.level.random.nextInt(200) == 0) {
-            String id = tag.getString("id");
-            Optional<EntityType<?>> entityType = EntityType.byString(id);
-            if (entityType.isPresent()) {
-                if (entityType.get() == EntityType.PARROT) {
-                    if (!Parrot.imitateNearbyMobs(this.level, this)) {
-                        this.level.playSound(null, this.getX(), this.getY(), this.getZ(), Parrot.getAmbient(this.level, this.level.random),
-                                             this.getSoundSource(), 1.0F, Parrot.getPitch(this.level.random));
-                    }
-                }
+    public void removeEntitiesOnShoulder() {
+        if (this.timeEntitySatOnShoulder + 20L < this.level.getGameTime()) {
+            CompoundTag leftTag = this.getShoulderEntityLeft();
+            if (!leftTag.isEmpty()) {
+                this.respawnEntityOnShoulder(leftTag);
+                this.setShoulderEntityLeft(new CompoundTag());
+            }
+            CompoundTag rightTag = this.getShoulderEntityRight();
+            if (!rightTag.isEmpty()) {
+                this.respawnEntityOnShoulder(rightTag);
+                this.setShoulderEntityRight(new CompoundTag());
             }
         }
     }
-
-    @Shadow
-    protected abstract void removeEntitiesOnShoulder();
 
     @Override
     public void setCrawling(boolean crawling) {
@@ -776,9 +734,6 @@ public abstract class MixinPlayer extends LivingEntity implements PatchPlayer {
         EntityEvents.onPlayerTickEnd((Player) (Object) this);
     }
 
-    @Shadow
-    protected abstract void touch(Entity pEntity);
-
     /**
      * @author TheGreatWolf
      * @reason Replace to handle Evolution's physics
@@ -802,12 +757,6 @@ public abstract class MixinPlayer extends LivingEntity implements PatchPlayer {
         }
     }
 
-    @Shadow
-    protected abstract void turtleHelmetTick();
-
-    @Shadow
-    protected abstract boolean updateIsUnderwater();
-
     /**
      * @author TheGreatWolf
      * @reason Handle crawling pose
@@ -818,25 +767,7 @@ public abstract class MixinPlayer extends LivingEntity implements PatchPlayer {
             this.setPose(Pose.STANDING);
         }
         else if (this.canEnterPose(Pose.SWIMMING)) {
-            Pose firstPose;
-            if (this.isFallFlying()) {
-                firstPose = Pose.FALL_FLYING;
-            }
-            else if (this.isSleeping()) {
-                firstPose = Pose.SLEEPING;
-            }
-            else if (this.isSwimming() || this.isCrawling) {
-                firstPose = Pose.SWIMMING;
-            }
-            else if (this.isAutoSpinAttack()) {
-                firstPose = Pose.SPIN_ATTACK;
-            }
-            else if (this.isShiftKeyDown() && !this.abilities.flying) {
-                firstPose = Pose.CROUCHING;
-            }
-            else {
-                firstPose = Pose.STANDING;
-            }
+            Pose firstPose = this.getBasePose();
             Pose secondPose;
             if (!this.isSpectator() && !this.isPassenger() && !this.canEnterPose(firstPose)) {
                 if (this.canEnterPose(Pose.CROUCHING)) {
@@ -850,6 +781,104 @@ public abstract class MixinPlayer extends LivingEntity implements PatchPlayer {
                 secondPose = firstPose;
             }
             this.setPose(secondPose);
+        }
+    }
+
+    @Shadow
+    protected abstract void closeContainer();
+
+    @Shadow
+    protected abstract void moveCloak();
+
+    @Shadow
+    protected abstract void respawnEntityOnShoulder(CompoundTag compoundTag);
+
+    @Shadow
+    protected abstract void setShoulderEntityLeft(CompoundTag compoundTag);
+
+    @Shadow
+    protected abstract void setShoulderEntityRight(CompoundTag compoundTag);
+
+    @Shadow
+    protected abstract void touch(Entity pEntity);
+
+    @Shadow
+    protected abstract void turtleHelmetTick();
+
+    @Shadow
+    protected abstract boolean updateIsUnderwater();
+
+    /**
+     * @author TheGreatWolf
+     * @reason Overwrite to use Evolution Stats.
+     */
+    @Overwrite
+    private void checkRidingStatistics(double dx, double dy, double dz) {
+        //noinspection ConstantConditions
+        if ((Object) this instanceof ServerPlayer player && this.isPassenger()) {
+            float dist = MathHelper.sqrt(dx * dx + dy * dy + dz * dz) * 1_000;
+            if (dist > 0) {
+                PlayerHelper.addStat(player, EvolutionStats.TOTAL_DISTANCE_TRAVELED, dist);
+            }
+        }
+    }
+
+    @Unique
+    private Pose getBasePose() {
+        if (this.isFallFlying()) {
+            return Pose.FALL_FLYING;
+        }
+        if (this.isSleeping()) {
+            return Pose.SLEEPING;
+        }
+        if (this.isSwimming() || this.isCrawling) {
+            return Pose.SWIMMING;
+        }
+        if (this.isAutoSpinAttack()) {
+            return Pose.SPIN_ATTACK;
+        }
+        if (this.isShiftKeyDown() && !this.abilities.flying) {
+            return Pose.CROUCHING;
+        }
+        return Pose.STANDING;
+    }
+
+    @Unique
+    private float getStepHeightInternal() {
+        AttributeInstance massAttribute = this.getAttribute(EvolutionAttributes.MASS);
+        assert massAttribute != null;
+        double baseMass = massAttribute.getBaseValue();
+        double totalMass = massAttribute.getValue();
+        double equipMass = totalMass - baseMass;
+        double stepHeight = 1.062_5f - equipMass * 0.001_14f;
+        return (float) Math.max(stepHeight, 0.6);
+    }
+
+    @Inject(method = "startSleepInBed", at = @At("TAIL"))
+    private void onStartSleepInBed(BlockPos pos, CallbackInfoReturnable<Either<Player.BedSleepingProblem, Unit>> cir) {
+        if (!this.level.isClientSide) {
+            //noinspection ConstantConditions
+            ((ServerPlayer) (Object) this).connection.send(new PacketSCMovement(0, 0, 0));
+        }
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Avoid most allocations, check for empty tag to not perform a ton of calculations when no entity is on the shoulder.
+     */
+    @Overwrite
+    private void playShoulderEntityAmbientSound(@Nullable CompoundTag tag) {
+        if (tag != null && !tag.isEmpty() && (!tag.contains("Silent") || !tag.getBoolean("Silent")) && this.level.random.nextInt(200) == 0) {
+            String id = tag.getString("id");
+            Optional<EntityType<?>> entityType = EntityType.byString(id);
+            if (entityType.isPresent()) {
+                if (entityType.get() == EntityType.PARROT) {
+                    if (!Parrot.imitateNearbyMobs(this.level, this)) {
+                        this.level.playSound(null, this.getX(), this.getY(), this.getZ(), Parrot.getAmbient(this.level, this.level.random),
+                                             this.getSoundSource(), 1.0F, Parrot.getPitch(this.level.random));
+                    }
+                }
+            }
         }
     }
 }

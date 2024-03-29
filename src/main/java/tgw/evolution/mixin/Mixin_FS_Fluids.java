@@ -24,7 +24,8 @@ public abstract class Mixin_FS_Fluids {
         WATER = register("water", new WaterFluid.Source());
         FLOWING_LAVA = register("flowing_lava", new LavaFluid.Flowing());
         LAVA = register("lava", new LavaFluid.Source());
-        for (Fluid fluid : Registry.FLUID) {
+        for (long it = Registry.FLUID.beginIteration(); Registry.FLUID.hasNextIteration(it); it = Registry.FLUID.nextEntry(it)) {
+            Fluid fluid = (Fluid) Registry.FLUID.getIteration(it);
             OList<FluidState> possibleStates = fluid.getStateDefinition().getPossibleStates_();
             for (int i = 0, len = possibleStates.size(); i < len; ++i) {
                 Fluid.FLUID_STATE_REGISTRY.add(possibleStates.get(i));

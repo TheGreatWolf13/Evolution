@@ -68,6 +68,11 @@ public class RLinkedHashSet<K> extends ReferenceLinkedOpenHashSet<K> implements 
     }
 
     @Override
+    public boolean addAll(Collection<? extends K> c) {
+        return RSet.super.addAll(c);
+    }
+
+    @Override
     public long beginIteration() {
         if (this.isEmpty()) {
             return -1;
@@ -119,6 +124,16 @@ public class RLinkedHashSet<K> extends ReferenceLinkedOpenHashSet<K> implements 
             return curr;
         }
         return (int) this.link[curr];
+    }
+
+    @Override
+    public void preAllocate(int extraSize) {
+        if (this.f <= 0.5) {
+            this.ensureCapacity(extraSize);
+        }
+        else {
+            this.tryCapacity(this.size() + extraSize);
+        }
     }
 
     @Override
@@ -187,5 +202,19 @@ public class RLinkedHashSet<K> extends ReferenceLinkedOpenHashSet<K> implements 
             this.view = new View<>(this);
         }
         return this.view;
+    }
+
+    private void ensureCapacity(int capacity) {
+        int needed = HashCommon.arraySize(capacity, this.f);
+        if (needed > this.n) {
+            this.rehash(needed);
+        }
+    }
+
+    private void tryCapacity(long capacity) {
+        int needed = (int) Math.min(1_073_741_824L, Math.max(2L, HashCommon.nextPowerOfTwo((long) Math.ceil(capacity / this.f))));
+        if (needed > this.n) {
+            this.rehash(needed);
+        }
     }
 }

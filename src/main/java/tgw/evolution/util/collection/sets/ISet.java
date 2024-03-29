@@ -1,5 +1,7 @@
 package tgw.evolution.util.collection.sets;
 
+import it.unimi.dsi.fastutil.ints.IntCollection;
+import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.ints.IntSets;
 import org.jetbrains.annotations.UnmodifiableView;
@@ -36,6 +38,33 @@ public interface ISet extends IntSet, SetEv {
         return new ISet.Singleton(k);
     }
 
+    default boolean addAll(ISet set) {
+        this.preAllocate(set.size());
+        boolean modified = false;
+        for (long it = set.beginIteration(); set.hasNextIteration(it); it = set.nextEntry(it)) {
+            if (this.add(set.getIteration(it))) {
+                modified = true;
+            }
+        }
+        return modified;
+    }
+
+    @Override
+    default boolean addAll(IntCollection c) {
+        if (c instanceof ISet set) {
+            return this.addAll(set);
+        }
+        this.preAllocate(c.size());
+        boolean retVal = false;
+        IntIterator i = c.iterator();
+        while (i.hasNext()) {
+            if (this.add(i.nextInt())) {
+                retVal = true;
+            }
+        }
+        return retVal;
+    }
+
     long beginIteration();
 
     int getIteration(long it);
@@ -43,6 +72,10 @@ public interface ISet extends IntSet, SetEv {
     int getSampleElement();
 
     long nextEntry(long it);
+
+    default void preAllocate(int extraSize) {
+
+    }
 
     long removeIteration(long it);
 
@@ -53,6 +86,11 @@ public interface ISet extends IntSet, SetEv {
         protected static final EmptySet EMPTY = new EmptySet();
 
         protected EmptySet() {
+        }
+
+        @Override
+        public boolean addAll(IntCollection c) {
+            throw new UnsupportedOperationException();
         }
 
         @Override
@@ -103,6 +141,11 @@ public interface ISet extends IntSet, SetEv {
         }
 
         @Override
+        public boolean addAll(IntCollection c) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
         public long beginIteration() {
             return 1;
         }
@@ -148,6 +191,11 @@ public interface ISet extends IntSet, SetEv {
         protected View(ISet s) {
             super(s);
             this.set = s;
+        }
+
+        @Override
+        public boolean addAll(IntCollection c) {
+            throw new UnsupportedOperationException();
         }
 
         @Override

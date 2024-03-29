@@ -139,8 +139,9 @@ public abstract class MixinChunkMap extends ChunkStorage implements PatchChunkMa
         OList<ServerPlayer> list = null;
         int x = pos.x;
         int z = pos.z;
-        //Cannot use fastEntries as apparently this runs asynchronously
-        for (ServerPlayer player : this.playerMap.getPlayers(0L)) {
+        O2ZMap<ServerPlayer> playerMap = this.playerMap.getPlayerMap();
+        for (long it = playerMap.beginIteration(); playerMap.hasNextIteration(it); it = playerMap.nextEntry(it)) {
+            ServerPlayer player = playerMap.getIterationKey(it);
             ChunkPos lastChunkPos = player.getLastChunkPos();
             int lastX = lastChunkPos.x;
             int lastZ = lastChunkPos.z;

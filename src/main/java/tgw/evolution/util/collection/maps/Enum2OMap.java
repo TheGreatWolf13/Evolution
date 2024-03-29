@@ -192,6 +192,11 @@ public class Enum2OMap<K extends Enum<K>, V> extends AbstractReference2ObjectMap
     }
 
     @Override
+    public void putAll(Map<? extends K, ? extends V> m) {
+        R2OMap.super.putAll(m);
+    }
+
+    @Override
     public FastEntrySet<K, V> reference2ObjectEntrySet() {
         this.deprecatedMethod();
         if (this.entrySet == null) {

@@ -63,7 +63,7 @@ public class SimpleEnumSet<E extends Enum<E>> extends AbstractSet<E> implements 
     @Override
     public boolean addAll(Collection<? extends E> c) {
         if (!(c instanceof SimpleEnumSet<?> es)) {
-            return super.addAll(c);
+            return RSet.super.addAll(c);
         }
         if (es.clazz != this.clazz) {
             if (es.isEmpty()) {

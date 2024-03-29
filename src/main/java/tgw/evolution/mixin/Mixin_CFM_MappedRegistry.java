@@ -117,6 +117,11 @@ public abstract class Mixin_CFM_MappedRegistry<T> extends WritableRegistry<T> {
         throw new AbstractMethodError();
     }
 
+    @Override
+    public long beginIteration() {
+        return this.holdersInOrder().size();
+    }
+
     /**
      * @author TheGreatWolf
      * @reason _
@@ -311,6 +316,12 @@ public abstract class Mixin_CFM_MappedRegistry<T> extends WritableRegistry<T> {
         return this.toId_.getInt(object);
     }
 
+    @Override
+    public T getIteration(long it) {
+        assert this.holdersInOrder_ != null;
+        return this.holdersInOrder_.get((int) (it >> 32)).value();
+    }
+
     /**
      * @author TheGreatWolf
      * @reason _
@@ -403,6 +414,11 @@ public abstract class Mixin_CFM_MappedRegistry<T> extends WritableRegistry<T> {
         return this.tags_.entrySet().stream().map(entry -> Pair.of(entry.getKey(), entry.getValue()));
     }
 
+    @Override
+    public boolean hasNextIteration(long it) {
+        return (int) it > 0;
+    }
+
     /**
      * @author TheGreatWolf
      * @reason _
@@ -461,6 +477,16 @@ public abstract class Mixin_CFM_MappedRegistry<T> extends WritableRegistry<T> {
     @Overwrite
     public Lifecycle lifecycle(T object) {
         return this.lifecycles_.get(object);
+    }
+
+    @Override
+    public long nextEntry(long it) {
+        int size = (int) it;
+        if (--size == 0) {
+            return 0;
+        }
+        int pos = (int) (it >> 32) + 1;
+        return (long) pos << 32 | size;
     }
 
     /**

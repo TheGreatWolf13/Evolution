@@ -29,6 +29,7 @@ import net.minecraft.stats.Stats;
 import net.minecraft.util.Unit;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.EntityDamageSource;
+import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -68,10 +69,10 @@ import tgw.evolution.patches.obj.ContainerSynchronizerImpl;
 import tgw.evolution.util.NBTHelper;
 import tgw.evolution.util.OptionalMutableChunkPos;
 import tgw.evolution.util.collection.lists.OArrayList;
+import tgw.evolution.util.collection.maps.R2OMap;
 import tgw.evolution.util.damage.DamageSourceEv;
 import tgw.evolution.util.math.ChunkPosMutable;
 
-import java.util.Collection;
 import java.util.List;
 
 @Mixin(ServerPlayer.class)
@@ -468,12 +469,10 @@ public abstract class Mixin_CF_ServerPlayer extends Player implements PatchServe
     @Override
     public void onAddedToWorld() {
         super.onAddedToWorld();
-        Collection<MobEffectInstance> effects = this.getActiveEffects();
-        if (!effects.isEmpty()) {
-            for (MobEffectInstance instance : effects) {
-                //noinspection ObjectAllocationInLoop
-                this.connection.send(new PacketSCAddEffect(instance, PacketSCAddEffect.Logic.ADD));
-            }
+        R2OMap<MobEffect, MobEffectInstance> effectsMap = (R2OMap<MobEffect, MobEffectInstance>) this.getActiveEffectsMap();
+        for (long it = effectsMap.beginIteration(); effectsMap.hasNextIteration(it); it = effectsMap.nextEntry(it)) {
+            //noinspection ObjectAllocationInLoop
+            this.connection.send(new PacketSCAddEffect(effectsMap.getIterationValue(it), PacketSCAddEffect.Logic.ADD));
         }
     }
 

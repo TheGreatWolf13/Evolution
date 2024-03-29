@@ -4,6 +4,7 @@ import it.unimi.dsi.fastutil.objects.ReferenceSet;
 import it.unimi.dsi.fastutil.objects.ReferenceSets;
 import org.jetbrains.annotations.UnmodifiableView;
 
+import java.util.Collection;
 import java.util.NoSuchElementException;
 
 public interface RSet<K> extends ReferenceSet<K>, SetEv {
@@ -37,6 +38,32 @@ public interface RSet<K> extends ReferenceSet<K>, SetEv {
         return new Singleton<>(k);
     }
 
+    default boolean addAll(RSet<? extends K> set) {
+        this.preAllocate(set.size());
+        boolean modified = false;
+        for (long it = set.beginIteration(); set.hasNextIteration(it); it = set.nextEntry(it)) {
+            if (this.add(set.getIteration(it))) {
+                modified = true;
+            }
+        }
+        return modified;
+    }
+
+    @Override
+    default boolean addAll(Collection<? extends K> c) {
+        if (c instanceof RSet<? extends K> set) {
+            return this.addAll(set);
+        }
+        this.preAllocate(c.size());
+        boolean modified = false;
+        for (K e : c) {
+            if (this.add(e)) {
+                modified = true;
+            }
+        }
+        return modified;
+    }
+
     long beginIteration();
 
     K getIteration(long it);
@@ -44,6 +71,22 @@ public interface RSet<K> extends ReferenceSet<K>, SetEv {
     K getSampleElement();
 
     long nextEntry(long it);
+
+    default void preAllocate(int extraSize) {
+
+    }
+
+    @Override
+    default boolean removeAll(Collection<?> c) {
+        boolean modified = false;
+        for (long it = this.beginIteration(); this.hasNextIteration(it); it = this.nextEntry(it)) {
+            if (c.contains(this.getIteration(it))) {
+                it = this.removeIteration(it);
+                modified = true;
+            }
+        }
+        return modified;
+    }
 
     long removeIteration(long it);
 
@@ -54,6 +97,11 @@ public interface RSet<K> extends ReferenceSet<K>, SetEv {
         protected static final EmptySet EMPTY = new EmptySet();
 
         protected EmptySet() {
+        }
+
+        @Override
+        public boolean addAll(Collection<? extends K> c) {
+            throw new UnsupportedOperationException();
         }
 
         @Override
@@ -82,6 +130,11 @@ public interface RSet<K> extends ReferenceSet<K>, SetEv {
         }
 
         @Override
+        public boolean removeAll(Collection<?> c) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
         public long removeIteration(long it) {
             throw new UnsupportedOperationException();
         }
@@ -101,6 +154,11 @@ public interface RSet<K> extends ReferenceSet<K>, SetEv {
 
         protected Singleton(K element) {
             super(element);
+        }
+
+        @Override
+        public boolean addAll(Collection<? extends K> c) {
+            throw new UnsupportedOperationException();
         }
 
         @Override
@@ -124,6 +182,11 @@ public interface RSet<K> extends ReferenceSet<K>, SetEv {
         @Override
         public long nextEntry(long it) {
             return 0;
+        }
+
+        @Override
+        public boolean removeAll(Collection<?> c) {
+            throw new UnsupportedOperationException();
         }
 
         @Override
@@ -152,6 +215,11 @@ public interface RSet<K> extends ReferenceSet<K>, SetEv {
         }
 
         @Override
+        public boolean addAll(Collection<? extends K> c) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
         public long beginIteration() {
             return this.set.beginIteration();
         }
@@ -174,6 +242,11 @@ public interface RSet<K> extends ReferenceSet<K>, SetEv {
         @Override
         public long nextEntry(long it) {
             return this.set.nextEntry(it);
+        }
+
+        @Override
+        public boolean removeAll(Collection<?> c) {
+            throw new UnsupportedOperationException();
         }
 
         @Override

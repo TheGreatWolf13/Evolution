@@ -1,10 +1,13 @@
 package tgw.evolution.util.collection.maps;
 
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectMaps;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 
+import java.util.Iterator;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 public interface R2OMap<K, V> extends Reference2ObjectMap<K, V>, MapEv {
@@ -31,6 +34,41 @@ public interface R2OMap<K, V> extends Reference2ObjectMap<K, V>, MapEv {
     V getSampleValue();
 
     long nextEntry(long it);
+
+    default void preAllocate(int extraSize) {
+
+    }
+
+    @Override
+    default void putAll(Map<? extends K, ? extends V> m) {
+        if (m instanceof R2OMap<? extends K, ? extends V> map) {
+            this.putAll(map);
+            return;
+        }
+        this.preAllocate(m.size());
+        if (m instanceof Reference2ObjectMap) {
+            ObjectIterator<Entry<K, V>> i = Reference2ObjectMaps.fastIterator((Reference2ObjectMap) m);
+            while (i.hasNext()) {
+                Reference2ObjectMap.Entry<? extends K, ? extends V> e = i.next();
+                this.put(e.getKey(), e.getValue());
+            }
+        }
+        else {
+            int n = m.size();
+            Iterator<? extends Map.Entry<? extends K, ? extends V>> i = m.entrySet().iterator();
+            while (n-- != 0) {
+                Map.Entry<? extends K, ? extends V> e = i.next();
+                this.put(e.getKey(), e.getValue());
+            }
+        }
+    }
+
+    default void putAll(R2OMap<? extends K, ? extends V> map) {
+        this.preAllocate(map.size());
+        for (long it = map.beginIteration(); map.hasNextIteration(it); it = map.nextEntry(it)) {
+            this.put(map.getIterationKey(it), map.getIterationValue(it));
+        }
+    }
 
     long removeIteration(long it);
 
@@ -73,6 +111,11 @@ public interface R2OMap<K, V> extends Reference2ObjectMap<K, V>, MapEv {
         @Override
         public long nextEntry(long it) {
             throw new NoSuchElementException();
+        }
+
+        @Override
+        public void putAll(Map<? extends K, ? extends V> m) {
+            throw new UnsupportedOperationException();
         }
 
         @Override
@@ -139,6 +182,11 @@ public interface R2OMap<K, V> extends Reference2ObjectMap<K, V>, MapEv {
         }
 
         @Override
+        public void putAll(Map<? extends K, ? extends V> m) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
         public long removeIteration(long it) {
             throw new UnsupportedOperationException();
         }
@@ -196,6 +244,11 @@ public interface R2OMap<K, V> extends Reference2ObjectMap<K, V>, MapEv {
         @Override
         public long nextEntry(long it) {
             return this.m.nextEntry(it);
+        }
+
+        @Override
+        public void putAll(Map<? extends K, ? extends V> m) {
+            throw new UnsupportedOperationException();
         }
 
         @Override

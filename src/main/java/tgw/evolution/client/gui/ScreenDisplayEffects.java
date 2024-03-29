@@ -12,6 +12,7 @@ import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
 import net.minecraft.util.StringUtil;
+import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -22,20 +23,17 @@ import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.init.EvolutionStyles;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
+import tgw.evolution.util.collection.maps.R2OMap;
 import tgw.evolution.util.math.MathHelper;
 
-import java.util.Collection;
 import java.util.Comparator;
 
 public abstract class ScreenDisplayEffects<T extends AbstractContainerMenu> extends AbstractContainerScreen<T> {
     protected boolean hasActivePotionEffects;
     protected final Inventory inventory;
-    private final Comparator<MobEffectInstance> comparator = (a, b) -> String.CASE_INSENSITIVE_ORDER.compare(a.getEffect()
-                                                                                                              .getDisplayName()
-                                                                                                              .getString(),
-                                                                                                             b.getEffect()
-                                                                                                              .getDisplayName()
-                                                                                                              .getString());
+    private final Comparator<MobEffectInstance> comparator = (a, b) -> String.CASE_INSENSITIVE_ORDER.compare(a.getEffect().getDisplayName().getString(),
+                                                                                                             b.getEffect().getDisplayName().getString()
+    );
     private int effectHeight;
     private @Nullable OList<MobEffectInstance> effects;
     private boolean full;
@@ -64,7 +62,7 @@ public abstract class ScreenDisplayEffects<T extends AbstractContainerMenu> exte
 
     private static String getPotionDurationString(MobEffectInstance effect, float durationFactor) {
         if (effect.isNoCounter()) {
-            return "\u221E";
+            return "∞";
         }
         int i = Mth.floor(effect.getDuration() * durationFactor);
         return StringUtil.formatTickDuration(i);
@@ -121,13 +119,18 @@ public abstract class ScreenDisplayEffects<T extends AbstractContainerMenu> exte
     public void updateActivePotionEffects() {
         assert this.minecraft != null;
         assert this.minecraft.player != null;
-        if (this.minecraft.player.getActiveEffects().isEmpty()) {
+        if (this.minecraft.player.getActiveEffectsMap().isEmpty()) {
             this.leftPos = (this.width - this.imageWidth) / 2;
             this.hasActivePotionEffects = false;
         }
         else {
             this.hasActivePotionEffects = true;
         }
+    }
+
+    @Override
+    protected void containerTick() {
+        this.updateActivePotionEffects();
     }
 
     @Override
@@ -141,8 +144,8 @@ public abstract class ScreenDisplayEffects<T extends AbstractContainerMenu> exte
     private void drawActivePotionEffects(PoseStack matrices) {
         assert this.minecraft != null;
         assert this.minecraft.player != null;
-        Collection<MobEffectInstance> collection = this.minecraft.player.getActiveEffects();
-        if (!collection.isEmpty()) {
+        R2OMap<MobEffect, MobEffectInstance> activeEffectsMap = (R2OMap<MobEffect, MobEffectInstance>) this.minecraft.player.getActiveEffectsMap();
+        if (!activeEffectsMap.isEmpty()) {
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
             this.effectHeight = 33;
             if (this.effects == null) {
@@ -151,7 +154,8 @@ public abstract class ScreenDisplayEffects<T extends AbstractContainerMenu> exte
             else {
                 this.effects.clear();
             }
-            for (MobEffectInstance instance : collection) {
+            for (long it = activeEffectsMap.beginIteration(); activeEffectsMap.hasNextIteration(it); it = activeEffectsMap.nextEntry(it)) {
+                MobEffectInstance instance = activeEffectsMap.getIterationValue(it);
                 if (instance.getDuration() > 0) {
                     this.effects.add(instance);
                 }
@@ -165,7 +169,7 @@ public abstract class ScreenDisplayEffects<T extends AbstractContainerMenu> exte
             this.full = totalEffectHeight + 20 > this.height;
             if (this.full) {
                 this.initialHeight = 10;
-                this.effectHeight = (this.height - 40) / (collection.size() - 1);
+                this.effectHeight = (this.height - 40) / (activeEffectsMap.size() - 1);
             }
             this.drawActivePotionEffectsBackgrounds(matrices);
             this.drawActivePotionEffectsIcons(matrices);

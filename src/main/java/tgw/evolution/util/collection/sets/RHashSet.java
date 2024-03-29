@@ -70,6 +70,11 @@ public class RHashSet<K> extends ReferenceOpenHashSet<K> implements RSet<K> {
     }
 
     @Override
+    public boolean addAll(Collection<? extends K> c) {
+        return RSet.super.addAll(c);
+    }
+
+    @Override
     public long beginIteration() {
         if (this.wrappedEntries != null) {
             this.wrappedEntries.clear();
@@ -143,6 +148,21 @@ public class RHashSet<K> extends ReferenceOpenHashSet<K> implements RSet<K> {
     }
 
     @Override
+    public void preAllocate(int extraSize) {
+        if (this.f <= 0.5) {
+            this.ensureCapacity(extraSize);
+        }
+        else {
+            this.tryCapacity(this.size() + extraSize);
+        }
+    }
+
+    @Override
+    public boolean removeAll(Collection<?> c) {
+        return RSet.super.removeAll(c);
+    }
+
+    @Override
     public long removeIteration(long it) {
         int pos = (int) (it >> 32);
         if (pos == this.n) {
@@ -209,6 +229,20 @@ public class RHashSet<K> extends ReferenceOpenHashSet<K> implements RSet<K> {
                 this.wrappedEntries.add(key[pos]);
             }
             key[last] = curr;
+        }
+    }
+
+    private void ensureCapacity(int capacity) {
+        int needed = HashCommon.arraySize(capacity, this.f);
+        if (needed > this.n) {
+            this.rehash(needed);
+        }
+    }
+
+    private void tryCapacity(long capacity) {
+        int needed = (int) Math.min(1_073_741_824L, Math.max(2L, HashCommon.nextPowerOfTwo((long) Math.ceil(capacity / this.f))));
+        if (needed > this.n) {
+            this.rehash(needed);
         }
     }
 }

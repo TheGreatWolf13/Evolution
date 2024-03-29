@@ -169,6 +169,21 @@ public class O2OHashMap<K, V> extends Object2ObjectOpenHashMap<K, V> implements 
     }
 
     @Override
+    public void preAllocate(int extraSize) {
+        if (this.f <= 0.5) {
+            this.ensureCapacity(extraSize);
+        }
+        else {
+            this.tryCapacity(this.size() + extraSize);
+        }
+    }
+
+    @Override
+    public void putAll(Map<? extends K, ? extends V> m) {
+        O2OMap.super.putAll(m);
+    }
+
+    @Override
     public long removeIteration(long it) {
         int pos = (int) (it >> 32);
         if (pos == this.n) {
@@ -235,6 +250,20 @@ public class O2OHashMap<K, V> extends Object2ObjectOpenHashMap<K, V> implements 
             }
             key[last] = curr;
             this.value[last] = this.value[pos];
+        }
+    }
+
+    private void ensureCapacity(int capacity) {
+        int needed = HashCommon.arraySize(capacity, this.f);
+        if (needed > this.n) {
+            this.rehash(needed);
+        }
+    }
+
+    private void tryCapacity(long capacity) {
+        int needed = (int) Math.min(1_073_741_824L, Math.max(2L, HashCommon.nextPowerOfTwo((long) Math.ceil(capacity / this.f))));
+        if (needed > this.n) {
+            this.rehash(needed);
         }
     }
 }

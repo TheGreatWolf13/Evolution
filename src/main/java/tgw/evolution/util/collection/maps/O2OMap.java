@@ -2,9 +2,13 @@ package tgw.evolution.util.collection.maps;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.UnmodifiableView;
 
+import java.util.Iterator;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 public interface O2OMap<K, V> extends Object2ObjectMap<K, V>, MapEv {
@@ -36,13 +40,47 @@ public interface O2OMap<K, V> extends Object2ObjectMap<K, V>, MapEv {
 
     long nextEntry(long it);
 
-    default void putAll(O2OMap<K, V> map) {
+    default void preAllocate(int extraSize) {
+
+    }
+
+    @Override
+    default void putAll(@NotNull Map<? extends K, ? extends V> m) {
+        if (m instanceof O2OMap<? extends K, ? extends V> map) {
+            this.putAll(map);
+            return;
+        }
+        if (m instanceof R2OMap<? extends K, ? extends V> map) {
+            this.putAll(map);
+            return;
+        }
+        this.preAllocate(m.size());
+        if (m instanceof Object2ObjectMap) {
+            ObjectIterator<Entry<K, V>> i = Object2ObjectMaps.fastIterator((Object2ObjectMap) m);
+            while (i.hasNext()) {
+                Object2ObjectMap.Entry<? extends K, ? extends V> e = i.next();
+                this.put(e.getKey(), e.getValue());
+            }
+        }
+        else {
+            int n = m.size();
+            Iterator<? extends Map.Entry<? extends K, ? extends V>> i = m.entrySet().iterator();
+            while (n-- != 0) {
+                Map.Entry<? extends K, ? extends V> e = i.next();
+                this.put(e.getKey(), e.getValue());
+            }
+        }
+    }
+
+    default void putAll(O2OMap<? extends K, ? extends V> map) {
+        this.preAllocate(map.size());
         for (long it = map.beginIteration(); map.hasNextIteration(it); it = map.nextEntry(it)) {
             this.put(map.getIterationKey(it), map.getIterationValue(it));
         }
     }
 
-    default void putAll(R2OMap<K, V> map) {
+    default void putAll(R2OMap<? extends K, ? extends V> map) {
+        this.preAllocate(map.size());
         for (long it = map.beginIteration(); map.hasNextIteration(it); it = map.nextEntry(it)) {
             this.put(map.getIterationKey(it), map.getIterationValue(it));
         }
@@ -92,6 +130,11 @@ public interface O2OMap<K, V> extends Object2ObjectMap<K, V>, MapEv {
         @Override
         public long nextEntry(long it) {
             throw new NoSuchElementException();
+        }
+
+        @Override
+        public void putAll(Map<? extends K, ? extends V> m) {
+            throw new UnsupportedOperationException();
         }
 
         @Override
@@ -158,6 +201,11 @@ public interface O2OMap<K, V> extends Object2ObjectMap<K, V>, MapEv {
         }
 
         @Override
+        public void putAll(Map<? extends K, ? extends V> m) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
         public long removeIteration(long it) {
             throw new UnsupportedOperationException();
         }
@@ -215,6 +263,11 @@ public interface O2OMap<K, V> extends Object2ObjectMap<K, V>, MapEv {
         @Override
         public long nextEntry(long it) {
             return this.m.nextEntry(it);
+        }
+
+        @Override
+        public void putAll(Map<? extends K, ? extends V> m) {
+            throw new UnsupportedOperationException();
         }
 
         @Override

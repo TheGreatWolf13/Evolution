@@ -417,6 +417,12 @@
       ],
       "net/minecraft/world/level/GameRules": [
         "tgw/evolution/patches/PatchGameRules"
+      ],
+      "net/minecraft/core/IdMap": [
+        "tgw/evolution/patches/PatchIdMap"
+      ],
+      "net/minecraft/world/effect/MobEffect": [
+        "tgw/evolution/patches/PatchMobEffect"
       ]
     }
   }

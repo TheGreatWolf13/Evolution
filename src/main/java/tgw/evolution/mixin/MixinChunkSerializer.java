@@ -27,6 +27,7 @@ import net.minecraft.world.level.levelgen.GenerationStep;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.blending.BlendingData;
 import net.minecraft.world.level.levelgen.feature.ConfiguredStructureFeature;
+import net.minecraft.world.level.levelgen.feature.StructureFeature;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSerializationContext;
 import net.minecraft.world.level.lighting.LevelLightEngine;
@@ -48,6 +49,9 @@ import tgw.evolution.patches.PatchLevelChunk;
 import tgw.evolution.util.NBTHelper;
 import tgw.evolution.util.collection.ArrayHelper;
 import tgw.evolution.util.collection.maps.L2OMap;
+import tgw.evolution.util.collection.maps.O2OHashMap;
+import tgw.evolution.util.collection.maps.O2OMap;
+import tgw.evolution.util.collection.sets.LHashSet;
 import tgw.evolution.util.collection.sets.RSet;
 import tgw.evolution.util.collection.sets.SimpleEnumSet;
 import tgw.evolution.world.lighting.SWMRNibbleArray;
@@ -431,12 +435,36 @@ public abstract class MixinChunkSerializer {
         }
     }
 
-    @Shadow
-    private static CompoundTag packStructureData(StructurePieceSerializationContext pContext,
-                                                 ChunkPos pPos,
-                                                 Map<ConfiguredStructureFeature<?, ?>, StructureStart> pStructureMap,
-                                                 Map<ConfiguredStructureFeature<?, ?>, LongSet> pReferenceMap) {
-        throw new AbstractMethodError();
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    private static CompoundTag packStructureData(StructurePieceSerializationContext context, ChunkPos chunkPos, Map<ConfiguredStructureFeature<?, ?>, StructureStart> startsMap, Map<ConfiguredStructureFeature<?, ?>, LongSet> referencesMap) {
+        CompoundTag structureDataTag = new CompoundTag();
+        CompoundTag startsTag = new CompoundTag();
+        Registry<ConfiguredStructureFeature<?, ?>> registry = context.registryAccess().registryOrThrow(Registry.CONFIGURED_STRUCTURE_FEATURE_REGISTRY);
+        O2OMap<ConfiguredStructureFeature<?, ?>, StructureStart> starts = (O2OMap<ConfiguredStructureFeature<?, ?>, StructureStart>) startsMap;
+        for (long it = starts.beginIteration(); starts.hasNextIteration(it); it = starts.nextEntry(it)) {
+            ResourceLocation resLoc = registry.getKey(starts.getIterationKey(it));
+            assert resLoc != null;
+            //noinspection ObjectAllocationInLoop
+            startsTag.put(resLoc.toString(), starts.getIterationValue(it).createTag(context, chunkPos));
+        }
+        structureDataTag.put("starts", startsTag);
+        CompoundTag referencesTag = new CompoundTag();
+        O2OMap<ConfiguredStructureFeature<?, ?>, LongSet> references = (O2OMap<ConfiguredStructureFeature<?, ?>, LongSet>) referencesMap;
+        for (long it = references.beginIteration(); references.hasNextIteration(it); it = references.nextEntry(it)) {
+            LongSet value = references.getIterationValue(it);
+            if (!value.isEmpty()) {
+                ResourceLocation resLoc = registry.getKey(references.getIterationKey(it));
+                assert resLoc != null;
+                //noinspection ObjectAllocationInLoop
+                referencesTag.put(resLoc.toString(), new LongArrayTag(value));
+            }
+        }
+        structureDataTag.put("References", referencesTag);
+        return structureDataTag;
     }
 
     /**
@@ -459,14 +487,69 @@ public abstract class MixinChunkSerializer {
         throw new AbstractMethodError();
     }
 
-    @Shadow
-    private static Map<ConfiguredStructureFeature<?, ?>, LongSet> unpackStructureReferences(RegistryAccess pReigstryAccess, ChunkPos pPos, CompoundTag pTag) {
-        throw new AbstractMethodError();
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    private static Map<ConfiguredStructureFeature<?, ?>, LongSet> unpackStructureReferences(RegistryAccess registryAccess, ChunkPos pos, CompoundTag tag) {
+        O2OMap<ConfiguredStructureFeature<?, ?>, LongSet> map = new O2OHashMap<>();
+        Registry<ConfiguredStructureFeature<?, ?>> registry = registryAccess.registryOrThrow(Registry.CONFIGURED_STRUCTURE_FEATURE_REGISTRY);
+        CompoundTag referencesTag = tag.getCompound("References");
+        O2OMap<String, Tag> tags = referencesTag.tags();
+        for (long it = tags.beginIteration(); tags.hasNextIteration(it); it = tags.nextEntry(it)) {
+            String key = tags.getIterationKey(it);
+            ResourceLocation resLoc = ResourceLocation.tryParse(key);
+            ConfiguredStructureFeature<?, ?> feature = registry.get(resLoc);
+            if (feature == null) {
+                LOGGER.warn("Found reference to unknown structure '{}' in chunk {}, discarding", resLoc, pos);
+            }
+            else {
+                long[] ls = referencesTag.getLongArray(key);
+                if (ls.length != 0) {
+                    //noinspection ObjectAllocationInLoop
+                    LHashSet set = new LHashSet();
+                    for (long l : ls) {
+                        int x = ChunkPos.getX(l);
+                        int z = ChunkPos.getZ(l);
+                        if (Math.max(Math.abs(x - pos.x), Math.abs(z - pos.z)) > 8) {
+                            LOGGER.warn("Found invalid structure reference [ {}, {} @ {} ] for chunk {}.", resLoc, x, z, pos);
+                        }
+                        else {
+                            set.add(l);
+                        }
+                    }
+                    map.put(feature, set);
+                }
+            }
+        }
+        return map;
     }
 
-    @Shadow
-    private static Map<ConfiguredStructureFeature<?, ?>, StructureStart> unpackStructureStart(
-            StructurePieceSerializationContext pContext, CompoundTag pTag, long pSeed) {
-        throw new AbstractMethodError();
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    private static Map<ConfiguredStructureFeature<?, ?>, StructureStart> unpackStructureStart(StructurePieceSerializationContext context, CompoundTag tag, long seed) {
+        Map<ConfiguredStructureFeature<?, ?>, StructureStart> map = new O2OHashMap<>();
+        Registry<ConfiguredStructureFeature<?, ?>> registry = context.registryAccess().registryOrThrow(Registry.CONFIGURED_STRUCTURE_FEATURE_REGISTRY);
+        CompoundTag startsTag = tag.getCompound("starts");
+        O2OMap<String, Tag> tags = startsTag.tags();
+        for (long it = tags.beginIteration(); tags.hasNextIteration(it); it = tags.nextEntry(it)) {
+            String key = tags.getIterationKey(it);
+            ResourceLocation resourceLocation = ResourceLocation.tryParse(key);
+            ConfiguredStructureFeature<?, ?> configuredStructureFeature = registry.get(resourceLocation);
+            if (configuredStructureFeature == null) {
+                LOGGER.error("Unknown structure start: {}", resourceLocation);
+            }
+            else {
+                StructureStart structureStart = StructureFeature.loadStaticStart(context, startsTag.getCompound(key), seed);
+                if (structureStart != null) {
+                    map.put(configuredStructureFeature, structureStart);
+                }
+            }
+        }
+        return map;
     }
 }

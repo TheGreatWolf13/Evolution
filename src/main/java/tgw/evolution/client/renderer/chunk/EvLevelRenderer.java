@@ -1994,14 +1994,9 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
         this.entityRenderDispatcher.render(entity, x - camX, y - camY, z - camZ, yRot, partialTick, matrices, bufferSource, this.entityRenderDispatcher.getPackedLightCoords(entity, partialTick));
     }
 
-    private void renderGlobalTileEntities(Frustum frustum,
-                                          PoseStack matrices,
-                                          MultiBufferSource buffer,
-                                          float camX,
-                                          float camY,
-                                          float camZ,
-                                          float partialTicks) {
-        for (BlockEntity blockEntity : this.globalBlockEntities) {
+    private void renderGlobalTileEntities(Frustum frustum, PoseStack matrices, MultiBufferSource buffer, float camX, float camY, float camZ, float partialTicks) {
+        for (long it = this.globalBlockEntities.beginIteration(); this.globalBlockEntities.hasNextIteration(it); it = this.globalBlockEntities.nextEntry(it)) {
+            BlockEntity blockEntity = this.globalBlockEntities.getIteration(it);
             if (!frustum.isVisible(blockEntity.getRenderBoundingBox())) {
                 continue;
             }

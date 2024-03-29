@@ -71,12 +71,6 @@ public class OHashSet<K> extends ObjectOpenHashSet<K> implements OSet<K> {
 
     @Override
     public boolean addAll(Collection<? extends K> c) {
-        if (this.f <= 0.5) {
-            this.ensureCapacity(c.size());
-        }
-        else {
-            this.tryCapacity(this.size() + c.size());
-        }
         return OSet.super.addAll(c);
     }
 
@@ -152,6 +146,16 @@ public class OHashSet<K> extends ObjectOpenHashSet<K> implements OSet<K> {
             if (key[pos] != null) {
                 return (long) pos << 32 | size;
             }
+        }
+    }
+
+    @Override
+    public void preAllocate(int extraSize) {
+        if (this.f <= 0.5) {
+            this.ensureCapacity(extraSize);
+        }
+        else {
+            this.tryCapacity(this.size() + extraSize);
         }
     }
 

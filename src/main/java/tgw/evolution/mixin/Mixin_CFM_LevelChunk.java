@@ -513,7 +513,9 @@ public abstract class Mixin_CFM_LevelChunk extends ChunkAccess implements PatchL
      */
     @Overwrite
     public void registerAllBlockEntitiesAfterLevelLoad() {
-        for (BlockEntity te : this.blockEntities_().values()) {
+        L2OMap<BlockEntity> blockEntities = this.blockEntities_();
+        for (long it = blockEntities.beginIteration(); blockEntities.hasNextIteration(it); it = blockEntities.nextEntry(it)) {
+            BlockEntity te = blockEntities.getIterationValue(it);
             this.addGameEventListener(te);
             this.updateBlockEntityTicker(te);
         }
