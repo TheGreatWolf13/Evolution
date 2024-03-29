@@ -5,7 +5,7 @@ import tgw.evolution.Evolution;
 
 public interface SetEv {
 
-    boolean CHECKS = true;
+    boolean CHECKS = false;
 
     void clear();
 
