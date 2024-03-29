@@ -12,6 +12,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelHeightAccessor;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.lighting.LevelLightEngine;
@@ -28,11 +30,14 @@ import tgw.evolution.util.collection.sets.SSet;
 import tgw.evolution.util.math.BlockPosUtil;
 
 import java.util.BitSet;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 @Mixin(ChunkHolder.class)
 public abstract class Mixin_M_ChunkHolder implements PatchChunkHolder {
 
+    @Shadow @Final public static Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure> UNLOADED_CHUNK;
+    @Shadow @Final private static List<ChunkStatus> CHUNK_STATUSES;
     @Shadow @Final private BitSet blockChangedLightSectionFilter;
     @Shadow @Final private ShortSet[] changedBlocksPerSection;
     @Shadow private boolean hasChangedSections;
@@ -120,6 +125,28 @@ public abstract class Mixin_M_ChunkHolder implements PatchChunkHolder {
             }
             this.hasChangedSections = false;
         }
+    }
+
+    @Shadow
+    public abstract CompletableFuture<Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure>> getFutureIfPresentUnchecked(ChunkStatus chunkStatus);
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Overwrite
+    public @Nullable ChunkAccess getLastAvailable() {
+        for (int i = CHUNK_STATUSES.size() - 1; i >= 0; --i) {
+            ChunkStatus chunkStatus = CHUNK_STATUSES.get(i);
+            CompletableFuture<Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure>> future = this.getFutureIfPresentUnchecked(chunkStatus);
+            if (!future.isCompletedExceptionally()) {
+                PatchEither<ChunkAccess, ChunkHolder.ChunkLoadingFailure> either = (PatchEither<ChunkAccess, ChunkHolder.ChunkLoadingFailure>) future.getNow(UNLOADED_CHUNK);
+                if (either.isLeft()) {
+                    return either.getLeft();
+                }
+            }
+        }
+        return null;
     }
 
     /**
