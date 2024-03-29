@@ -17,4 +17,13 @@ public abstract class MixinHolder_Reference<T> implements PatchHolderReference<T
     public Set<TagKey<T>> getTags() {
         return this.tags;
     }
+
+//    /**
+//     * @author TheGreatWolf
+//     * @reason _
+//     */
+//    @Overwrite
+//    public boolean isValidInRegistry(Registry<T> registry) {
+//        return true;
+//    }
 }
