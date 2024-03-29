@@ -27,6 +27,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.stats.Stat;
 import net.minecraft.stats.StatsCounter;
+import net.minecraft.tags.TagKey;
+import net.minecraft.tags.TagNetworkSerialization;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -65,6 +67,8 @@ import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.network.*;
 import tgw.evolution.patches.PatchLivingEntity;
 import tgw.evolution.util.collection.lists.OList;
+import tgw.evolution.util.collection.maps.O2OHashMap;
+import tgw.evolution.util.collection.maps.O2OMap;
 import tgw.evolution.util.constants.BlockFlags;
 import tgw.evolution.util.math.Vec3d;
 
@@ -82,40 +86,6 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
     @Shadow private RegistryAccess.Frozen registryAccess;
     @Shadow private int serverChunkRadius;
     @Shadow private int serverSimulationDistance;
-
-    /**
-     * @reason _
-     * @author TheGreatWolf
-     */
-    @Overwrite
-    private void applyLightData(int i, int j, ClientboundLightUpdatePacketData packetData) {
-        LevelLightEngine levelLightEngine = this.level.getChunkSource().getLightEngine();
-        BitSet bitSet = packetData.getSkyYMask();
-        BitSet bitSet2 = packetData.getEmptySkyYMask();
-        this.readSectionList(i, j, levelLightEngine, LightLayer.SKY, bitSet, bitSet2, packetData.getSkyUpdates(), packetData.getTrustEdges());
-        BitSet bitSet3 = packetData.getBlockYMask();
-        BitSet bitSet4 = packetData.getEmptyBlockYMask();
-        this.readSectionList(i, j, levelLightEngine, LightLayer.BLOCK, bitSet3, bitSet4, packetData.getBlockUpdates(), packetData.getTrustEdges());
-        this.level.setLightReady(i, j);
-    }
-
-    /**
-     * @reason _
-     * @author TheGreatWolf
-     */
-    @Overwrite
-    private void enableChunkLight(LevelChunk levelChunk, int i, int j) {
-        LevelLightEngine lightEngine = this.level.getChunkSource().getLightEngine();
-        LevelChunkSection[] sections = levelChunk.getSections();
-        ChunkPos chunkPos = levelChunk.getPos();
-        for (int index = 0, len = sections.length; index < len; ++index) {
-            LevelChunkSection section = sections[index];
-            int secY = this.level.getSectionYFromSectionIndex(index);
-            lightEngine.updateSectionStatus_sec(chunkPos.x, secY, chunkPos.z, section.hasOnlyAir());
-            this.level.setSectionDirtyWithNeighbors(i, secY, j);
-        }
-        this.level.setLightReady(i, j);
-    }
 
     @Override
     public void handleAddEffect(PacketSCAddEffect packet) {
@@ -791,6 +761,40 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
      * @author TheGreatWolf
      */
     @Overwrite
+    private void applyLightData(int i, int j, ClientboundLightUpdatePacketData packetData) {
+        LevelLightEngine levelLightEngine = this.level.getChunkSource().getLightEngine();
+        BitSet bitSet = packetData.getSkyYMask();
+        BitSet bitSet2 = packetData.getEmptySkyYMask();
+        this.readSectionList(i, j, levelLightEngine, LightLayer.SKY, bitSet, bitSet2, packetData.getSkyUpdates(), packetData.getTrustEdges());
+        BitSet bitSet3 = packetData.getBlockYMask();
+        BitSet bitSet4 = packetData.getEmptyBlockYMask();
+        this.readSectionList(i, j, levelLightEngine, LightLayer.BLOCK, bitSet3, bitSet4, packetData.getBlockUpdates(), packetData.getTrustEdges());
+        this.level.setLightReady(i, j);
+    }
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Overwrite
+    private void enableChunkLight(LevelChunk levelChunk, int i, int j) {
+        LevelLightEngine lightEngine = this.level.getChunkSource().getLightEngine();
+        LevelChunkSection[] sections = levelChunk.getSections();
+        ChunkPos chunkPos = levelChunk.getPos();
+        for (int index = 0, len = sections.length; index < len; ++index) {
+            LevelChunkSection section = sections[index];
+            int secY = this.level.getSectionYFromSectionIndex(index);
+            lightEngine.updateSectionStatus_sec(chunkPos.x, secY, chunkPos.z, section.hasOnlyAir());
+            this.level.setSectionDirtyWithNeighbors(i, secY, j);
+        }
+        this.level.setLightReady(i, j);
+    }
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Overwrite
     @DeleteMethod
     private void method_38545(int par1, int par2, ClientboundLightUpdatePacketData par3) {
         throw new AbstractMethodError();
@@ -866,5 +870,19 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
     @Overwrite
     private void updateLevelChunk(int i, int j, ClientboundLevelChunkPacketData packet) {
         this.level.getChunkSource().replaceWithPacketData_(i, j, packet.getReadBuffer(), packet.getHeightmaps(), packet.getBlockEntitiesTagsConsumer_(i, j));
+    }
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Overwrite
+    private <T> void updateTagsForRegistry(ResourceKey<? extends Registry<? extends T>> resourceKey, TagNetworkSerialization.NetworkPayload networkPayload) {
+        if (!networkPayload.isEmpty()) {
+            Registry<T> registry = this.registryAccess.registry(resourceKey).orElseThrow(() -> new IllegalStateException("Unknown registry " + resourceKey));
+            O2OMap<TagKey<T>, List<Holder<T>>> map = new O2OHashMap<>();
+            TagNetworkSerialization.deserializeTagsFromNetwork((ResourceKey<? extends Registry<T>>) resourceKey, registry, networkPayload, map::put);
+            registry.bindTags(map);
+        }
     }
 }

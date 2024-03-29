@@ -252,6 +252,9 @@ accessible method net/minecraft/client/renderer/texture/TextureAtlasSprite uploa
 accessible method net/minecraft/client/renderer/texture/TextureAtlasSprite$InterpolationData uploadInterpolatedFrame (Lnet/minecraft/client/renderer/texture/TextureAtlasSprite$AnimatedTexture;)V
 accessible method net/minecraft/client/sounds/SoundManager$Preparations <init> ()V
 accessible method net/minecraft/client/sounds/SoundManager$Preparations handleRegistration (Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/client/resources/sounds/SoundEventRegistration;Lnet/minecraft/server/packs/resources/ResourceManager;)V
+accessible method net/minecraft/core/Holder$Reference bind (Lnet/minecraft/resources/ResourceKey;Ljava/lang/Object;)V
+accessible method net/minecraft/core/Holder$Reference bindTags (Ljava/util/Collection;)V
+accessible method net/minecraft/core/HolderSet$Named bind (Ljava/util/List;)V
 accessible method net/minecraft/core/MappedRegistry holdersInOrder ()Ljava/util/List;
 accessible method net/minecraft/core/NonNullList <init> (Ljava/util/List;Ljava/lang/Object;)V
 accessible method net/minecraft/nbt/CompoundTag <init> (Ljava/util/Map;)V

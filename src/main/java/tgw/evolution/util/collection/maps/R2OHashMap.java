@@ -2,6 +2,7 @@ package tgw.evolution.util.collection.maps;
 
 import it.unimi.dsi.fastutil.HashCommon;
 import it.unimi.dsi.fastutil.objects.ObjectCollection;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceSet;
 import org.jetbrains.annotations.Nullable;
@@ -9,12 +10,48 @@ import org.jetbrains.annotations.UnmodifiableView;
 import tgw.evolution.util.collection.lists.OArrayList;
 
 import java.util.ConcurrentModificationException;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 public class R2OHashMap<K, V> extends Reference2ObjectOpenHashMap<K, V> implements R2OMap<K, V> {
 
     protected @Nullable View<K, V> view;
     protected @Nullable OArrayList<K> wrappedEntries;
+
+    public R2OHashMap(int expected, float f) {
+        super(expected, f);
+    }
+
+    public R2OHashMap(int expected) {
+        super(expected);
+    }
+
+    public R2OHashMap() {
+    }
+
+    public R2OHashMap(Map<? extends K, ? extends V> m, float f) {
+        super(m, f);
+    }
+
+    public R2OHashMap(Map<? extends K, ? extends V> m) {
+        super(m);
+    }
+
+    public R2OHashMap(Reference2ObjectMap<K, V> m, float f) {
+        super(m, f);
+    }
+
+    public R2OHashMap(Reference2ObjectMap<K, V> m) {
+        super(m);
+    }
+
+    public R2OHashMap(K[] k, V[] v, float f) {
+        super(k, v, f);
+    }
+
+    public R2OHashMap(K[] k, V[] v) {
+        super(k, v);
+    }
 
     @Override
     public long beginIteration() {
