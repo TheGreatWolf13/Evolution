@@ -232,6 +232,7 @@
     "Mixin_M_PotatoBlock",
     "Mixin_M_PowderSnowBlock",
     "Mixin_M_PoweredBlock",
+    "Mixin_M_PrimaryLevelData",
     "Mixin_M_PumpkinBlock",
     "Mixin_M_Ravager",
     "Mixin_M_RecordItem",
