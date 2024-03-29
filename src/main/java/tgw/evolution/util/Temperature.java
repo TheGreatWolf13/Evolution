@@ -262,12 +262,6 @@ public final class Temperature implements ILocked {
         this.cachedFrostAmount = Float.NaN;
     }
 
-    private int getAfternoon() {
-        int sunrise = this.getSunrise();
-        int delta = Time.TICKS_PER_DAY / 2 - sunrise;
-        return (Time.TICKS_PER_DAY + delta) / 2;
-    }
-
     public double getAmbientBasedTemperature() {
         //Step 3: Apply diurnal high-low factor
         double min = this.getBiomeBasedMinTemperature();
@@ -280,14 +274,6 @@ public final class Temperature implements ILocked {
             return (min + max) / 2.0;
         }
         return min + this.getDiurnalHighLowFactor() * (max - min);
-    }
-
-    private float getAnnualHighLowFactor() {
-        if (Float.isNaN(this.cachedAnnualHighLowFactor)) {
-            float latitudeFactor = (90.0f - Math.abs(this.getLatitude())) / 90.0f;
-            this.cachedAnnualHighLowFactor = (2 * this.getAnnualInsolation() + latitudeFactor) / 3;
-        }
-        return this.cachedAnnualHighLowFactor;
     }
 
     public float getAnnualInsolation() {
@@ -308,13 +294,6 @@ public final class Temperature implements ILocked {
         //Step 2: modify min by latitude using the local biome
         //TODO
         return this.getLatitudeBasedMinTemperature();
-    }
-
-    private float getDeclination() {
-        if (Float.isNaN(this.cachedDeclination)) {
-            this.cachedDeclination = EarthHelper.sunSeasonalDeclination(this.t);
-        }
-        return this.cachedDeclination;
     }
 
     public float getDiurnalHighLowFactor() {
@@ -354,33 +333,6 @@ public final class Temperature implements ILocked {
         }
         //Outside
         return this.getSolarHighLowFactor();
-    }
-
-    private double getFrostAmount() {
-        if (Float.isNaN(this.cachedFrostAmount)) {
-            if (Math.abs(this.getLatitude()) >= 90 - EarthHelper.ECLIPTIC_INCLINATION) {
-                if (this.isInPolarNight()) {
-                    int timeWithoutSun = this.timeWithoutSun();
-                    //-10 degree for every month spent without sun, capped at 3 months or -30 degrees
-                    this.cachedFrostAmount = 10.0f / Time.TICKS_PER_MONTH * Math.min(timeWithoutSun, 3 * Time.TICKS_PER_MONTH);
-                }
-                else {
-                    //-20 degree for every month spent since sun came back, capped at 2 months or -40 degrees
-                    int recoveryTime = this.maxTimeWithoutSun() / 3 - this.timeSinceSunCameBack();
-                    assert recoveryTime <= 2 * Time.TICKS_PER_MONTH : "Recovery time greater than 2 months: " + recoveryTime;
-                    if (recoveryTime > 0) {
-                        this.cachedFrostAmount = 20.0f / Time.TICKS_PER_MONTH * recoveryTime;
-                    }
-                    else {
-                        this.cachedFrostAmount = 0;
-                    }
-                }
-            }
-            else {
-                this.cachedFrostAmount = 0;
-            }
-        }
-        return this.cachedFrostAmount;
     }
 
     /**
@@ -450,10 +402,6 @@ public final class Temperature implements ILocked {
             return 0.0f;
         }
         int afternoon = this.getAfternoon();
-        if (this.t % 200 == 0) {
-            Evolution.info("Sunrise is at {}", Time.fromTicks(sunrise - 6L * Time.TICKS_PER_HOUR));
-            Evolution.info("Afternoon is at {}", Time.fromTicks(afternoon - 6L * Time.TICKS_PER_HOUR));
-        }
         if (sunrise <= timeInDay && timeInDay <= afternoon) {
             return MathHelper.relativize(timeInDay, sunrise, afternoon);
         }
@@ -461,6 +409,64 @@ public final class Temperature implements ILocked {
             timeInDay += Time.TICKS_PER_DAY;
         }
         return 1.0f - MathHelper.relativize(timeInDay, afternoon, sunrise + Time.TICKS_PER_DAY);
+    }
+
+    @Override
+    public boolean isLocked() {
+        return this.locked;
+    }
+
+    @Override
+    public void lock() {
+        this.locked = true;
+    }
+
+    private int getAfternoon() {
+        int sunrise = this.getSunrise();
+        int delta = Time.TICKS_PER_DAY / 2 - sunrise;
+        return (Time.TICKS_PER_DAY + delta) / 2;
+    }
+
+    private float getAnnualHighLowFactor() {
+        if (Float.isNaN(this.cachedAnnualHighLowFactor)) {
+            float latitudeFactor = (90.0f - Math.abs(this.getLatitude())) / 90.0f;
+            this.cachedAnnualHighLowFactor = (2 * this.getAnnualInsolation() + latitudeFactor) / 3;
+        }
+        return this.cachedAnnualHighLowFactor;
+    }
+
+    private float getDeclination() {
+        if (Float.isNaN(this.cachedDeclination)) {
+            this.cachedDeclination = EarthHelper.sunSeasonalDeclination(this.t);
+        }
+        return this.cachedDeclination;
+    }
+
+    private double getFrostAmount() {
+        if (Float.isNaN(this.cachedFrostAmount)) {
+            if (Math.abs(this.getLatitude()) >= 90 - EarthHelper.ECLIPTIC_INCLINATION) {
+                if (this.isInPolarNight()) {
+                    int timeWithoutSun = this.timeWithoutSun();
+                    //-10 degree for every month spent without sun, capped at 3 months or -30 degrees
+                    this.cachedFrostAmount = 10.0f / Time.TICKS_PER_MONTH * Math.min(timeWithoutSun, 3 * Time.TICKS_PER_MONTH);
+                }
+                else {
+                    //-20 degree for every month spent since sun came back, capped at 2 months or -40 degrees
+                    int recoveryTime = this.maxTimeWithoutSun() / 3 - this.timeSinceSunCameBack();
+                    assert recoveryTime <= 2 * Time.TICKS_PER_MONTH : "Recovery time greater than 2 months: " + recoveryTime;
+                    if (recoveryTime > 0) {
+                        this.cachedFrostAmount = 20.0f / Time.TICKS_PER_MONTH * recoveryTime;
+                    }
+                    else {
+                        this.cachedFrostAmount = 0;
+                    }
+                }
+            }
+            else {
+                this.cachedFrostAmount = 0;
+            }
+        }
+        return this.cachedFrostAmount;
     }
 
     private int getSunrise() {
@@ -496,16 +502,6 @@ public final class Temperature implements ILocked {
     private boolean isInPolarNight() {
         int sunrise = this.getSunrise();
         return sunrise == -1 || sunrise == 12 * Time.TICKS_PER_HOUR;
-    }
-
-    @Override
-    public boolean isLocked() {
-        return this.locked;
-    }
-
-    @Override
-    public void lock() {
-        this.locked = true;
     }
 
     private int maxTimeWithoutSun() {
