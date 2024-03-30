@@ -33,6 +33,7 @@ import tgw.evolution.entities.IEntitySpawnData;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionEntities;
+import tgw.evolution.network.PacketSCBlockUpdate;
 import tgw.evolution.network.PacketSCCustomEntity;
 import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 import tgw.evolution.util.math.ClipContextMutable;
@@ -234,16 +235,19 @@ public class EntityFallingWeight extends Entity implements IEntitySpawnData {
         }
         BlockState state = this.level.getBlockState_(x, y, z);
         if ((!isInWater || this.onGround) && state.getBlock() != Blocks.MOVING_PISTON) {
-            this.discard();
             if (!this.level.isClientSide) {
                 if (BlockUtils.isReplaceable(state)) {
                     this.level.destroyBlock_(x, y, z, true);
-                    this.level.setBlockAndUpdate_(x, y, z, this.state);
+                    if (this.level.setBlockAndUpdate_(x, y, z, this.state)) {
+                        ((ServerLevel) this.level).getChunkSource().chunkMap.broadcast(this, new PacketSCBlockUpdate(BlockPos.asLong(x, y, z), this.level.getBlockState_(x, y, z)));
+                        this.discard();
+                    }
                 }
                 else if (this.level.getGameRules().getBoolean(GameRules.RULE_DOENTITYDROPS)) {
                     try (ItemDropper dropper = DROPPER.setup(this)) {
                         this.state.dropLoot((ServerLevel) this.level, x, y, z, ItemStack.EMPTY, null, null, this.level.random, dropper);
                     }
+                    this.discard();
                 }
             }
         }
