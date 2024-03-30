@@ -108,17 +108,6 @@ public final class Physics implements ILocked {
         return gravity + centrifugal;
     }
 
-    /**
-     * The actual equation is {@code sqrt((a^4*cos^2(lat)+b^4*sin^2(lat))/(a^2*cos^2(lat)+b^2*sin^2(lat)))} <br>
-     * A very good approximation of this formula for values of {@code a} and {@code b} very close to one another is: {@code (a-b) * cos^2(lat) + b}
-     * <br>
-     * In both these equations, the values of {@code a} and {@code b} are, respectively, the equatorial and polar radii of the planet.
-     */
-    private double baseRadius() {
-        float cosLat = this.cosLatitude();
-        return (EARTH_RADIUS_EQUATOR - EARTH_RADIUS_POLE) * cosLat * cosLat + EARTH_RADIUS_POLE;
-    }
-
     public void calcAccAbsolute(Entity entity, Vec3d direction, double magnitude) {
         double lengthSqr = direction.lengthSqr();
         boolean swimming = entity.isSwimming();
@@ -409,5 +398,16 @@ public final class Physics implements ILocked {
             this.cachedSinLat = MathHelper.sinDeg(this.latitude());
         }
         return this.cachedSinLat;
+    }
+
+    /**
+     * The actual equation is {@code sqrt((a^4*cos^2(lat)+b^4*sin^2(lat))/(a^2*cos^2(lat)+b^2*sin^2(lat)))} <br>
+     * A very good approximation of this formula for values of {@code a} and {@code b} very close to one another is: {@code (a-b) * cos^2(lat) + b}
+     * <br>
+     * In both these equations, the values of {@code a} and {@code b} are, respectively, the equatorial and polar radii of the planet.
+     */
+    private double baseRadius() {
+        float cosLat = this.cosLatitude();
+        return (EARTH_RADIUS_EQUATOR - EARTH_RADIUS_POLE) * cosLat * cosLat + EARTH_RADIUS_POLE;
     }
 }
