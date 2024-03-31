@@ -2,6 +2,7 @@ package tgw.evolution.init;
 
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.properties.*;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import tgw.evolution.blocks.tileentities.SchematicMode;
 
 public final class EvolutionBStates {
@@ -25,6 +26,7 @@ public final class EvolutionBStates {
     public static final IntegerProperty AGE_0_15 = IntegerProperty.create("age", 0, 15);
     public static final IntegerProperty ATM = IntegerProperty.create("atm", 0, 31);
     public static final IntegerProperty DISTANCE_0_7 = IntegerProperty.create("distance", 0, 7);
+    public static final IntegerProperty DISTANCE_1_4 = IntegerProperty.create("distance", 1, 4);
     public static final IntegerProperty FIREWOOD_COUNT = IntegerProperty.create("log_count", 1, 16);
     public static final IntegerProperty LAYERS_0_16 = IntegerProperty.create("layers", 0, 16);
     public static final IntegerProperty LAYERS_1_4 = IntegerProperty.create("layers", 1, 4);
@@ -51,6 +53,17 @@ public final class EvolutionBStates {
             case WEST -> WEST;
             case NORTH -> NORTH;
             case SOUTH -> SOUTH;
+        };
+    }
+
+    public static VoxelShape directionToShape(Direction direction) {
+        return switch (direction) {
+            case UP -> EvolutionShapes.SLAB_16_U;
+            case DOWN -> EvolutionShapes.SLAB_16_D[0];
+            case NORTH -> EvolutionShapes.SLAB_16_N;
+            case SOUTH -> EvolutionShapes.SLAB_16_S;
+            case EAST -> EvolutionShapes.SLAB_16_E;
+            case WEST -> EvolutionShapes.SLAB_16_W;
         };
     }
 }

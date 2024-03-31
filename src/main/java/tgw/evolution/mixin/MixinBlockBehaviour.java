@@ -141,6 +141,11 @@ public abstract class MixinBlockBehaviour implements PatchBlockBehaviour {
     }
 
     @Override
+    public BlockState getDestroyingState(BlockState state, Level level, int x, int y, int z, @Nullable Direction face, double hitX, double hitY, double hitZ) {
+        return state;
+    }
+
+    @Override
     public int getEmissiveLightColor(BlockState state, BlockAndTintGetter level, int x, int y, int z) {
         return DynamicLights.FULL_LIGHTMAP;
     }
@@ -462,6 +467,11 @@ public abstract class MixinBlockBehaviour implements PatchBlockBehaviour {
     @Override
     public BlockState updateShape_(BlockState state, Direction from, BlockState fromState, LevelAccessor level, int x, int y, int z, int fromX, int fromY, int fromZ) {
         return state;
+    }
+
+    @Override
+    public boolean updatesSelf(BlockState state, Level level, int x, int y, int z) {
+        return false;
     }
 
     /**

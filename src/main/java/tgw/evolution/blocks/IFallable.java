@@ -12,6 +12,7 @@ import tgw.evolution.entities.misc.EntityFallingWeight;
 public interface IFallable extends IPhysics {
 
     default void fall(Level level, int x, int y, int z) {
+        level.destroyBlock_(x, y - 1, z, true, null);
         BlockState stateForPhysicsChange = this.getStateForPhysicsChange(level.getBlockState_(x, y, z));
         EntityFallingWeight entity = new EntityFallingWeight(level, x + 0.5, y, z + 0.5, stateForPhysicsChange, 500);
         level.removeBlock_(x, y, z, true);

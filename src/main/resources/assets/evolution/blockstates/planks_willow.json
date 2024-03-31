@@ -1,7 +1,65 @@
 {
-  "variants": {
-    "": {
-      "model": "evolution:block/planks_willow"
+  "multipart": [
+    {
+      "when": {
+        "up": "true",
+        "down": "true",
+        "north": "true",
+        "south": "true",
+        "east": "true",
+        "west": "true"
+      },
+      "apply": {
+        "model": "evolution:block/planks_willow_full"
+      }
+    },
+    {
+      "when": {
+        "up": "true"
+      },
+      "apply": {
+        "model": "evolution:block/planks_willow_up"
+      }
+    },
+    {
+      "when": {
+        "down": "true"
+      },
+      "apply": {
+        "model": "evolution:block/planks_willow_down"
+      }
+    },
+    {
+      "when": {
+        "north": "true"
+      },
+      "apply": {
+        "model": "evolution:block/planks_willow_north"
+      }
+    },
+    {
+      "when": {
+        "south": "true"
+      },
+      "apply": {
+        "model": "evolution:block/planks_willow_south"
+      }
+    },
+    {
+      "when": {
+        "east": "true"
+      },
+      "apply": {
+        "model": "evolution:block/planks_willow_east"
+      }
+    },
+    {
+      "when": {
+        "west": "true"
+      },
+      "apply": {
+        "model": "evolution:block/planks_willow_west"
+      }
     }
-  }
+  ]
 }

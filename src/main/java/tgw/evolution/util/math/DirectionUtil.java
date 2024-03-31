@@ -37,6 +37,99 @@ public final class DirectionUtil {
         };
     }
 
+    public static double choose(Direction.Axis axis, double x, double y, double z) {
+        return switch (axis) {
+            case X -> x;
+            case Y -> y;
+            case Z -> z;
+        };
+    }
+
+    public static Direction chooseByDistance(double negativeOff, double positiveOff, Direction.Axis primaryAxis, double primaryDist, Direction.Axis secondaryAxis, double secondaryDist, Direction fallback, int dirSet) {
+        assert negativeOff < positiveOff;
+        assert negativeOff > 0;
+        assert positiveOff < 1;
+        assert 0 <= primaryDist && primaryDist <= 1;
+        assert 0 <= secondaryDist && secondaryDist <= 1;
+        if (primaryDist < negativeOff) {
+            if (secondaryDist < negativeOff) {
+                if (primaryDist < secondaryDist) {
+                    Direction negative = getNegative(primaryAxis);
+                    if (hasDirection(dirSet, negative)) {
+                        return negative;
+                    }
+                }
+                Direction negative = getNegative(secondaryAxis);
+                if (hasDirection(dirSet, negative)) {
+                    return negative;
+                }
+            }
+            else if (secondaryDist > positiveOff) {
+                if (primaryDist < 1 - secondaryDist) {
+                    Direction negative = getNegative(primaryAxis);
+                    if (hasDirection(dirSet, negative)) {
+                        return negative;
+                    }
+                }
+                Direction positive = getPositive(secondaryAxis);
+                if (hasDirection(dirSet, positive)) {
+                    return positive;
+                }
+            }
+            else {
+                Direction negative = getNegative(primaryAxis);
+                if (hasDirection(dirSet, negative)) {
+                    return negative;
+                }
+            }
+        }
+        else if (primaryDist > positiveOff) {
+            if (secondaryDist < negativeOff) {
+                if (1 - primaryDist < secondaryDist) {
+                    Direction positive = getPositive(primaryAxis);
+                    if (hasDirection(dirSet, positive)) {
+                        return positive;
+                    }
+                }
+                Direction negative = getNegative(secondaryAxis);
+                if (hasDirection(dirSet, negative)) {
+                    return negative;
+                }
+            }
+            else if (secondaryDist > positiveOff) {
+                if (primaryDist > secondaryDist) {
+                    Direction positive = getPositive(primaryAxis);
+                    if (hasDirection(dirSet, positive)) {
+                        return positive;
+                    }
+                }
+                Direction positive = getPositive(secondaryAxis);
+                if (hasDirection(dirSet, positive)) {
+                    return positive;
+                }
+            }
+            else {
+                Direction positive = getPositive(primaryAxis);
+                if (hasDirection(dirSet, positive)) {
+                    return positive;
+                }
+            }
+        }
+        else if (secondaryDist < negativeOff) {
+            Direction negative = getNegative(secondaryAxis);
+            if (hasDirection(dirSet, negative)) {
+                return negative;
+            }
+        }
+        else if (secondaryDist > positiveOff) {
+            Direction positive = getPositive(secondaryAxis);
+            if (hasDirection(dirSet, positive)) {
+                return positive;
+            }
+        }
+        return fallback;
+    }
+
     public static int cycle(AxisCycle cycle, int x, int y, int z, Direction.Axis axis) {
         return switch (cycle) {
             case NONE -> choose(axis, x, y, z);
@@ -69,8 +162,39 @@ public final class DirectionUtil {
         return HORIZ_NESW[index];
     }
 
+    public static int fullSetExcept(Direction dir) {
+        return switch (dir) {
+            case NORTH -> 0b11_1011;
+            case SOUTH -> 0b11_0111;
+            case UP -> 0b11_1101;
+            case DOWN -> 0b11_1110;
+            case EAST -> 0b01_1111;
+            case WEST -> 0b10_1111;
+        };
+    }
+
+    public static Direction getNegative(Direction.Axis axis) {
+        return switch (axis) {
+            case X -> Direction.WEST;
+            case Y -> Direction.DOWN;
+            case Z -> Direction.NORTH;
+        };
+    }
+
+    public static Direction getPositive(Direction.Axis axis) {
+        return switch (axis) {
+            case X -> Direction.EAST;
+            case Y -> Direction.UP;
+            case Z -> Direction.SOUTH;
+        };
+    }
+
     public static Direction getRandom(RandomGenerator random) {
         return ALL[random.nextInt(6)];
+    }
+
+    public static boolean hasDirection(int dirSet, Direction dir) {
+        return (dirSet & 1 << dir.ordinal()) != 0;
     }
 
     public static int horizontalIndex(Direction dir) {

@@ -1,0 +1,6 @@
+{
+  "parent": "evolution:block/planks_south",
+  "textures": {
+    "block": "evolution:block/planks_oak"
+  }
+}

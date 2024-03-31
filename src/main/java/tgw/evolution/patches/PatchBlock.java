@@ -81,7 +81,7 @@ public interface PatchBlock {
         throw new AbstractMethodError();
     }
 
-    default void playerWillDestroy_(Level level, int x, int y, int z, BlockState state, Player player) {
+    default BlockState playerWillDestroy_(Level level, int x, int y, int z, BlockState state, Player player, Direction face, double hitX, double hitY, double hitZ) {
         throw new AbstractMethodError();
     }
 

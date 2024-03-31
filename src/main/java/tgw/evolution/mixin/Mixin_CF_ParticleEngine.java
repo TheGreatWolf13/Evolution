@@ -140,13 +140,12 @@ public abstract class Mixin_CF_ParticleEngine implements PreparableReloadListene
     @Overwrite
     public void crack(BlockPos pos, Direction face) {
         Evolution.deprecatedMethod();
-        this.crack_(pos.getX(), pos.getY(), pos.getZ(), face);
     }
 
     @Override
-    public void crack_(int x, int y, int z, Direction face) {
+    public void crack_(int x, int y, int z, Direction face, double hitX, double hitY, double hitZ) {
         assert this.level != null;
-        BlockState stateAtPos = this.level.getBlockState_(x, y, z);
+        BlockState stateAtPos = this.level.getBlockState_(x, y, z).getDestroyingState(this.level, x, y, z, face, hitX, hitY, hitZ);
         BlockState stateForParticles = stateAtPos.stateForParticles(this.level, x, y, z);
         if (stateForParticles.getRenderShape() != RenderShape.INVISIBLE) {
             VoxelShape shape = stateAtPos.getShape_(this.level, x, y, z);

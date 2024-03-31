@@ -26,14 +26,7 @@ public interface PatchBlockBehaviour {
         throw new AbstractMethodError();
     }
 
-    default boolean canBeReplaced_(BlockState state,
-                                   Level level,
-                                   int x,
-                                   int y,
-                                   int z,
-                                   Player player,
-                                   InteractionHand hand,
-                                   BlockHitResult hitResult) {
+    default boolean canBeReplaced_(BlockState state, Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult) {
         throw new AbstractMethodError();
     }
 
@@ -54,6 +47,10 @@ public interface PatchBlockBehaviour {
     }
 
     default float getDestroyProgress_(BlockState state, Player player, BlockGetter level, int x, int y, int z) {
+        throw new AbstractMethodError();
+    }
+
+    default BlockState getDestroyingState(BlockState state, Level level, int x, int y, int z, @Nullable Direction face, double hitX, double hitY, double hitZ) {
         throw new AbstractMethodError();
     }
 
@@ -101,16 +98,7 @@ public interface PatchBlockBehaviour {
         throw new AbstractMethodError();
     }
 
-    default void neighborChanged_(BlockState state,
-                                  Level level,
-                                  int x,
-                                  int y,
-                                  int z,
-                                  Block oldBlock,
-                                  int fromX,
-                                  int fromY,
-                                  int fromZ,
-                                  boolean isMoving) {
+    default void neighborChanged_(BlockState state, Level level, int x, int y, int z, Block oldBlock, int fromX, int fromY, int fromZ, boolean isMoving) {
         throw new AbstractMethodError();
     }
 
@@ -142,27 +130,15 @@ public interface PatchBlockBehaviour {
         throw new AbstractMethodError();
     }
 
-    default BlockState updateShape_(BlockState state,
-                                    Direction from,
-                                    BlockState fromState,
-                                    LevelAccessor level,
-                                    int x,
-                                    int y,
-                                    int z,
-                                    int fromX,
-                                    int fromY,
-                                    int fromZ) {
+    default BlockState updateShape_(BlockState state, Direction from, BlockState fromState, LevelAccessor level, int x, int y, int z, int fromX, int fromY, int fromZ) {
         throw new AbstractMethodError();
     }
 
-    default InteractionResult use_(BlockState state,
-                                   Level level,
-                                   int x,
-                                   int y,
-                                   int z,
-                                   Player player,
-                                   InteractionHand hand,
-                                   BlockHitResult hitResult) {
+    default boolean updatesSelf(BlockState state, Level level, int x, int y, int z) {
+        throw new AbstractMethodError();
+    }
+
+    default InteractionResult use_(BlockState state, Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult) {
         throw new AbstractMethodError();
     }
 }

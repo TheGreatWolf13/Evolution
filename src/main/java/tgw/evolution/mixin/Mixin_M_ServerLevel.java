@@ -2,6 +2,7 @@ package tgw.evolution.mixin;
 
 import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -94,7 +95,7 @@ public abstract class Mixin_M_ServerLevel extends Level implements WorldGenLevel
     }
 
     @Override
-    public void destroyBlockProgress(int breakerId, long pos, int progress) {
+    public void destroyBlockProgress(int breakerId, long pos, int progress, @Nullable Direction face, double hitX, double hitY, double hitZ) {
         Packet<ClientGamePacketListener> packet = null;
         for (ServerPlayer player : this.server.getPlayerList().getPlayers()) {
             if (player != null && player.level == this && player.getId() != breakerId) {
@@ -103,7 +104,7 @@ public abstract class Mixin_M_ServerLevel extends Level implements WorldGenLevel
                 double dz = BlockPos.getZ(pos) - player.getZ();
                 if (dx * dx + dy * dy + dz * dz < 1_024.0) {
                     if (packet == null) {
-                        packet = new PacketSCBlockDestruction(breakerId, pos, progress);
+                        packet = new PacketSCBlockDestruction(breakerId, pos, progress, face, hitX, hitY, hitZ);
                     }
                     player.connection.send(packet);
                 }

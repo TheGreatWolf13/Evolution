@@ -82,51 +82,6 @@ public abstract class Mixin_M_DoorBlock extends Block {
         }
     }
 
-    @Shadow
-    protected abstract @LvlEvent int getCloseSound();
-
-    /**
-     * @reason _
-     * @author TheGreatWolf
-     */
-    @Overwrite
-    private DoorHingeSide getHinge(BlockPlaceContext context) {
-        BlockGetter level = context.getLevel();
-        BlockPos pos = context.getClickedPos();
-        int x = pos.getX();
-        int y = pos.getY();
-        int z = pos.getZ();
-        Direction horizDir = context.getHorizontalDirection();
-        Direction nextHorizDir = horizDir.getCounterClockWise();
-        int nextX = x + nextHorizDir.getStepX();
-        int nextZ = z + nextHorizDir.getStepZ();
-        BlockState stateAtNext = level.getBlockState_(nextX, y, nextZ);
-        BlockState stateAtNextUp = level.getBlockState_(nextX, y + 1, nextZ);
-        Direction prevHorizDir = horizDir.getClockWise();
-        int prevX = x + prevHorizDir.getStepX();
-        int prevZ = z + prevHorizDir.getStepZ();
-        BlockState stateAtPrev = level.getBlockState_(prevX, y, prevZ);
-        BlockState stateAtPrevUp = level.getBlockState_(prevX, y + 1, prevZ);
-        int i = (stateAtNext.isCollisionShapeFullBlock_(level, nextX, y, nextZ) ? -1 : 0) + (stateAtNextUp.isCollisionShapeFullBlock_(level, nextX, y + 1, nextZ) ? -1 : 0) + (stateAtPrev.isCollisionShapeFullBlock_(level, prevX, y, prevZ) ? 1 : 0) + (stateAtPrevUp.isCollisionShapeFullBlock_(level, prevX, y + 1, prevZ) ? 1 : 0);
-        boolean bl = stateAtNext.is(this) && stateAtNext.getValue(HALF) == DoubleBlockHalf.LOWER;
-        boolean bl2 = stateAtPrev.is(this) && stateAtPrev.getValue(HALF) == DoubleBlockHalf.LOWER;
-        if ((!bl || bl2) && i <= 0) {
-            if ((!bl2 || bl) && i == 0) {
-                int j = horizDir.getStepX();
-                int k = horizDir.getStepZ();
-                BlockHitResult hitResult = context.getHitResult();
-                double d = hitResult.x() - pos.getX();
-                double e = hitResult.z() - pos.getZ();
-                return (j >= 0 || !(e < 0.5)) && (j <= 0 || !(e > 0.5)) && (k >= 0 || !(d > 0.5)) && (k <= 0 || !(d < 0.5)) ? DoorHingeSide.LEFT : DoorHingeSide.RIGHT;
-            }
-            return DoorHingeSide.LEFT;
-        }
-        return DoorHingeSide.RIGHT;
-    }
-
-    @Shadow
-    protected abstract @LvlEvent int getOpenSound();
-
     /**
      * @reason _
      * @author TheGreatWolf
@@ -213,9 +168,6 @@ public abstract class Mixin_M_DoorBlock extends Block {
         }
     }
 
-    @Shadow
-    protected abstract void playSound(Level level, BlockPos blockPos, boolean bl);
-
     /**
      * @reason _
      * @author TheGreatWolf
@@ -228,17 +180,18 @@ public abstract class Mixin_M_DoorBlock extends Block {
     }
 
     @Override
-    public void playerWillDestroy_(Level level, int x, int y, int z, BlockState state, Player player) {
+    public BlockState playerWillDestroy_(Level level, int x, int y, int z, BlockState state, Player player, Direction face, double hitX, double hitY, double hitZ) {
         if (!level.isClientSide && player.isCreative()) {
             BlockUtils.preventCreativeDropFromBottomPart(level, x, y, z, state, player);
         }
-        super.playerWillDestroy_(level, x, y, z, state, player);
+        return super.playerWillDestroy_(level, x, y, z, state, player, face, hitX, hitY, hitZ);
     }
 
     /**
      * @reason _
      * @author TheGreatWolf
      */
+    @SuppressWarnings("removal")
     @Override
     @Overwrite
     @DeleteMethod
@@ -305,5 +258,53 @@ public abstract class Mixin_M_DoorBlock extends Block {
         level.levelEvent_(player, isOpen ? this.getOpenSound() : this.getCloseSound(), x, y, z, 0);
         level.gameEvent(player, isOpen ? GameEvent.BLOCK_OPEN : GameEvent.BLOCK_CLOSE, new BlockPos(x, y, z));
         return InteractionResult.sidedSuccess(level.isClientSide);
+    }
+
+    @Shadow
+    protected abstract @LvlEvent int getCloseSound();
+
+    @Shadow
+    protected abstract @LvlEvent int getOpenSound();
+
+    @Shadow
+    protected abstract void playSound(Level level, BlockPos blockPos, boolean bl);
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Overwrite
+    private DoorHingeSide getHinge(BlockPlaceContext context) {
+        BlockGetter level = context.getLevel();
+        BlockPos pos = context.getClickedPos();
+        int x = pos.getX();
+        int y = pos.getY();
+        int z = pos.getZ();
+        Direction horizDir = context.getHorizontalDirection();
+        Direction nextHorizDir = horizDir.getCounterClockWise();
+        int nextX = x + nextHorizDir.getStepX();
+        int nextZ = z + nextHorizDir.getStepZ();
+        BlockState stateAtNext = level.getBlockState_(nextX, y, nextZ);
+        BlockState stateAtNextUp = level.getBlockState_(nextX, y + 1, nextZ);
+        Direction prevHorizDir = horizDir.getClockWise();
+        int prevX = x + prevHorizDir.getStepX();
+        int prevZ = z + prevHorizDir.getStepZ();
+        BlockState stateAtPrev = level.getBlockState_(prevX, y, prevZ);
+        BlockState stateAtPrevUp = level.getBlockState_(prevX, y + 1, prevZ);
+        int i = (stateAtNext.isCollisionShapeFullBlock_(level, nextX, y, nextZ) ? -1 : 0) + (stateAtNextUp.isCollisionShapeFullBlock_(level, nextX, y + 1, nextZ) ? -1 : 0) + (stateAtPrev.isCollisionShapeFullBlock_(level, prevX, y, prevZ) ? 1 : 0) + (stateAtPrevUp.isCollisionShapeFullBlock_(level, prevX, y + 1, prevZ) ? 1 : 0);
+        boolean bl = stateAtNext.is(this) && stateAtNext.getValue(HALF) == DoubleBlockHalf.LOWER;
+        boolean bl2 = stateAtPrev.is(this) && stateAtPrev.getValue(HALF) == DoubleBlockHalf.LOWER;
+        if ((!bl || bl2) && i <= 0) {
+            if ((!bl2 || bl) && i == 0) {
+                int j = horizDir.getStepX();
+                int k = horizDir.getStepZ();
+                BlockHitResult hitResult = context.getHitResult();
+                double d = hitResult.x() - pos.getX();
+                double e = hitResult.z() - pos.getZ();
+                return (j >= 0 || !(e < 0.5)) && (j <= 0 || !(e > 0.5)) && (k >= 0 || !(d > 0.5)) && (k <= 0 || !(d < 0.5)) ? DoorHingeSide.LEFT : DoorHingeSide.RIGHT;
+            }
+            return DoorHingeSide.LEFT;
+        }
+        return DoorHingeSide.RIGHT;
     }
 }

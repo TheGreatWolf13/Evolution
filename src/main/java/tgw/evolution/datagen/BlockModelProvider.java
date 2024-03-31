@@ -30,6 +30,11 @@ public class BlockModelProvider extends ModelProvider<BlockModelBuilder> {
     }
 
     @Override
+    public String type() {
+        return "BlockModel";
+    }
+
+    @Override
     protected void registerModels() {
         this.getBuilder("evolution:block/rock")
             .element()
@@ -172,10 +177,71 @@ public class BlockModelProvider extends ModelProvider<BlockModelBuilder> {
             .face(Direction.WEST).uvs(0.0f, 4.0f, 16.0f, 16.0f).texture("#side").cullface(Direction.WEST).end()
             .face(Direction.EAST).uvs(0.0f, 4.0f, 16.0f, 16.0f).texture("#side").cullface(Direction.EAST).end()
             .end();
-    }
-
-    @Override
-    public String type() {
-        return "BlockModel";
+        this.getBuilder("evolution:planks_up")
+            .element()
+            .from(0, 15, 0)
+            .to(16, 16, 16)
+            .face(Direction.NORTH).uvs(0, 0, 16, 1).texture("#block").cullface(Direction.NORTH).end()
+            .face(Direction.EAST).uvs(0, 0, 16, 1).texture("#block").cullface(Direction.EAST).end()
+            .face(Direction.SOUTH).uvs(0, 0, 16, 1).texture("#block").cullface(Direction.SOUTH).end()
+            .face(Direction.WEST).uvs(0, 0, 16, 1).texture("#block").cullface(Direction.WEST).end()
+            .face(Direction.UP).uvs(0, 0, 16, 16).texture("#block").cullface(Direction.UP).end()
+            .face(Direction.DOWN).uvs(0, 0, 16, 16).texture("#block").end()
+            .end();
+        this.getBuilder("evolution:planks_north")
+            .element()
+            .from(0, 0, 0)
+            .to(16, 16, 1)
+            .face(Direction.NORTH).uvs(0, 0, 16, 16).texture("#block").cullface(Direction.NORTH).end()
+            .face(Direction.EAST).uvs(15, 0, 16, 16).texture("#block").cullface(Direction.EAST).end()
+            .face(Direction.SOUTH).uvs(0, 0, 16, 16).texture("#block").end()
+            .face(Direction.WEST).uvs(0, 0, 1, 16).texture("#block").cullface(Direction.WEST).end()
+            .face(Direction.UP).uvs(0, 0, 16, 1).texture("#block").cullface(Direction.UP).end()
+            .face(Direction.DOWN).uvs(0, 15, 16, 16).texture("#block").cullface(Direction.DOWN).end()
+            .end();
+        this.getBuilder("evolution:planks_west")
+            .element()
+            .from(0, 0, 0)
+            .to(1, 16, 16)
+            .face(Direction.NORTH).uvs(15, 0, 16, 16).texture("#block").cullface(Direction.NORTH).end()
+            .face(Direction.EAST).uvs(0, 0, 16, 16).texture("#block").end()
+            .face(Direction.SOUTH).uvs(0, 0, 1, 16).texture("#block").cullface(Direction.SOUTH).end()
+            .face(Direction.WEST).uvs(0, 0, 16, 16).texture("#block").cullface(Direction.WEST).end()
+            .face(Direction.UP).uvs(0, 0, 1, 16).texture("#block").cullface(Direction.UP).end()
+            .face(Direction.DOWN).uvs(0, 0, 1, 16).texture("#block").cullface(Direction.DOWN).end()
+            .end();
+        this.getBuilder("evolution:planks_down")
+            .element()
+            .from(0, 0, 0)
+            .to(16, 1, 16)
+            .face(Direction.NORTH).uvs(0, 15, 16, 16).texture("#block").cullface(Direction.NORTH).end()
+            .face(Direction.EAST).uvs(0, 15, 16, 16).texture("#block").cullface(Direction.EAST).end()
+            .face(Direction.SOUTH).uvs(0, 15, 16, 16).texture("#block").cullface(Direction.SOUTH).end()
+            .face(Direction.WEST).uvs(0, 15, 16, 16).texture("#block").cullface(Direction.WEST).end()
+            .face(Direction.UP).uvs(0, 0, 16, 16).texture("#block").end()
+            .face(Direction.DOWN).uvs(0, 0, 16, 16).texture("#block").cullface(Direction.DOWN).end()
+            .end();
+        this.getBuilder("evolution:planks_east")
+            .element()
+            .from(15, 0, 0)
+            .to(16, 16, 16)
+            .face(Direction.NORTH).uvs(0, 0, 1, 16).texture("#block").cullface(Direction.NORTH).end()
+            .face(Direction.EAST).uvs(0, 0, 16, 16).texture("#block").cullface(Direction.EAST).end()
+            .face(Direction.SOUTH).uvs(15, 0, 16, 16).texture("#block").cullface(Direction.SOUTH).end()
+            .face(Direction.WEST).uvs(0, 0, 16, 16).texture("#block").end()
+            .face(Direction.UP).uvs(15, 0, 16, 16).texture("#block").cullface(Direction.UP).end()
+            .face(Direction.DOWN).uvs(15, 0, 16, 16).texture("#block").cullface(Direction.DOWN).end()
+            .end();
+        this.getBuilder("evolution:planks_south")
+            .element()
+            .from(0, 0, 15)
+            .to(16, 16, 16)
+            .face(Direction.NORTH).uvs(0, 0, 16, 16).texture("#block").end()
+            .face(Direction.EAST).uvs(0, 0, 1, 16).texture("#block").cullface(Direction.EAST).end()
+            .face(Direction.SOUTH).uvs(0, 0, 16, 16).texture("#block").cullface(Direction.SOUTH).end()
+            .face(Direction.WEST).uvs(15, 0, 16, 16).texture("#block").cullface(Direction.WEST).end()
+            .face(Direction.UP).uvs(0, 15, 16, 16).texture("#block").cullface(Direction.UP).end()
+            .face(Direction.DOWN).uvs(0, 0, 16, 1).texture("#block").cullface(Direction.DOWN).end()
+            .end();
     }
 }

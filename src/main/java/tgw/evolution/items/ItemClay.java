@@ -29,23 +29,28 @@ public class ItemClay extends ItemGenericPlaceable {
     }
 
     @Override
-    public boolean customCondition(BlockState stateAtPos) {
+    protected boolean customCondition(BlockState oldStateAtPos) {
         return false;
     }
 
     @Override
-    public BlockState getCustomState(BlockState stateAtPos) {
+    protected @Nullable BlockState getCustomState(BlockState stateAtPos) {
         return null;
     }
 
     @Override
-    public BlockState getSneakingState(Player player) {
+    protected @Nullable BlockState getSneakingState(Player player) {
         return EvolutionBlocks.MOLDING_BLOCK.defaultBlockState();
     }
 
     @Override
-    public void successPlaceLogic(Level level, int x, int y, int z, Player player, ItemStack stack) {
+    protected void successPlaceLogic(Level level, int x, int y, int z, Player player, ItemStack stack) {
         Evolution.deprecatedMethod();
         ((ServerPlayer) player).connection.send(new PacketSCOpenMoldingGui(new BlockPos(x, y, z)));
+    }
+
+    @Override
+    protected boolean usesCustomCondition() {
+        return false;
     }
 }

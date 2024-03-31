@@ -100,7 +100,6 @@ public final class EvolutionItems {
     public static final Map<WoodVariant, Item> LEAVES;
     public static final Map<WoodVariant, Item> LOGS;
     public static final Map<WoodVariant, Item> PLANK;
-    public static final Map<WoodVariant, Item> PLANKS;
     public static final Map<RockVariant, Item> POLISHED_STONES;
     public static final Map<RockVariant, Item> PRIMITIVE_KNIVES;
     public static final Map<RockVariant, Item> ROCKS;
@@ -189,8 +188,7 @@ public final class EvolutionItems {
         GRAVELS = makeBlock(RockVariant.class, EvolutionBlocks.GRAVELS, e -> itemBlock(e.get(EvolutionBlocks.GRAVELS)));
         LEAVES = makeBlock(WoodVariant.class, EvolutionBlocks.LEAVES, e -> woodBlock(e.get(EvolutionBlocks.LEAVES)));
         LOGS = makeBlock(WoodVariant.class, EvolutionBlocks.LOGS, e -> new ItemLog(e, e.get(EvolutionBlocks.LOGS), propTreesAndWood()));
-        PLANK = make(WoodVariant.class, WoodVariant.VALUES, "plank_", e -> wood());
-        PLANKS = makeBlock(WoodVariant.class, EvolutionBlocks.PLANKS, e -> woodBlock(e.get(EvolutionBlocks.PLANKS)));
+        PLANK = make(WoodVariant.class, WoodVariant.VALUES, "plank_", e -> new ItemPlank(e, propTreesAndWood()));
         POLISHED_STONES = makeBlock(RockVariant.class, EvolutionBlocks.POLISHED_STONES, e -> itemBlock(e.get(EvolutionBlocks.POLISHED_STONES)));
         PRIMITIVE_KNIVES = make(RockVariant.class, RockVariant.VALUES, "primitive_knife_", e -> new ItemGeneric(propPartTool()));
         ROCKS = makeBlock(RockVariant.class, EvolutionBlocks.ROCKS, e -> new ItemRock(e.get(EvolutionBlocks.ROCKS), propMisc(), e));
@@ -223,6 +221,10 @@ public final class EvolutionItems {
 //    public static <E extends Entity> Item genEgg(EntityType<E> type) {
 //        return new ItemSpawnEgg<>(type);
 //    }
+
+    public static void register() {
+        //Items are registered via class-loading.
+    }
 
     @Contract("_ -> new")
     private static Item item(Item.Properties prop) {
@@ -260,15 +262,15 @@ public final class EvolutionItems {
         return Maps.immutableEnumMap(map);
     }
 
-    @Contract(" -> new")
-    private static Item.Properties propDev() {
-        return new Item.Properties().tab(EvolutionCreativeTabs.DEV);
-    }
-
 //    @Contract(pure = true, value = " -> new")
 //    private static Item.Properties propLiquid() {
 //        return new Item.Properties().tab(EvolutionCreativeTabs.LIQUIDS);
 //    }
+
+    @Contract(" -> new")
+    private static Item.Properties propDev() {
+        return new Item.Properties().tab(EvolutionCreativeTabs.DEV);
+    }
 
     @Contract(" -> new")
     private static Item.Properties propMetal() {
@@ -299,10 +301,6 @@ public final class EvolutionItems {
             i.registerBlocks(Item.BY_BLOCK, item);
         }
         return Registry.register(Registry.ITEM, loc, item);
-    }
-
-    public static void register() {
-        //Items are registered via class-loading.
     }
 
     @Contract(" -> new")

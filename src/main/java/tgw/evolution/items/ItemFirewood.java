@@ -32,13 +32,17 @@ public class ItemFirewood extends ItemGenericPlaceable {
         tooltip.add(EvolutionTexts.TOOLTIP_FIREWOOD_PILE);
     }
 
+    public WoodVariant getVariant() {
+        return this.variant;
+    }
+
     @Override
-    public boolean customCondition(BlockState stateAtPos) {
+    protected boolean customCondition(BlockState stateAtPos) {
         return stateAtPos.getBlock() == EvolutionBlocks.FIREWOOD_PILE;
     }
 
     @Override
-    public @Nullable BlockState getCustomState(BlockState stateAtPos) {
+    protected @Nullable BlockState getCustomState(BlockState stateAtPos) {
         int count = stateAtPos.getValue(EvolutionBStates.FIREWOOD_COUNT);
         if (count < 16) {
             return stateAtPos.setValue(EvolutionBStates.FIREWOOD_COUNT, count + 1);
@@ -47,16 +51,12 @@ public class ItemFirewood extends ItemGenericPlaceable {
     }
 
     @Override
-    public @Nullable BlockState getSneakingState(Player player) {
+    protected @Nullable BlockState getSneakingState(Player player) {
         return EvolutionBlocks.FIREWOOD_PILE.defaultBlockState().setValue(DIRECTION_HORIZONTAL, player.getDirection());
     }
 
-    public WoodVariant getVariant() {
-        return this.variant;
-    }
-
     @Override
-    public void successPlaceLogic(Level level, int x, int y, int z, Player player, ItemStack stack) {
+    protected void successPlaceLogic(Level level, int x, int y, int z, Player player, ItemStack stack) {
         if (stack.getItem() instanceof ItemFirewood firewood) {
             if (level.getBlockEntity_(x, y, z) instanceof TEFirewoodPile tile) {
                 tile.addFirewood(firewood);

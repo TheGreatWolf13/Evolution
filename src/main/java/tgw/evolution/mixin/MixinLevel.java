@@ -132,6 +132,7 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
      * @author TheGreatWolf
      * @reason Use non-BlockPos version
      */
+    @SuppressWarnings("removal")
     @Overwrite
     @Override
     public @Nullable BlockEntity getBlockEntity(BlockPos pos) {
@@ -151,6 +152,7 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
      * @author TheGreatWolf
      * @reason Use non-BlockPos version
      */
+    @SuppressWarnings("removal")
     @Overwrite
     @Override
     public BlockState getBlockState(BlockPos pos) {
@@ -255,6 +257,7 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
      * @author TheGreatWolf
      * @reason Use non-BlockPos version
      */
+    @SuppressWarnings("removal")
     @Overwrite
     @Override
     public FluidState getFluidState(BlockPos pos) {
@@ -500,6 +503,7 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
      * @reason _
      * @author TheGreatWolf
      */
+    @SuppressWarnings("removal")
     @Override
     @Overwrite
     public boolean setBlock(BlockPos pos, BlockState state, @BlockFlags int flags) {
@@ -574,6 +578,11 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
                 }
             }
             if ((flags & BlockFlags.UPDATE_NEIGHBORS) == 0 && limit > 0) {
+                if (gottenState.updatesSelf((Level) (Object) this, x, y, z)) {
+                    if (!gottenState.canSurvive_(this, x, y, z)) {
+                        this.destroyBlock_(x, y, z, true, null, 0);
+                    }
+                }
                 int newFlags = flags & ~BlockFlags.NOTIFY;
                 oldState.updateIndirectNeighbourShapes_(this, x, y, z, newFlags, limit - 1);
                 state.updateNeighbourShapes_(this, x, y, z, newFlags, limit - 1);

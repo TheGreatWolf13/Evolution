@@ -29,6 +29,7 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.hooks.asm.DeleteMethod;
 import tgw.evolution.patches.PatchEither;
+import tgw.evolution.util.constants.BlockFlags;
 
 @Mixin(BedBlock.class)
 public abstract class Mixin_M_BedBlock extends HorizontalDirectionalBlock implements EntityBlock {
@@ -103,9 +104,6 @@ public abstract class Mixin_M_BedBlock extends HorizontalDirectionalBlock implem
         };
     }
 
-    @Shadow
-    protected abstract boolean kickVillagerOutOfBed(Level level, BlockPos blockPos);
-
     /**
      * @reason _
      * @author TheGreatWolf
@@ -118,7 +116,7 @@ public abstract class Mixin_M_BedBlock extends HorizontalDirectionalBlock implem
     }
 
     @Override
-    public void playerWillDestroy_(Level level, int x, int y, int z, BlockState state, Player player) {
+    public BlockState playerWillDestroy_(Level level, int x, int y, int z, BlockState state, Player player, Direction face, double hitX, double hitY, double hitZ) {
         if (!level.isClientSide && player.isCreative()) {
             BedPart bedPart = state.getValue(PART);
             if (bedPart == BedPart.FOOT) {
@@ -127,13 +125,12 @@ public abstract class Mixin_M_BedBlock extends HorizontalDirectionalBlock implem
                 int otherZ = z + otherDir.getStepZ();
                 BlockState otherState = level.getBlockState_(otherX, y, otherZ);
                 if (otherState.is(this) && otherState.getValue(PART) == BedPart.HEAD) {
-                    BlockPos otherPos = new BlockPos(otherX, y, otherZ);
-                    level.setBlock(otherPos, Blocks.AIR.defaultBlockState(), 35);
-                    level.levelEvent(player, LevelEvent.PARTICLES_DESTROY_BLOCK, otherPos, Block.getId(otherState));
+                    level.setBlock_(otherX, y, otherZ, Blocks.AIR.defaultBlockState(), BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE | BlockFlags.NO_NEIGHBOR_DROPS);
+                    level.levelEvent_(player, LevelEvent.PARTICLES_DESTROY_BLOCK, otherX, y, otherZ, Block.getId(otherState));
                 }
             }
         }
-        super.playerWillDestroy_(level, x, y, z, state, player);
+        return super.playerWillDestroy_(level, x, y, z, state, player, face, hitX, hitY, hitZ);
     }
 
     /**
@@ -143,26 +140,12 @@ public abstract class Mixin_M_BedBlock extends HorizontalDirectionalBlock implem
     @Override
     @Overwrite
     @DeleteMethod
-    public BlockState updateShape(BlockState blockState,
-                                  Direction direction,
-                                  BlockState blockState2,
-                                  LevelAccessor levelAccessor,
-                                  BlockPos blockPos,
-                                  BlockPos blockPos2) {
+    public BlockState updateShape(BlockState blockState, Direction direction, BlockState blockState2, LevelAccessor levelAccessor, BlockPos blockPos, BlockPos blockPos2) {
         throw new AbstractMethodError();
     }
 
     @Override
-    public BlockState updateShape_(BlockState state,
-                                   Direction from,
-                                   BlockState fromState,
-                                   LevelAccessor level,
-                                   int x,
-                                   int y,
-                                   int z,
-                                   int fromX,
-                                   int fromY,
-                                   int fromZ) {
+    public BlockState updateShape_(BlockState state, Direction from, BlockState fromState, LevelAccessor level, int x, int y, int z, int fromX, int fromY, int fromZ) {
         if (from == getNeighbourDirection(state.getValue(PART), state.getValue(FACING))) {
             return fromState.is(this) && fromState.getValue(PART) != state.getValue(PART) ?
                    state.setValue(OCCUPIED, fromState.getValue(OCCUPIED)) :
@@ -178,12 +161,7 @@ public abstract class Mixin_M_BedBlock extends HorizontalDirectionalBlock implem
     @Override
     @Overwrite
     @DeleteMethod
-    public InteractionResult use(BlockState blockState,
-                                 Level level,
-                                 BlockPos blockPos,
-                                 Player player,
-                                 InteractionHand interactionHand,
-                                 BlockHitResult blockHitResult) {
+    public InteractionResult use(BlockState blockState, Level level, BlockPos blockPos, Player player, InteractionHand interactionHand, BlockHitResult blockHitResult) {
         throw new AbstractMethodError();
     }
 
@@ -202,10 +180,12 @@ public abstract class Mixin_M_BedBlock extends HorizontalDirectionalBlock implem
             }
         }
         if (!canSetSpawn(level)) {
-            level.removeBlock(new BlockPos(x, y, z), false);
-            BlockPos otherPos = new BlockPos(x, y, z).relative(state.getValue(FACING).getOpposite());
-            if (level.getBlockState(otherPos).is(this)) {
-                level.removeBlock(otherPos, false);
+            level.removeBlock_(x, y, z, false);
+            Direction offset = state.getValue(FACING).getOpposite();
+            int otherX = x + offset.getStepX();
+            int otherZ = z + offset.getStepZ();
+            if (level.getBlockState_(otherX, y, otherZ).is(this)) {
+                level.removeBlock_(otherX, y, otherZ, false);
             }
             level.explode(null, DamageSource.badRespawnPointExplosion(), null, x + 0.5, y + 0.5, z + 0.5, 5.0F, true,
                           Explosion.BlockInteraction.DESTROY);
@@ -223,4 +203,7 @@ public abstract class Mixin_M_BedBlock extends HorizontalDirectionalBlock implem
         }
         return InteractionResult.SUCCESS;
     }
+
+    @Shadow
+    protected abstract boolean kickVillagerOutOfBed(Level level, BlockPos blockPos);
 }

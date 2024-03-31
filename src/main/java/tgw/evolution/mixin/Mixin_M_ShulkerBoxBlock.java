@@ -1,6 +1,7 @@
 package tgw.evolution.mixin;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -34,15 +35,12 @@ public abstract class Mixin_M_ShulkerBoxBlock extends BaseEntityBlock {
     }
 
     @Shadow
-    private static boolean canOpen(BlockState blockState,
-                                   Level level,
-                                   BlockPos blockPos,
-                                   ShulkerBoxBlockEntity shulkerBoxBlockEntity) {
+    public static ItemStack getColoredItemStack(@Nullable DyeColor dyeColor) {
         throw new AbstractMethodError();
     }
 
     @Shadow
-    public static ItemStack getColoredItemStack(@Nullable DyeColor dyeColor) {
+    private static boolean canOpen(BlockState blockState, Level level, BlockPos blockPos, ShulkerBoxBlockEntity shulkerBoxBlockEntity) {
         throw new AbstractMethodError();
     }
 
@@ -101,7 +99,7 @@ public abstract class Mixin_M_ShulkerBoxBlock extends BaseEntityBlock {
     }
 
     @Override
-    public void playerWillDestroy_(Level level, int x, int y, int z, BlockState state, Player player) {
+    public BlockState playerWillDestroy_(Level level, int x, int y, int z, BlockState state, Player player, Direction face, double hitX, double hitY, double hitZ) {
         if (level.getBlockEntity_(x, y, z) instanceof ShulkerBoxBlockEntity tile) {
             if (!level.isClientSide && player.isCreative() && !tile.isEmpty()) {
                 ItemStack stack = getColoredItemStack(this.getColor());
@@ -117,7 +115,7 @@ public abstract class Mixin_M_ShulkerBoxBlock extends BaseEntityBlock {
                 tile.unpackLootTable(player);
             }
         }
-        super.playerWillDestroy_(level, x, y, z, state, player);
+        return super.playerWillDestroy_(level, x, y, z, state, player, face, hitX, hitY, hitZ);
     }
 
     /**
@@ -127,12 +125,7 @@ public abstract class Mixin_M_ShulkerBoxBlock extends BaseEntityBlock {
     @Override
     @Overwrite
     @DeleteMethod
-    public InteractionResult use(BlockState blockState,
-                                 Level level,
-                                 BlockPos blockPos,
-                                 Player player,
-                                 InteractionHand interactionHand,
-                                 BlockHitResult blockHitResult) {
+    public InteractionResult use(BlockState blockState, Level level, BlockPos blockPos, Player player, InteractionHand interactionHand, BlockHitResult blockHitResult) {
         throw new AbstractMethodError();
     }
 

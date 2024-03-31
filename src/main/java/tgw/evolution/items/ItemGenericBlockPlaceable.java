@@ -21,22 +21,16 @@ public abstract class ItemGenericBlockPlaceable extends ItemBlock {
         super(block, builder);
     }
 
-    public abstract boolean customCondition(Block blockAtPlacing, Block blockClicking);
-
-    public abstract @Nullable BlockState getCustomState(Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult);
-
-    public abstract BlockState getSneakingState(Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult);
-
     @Override
     public InteractionResult place(Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult, boolean canPlace) {
         if (!canPlace) {
             return InteractionResult.FAIL;
         }
         BlockState stateForPlacement = this.getPlacementState(level, x, y, z, player, hand, hitResult);
-        if (player.isSecondaryUseActive()) {
+        if (this.usesSneakingCondition() && player.isSecondaryUseActive()) {
             stateForPlacement = this.getSneakingState(level, x, y, z, player, hand, hitResult);
         }
-        if (this.customCondition(level.getBlockState_(x, y, z).getBlock(), level.getBlockStateAtSide(x, y, z, hitResult.getDirection().getOpposite()).getBlock())) {
+        if (this.usesCustomCondition() && this.customCondition(level.getBlockState_(x, y, z).getBlock(), level.getBlockStateAtSide(x, y, z, hitResult.getDirection().getOpposite()).getBlock())) {
             stateForPlacement = this.getCustomState(level, x, y, z, player, hand, hitResult);
         }
         if (stateForPlacement == null) {
@@ -57,7 +51,7 @@ public abstract class ItemGenericBlockPlaceable extends ItemBlock {
                 p.awardStat(EvolutionStats.BLOCK_PLACED.get(blockAtPos));
             }
         }
-        if (player.isSecondaryUseActive()) {
+        if (this.usesSneakingCondition() && player.isSecondaryUseActive()) {
             this.sneakingAction(level, x, y, z, player, hand, hitResult);
         }
         SoundType soundType = stateForPlacement.getSoundType();
@@ -66,6 +60,16 @@ public abstract class ItemGenericBlockPlaceable extends ItemBlock {
         return InteractionResult.sidedSuccess(level.isClientSide);
     }
 
-    public void sneakingAction(Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult) {
+    protected abstract boolean customCondition(Block blockAtPlacing, Block blockClicking);
+
+    protected abstract @Nullable BlockState getCustomState(Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult);
+
+    protected abstract @Nullable BlockState getSneakingState(Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult);
+
+    protected void sneakingAction(Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult) {
     }
+
+    protected abstract boolean usesCustomCondition();
+
+    protected abstract boolean usesSneakingCondition();
 }

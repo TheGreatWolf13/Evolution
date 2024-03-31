@@ -160,7 +160,7 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
     @Override
     public void handleBlockDestruction(PacketSCBlockDestruction packet) {
         PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
-        this.level.destroyBlockProgress(packet.id, packet.pos, packet.progress);
+        this.level.destroyBlockProgress(packet.id, packet.pos, packet.progress, packet.face, packet.hitX, packet.hitY, packet.hitZ);
     }
 
     /**

@@ -77,9 +77,6 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
         this.canOcclude = properties.canOcclude;
     }
 
-    @Shadow
-    protected abstract BlockState asState();
-
     /**
      * @reason _
      * @author TheGreatWolf
@@ -214,6 +211,11 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
     @Override
     public float getDestroySpeed_() {
         return this.destroySpeed;
+    }
+
+    @Override
+    public BlockState getDestroyingState(Level level, int x, int y, int z, @Nullable Direction face, double hitX, double hitY, double hitZ) {
+        return this.getBlock().getDestroyingState(this.asState(), level, x, y, z, face, hitX, hitY, hitZ);
     }
 
     /**
@@ -722,6 +724,11 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
         return this.getBlock().updateShape_(this.asState(), from, fromState, level, x, y, z, fromX, fromY, fromZ);
     }
 
+    @Override
+    public boolean updatesSelf(Level level, int x, int y, int z) {
+        return this.getBlock().updatesSelf(this.asState(), level, x, y, z);
+    }
+
     /**
      * @reason _
      * @author TheGreatWolf
@@ -730,4 +737,7 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
     public InteractionResult use(Level level, Player player, InteractionHand hand, BlockHitResult hitResult) {
         return this.getBlock().use_(this.asState(), level, hitResult.posX(), hitResult.posY(), hitResult.posZ(), player, hand, hitResult);
     }
+
+    @Shadow
+    protected abstract BlockState asState();
 }

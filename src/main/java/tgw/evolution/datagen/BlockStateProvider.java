@@ -521,12 +521,52 @@ public class BlockStateProvider implements EvolutionDataProvider<ResourceLocatio
         for (WoodVariant variant : WoodVariant.VALUES) {
             Block choppingBlock = variant.get(EvolutionBlocks.CHOPPING_BLOCKS);
             BlockLog log = variant.get(EvolutionBlocks.LOGS);
-            this.simpleBlock(choppingBlock,
-                             this.models().slab(name(choppingBlock), blockTexture(log), blockTexture(log, "_top"), blockTexture(log, "_top")));
+            this.simpleBlock(choppingBlock, this.models().slab(name(choppingBlock), blockTexture(log), blockTexture(log, "_top"), blockTexture(log, "_top")));
             Block leaves = variant.get(EvolutionBlocks.LEAVES);
             this.simpleBlock(leaves, this.models().leaves(name(leaves), blockTexture(leaves)));
             this.axisBlock(log, blockTexture(log), blockTexture(log, "_top"));
-            this.simpleBlock(variant.get(EvolutionBlocks.PLANKS));
+            Block planks = EvolutionBlocks.PLANKS.get(variant);
+            this.getMultipartBuilder(planks)
+                .part()
+                .modelFile(this.models().cubeAll(name(planks) + "_full", blockTexture(planks)))
+                .addModel()
+                .condition(EvolutionBStates.UP, true)
+                .condition(EvolutionBStates.DOWN, true)
+                .condition(EvolutionBStates.NORTH, true)
+                .condition(EvolutionBStates.SOUTH, true)
+                .condition(EvolutionBStates.EAST, true)
+                .condition(EvolutionBStates.WEST, true)
+                .end()
+                .part()
+                .modelFile(this.models().singleTexture(name(planks) + "_up", Evolution.getResource("planks_up"), "block", blockTexture(planks)))
+                .addModel()
+                .condition(EvolutionBStates.UP, true)
+                .end()
+                .part()
+                .modelFile(this.models().singleTexture(name(planks) + "_down", Evolution.getResource("planks_down"), "block", blockTexture(planks)))
+                .addModel()
+                .condition(EvolutionBStates.DOWN, true)
+                .end()
+                .part()
+                .modelFile(this.models().singleTexture(name(planks) + "_north", Evolution.getResource("planks_north"), "block", blockTexture(planks)))
+                .addModel()
+                .condition(EvolutionBStates.NORTH, true)
+                .end()
+                .part()
+                .modelFile(this.models().singleTexture(name(planks) + "_south", Evolution.getResource("planks_south"), "block", blockTexture(planks)))
+                .addModel()
+                .condition(EvolutionBStates.SOUTH, true)
+                .end()
+                .part()
+                .modelFile(this.models().singleTexture(name(planks) + "_east", Evolution.getResource("planks_east"), "block", blockTexture(planks)))
+                .addModel()
+                .condition(EvolutionBStates.EAST, true)
+                .end()
+                .part()
+                .modelFile(this.models().singleTexture(name(planks) + "_west", Evolution.getResource("planks_west"), "block", blockTexture(planks)))
+                .addModel()
+                .condition(EvolutionBStates.WEST, true)
+                .end();
             Block sapling = variant.get(EvolutionBlocks.SAPLINGS);
             this.simpleBlockNoItem(sapling, this.models().cross(name(sapling), blockTexture(sapling)));
         }

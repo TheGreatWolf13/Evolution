@@ -22,6 +22,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.hooks.asm.DeleteMethod;
+import tgw.evolution.util.constants.BlockFlags;
 
 import java.util.Map;
 import java.util.Random;
@@ -39,9 +40,6 @@ public abstract class Mixin_M_TripWireBlock extends Block {
     public Mixin_M_TripWireBlock(Properties properties) {
         super(properties);
     }
-
-    @Shadow
-    protected abstract void checkPressed(Level level, BlockPos blockPos);
 
     /**
      * @reason _
@@ -107,13 +105,12 @@ public abstract class Mixin_M_TripWireBlock extends Block {
     }
 
     @Override
-    public void playerWillDestroy_(Level level, int x, int y, int z, BlockState state, Player player) {
+    public BlockState playerWillDestroy_(Level level, int x, int y, int z, BlockState state, Player player, Direction face, double hitX, double hitY, double hitZ) {
         if (!level.isClientSide && !player.getMainHandItem().isEmpty() && player.getMainHandItem().is(Items.SHEARS)) {
-            BlockPos pos = new BlockPos(x, y, z);
-            level.setBlock(pos, state.setValue(DISARMED, true), 4);
-            level.gameEvent(player, GameEvent.SHEAR, pos);
+            level.setBlock_(x, y, z, state.setValue(DISARMED, true), BlockFlags.NO_RERENDER);
+            level.gameEvent(player, GameEvent.SHEAR, new BlockPos(x, y, z));
         }
-        super.playerWillDestroy_(level, x, y, z, state, player);
+        return super.playerWillDestroy_(level, x, y, z, state, player, face, hitX, hitY, hitZ);
     }
 
     @Shadow
@@ -144,30 +141,19 @@ public abstract class Mixin_M_TripWireBlock extends Block {
     @Override
     @Overwrite
     @DeleteMethod
-    public BlockState updateShape(BlockState blockState,
-                                  Direction direction,
-                                  BlockState blockState2,
-                                  LevelAccessor levelAccessor,
-                                  BlockPos blockPos,
-                                  BlockPos blockPos2) {
+    public BlockState updateShape(BlockState blockState, Direction direction, BlockState blockState2, LevelAccessor levelAccessor, BlockPos blockPos, BlockPos blockPos2) {
         throw new AbstractMethodError();
     }
 
     @Override
-    public BlockState updateShape_(BlockState state,
-                                   Direction from,
-                                   BlockState fromState,
-                                   LevelAccessor level,
-                                   int x,
-                                   int y,
-                                   int z,
-                                   int fromX,
-                                   int fromY,
-                                   int fromZ) {
+    public BlockState updateShape_(BlockState state, Direction from, BlockState fromState, LevelAccessor level, int x, int y, int z, int fromX, int fromY, int fromZ) {
         return from.getAxis().isHorizontal() ?
                state.setValue(PROPERTY_BY_DIRECTION.get(from), this.shouldConnectTo(fromState, from)) :
                super.updateShape_(state, from, fromState, level, x, y, z, fromX, fromY, fromZ);
     }
+
+    @Shadow
+    protected abstract void checkPressed(Level level, BlockPos blockPos);
 
     @Shadow
     protected abstract void updateSource(Level level, BlockPos blockPos, BlockState blockState);

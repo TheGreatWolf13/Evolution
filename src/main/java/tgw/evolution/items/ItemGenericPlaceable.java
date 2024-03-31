@@ -37,13 +37,33 @@ public abstract class ItemGenericPlaceable extends ItemGeneric {
         return level.setBlock_(x, y, z, state, BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE | BlockFlags.RENDER_MAINTHREAD);
     }
 
-    public abstract boolean customCondition(BlockState stateAtPos);
+    @Override
+    public InteractionResult useOn_(Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult) {
+        InteractionResult placeResult;
+        if (level.getBlockState_(x, y, z).canBeReplaced_(level, x, y, z, player, hand, hitResult)) {
+            placeResult = this.place(level, x, y, z, player, hand, hitResult, true);
+        }
+        else {
+            Direction dir = hitResult.getDirection();
+            int offX = x + dir.getStepX();
+            int offY = y + dir.getStepY();
+            int offZ = z + dir.getStepZ();
+            placeResult = this.place(level, offX, offY, offZ, player, hand, hitResult, level.getBlockState_(offX, offY, offZ).canBeReplaced_(level, offX, offY, offZ, player, hand, hitResult));
+        }
+        if (!placeResult.consumesAction() && this.isEdible()) {
+            InteractionResult secondaryResult = this.use(level, player, hand).getResult();
+            return secondaryResult == InteractionResult.CONSUME ? InteractionResult.CONSUME_PARTIAL : secondaryResult;
+        }
+        return placeResult;
+    }
 
-    public abstract @Nullable BlockState getCustomState(BlockState stateAtPos);
+    protected abstract boolean customCondition(BlockState oldStateAtPos);
 
-    public abstract @Nullable BlockState getSneakingState(Player player);
+    protected abstract @Nullable BlockState getCustomState(BlockState stateAtPos);
 
-    public InteractionResult place(Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult, boolean canPlace) {
+    protected abstract @Nullable BlockState getSneakingState(Player player);
+
+    protected InteractionResult place(Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult, boolean canPlace) {
         if (!canPlace) {
             return InteractionResult.FAIL;
         }
@@ -51,9 +71,11 @@ public abstract class ItemGenericPlaceable extends ItemGeneric {
         if (player.isSecondaryUseActive()) {
             stateForPlacement = this.getSneakingState(player);
         }
-        BlockState oldStateAtPos = level.getBlockState_(x, y, z);
-        if (this.customCondition(oldStateAtPos)) {
-            stateForPlacement = this.getCustomState(oldStateAtPos);
+        if (this.usesCustomCondition()) {
+            BlockState oldStateAtPos = level.getBlockState_(x, y, z);
+            if (this.customCondition(oldStateAtPos)) {
+                stateForPlacement = this.getCustomState(oldStateAtPos);
+            }
         }
         if (stateForPlacement == null) {
             return InteractionResult.FAIL;
@@ -84,25 +106,9 @@ public abstract class ItemGenericPlaceable extends ItemGeneric {
         return InteractionResult.sidedSuccess(level.isClientSide);
     }
 
-    public abstract void successPlaceLogic(Level level, int x, int y, int z, Player player, ItemStack stack);
+    protected abstract void successPlaceLogic(Level level, int x, int y, int z, Player player, ItemStack stack);
 
-    @Override
-    public InteractionResult useOn_(Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult) {
-        InteractionResult placeResult;
-        if (level.getBlockState_(x, y, z).canBeReplaced_(level, x, y, z, player, hand, hitResult)) {
-            placeResult = this.place(level, x, y, z, player, hand, hitResult, true);
-        }
-        else {
-            Direction dir = hitResult.getDirection();
-            int offX = x + dir.getStepX();
-            int offY = y + dir.getStepY();
-            int offZ = z + dir.getStepZ();
-            placeResult = this.place(level, offX, offY, offZ, player, hand, hitResult, level.getBlockState_(offX, offY, offZ).canBeReplaced_(level, offX, offY, offZ, player, hand, hitResult));
-        }
-        if (!placeResult.consumesAction() && this.isEdible()) {
-            InteractionResult secondaryResult = this.use(level, player, hand).getResult();
-            return secondaryResult == InteractionResult.CONSUME ? InteractionResult.CONSUME_PARTIAL : secondaryResult;
-        }
-        return placeResult;
+    protected boolean usesCustomCondition() {
+        return true;
     }
 }

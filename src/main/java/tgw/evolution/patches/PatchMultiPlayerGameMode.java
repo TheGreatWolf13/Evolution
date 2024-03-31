@@ -12,7 +12,7 @@ public interface PatchMultiPlayerGameMode {
         throw new AbstractMethodError();
     }
 
-    default boolean destroyBlock_(int x, int y, int z) {
+    default boolean destroyBlock_(int x, int y, int z, Direction face, double hitX, double hitY, double hitZ) {
         throw new AbstractMethodError();
     }
 

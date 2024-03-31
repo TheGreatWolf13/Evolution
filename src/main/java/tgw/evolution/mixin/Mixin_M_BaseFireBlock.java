@@ -45,6 +45,7 @@ public abstract class Mixin_M_BaseFireBlock extends Block {
      * @reason _
      * @author TheGreatWolf
      */
+    @SuppressWarnings("removal")
     @Override
     @Overwrite
     @DeleteMethod
@@ -95,9 +96,6 @@ public abstract class Mixin_M_BaseFireBlock extends Block {
         }
     }
 
-    @Shadow
-    protected abstract boolean canBurn(BlockState blockState);
-
     /**
      * @reason _
      * @author TheGreatWolf
@@ -136,7 +134,7 @@ public abstract class Mixin_M_BaseFireBlock extends Block {
                 }
             }
             if (!state.canSurvive_(level, x, y, z)) {
-                level.removeBlock(new BlockPos(x, y, z), false);
+                level.removeBlock_(x, y, z, false);
             }
         }
     }
@@ -153,11 +151,11 @@ public abstract class Mixin_M_BaseFireBlock extends Block {
     }
 
     @Override
-    public void playerWillDestroy_(Level level, int x, int y, int z, BlockState state, Player player) {
+    public BlockState playerWillDestroy_(Level level, int x, int y, int z, BlockState state, Player player, Direction face, double hitX, double hitY, double hitZ) {
         if (!level.isClientSide()) {
-            level.levelEvent(LevelEvent.SOUND_EXTINGUISH_FIRE, new BlockPos(x, y, z), 0);
+            level.levelEvent_(LevelEvent.SOUND_EXTINGUISH_FIRE, x, y, z, 0);
         }
-        super.playerWillDestroy_(level, x, y, z, state, player);
+        return super.playerWillDestroy_(level, x, y, z, state, player, face, hitX, hitY, hitZ);
     }
 
     /**
@@ -174,4 +172,7 @@ public abstract class Mixin_M_BaseFireBlock extends Block {
     @Override
     public void spawnDestroyParticles_(Level level, Player player, int x, int y, int z, BlockState state) {
     }
+
+    @Shadow
+    protected abstract boolean canBurn(BlockState blockState);
 }

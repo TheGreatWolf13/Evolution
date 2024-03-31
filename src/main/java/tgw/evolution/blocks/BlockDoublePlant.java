@@ -1,6 +1,5 @@
 package tgw.evolution.blocks;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
@@ -50,11 +49,6 @@ public class BlockDoublePlant extends BlockBush {
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(HALF);
-    }
-
-    @Override
     public OffsetType getOffsetType() {
         return OffsetType.XZ;
     }
@@ -65,13 +59,7 @@ public class BlockDoublePlant extends BlockBush {
     }
 
     @Override
-    public @Nullable BlockState getStateForPlacement_(Level level,
-                                                      int x,
-                                                      int y,
-                                                      int z,
-                                                      Player player,
-                                                      InteractionHand hand,
-                                                      BlockHitResult hitResult) {
+    public @Nullable BlockState getStateForPlacement_(Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult) {
         return y < level.dimensionType().logicalHeight() - 1 &&
                level.getBlockState_(x, y + 1, z).canBeReplaced_(level, x, y, z, player, hand, hitResult) ?
                super.getStateForPlacement_(level, x, y, z, player, hand, hitResult) :
@@ -84,7 +72,7 @@ public class BlockDoublePlant extends BlockBush {
     }
 
     @Override
-    public void playerWillDestroy_(Level level, int x, int y, int z, BlockState state, Player player) {
+    public BlockState playerWillDestroy_(Level level, int x, int y, int z, BlockState state, Player player, Direction face, double hitX, double hitY, double hitZ) {
 //        DoubleBlockHalf half = state.getValue(HALF);
 //        int otherY = half == DoubleBlockHalf.LOWER ? y + 1 : y - 1;
 //        BlockState stateOfHalf = level.getBlockState_(x, otherY, z);
@@ -97,26 +85,16 @@ public class BlockDoublePlant extends BlockBush {
 //                dropResources(stateOfHalf, level, x, otherY, z, null, player, player.getMainHandItem());
 //            }
 //        }
-        super.playerWillDestroy_(level, x, y, z, state, player);
+        return super.playerWillDestroy_(level, x, y, z, state, player, face, hitX, hitY, hitZ);
     }
 
     @Override
     public void setPlacedBy_(Level level, int x, int y, int z, BlockState stateAtPos, Player player, ItemStack stack) {
-        level.setBlock(new BlockPos(x, y + 1, z), this.defaultBlockState().setValue(HALF, DoubleBlockHalf.UPPER),
-                       BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE);
+        level.setBlock_(x, y + 1, z, this.defaultBlockState().setValue(HALF, DoubleBlockHalf.UPPER), BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE);
     }
 
     @Override
-    public BlockState updateShape_(BlockState state,
-                                   Direction from,
-                                   BlockState fromState,
-                                   LevelAccessor level,
-                                   int x,
-                                   int y,
-                                   int z,
-                                   int fromX,
-                                   int fromY,
-                                   int fromZ) {
+    public BlockState updateShape_(BlockState state, Direction from, BlockState fromState, LevelAccessor level, int x, int y, int z, int fromX, int fromY, int fromZ) {
         DoubleBlockHalf half = state.getValue(HALF);
         if (from.getAxis() != Direction.Axis.Y ||
             half == DoubleBlockHalf.LOWER != (from == Direction.UP) ||
@@ -126,5 +104,10 @@ public class BlockDoublePlant extends BlockBush {
                    super.updateShape_(state, from, fromState, level, x, y, z, fromX, fromY, fromZ);
         }
         return Blocks.AIR.defaultBlockState();
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(HALF);
     }
 }

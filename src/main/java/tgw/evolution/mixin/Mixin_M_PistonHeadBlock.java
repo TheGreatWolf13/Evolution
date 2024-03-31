@@ -68,9 +68,6 @@ public abstract class Mixin_M_PistonHeadBlock extends DirectionalBlock {
         return (state.getValue(SHORT) ? SHAPES_SHORT : SHAPES_LONG)[state.getValue(FACING).ordinal()];
     }
 
-    @Shadow
-    protected abstract boolean isFittingBase(BlockState blockState, BlockState blockState2);
-
     /**
      * @reason _
      * @author TheGreatWolf
@@ -117,9 +114,12 @@ public abstract class Mixin_M_PistonHeadBlock extends DirectionalBlock {
     public void onRemove_(BlockState state, Level level, int x, int y, int z, BlockState newState, boolean isMoving) {
         if (!state.is(newState.getBlock())) {
             super.onRemove_(state, level, x, y, z, newState, isMoving);
-            BlockPos blockPos2 = new BlockPos(x, y, z).relative(state.getValue(FACING).getOpposite());
-            if (this.isFittingBase(state, level.getBlockState(blockPos2))) {
-                level.destroyBlock(blockPos2, true);
+            Direction offset = state.getValue(FACING).getOpposite();
+            int offX = x + offset.getStepX();
+            int offY = y + offset.getStepY();
+            int offZ = z + offset.getStepZ();
+            if (this.isFittingBase(state, level.getBlockState_(offX, offY, offZ))) {
+                level.destroyBlock_(offX, offY, offZ, true);
             }
         }
     }
@@ -136,17 +136,17 @@ public abstract class Mixin_M_PistonHeadBlock extends DirectionalBlock {
     }
 
     @Override
-    public void playerWillDestroy_(Level level, int x, int y, int z, BlockState state, Player player) {
+    public BlockState playerWillDestroy_(Level level, int x, int y, int z, BlockState state, Player player, Direction face, double hitX, double hitY, double hitZ) {
         if (!level.isClientSide && player.getAbilities().instabuild) {
             Direction dir = state.getValue(FACING).getOpposite();
             int otherX = x + dir.getStepX();
             int otherY = y + dir.getStepY();
             int otherZ = z + dir.getStepZ();
             if (this.isFittingBase(state, level.getBlockState_(otherX, otherY, otherZ))) {
-                level.destroyBlock(new BlockPos(otherX, otherY, otherZ), false);
+                level.destroyBlock_(otherX, otherY, otherZ, false);
             }
         }
-        super.playerWillDestroy_(level, x, y, z, state, player);
+        return super.playerWillDestroy_(level, x, y, z, state, player, face, hitX, hitY, hitZ);
     }
 
     /**
@@ -156,28 +156,17 @@ public abstract class Mixin_M_PistonHeadBlock extends DirectionalBlock {
     @Override
     @Overwrite
     @DeleteMethod
-    public BlockState updateShape(BlockState blockState,
-                                  Direction direction,
-                                  BlockState blockState2,
-                                  LevelAccessor levelAccessor,
-                                  BlockPos blockPos,
-                                  BlockPos blockPos2) {
+    public BlockState updateShape(BlockState blockState, Direction direction, BlockState blockState2, LevelAccessor levelAccessor, BlockPos blockPos, BlockPos blockPos2) {
         throw new AbstractMethodError();
     }
 
     @Override
-    public BlockState updateShape_(BlockState state,
-                                   Direction from,
-                                   BlockState fromState,
-                                   LevelAccessor level,
-                                   int x,
-                                   int y,
-                                   int z,
-                                   int fromX,
-                                   int fromY,
-                                   int fromZ) {
+    public BlockState updateShape_(BlockState state, Direction from, BlockState fromState, LevelAccessor level, int x, int y, int z, int fromX, int fromY, int fromZ) {
         return from.getOpposite() == state.getValue(FACING) && !state.canSurvive_(level, x, y, z) ?
                Blocks.AIR.defaultBlockState() :
                super.updateShape_(state, from, fromState, level, x, y, z, fromX, fromY, fromZ);
     }
+
+    @Shadow
+    protected abstract boolean isFittingBase(BlockState blockState, BlockState blockState2);
 }

@@ -16,10 +16,6 @@ public class PacketCSPlayerAction implements Packet<ServerGamePacketListener> {
     public final double y;
     public final double z;
 
-    public PacketCSPlayerAction(ServerboundPlayerActionPacket.Action action, long pos, Direction direction) {
-        this(action, pos, direction, Double.NaN, Double.NaN, Double.NaN);
-    }
-
     public PacketCSPlayerAction(ServerboundPlayerActionPacket.Action action, long pos, Direction direction, double x, double y, double z) {
         this.pos = pos;
         this.direction = direction;

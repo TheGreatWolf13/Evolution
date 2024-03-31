@@ -53,10 +53,6 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
         this.registerDefaultState(this.defaultBlockState().setValue(AGE_0_15, 0).setValue(NORTH, false).setValue(EAST, false).setValue(SOUTH, false).setValue(WEST, false).setValue(UP, false));
     }
 
-    private static int getTickCooldown(RandomGenerator random) {
-        return 30 + random.nextInt(10);
-    }
-
     public static void init() {
         BlockFire fire = EvolutionBlocks.FIRE;
         for (WoodVariant variant : WoodVariant.VALUES) {
@@ -68,6 +64,10 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
         fire.setFireInfo(EvolutionBlocks.FIREWOOD_PILE, 5, 5);
         fire.setFireInfo(EvolutionBlocks.TALLGRASS, 60, 100);
         fire.setFireInfo(EvolutionBlocks.TALLGRASS_HIGH, 60, 100);
+    }
+
+    private static int getTickCooldown(RandomGenerator random) {
+        return 30 + random.nextInt(10);
     }
 
     @Override
@@ -146,25 +146,6 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
         return BlockUtils.hasSolidFace(level, x, y - 1, z, Direction.UP) || this.isValidFireLocation(level, x, y, z);
     }
 
-    private void checkBurnOut(Level level, int x, int y, int z, int chance, RandomGenerator random, int age) {
-        BlockState state = level.getBlockState_(x, y, z);
-        int odds = this.getBurnOdds(state);
-        if (random.nextInt(chance) < odds) {
-            if (random.nextInt(age + 10) < 5 /*&& !level.isRainingAt(pos)*/) {
-                int j = Math.min(age + random.nextInt(5) / 4, 15);
-                level.setBlockAndUpdate_(x, y, z, this.getStateWithAge(level, x, y, z).setValue(AGE_0_15, j));
-            }
-            else {
-                level.removeBlock_(x, y, z, false);
-            }
-        }
-    }
-
-    @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(AGE_0_15, NORTH, EAST, SOUTH, WEST, UP);
-    }
-
     @Override
     public void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
         if (!entity.fireImmune()) {
@@ -179,18 +160,6 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
 
     public int getBurnOdds(BlockState state) {
         return this.burnOdds.getInt(state.getBlock());
-    }
-
-    private int getFireOdds(LevelReader level, int x, int y, int z) {
-        if (!level.isEmptyBlock_(x, y, z)) {
-            return 0;
-        }
-        int i = 0;
-        for (Direction direction : DirectionUtil.ALL) {
-            BlockState blockstate = level.getBlockStateAtSide(x, y, z, direction);
-            i = Math.max(this.getBurnOdds(blockstate), i);
-        }
-        return i;
     }
 
     @Override
@@ -244,26 +213,9 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
         return true;
     }
 
-    protected boolean isNearRain(Level level, int x, int y, int z) {
-        return /*level.isRainingAt(pos) ||
-               level.isRainingAt(pos.west()) ||
-               level.isRainingAt(pos.east()) ||
-               level.isRainingAt(pos.north()) ||
-               level.isRainingAt(pos.south())*/false;
-    }
-
     @Override
     public boolean isReplaceable(BlockState state) {
         return true;
-    }
-
-    private boolean isValidFireLocation(BlockGetter level, int x, int y, int z) {
-        for (Direction direction : DirectionUtil.ALL) {
-            if (this.canBurn(level.getBlockStateAtSide(x, y, z, direction))) {
-                return true;
-            }
-        }
-        return false;
     }
 
     @Override
@@ -287,11 +239,11 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
     }
 
     @Override
-    public void playerWillDestroy_(Level level, int x, int y, int z, BlockState state, Player player) {
+    public BlockState playerWillDestroy_(Level level, int x, int y, int z, BlockState state, Player player, Direction face, double hitX, double hitY, double hitZ) {
         if (!level.isClientSide()) {
             level.levelEvent_(LevelEvent.SOUND_EXTINGUISH_FIRE, x, y, z, 0);
         }
-        super.playerWillDestroy_(level, x, y, z, state, player);
+        return super.playerWillDestroy_(level, x, y, z, state, player, face, hitX, hitY, hitZ);
     }
 
     public void setFireInfo(Block block, int encouragement, int flammability) {
@@ -375,5 +327,53 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
     @Override
     public BlockState updateShape_(BlockState state, Direction from, BlockState fromState, LevelAccessor level, int x, int y, int z, int fromX, int fromY, int fromZ) {
         return this.canSurvive_(state, level, x, y, z) ? this.getStateWithAge(level, x, y, z).setValue(AGE_0_15, state.getValue(AGE_0_15)) : Blocks.AIR.defaultBlockState();
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(AGE_0_15, NORTH, EAST, SOUTH, WEST, UP);
+    }
+
+    protected boolean isNearRain(Level level, int x, int y, int z) {
+        return /*level.isRainingAt(pos) ||
+               level.isRainingAt(pos.west()) ||
+               level.isRainingAt(pos.east()) ||
+               level.isRainingAt(pos.north()) ||
+               level.isRainingAt(pos.south())*/false;
+    }
+
+    private void checkBurnOut(Level level, int x, int y, int z, int chance, RandomGenerator random, int age) {
+        BlockState state = level.getBlockState_(x, y, z);
+        int odds = this.getBurnOdds(state);
+        if (random.nextInt(chance) < odds) {
+            if (random.nextInt(age + 10) < 5 /*&& !level.isRainingAt(pos)*/) {
+                int j = Math.min(age + random.nextInt(5) / 4, 15);
+                level.setBlockAndUpdate_(x, y, z, this.getStateWithAge(level, x, y, z).setValue(AGE_0_15, j));
+            }
+            else {
+                level.removeBlock_(x, y, z, false);
+            }
+        }
+    }
+
+    private int getFireOdds(LevelReader level, int x, int y, int z) {
+        if (!level.isEmptyBlock_(x, y, z)) {
+            return 0;
+        }
+        int i = 0;
+        for (Direction direction : DirectionUtil.ALL) {
+            BlockState blockstate = level.getBlockStateAtSide(x, y, z, direction);
+            i = Math.max(this.getBurnOdds(blockstate), i);
+        }
+        return i;
+    }
+
+    private boolean isValidFireLocation(BlockGetter level, int x, int y, int z) {
+        for (Direction direction : DirectionUtil.ALL) {
+            if (this.canBurn(level.getBlockStateAtSide(x, y, z, direction))) {
+                return true;
+            }
+        }
+        return false;
     }
 }

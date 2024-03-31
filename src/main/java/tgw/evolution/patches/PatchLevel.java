@@ -24,7 +24,7 @@ public interface PatchLevel extends PatchLevelWriter {
         throw new AbstractMethodError();
     }
 
-    default void destroyBlockProgress(int breakerId, long pos, int progress) {
+    default void destroyBlockProgress(int breakerId, long pos, int progress, @Nullable Direction face, double hitX, double hitY, double hitZ) {
         throw new AbstractMethodError();
     }
 

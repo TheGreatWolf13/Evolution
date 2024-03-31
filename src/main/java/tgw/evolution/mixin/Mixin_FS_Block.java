@@ -346,15 +346,15 @@ public abstract class Mixin_FS_Block extends BlockBehaviour implements PatchBloc
     //ok
     public void playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
         Evolution.deprecatedMethod();
-        this.playerWillDestroy_(level, pos.getX(), pos.getY(), pos.getZ(), state, player);
     }
 
     @Override
-    public void playerWillDestroy_(Level level, int x, int y, int z, BlockState state, Player player) {
+    public BlockState playerWillDestroy_(Level level, int x, int y, int z, BlockState state, Player player, Direction face, double hitX, double hitY, double hitZ) {
         this.spawnDestroyParticles_(level, player, x, y, z, state.stateForParticles(level, x, y, z));
         if (state.is(BlockTags.GUARDED_BY_PIGLINS)) {
             PiglinAi.angerNearbyPiglins(player, false);
         }
+        return level.getFluidState_(x, y, z).createLegacyBlock();
     }
 
     /**

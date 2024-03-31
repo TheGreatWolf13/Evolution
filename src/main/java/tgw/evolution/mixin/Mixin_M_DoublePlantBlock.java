@@ -107,16 +107,16 @@ public abstract class Mixin_M_DoublePlantBlock extends BushBlock {
     }
 
     @Override
-    public void playerWillDestroy_(Level level, int x, int y, int z, BlockState state, Player player) {
+    public BlockState playerWillDestroy_(Level level, int x, int y, int z, BlockState state, Player player, Direction face, double hitX, double hitY, double hitZ) {
         if (!level.isClientSide) {
             if (player.isCreative()) {
                 BlockUtils.preventCreativeDropFromBottomPart(level, x, y, z, state, player);
             }
             else {
-                dropResources(state, level, new BlockPos(x, y, z), null, player, player.getMainHandItem());
+                BlockUtils.dropResources(state, level, x, y, z, null, player, player.getMainHandItem());
             }
         }
-        super.playerWillDestroy_(level, x, y, z, state, player);
+        return super.playerWillDestroy_(level, x, y, z, state, player, face, hitX, hitY, hitZ);
     }
 
     /**

@@ -500,7 +500,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
         return this.renderChunksInFrustum.size();
     }
 
-    public void destroyBlockProgress(int breakerId, long pos, int progress) {
+    public void destroyBlockProgress(int breakerId, long pos, int progress, @Nullable Direction face, double hitX, double hitY, double hitZ) {
         if (progress >= 0 && progress < 10) {
             EvBlockDestructionProgress blockDestructionProgress = this.destroyingBlocks.get(breakerId);
             if (blockDestructionProgress != null) {
@@ -510,6 +510,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
                 blockDestructionProgress = new EvBlockDestructionProgress(breakerId, pos);
                 this.destroyingBlocks.put(breakerId, blockDestructionProgress);
             }
+            blockDestructionProgress.setLocation(face, hitX, hitY, hitZ);
             blockDestructionProgress.setProgress(progress);
             blockDestructionProgress.updateTick(this.ticks);
             SortedSet<EvBlockDestructionProgress> blockDestructionProgresses = this.destructionProgress.get(blockDestructionProgress.getPos());
@@ -1004,13 +1005,14 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
             if (!(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ > 1_024.0)) {
                 SortedSet<EvBlockDestructionProgress> destructionProgresses = destructions.getIterationValue(it);
                 if (!destructionProgresses.isEmpty()) {
-                    int progress = destructionProgresses.last().getProgress();
+                    EvBlockDestructionProgress last = destructionProgresses.last();
+                    int progress = last.getProgress();
                     matrices.pushPose();
                     matrices.translate(deltaX, deltaY, deltaZ);
                     PoseStack.Pose entry = matrices.last();
                     //noinspection ObjectAllocationInLoop
                     VertexConsumer consumer = new SheetedDecalTextureGenerator(this.bufferHolder.crumblingBufferSource().getBuffer(ModelBakery.DESTROY_TYPES.get(progress)), entry.pose(), entry.normal());
-                    this.mc.getBlockRenderer().renderBreakingTexture(this.level.getBlockState_(x, y, z), x, y, z, this.level, matrices, consumer);
+                    this.mc.getBlockRenderer().renderBreakingTexture(last.getBlockState(this.level), x, y, z, this.level, matrices, consumer);
                     matrices.popPose();
                 }
             }

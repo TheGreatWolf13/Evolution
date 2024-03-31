@@ -56,13 +56,11 @@ public abstract class Mixin_M_BeehiveBlock extends BaseEntityBlock {
         throw new AbstractMethodError();
     }
 
-    @Shadow
-    protected abstract void angerNearbyBees(Level level, BlockPos blockPos);
-
     /**
      * @reason _
      * @author TheGreatWolf
      */
+    @SuppressWarnings("removal")
     @Override
     @Overwrite
     @DeleteMethod
@@ -80,9 +78,6 @@ public abstract class Mixin_M_BeehiveBlock extends BaseEntityBlock {
         }
     }
 
-    @Shadow
-    protected abstract boolean hiveContainsBees(Level level, BlockPos blockPos);
-
     /**
      * @reason _
      * @author TheGreatWolf
@@ -90,12 +85,7 @@ public abstract class Mixin_M_BeehiveBlock extends BaseEntityBlock {
     @Override
     @Overwrite
     @DeleteMethod
-    public void playerDestroy(Level level,
-                              Player player,
-                              BlockPos blockPos,
-                              BlockState blockState,
-                              @Nullable BlockEntity blockEntity,
-                              ItemStack itemStack) {
+    public void playerDestroy(Level level, Player player, BlockPos blockPos, BlockState blockState, @Nullable BlockEntity blockEntity, ItemStack itemStack) {
         throw new AbstractMethodError();
     }
 
@@ -105,9 +95,8 @@ public abstract class Mixin_M_BeehiveBlock extends BaseEntityBlock {
         if (!level.isClientSide && te instanceof BeehiveBlockEntity tile) {
             if (EnchantmentHelper.getItemEnchantmentLevel(Enchantments.SILK_TOUCH, stack) == 0) {
                 tile.emptyAllLivingFromHive(player, state, BeehiveBlockEntity.BeeReleaseStatus.EMERGENCY);
-                BlockPos pos = new BlockPos(x, y, z);
-                level.updateNeighbourForOutputSignal(pos, this);
-                this.angerNearbyBees(level, pos);
+                level.updateNeighbourForOutputSignal_(x, y, z, this);
+                this.angerNearbyBees(level, new BlockPos(x, y, z));
             }
             CriteriaTriggers.BEE_NEST_DESTROYED.trigger((ServerPlayer) player, state, stack, tile.getOccupantCount());
         }
@@ -125,7 +114,7 @@ public abstract class Mixin_M_BeehiveBlock extends BaseEntityBlock {
     }
 
     @Override
-    public void playerWillDestroy_(Level level, int x, int y, int z, BlockState state, Player player) {
+    public BlockState playerWillDestroy_(Level level, int x, int y, int z, BlockState state, Player player, Direction face, double hitX, double hitY, double hitZ) {
         if (!level.isClientSide && player.isCreative() && level.getGameRules().getBoolean(GameRules.RULE_DOBLOCKDROPS)) {
             if (level.getBlockEntity_(x, y, z) instanceof BeehiveBlockEntity tile) {
                 ItemStack stack = new ItemStack(this);
@@ -147,21 +136,14 @@ public abstract class Mixin_M_BeehiveBlock extends BaseEntityBlock {
                 }
             }
         }
-        super.playerWillDestroy_(level, x, y, z, state, player);
+        return super.playerWillDestroy_(level, x, y, z, state, player, face, hitX, hitY, hitZ);
     }
 
     @Shadow
-    public abstract void releaseBeesAndResetHoneyLevel(Level level,
-                                                       BlockState blockState,
-                                                       BlockPos blockPos,
-                                                       @Nullable Player player,
-                                                       BeehiveBlockEntity.BeeReleaseStatus beeReleaseStatus);
+    public abstract void releaseBeesAndResetHoneyLevel(Level level, BlockState blockState, BlockPos blockPos, @Nullable Player player, BeehiveBlockEntity.BeeReleaseStatus beeReleaseStatus);
 
     @Shadow
     public abstract void resetHoneyLevel(Level level, BlockState blockState, BlockPos blockPos);
-
-    @Shadow
-    protected abstract void trySpawnDripParticles(Level level, BlockPos blockPos, BlockState blockState);
 
     /**
      * @reason _
@@ -170,26 +152,12 @@ public abstract class Mixin_M_BeehiveBlock extends BaseEntityBlock {
     @Override
     @Overwrite
     @DeleteMethod
-    public BlockState updateShape(BlockState blockState,
-                                  Direction direction,
-                                  BlockState blockState2,
-                                  LevelAccessor levelAccessor,
-                                  BlockPos blockPos,
-                                  BlockPos blockPos2) {
+    public BlockState updateShape(BlockState blockState, Direction direction, BlockState blockState2, LevelAccessor levelAccessor, BlockPos blockPos, BlockPos blockPos2) {
         throw new AbstractMethodError();
     }
 
     @Override
-    public BlockState updateShape_(BlockState state,
-                                   Direction from,
-                                   BlockState fromState,
-                                   LevelAccessor level,
-                                   int x,
-                                   int y,
-                                   int z,
-                                   int fromX,
-                                   int fromY,
-                                   int fromZ) {
+    public BlockState updateShape_(BlockState state, Direction from, BlockState fromState, LevelAccessor level, int x, int y, int z, int fromX, int fromY, int fromZ) {
         if (fromState.getBlock() instanceof FireBlock) {
             if (level.getBlockEntity_(x, y, z) instanceof BeehiveBlockEntity tile) {
                 tile.emptyAllLivingFromHive(null, state, BeehiveBlockEntity.BeeReleaseStatus.EMERGENCY);
@@ -205,12 +173,7 @@ public abstract class Mixin_M_BeehiveBlock extends BaseEntityBlock {
     @Override
     @Overwrite
     @DeleteMethod
-    public InteractionResult use(BlockState blockState,
-                                 Level level,
-                                 BlockPos blockPos,
-                                 Player player,
-                                 InteractionHand interactionHand,
-                                 BlockHitResult blockHitResult) {
+    public InteractionResult use(BlockState blockState, Level level, BlockPos blockPos, Player player, InteractionHand interactionHand, BlockHitResult blockHitResult) {
         throw new AbstractMethodError();
     }
 
@@ -260,4 +223,13 @@ public abstract class Mixin_M_BeehiveBlock extends BaseEntityBlock {
         }
         return super.use_(state, level, x, y, z, player, hand, hitResult);
     }
+
+    @Shadow
+    protected abstract void angerNearbyBees(Level level, BlockPos blockPos);
+
+    @Shadow
+    protected abstract boolean hiveContainsBees(Level level, BlockPos blockPos);
+
+    @Shadow
+    protected abstract void trySpawnDripParticles(Level level, BlockPos blockPos, BlockState blockState);
 }

@@ -42,30 +42,39 @@ public class ItemRock extends ItemGenericBlockPlaceable implements IRockVariant 
     }
 
     @Override
-    public boolean customCondition(Block blockAtPlacing, Block blockClicking) {
-        return blockClicking instanceof BlockKnapping;
-    }
-
-    @Override
-    public @Nullable BlockState getCustomState(Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult) {
-        return null;
-    }
-
-    @Override
-    public BlockState getSneakingState(Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult) {
-        return this.variant.get(EvolutionBlocks.KNAPPING_BLOCKS).defaultBlockState();
-
-    }
-
-    @Override
     public RockVariant rockVariant() {
         return this.variant;
     }
 
     @Override
-    public void sneakingAction(Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult) {
+    protected boolean customCondition(Block blockAtPlacing, Block blockClicking) {
+        return blockClicking instanceof BlockKnapping;
+    }
+
+    @Override
+    protected @Nullable BlockState getCustomState(Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult) {
+        return null;
+    }
+
+    @Override
+    protected BlockState getSneakingState(Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult) {
+        return this.variant.get(EvolutionBlocks.KNAPPING_BLOCKS).defaultBlockState();
+    }
+
+    @Override
+    protected void sneakingAction(Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult) {
         if (player instanceof ServerPlayer p) {
             p.connection.send(new PacketSCOpenKnappingGui(BlockPos.asLong(x, y, z), this.variant));
         }
+    }
+
+    @Override
+    protected boolean usesCustomCondition() {
+        return true;
+    }
+
+    @Override
+    protected boolean usesSneakingCondition() {
+        return true;
     }
 }

@@ -1,6 +1,7 @@
 package tgw.evolution.mixin;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -22,6 +23,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.hooks.asm.DeleteMethod;
+import tgw.evolution.util.constants.BlockFlags;
 
 @Mixin(TntBlock.class)
 public abstract class Mixin_M_TntBlock extends Block {
@@ -54,20 +56,10 @@ public abstract class Mixin_M_TntBlock extends Block {
     }
 
     @Override
-    public void neighborChanged_(BlockState state,
-                                 Level level,
-                                 int x,
-                                 int y,
-                                 int z,
-                                 Block oldBlock,
-                                 int fromX,
-                                 int fromY,
-                                 int fromZ,
-                                 boolean isMoving) {
-        BlockPos pos = new BlockPos(x, y, z);
-        if (level.hasNeighborSignal(pos)) {
-            explode(level, pos);
-            level.removeBlock(pos, false);
+    public void neighborChanged_(BlockState state, Level level, int x, int y, int z, Block oldBlock, int fromX, int fromY, int fromZ, boolean isMoving) {
+        if (level.hasNeighborSignal_(x, y, z)) {
+            explode(level, new BlockPos(x, y, z));
+            level.removeBlock_(x, y, z, false);
         }
     }
 
@@ -85,10 +77,9 @@ public abstract class Mixin_M_TntBlock extends Block {
     @Override
     public void onPlace_(BlockState state, Level level, int x, int y, int z, BlockState oldState, boolean isMoving) {
         if (!oldState.is(state.getBlock())) {
-            BlockPos pos = new BlockPos(x, y, z);
-            if (level.hasNeighborSignal(pos)) {
-                explode(level, pos);
-                level.removeBlock(pos, false);
+            if (level.hasNeighborSignal_(x, y, z)) {
+                explode(level, new BlockPos(x, y, z));
+                level.removeBlock_(x, y, z, false);
             }
         }
     }
@@ -105,11 +96,11 @@ public abstract class Mixin_M_TntBlock extends Block {
     }
 
     @Override
-    public void playerWillDestroy_(Level level, int x, int y, int z, BlockState state, Player player) {
+    public BlockState playerWillDestroy_(Level level, int x, int y, int z, BlockState state, Player player, Direction face, double hitX, double hitY, double hitZ) {
         if (!level.isClientSide() && !player.isCreative() && state.getValue(UNSTABLE)) {
             explode(level, new BlockPos(x, y, z));
         }
-        super.playerWillDestroy_(level, x, y, z, state, player);
+        return super.playerWillDestroy_(level, x, y, z, state, player, face, hitX, hitY, hitZ);
     }
 
     /**
@@ -119,12 +110,7 @@ public abstract class Mixin_M_TntBlock extends Block {
     @Override
     @Overwrite
     @DeleteMethod
-    public InteractionResult use(BlockState blockState,
-                                 Level level,
-                                 BlockPos blockPos,
-                                 Player player,
-                                 InteractionHand interactionHand,
-                                 BlockHitResult blockHitResult) {
+    public InteractionResult use(BlockState blockState, Level level, BlockPos blockPos, Player player, InteractionHand interactionHand, BlockHitResult blockHitResult) {
         throw new AbstractMethodError();
     }
 
@@ -134,9 +120,8 @@ public abstract class Mixin_M_TntBlock extends Block {
         if (!stack.is(Items.FLINT_AND_STEEL) && !stack.is(Items.FIRE_CHARGE)) {
             return super.use_(state, level, x, y, z, player, hand, hitResult);
         }
-        BlockPos pos = new BlockPos(x, y, z);
-        explode(level, pos, player);
-        level.setBlock(pos, Blocks.AIR.defaultBlockState(), 11);
+        explode(level, new BlockPos(x, y, z), player);
+        level.setBlock_(x, y, z, Blocks.AIR.defaultBlockState(), BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE | BlockFlags.RENDER_MAINTHREAD);
         Item item = stack.getItem();
         if (!player.isCreative()) {
             if (stack.is(Items.FLINT_AND_STEEL)) {

@@ -63,6 +63,10 @@ public interface PatchBlockStateBase {
         throw new AbstractMethodError();
     }
 
+    default BlockState getDestroyingState(Level level, int x, int y, int z, @Nullable Direction face, double hitX, double hitY, double hitZ) {
+        throw new AbstractMethodError();
+    }
+
     default int getEmissiveLightColor(BlockAndTintGetter level, int x, int y, int z) {
         throw new AbstractMethodError();
     }
@@ -191,15 +195,11 @@ public interface PatchBlockStateBase {
         throw new AbstractMethodError();
     }
 
-    default BlockState updateShape_(Direction from,
-                                    BlockState fromState,
-                                    LevelAccessor level,
-                                    int x,
-                                    int y,
-                                    int z,
-                                    int fromX,
-                                    int fromY,
-                                    int fromZ) {
+    default BlockState updateShape_(Direction from, BlockState fromState, LevelAccessor level, int x, int y, int z, int fromX, int fromY, int fromZ) {
+        throw new AbstractMethodError();
+    }
+
+    default boolean updatesSelf(Level level, int x, int y, int z) {
         throw new AbstractMethodError();
     }
 }
