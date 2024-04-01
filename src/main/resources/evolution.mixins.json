@@ -411,6 +411,7 @@
     "MixinGiveCommand",
     "MixinHeightmap",
     "MixinHolder_Reference",
+    "MixinIdMap",
     "MixinImposterProtoChunk",
     "MixinIngredient",
     "MixinIngredient_ItemValue",
