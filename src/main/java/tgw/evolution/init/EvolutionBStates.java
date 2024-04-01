@@ -2,7 +2,6 @@ package tgw.evolution.init;
 
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.properties.*;
-import net.minecraft.world.phys.shapes.VoxelShape;
 import tgw.evolution.blocks.tileentities.SchematicMode;
 
 public final class EvolutionBStates {
@@ -53,17 +52,6 @@ public final class EvolutionBStates {
             case WEST -> WEST;
             case NORTH -> NORTH;
             case SOUTH -> SOUTH;
-        };
-    }
-
-    public static VoxelShape directionToShape(Direction direction) {
-        return switch (direction) {
-            case UP -> EvolutionShapes.SLAB_16_U;
-            case DOWN -> EvolutionShapes.SLAB_16_D[0];
-            case NORTH -> EvolutionShapes.SLAB_16_N;
-            case SOUTH -> EvolutionShapes.SLAB_16_S;
-            case EAST -> EvolutionShapes.SLAB_16_E;
-            case WEST -> EvolutionShapes.SLAB_16_W;
         };
     }
 }

@@ -14,6 +14,11 @@ public final class EvolutionShapes {
     public static final VoxelShape SLAB_2_D;
     public static final VoxelShape[] SLAB_4_D;
     public static final VoxelShape[] SLAB_8_D;
+    public static final VoxelShape SLAB_8_U;
+    public static final VoxelShape SLAB_8_N;
+    public static final VoxelShape SLAB_8_S;
+    public static final VoxelShape SLAB_8_E;
+    public static final VoxelShape SLAB_8_W;
     public static final VoxelShape[] SLAB_16_D;
     public static final VoxelShape SLAB_16_U;
     public static final VoxelShape SLAB_16_N;
@@ -54,43 +59,55 @@ public final class EvolutionShapes {
     //Groups
     public static final VoxelShape[] LOG_PILE;
     public static final VoxelShape[] MOLD_CLAY;
+    public static final VoxelShape PICKAXE_THICK;
+    public static final VoxelShape AXE_THICK;
     private static final VoxelShape PICKAXE1_THICK = Block.box(3.5, 0.5, 3.5, 12.5, 3, 6.5);
     private static final VoxelShape PICKAXE2_THICK = Block.box(0.5, 0.5, 6.5, 3.5, 3, 9.5);
     private static final VoxelShape PICKAXE3_THICK = Block.box(12.5, 0.5, 6.5, 15.5, 3, 9.5);
-    public static final VoxelShape PICKAXE_THICK = Shapes.or(PICKAXE1_THICK, PICKAXE2_THICK, PICKAXE3_THICK);
     private static final VoxelShape AXE1_THICK = Block.box(0.5, 0.5, 3.5, 12.5, 3, 12.5);
     private static final VoxelShape AXE2_THICK = Block.box(12.5, 0.5, 6.5, 15.5, 3, 9.5);
     private static final VoxelShape AXE3_THICK = Block.box(3.5, 0.5, 0.5, 6.5, 3, 15.5);
-    public static final VoxelShape AXE_THICK = Shapes.or(AXE1_THICK, AXE2_THICK, AXE3_THICK);
 
     static {
         SLAB_2_D = Block.box(0, 0, 0, 16, 8, 16);
-        SLAB_4_D = new VoxelShape[]{Block.box(0, 0, 0, 16, 4, 16),
-                                    SLAB_2_D,
-                                    Block.box(0, 0, 0, 16, 12, 16),
-                                    Shapes.block()};
-        SLAB_8_D = new VoxelShape[]{Block.box(0, 0, 0, 16, 2, 16),
-                                    SLAB_4_D[0],
-                                    Block.box(0, 0, 0, 16, 6, 16),
-                                    SLAB_4_D[1],
-                                    };
-        SLAB_16_D = new VoxelShape[]{Block.box(0, 0, 0, 16, 1, 16),
-                                     SLAB_8_D[0],
-                                     Block.box(0, 0, 0, 16, 3, 16),
-                                     SLAB_8_D[1],
-                                     Block.box(0, 0, 0, 16, 5, 16),
-                                     SLAB_8_D[2],
-                                     Block.box(0, 0, 0, 16, 7, 16),
-                                     SLAB_8_D[3]};
+        SLAB_4_D = new VoxelShape[]{
+                Block.box(0, 0, 0, 16, 4, 16),
+                SLAB_2_D,
+                Block.box(0, 0, 0, 16, 12, 16),
+                Shapes.block()
+        };
+        SLAB_8_D = new VoxelShape[]{
+                Block.box(0, 0, 0, 16, 2, 16),
+                SLAB_4_D[0],
+                Block.box(0, 0, 0, 16, 6, 16),
+                SLAB_4_D[1]
+        };
+        SLAB_8_U = Block.box(0, 14, 0, 16, 16, 16);
+        SLAB_8_N = Block.box(0, 0, 0, 16, 16, 2);
+        SLAB_8_S = Block.box(0, 0, 14, 16, 16, 16);
+        SLAB_8_E = Block.box(14, 0, 0, 16, 16, 16);
+        SLAB_8_W = Block.box(0, 0, 0, 2, 16, 16);
+        SLAB_16_D = new VoxelShape[]{
+                Block.box(0, 0, 0, 16, 1, 16),
+                SLAB_8_D[0],
+                Block.box(0, 0, 0, 16, 3, 16),
+                SLAB_8_D[1],
+                Block.box(0, 0, 0, 16, 5, 16),
+                SLAB_8_D[2],
+                Block.box(0, 0, 0, 16, 7, 16),
+                SLAB_8_D[3]
+        };
         SLAB_16_U = Block.box(0, 15, 0, 16, 16, 16);
         SLAB_16_N = Block.box(0, 0, 0, 16, 16, 1);
         SLAB_16_S = Block.box(0, 0, 15, 16, 16, 16);
         SLAB_16_E = Block.box(15, 0, 0, 16, 16, 16);
         SLAB_16_W = Block.box(0, 0, 0, 1, 16, 16);
-        LOG_PILE = new VoxelShape[]{Block.box(0, 0, 0, 4, 4, 16), Block.box(0, 0, 0, 8, 4, 16), Block.box(0, 0, 0, 12, 4, 16), SLAB_4_D[0],
-                                    Block.box(0, 0, 0, 4, 8, 16), Block.box(0, 0, 0, 8, 8, 16), Block.box(0, 0, 0, 12, 8, 16), SLAB_4_D[1],
-                                    Block.box(0, 0, 0, 4, 12, 16), Block.box(0, 0, 0, 8, 12, 16), Block.box(0, 0, 0, 12, 12, 16), SLAB_4_D[2],
-                                    Block.box(0, 0, 0, 4, 16, 16), Block.box(0, 0, 0, 8, 16, 16), Block.box(0, 0, 0, 12, 16, 16)};
+        LOG_PILE = new VoxelShape[]{
+                Block.box(0, 0, 0, 4, 4, 16), Block.box(0, 0, 0, 8, 4, 16), Block.box(0, 0, 0, 12, 4, 16), SLAB_4_D[0],
+                Block.box(0, 0, 0, 4, 8, 16), Block.box(0, 0, 0, 8, 8, 16), Block.box(0, 0, 0, 12, 8, 16), SLAB_4_D[1],
+                Block.box(0, 0, 0, 4, 12, 16), Block.box(0, 0, 0, 8, 12, 16), Block.box(0, 0, 0, 12, 12, 16), SLAB_4_D[2],
+                Block.box(0, 0, 0, 4, 16, 16), Block.box(0, 0, 0, 8, 16, 16), Block.box(0, 0, 0, 12, 16, 16)
+        };
         MOLD_CLAY = new VoxelShape[]{MOLD_1, MOLD_2, MOLD_3, MOLD_4, MOLD_5};
         VoxelShape moldBase = Shapes.box(0, 0, 0, 1, 0.5 / 16, 1);
         VoxelShape moldBaseN = Shapes.box(0, 0, 0, 1, 3 / 16.0, 0.5 / 16);
@@ -98,6 +115,8 @@ public final class EvolutionShapes {
         VoxelShape moldBaseW = Shapes.box(0, 0, 0, 0.5 / 16, 3 / 16.0, 1);
         VoxelShape moldBaseE = Shapes.box(15.5 / 16, 0, 0, 1, 3 / 16.0, 1);
         MOLD_TOTAL_BASE = Shapes.or(moldBase, moldBaseN, moldBaseS, moldBaseW, moldBaseE);
+        PICKAXE_THICK = Shapes.or(PICKAXE1_THICK, PICKAXE2_THICK, PICKAXE3_THICK);
+        AXE_THICK = Shapes.or(AXE1_THICK, AXE2_THICK, AXE3_THICK);
     }
 
     private EvolutionShapes() {
@@ -111,5 +130,16 @@ public final class EvolutionShapes {
             value = list.get(i).collide(axis, bb, value);
         }
         return value;
+    }
+
+    public static VoxelShape directionToShape2Thickness(Direction direction) {
+        return switch (direction) {
+            case UP -> SLAB_8_U;
+            case DOWN -> SLAB_8_D[0];
+            case NORTH -> SLAB_8_N;
+            case SOUTH -> SLAB_8_S;
+            case EAST -> SLAB_8_E;
+            case WEST -> SLAB_8_W;
+        };
     }
 }

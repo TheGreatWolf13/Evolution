@@ -21,6 +21,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionItems;
+import tgw.evolution.init.EvolutionShapes;
 import tgw.evolution.util.constants.HarvestLevel;
 import tgw.evolution.util.constants.WoodVariant;
 import tgw.evolution.util.math.DirectionUtil;
@@ -42,7 +43,7 @@ public class BlockPlanks extends BlockPhysics {
             VoxelShape shape = Shapes.empty();
             for (Direction direction : DirectionUtil.ALL) {
                 if ((i & 1 << direction.ordinal()) != 0) {
-                    shape = MathHelper.union(shape, directionToShape(direction));
+                    shape = MathHelper.union(shape, EvolutionShapes.directionToShape2Thickness(direction));
                 }
             }
             SHAPE_CACHE[i] = shape;
@@ -177,7 +178,7 @@ public class BlockPlanks extends BlockPhysics {
             }
             Direction.Axis primaryAxis = DirectionUtil.backward(axis);
             Direction.Axis secondaryAxis = DirectionUtil.forward(axis);
-            Direction chosenDir = DirectionUtil.chooseByDistance(1 / 16.0, 15 / 16.0, primaryAxis, DirectionUtil.choose(primaryAxis, dx, dy, dz), secondaryAxis, DirectionUtil.choose(secondaryAxis, dx, dy, dz), face, hasSide);
+            Direction chosenDir = DirectionUtil.chooseByDistance(2 / 16.0, 14 / 16.0, primaryAxis, DirectionUtil.choose(primaryAxis, dx, dy, dz), secondaryAxis, DirectionUtil.choose(secondaryAxis, dx, dy, dz), face, hasSide);
             return this.defaultBlockState().setValue(directionToProperty(chosenDir), true);
         }
         return this.defaultBlockState().setValue(directionToProperty(face.getOpposite()), true);
@@ -190,7 +191,7 @@ public class BlockPlanks extends BlockPhysics {
 
     @Override
     public int getHarvestLevel(BlockState state, Level level, int x, int y, int z) {
-        return HarvestLevel.HAND;
+        return HarvestLevel.STONE;
     }
 
     @Override
@@ -258,7 +259,7 @@ public class BlockPlanks extends BlockPhysics {
             }
             Direction.Axis primaryAxis = DirectionUtil.backward(axis);
             Direction.Axis secondaryAxis = DirectionUtil.forward(axis);
-            Direction chosenDir = DirectionUtil.chooseByDistance(1 / 16.0, 15 / 16.0, primaryAxis, DirectionUtil.choose(primaryAxis, dx, dy, dz), secondaryAxis, DirectionUtil.choose(secondaryAxis, dx, dy, dz), face, hasSide);
+            Direction chosenDir = DirectionUtil.chooseByDistance(2 / 16.0, 14 / 16.0, primaryAxis, DirectionUtil.choose(primaryAxis, dx, dy, dz), secondaryAxis, DirectionUtil.choose(secondaryAxis, dx, dy, dz), face, hasSide);
             BooleanProperty property = directionToProperty(chosenDir);
             this.spawnDestroyParticles_(level, player, x, y, z, this.defaultBlockState().setValue(property, true));
             return this.updateDistance(state.setValue(property, false), level, x, y, z);
