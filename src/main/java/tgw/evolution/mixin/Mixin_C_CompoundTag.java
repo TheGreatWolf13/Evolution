@@ -15,8 +15,9 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Map;
 
+@SuppressWarnings("NullableProblems")
 @Mixin(CompoundTag.class)
-public abstract class Mixin_C_CompoundTag implements PatchCompoundTag {
+public abstract class Mixin_C_CompoundTag implements Tag, PatchCompoundTag {
 
     @Shadow @Final private Map<String, Tag> tags;
 
@@ -43,6 +44,7 @@ public abstract class Mixin_C_CompoundTag implements PatchCompoundTag {
      * @author TheGreatWolf
      * @reason _
      */
+    @Override
     @Overwrite
     public CompoundTag copy() {
         O2OMap<String, Tag> map = new O2OHashMap<>(this.tags.size());
@@ -62,6 +64,7 @@ public abstract class Mixin_C_CompoundTag implements PatchCompoundTag {
      * @author TheGreatWolf
      * @reason _
      */
+    @Override
     @Overwrite
     public void write(DataOutput dataOutput) throws IOException {
         O2OMap<String, Tag> tags = (O2OMap<String, Tag>) this.tags;
