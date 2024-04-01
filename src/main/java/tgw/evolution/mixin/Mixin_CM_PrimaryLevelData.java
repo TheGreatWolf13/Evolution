@@ -1,6 +1,8 @@
 package tgw.evolution.mixin;
 
+import com.mojang.datafixers.DataFixer;
 import com.mojang.serialization.DataResult;
+import com.mojang.serialization.Lifecycle;
 import net.minecraft.SharedConstants;
 import net.minecraft.Util;
 import net.minecraft.core.RegistryAccess;
@@ -14,6 +16,7 @@ import net.minecraft.world.level.levelgen.WorldGenSettings;
 import net.minecraft.world.level.storage.PrimaryLevelData;
 import net.minecraft.world.level.storage.ServerLevelData;
 import net.minecraft.world.level.storage.WorldData;
+import net.minecraft.world.level.timers.TimerCallbacks;
 import net.minecraft.world.level.timers.TimerQueue;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -22,6 +25,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.hooks.asm.DeleteMethod;
+import tgw.evolution.hooks.asm.ModifyConstructor;
+import tgw.evolution.util.collection.sets.OLinkedHashSet;
 import tgw.evolution.util.collection.sets.OSet;
 
 import java.util.Optional;
@@ -29,7 +34,7 @@ import java.util.Set;
 import java.util.UUID;
 
 @Mixin(PrimaryLevelData.class)
-public abstract class Mixin_M_PrimaryLevelData implements ServerLevelData, WorldData {
+public abstract class Mixin_CM_PrimaryLevelData implements ServerLevelData, WorldData {
 
     @Shadow @Final private static Logger LOGGER;
     @Shadow private int clearWeatherTime;
@@ -56,6 +61,15 @@ public abstract class Mixin_M_PrimaryLevelData implements ServerLevelData, World
     @Shadow private int xSpawn;
     @Shadow private int ySpawn;
     @Shadow private int zSpawn;
+
+    private Mixin_CM_PrimaryLevelData(@Nullable DataFixer dataFixer, int i, @Nullable CompoundTag compoundTag, boolean bl, int j, int k, int l, float f, long m, long n, int o, int p, int q, boolean bl2, int r, boolean bl3, boolean bl4, boolean bl5, WorldBorder.Settings settings, int s, int t, @Nullable UUID uUID, Set<String> set, TimerQueue<MinecraftServer> timerQueue, @Nullable CompoundTag compoundTag2, CompoundTag compoundTag3, LevelSettings levelSettings, WorldGenSettings worldGenSettings, Lifecycle lifecycle) {
+        this.xSpawn = 0;
+    }
+
+    @ModifyConstructor
+    public Mixin_CM_PrimaryLevelData(LevelSettings levelSettings, WorldGenSettings worldGenSettings, Lifecycle lifecycle) {
+        this(null, SharedConstants.getCurrentVersion().getWorldVersion(), null, false, 0, 0, 0, 0.0F, 0L, 0L, 19_133, 0, 0, false, 0, false, false, false, WorldBorder.DEFAULT_SETTINGS, 0, 0, null, new OLinkedHashSet<>(), new TimerQueue<>(TimerCallbacks.SERVER_CALLBACKS), null, new CompoundTag(), levelSettings.copy(), worldGenSettings, lifecycle);
+    }
 
     /**
      * @author TheGreatWolf
