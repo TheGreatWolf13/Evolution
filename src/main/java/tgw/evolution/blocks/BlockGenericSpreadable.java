@@ -113,7 +113,10 @@ public abstract class BlockGenericSpreadable extends BlockPhysics {
                 zOffset += dir.getStepZ();
                 BlockState stateToSpread = level.getBlockState_(xOffset, yOffset, zOffset);
                 IGrassSpreadable spreadable = (IGrassSpreadable) stateToSpread.getBlock();
-                level.setBlockAndUpdate_(xOffset, yOffset, zOffset, spreadable.getGrass().defaultBlockState());
+                int allowanceCost = spreadable.getAllowanceCost(stateToSpread);
+                if (level.getChunkAt_(xOffset, zOffset).getChunkStorage().getAllowance().ifHasConsumeGrassAllowance(allowanceCost)) {
+                    level.setBlockAndUpdate_(xOffset, yOffset, zOffset, spreadable.getGrass().defaultBlockState());
+                }
             }
         }
     }

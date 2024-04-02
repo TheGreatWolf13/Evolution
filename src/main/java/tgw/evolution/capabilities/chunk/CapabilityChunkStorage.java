@@ -15,6 +15,7 @@ import tgw.evolution.blocks.*;
 import tgw.evolution.commands.CommandAtm;
 import tgw.evolution.util.ChunkHolder;
 import tgw.evolution.util.DirectionHolder;
+import tgw.evolution.util.NBTHelper;
 import tgw.evolution.util.collection.lists.IArrayList;
 import tgw.evolution.util.collection.lists.IList;
 import tgw.evolution.util.math.DirectionList;
@@ -31,11 +32,6 @@ public class CapabilityChunkStorage {
 
         @Override
         public void scheduleAtmTick(LevelChunk chunk, int x, int y, int z, boolean forceUpdate) {
-            throw new IllegalStateException("Should not be called on the client!");
-        }
-
-        @Override
-        protected void scheduleAtmTick(LevelChunk chunk, int internalPos) {
             throw new IllegalStateException("Should not be called on the client!");
         }
 
@@ -68,105 +64,22 @@ public class CapabilityChunkStorage {
         public void tick(LevelChunk chunk) {
             throw new IllegalStateException("Should not be called on the client!");
         }
+
+        @Override
+        protected void scheduleAtmTick(LevelChunk chunk, int internalPos) {
+            throw new IllegalStateException("Should not be called on the client!");
+        }
     };
     private static final ThreadLocal<ChunkHolder> HOLDER = ThreadLocal.withInitial(ChunkHolder::new);
     private static final ThreadLocal<DirectionHolder> DIR_HOLDER = ThreadLocal.withInitial(DirectionHolder::new);
+    private final ChunkAllowance allowance = new ChunkAllowance();
+    private boolean continuousAtmDebug;
+    private boolean needsSorting;
     private final IList pendingAtmTicks = new IArrayList();
     private final IList pendingBlockTicks = new IArrayList();
     private final IList pendingIntegrityTicks = new IArrayList();
     private final TickStorage pendingPreciseBlockTicks = new TickStorage();
-    private boolean continuousAtmDebug;
-    private boolean needsSorting;
     private byte updateTicks;
-
-    private static boolean canStabilize(LevelChunk chunk, LevelChunkSection section, ChunkHolder holder, IStructural structural, BlockState state, int x, int y, int z, int index, int selfLoad) {
-        //Try to stabilize on the X axis
-        BlockState stateW = safeGetBlockstate(chunk, section, holder, x - 1, y, z, index, 0);
-        if (stateW.getBlock() instanceof IFillable && structural.canMakeABeamWith(state, stateW)) {
-            int loadW = IFillable.getStableLoadFactor(safeGetStructuralData(chunk, section, holder, x - 1, y, z, index, 0));
-            if (loadW <= selfLoad) {
-                BlockState stateE = safeGetBlockstate(chunk, section, holder, x + 1, y, z, index, 0);
-                if (stateE.getBlock() instanceof IFillable && structural.canMakeABeamWith(state, stateE)) {
-                    int loadE = IFillable.getStableLoadFactor(safeGetStructuralData(chunk, section, holder, x + 1, y, z, index, 0));
-                    if (loadE <= selfLoad) {
-                        if (loadE < selfLoad || loadW < selfLoad) {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-        //Try to stabilize on the Z axis
-        BlockState stateN = safeGetBlockstate(chunk, section, holder, x, y, z - 1, index, 0);
-        if (stateN.getBlock() instanceof IFillable && structural.canMakeABeamWith(state, stateN)) {
-            int loadN = IFillable.getStableLoadFactor(safeGetStructuralData(chunk, section, holder, x, y, z - 1, index, 0));
-            if (loadN <= selfLoad) {
-                BlockState stateS = safeGetBlockstate(chunk, section, holder, x, y, z + 1, index, 0);
-                if (stateS.getBlock() instanceof IFillable && structural.canMakeABeamWith(state, stateS)) {
-                    int loadS = IFillable.getStableLoadFactor(safeGetStructuralData(chunk, section, holder, x, y, z + 1, index, 0));
-                    if (loadS <= selfLoad) {
-                        return loadS < selfLoad || loadN < selfLoad;
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    private static boolean canStabilizeArch(LevelChunk chunk, LevelChunkSection section, ChunkHolder holder, IStructural structural, BlockState state, int x, int y, int z, int index, int selfLoad) {
-        //Try to stabilize on the X axis
-        for (int j = -1; j <= 1; ++j) {
-            BlockState firstState = safeGetBlockstate(chunk, section, holder, x - 1, y, z, index, j);
-            if (firstState.getBlock() instanceof IFillable && structural.canMakeABeamWith(state, firstState)) {
-                int loadW = IFillable.getStableLoadFactor(safeGetStructuralData(chunk, section, holder, x - 1, y, z, index, j));
-                if (loadW <= selfLoad) {
-                    for (int i = -1; i <= 1; ++i) {
-                        if (j == 1 && i == 1) {
-                            continue;
-                        }
-                        BlockState secondState = safeGetBlockstate(chunk, section, holder, x + 1, y, z, index, i);
-                        if (secondState.getBlock() instanceof IFillable && structural.canMakeABeamWith(state, secondState)) {
-                            int loadE = IFillable.getStableLoadFactor(safeGetStructuralData(chunk, section, holder, x + 1, y, z, index, i));
-                            if (loadE <= selfLoad) {
-                                if (loadE < selfLoad || loadW < selfLoad) {
-                                    return true;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        //Try to stabilize on the Z axis
-        for (int j = -1; j <= 1; ++j) {
-            BlockState firstState = safeGetBlockstate(chunk, section, holder, x, y, z - 1, index, j);
-            if (firstState.getBlock() instanceof IFillable && structural.canMakeABeamWith(state, firstState)) {
-                int loadN = IFillable.getStableLoadFactor(safeGetStructuralData(chunk, section, holder, x, y, z - 1, index, j));
-                if (loadN <= selfLoad) {
-                    for (int i = -1; i <= 1; ++i) {
-                        if (j == 1 && i == 1) {
-                            continue;
-                        }
-                        BlockState secondState = safeGetBlockstate(chunk, section, holder, x, y, z + 1, index, i);
-                        if (secondState.getBlock() instanceof IFillable && structural.canMakeABeamWith(state, secondState)) {
-                            int loadS = IFillable.getStableLoadFactor(safeGetStructuralData(chunk, section, holder, x, y, z + 1, index, i));
-                            if (loadS <= selfLoad) {
-                                return loadS < selfLoad || loadN < selfLoad;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    private static void fail(Level level, int x, int y, int z) {
-        BlockState state = level.getBlockState_(x, y, z);
-        if (state.getBlock() instanceof IStructural structural) {
-            structural.fail(level, state, x, y, z);
-        }
-    }
 
     /**
      * Retrieves the atm value to be used during Atm Priming. Always call after
@@ -290,6 +203,95 @@ public class CapabilityChunkStorage {
         return section.getBlockState(x, y, z);
     }
 
+    private static boolean canStabilize(LevelChunk chunk, LevelChunkSection section, ChunkHolder holder, IStructural structural, BlockState state, int x, int y, int z, int index, int selfLoad) {
+        //Try to stabilize on the X axis
+        BlockState stateW = safeGetBlockstate(chunk, section, holder, x - 1, y, z, index, 0);
+        if (stateW.getBlock() instanceof IFillable && structural.canMakeABeamWith(state, stateW)) {
+            int loadW = IFillable.getStableLoadFactor(safeGetStructuralData(chunk, section, holder, x - 1, y, z, index, 0));
+            if (loadW <= selfLoad) {
+                BlockState stateE = safeGetBlockstate(chunk, section, holder, x + 1, y, z, index, 0);
+                if (stateE.getBlock() instanceof IFillable && structural.canMakeABeamWith(state, stateE)) {
+                    int loadE = IFillable.getStableLoadFactor(safeGetStructuralData(chunk, section, holder, x + 1, y, z, index, 0));
+                    if (loadE <= selfLoad) {
+                        if (loadE < selfLoad || loadW < selfLoad) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        //Try to stabilize on the Z axis
+        BlockState stateN = safeGetBlockstate(chunk, section, holder, x, y, z - 1, index, 0);
+        if (stateN.getBlock() instanceof IFillable && structural.canMakeABeamWith(state, stateN)) {
+            int loadN = IFillable.getStableLoadFactor(safeGetStructuralData(chunk, section, holder, x, y, z - 1, index, 0));
+            if (loadN <= selfLoad) {
+                BlockState stateS = safeGetBlockstate(chunk, section, holder, x, y, z + 1, index, 0);
+                if (stateS.getBlock() instanceof IFillable && structural.canMakeABeamWith(state, stateS)) {
+                    int loadS = IFillable.getStableLoadFactor(safeGetStructuralData(chunk, section, holder, x, y, z + 1, index, 0));
+                    if (loadS <= selfLoad) {
+                        return loadS < selfLoad || loadN < selfLoad;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private static boolean canStabilizeArch(LevelChunk chunk, LevelChunkSection section, ChunkHolder holder, IStructural structural, BlockState state, int x, int y, int z, int index, int selfLoad) {
+        //Try to stabilize on the X axis
+        for (int j = -1; j <= 1; ++j) {
+            BlockState firstState = safeGetBlockstate(chunk, section, holder, x - 1, y, z, index, j);
+            if (firstState.getBlock() instanceof IFillable && structural.canMakeABeamWith(state, firstState)) {
+                int loadW = IFillable.getStableLoadFactor(safeGetStructuralData(chunk, section, holder, x - 1, y, z, index, j));
+                if (loadW <= selfLoad) {
+                    for (int i = -1; i <= 1; ++i) {
+                        if (j == 1 && i == 1) {
+                            continue;
+                        }
+                        BlockState secondState = safeGetBlockstate(chunk, section, holder, x + 1, y, z, index, i);
+                        if (secondState.getBlock() instanceof IFillable && structural.canMakeABeamWith(state, secondState)) {
+                            int loadE = IFillable.getStableLoadFactor(safeGetStructuralData(chunk, section, holder, x + 1, y, z, index, i));
+                            if (loadE <= selfLoad) {
+                                if (loadE < selfLoad || loadW < selfLoad) {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        //Try to stabilize on the Z axis
+        for (int j = -1; j <= 1; ++j) {
+            BlockState firstState = safeGetBlockstate(chunk, section, holder, x, y, z - 1, index, j);
+            if (firstState.getBlock() instanceof IFillable && structural.canMakeABeamWith(state, firstState)) {
+                int loadN = IFillable.getStableLoadFactor(safeGetStructuralData(chunk, section, holder, x, y, z - 1, index, j));
+                if (loadN <= selfLoad) {
+                    for (int i = -1; i <= 1; ++i) {
+                        if (j == 1 && i == 1) {
+                            continue;
+                        }
+                        BlockState secondState = safeGetBlockstate(chunk, section, holder, x, y, z + 1, index, i);
+                        if (secondState.getBlock() instanceof IFillable && structural.canMakeABeamWith(state, secondState)) {
+                            int loadS = IFillable.getStableLoadFactor(safeGetStructuralData(chunk, section, holder, x, y, z + 1, index, i));
+                            if (loadS <= selfLoad) {
+                                return loadS < selfLoad || loadN < selfLoad;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private static void fail(Level level, int x, int y, int z) {
+        BlockState state = level.getBlockState_(x, y, z);
+        if (state.getBlock() instanceof IStructural structural) {
+            structural.fail(level, state, x, y, z);
+        }
+    }
+
     private static int safeGetStructuralData(LevelChunk chunk, LevelChunkSection section, ChunkHolder holder, int x, int y, int z, int index, int yOffset) {
         Direction dir = holder.getRememberedDir();
         if (yOffset != 0) {
@@ -403,6 +405,7 @@ public class CapabilityChunkStorage {
     }
 
     public void deserializeNBT(CompoundTag nbt) {
+        this.allowance.deserializeNBT(NBTHelper.getCompoundOrEmpty(nbt, "Allowance"));
         int[] pendingIntegrityTicks = nbt.getIntArray("PendingIntegrityTicks");
         this.pendingIntegrityTicks.size(pendingIntegrityTicks.length);
         this.pendingIntegrityTicks.setElements(pendingIntegrityTicks);
@@ -415,6 +418,129 @@ public class CapabilityChunkStorage {
         this.pendingPreciseBlockTicks.deserializeNbt(nbt.getCompound("PendingPreciseBlockTicks"));
         this.needsSorting = true;
         this.continuousAtmDebug = nbt.getBoolean("ContinuousAtmDebug");
+        if (this.continuousAtmDebug) {
+            this.updateTicks = 40;
+        }
+    }
+
+    public ChunkAllowance getAllowance() {
+        return this.allowance;
+    }
+
+    public void scheduleAtmTick(LevelChunk chunk, int x, int y, int z, boolean forceUpdate) {
+        this.scheduleAtmTick(chunk, IAir.packInternalPos(x & 15, y, z & 15, forceUpdate));
+    }
+
+    public void scheduleBlockTick(LevelChunk chunk, int x, int y, int z) {
+        this.pendingBlockTicks.add(IAir.packInternalPos(x & 15, y, z & 15));
+        chunk.setUnsaved(true);
+        if (this.continuousAtmDebug) {
+            this.updateTicks = 40;
+        }
+    }
+
+    public void scheduleIntegrityTick(LevelChunk chunk, int x, int y, int z, boolean oldFillable) {
+        this.scheduleIntegrityTick(chunk, x, y, z, 0, PropagationDirection.NONE, oldFillable);
+    }
+
+    public void schedulePreciseBlockTick(LevelChunk chunk, int x, int y, int z, int ticksInTheFuture) {
+        assert ticksInTheFuture > 0 : "Cannot schedule a tick to happen now or in the past!";
+        this.needsSorting |= this.pendingPreciseBlockTicks.add(chunk.level.getGameTime() + ticksInTheFuture, IAir.packInternalPos(x & 15, y, z & 15));
+        chunk.setUnsaved(true);
+        if (this.continuousAtmDebug) {
+            this.updateTicks = 40;
+        }
+    }
+
+    public CompoundTag serializeNBT() {
+        CompoundTag nbt = new CompoundTag();
+        nbt.put("Allowance", this.allowance.serializeNBT());
+        if (!this.pendingIntegrityTicks.isEmpty()) {
+            nbt.putIntArray("PendingIntegrityTicks", this.pendingIntegrityTicks.toIntArray());
+        }
+        if (!this.pendingBlockTicks.isEmpty()) {
+            nbt.putIntArray("PendingBlockTicks", this.pendingBlockTicks.toIntArray());
+        }
+        if (!this.pendingAtmTicks.isEmpty()) {
+            nbt.putIntArray("PendingAtmTicks", this.pendingAtmTicks.toIntArray());
+        }
+        if (!this.pendingPreciseBlockTicks.isEmpty()) {
+            nbt.put("PendingPreciseBlockTicks", this.pendingPreciseBlockTicks.serializeNbt());
+        }
+        if (this.continuousAtmDebug) {
+            nbt.putBoolean("ContinuousAtmDebug", true);
+        }
+        return nbt;
+    }
+
+    public boolean setContinuousAtmDebug(LevelChunk chunk, boolean debug) {
+        boolean old = this.continuousAtmDebug;
+        this.continuousAtmDebug = debug;
+        boolean changed = old != debug;
+        if (changed) {
+            if (debug) {
+                CommandAtm.fill(chunk, CommandAtm.AIR, true, CommandAtm.ATM_MAKER);
+            }
+            else {
+                CommandAtm.fill(chunk, CommandAtm.ATM, false, CommandAtm.AIR_MAKER);
+            }
+        }
+        return changed;
+    }
+
+    public void tick(LevelChunk chunk) {
+        ServerLevel level = (ServerLevel) chunk.getLevel();
+        this.allowance.tick();
+        this.processPreciseTicks(level, chunk);
+        int len = this.pendingBlockTicks.size();
+        if (len > 0) {
+            for (int i = 0; i < len; ++i) {
+                int pos = this.pendingBlockTicks.getInt(i);
+                int x = IAir.unpackX(pos);
+                int y = IAir.unpackY(pos);
+                int z = IAir.unpackZ(pos);
+                BlockState state = chunk.getBlockState_(x, y, z);
+                state.tick_(level, x, y, z, level.random);
+            }
+            this.pendingBlockTicks.removeElements(0, len);
+        }
+        len = this.pendingIntegrityTicks.size();
+        if (len > 0) {
+            ChunkHolder holder = HOLDER.get();
+            int maxSectionIndex = chunk.getSections().length;
+            ChunkPos pos = chunk.getPos();
+            int minX = pos.getMinBlockX();
+            int minZ = pos.getMinBlockZ();
+            for (int i = 0; i < len; ++i) {
+                this.updatePhysics(level, chunk, holder, this.pendingIntegrityTicks.getInt(i), maxSectionIndex, minX, minZ);
+            }
+            holder.reset();
+            this.pendingIntegrityTicks.removeElements(0, len);
+        }
+        len = this.pendingAtmTicks.size();
+        if (len > 0) {
+            ChunkHolder holder = HOLDER.get();
+            DirectionHolder dirHolder = DIR_HOLDER.get();
+            int maxSectionIndex = chunk.getSections().length;
+            for (int i = 0; i < len; ++i) {
+                this.updateAtm(chunk, holder, this.pendingAtmTicks.getInt(i), dirHolder, maxSectionIndex);
+            }
+            holder.reset();
+            this.pendingAtmTicks.removeElements(0, len);
+        }
+        if (this.continuousAtmDebug) {
+            if ((chunk.isUnsaved() || this.updateTicks > 0) && level.getGameTime() % 20 == 0) {
+                CommandAtm.fill(chunk, CommandAtm.AIR, true, CommandAtm.ATM_MAKER);
+            }
+            if (this.updateTicks > 0) {
+                --this.updateTicks;
+            }
+        }
+    }
+
+    protected void scheduleAtmTick(LevelChunk chunk, int internalPos) {
+        this.pendingAtmTicks.add(internalPos);
+        chunk.setUnsaved(true);
         if (this.continuousAtmDebug) {
             this.updateTicks = 40;
         }
@@ -573,18 +699,6 @@ public class CapabilityChunkStorage {
         }
     }
 
-    public void scheduleAtmTick(LevelChunk chunk, int x, int y, int z, boolean forceUpdate) {
-        this.scheduleAtmTick(chunk, IAir.packInternalPos(x & 15, y, z & 15, forceUpdate));
-    }
-
-    protected void scheduleAtmTick(LevelChunk chunk, int internalPos) {
-        this.pendingAtmTicks.add(internalPos);
-        chunk.setUnsaved(true);
-        if (this.continuousAtmDebug) {
-            this.updateTicks = 40;
-        }
-    }
-
     private void scheduleAtmUpdate(LevelChunk chunk, ChunkHolder holder, int x, int globalY, int z, Direction dir) {
         int x1 = x + dir.getStepX();
         int z1 = z + dir.getStepZ();
@@ -598,18 +712,6 @@ public class CapabilityChunkStorage {
                 held.getChunkStorage().scheduleAtmTick(held, x1, globalY, z1, false);
             }
         }
-    }
-
-    public void scheduleBlockTick(LevelChunk chunk, int x, int y, int z) {
-        this.pendingBlockTicks.add(IAir.packInternalPos(x & 15, y, z & 15));
-        chunk.setUnsaved(true);
-        if (this.continuousAtmDebug) {
-            this.updateTicks = 40;
-        }
-    }
-
-    public void scheduleIntegrityTick(LevelChunk chunk, int x, int y, int z, boolean oldFillable) {
-        this.scheduleIntegrityTick(chunk, x, y, z, 0, PropagationDirection.NONE, oldFillable);
     }
 
     private void scheduleIntegrityTick(LevelChunk chunk, int x, int y, int z, int failure, PropagationDirection propDir, boolean oldFillable) {
@@ -634,35 +736,6 @@ public class CapabilityChunkStorage {
         }
     }
 
-    public void schedulePreciseBlockTick(LevelChunk chunk, int x, int y, int z, int ticksInTheFuture) {
-        assert ticksInTheFuture > 0 : "Cannot schedule a tick to happen now or in the past!";
-        this.needsSorting |= this.pendingPreciseBlockTicks.add(chunk.level.getGameTime() + ticksInTheFuture, IAir.packInternalPos(x & 15, y, z & 15));
-        chunk.setUnsaved(true);
-        if (this.continuousAtmDebug) {
-            this.updateTicks = 40;
-        }
-    }
-
-    public CompoundTag serializeNBT() {
-        CompoundTag nbt = new CompoundTag();
-        if (!this.pendingIntegrityTicks.isEmpty()) {
-            nbt.putIntArray("PendingIntegrityTicks", this.pendingIntegrityTicks.toIntArray());
-        }
-        if (!this.pendingBlockTicks.isEmpty()) {
-            nbt.putIntArray("PendingBlockTicks", this.pendingBlockTicks.toIntArray());
-        }
-        if (!this.pendingAtmTicks.isEmpty()) {
-            nbt.putIntArray("PendingAtmTicks", this.pendingAtmTicks.toIntArray());
-        }
-        if (!this.pendingPreciseBlockTicks.isEmpty()) {
-            nbt.put("PendingPreciseBlockTicks", this.pendingPreciseBlockTicks.serializeNbt());
-        }
-        if (this.continuousAtmDebug) {
-            nbt.putBoolean("ContinuousAtmDebug", true);
-        }
-        return nbt;
-    }
-
     private void setAndUpdate(LevelChunk chunk, LevelChunkSection section, ChunkHolder holder, int x, int y, int z, int atm, int globalY, int directionList) {
         section.getAtmStorage().set(x, y, z, atm);
         chunk.setUnsaved(true);
@@ -677,70 +750,6 @@ public class CapabilityChunkStorage {
                 Direction dir = DirectionList.get(directionList, index);
                 directionList = DirectionList.remove(directionList, index);
                 this.scheduleAtmUpdate(chunk, holder, x, globalY, z, dir);
-            }
-        }
-    }
-
-    public boolean setContinuousAtmDebug(LevelChunk chunk, boolean debug) {
-        boolean old = this.continuousAtmDebug;
-        this.continuousAtmDebug = debug;
-        boolean changed = old != debug;
-        if (changed) {
-            if (debug) {
-                CommandAtm.fill(chunk, CommandAtm.AIR, true, CommandAtm.ATM_MAKER);
-            }
-            else {
-                CommandAtm.fill(chunk, CommandAtm.ATM, false, CommandAtm.AIR_MAKER);
-            }
-        }
-        return changed;
-    }
-
-    public void tick(LevelChunk chunk) {
-        ServerLevel level = (ServerLevel) chunk.getLevel();
-        this.processPreciseTicks(level, chunk);
-        int len = this.pendingBlockTicks.size();
-        if (len > 0) {
-            for (int i = 0; i < len; ++i) {
-                int pos = this.pendingBlockTicks.getInt(i);
-                int x = IAir.unpackX(pos);
-                int y = IAir.unpackY(pos);
-                int z = IAir.unpackZ(pos);
-                BlockState state = chunk.getBlockState_(x, y, z);
-                state.tick_(level, x, y, z, level.random);
-            }
-            this.pendingBlockTicks.removeElements(0, len);
-        }
-        len = this.pendingIntegrityTicks.size();
-        if (len > 0) {
-            ChunkHolder holder = HOLDER.get();
-            int maxSectionIndex = chunk.getSections().length;
-            ChunkPos pos = chunk.getPos();
-            int minX = pos.getMinBlockX();
-            int minZ = pos.getMinBlockZ();
-            for (int i = 0; i < len; ++i) {
-                this.updatePhysics(level, chunk, holder, this.pendingIntegrityTicks.getInt(i), maxSectionIndex, minX, minZ);
-            }
-            holder.reset();
-            this.pendingIntegrityTicks.removeElements(0, len);
-        }
-        len = this.pendingAtmTicks.size();
-        if (len > 0) {
-            ChunkHolder holder = HOLDER.get();
-            DirectionHolder dirHolder = DIR_HOLDER.get();
-            int maxSectionIndex = chunk.getSections().length;
-            for (int i = 0; i < len; ++i) {
-                this.updateAtm(chunk, holder, this.pendingAtmTicks.getInt(i), dirHolder, maxSectionIndex);
-            }
-            holder.reset();
-            this.pendingAtmTicks.removeElements(0, len);
-        }
-        if (this.continuousAtmDebug) {
-            if ((chunk.isUnsaved() || this.updateTicks > 0) && level.getGameTime() % 20 == 0) {
-                CommandAtm.fill(chunk, CommandAtm.AIR, true, CommandAtm.ATM_MAKER);
-            }
-            if (this.updateTicks > 0) {
-                --this.updateTicks;
             }
         }
     }

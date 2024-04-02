@@ -1,10 +1,88 @@
 {
-  "parent": "evolution:block/grass",
+  "parent": "minecraft:block/block",
   "textures": {
-    "side": "evolution:block/clay",
-    "overlay": "evolution:block/grass_side_overlay",
-    "bottom": "evolution:block/clay",
-    "top": "evolution:block/grass_top",
+    "dirt": "evolution:block/clay",
+    "grass_top": "evolution:block/grass_top_dry",
+    "grass_side": "evolution:block/grass_side_overlay",
     "particle": "evolution:block/clay"
-  }
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "down": {
+          "texture": "#dirt",
+          "cullface": "down"
+        },
+        "up": {
+          "texture": "#dirt",
+          "cullface": "up"
+        },
+        "north": {
+          "texture": "#dirt",
+          "cullface": "north"
+        },
+        "south": {
+          "texture": "#dirt",
+          "cullface": "south"
+        },
+        "west": {
+          "texture": "#dirt",
+          "cullface": "west"
+        },
+        "east": {
+          "texture": "#dirt",
+          "cullface": "east"
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "up": {
+          "texture": "#grass_top",
+          "cullface": "up",
+          "tintindex": 0
+        },
+        "north": {
+          "texture": "#grass_side",
+          "cullface": "north",
+          "tintindex": 0
+        },
+        "south": {
+          "texture": "#grass_side",
+          "cullface": "south",
+          "tintindex": 0
+        },
+        "west": {
+          "texture": "#grass_side",
+          "cullface": "west",
+          "tintindex": 0
+        },
+        "east": {
+          "texture": "#grass_side",
+          "cullface": "east",
+          "tintindex": 0
+        }
+      }
+    }
+  ]
 }

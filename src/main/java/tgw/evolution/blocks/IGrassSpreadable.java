@@ -15,5 +15,7 @@ public interface IGrassSpreadable {
         return !level.getBlockState_(x, y + 1, z).isFaceSturdy_(level, x, y + 1, z, Direction.DOWN);
     }
 
+    int getAllowanceCost(BlockState state);
+
     BlockGenericSpreadable getGrass();
 }

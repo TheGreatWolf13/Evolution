@@ -321,6 +321,7 @@ public class BlockStateProvider implements EvolutionDataProvider<ResourceLocatio
         return "BlockState";
     }
 
+    @SuppressWarnings("ObjectAllocationInLoop")
     protected void registerStatesAndModels() {
         //Temporary
         this.simpleBlock(EvolutionBlocks.GLASS);
@@ -474,17 +475,35 @@ public class BlockStateProvider implements EvolutionDataProvider<ResourceLocatio
         Block firewoodPile = EvolutionBlocks.FIREWOOD_PILE;
         this.simpleBlockNoItem(firewoodPile, this.models().builtin(name(firewoodPile), blockTexture(WoodVariant.OAK.get(EvolutionBlocks.LOGS))));
         Block clayGrass = EvolutionBlocks.GRASS_CLAY;
-        this.simpleBlockWithRandomRotation(clayGrass, this.models().withExistingParent(name(clayGrass), "evolution:block/grass")
-                                                          .texture("side", blockTexture(clay))
-                                                          .texture("overlay", "evolution:block/grass_side_overlay")
-                                                          .texture("bottom", blockTexture(clay))
-                                                          .texture("top", "evolution:block/grass_top")
+        this.simpleBlockWithRandomRotation(clayGrass, this.models().getBuilder(name(clayGrass))
+                                                          .parent(this.models().getExistingFile(new ResourceLocation("block")))
+                                                          .element()
+                                                          .from(0, 0, 0)
+                                                          .to(16, 16, 16)
+                                                          .face(Direction.UP).uvs(0, 0, 16, 16).texture("#dirt").cullface(Direction.UP).end()
+                                                          .face(Direction.DOWN).uvs(0, 0, 16, 16).texture("#dirt").cullface(Direction.DOWN).end()
+                                                          .face(Direction.NORTH).uvs(0, 0, 16, 16).texture("#dirt").cullface(Direction.NORTH).end()
+                                                          .face(Direction.SOUTH).uvs(0, 0, 16, 16).texture("#dirt").cullface(Direction.SOUTH).end()
+                                                          .face(Direction.EAST).uvs(0, 0, 16, 16).texture("#dirt").cullface(Direction.EAST).end()
+                                                          .face(Direction.WEST).uvs(0, 0, 16, 16).texture("#dirt").cullface(Direction.WEST).end()
+                                                          .end()
+                                                          .element()
+                                                          .from(0, 0, 0)
+                                                          .to(16, 16, 16)
+                                                          .face(Direction.UP).uvs(0, 0, 16, 16).texture("#grass_top").cullface(Direction.UP).tintindex(0).end()
+                                                          .face(Direction.NORTH).uvs(0, 0, 16, 16).texture("#grass_side").cullface(Direction.NORTH).tintindex(0).end()
+                                                          .face(Direction.SOUTH).uvs(0, 0, 16, 16).texture("#grass_side").cullface(Direction.SOUTH).tintindex(0).end()
+                                                          .face(Direction.EAST).uvs(0, 0, 16, 16).texture("#grass_side").cullface(Direction.EAST).tintindex(0).end()
+                                                          .face(Direction.WEST).uvs(0, 0, 16, 16).texture("#grass_side").cullface(Direction.WEST).tintindex(0).end()
+                                                          .end()
+                                                          .texture("dirt", blockTexture(clay))
+                                                          .texture("grass_top", "evolution:block/grass_top_dry")
+                                                          .texture("grass_side", "evolution:block/grass_side_overlay")
                                                           .texture("particle", blockTexture(clay))
         );
         //Collections
         Block tallgrass = EvolutionBlocks.TALLGRASS;
-        this.simpleBlockNoItem(tallgrass,
-                               this.models().withExistingParent(name(tallgrass), "block/tinted_cross").texture("cross", blockTexture(tallgrass)));
+        this.simpleBlockNoItem(tallgrass, this.models().withExistingParent(name(tallgrass), "block/tinted_cross").texture("cross", blockTexture(tallgrass)));
         Block tallgrassHigh = EvolutionBlocks.TALLGRASS_HIGH;
         this.blockEnumProperty(tallgrassHigh, EvolutionBStates.HALF, DoubleBlockHalf.values(), half ->
                 this.models()
@@ -528,7 +547,7 @@ public class BlockStateProvider implements EvolutionDataProvider<ResourceLocatio
             Block planks = EvolutionBlocks.PLANKS.get(variant);
             this.getMultipartBuilder(planks)
                 .part()
-                .modelFile(this.models().cubeAll(name(planks) + "_full", blockTexture(planks)))
+                .modelFile(this.models().cubeAll(name(planks, "_full"), blockTexture(planks)))
                 .addModel()
                 .condition(EvolutionBStates.UP, true)
                 .condition(EvolutionBStates.DOWN, true)
@@ -538,32 +557,32 @@ public class BlockStateProvider implements EvolutionDataProvider<ResourceLocatio
                 .condition(EvolutionBStates.WEST, true)
                 .end()
                 .part()
-                .modelFile(this.models().singleTexture(name(planks) + "_up", Evolution.getResource("planks_up"), "block", blockTexture(planks)))
+                .modelFile(this.models().singleTexture(name(planks, "_up"), Evolution.getResource("planks_up"), "block", blockTexture(planks)))
                 .addModel()
                 .condition(EvolutionBStates.UP, true)
                 .end()
                 .part()
-                .modelFile(this.models().singleTexture(name(planks) + "_down", Evolution.getResource("planks_down"), "block", blockTexture(planks)))
+                .modelFile(this.models().singleTexture(name(planks, "_down"), Evolution.getResource("planks_down"), "block", blockTexture(planks)))
                 .addModel()
                 .condition(EvolutionBStates.DOWN, true)
                 .end()
                 .part()
-                .modelFile(this.models().singleTexture(name(planks) + "_north", Evolution.getResource("planks_north"), "block", blockTexture(planks)))
+                .modelFile(this.models().singleTexture(name(planks, "_north"), Evolution.getResource("planks_north"), "block", blockTexture(planks)))
                 .addModel()
                 .condition(EvolutionBStates.NORTH, true)
                 .end()
                 .part()
-                .modelFile(this.models().singleTexture(name(planks) + "_south", Evolution.getResource("planks_south"), "block", blockTexture(planks)))
+                .modelFile(this.models().singleTexture(name(planks, "_south"), Evolution.getResource("planks_south"), "block", blockTexture(planks)))
                 .addModel()
                 .condition(EvolutionBStates.SOUTH, true)
                 .end()
                 .part()
-                .modelFile(this.models().singleTexture(name(planks) + "_east", Evolution.getResource("planks_east"), "block", blockTexture(planks)))
+                .modelFile(this.models().singleTexture(name(planks, "_east"), Evolution.getResource("planks_east"), "block", blockTexture(planks)))
                 .addModel()
                 .condition(EvolutionBStates.EAST, true)
                 .end()
                 .part()
-                .modelFile(this.models().singleTexture(name(planks) + "_west", Evolution.getResource("planks_west"), "block", blockTexture(planks)))
+                .modelFile(this.models().singleTexture(name(planks, "_west"), Evolution.getResource("planks_west"), "block", blockTexture(planks)))
                 .addModel()
                 .condition(EvolutionBStates.WEST, true)
                 .end();

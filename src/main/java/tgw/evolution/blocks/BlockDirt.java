@@ -7,6 +7,7 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Material;
 import org.jetbrains.annotations.Nullable;
+import tgw.evolution.capabilities.chunk.ChunkAllowance;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionSounds;
 import tgw.evolution.util.constants.NutrientVariant;
@@ -32,6 +33,15 @@ public class BlockDirt extends BlockPhysics implements INutrientVariant, ISloppa
     @Override
     public @Nullable SoundEvent fallingSound() {
         return EvolutionSounds.SOIL_COLLAPSE;
+    }
+
+    @Override
+    public int getAllowanceCost(BlockState state) {
+        return switch (this.variant) {
+            case POOR -> ChunkAllowance.BASE_GRASS_COST * 2;
+            case NORMAL -> ChunkAllowance.BASE_GRASS_COST;
+            case RICH -> ChunkAllowance.BASE_GRASS_COST / 2;
+        };
     }
 
     @Override

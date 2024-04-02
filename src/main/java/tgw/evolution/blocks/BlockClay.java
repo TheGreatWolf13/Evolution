@@ -10,6 +10,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Material;
 import org.jetbrains.annotations.Nullable;
+import tgw.evolution.capabilities.chunk.ChunkAllowance;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionSounds;
@@ -37,6 +38,11 @@ public class BlockClay extends BlockPhysics implements IStructural, IFallable, I
     @Override
     public @Nullable SoundEvent fallingSound() {
         return EvolutionSounds.SOIL_COLLAPSE;
+    }
+
+    @Override
+    public int getAllowanceCost(BlockState state) {
+        return ChunkAllowance.BASE_GRASS_COST * 4;
     }
 
     @Override

@@ -12,6 +12,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.*;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.BlockGrass;
+import tgw.evolution.blocks.BlockGrassClay;
 import tgw.evolution.client.renderer.chunk.EvLevelRenderer;
 import tgw.evolution.hooks.asm.DeleteField;
 import tgw.evolution.hooks.asm.ModifyConstructor;
@@ -41,7 +42,7 @@ public abstract class Mixin_CF_TerrainParticle extends TextureSheetParticle impl
         this.posY = Mth.floor(y);
         this.posZ = Mth.floor(z);
         Block block = state.getBlock();
-        if (block != Blocks.GRASS_BLOCK && !(block instanceof BlockGrass)) {
+        if (block != Blocks.GRASS_BLOCK && !(block instanceof BlockGrass) && !(block instanceof BlockGrassClay)) {
             int color = Minecraft.getInstance().getBlockColors().getColor_(state, level, this.posX, this.posY, this.posZ, 0);
             this.rCol *= (color >> 16 & 255) / 255.0F;
             this.gCol *= (color >> 8 & 255) / 255.0F;
@@ -53,17 +54,9 @@ public abstract class Mixin_CF_TerrainParticle extends TextureSheetParticle impl
     }
 
     @ModifyConstructor
-    public Mixin_CF_TerrainParticle(ClientLevel clientLevel,
-                                    double d,
-                                    double e,
-                                    double f,
-                                    double g,
-                                    double h,
-                                    double i,
-                                    BlockState blockState,
-                                    BlockPos blockPos) {
+    public Mixin_CF_TerrainParticle(ClientLevel clientLevel, double d, double e, double f, double g, double h, double i, BlockState blockState, BlockPos blockPos) {
         super(clientLevel, d, e, f, g, h, i);
-        Evolution.warn("Deprecated constructor called by {}", Thread.currentThread().getStackTrace()[2]);
+        Evolution.deprecatedConstructor();
     }
 
     /**
