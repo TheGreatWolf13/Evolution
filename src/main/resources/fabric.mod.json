@@ -423,6 +423,9 @@
       ],
       "net/minecraft/world/effect/MobEffect": [
         "tgw/evolution/patches/PatchMobEffect"
+      ],
+      "com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator": [
+        "tgw/evolution/patches/PatchSheetedDecalTextureGenerator"
       ]
     }
   }

@@ -115,6 +115,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
     private static final OList<ResourceLocation> DEPENDENCY = OList.of(ReloadListernerKeys.TEXTURES);
     private static final ThreadLocal<OArrayFIFOQueue<RenderChunkInfo>> QUEUE_CACHE = ThreadLocal.withInitial(OArrayFIFOQueue::new);
     private final BlockEntityRenderDispatcher blockEntityRenderDispatcher;
+    private final SheetedDecalTextureGenerator[] breakingBuffers = new SheetedDecalTextureGenerator[10];
     private final BufferHolder bufferHolder;
     private @Nullable EvChunkRenderDispatcher chunkRenderDispatcher;
     private @Nullable VertexBuffer cloudBuffer;
@@ -197,19 +198,19 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
                 this.rainSizeZ[x << 5 | z] = dz / dist;
             }
         }
+        for (int i = 0, len = this.breakingBuffers.length; i < len; i++) {
+            //noinspection ObjectAllocationInLoop
+            Matrix4f pose = new Matrix4f();
+            pose.setIdentity();
+            //noinspection ObjectAllocationInLoop
+            Matrix3f normal = new Matrix3f();
+            normal.setIdentity();
+            //noinspection ObjectAllocationInLoop,DataFlowIssue
+            this.breakingBuffers[i] = new SheetedDecalTextureGenerator(null, pose, normal);
+        }
     }
 
-    public static void addChainedFilledBoxVertices(VertexConsumer builder,
-                                                   double minX,
-                                                   double minY,
-                                                   double minZ,
-                                                   double maxX,
-                                                   double maxY,
-                                                   double maxZ,
-                                                   float r,
-                                                   float g,
-                                                   float b,
-                                                   float a) {
+    public static void addChainedFilledBoxVertices(VertexConsumer builder, double minX, double minY, double minZ, double maxX, double maxY, double maxZ, float r, float g, float b, float a) {
         builder.vertex(minX, minY, minZ).color(r, g, b, a).endVertex();
         builder.vertex(minX, minY, minZ).color(r, g, b, a).endVertex();
         builder.vertex(minX, minY, minZ).color(r, g, b, a).endVertex();
@@ -273,50 +274,11 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
         return DynamicLights.componentsToLightmap(rbl, gbl, bbl, sl);
     }
 
-    public static void renderLineBox(VertexConsumer builder,
-                                     double minX,
-                                     double minY,
-                                     double minZ,
-                                     double maxX,
-                                     double maxY,
-                                     double maxZ,
-                                     float r,
-                                     float g,
-                                     float b,
-                                     float a) {
-        renderLineBox(new PoseStack(), builder, minX, minY, minZ, maxX, maxY, maxZ, r, g, b, a, r, g, b);
-    }
-
-    public static void renderLineBox(PoseStack matrices,
-                                     VertexConsumer builder,
-                                     double minX,
-                                     double minY,
-                                     double minZ,
-                                     double maxX,
-                                     double maxY,
-                                     double maxZ,
-                                     float r,
-                                     float g,
-                                     float b,
-                                     float a) {
+    public static void renderLineBox(PoseStack matrices, VertexConsumer builder, double minX, double minY, double minZ, double maxX, double maxY, double maxZ, float r, float g, float b, float a) {
         renderLineBox(matrices, builder, minX, minY, minZ, maxX, maxY, maxZ, r, g, b, a, r, g, b);
     }
 
-    public static void renderLineBox(PoseStack matrices,
-                                     VertexConsumer builder,
-                                     double minX,
-                                     double minY,
-                                     double minZ,
-                                     double maxX,
-                                     double maxY,
-                                     double maxZ,
-                                     float r,
-                                     float g,
-                                     float b,
-                                     float a,
-                                     float r2,
-                                     float g2,
-                                     float b2) {
+    public static void renderLineBox(PoseStack matrices, VertexConsumer builder, double minX, double minY, double minZ, double maxX, double maxY, double maxZ, float r, float g, float b, float a, float r2, float g2, float b2) {
         Matrix4f pose = matrices.last().pose();
         Matrix3f normal = matrices.last().normal();
         float f = (float) minX;
@@ -393,16 +355,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
         RenderSystem.disableBlend();
     }
 
-    private static void renderShape(PoseStack matrices,
-                                    VertexConsumer builder,
-                                    VoxelShape shape,
-                                    double x,
-                                    double y,
-                                    double z,
-                                    float r,
-                                    float g,
-                                    float b,
-                                    float a) {
+    private static void renderShape(PoseStack matrices, VertexConsumer builder, VoxelShape shape, double x, double y, double z, float r, float g, float b, float a) {
         PoseStack.Pose last = matrices.last();
         shape.forAllEdges((x0, y0, z0, x1, y1, z1) -> {
             float dx = (float) (x1 - x0);
@@ -951,10 +904,8 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
                         int progress = destructionProgresses.last().getProgress();
                         if (progress >= 0) {
                             PoseStack.Pose entry = matrices.last();
-                            //noinspection ObjectAllocationInLoop
-                            VertexConsumer consumer = new SheetedDecalTextureGenerator(
-                                    this.bufferHolder.crumblingBufferSource().getBuffer(ModelBakery.DESTROY_TYPES.get(progress)), entry.pose(),
-                                    entry.normal());
+                            SheetedDecalTextureGenerator consumer = this.breakingBuffers[progress];
+                            consumer.set(this.bufferHolder.crumblingBufferSource().getBuffer(ModelBakery.DESTROY_TYPES.get(progress)), entry.pose(), entry.normal());
                             //noinspection ObjectAllocationInLoop
                             multiBufferSource = renderType -> {
                                 VertexConsumer vertexConsumer = buffer.getBuffer(renderType);
@@ -1010,8 +961,8 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
                     matrices.pushPose();
                     matrices.translate(deltaX, deltaY, deltaZ);
                     PoseStack.Pose entry = matrices.last();
-                    //noinspection ObjectAllocationInLoop
-                    VertexConsumer consumer = new SheetedDecalTextureGenerator(this.bufferHolder.crumblingBufferSource().getBuffer(ModelBakery.DESTROY_TYPES.get(progress)), entry.pose(), entry.normal());
+                    SheetedDecalTextureGenerator consumer = this.breakingBuffers[progress];
+                    consumer.set(this.bufferHolder.crumblingBufferSource().getBuffer(ModelBakery.DESTROY_TYPES.get(progress)), entry.pose(), entry.normal());
                     this.mc.getBlockRenderer().renderBreakingTexture(last.getBlockState(this.level), x, y, z, this.level, matrices, consumer);
                     matrices.popPose();
                 }
