@@ -1300,7 +1300,16 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
                 ItemStack mainhandStack = this.player.getMainHandItem();
                 //Holdable Attack
                 //Tools that can attack as well as weapons that have a "lunge" attack
-                if (mainhandStack.getItem() instanceof IMelee melee && melee.isHoldable(mainhandStack)) {
+                IMelee melee = null;
+                if (mainhandStack.isEmpty()) {
+                    if (!this.player.isCreative()) {
+                        melee = IMelee.BARE_HANDS;
+                    }
+                }
+                else if (mainhandStack.getItem() instanceof IMelee m) {
+                    melee = m;
+                }
+                if (melee != null && melee.isHoldable(mainhandStack)) {
                     int minAttackTime = melee.getMinAttackTime(mainhandStack);
                     int autoAttackTime = melee.getAutoAttackTime(mainhandStack);
                     if (this.options.keyAttack.isDown()) {
@@ -1746,7 +1755,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
                     return true;
                 }
                 ItemStack mainHandItem = this.player.getMainHandItem();
-                if (!this.player.isCreative() || mainHandItem.isEmpty() || mainHandItem.getItem() instanceof IMelee) {
+                if (!this.player.isCreative() && (mainHandItem.isEmpty() || mainHandItem.getItem() instanceof IMelee)) {
                     ClientEvents.getInstance().startShortAttack(mainHandItem);
                 }
                 swingHand = false;

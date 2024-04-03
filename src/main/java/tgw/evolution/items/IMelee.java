@@ -12,12 +12,60 @@ import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.client.tooltip.*;
 import tgw.evolution.init.EvolutionDamage;
+import tgw.evolution.init.EvolutionSounds;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.util.collection.lists.custom.EitherList;
 import tgw.evolution.util.hitbox.ColliderHitbox;
 import tgw.evolution.util.hitbox.HitboxType;
 
 public interface IMelee {
+
+    IMelee BARE_HANDS = new IMelee() {
+        @Override
+        public int getAutoAttackTime(ItemStack stack) {
+            return 4;
+        }
+
+        @Override
+        public @Nullable BasicAttackType getBasicAttackType(ItemStack stack) {
+            return null;
+        }
+
+        @Override
+        public SoundEvent getBlockHitSound(ItemStack stack) {
+            return EvolutionSounds.FIST_PUNCHES_BLOCK;
+        }
+
+        @Override
+        public @Nullable ChargeAttackType getChargeAttackType(ItemStack stack) {
+            return null;
+        }
+
+        @Override
+        public int getCooldown(ItemStack stack) {
+            return 20;
+        }
+
+        @Override
+        public double getDmgMultiplier(ItemStack stack, EvolutionDamage.Type type) {
+            return 1;
+        }
+
+        @Override
+        public int getMinAttackTime(ItemStack stack) {
+            return 4;
+        }
+
+        @Override
+        public boolean isHoldable(ItemStack stack) {
+            return true;
+        }
+
+        @Override
+        public boolean shouldPlaySheatheSound(ItemStack stack) {
+            return false;
+        }
+    };
 
     IAttackType BARE_HAND_ATTACK = new IAttackType() {
         @Override
