@@ -9,10 +9,10 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.init.EvolutionShapes;
 
-public class BlockTallGrass extends BlockBush {
+public class BlockShortGrass extends BlockBush {
 
-    public BlockTallGrass() {
-        super(Properties.of(Material.PLANT).noCollission().noDrops().strength(0.0F).sound(SoundType.GRASS));
+    public BlockShortGrass() {
+        super(Properties.of(Material.PLANT).noCollission().noDrops().strength(0.5F, 0.0f).sound(SoundType.GRASS));
     }
 
     @Override

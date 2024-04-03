@@ -10,7 +10,10 @@ import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import org.jetbrains.annotations.Nullable;
+import tgw.evolution.init.EvolutionBStates;
+import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.util.math.DirectionUtil;
 import tgw.evolution.util.math.MathHelper;
 
@@ -116,6 +119,28 @@ public abstract class BlockGenericSpreadable extends BlockPhysics {
                 int allowanceCost = spreadable.getAllowanceCost(stateToSpread);
                 if (level.getChunkAt_(xOffset, zOffset).getChunkStorage().getAllowance().ifHasConsumeGrassAllowance(allowanceCost)) {
                     level.setBlockAndUpdate_(xOffset, yOffset, zOffset, spreadable.getGrass().defaultBlockState());
+                }
+            }
+            else {
+                this.growTallGrass(level, x, y, z);
+            }
+        }
+    }
+
+    protected abstract int getTallGrassAllowanceCost();
+
+    protected void growTallGrass(ServerLevel level, int x, int y, int z) {
+        BlockState stateAbove = level.getBlockState_(x, y + 1, z);
+        if (stateAbove.isAir()) {
+            if (level.getChunkAt_(x, z).getChunkStorage().getAllowance().ifHasConsumeGrassAllowance(this.getTallGrassAllowanceCost())) {
+                level.setBlockAndUpdate_(x, y + 1, z, EvolutionBlocks.SHORT_GRASS.defaultBlockState());
+            }
+        }
+        else if (stateAbove.getBlock() == EvolutionBlocks.SHORT_GRASS) {
+            if (level.getBlockState_(x, y + 2, z).isAir()) {
+                if (level.getChunkAt_(x, z).getChunkStorage().getAllowance().ifHasConsumeGrassAllowance(2 * this.getTallGrassAllowanceCost())) {
+                    level.setBlockAndUpdate_(x, y + 1, z, EvolutionBlocks.TALL_GRASS.defaultBlockState());
+                    level.setBlockAndUpdate_(x, y + 2, z, EvolutionBlocks.TALL_GRASS.defaultBlockState().setValue(EvolutionBStates.HALF, DoubleBlockHalf.UPPER));
                 }
             }
         }

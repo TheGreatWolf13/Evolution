@@ -62,8 +62,8 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
             fire.setFireInfo(variant.get(EvolutionBlocks.LEAVES), 30, 60);
         }
         fire.setFireInfo(EvolutionBlocks.FIREWOOD_PILE, 5, 5);
-        fire.setFireInfo(EvolutionBlocks.TALLGRASS, 60, 100);
-        fire.setFireInfo(EvolutionBlocks.TALLGRASS_HIGH, 60, 100);
+        fire.setFireInfo(EvolutionBlocks.SHORT_GRASS, 60, 100);
+        fire.setFireInfo(EvolutionBlocks.TALL_GRASS, 60, 100);
     }
 
     private static int getTickCooldown(RandomGenerator random) {

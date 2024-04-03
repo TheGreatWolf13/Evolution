@@ -6,6 +6,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.material.MaterialColor;
 import org.jetbrains.annotations.Nullable;
+import tgw.evolution.capabilities.chunk.ChunkAllowance;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionSounds;
 import tgw.evolution.util.constants.NutrientVariant;
@@ -57,5 +58,14 @@ public class BlockGrass extends BlockGenericSpreadable implements INutrientVaria
     @Override
     public NutrientVariant nutrientVariant() {
         return this.variant;
+    }
+
+    @Override
+    protected int getTallGrassAllowanceCost() {
+        return switch (this.variant) {
+            case RICH -> ChunkAllowance.BASE_GRASS_COST;
+            case NORMAL -> 2 * ChunkAllowance.BASE_GRASS_COST;
+            case POOR -> 4 * ChunkAllowance.BASE_GRASS_COST;
+        };
     }
 }

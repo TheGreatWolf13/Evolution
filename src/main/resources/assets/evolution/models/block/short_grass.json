@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:block/tinted_cross",
   "textures": {
-    "cross": "evolution:block/tallgrass_high_bottom"
+    "cross": "evolution:block/short_grass"
   }
 }

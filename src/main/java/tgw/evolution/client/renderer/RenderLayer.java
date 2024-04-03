@@ -23,17 +23,6 @@ public enum RenderLayer {
         return get(VALUES[BLOCK_LAYERS.getByte(block)], fancy);
     }
 
-    private static RenderType get(RenderLayer layer, boolean fancy) {
-        return switch (layer) {
-            case SOLID -> RenderType.solid();
-            case CUTOUT -> RenderType.cutout();
-            case CUTOUT_MIPPED -> RenderType.cutoutMipped();
-            case TRANSLUCENT -> RenderType.translucent();
-            case TRIPWIRE -> RenderType.tripwire();
-            case LEAVES -> fancy ? RenderType.cutoutMipped() : RenderType.solid();
-        };
-    }
-
     public static RenderType get(Fluid fluid, boolean fancy) {
         return get(VALUES[FLUID_LAYERS.getByte(fluid)], fancy);
     }
@@ -51,7 +40,7 @@ public enum RenderLayer {
         set(EvolutionBlocks.CLIMBING_HOOK, CUTOUT);
         set(EvolutionBlocks.CLIMBING_STAKE, CUTOUT);
         set(EvolutionBlocks.FIRE, CUTOUT);
-        set(EvolutionBlocks.TALLGRASS, CUTOUT);
+        set(EvolutionBlocks.SHORT_GRASS, CUTOUT);
         set(EvolutionBlocks.GRASS_CLAY, CUTOUT_MIPPED);
         for (Block block : EvolutionBlocks.GRASSES.values()) {
             set(block, CUTOUT_MIPPED);
@@ -64,9 +53,20 @@ public enum RenderLayer {
         for (Block block : EvolutionBlocks.SAPLINGS.values()) {
             set(block, CUTOUT);
         }
-        set(EvolutionBlocks.TALLGRASS_HIGH, CUTOUT);
+        set(EvolutionBlocks.TALL_GRASS, CUTOUT);
         set(EvolutionBlocks.TORCH, CUTOUT);
         set(EvolutionBlocks.TORCH_WALL, CUTOUT);
         set(EvolutionBlocks.GLASS, CUTOUT);
+    }
+
+    private static RenderType get(RenderLayer layer, boolean fancy) {
+        return switch (layer) {
+            case SOLID -> RenderType.solid();
+            case CUTOUT -> RenderType.cutout();
+            case CUTOUT_MIPPED -> RenderType.cutoutMipped();
+            case TRANSLUCENT -> RenderType.translucent();
+            case TRIPWIRE -> RenderType.tripwire();
+            case LEAVES -> fancy ? RenderType.cutoutMipped() : RenderType.solid();
+        };
     }
 }

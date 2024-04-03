@@ -502,13 +502,13 @@ public class BlockStateProvider implements EvolutionDataProvider<ResourceLocatio
                                                           .texture("particle", blockTexture(clay))
         );
         //Collections
-        Block tallgrass = EvolutionBlocks.TALLGRASS;
-        this.simpleBlockNoItem(tallgrass, this.models().withExistingParent(name(tallgrass), "block/tinted_cross").texture("cross", blockTexture(tallgrass)));
-        Block tallgrassHigh = EvolutionBlocks.TALLGRASS_HIGH;
-        this.blockEnumProperty(tallgrassHigh, EvolutionBStates.HALF, DoubleBlockHalf.values(), half ->
+        Block shortGrass = EvolutionBlocks.SHORT_GRASS;
+        this.simpleBlockNoItem(shortGrass, this.models().withExistingParent(name(shortGrass), "block/tinted_cross").texture("cross", blockTexture(shortGrass)));
+        Block tallGrass = EvolutionBlocks.TALL_GRASS;
+        this.blockEnumProperty(tallGrass, EvolutionBStates.HALF, DoubleBlockHalf.values(), half ->
                 this.models()
-                    .withExistingParent(name(tallgrassHigh, half == DoubleBlockHalf.UPPER ? "_top" : "_bottom"), "block/tinted_cross")
-                    .texture("cross", blockTexture(tallgrassHigh, half == DoubleBlockHalf.UPPER ? "_top" : "_bottom"))
+                    .withExistingParent(name(tallGrass, half == DoubleBlockHalf.UPPER ? "_top" : "_bottom"), "block/tinted_cross")
+                    .texture("cross", blockTexture(tallGrass, half == DoubleBlockHalf.UPPER ? "_top" : "_bottom"))
         );
         for (NutrientVariant variant : NutrientVariant.VALUES) {
             Block dirt = variant.get(EvolutionBlocks.DIRTS);

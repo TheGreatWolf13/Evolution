@@ -59,8 +59,8 @@ public final class EvolutionBlocks {
     public static final Block ROPE;
     public static final Block ROPE_GROUND;
     public static final Block STICK;
-    public static final Block TALLGRASS;
-    public static final Block TALLGRASS_HIGH;
+    public static final Block SHORT_GRASS;
+    public static final Block TALL_GRASS;
     public static final Block TORCH;
     public static final Block TORCH_WALL;
     //Collections
@@ -124,8 +124,8 @@ public final class EvolutionBlocks {
         ROPE = register("rope", new BlockRope());
         ROPE_GROUND = register("rope_ground", new BlockRopeGround());
         STICK = register("stick", new BlockPlaceableItem(Block.Properties.of(Material.DECORATION).sound(SoundType.WOOD)));
-        TALLGRASS = register("tallgrass", new BlockTallGrass());
-        TALLGRASS_HIGH = register("tallgrass_high", BlockDoublePlant.make(false));
+        SHORT_GRASS = register("short_grass", new BlockShortGrass());
+        TALL_GRASS = register("tall_grass", BlockDoublePlant.make(false));
         TORCH = register("torch", new BlockTorch());
         TORCH_WALL = register("torch_wall", new BlockTorchWall());
         //Collection
@@ -152,6 +152,10 @@ public final class EvolutionBlocks {
     private EvolutionBlocks() {
     }
 
+    public static void register() {
+        //Blocks are registered via class-loading.
+    }
+
     @Contract("_, _, _, _, _ -> new")
     private static <E extends Enum<E> & IVariant, B extends Block> Map<E, B> make(Class<E> clazz,
                                                                                   E[] values,
@@ -171,9 +175,5 @@ public final class EvolutionBlocks {
 
     private static <B extends Block> B register(String name, B block) {
         return Registry.register(Registry.BLOCK, Evolution.getResource(name), block);
-    }
-
-    public static void register() {
-        //Blocks are registered via class-loading.
     }
 }	

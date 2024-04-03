@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "evolution:block/tallgrass_high_top"
+    "layer0": "evolution:block/short_grass"
   }
 }

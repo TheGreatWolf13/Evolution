@@ -175,8 +175,8 @@ public final class EvolutionItems {
         ROPE = register("rope", item(propMisc()));
         STICK = makeBlock(EvolutionBlocks.STICK, new ItemStick(EvolutionBlocks.STICK, propTreesAndWood()));
         STRAW = register("straw", item(propMisc()));
-        TALLGRASS = makeBlock(EvolutionBlocks.TALLGRASS, itemBlock(EvolutionBlocks.TALLGRASS));
-        TALLGRASS_HIGH = makeBlock(EvolutionBlocks.TALLGRASS_HIGH, itemBlock(EvolutionBlocks.TALLGRASS_HIGH));
+        TALLGRASS = makeBlock(EvolutionBlocks.SHORT_GRASS, itemBlock(EvolutionBlocks.SHORT_GRASS));
+        TALLGRASS_HIGH = makeBlock(EvolutionBlocks.TALL_GRASS, itemBlock(EvolutionBlocks.TALL_GRASS));
         TORCH = makeBlock(EvolutionBlocks.TORCH, new ItemTorch(propMisc()));
         TORCH_UNLIT = register("torch_unlit", new ItemTorchUnlit(propMisc()));
         //Collection

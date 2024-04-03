@@ -37,14 +37,6 @@ public final class ColorManager {
         return level.getBlockTint_(x, y, z, BiomeColors.WATER_COLOR_RESOLVER);
     }
 
-    private static void register(ItemColors colors, ItemColor color, ItemLike item) {
-        colors.register(color, item);
-    }
-
-    private static void register(BlockColors colors, BlockColor color, Block block) {
-        colors.register(color, block);
-    }
-
     public static void registerBlockColorHandlers(BlockColors colors) {
         BlockColor grass = (IBlockColor) (state, level, x, y, z, data) -> level != null && x != Integer.MIN_VALUE ? getAverageGrassColor(level, x, y, z) : GrassColor.get(0.5, 1.0);
         BlockColor spruce = (IBlockColor) (state, level, x, y, z, data) -> FoliageColor.getEvergreenColor();
@@ -56,8 +48,8 @@ public final class ColorManager {
             register(colors, grass, variant.get(GRASSES));
         }
         register(colors, grass, GRASS_CLAY);
-        register(colors, grass, TALLGRASS);
-        register(colors, grass, TALLGRASS_HIGH);
+        register(colors, grass, SHORT_GRASS);
+        register(colors, grass, TALL_GRASS);
         //Leaves
         for (WoodVariant wood : WoodVariant.VALUES) {
             switch (wood) {
@@ -98,8 +90,8 @@ public final class ColorManager {
             register(colors, grass, variant.get(GRASSES));
         }
         register(colors, grass, GRASS_CLAY);
-        register(colors, grass, TALLGRASS);
-        register(colors, grass, TALLGRASS_HIGH);
+        register(colors, grass, SHORT_GRASS);
+        register(colors, grass, TALL_GRASS);
         //Leaves
         for (WoodVariant wood : WoodVariant.VALUES) {
             switch (wood) {
@@ -119,5 +111,13 @@ public final class ColorManager {
             register(colors, leaves, wood.get(LEAVES));
         }
         register(colors, temperature, EvolutionItems.INGOT_COPPER);
+    }
+
+    private static void register(ItemColors colors, ItemColor color, ItemLike item) {
+        colors.register(color, item);
+    }
+
+    private static void register(BlockColors colors, BlockColor color, Block block) {
+        colors.register(color, block);
     }
 }

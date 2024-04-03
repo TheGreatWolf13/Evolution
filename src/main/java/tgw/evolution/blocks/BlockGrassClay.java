@@ -7,6 +7,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.material.MaterialColor;
 import org.jetbrains.annotations.Nullable;
+import tgw.evolution.capabilities.chunk.ChunkAllowance;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionSounds;
 
@@ -45,5 +46,10 @@ public class BlockGrassClay extends BlockGenericSpreadable implements IStructura
     @Override
     public Stabilization getStabilization(BlockState state) {
         return Stabilization.NONE;
+    }
+
+    @Override
+    protected int getTallGrassAllowanceCost() {
+        return 8 * ChunkAllowance.BASE_GRASS_COST;
     }
 }

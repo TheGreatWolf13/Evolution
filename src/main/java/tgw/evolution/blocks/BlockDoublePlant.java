@@ -31,9 +31,9 @@ public class BlockDoublePlant extends BlockBush {
 
     public static BlockDoublePlant make(boolean drops) {
         if (drops) {
-            return new BlockDoublePlant(Properties.of(Material.PLANT).noCollission().strength(0.0F).sound(SoundType.GRASS));
+            return new BlockDoublePlant(Properties.of(Material.PLANT).noCollission().strength(0.5f, 0.0F).sound(SoundType.GRASS));
         }
-        return new BlockDoublePlant(Properties.of(Material.PLANT).noCollission().strength(0.0F).sound(SoundType.GRASS).noDrops());
+        return new BlockDoublePlant(Properties.of(Material.PLANT).noCollission().strength(0.5f, 0.0F).sound(SoundType.GRASS).noDrops());
     }
 
     @Override
