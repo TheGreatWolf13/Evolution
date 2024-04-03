@@ -280,6 +280,11 @@ public class BlockPlanks extends BlockPhysics {
     }
 
     @Override
+    public boolean useShapeForLightOcclusion(BlockState blockState) {
+        return true;
+    }
+
+    @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         super.createBlockStateDefinition(builder);
         builder.add(DISTANCE_1_4);
