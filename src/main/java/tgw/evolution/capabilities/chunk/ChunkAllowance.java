@@ -9,10 +9,12 @@ public class ChunkAllowance {
     private static final int GRASS_MAX = 16 * BASE_GRASS_COST;
     private int grassAllowance;
     private int grassOverflowTimer;
+    private int tallGrassAllowance;
 
     public void deserializeNBT(CompoundTag tag) {
         this.grassAllowance = Short.toUnsignedInt(tag.getShort("GrassAllowance"));
         this.grassOverflowTimer = tag.getShort("GrassOverflowTimer");
+        this.tallGrassAllowance = tag.getShort("TallGrassAllowance");
     }
 
     public boolean ifHasConsumeGrassAllowance(int allowance, boolean force) {
@@ -32,10 +34,20 @@ public class ChunkAllowance {
         return this.ifHasConsumeGrassAllowance(allowance, false);
     }
 
+    public boolean ifHasConsumeTallGrassAllowance(int allowance) {
+        assert 1 <= allowance && allowance <= GRASS_MAX;
+        if (this.tallGrassAllowance >= allowance) {
+            this.tallGrassAllowance -= allowance;
+            return true;
+        }
+        return false;
+    }
+
     public CompoundTag serializeNBT() {
         CompoundTag tag = new CompoundTag();
         tag.putShort("GrassAllowance", (short) this.grassAllowance);
         tag.putShort("GrassOverflowTimer", (short) this.grassOverflowTimer);
+        tag.putShort("TallGrassAllowance", (short) this.tallGrassAllowance);
         return tag;
     }
 
@@ -51,6 +63,10 @@ public class ChunkAllowance {
             if (this.grassAllowance > GRASS_MAX) {
                 this.grassAllowance = GRASS_MAX;
             }
+        }
+        this.tallGrassAllowance += GRASS_REGEN;
+        if (this.tallGrassAllowance > GRASS_MAX) {
+            this.tallGrassAllowance = GRASS_MAX;
         }
     }
 }

@@ -49,6 +49,11 @@ public class BlockGrassClay extends BlockGenericSpreadable implements IStructura
     }
 
     @Override
+    protected float getGrassDensity() {
+        return 0.15f;
+    }
+
+    @Override
     protected int getTallGrassAllowanceCost() {
         return 8 * ChunkAllowance.BASE_GRASS_COST;
     }

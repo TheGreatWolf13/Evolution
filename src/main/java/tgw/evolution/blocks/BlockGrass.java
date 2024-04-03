@@ -61,6 +61,15 @@ public class BlockGrass extends BlockGenericSpreadable implements INutrientVaria
     }
 
     @Override
+    protected float getGrassDensity() {
+        return switch (this.variant) {
+            case RICH -> 0.9f;
+            case NORMAL -> 0.6f;
+            case POOR -> 0.3f;
+        };
+    }
+
+    @Override
     protected int getTallGrassAllowanceCost() {
         return switch (this.variant) {
             case RICH -> ChunkAllowance.BASE_GRASS_COST;

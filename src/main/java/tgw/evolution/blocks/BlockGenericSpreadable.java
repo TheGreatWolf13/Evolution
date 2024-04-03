@@ -3,6 +3,7 @@ package tgw.evolution.blocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -15,12 +16,15 @@ import org.jetbrains.annotations.Nullable;
 import tgw.evolution.init.EvolutionBStates;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.util.math.DirectionUtil;
+import tgw.evolution.util.math.FastRandom;
 import tgw.evolution.util.math.MathHelper;
 
 import java.util.Random;
 import java.util.function.Consumer;
 
 public abstract class BlockGenericSpreadable extends BlockPhysics {
+
+    protected static final FastRandom RANDOM = new FastRandom();
 
     public BlockGenericSpreadable(Block.Properties builder) {
         super(builder.randomTicks());
@@ -127,20 +131,26 @@ public abstract class BlockGenericSpreadable extends BlockPhysics {
         }
     }
 
+    protected abstract float getGrassDensity();
+
     protected abstract int getTallGrassAllowanceCost();
 
     protected void growTallGrass(ServerLevel level, int x, int y, int z) {
         BlockState stateAbove = level.getBlockState_(x, y + 1, z);
         if (stateAbove.isAir()) {
-            if (level.getChunkAt_(x, z).getChunkStorage().getAllowance().ifHasConsumeGrassAllowance(this.getTallGrassAllowanceCost())) {
-                level.setBlockAndUpdate_(x, y + 1, z, EvolutionBlocks.SHORT_GRASS.defaultBlockState());
+            if (RANDOM.setSeedAndReturn(Mth.getSeed(x, y, z)).nextFloat() < this.getGrassDensity()) {
+                if (level.getChunkAt_(x, z).getChunkStorage().getAllowance().ifHasConsumeTallGrassAllowance(this.getTallGrassAllowanceCost())) {
+                    level.setBlockAndUpdate_(x, y + 1, z, EvolutionBlocks.SHORT_GRASS.defaultBlockState());
+                }
             }
         }
         else if (stateAbove.getBlock() == EvolutionBlocks.SHORT_GRASS) {
-            if (level.getBlockState_(x, y + 2, z).isAir()) {
-                if (level.getChunkAt_(x, z).getChunkStorage().getAllowance().ifHasConsumeGrassAllowance(2 * this.getTallGrassAllowanceCost())) {
-                    level.setBlockAndUpdate_(x, y + 1, z, EvolutionBlocks.TALL_GRASS.defaultBlockState());
-                    level.setBlockAndUpdate_(x, y + 2, z, EvolutionBlocks.TALL_GRASS.defaultBlockState().setValue(EvolutionBStates.HALF, DoubleBlockHalf.UPPER));
+            if (RANDOM.setSeedAndReturn(Mth.getSeed(x, y + 1, z)).nextFloat() < this.getGrassDensity()) {
+                if (level.getBlockState_(x, y + 2, z).isAir()) {
+                    if (level.getChunkAt_(x, z).getChunkStorage().getAllowance().ifHasConsumeTallGrassAllowance(2 * this.getTallGrassAllowanceCost())) {
+                        level.setBlockAndUpdate_(x, y + 1, z, EvolutionBlocks.TALL_GRASS.defaultBlockState());
+                        level.setBlockAndUpdate_(x, y + 2, z, EvolutionBlocks.TALL_GRASS.defaultBlockState().setValue(EvolutionBStates.HALF, DoubleBlockHalf.UPPER));
+                    }
                 }
             }
         }
