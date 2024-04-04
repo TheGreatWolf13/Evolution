@@ -17,6 +17,7 @@ import tgw.evolution.patches.PatchSortState;
 import tgw.evolution.util.collection.lists.FArrayList;
 import tgw.evolution.util.collection.lists.FList;
 import tgw.evolution.util.collection.lists.IList;
+import tgw.evolution.util.collection.lists.OList;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
@@ -25,7 +26,6 @@ import java.util.List;
 @Mixin(BufferBuilder.class)
 public abstract class MixinBufferBuilder extends DefaultedVertexConsumer implements BufferVertexConsumer, ICrashReset {
 
-    @Unique private final FList newSortingPoints = new FArrayList();
     @Shadow private ByteBuffer buffer;
     @Shadow private boolean building;
     @Shadow private @Nullable VertexFormatElement currentElement;
@@ -35,6 +35,7 @@ public abstract class MixinBufferBuilder extends DefaultedVertexConsumer impleme
     @Shadow private VertexFormat format;
     @Shadow private boolean indexOnly;
     @Shadow private VertexFormat.Mode mode;
+    @Unique private final FList newSortingPoints = new FArrayList();
     @Shadow private int nextElementByte;
     @Shadow private float sortX;
     @Shadow private float sortY;
@@ -42,6 +43,23 @@ public abstract class MixinBufferBuilder extends DefaultedVertexConsumer impleme
     @Shadow private @Nullable Vector3f[] sortingPoints;
     @Shadow private int totalRenderedBytes;
     @Shadow private int vertices;
+
+    /**
+     * @author TheGreatWolf
+     * @reason Use newSortingPoints
+     */
+    @Overwrite
+    public void begin(VertexFormat.Mode mode, VertexFormat vertexFormat) {
+        if (this.building) {
+            throw new IllegalStateException("Already building!");
+        }
+        this.building = true;
+        this.mode = mode;
+        this.switchFormat(vertexFormat);
+        this.currentElement = vertexFormat.getElements_().get(0);
+        this.elementIndex = 0;
+        this.buffer.clear();
+    }
 
     /**
      * @author TheGreatWolf
@@ -79,57 +97,40 @@ public abstract class MixinBufferBuilder extends DefaultedVertexConsumer impleme
         this.indexOnly = false;
     }
 
-    @Shadow
-    protected abstract void ensureCapacity(int pIncreaseAmount);
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public BufferBuilder.SortState getSortState() {
+        BufferBuilder.SortState sortState = new BufferBuilder.SortState(this.mode, this.vertices, this.sortingPoints, this.sortX, this.sortY, this.sortZ);
+        ((PatchSortState) sortState).putNewSortingPoints(this.newSortingPoints);
+        return sortState;
+    }
 
     /**
      * @author TheGreatWolf
      * @reason Use newSortingPoints
      */
+    @Override
     @Overwrite
-    public BufferBuilder.SortState getSortState() {
-        BufferBuilder.SortState sortState = new BufferBuilder.SortState(this.mode, this.vertices, this.sortingPoints, this.sortX, this.sortY,
-                                                                        this.sortZ);
-        ((PatchSortState) sortState).putNewSortingPoints(this.newSortingPoints);
-        return sortState;
-    }
-
-    @Shadow
-    protected abstract IntConsumer intConsumer(VertexFormat.IndexType pIndexType);
-
-    @Unique
-    private void makeNewQuadSortingPoints() {
-        FloatBuffer floatbuffer = this.buffer.asFloatBuffer();
-        int i = this.totalRenderedBytes / 4;
-        int j = this.format.getIntegerSize();
-        int k = j * this.mode.primitiveStride;
-        int l = this.vertices / this.mode.primitiveStride;
-        for (int i1 = 0; i1 < l; ++i1) {
-            float f = floatbuffer.get(i + i1 * k);
-            float f1 = floatbuffer.get(i + i1 * k + 1);
-            float f2 = floatbuffer.get(i + i1 * k + 2);
-            float f3 = floatbuffer.get(i + i1 * k + j * 2);
-            float f4 = floatbuffer.get(i + i1 * k + j * 2 + 1);
-            float f5 = floatbuffer.get(i + i1 * k + j * 2 + 2);
-            float f6 = (f + f3) / 2.0F;
-            float f7 = (f1 + f4) / 2.0F;
-            float f8 = (f2 + f5) / 2.0F;
-            this.newSortingPoints.add(f6);
-            this.newSortingPoints.add(f7);
-            this.newSortingPoints.add(f8);
+    public void nextElement() {
+        assert this.currentElement != null;
+        OList<VertexFormatElement> list = this.format.getElements_();
+        this.elementIndex = (this.elementIndex + 1) % list.size();
+        this.nextElementByte += this.currentElement.getByteSize();
+        VertexFormatElement vertexFormatElement = list.get(this.elementIndex);
+        this.currentElement = vertexFormatElement;
+        if (vertexFormatElement.getUsage() == VertexFormatElement.Usage.PADDING) {
+            this.nextElement();
+        }
+        if (this.defaultColorSet && this.currentElement.getUsage() == VertexFormatElement.Usage.COLOR) {
+            BufferVertexConsumer.super.color(this.defaultR, this.defaultG, this.defaultB, this.defaultA);
         }
     }
 
     @Override
-    public void putBulkData(PoseStack.Pose entry,
-                            BakedQuad quad,
-                            float[] brightnessTable,
-                            float r,
-                            float g,
-                            float b,
-                            int[] light,
-                            int overlay,
-                            boolean colorize) {
+    public void putBulkData(PoseStack.Pose entry, BakedQuad quad, float[] brightnessTable, float r, float g, float b, int[] light, int overlay, boolean colorize) {
         if (!this.fastFormat) {
             super.putBulkData(entry, quad, brightnessTable, r, g, b, light, overlay, colorize);
             return;
@@ -170,38 +171,6 @@ public abstract class MixinBufferBuilder extends DefaultedVertexConsumer impleme
             float u = Float.intBitsToFloat(vertices[offset + 4]);
             float v = Float.intBitsToFloat(vertices[offset + 5]);
             this.vertex(x, y, z).color(cr, cg, cb, 1.0f).uv(u, v).uv2(light[vertex]).overlayCoords(overlay).normal(nx, ny, nz).endVertex();
-        }
-    }
-
-    /**
-     * @author TheGreatWolf
-     * @reason Try to avoid allocations, but the sorting method tends to allocate a lot of {@code int[]}. Can we do better?
-     */
-    @Overwrite
-    private void putSortedQuadIndices(VertexFormat.IndexType indexType) {
-        FList floatList = RenderHelper.FLOAT_LIST.get();
-        floatList.clear();
-        floatList.size(this.newSortingPoints.size() / 3);
-        IList intList = RenderHelper.INT_LIST.get();
-        intList.clear();
-        intList.size(this.newSortingPoints.size() / 3);
-        for (int i = 0; i < this.newSortingPoints.size() / 3; intList.set(i, i++)) {
-            float dx = this.newSortingPoints.getFloat(3 * i) - this.sortX;
-            float dy = this.newSortingPoints.getFloat(3 * i + 1) - this.sortY;
-            float dz = this.newSortingPoints.getFloat(3 * i + 2) - this.sortZ;
-            floatList.set(i, dx * dx + dy * dy + dz * dz);
-        }
-        intList.sort((a, b) -> Floats.compare(floatList.getFloat(b), floatList.getFloat(a)));
-        IntConsumer consumer = this.intConsumer(indexType);
-        this.buffer.position(this.nextElementByte);
-        for (int i = 0; i < this.newSortingPoints.size() / 3; i++) {
-            int u = intList.getInt(i);
-            consumer.accept(u * this.mode.primitiveStride);
-            consumer.accept(u * this.mode.primitiveStride + 1);
-            consumer.accept(u * this.mode.primitiveStride + 2);
-            consumer.accept(u * this.mode.primitiveStride + 2);
-            consumer.accept(u * this.mode.primitiveStride + 3);
-            consumer.accept(u * this.mode.primitiveStride);
         }
     }
 
@@ -252,6 +221,70 @@ public abstract class MixinBufferBuilder extends DefaultedVertexConsumer impleme
                     this.makeNewQuadSortingPoints();
                 }
             }
+        }
+    }
+
+    @Shadow
+    protected abstract void ensureCapacity(int pIncreaseAmount);
+
+    @Shadow
+    protected abstract IntConsumer intConsumer(VertexFormat.IndexType pIndexType);
+
+    @Shadow
+    protected abstract void switchFormat(VertexFormat vertexFormat);
+
+    @Unique
+    private void makeNewQuadSortingPoints() {
+        FloatBuffer floatbuffer = this.buffer.asFloatBuffer();
+        int i = this.totalRenderedBytes / 4;
+        int j = this.format.getIntegerSize();
+        int k = j * this.mode.primitiveStride;
+        int l = this.vertices / this.mode.primitiveStride;
+        for (int i1 = 0; i1 < l; ++i1) {
+            float f = floatbuffer.get(i + i1 * k);
+            float f1 = floatbuffer.get(i + i1 * k + 1);
+            float f2 = floatbuffer.get(i + i1 * k + 2);
+            float f3 = floatbuffer.get(i + i1 * k + j * 2);
+            float f4 = floatbuffer.get(i + i1 * k + j * 2 + 1);
+            float f5 = floatbuffer.get(i + i1 * k + j * 2 + 2);
+            float f6 = (f + f3) / 2.0F;
+            float f7 = (f1 + f4) / 2.0F;
+            float f8 = (f2 + f5) / 2.0F;
+            this.newSortingPoints.add(f6);
+            this.newSortingPoints.add(f7);
+            this.newSortingPoints.add(f8);
+        }
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Try to avoid allocations, but the sorting method tends to allocate a lot of {@code int[]}. Can we do better?
+     */
+    @Overwrite
+    private void putSortedQuadIndices(VertexFormat.IndexType indexType) {
+        FList floatList = RenderHelper.FLOAT_LIST.get();
+        floatList.clear();
+        floatList.size(this.newSortingPoints.size() / 3);
+        IList intList = RenderHelper.INT_LIST.get();
+        intList.clear();
+        intList.size(this.newSortingPoints.size() / 3);
+        for (int i = 0; i < this.newSortingPoints.size() / 3; intList.set(i, i++)) {
+            float dx = this.newSortingPoints.getFloat(3 * i) - this.sortX;
+            float dy = this.newSortingPoints.getFloat(3 * i + 1) - this.sortY;
+            float dz = this.newSortingPoints.getFloat(3 * i + 2) - this.sortZ;
+            floatList.set(i, dx * dx + dy * dy + dz * dz);
+        }
+        intList.sort((a, b) -> Floats.compare(floatList.getFloat(b), floatList.getFloat(a)));
+        IntConsumer consumer = this.intConsumer(indexType);
+        this.buffer.position(this.nextElementByte);
+        for (int i = 0; i < this.newSortingPoints.size() / 3; i++) {
+            int u = intList.getInt(i);
+            consumer.accept(u * this.mode.primitiveStride);
+            consumer.accept(u * this.mode.primitiveStride + 1);
+            consumer.accept(u * this.mode.primitiveStride + 2);
+            consumer.accept(u * this.mode.primitiveStride + 2);
+            consumer.accept(u * this.mode.primitiveStride + 3);
+            consumer.accept(u * this.mode.primitiveStride);
         }
     }
 }

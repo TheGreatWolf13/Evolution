@@ -550,6 +550,7 @@
     "Mixin_CF_SimpleBakedModel",
     "Mixin_CF_SimpleBakedModel_Builder",
     "Mixin_CF_TerrainParticle",
+    "Mixin_CF_VertexFormat",
     "Mixin_CFM_MultiPlayerGameMode",
     "Mixin_CFS_KeyMapping",
     "Mixin_FS_ItemBlockRenderTypes",

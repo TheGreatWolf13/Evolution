@@ -426,6 +426,9 @@
       ],
       "com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator": [
         "tgw/evolution/patches/PatchSheetedDecalTextureGenerator"
+      ],
+      "com/mojang/blaze3d/vertex/VertexFormat": [
+        "tgw/evolution/patches/PatchVertexFormat"
       ]
     }
   }

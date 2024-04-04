@@ -1,74 +1,53 @@
-package tgw.evolution.util.collection.sets;
+package tgw.evolution.util.collection.maps;
 
 import it.unimi.dsi.fastutil.HashCommon;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectCollection;
-import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
-import it.unimi.dsi.fastutil.objects.ObjectListIterator;
+import it.unimi.dsi.fastutil.objects.ObjectSortedSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 
-import java.util.Collection;
-import java.util.Iterator;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
-public class OLinkedHashSet<K> extends ObjectLinkedOpenHashSet<K> implements OSet<K> {
+public class O2OLinkedHashMap<K, V> extends Object2ObjectLinkedOpenHashMap<K, V> implements O2OMap<K, V> {
 
-    protected @Nullable View<K> view;
+    protected @Nullable View<K, V> view;
 
-    public OLinkedHashSet(int expected, float f) {
+    public O2OLinkedHashMap(int expected, float f) {
         super(expected, f);
     }
 
-    public OLinkedHashSet(int expected) {
+    public O2OLinkedHashMap(int expected) {
         super(expected);
     }
 
-    public OLinkedHashSet() {
+    public O2OLinkedHashMap() {
     }
 
-    public OLinkedHashSet(Collection<? extends K> c, float f) {
-        super(c, f);
+    public O2OLinkedHashMap(Map<? extends K, ? extends V> m, float f) {
+        super(m, f);
     }
 
-    public OLinkedHashSet(Collection<? extends K> c) {
-        super(c);
+    public O2OLinkedHashMap(Map<? extends K, ? extends V> m) {
+        super(m);
     }
 
-    public OLinkedHashSet(ObjectCollection<? extends K> c, float f) {
-        super(c, f);
+    public O2OLinkedHashMap(Object2ObjectMap<K, V> m, float f) {
+        super(m, f);
     }
 
-    public OLinkedHashSet(ObjectCollection<? extends K> c) {
-        super(c);
+    public O2OLinkedHashMap(Object2ObjectMap<K, V> m) {
+        super(m);
     }
 
-    public OLinkedHashSet(Iterator<? extends K> i, float f) {
-        super(i, f);
+    public O2OLinkedHashMap(K[] k, V[] v, float f) {
+        super(k, v, f);
     }
 
-    public OLinkedHashSet(Iterator<? extends K> i) {
-        super(i);
-    }
-
-    public OLinkedHashSet(K[] a, int offset, int length, float f) {
-        super(a, offset, length, f);
-    }
-
-    public OLinkedHashSet(K[] a, int offset, int length) {
-        super(a, offset, length);
-    }
-
-    public OLinkedHashSet(K[] a, float f) {
-        super(a, f);
-    }
-
-    public OLinkedHashSet(K[] a) {
-        super(a);
-    }
-
-    @Override
-    public boolean addAll(Collection<? extends K> c) {
-        return OSet.super.addAll(c);
+    public O2OLinkedHashMap(K[] k, V[] v) {
+        super(k, v);
     }
 
     @Override
@@ -80,7 +59,7 @@ public class OLinkedHashSet<K> extends ObjectLinkedOpenHashSet<K> implements OSe
     }
 
     @Override
-    public K getIteration(long it) {
+    public K getIterationKey(long it) {
         int curr = (int) it;
         if (curr == -1) {
             throw new NoSuchElementException();
@@ -89,8 +68,25 @@ public class OLinkedHashSet<K> extends ObjectLinkedOpenHashSet<K> implements OSe
     }
 
     @Override
-    public K getSampleElement() {
-        return this.first();
+    public V getIterationValue(long it) {
+        int curr = (int) it;
+        if (curr == -1) {
+            throw new NoSuchElementException();
+        }
+        return this.value[curr];
+    }
+
+    @Override
+    public K getSampleKey() {
+        return this.firstKey();
+    }
+
+    @Override
+    public V getSampleValue() {
+        if (this.isEmpty()) {
+            throw new NoSuchElementException("Empty map");
+        }
+        return this.value[this.first];
     }
 
     @Override
@@ -99,9 +95,9 @@ public class OLinkedHashSet<K> extends ObjectLinkedOpenHashSet<K> implements OSe
     }
 
     @Override
-    public ObjectListIterator<K> iterator() {
+    public ObjectSortedSet<K> keySet() {
         this.deprecatedMethod();
-        return super.iterator();
+        return super.keySet();
     }
 
     @Override
@@ -114,6 +110,12 @@ public class OLinkedHashSet<K> extends ObjectLinkedOpenHashSet<K> implements OSe
     }
 
     @Override
+    public FastSortedEntrySet<K, V> object2ObjectEntrySet() {
+        this.deprecatedMethod();
+        return super.object2ObjectEntrySet();
+    }
+
+    @Override
     public void preAllocate(int extraSize) {
         if (this.f <= 0.5) {
             this.ensureCapacity(extraSize);
@@ -121,6 +123,11 @@ public class OLinkedHashSet<K> extends ObjectLinkedOpenHashSet<K> implements OSe
         else {
             this.tryCapacity(this.size() + extraSize);
         }
+    }
+
+    @Override
+    public void putAll(Map<? extends K, ? extends V> m) {
+        O2OMap.super.putAll(m);
     }
 
     @Override
@@ -148,11 +155,13 @@ public class OLinkedHashSet<K> extends ObjectLinkedOpenHashSet<K> implements OSe
         }
         //Actually remove
         if (curr == this.n) {
-            this.containsNull = false;
+            this.containsNullKey = false;
             this.key[this.n] = null;
+            this.value[this.n] = null;
         }
         else {
             K[] key = this.key;
+            V[] value = this.value;
             while (true) {
                 int last = curr;
                 curr = curr + 1 & this.mask;
@@ -160,6 +169,7 @@ public class OLinkedHashSet<K> extends ObjectLinkedOpenHashSet<K> implements OSe
                 while (true) {
                     if ((currKey = key[curr]) == null) {
                         key[last] = null;
+                        value[last] = null;
                         return next | 1L << 63;
                     }
                     int slot = HashCommon.mix(currKey.hashCode()) & this.mask;
@@ -174,6 +184,7 @@ public class OLinkedHashSet<K> extends ObjectLinkedOpenHashSet<K> implements OSe
                     curr = curr + 1 & this.mask;
                 }
                 key[last] = currKey;
+                value[last] = value[curr];
                 if (next == curr) {
                     next = last;
                 }
@@ -184,7 +195,13 @@ public class OLinkedHashSet<K> extends ObjectLinkedOpenHashSet<K> implements OSe
     }
 
     @Override
-    public @UnmodifiableView OSet<K> view() {
+    public ObjectCollection<V> values() {
+        this.deprecatedMethod();
+        return super.values();
+    }
+
+    @Override
+    public @UnmodifiableView O2OMap<K, V> view() {
         if (this.view == null) {
             this.view = new View<>(this);
         }
@@ -199,7 +216,7 @@ public class OLinkedHashSet<K> extends ObjectLinkedOpenHashSet<K> implements OSe
     }
 
     private void tryCapacity(long capacity) {
-        int needed = (int) Math.min(0x4000_0000L, Math.max(2L, HashCommon.nextPowerOfTwo((long) Math.ceil(capacity / this.f))));
+        int needed = (int) Math.min(1_073_741_824L, Math.max(2L, HashCommon.nextPowerOfTwo((long) Math.ceil(capacity / this.f))));
         if (needed > this.n) {
             this.rehash(needed);
         }
