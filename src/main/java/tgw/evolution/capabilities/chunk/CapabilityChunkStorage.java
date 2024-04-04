@@ -348,7 +348,7 @@ public class CapabilityChunkStorage {
         return (section.getStabilityStorage().get(x, y, z) ? 1 << 31 : 0) | section.getLoadFactorStorage().get(x, y, z) << 16 | section.getIntegrityStorage().get(x, y, z);
     }
 
-    private static int verifyArch(BlockState state, IStructural structural, LevelChunk chunk, LevelChunkSection section, ChunkHolder holder, int index, int x, int y, int z, int selfIntegrity, int directionList, int incrementForBeam) {
+    private static int verifyArch(BlockState state, IStructural structural, LevelChunk chunk, LevelChunkSection section, ChunkHolder holder, int index, int x, int y, int z, int selfIntegrity, int directionList, int incrementForBeam, int incrementForArch) {
         int load = 255;
         int integrity = selfIntegrity;
         float factor = (float) load / integrity;
@@ -362,7 +362,7 @@ public class CapabilityChunkStorage {
             BlockState otherState = safeGetBlockstate(chunk, section, holder, x0, y, z0, index, -1);
             if (otherState.getBlock() instanceof IStructural && structural.canMakeABeamWith(state, otherState)) {
                 int data = safeGetStructuralData(chunk, section, holder, x0, y, z0, index, -1);
-                int l = IFillable.getLoadFactor(data) + 2;
+                int l = IFillable.getLoadFactor(data) + incrementForArch;
                 int i = Math.min(IFillable.getIntegrity(data), selfIntegrity);
                 float f = (float) l / i;
                 if (f < factor) {
@@ -899,17 +899,17 @@ public class CapabilityChunkStorage {
                             newIntegrity = result & 0xFFFF;
                         }
                         case X_ARCH -> {
-                            int result = verifyArch(state, structural, chunk, section, holder, index, x, y, z, selfIntegrity, DirectionList.X_AXIS, incrementForBeam);
+                            int result = verifyArch(state, structural, chunk, section, holder, index, x, y, z, selfIntegrity, DirectionList.X_AXIS, incrementForBeam, structural.getIncrementForArch(state));
                             newLoad = result >> 16;
                             newIntegrity = result & 0xFFFF;
                         }
                         case Z_ARCH -> {
-                            int result = verifyArch(state, structural, chunk, section, holder, index, x, y, z, selfIntegrity, DirectionList.Z_AXIS, incrementForBeam);
+                            int result = verifyArch(state, structural, chunk, section, holder, index, x, y, z, selfIntegrity, DirectionList.Z_AXIS, incrementForBeam, structural.getIncrementForArch(state));
                             newLoad = result >> 16;
                             newIntegrity = result & 0xFFFF;
                         }
                         case CARDINAL_ARCH -> {
-                            int result = verifyArch(state, structural, chunk, section, holder, index, x, y, z, selfIntegrity, DirectionList.HORIZONTAL, incrementForBeam);
+                            int result = verifyArch(state, structural, chunk, section, holder, index, x, y, z, selfIntegrity, DirectionList.HORIZONTAL, incrementForBeam, structural.getIncrementForArch(state));
                             newLoad = result >> 16;
                             newIntegrity = result & 0xFFFF;
                         }

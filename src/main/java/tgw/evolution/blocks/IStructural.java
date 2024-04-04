@@ -21,6 +21,10 @@ public interface IStructural extends IFillable {
 
     BeamType getBeamType(BlockState state);
 
+    default int getIncrementForArch(BlockState state) {
+        return 2;
+    }
+
     default int getIncrementForBeam(BlockState state) {
         return 1;
     }

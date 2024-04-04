@@ -69,13 +69,18 @@ public class BlockStone extends BlockPhysics implements IRockVariant, IStructura
     }
 
     @Override
+    public int getIncrementForArch(BlockState state) {
+        return 4;
+    }
+
+    @Override
     public int getIncrementForBeam(BlockState state) {
-        return 5;
+        return 10;
     }
 
     @Override
     public int getIntegrity(BlockState state) {
-        return this.variant.getRockType().baseIntegrity;
+        return this.variant.getRockType().baseIntegrity * 2;
     }
 
     @Override
