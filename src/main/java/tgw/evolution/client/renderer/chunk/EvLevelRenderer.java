@@ -969,10 +969,10 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
             }
         }
         checkPoseStack(matrices);
+        profiler.popPush("outline");
         HitResult hitResult = this.mc.hitResult;
         if (hitResult != null) {
             if (renderBlockOutline && hitResult.getType() == HitResult.Type.BLOCK) {
-                profiler.popPush("outline");
                 BlockHitResult blockHitResult = (BlockHitResult) hitResult;
                 int x = blockHitResult.posX();
                 int y = blockHitResult.posY();
@@ -1016,6 +1016,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
         RenderSystem.applyModelViewMatrix();
         this.mc.debugRenderer.render(matrices, buffer, camX, camY, camZ);
         this.renderLoadFactor(matrices, buffer, camX, camY, camZ);
+        profiler.popPush("endBatch");
         internalMat.popPose();
         RenderSystem.applyModelViewMatrix();
         buffer.endBatch(Sheets.translucentCullBlockSheet());
