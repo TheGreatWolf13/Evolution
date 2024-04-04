@@ -7,9 +7,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.*;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
@@ -233,6 +231,15 @@ public class BlockPlanks extends BlockPhysics {
     }
 
     @Override
+    public BlockState mirror(BlockState state, Mirror mirror) {
+        return switch (mirror) {
+            case NONE -> state;
+            case FRONT_BACK -> state.setValue(EAST, state.getValue(WEST)).setValue(WEST, state.getValue(EAST));
+            case LEFT_RIGHT -> state.setValue(NORTH, state.getValue(SOUTH)).setValue(SOUTH, state.getValue(NORTH));
+        };
+    }
+
+    @Override
     public BlockState playerWillDestroy_(Level level, int x, int y, int z, BlockState state, Player player, Direction face, double hitX, double hitY, double hitZ) {
         int count = 0;
         int hasSide = 0;
@@ -267,6 +274,16 @@ public class BlockPlanks extends BlockPhysics {
         BooleanProperty property = directionToProperty(face.getOpposite());
         this.spawnDestroyParticles_(level, player, x, y, z, this.defaultBlockState().setValue(property, true));
         return this.updateDistance(state.setValue(property, false), level, x, y, z);
+    }
+
+    @Override
+    public BlockState rotate(BlockState state, Rotation rotation) {
+        return switch (rotation) {
+            case NONE -> state;
+            case CLOCKWISE_90 -> state.setValue(NORTH, state.getValue(WEST)).setValue(EAST, state.getValue(NORTH)).setValue(SOUTH, state.getValue(EAST)).setValue(WEST, state.getValue(SOUTH));
+            case CLOCKWISE_180 -> state.setValue(NORTH, state.getValue(SOUTH)).setValue(SOUTH, state.getValue(NORTH)).setValue(EAST, state.getValue(WEST)).setValue(WEST, state.getValue(EAST));
+            case COUNTERCLOCKWISE_90 -> state.setValue(NORTH, state.getValue(EAST)).setValue(EAST, state.getValue(SOUTH)).setValue(SOUTH, state.getValue(WEST)).setValue(WEST, state.getValue(NORTH));
+        };
     }
 
     @Override
