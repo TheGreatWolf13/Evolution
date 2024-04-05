@@ -1357,12 +1357,14 @@ public abstract class Mixin_FS_Blocks {
                                                       .noCollission()
                                                       .instabreak()
                                                       .lightLevel(BlockUtils.LIGHT_15)
-                                                      .sound(SoundType.WOOL)));
+                                                      .sound(SoundType.WOOL)
+                                                      .noDrops()));
         SOUL_FIRE = register("soul_fire", new SoulFireBlock(of(Material.FIRE, MaterialColor.COLOR_LIGHT_BLUE)
                                                                     .noCollission()
                                                                     .instabreak()
                                                                     .lightLevel(BlockUtils.LIGHT_10)
-                                                                    .sound(SoundType.WOOL)));
+                                                                    .sound(SoundType.WOOL)
+                                                                    .noDrops()));
         SPAWNER = register("spawner", new SpawnerBlock(of(Material.STONE)
                                                                .requiresCorrectToolForDrops()
                                                                .strength(5.0F)
