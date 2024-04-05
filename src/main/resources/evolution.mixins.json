@@ -21,6 +21,7 @@
     "Mixin_CF_ClientboundLevelChunkPacketData",
     "Mixin_CF_ClientboundPlayerCombatKillPacket",
     "Mixin_CF_ClipContext",
+    "Mixin_CF_DirectionalPlaceContext",
     "Mixin_CF_EnumProperty",
     "Mixin_CF_HitResult",
     "Mixin_CF_IdMapper",
