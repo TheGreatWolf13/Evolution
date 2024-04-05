@@ -5,7 +5,6 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.SectionPos;
-import net.minecraft.util.Mth;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -24,7 +23,10 @@ public class ClientIntegrityStorage {
         if (max == 255) {
             return 0xff00_00ff;
         }
-        value = Mth.clamp(value, min, max);
+        if (value > max) {
+            return 0xffff_00ff;
+        }
+        value = Math.max(value, min);
         float delta = (float) (value - min) / (max - min);
         if (Float.isNaN(delta)) {
             return 0xffff_ffff;
