@@ -48,23 +48,15 @@ public class EvAmbientOcclusionFace {
                ((lightColor0 & 0x100_0000) + (lightColor1 & 0x100_0000) + (lightColor2 & 0x100_0000) + (lightColor3 & 0x100_0000) >= 0x200_0000 ? 0x100_0000 : 0);
     }
 
-    private static int blend(int brightness0,
-                             int brightness1,
-                             int brightness2,
-                             int brightness3,
-                             float weight0,
-                             float weight1,
-                             float weight2,
-                             float weight3) {
-        int i = (int) ((brightness0 >> 16 & 255) * weight0 +
-                       (brightness1 >> 16 & 255) * weight1 +
-                       (brightness2 >> 16 & 255) * weight2 +
-                       (brightness3 >> 16 & 255) * weight3) & 255;
-        int j = (int) ((brightness0 & 255) * weight0 +
-                       (brightness1 & 255) * weight1 +
-                       (brightness2 & 255) * weight2 +
-                       (brightness3 & 255) * weight3) & 255;
-        return i << 16 | j;
+    private static int blend(int brightness0, int brightness1, int brightness2, int brightness3, float weight0, float weight1, float weight2, float weight3) {
+        int rr = (int) ((brightness0 & 15) * weight0 + (brightness1 & 15) * weight1 + (brightness2 & 15) * weight2 + (brightness3 & 15) * weight3) & 15;
+        int rs = Math.round((brightness0 & 1 << 4) * weight0 + (brightness1 & 1 << 4) * weight1 + (brightness2 & 1 << 4) * weight2 + (brightness3 & 1 << 4) * weight3) & 1 << 4;
+        int gr = (int) ((brightness0 & 15 << 5) * weight0 + (brightness1 & 15 << 5) * weight1 + (brightness2 & 15 << 5) * weight2 + (brightness3 & 15 << 5) * weight3) & 15 << 5;
+        int gs = Math.round((brightness0 & 1 << 9) * weight0 + (brightness1 & 1 << 9) * weight1 + (brightness2 & 1 << 9) * weight2 + (brightness3 & 1 << 9) * weight3) & 1 << 9;
+        int br = (int) ((brightness0 & 15 << 20) * weight0 + (brightness1 & 15 << 20) * weight1 + (brightness2 & 15 << 20) * weight2 + (brightness3 & 15 << 20) * weight3) & 15 << 20;
+        int bs = Math.round((brightness0 & 1 << 24) * weight0 + (brightness1 & 1 << 24) * weight1 + (brightness2 & 1 << 24) * weight2 + (brightness3 & 1 << 24) * weight3) & 1 << 24;
+        int sky = (int) ((brightness0 & 15 << 16) * weight0 + (brightness1 & 15 << 16) * weight1 + (brightness2 & 15 << 16) * weight2 + (brightness3 & 15 << 16) * weight3) & 15 << 16;
+        return rr | rs | gr | gs | br | bs | sky;
     }
 
     private static int blend2(int lightColor0, int lightColor1) {

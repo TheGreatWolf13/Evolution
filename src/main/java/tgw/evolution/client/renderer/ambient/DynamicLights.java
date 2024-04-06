@@ -48,6 +48,17 @@ public class DynamicLights {
         return range | strength;
     }
 
+    public static int combineLightMap(int l1, int l2) {
+        int rr = Math.max(l1 & 15, l2 & 15);
+        int rs = Math.max(l1 & 1 << 4, l2 & 1 << 4);
+        int gr = Math.max(l1 & 15 << 5, l2 & 15 << 5);
+        int gs = Math.max(l1 & 1 << 9, l2 & 1 << 9);
+        int br = Math.max(l1 & 15 << 20, l2 & 15 << 20);
+        int bs = Math.max(l1 & 1 << 24, l2 & 1 << 24);
+        int sky = Math.max(l1 & 15 << 16, l2 & 15 << 16);
+        return rr | rs | gr | gs | br | bs | sky;
+    }
+
     public static int componentsToLightmap(int red, int green, int blue, int sky) {
         assert 0 <= red && red < 32 : "Red out of bounds: " + red;
         assert 0 <= green && green < 32 : "Green out of bounds: " + green;

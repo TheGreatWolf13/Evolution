@@ -29,13 +29,27 @@ public abstract class MixinFlameParticle extends RisingParticle {
         float life = (this.age + partialTicks) / this.lifetime;
         life = Mth.clamp(life, 0.0F, 1.0F);
         int color = super.getLightColor(partialTicks);
-        int bl = color & 0xF;
-        int sl = color >> 16 & 0xF;
-        bl += (int) (life * 15);
-        if (bl > 15) {
-            bl = 15;
+        int increment = (int) (life * 15);
+        int rr = color & 15;
+        int rs = color & 1 << 4;
+        int gr = color >> 5 & 15;
+        int gs = color & 1 << 9;
+        int br = color >> 20 & 15;
+        int bs = color & 1 << 24;
+        int s = color >> 16 & 0xF;
+        rr += increment;
+        if (rr > 15) {
+            rr = 15;
         }
-        return bl | bl << 4 | bl << 20 | sl << 16;
+        gr += increment;
+        if (gr > 15) {
+            gr = 15;
+        }
+        br += increment;
+        if (br > 15) {
+            br = 15;
+        }
+        return rr | rs | gr << 5 | gs | br << 20 | bs | s << 16;
     }
 
     /**

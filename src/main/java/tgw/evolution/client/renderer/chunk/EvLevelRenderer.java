@@ -251,9 +251,12 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
      * Returns the light color in the specified block in the following format:<br>
      * <br>
      * Bit 0 ~ 3: red component, from 0 to 15; <br>
-     * Bit 4 ~ 7: green component, from 0 to 15; <br>
+     * Bit 4: red strength;<br>
+     * Bit 5 ~ 8: green component, from 0 to 15; <br>
+     * Bit 9: green strength;<br>
      * Bit 16 ~ 19: skylight component, from 0 to 15; <br>
      * Bit 20 ~ 23: blue component, from 0 to 15; <br>
+     * Bit 24: blue strength;<br>
      * <br>
      * Special case: -1 if the block is opaque and needsToCheckForOpaqueness is true.
      */

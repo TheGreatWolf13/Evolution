@@ -24,6 +24,7 @@ import org.spongepowered.asm.mixin.*;
 import tgw.evolution.ColorManager;
 import tgw.evolution.Evolution;
 import tgw.evolution.client.renderer.EvAmbientOcclusionFace;
+import tgw.evolution.client.renderer.ambient.DynamicLights;
 import tgw.evolution.client.renderer.chunk.EvLevelRenderer;
 import tgw.evolution.hooks.asm.DeleteMethod;
 import tgw.evolution.patches.PatchLiquidBlockRenderer;
@@ -38,6 +39,16 @@ public abstract class Mixin_M_LiquidBlockRenderer implements PatchLiquidBlockRen
     @Shadow @Final private TextureAtlasSprite[] lavaIcons;
     @Shadow @Final private TextureAtlasSprite[] waterIcons;
     @Shadow private TextureAtlasSprite waterOverlay;
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Overwrite
+    @DeleteMethod
+    public static boolean shouldRenderFace(BlockAndTintGetter blockAndTintGetter, BlockPos blockPos, FluidState fluidState, BlockState blockState, Direction direction, FluidState fluidState2) {
+        return !isFaceOccludedBySelf(blockAndTintGetter, blockPos, blockState, direction) && !isNeighborSameFluid(fluidState, fluidState2);
+    }
 
     @Unique
     private static long addWeightedHeight(long a, float f) {
@@ -92,13 +103,7 @@ public abstract class Mixin_M_LiquidBlockRenderer implements PatchLiquidBlockRen
 
     @Unique
     private static int getLightColor(BlockAndTintGetter level, int x, int y, int z) {
-        int light = EvLevelRenderer.getLightColor(level, x, y, z);
-        int lightAbove = EvLevelRenderer.getLightColor(level, x, y + 1, z);
-        int k = light & 255;
-        int l = lightAbove & 255;
-        int i1 = light >> 16 & 255;
-        int j1 = lightAbove >> 16 & 255;
-        return Math.max(k, l) | Math.max(i1, j1) << 16;
+        return DynamicLights.combineLightMap(EvLevelRenderer.getLightColor(level, x, y, z), EvLevelRenderer.getLightColor(level, x, y + 1, z));
     }
 
     /**
@@ -173,69 +178,9 @@ public abstract class Mixin_M_LiquidBlockRenderer implements PatchLiquidBlockRen
         return false;
     }
 
-    /**
-     * @reason _
-     * @author TheGreatWolf
-     */
-    @Overwrite
-    @DeleteMethod
-    public static boolean shouldRenderFace(BlockAndTintGetter blockAndTintGetter, BlockPos blockPos, FluidState fluidState, BlockState blockState, Direction direction, FluidState fluidState2) {
-        return !isFaceOccludedBySelf(blockAndTintGetter, blockPos, blockState, direction) && !isNeighborSameFluid(fluidState, fluidState2);
-    }
-
     @Unique
     private static boolean shouldRenderFace(BlockAndTintGetter level, int x, int y, int z, FluidState fluid, BlockState state, Direction direction, FluidState fluidAtDir) {
         return !isFaceOccludedBySelf(level, x, y, z, state, direction) && !isNeighborSameFluid(fluid, fluidAtDir);
-    }
-
-    /**
-     * @reason _
-     * @author TheGreatWolf
-     */
-    @Overwrite
-    @DeleteMethod
-    private void addWeightedHeight(float[] fs, float f) {
-        throw new AbstractMethodError();
-    }
-
-    /**
-     * @reason _
-     * @author TheGreatWolf
-     */
-    @Overwrite
-    @DeleteMethod
-    private float calculateAverageHeight(BlockAndTintGetter blockAndTintGetter, Fluid fluid, float f, float g, float h, BlockPos blockPos) {
-        throw new AbstractMethodError();
-    }
-
-    /**
-     * @reason _
-     * @author TheGreatWolf
-     */
-    @Overwrite
-    @DeleteMethod
-    private float getHeight(BlockAndTintGetter blockAndTintGetter, Fluid fluid, BlockPos blockPos) {
-        throw new AbstractMethodError();
-    }
-
-    /**
-     * @reason _
-     * @author TheGreatWolf
-     */
-    @Overwrite
-    @DeleteMethod
-    private float getHeight(BlockAndTintGetter blockAndTintGetter, Fluid fluid, BlockPos blockPos, BlockState blockState, FluidState fluidState) {
-        throw new AbstractMethodError();
-    }
-
-    /**
-     * @author TheGreatWolf
-     * @reason Replace LevelRenderer
-     */
-    @Overwrite
-    @DeleteMethod
-    private int getLightColor(BlockAndTintGetter level, BlockPos pos) {
-        throw new AbstractMethodError();
     }
 
     /**
@@ -265,7 +210,7 @@ public abstract class Mixin_M_LiquidBlockRenderer implements PatchLiquidBlockRen
         if (!renderU && !renderD && !renderE && !renderW && !renderN && !renderS) {
             return false;
         }
-        boolean ao = Minecraft.useAmbientOcclusion() && state.getLightEmission() < 15;
+        boolean ao = Minecraft.useAmbientOcclusion() && state.getLightEmission() < 0b1_1111_1_1111_1_1111;
         boolean rendered = false;
         float shadeD = level.getShade(Direction.DOWN, true);
         float shadeU = level.getShade(Direction.UP, true);
@@ -520,4 +465,54 @@ public abstract class Mixin_M_LiquidBlockRenderer implements PatchLiquidBlockRen
 
     @Shadow
     protected abstract void vertex(VertexConsumer vertexConsumer, double d, double e, double f, float g, float h, float i, float j, float k, int l);
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Overwrite
+    @DeleteMethod
+    private void addWeightedHeight(float[] fs, float f) {
+        throw new AbstractMethodError();
+    }
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Overwrite
+    @DeleteMethod
+    private float calculateAverageHeight(BlockAndTintGetter blockAndTintGetter, Fluid fluid, float f, float g, float h, BlockPos blockPos) {
+        throw new AbstractMethodError();
+    }
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Overwrite
+    @DeleteMethod
+    private float getHeight(BlockAndTintGetter blockAndTintGetter, Fluid fluid, BlockPos blockPos) {
+        throw new AbstractMethodError();
+    }
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Overwrite
+    @DeleteMethod
+    private float getHeight(BlockAndTintGetter blockAndTintGetter, Fluid fluid, BlockPos blockPos, BlockState blockState, FluidState fluidState) {
+        throw new AbstractMethodError();
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Replace LevelRenderer
+     */
+    @Overwrite
+    @DeleteMethod
+    private int getLightColor(BlockAndTintGetter level, BlockPos pos) {
+        throw new AbstractMethodError();
+    }
 }
