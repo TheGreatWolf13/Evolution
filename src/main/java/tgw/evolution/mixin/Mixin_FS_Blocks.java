@@ -1098,7 +1098,7 @@ public abstract class Mixin_FS_Blocks {
                 .noCollission()
                 .randomTicks()
                 .strength(100.0F)
-                .lightLevel(BlockUtils.LIGHT_15)
+                .lightLevel(BlockUtils.LIGHT_RED_15)
                 .noDrops()));
         SAND = register("sand", new SandBlock(0xdb_d3a0, of(Material.SAND, MaterialColor.SAND).strength(0.5F).sound(SoundType.SAND)));
         RED_SAND = register("red_sand", new SandBlock(0xa9_5821, of(Material.SAND, MaterialColor.COLOR_ORANGE)
@@ -1317,7 +1317,7 @@ public abstract class Mixin_FS_Blocks {
                                                                               .randomTicks()
                                                                               .instabreak()
                                                                               .sound(SoundType.GRASS)
-                                                                              .lightLevel(BlockUtils.LIGHT_1)
+                                                                              .lightLevel(BlockUtils.LIGHT_WHITE_1)
                                                                               .hasPostProcess_(BlockUtils.ALWAYS),
                                                                       Mixin_FS_Blocks::_hugeBrownMushroom));
         RED_MUSHROOM = register("red_mushroom", new MushroomBlock(of(Material.PLANT, MaterialColor.COLOR_RED)
@@ -1345,26 +1345,29 @@ public abstract class Mixin_FS_Blocks {
         TORCH = register("torch", new TorchBlock(of(Material.DECORATION)
                                                          .noCollission()
                                                          .instabreak()
-                                                         .lightLevel(BlockUtils.LIGHT_14)
+                                                         .lightLevel(BlockUtils.LIGHT_ORANGE_14)
                                                          .sound(SoundType.WOOD), ParticleTypes.FLAME));
         WALL_TORCH = register("wall_torch", new WallTorchBlock(of(Material.DECORATION)
                                                                        .noCollission()
                                                                        .instabreak()
-                                                                       .lightLevel(BlockUtils.LIGHT_14)
+                                                                       .lightLevel(BlockUtils.LIGHT_ORANGE_14)
                                                                        .sound(SoundType.WOOD)
-                                                                       .dropsLike(TORCH), ParticleTypes.FLAME));
+                                                                       .dropsLike(TORCH), ParticleTypes.FLAME)
+        );
         FIRE = register("fire", new FireBlock(of(Material.FIRE, MaterialColor.FIRE)
                                                       .noCollission()
                                                       .instabreak()
-                                                      .lightLevel(BlockUtils.LIGHT_15)
+                                                      .lightLevel(BlockUtils.LIGHT_ORANGE_15)
                                                       .sound(SoundType.WOOL)
-                                                      .noDrops()));
+                                                      .noDrops())
+        );
         SOUL_FIRE = register("soul_fire", new SoulFireBlock(of(Material.FIRE, MaterialColor.COLOR_LIGHT_BLUE)
                                                                     .noCollission()
                                                                     .instabreak()
-                                                                    .lightLevel(BlockUtils.LIGHT_10)
+                                                                    .lightLevel(BlockUtils.LIGHT_CYAN_10)
                                                                     .sound(SoundType.WOOL)
-                                                                    .noDrops()));
+                                                                    .noDrops())
+        );
         SPAWNER = register("spawner", new SpawnerBlock(of(Material.STONE)
                                                                .requiresCorrectToolForDrops()
                                                                .strength(5.0F)
@@ -1373,13 +1376,11 @@ public abstract class Mixin_FS_Blocks {
         OAK_STAIRS = register("oak_stairs", new StairBlock(OAK_PLANKS.defaultBlockState(), BlockBehaviour.Properties.copy(OAK_PLANKS)));
         CHEST = register("chest", new ChestBlock(of(Material.WOOD).strength(2.5F).sound(SoundType.WOOD), Mixin_FS_Blocks::_chest));
         REDSTONE_WIRE = register("redstone_wire", new RedStoneWireBlock(of(Material.DECORATION).noCollission().instabreak()));
-        DIAMOND_ORE = register("diamond_ore", new OreBlock(of(Material.STONE).requiresCorrectToolForDrops().strength(3.0F, 3.0F),
-                                                           UniformInt.of(3, 7)));
+        DIAMOND_ORE = register("diamond_ore", new OreBlock(of(Material.STONE).requiresCorrectToolForDrops().strength(3.0F, 3.0F), UniformInt.of(3, 7)));
         DEEPSLATE_DIAMOND_ORE = register("deepslate_diamond_ore", new OreBlock(BlockBehaviour.Properties.copy(DIAMOND_ORE)
                                                                                                         .color(MaterialColor.DEEPSLATE)
                                                                                                         .strength(4.5F, 3.0F)
-                                                                                                        .sound(SoundType.DEEPSLATE),
-                                                                               UniformInt.of(3, 7)));
+                                                                                                        .sound(SoundType.DEEPSLATE), UniformInt.of(3, 7)));
         DIAMOND_BLOCK = register("diamond_block", new Block(of(Material.METAL, MaterialColor.DIAMOND)
                                                                     .requiresCorrectToolForDrops()
                                                                     .strength(5.0F, 6.0F)
@@ -1562,12 +1563,12 @@ public abstract class Mixin_FS_Blocks {
         SOUL_TORCH = register("soul_torch", new TorchBlock(of(Material.DECORATION)
                                                                    .noCollission()
                                                                    .instabreak()
-                                                                   .lightLevel(BlockUtils.LIGHT_10)
+                                                                   .lightLevel(BlockUtils.LIGHT_CYAN_10)
                                                                    .sound(SoundType.WOOD), ParticleTypes.SOUL_FIRE_FLAME));
         SOUL_WALL_TORCH = register("soul_wall_torch", new WallTorchBlock(of(Material.DECORATION)
                                                                                  .noCollission()
                                                                                  .instabreak()
-                                                                                 .lightLevel(BlockUtils.LIGHT_10)
+                                                                                 .lightLevel(BlockUtils.LIGHT_CYAN_10)
                                                                                  .sound(SoundType.WOOD)
                                                                                  .dropsLike(SOUL_TORCH), ParticleTypes.SOUL_FIRE_FLAME));
         GLOWSTONE = register("glowstone", new Block(of(Material.GLASS, MaterialColor.SAND)
@@ -1579,7 +1580,7 @@ public abstract class Mixin_FS_Blocks {
                                                                                 .randomTicks()
                                                                                 .strength(-1.0F)
                                                                                 .sound(SoundType.GLASS)
-                                                                                .lightLevel(BlockUtils.LIGHT_11)));
+                                                                                .lightLevel(BlockUtils.LIGHT_PURPLE_11)));
         CARVED_PUMPKIN = register("carved_pumpkin", new CarvedPumpkinBlock(of(Material.VEGETABLE, MaterialColor.COLOR_ORANGE)
                                                                                    .strength(1.0F)
                                                                                    .sound(SoundType.WOOD)
@@ -1587,7 +1588,7 @@ public abstract class Mixin_FS_Blocks {
         JACK_O_LANTERN = register("jack_o_lantern", new CarvedPumpkinBlock(of(Material.VEGETABLE, MaterialColor.COLOR_ORANGE)
                                                                                    .strength(1.0F)
                                                                                    .sound(SoundType.WOOD)
-                                                                                   .lightLevel(BlockUtils.LIGHT_15)
+                                                                                   .lightLevel(BlockUtils.LIGHT_ORANGE_15)
                                                                                    .isValidSpawn_(BlockUtils.ALWAYS_SPAWN)));
         CAKE = register("cake", new CakeBlock(of(Material.CAKE).strength(0.5F).sound(SoundType.WOOL)));
         REPEATER = register("repeater", new RepeaterBlock(of(Material.DECORATION).instabreak().sound(SoundType.WOOD)));
@@ -1705,70 +1706,61 @@ public abstract class Mixin_FS_Blocks {
         NETHER_BRICK_FENCE = register("nether_brick_fence", new FenceBlock(of(Material.STONE, MaterialColor.NETHER)
                                                                                    .requiresCorrectToolForDrops()
                                                                                    .strength(2.0F, 6.0F)
-                                                                                   .sound(SoundType.NETHER_BRICKS)));
-        NETHER_BRICK_STAIRS = register("nether_brick_stairs",
-                                       new StairBlock(NETHER_BRICKS.defaultBlockState(), BlockBehaviour.Properties.copy(NETHER_BRICKS)));
-        NETHER_WART = register("nether_wart", new NetherWartBlock(
-                of(Material.PLANT, MaterialColor.COLOR_RED).noCollission().randomTicks().sound(SoundType.NETHER_WART)));
-        ENCHANTING_TABLE = register("enchanting_table",
-                                    new EnchantmentTableBlock(of(Material.STONE, MaterialColor.COLOR_RED)
-                                                                      .requiresCorrectToolForDrops()
-                                                                      .lightLevel(BlockUtils.LIGHT_7)
-                                                                      .strength(5.0F, 1_200.0F)));
+                                                                                   .sound(SoundType.NETHER_BRICKS))
+        );
+        NETHER_BRICK_STAIRS = register("nether_brick_stairs", new StairBlock(NETHER_BRICKS.defaultBlockState(), BlockBehaviour.Properties.copy(NETHER_BRICKS)));
+        NETHER_WART = register("nether_wart", new NetherWartBlock(of(Material.PLANT, MaterialColor.COLOR_RED).noCollission().randomTicks().sound(SoundType.NETHER_WART)));
+        ENCHANTING_TABLE = register("enchanting_table", new EnchantmentTableBlock(of(Material.STONE, MaterialColor.COLOR_RED)
+                                                                                          .requiresCorrectToolForDrops()
+                                                                                          .lightLevel(BlockUtils.LIGHT_WHITE_7)
+                                                                                          .strength(5.0F, 1_200.0F))
+        );
         BREWING_STAND = register("brewing_stand", new BrewingStandBlock(of(Material.METAL)
                                                                                 .requiresCorrectToolForDrops()
                                                                                 .strength(0.5F)
-                                                                                .lightLevel(BlockUtils.LIGHT_1)
-                                                                                .noOcclusion()));
-        CAULDRON = register("cauldron", new CauldronBlock(
-                of(Material.METAL, MaterialColor.STONE).requiresCorrectToolForDrops().strength(2.0F).noOcclusion()));
-        WATER_CAULDRON = register("water_cauldron", new LayeredCauldronBlock(BlockBehaviour.Properties.copy(CAULDRON), LayeredCauldronBlock.RAIN,
-                                                                             CauldronInteraction.WATER));
-        LAVA_CAULDRON = register("lava_cauldron", new LavaCauldronBlock(BlockBehaviour.Properties.copy(CAULDRON).lightLevel(BlockUtils.LIGHT_15)));
-        POWDER_SNOW_CAULDRON = register("powder_snow_cauldron",
-                                        new PowderSnowCauldronBlock(BlockBehaviour.Properties.copy(CAULDRON), LayeredCauldronBlock.SNOW,
-                                                                    CauldronInteraction.POWDER_SNOW));
-        END_PORTAL = register("end_portal", new EndPortalBlock(
-                of(Material.PORTAL, MaterialColor.COLOR_BLACK)
-                        .noCollission()
-                        .lightLevel(BlockUtils.LIGHT_15)
-                        .strength(-1.0F, 3_600_000.0F)
-                        .noDrops()));
-        END_PORTAL_FRAME = register("end_portal_frame", new EndPortalFrameBlock(
-                of(Material.STONE, MaterialColor.COLOR_GREEN)
-                        .sound(SoundType.GLASS)
-                        .lightLevel(BlockUtils.LIGHT_1)
-                        .strength(-1.0F, 3_600_000.0F)
-                        .noDrops()));
-        END_STONE = register("end_stone", new Block(
-                of(Material.STONE, MaterialColor.SAND).requiresCorrectToolForDrops().strength(3.0F, 9.0F)));
+                                                                                .lightLevel(BlockUtils.LIGHT_WHITE_1)
+                                                                                .noOcclusion())
+        );
+        CAULDRON = register("cauldron", new CauldronBlock(of(Material.METAL, MaterialColor.STONE).requiresCorrectToolForDrops().strength(2.0F).noOcclusion()));
+        WATER_CAULDRON = register("water_cauldron", new LayeredCauldronBlock(BlockBehaviour.Properties.copy(CAULDRON), LayeredCauldronBlock.RAIN, CauldronInteraction.WATER));
+        LAVA_CAULDRON = register("lava_cauldron", new LavaCauldronBlock(BlockBehaviour.Properties.copy(CAULDRON).lightLevel(BlockUtils.LIGHT_RED_15)));
+        POWDER_SNOW_CAULDRON = register("powder_snow_cauldron", new PowderSnowCauldronBlock(BlockBehaviour.Properties.copy(CAULDRON), LayeredCauldronBlock.SNOW, CauldronInteraction.POWDER_SNOW));
+        END_PORTAL = register("end_portal", new EndPortalBlock(of(Material.PORTAL, MaterialColor.COLOR_BLACK)
+                                                                       .noCollission()
+                                                                       .lightLevel(BlockUtils.LIGHT_WHITE_15)
+                                                                       .strength(-1.0F, 3_600_000.0F)
+                                                                       .noDrops())
+        );
+        END_PORTAL_FRAME = register("end_portal_frame", new EndPortalFrameBlock(of(Material.STONE, MaterialColor.COLOR_GREEN)
+                                                                                        .sound(SoundType.GLASS)
+                                                                                        .lightLevel(BlockUtils.LIGHT_WHITE_1)
+                                                                                        .strength(-1.0F, 3_600_000.0F)
+                                                                                        .noDrops())
+        );
+        END_STONE = register("end_stone", new Block(of(Material.STONE, MaterialColor.SAND).requiresCorrectToolForDrops().strength(3.0F, 9.0F)));
         DRAGON_EGG = register("dragon_egg", new DragonEggBlock(of(Material.EGG, MaterialColor.COLOR_BLACK)
                                                                        .strength(3.0F, 9.0F)
-                                                                       .lightLevel(BlockUtils.LIGHT_1)
-                                                                       .noOcclusion()));
+                                                                       .lightLevel(BlockUtils.LIGHT_WHITE_1)
+                                                                       .noOcclusion())
+        );
         REDSTONE_LAMP = register("redstone_lamp", new RedstoneLampBlock(of(Material.BUILDABLE_GLASS)
-                                                                                .lightLevel(litBlockEmission(0xFF))
+                                                                                .lightLevel(litBlockEmission(0b0_0000_1_1111_1_1111))
                                                                                 .strength(0.3F)
                                                                                 .sound(SoundType.GLASS)
-                                                                                .isValidSpawn_(BlockUtils.ALWAYS_SPAWN)));
-        COCOA = register("cocoa", new CocoaBlock(
-                of(Material.PLANT).randomTicks().strength(0.2F, 3.0F).sound(SoundType.WOOD).noOcclusion()));
+                                                                                .isValidSpawn_(BlockUtils.ALWAYS_SPAWN))
+        );
+        COCOA = register("cocoa", new CocoaBlock(of(Material.PLANT).randomTicks().strength(0.2F, 3.0F).sound(SoundType.WOOD).noOcclusion()));
         SANDSTONE_STAIRS = register("sandstone_stairs", new StairBlock(SANDSTONE.defaultBlockState(), BlockBehaviour.Properties.copy(SANDSTONE)));
-        EMERALD_ORE = register("emerald_ore",
-                               new OreBlock(of(Material.STONE).requiresCorrectToolForDrops().strength(3.0F, 3.0F),
-                                            UniformInt.of(3, 7)));
-        DEEPSLATE_EMERALD_ORE = register("deepslate_emerald_ore", new OreBlock(
-                BlockBehaviour.Properties.copy(EMERALD_ORE).color(MaterialColor.DEEPSLATE).strength(4.5F, 3.0F).sound(SoundType.DEEPSLATE),
-                UniformInt.of(3, 7)));
-        ENDER_CHEST = register("ender_chest", new EnderChestBlock(
-                of(Material.STONE).requiresCorrectToolForDrops().strength(22.5F, 600.0F).lightLevel(BlockUtils.LIGHT_7)));
+        EMERALD_ORE = register("emerald_ore", new OreBlock(of(Material.STONE).requiresCorrectToolForDrops().strength(3.0F, 3.0F), UniformInt.of(3, 7)));
+        DEEPSLATE_EMERALD_ORE = register("deepslate_emerald_ore", new OreBlock(BlockBehaviour.Properties.copy(EMERALD_ORE).color(MaterialColor.DEEPSLATE).strength(4.5F, 3.0F).sound(SoundType.DEEPSLATE), UniformInt.of(3, 7)));
+        ENDER_CHEST = register("ender_chest", new EnderChestBlock(of(Material.STONE).requiresCorrectToolForDrops().strength(22.5F, 600.0F).lightLevel(BlockUtils.LIGHT_WHITE_7)));
         TRIPWIRE_HOOK = register("tripwire_hook", new TripWireHookBlock(of(Material.DECORATION).noCollission()));
-        TRIPWIRE = register("tripwire",
-                            new TripWireBlock((TripWireHookBlock) TRIPWIRE_HOOK, of(Material.DECORATION).noCollission()));
+        TRIPWIRE = register("tripwire", new TripWireBlock((TripWireHookBlock) TRIPWIRE_HOOK, of(Material.DECORATION).noCollission()));
         EMERALD_BLOCK = register("emerald_block", new Block(of(Material.METAL, MaterialColor.EMERALD)
                                                                     .requiresCorrectToolForDrops()
                                                                     .strength(5.0F, 6.0F)
-                                                                    .sound(SoundType.METAL).lightLevel(s -> 0b1_1111_0_0000)));
+                                                                    .sound(SoundType.METAL).lightLevel(s -> 0b1_1111_0_0000))
+        );
         SPRUCE_STAIRS = register("spruce_stairs", new StairBlock(SPRUCE_PLANKS.defaultBlockState(), BlockBehaviour.Properties.copy(SPRUCE_PLANKS)));
         BIRCH_STAIRS = register("birch_stairs", new StairBlock(BIRCH_PLANKS.defaultBlockState(), BlockBehaviour.Properties.copy(BIRCH_PLANKS)));
         JUNGLE_STAIRS = register("jungle_stairs", new StairBlock(JUNGLE_PLANKS.defaultBlockState(), BlockBehaviour.Properties.copy(JUNGLE_PLANKS)));
@@ -1778,9 +1770,10 @@ public abstract class Mixin_FS_Blocks {
                                                                            .noDrops(), false));
         BEACON = register("beacon", new BeaconBlock(of(Material.GLASS, MaterialColor.DIAMOND)
                                                             .strength(3.0F)
-                                                            .lightLevel(BlockUtils.LIGHT_15)
+                                                            .lightLevel(BlockUtils.LIGHT_WHITE_15)
                                                             .noOcclusion()
-                                                            .isRedstoneConductor_(BlockUtils.NEVER)));
+                                                            .isRedstoneConductor_(BlockUtils.NEVER))
+        );
         COBBLESTONE_WALL = register("cobblestone_wall", new WallBlock(BlockBehaviour.Properties.copy(COBBLESTONE)));
         MOSSY_COBBLESTONE_WALL = register("mossy_cobblestone_wall", new WallBlock(BlockBehaviour.Properties.copy(COBBLESTONE)));
         FLOWER_POT = register("flower_pot", new FlowerPotBlock(AIR, of(Material.DECORATION).instabreak().noOcclusion()));
@@ -2423,16 +2416,15 @@ public abstract class Mixin_FS_Blocks {
                                                                         .strength(3.0F)
                                                                         .sound(SoundType.WOOD)
                                                                         .noOcclusion()));
-        END_ROD = register("end_rod",
-                           new EndRodBlock(of(Material.DECORATION).instabreak().lightLevel(BlockUtils.LIGHT_14).sound(SoundType.WOOD).noOcclusion()));
+        END_ROD = register("end_rod", new EndRodBlock(of(Material.DECORATION).instabreak().lightLevel(BlockUtils.LIGHT_WHITE_14).sound(SoundType.WOOD).noOcclusion()));
         CHORUS_PLANT = register("chorus_plant", new ChorusPlantBlock(
                 of(Material.PLANT, MaterialColor.COLOR_PURPLE).strength(0.4F).sound(SoundType.WOOD).noOcclusion()));
-        CHORUS_FLOWER = register("chorus_flower", new ChorusFlowerBlock((ChorusPlantBlock) CHORUS_PLANT,
-                                                                        of(Material.PLANT, MaterialColor.COLOR_PURPLE)
-                                                                                .randomTicks()
-                                                                                .strength(0.4F)
-                                                                                .sound(SoundType.WOOD)
-                                                                                .noOcclusion()));
+        CHORUS_FLOWER = register("chorus_flower", new ChorusFlowerBlock((ChorusPlantBlock) CHORUS_PLANT, of(Material.PLANT, MaterialColor.COLOR_PURPLE)
+                .randomTicks()
+                .strength(0.4F)
+                .sound(SoundType.WOOD)
+                .noOcclusion())
+        );
         PURPUR_BLOCK = register("purpur_block", new Block(
                 of(Material.STONE, MaterialColor.COLOR_MAGENTA).requiresCorrectToolForDrops().strength(1.5F, 6.0F)));
         PURPUR_PILLAR = register("purpur_pillar", new RotatedPillarBlock(
@@ -2447,7 +2439,7 @@ public abstract class Mixin_FS_Blocks {
                                                                     .isViewBlocking_(BlockUtils.ALWAYS)
                                                                     .isSuffocating_(BlockUtils.ALWAYS)));
         END_GATEWAY = register("end_gateway", new EndGatewayBlock(of(Material.PORTAL, MaterialColor.COLOR_BLACK).noCollission()
-                                                                                                                .lightLevel(BlockUtils.LIGHT_15)
+                                                                                                                .lightLevel(BlockUtils.LIGHT_WHITE_15)
                                                                                                                 .strength(-1.0F, 3_600_000.0F)
                                                                                                                 .noDrops()));
         REPEATING_COMMAND_BLOCK = register("repeating_command_block", new CommandBlock(of(Material.METAL, MaterialColor.COLOR_PURPLE)
@@ -2466,7 +2458,7 @@ public abstract class Mixin_FS_Blocks {
                                                                           .noOcclusion()
                                                                           .isValidSpawn_(Mixin_FS_Blocks::_polarBear)));
         MAGMA_BLOCK = register("magma_block", new MagmaBlock(of(Material.STONE, MaterialColor.NETHER).requiresCorrectToolForDrops()
-                                                                                                     .lightLevel(BlockUtils.LIGHT_3)
+                                                                                                     .lightLevel(BlockUtils.LIGHT_ORANGE_3)
                                                                                                      .randomTicks()
                                                                                                      .strength(0.5F)
                                                                                                      .isValidSpawn_(Mixin_FS_Blocks::_fireImmune)
@@ -2838,7 +2830,7 @@ public abstract class Mixin_FS_Blocks {
         BLUE_ICE = register("blue_ice", new HalfTransparentBlock(
                 of(Material.ICE_SOLID).strength(2.8F).friction(0.989F).sound(SoundType.GLASS)));
         CONDUIT = register("conduit", new ConduitBlock(
-                of(Material.GLASS, MaterialColor.DIAMOND).strength(3.0F).lightLevel(BlockUtils.LIGHT_15).noOcclusion()));
+                of(Material.GLASS, MaterialColor.DIAMOND).strength(3.0F).lightLevel(BlockUtils.LIGHT_WHITE_15).noOcclusion()));
         BAMBOO_SAPLING = register("bamboo_sapling", new BambooSaplingBlock(of(Material.BAMBOO_SAPLING)
                                                                                    .randomTicks()
                                                                                    .instabreak()
@@ -2936,13 +2928,13 @@ public abstract class Mixin_FS_Blocks {
                                                                .requiresCorrectToolForDrops()
                                                                .strength(3.5F)
                                                                .sound(SoundType.LANTERN)
-                                                               .lightLevel(BlockUtils.LIGHT_15)
+                                                               .lightLevel(BlockUtils.LIGHT_ORANGE_15)
                                                                .noOcclusion()));
         SOUL_LANTERN = register("soul_lantern", new LanternBlock(of(Material.METAL)
                                                                          .requiresCorrectToolForDrops()
                                                                          .strength(3.5F)
                                                                          .sound(SoundType.LANTERN)
-                                                                         .lightLevel(BlockUtils.LIGHT_10)
+                                                                         .lightLevel(BlockUtils.LIGHT_CYAN_10)
                                                                          .noOcclusion()));
         CAMPFIRE = register("campfire", new CampfireBlock(true, 1, of(Material.WOOD, MaterialColor.PODZOL)
                 .strength(2.0F)
@@ -2997,7 +2989,7 @@ public abstract class Mixin_FS_Blocks {
         SHROOMLIGHT = register("shroomlight", new Block(of(Material.GRASS, MaterialColor.COLOR_RED)
                                                                 .strength(1.0F)
                                                                 .sound(SoundType.SHROOMLIGHT)
-                                                                .lightLevel(BlockUtils.LIGHT_15)));
+                                                                .lightLevel(BlockUtils.LIGHT_ORANGE_15)));
         WEEPING_VINES = register("weeping_vines", new WeepingVinesBlock(of(Material.PLANT, MaterialColor.NETHER)
                                                                                 .randomTicks()
                                                                                 .noCollission()
@@ -3133,7 +3125,7 @@ public abstract class Mixin_FS_Blocks {
         CRYING_OBSIDIAN = register("crying_obsidian", new CryingObsidianBlock(of(Material.STONE, MaterialColor.COLOR_BLACK)
                                                                                       .requiresCorrectToolForDrops()
                                                                                       .strength(50.0F, 1_200.0F)
-                                                                                      .lightLevel(BlockUtils.LIGHT_10)));
+                                                                                      .lightLevel(BlockUtils.LIGHT_PURPLE_10)));
         RESPAWN_ANCHOR = register("respawn_anchor", new RespawnAnchorBlock(of(Material.STONE, MaterialColor.COLOR_BLACK)
                                                                                    .requiresCorrectToolForDrops()
                                                                                    .strength(50.0F, 1_200.0F)
@@ -3313,19 +3305,19 @@ public abstract class Mixin_FS_Blocks {
                 .randomTicks()
                 .sound(SoundType.AMETHYST_CLUSTER)
                 .strength(1.5F)
-                .lightLevel(BlockUtils.LIGHT_5)));
+                .lightLevel(BlockUtils.LIGHT_PURPLE_5)));
         LARGE_AMETHYST_BUD = register("large_amethyst_bud", new AmethystClusterBlock(5, 3,
                                                                                      BlockBehaviour.Properties.copy(AMETHYST_CLUSTER)
                                                                                                               .sound(SoundType.MEDIUM_AMETHYST_BUD)
-                                                                                                              .lightLevel(BlockUtils.LIGHT_4)));
+                                                                                                              .lightLevel(BlockUtils.LIGHT_PURPLE_4)));
         MEDIUM_AMETHYST_BUD = register("medium_amethyst_bud", new AmethystClusterBlock(4, 3,
                                                                                        BlockBehaviour.Properties.copy(AMETHYST_CLUSTER)
                                                                                                                 .sound(SoundType.LARGE_AMETHYST_BUD)
-                                                                                                                .lightLevel(BlockUtils.LIGHT_2)));
+                                                                                                                .lightLevel(BlockUtils.LIGHT_PURPLE_2)));
         SMALL_AMETHYST_BUD = register("small_amethyst_bud", new AmethystClusterBlock(3, 4,
                                                                                      BlockBehaviour.Properties.copy(AMETHYST_CLUSTER)
                                                                                                               .sound(SoundType.SMALL_AMETHYST_BUD)
-                                                                                                              .lightLevel(BlockUtils.LIGHT_1)));
+                                                                                                              .lightLevel(BlockUtils.LIGHT_PURPLE_1)));
         TUFF = register("tuff", new Block(of(Material.STONE, MaterialColor.TERRACOTTA_GRAY)
                                                   .sound(SoundType.TUFF)
                                                   .requiresCorrectToolForDrops()
@@ -3346,7 +3338,7 @@ public abstract class Mixin_FS_Blocks {
         SCULK_SENSOR = register("sculk_sensor", new SculkSensorBlock(of(Material.SCULK, MaterialColor.COLOR_CYAN)
                                                                              .strength(1.5F)
                                                                              .sound(SoundType.SCULK_SENSOR)
-                                                                             .lightLevel(BlockUtils.LIGHT_1)
+                                                                             .lightLevel(BlockUtils.LIGHT_WHITE_1)
                                                                              .emissiveRendering_(Mixin_FS_Blocks::_sculkSensor), 8));
         OXIDIZED_COPPER = register("oxidized_copper", new WeatheringCopperFullBlock(WeatheringCopper.WeatherState.OXIDIZED,
                                                                                     of(Material.METAL,

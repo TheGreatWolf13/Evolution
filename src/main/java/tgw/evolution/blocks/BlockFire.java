@@ -49,7 +49,7 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
     private final R2IMap<Block> flameOdds = new R2IHashMap<>();
 
     public BlockFire() {
-        super(Properties.of(Material.FIRE).noCollission().randomTicks().strength(0).lightLevel(BlockUtils.LIGHT_15).sound(FIRE).noDrops());
+        super(Properties.of(Material.FIRE).noCollission().randomTicks().strength(0).lightLevel(BlockUtils.LIGHT_ORANGE_15).sound(FIRE).noDrops());
         this.registerDefaultState(this.defaultBlockState().setValue(AGE_0_15, 0).setValue(NORTH, false).setValue(EAST, false).setValue(SOUTH, false).setValue(WEST, false).setValue(UP, false));
     }
 

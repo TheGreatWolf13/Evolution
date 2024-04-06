@@ -38,33 +38,30 @@ import java.util.function.ToIntFunction;
 
 public final class BlockUtils {
 
-    public static final IStatePredicate ALWAYS = BlockUtils::always;
-    public static final IStatePredicate NEVER = BlockUtils::never;
-    public static final IStateArgumentPredicate<EntityType<?>> ALWAYS_SPAWN = BlockUtils::always;
-    public static final IStateArgumentPredicate<EntityType<?>> NEVER_SPAWN = BlockUtils::never;
-    public static final ToIntFunction<BlockState> LIGHT_1 = BlockUtils::light1;
-    public static final ToIntFunction<BlockState> LIGHT_2 = BlockUtils::light2;
-    public static final ToIntFunction<BlockState> LIGHT_3 = BlockUtils::light3;
-    public static final ToIntFunction<BlockState> LIGHT_4 = BlockUtils::light4;
-    public static final ToIntFunction<BlockState> LIGHT_5 = BlockUtils::light5;
-    public static final ToIntFunction<BlockState> LIGHT_7 = BlockUtils::light7;
-    public static final ToIntFunction<BlockState> LIGHT_10 = BlockUtils::light10;
-    public static final ToIntFunction<BlockState> LIGHT_11 = BlockUtils::light11;
-    public static final ToIntFunction<BlockState> LIGHT_14 = BlockUtils::light14;
-    public static final ToIntFunction<BlockState> LIGHT_15 = BlockUtils::light15;
-    public static final ToIntFunction<BlockState> LIGHT_YELLOW_15 = BlockUtils::lightYellow15;
+    public static final IStatePredicate ALWAYS = (state, level, x, y, z) -> true;
+    public static final IStatePredicate NEVER = (state, level, x, y, z) -> false;
+    public static final IStateArgumentPredicate<EntityType<?>> ALWAYS_SPAWN = (state, level, x, y, z, arg) -> true;
+    public static final IStateArgumentPredicate<EntityType<?>> NEVER_SPAWN = (state, level, x, y, z, arg) -> false;
+    public static final ToIntFunction<BlockState> LIGHT_CYAN_10 = state -> 0b1_1010_1_1010_0_0000;
+    public static final ToIntFunction<BlockState> LIGHT_ORANGE_3 = state -> 0b0_0000_0_0011_1_0011;
+    public static final ToIntFunction<BlockState> LIGHT_ORANGE_14 = state -> 0b0_0000_0_1110_1_1110;
+    public static final ToIntFunction<BlockState> LIGHT_ORANGE_15 = state -> 0b0_0000_0_1111_1_1111;
+    public static final ToIntFunction<BlockState> LIGHT_PURPLE_1 = state -> 0b1_0001_0_0000_0_0001;
+    public static final ToIntFunction<BlockState> LIGHT_PURPLE_2 = state -> 0b1_0010_0_0000_0_0010;
+    public static final ToIntFunction<BlockState> LIGHT_PURPLE_4 = state -> 0b1_0100_0_0000_0_0100;
+    public static final ToIntFunction<BlockState> LIGHT_PURPLE_5 = state -> 0b1_0101_0_0000_0_0101;
+    public static final ToIntFunction<BlockState> LIGHT_PURPLE_10 = state -> 0b1_1010_0_0000_0_1010;
+    public static final ToIntFunction<BlockState> LIGHT_PURPLE_11 = state -> 0b1_1011_0_0000_0_1011;
+    public static final ToIntFunction<BlockState> LIGHT_RED_15 = state -> 0b0_0000_0_0000_1_1111;
+    public static final ToIntFunction<BlockState> LIGHT_WHITE_1 = state -> 0b1_0001_1_0001_1_0001;
+    public static final ToIntFunction<BlockState> LIGHT_WHITE_7 = state -> 0b1_0111_1_0111_1_0111;
+    public static final ToIntFunction<BlockState> LIGHT_WHITE_14 = state -> 0b1_1110_1_1110_1_1110;
+    public static final ToIntFunction<BlockState> LIGHT_WHITE_15 = state -> 0b1_1111_1_1111_1_1111;
+    public static final ToIntFunction<BlockState> LIGHT_YELLOW_15 = state -> 0b0_0000_1_1111_1_1111;
     private static final ThreadLocal<TriKey2BLinkedHashCache<BlockState, BlockState, Direction>> OCCLUSION_CACHE = ThreadLocal.withInitial(() -> new TriKey2BLinkedHashCache<>(2_048, (byte) 127));
     private static final ItemDropper DROPPER = new ItemDropper();
 
     private BlockUtils() {
-    }
-
-    private static boolean always(BlockState state, BlockGetter level, int x, int y, int z) {
-        return true;
-    }
-
-    private static boolean always(BlockState state, BlockGetter level, int x, int y, int z, EntityType<?> entity) {
-        return true;
     }
 
     public static boolean canBeReplacedByFluid(BlockState state) {
@@ -161,58 +158,6 @@ public final class BlockUtils {
                 return CampfireBlock.isLitCampfire(state);
             }
         }
-        return false;
-    }
-
-    private static int light1(BlockState state) {
-        return 1;
-    }
-
-    private static int light10(BlockState state) {
-        return 10;
-    }
-
-    private static int light11(BlockState state) {
-        return 11;
-    }
-
-    private static int light14(BlockState state) {
-        return 14;
-    }
-
-    private static int light15(BlockState state) {
-        return 15;
-    }
-
-    private static int light2(BlockState state) {
-        return 2;
-    }
-
-    private static int light3(BlockState state) {
-        return 3;
-    }
-
-    private static int light4(BlockState state) {
-        return 4;
-    }
-
-    private static int light5(BlockState state) {
-        return 5;
-    }
-
-    private static int light7(BlockState state) {
-        return 7;
-    }
-
-    private static int lightYellow15(BlockState state) {
-        return 0b1_1111_1_1111;
-    }
-
-    private static boolean never(BlockState state, BlockGetter level, int x, int y, int z) {
-        return false;
-    }
-
-    private static boolean never(BlockState state, BlockGetter level, int x, int y, int z, EntityType<?> entity) {
         return false;
     }
 
