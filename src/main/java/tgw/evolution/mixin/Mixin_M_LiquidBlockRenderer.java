@@ -210,7 +210,7 @@ public abstract class Mixin_M_LiquidBlockRenderer implements PatchLiquidBlockRen
         if (!renderU && !renderD && !renderE && !renderW && !renderN && !renderS) {
             return false;
         }
-        boolean ao = Minecraft.useAmbientOcclusion() && state.getLightEmission() < 0b1_1111_1_1111_1_1111;
+        boolean ao = Minecraft.useAmbientOcclusion() && DynamicLights.shouldApplyAmbientOcclusion(state.getLightEmission());
         boolean rendered = false;
         float shadeD = level.getShade(Direction.DOWN, true);
         float shadeU = level.getShade(Direction.UP, true);

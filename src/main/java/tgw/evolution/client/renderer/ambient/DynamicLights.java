@@ -148,6 +148,16 @@ public class DynamicLights {
         };
     }
 
+    public static boolean shouldApplyAmbientOcclusion(int light) {
+        if ((light & 15) == 15) {
+            return false;
+        }
+        if ((light >> 5 & 15) == 15) {
+            return false;
+        }
+        return (light >> 10 & 15) != 15;
+    }
+
     private static boolean atLeastOneMatches(short l1, short l2) {
         if ((l1 & 0b1111) == (l2 & 0b1111)) {
             return true;

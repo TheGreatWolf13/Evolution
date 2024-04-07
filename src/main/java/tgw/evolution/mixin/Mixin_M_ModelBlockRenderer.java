@@ -23,6 +23,7 @@ import tgw.evolution.Evolution;
 import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.client.models.data.IModelData;
 import tgw.evolution.client.renderer.EvAmbientOcclusionFace;
+import tgw.evolution.client.renderer.ambient.DynamicLights;
 import tgw.evolution.client.renderer.chunk.EvLevelRenderer;
 import tgw.evolution.hooks.asm.DeleteMethod;
 import tgw.evolution.patches.PatchModelBlockRenderer;
@@ -254,7 +255,7 @@ public abstract class Mixin_M_ModelBlockRenderer implements PatchModelBlockRende
 
     @Override
     public boolean tesselateBlock(BlockAndTintGetter level, BakedModel model, BlockState state, int x, int y, int z, PoseStack matrices, VertexConsumer builder, boolean checkSides, IRandom random, long seed, int packedOverlay) {
-        boolean ao = Minecraft.useAmbientOcclusion() && state.getLightEmission() < 0b1_1111_1_1111_1_1111 && model.useAmbientOcclusion();
+        boolean ao = Minecraft.useAmbientOcclusion() && DynamicLights.shouldApplyAmbientOcclusion(state.getLightEmission()) && model.useAmbientOcclusion();
         state.getBlock().translateByOffset(matrices, x, z);
         IModelData modelData = model.getModelData(level, x, y, z, state);
         try {
