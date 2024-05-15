@@ -26,6 +26,7 @@ public abstract class MixinMobEffectInstance implements PatchMobEffectInstance {
     @Shadow @Final private MobEffect effect;
     @Shadow private @Nullable MobEffectInstance hiddenEffect;
     @Unique private boolean infinite;
+    @Unique private boolean shouldRemove;
     @Shadow private boolean showIcon;
     @Shadow private boolean visible;
 
@@ -59,8 +60,7 @@ public abstract class MixinMobEffectInstance implements PatchMobEffectInstance {
         if (nbt.contains("HiddenEffect", Tag.TAG_COMPOUND)) {
             hiddenEffects = loadSpecifiedEffect(effect, nbt.getCompound("HiddenEffect"));
         }
-        MobEffectInstance instance = new MobEffectInstance(effect, duration, amplifier, (flags & 2) != 0, (flags & 4) != 0, (flags & 8) != 0,
-                                                           hiddenEffects);
+        MobEffectInstance instance = new MobEffectInstance(effect, duration, amplifier, (flags & 2) != 0, (flags & 4) != 0, (flags & 8) != 0, hiddenEffects);
         instance.setInfinite((flags & 1) != 0);
         return instance;
     }
@@ -136,6 +136,11 @@ public abstract class MixinMobEffectInstance implements PatchMobEffectInstance {
     @Shadow
     public abstract boolean isVisible();
 
+    @Override
+    public void markForRemoval() {
+        this.shouldRemove = true;
+    }
+
     /**
      * @reason _
      * @author TheGreatWolf
@@ -205,23 +210,10 @@ public abstract class MixinMobEffectInstance implements PatchMobEffectInstance {
                 entity.onEffectUpdated((MobEffectInstance) (Object) this, false, null);
             }
         }
+        if (this.shouldRemove) {
+            return false;
+        }
         return this.duration > 0;
-    }
-
-    /**
-     * @author TheGreatWolf
-     * @reason Overwrite to handle infinite effects.
-     */
-    @Overwrite
-    private int tickDownDuration() {
-        if (this.hiddenEffect != null) {
-            this.hiddenEffect.tickDownDurationPatch();
-        }
-        this.duration--;
-        if (this.duration == 0 && this.infinite) {
-            this.duration = 20_000_000;
-        }
-        return this.duration;
     }
 
     @Override
@@ -326,6 +318,22 @@ public abstract class MixinMobEffectInstance implements PatchMobEffectInstance {
             return true;
         }
         return changed;
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Overwrite to handle infinite effects.
+     */
+    @Overwrite
+    private int tickDownDuration() {
+        if (this.hiddenEffect != null) {
+            this.hiddenEffect.tickDownDurationPatch();
+        }
+        this.duration--;
+        if (this.duration == 0 && this.infinite) {
+            this.duration = 20_000_000;
+        }
+        return this.duration;
     }
 
     /**

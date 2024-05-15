@@ -18,6 +18,10 @@ public interface PatchMobEffectInstance {
         throw new AbstractMethodError();
     }
 
+    default void markForRemoval() {
+        throw new AbstractMethodError();
+    }
+
     default void setHiddenEffect(@Nullable MobEffectInstance hiddenInstance) {
         throw new AbstractMethodError();
     }

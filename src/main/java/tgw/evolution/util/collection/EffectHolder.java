@@ -35,7 +35,10 @@ public class EffectHolder {
 
     public void remove(int amplifier, LivingEntity entity) {
         if (this.shouldApply(amplifier, entity)) {
-            entity.removeEffect(this.effect);
+            MobEffectInstance instance = entity.getEffect(this.effect);
+            if (instance != null) {
+                instance.markForRemoval();
+            }
         }
     }
 
