@@ -36,7 +36,7 @@ public final class Evolution implements ModInitializer {
     }
 
     public static void deprecatedMethod() {
-        warn("Calling deprecated method!");
+//        warn("Calling deprecated method!");
     }
 
     public static void error(String message, Object... objects) {

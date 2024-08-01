@@ -125,10 +125,13 @@ public abstract class MixinResetChunksCommand {
                                                                                    ChunkAccess left = e.getLeft();
                                                                                    Heightmap.primeHeightmaps(left, ChunkStatus.POST_FEATURES);
                                                                                    if (left instanceof LevelChunk c) {
+//                                                                                       c.primeStructural(true);
                                                                                        c.primeAtm(true);
                                                                                    }
                                                                                    else if (left instanceof ImposterProtoChunk proto) {
-                                                                                       proto.getWrapped().primeAtm(true);
+                                                                                       LevelChunk c = proto.getWrapped();
+//                                                                                       c.primeStructural(true);
+                                                                                       c.primeAtm(true);
                                                                                    }
                                                                                }
                                                                            }

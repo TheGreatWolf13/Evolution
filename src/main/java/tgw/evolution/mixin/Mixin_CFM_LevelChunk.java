@@ -37,9 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.*;
 import tgw.evolution.Evolution;
-import tgw.evolution.blocks.BlockAtm;
-import tgw.evolution.blocks.IAir;
-import tgw.evolution.blocks.IFillable;
+import tgw.evolution.blocks.*;
 import tgw.evolution.blocks.tileentities.TEUtils;
 import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.capabilities.chunk.CapabilityChunkStorage;
@@ -57,9 +55,13 @@ import tgw.evolution.util.collection.lists.LArrayList;
 import tgw.evolution.util.collection.lists.LList;
 import tgw.evolution.util.collection.maps.L2OHashMap;
 import tgw.evolution.util.collection.maps.L2OMap;
+import tgw.evolution.util.collection.maps.R2OMap;
+import tgw.evolution.util.collection.sets.IHashSet;
+import tgw.evolution.util.collection.sets.ISet;
 import tgw.evolution.util.constants.BlockFlags;
 import tgw.evolution.util.math.DirectionList;
 import tgw.evolution.util.math.DirectionUtil;
+import tgw.evolution.util.math.PropagationDirection;
 import tgw.evolution.world.lighting.StarLightEngine;
 
 import java.util.Map;
@@ -71,6 +73,7 @@ public abstract class Mixin_CFM_LevelChunk extends ChunkAccess implements PatchL
 
     @Shadow @Final static Logger LOGGER;
     @Unique private static final ThreadLocal<IList> TO_UPDATE = ThreadLocal.withInitial(IArrayList::new);
+    @Unique private static final ThreadLocal<ISet> AUX_SET = ThreadLocal.withInitial(IHashSet::new);
     @Unique private static final ThreadLocal<ChunkHolder> HOLDER = ThreadLocal.withInitial(ChunkHolder::new);
     @Shadow @Final private static TickingBlockEntity NULL_TICKER;
     @Mutable @Shadow @Final @RestoreFinal public Level level;
@@ -84,15 +87,7 @@ public abstract class Mixin_CFM_LevelChunk extends ChunkAccess implements PatchL
     @Unique private final L2OMap<LevelChunk.RebindableTickingBlockEntityWrapper> tickersInLevel_;
 
     @ModifyConstructor
-    public Mixin_CFM_LevelChunk(Level level,
-                                ChunkPos chunkPos,
-                                UpgradeData upgradeData,
-                                LevelChunkTicks<Block> blockTicks,
-                                LevelChunkTicks<Fluid> fluidTicks,
-                                long inhabitedTime,
-                                @Nullable LevelChunkSection[] sections,
-                                @Nullable LevelChunk.PostLoadProcessor processor,
-                                @Nullable BlendingData blendingData) {
+    public Mixin_CFM_LevelChunk(Level level, ChunkPos chunkPos, UpgradeData upgradeData, LevelChunkTicks<Block> blockTicks, LevelChunkTicks<Fluid> fluidTicks, long inhabitedTime, @Nullable LevelChunkSection[] sections, @Nullable LevelChunk.PostLoadProcessor processor, @Nullable BlendingData blendingData) {
         super(chunkPos, upgradeData, level, level.registryAccess().registryOrThrow(Registry.BIOME_REGISTRY), inhabitedTime, sections, blendingData);
         this.tickersInLevel_ = new L2OHashMap<>();
         this.clientLightReady = false;
@@ -102,7 +97,7 @@ public abstract class Mixin_CFM_LevelChunk extends ChunkAccess implements PatchL
         for (Heightmap.Types types : ArrayHelper.HEIGHTMAP) {
             if (ChunkStatus.FULL.heightmapsAfter().contains(types)) {
                 //noinspection ObjectAllocationInLoop
-                this.heightmaps.put(types, new Heightmap(this, types));
+                this.heightmaps_().put(types, new Heightmap(this, types));
             }
         }
         this.postLoad = processor;
@@ -114,8 +109,7 @@ public abstract class Mixin_CFM_LevelChunk extends ChunkAccess implements PatchL
 
     @ModifyConstructor
     public Mixin_CFM_LevelChunk(ServerLevel level, ProtoChunk protoChunk, @Nullable LevelChunk.PostLoadProcessor processor) {
-        this(level, protoChunk.getPos(), protoChunk.getUpgradeData(), protoChunk.unpackBlockTicks(), protoChunk.unpackFluidTicks(),
-             protoChunk.getInhabitedTime(), protoChunk.getSections(), processor, protoChunk.getBlendingData());
+        this(level, protoChunk.getPos(), protoChunk.getUpgradeData(), protoChunk.unpackBlockTicks(), protoChunk.unpackFluidTicks(), protoChunk.getInhabitedTime(), protoChunk.getSections(), processor, protoChunk.getBlendingData());
         L2OMap<BlockEntity> tes = protoChunk.blockEntities_();
         for (long it = tes.beginIteration(); tes.hasNextIteration(it); it = tes.nextEntry(it)) {
             this.setBlockEntity(tes.getIterationValue(it));
@@ -137,6 +131,7 @@ public abstract class Mixin_CFM_LevelChunk extends ChunkAccess implements PatchL
         this.setSkyNibbles(protoChunk.getSkyNibbles());
         this.setSkyEmptinessMap(protoChunk.getSkyEmptinessMap());
         this.setBlockEmptinessMap(protoChunk.getBlockEmptinessMap());
+//        this.primeStructural(false);
         this.primeAtm(false);
     }
 
@@ -453,9 +448,9 @@ public abstract class Mixin_CFM_LevelChunk extends ChunkAccess implements PatchL
                 section.getAtmStorage().reset();
             }
         }
-        Heightmap heightmap = this.heightmaps.get(Heightmap.Types.WORLD_SURFACE);
+        Heightmap heightmap = this.heightmaps_().get(Heightmap.Types.WORLD_SURFACE);
         IList toUpdate = TO_UPDATE.get();
-        toUpdate.clear();
+        assert toUpdate.isEmpty();
         int deepestY = Integer.MAX_VALUE;
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
@@ -505,6 +500,20 @@ public abstract class Mixin_CFM_LevelChunk extends ChunkAccess implements PatchL
             }
         }
         this.updateShallowAtm(deepestY, toUpdate);
+    }
+
+    @Override
+    @Unique
+    public void primeStructural(boolean needsResetting) {
+        if (needsResetting) {
+            LevelChunkSection[] sections = this.sections;
+            for (LevelChunkSection section : sections) {
+                section.getIntegrityStorage().reset();
+                section.getLoadFactorStorage().reset();
+                section.getStabilityStorage().reset();
+            }
+        }
+        this.fillPillarsFromStable();
     }
 
     /**
@@ -610,10 +619,11 @@ public abstract class Mixin_CFM_LevelChunk extends ChunkAccess implements PatchL
             return null;
         }
         Block newBlock = state.getBlock();
-        this.heightmaps.get(Heightmap.Types.MOTION_BLOCKING).update(localX, y, localZ, state);
-        this.heightmaps.get(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES).update(localX, y, localZ, state);
-        this.heightmaps.get(Heightmap.Types.OCEAN_FLOOR).update(localX, y, localZ, state);
-        this.heightmaps.get(Heightmap.Types.WORLD_SURFACE).update(localX, y, localZ, state);
+        R2OMap<Heightmap.Types, Heightmap> heightmaps = this.heightmaps_();
+        heightmaps.get(Heightmap.Types.MOTION_BLOCKING).update(localX, y, localZ, state);
+        heightmaps.get(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES).update(localX, y, localZ, state);
+        heightmaps.get(Heightmap.Types.OCEAN_FLOOR).update(localX, y, localZ, state);
+        heightmaps.get(Heightmap.Types.WORLD_SURFACE).update(localX, y, localZ, state);
         boolean hasOnlyAir = section.hasOnlyAir();
         if (hadOnlyAir != hasOnlyAir) {
             this.level.getChunkSource().getLightEngine().updateSectionStatus_block(x, y, z, hasOnlyAir);
@@ -672,6 +682,121 @@ public abstract class Mixin_CFM_LevelChunk extends ChunkAccess implements PatchL
     @Shadow
     protected abstract <T extends BlockEntity> void removeGameEventListener(T blockEntity);
 
+    @Unique
+    private void breakBlockUpdateLightAndHeightmap(LevelChunkSection section, int x, int localY, int z, int globalY) {
+        BlockState state = Blocks.AIR.defaultBlockState();
+        section.setBlockState(x, localY, z, state);
+        this.level.getLightEngine().checkBlock_(BlockPos.asLong(x + this.chunkPos.getMinBlockX(), globalY, z + this.chunkPos.getMinBlockZ()));
+        R2OMap<Heightmap.Types, Heightmap> heightmaps = this.heightmaps_();
+        heightmaps.get(Heightmap.Types.MOTION_BLOCKING).update(x, globalY, z, state);
+        heightmaps.get(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES).update(x, globalY, z, state);
+        heightmaps.get(Heightmap.Types.OCEAN_FLOOR).update(x, globalY, z, state);
+        heightmaps.get(Heightmap.Types.WORLD_SURFACE).update(x, globalY, z, state);
+    }
+
+    @Unique
+    private void breakColumnAndReset(int x, int y, int z) {
+        while (true) {
+            int index = this.getSectionIndex(y);
+            if (index >= this.sections.length) {
+                break;
+            }
+            int localY = y & 15;
+            LevelChunkSection section = this.sections[index];
+            BlockState state = section.hasOnlyAir() ? Blocks.AIR.defaultBlockState() : section.getBlockState(x, localY, z);
+            Block block = state.getBlock();
+            if (block instanceof IStable) {
+                break;
+            }
+            if (block instanceof IFillable) {
+                this.breakBlockUpdateLightAndHeightmap(section, x, localY, z, y);
+                section.getIntegrityStorage().set(x, localY, z, 0);
+                section.getLoadFactorStorage().set(x, localY, z, 0);
+            }
+            else {
+                break;
+            }
+            ++y;
+        }
+    }
+
+    @Unique
+    private boolean calculateBeams(IList potentialBeams, ISet confirmedBeams, ChunkHolder holder) {
+        boolean changed = false;
+        int len = potentialBeams.size();
+        for (int i = 0; i < len; ++i) {
+            int packed = potentialBeams.getInt(i);
+            int x = IFillable.unpackX(packed);
+            int y = IFillable.unpackY(packed);
+            int z = IFillable.unpackZ(packed);
+            int index = this.getSectionIndex(y);
+            if (index < 0 || index >= this.sections.length) {
+                continue;
+            }
+            int localY = y & 15;
+            LevelChunkSection section = this.sections[index];
+            BlockState stateBelow = CapabilityChunkStorage.safeGetBlockstate((LevelChunk) (Object) this, section, holder, x, localY - 1, z, index, 0);
+            if (stateBelow.getBlock() instanceof IFillable) {
+                Evolution.info("This shouldn't happen!");
+                continue;
+            }
+            BlockState state = section.hasOnlyAir() ? Blocks.AIR.defaultBlockState() : section.getBlockState(x, localY, z);
+            if (state.getBlock() instanceof IStructural structural) {
+                int selfIntegrity = structural.getIntegrity(state);
+                int incrementForBeam = structural.getIncrementForBeam(state);
+                int result = switch (structural.getBeamType(state)) {
+                    case NONE -> {
+                        //Try to get a beam upwards
+                        this.breakBlockUpdateLightAndHeightmap(section, x, localY, z, y);
+                        BlockState stateAbove = CapabilityChunkStorage.safeGetBlockstate((LevelChunk) (Object) this, section, holder, x, localY + 1, z, index, 0);
+                        if (stateAbove.getBlock() instanceof IFillable) {
+                            changed = true;
+                            potentialBeams.add(IFillable.packInternalPos(x, y + 1, z, 0, PropagationDirection.NONE, false));
+                        }
+                        yield 0;
+                    }
+                    case X_BEAM -> CapabilityChunkStorage.verifySimpleBeam(state, structural, (LevelChunk) (Object) this, section, holder, DirectionList.X_AXIS, index, x, localY, z, incrementForBeam, selfIntegrity, 255, selfIntegrity);
+                    case Z_BEAM -> CapabilityChunkStorage.verifySimpleBeam(state, structural, (LevelChunk) (Object) this, section, holder, DirectionList.Z_AXIS, index, x, localY, z, incrementForBeam, selfIntegrity, 255, selfIntegrity);
+                    case CARDINAL_BEAM -> CapabilityChunkStorage.verifySimpleBeam(state, structural, (LevelChunk) (Object) this, section, holder, DirectionList.HORIZONTAL, index, x, localY, z, incrementForBeam, selfIntegrity, 255, selfIntegrity);
+                    case X_ARCH -> CapabilityChunkStorage.verifyArch(state, structural, (LevelChunk) (Object) this, section, holder, index, x, localY, z, selfIntegrity, DirectionList.X_AXIS, incrementForBeam, structural.getIncrementForArch(state));
+                    case Z_ARCH -> CapabilityChunkStorage.verifyArch(state, structural, (LevelChunk) (Object) this, section, holder, index, x, localY, z, selfIntegrity, DirectionList.Z_AXIS, incrementForBeam, structural.getIncrementForArch(state));
+                    case CARDINAL_ARCH -> CapabilityChunkStorage.verifyArch(state, structural, (LevelChunk) (Object) this, section, holder, index, x, localY, z, selfIntegrity, DirectionList.HORIZONTAL, incrementForBeam, structural.getIncrementForArch(state));
+                };
+                if (result == 0) {
+                    continue;
+                }
+                int newLoad = result >> 16;
+                int newIntegrity = result & 0xFFFF;
+                if (newLoad != 255 && newLoad <= newIntegrity) {
+                    changed = true;
+                    section.getIntegrityStorage().set(x, localY, z, newIntegrity);
+                    section.getLoadFactorStorage().set(x, localY, z, newLoad);
+                    boolean newStable = switch (structural.getStabilization(state)) {
+                        case BEAM -> CapabilityChunkStorage.canStabilize((LevelChunk) (Object) this, section, holder, structural, state, x, localY, z, index, newLoad);
+                        case ARCH -> CapabilityChunkStorage.canStabilizeArch((LevelChunk) (Object) this, section, holder, structural, state, x, localY, z, index, newLoad);
+                        case NONE -> false;
+                    };
+                    section.getStabilityStorage().set(x, localY, z, newStable);
+                    confirmedBeams.add(packed);
+                }
+                else {
+                    potentialBeams.add(packed);
+                }
+            }
+            else if (state.getBlock() instanceof IFillable) {
+                //Try to get a beam upwards
+                this.breakBlockUpdateLightAndHeightmap(section, x, localY, z, y);
+                BlockState stateAbove = CapabilityChunkStorage.safeGetBlockstate((LevelChunk) (Object) this, section, holder, x, localY + 1, z, index, 0);
+                if (stateAbove.getBlock() instanceof IFillable) {
+                    potentialBeams.add(IFillable.packInternalPos(x, y + 1, z, 0, PropagationDirection.NONE, false));
+                    changed = true;
+                }
+            }
+        }
+        potentialBeams.removeElements(0, len);
+        return changed;
+    }
+
     /**
      * @author TheGreatWolf
      * @reason _
@@ -687,6 +812,97 @@ public abstract class Mixin_CFM_LevelChunk extends ChunkAccess implements PatchL
         BlockState state = this.getBlockState_(x, y, z);
         //It's fine to allocate here, since this BlockPos will be saved to the BlockEntity itself
         return !state.hasBlockEntity() ? null : ((EntityBlock) state.getBlock()).newBlockEntity(new BlockPos(x, y, z), state);
+    }
+
+    @Unique
+    private void fillPillarsFromStable() {
+        IList potentialBeams = TO_UPDATE.get();
+        potentialBeams.clear();
+//        assert potentialBeams.isEmpty();
+        ISet confirmedBeams = AUX_SET.get();
+        confirmedBeams.clear();
+//        assert confirmedBeams.isEmpty();
+        LevelChunkSection[] sections = this.sections;
+        Heightmap heightmap = this.heightmaps_().get(Heightmap.Types.WORLD_SURFACE);
+        int dependencies = 0;
+        for (int x = 0; x < 16; ++x) {
+            for (int z = 0; z < 16; ++z) {
+                int integrity = 0;
+                boolean belowEmpty = true;
+                for (int y = this.getMinBuildHeight(), maxBuildHeight = heightmap.getFirstAvailable(x, z); y < maxBuildHeight; ++y) {
+                    int index = this.getSectionIndex(y);
+                    if (index < 0 || index >= sections.length) {
+                        break;
+                    }
+                    int localY = y & 15;
+                    LevelChunkSection section = sections[index];
+                    BlockState state = section.hasOnlyAir() ? Blocks.AIR.defaultBlockState() : section.getBlockState(x, localY, z);
+                    Block block = state.getBlock();
+                    if (block instanceof IStable) {
+                        //Load factor should be already set to 0
+                        section.getIntegrityStorage().set(x, localY, z, 255);
+                        integrity = 255;
+                        belowEmpty = false;
+                    }
+                    else if (block instanceof IStructural structural) {
+                        if (integrity != 0) {
+                            integrity = Math.min(integrity, structural.getIntegrity(state));
+                            //Load factor should be already set to 0
+                            section.getIntegrityStorage().set(x, localY, z, integrity);
+                        }
+                        else {
+                            if (belowEmpty) {
+                                potentialBeams.add(IFillable.packInternalPos(x, y, z, 0, PropagationDirection.NONE, false));
+                                if (x == 0) {
+                                    dependencies |= 1 << DirectionUtil.horizontalIndex(Direction.WEST);
+                                }
+                                else if (x == 15) {
+                                    dependencies |= 1 << DirectionUtil.horizontalIndex(Direction.EAST);
+                                }
+                                if (z == 0) {
+                                    dependencies |= 1 << DirectionUtil.horizontalIndex(Direction.NORTH);
+                                }
+                                else if (z == 15) {
+                                    dependencies |= 1 << DirectionUtil.horizontalIndex(Direction.SOUTH);
+                                }
+                            }
+                        }
+                        belowEmpty = false;
+                    }
+                    else if (block instanceof IFillable) {
+                        if (integrity != 0) {
+                            //Load factor should be already set to 0
+                            section.getIntegrityStorage().set(x, localY, z, integrity);
+                        }
+                        else {
+                            if (belowEmpty) {
+                                potentialBeams.add(IFillable.packInternalPos(x, y, z, 0, PropagationDirection.NONE, false));
+                                if (x == 0) {
+                                    dependencies |= 1 << DirectionUtil.horizontalIndex(Direction.WEST);
+                                }
+                                else if (x == 15) {
+                                    dependencies |= 1 << DirectionUtil.horizontalIndex(Direction.EAST);
+                                }
+                                if (z == 0) {
+                                    dependencies |= 1 << DirectionUtil.horizontalIndex(Direction.NORTH);
+                                }
+                                else if (z == 15) {
+                                    dependencies |= 1 << DirectionUtil.horizontalIndex(Direction.SOUTH);
+                                }
+                            }
+                        }
+                        belowEmpty = false;
+                    }
+                    else {
+                        integrity = 0;
+                        belowEmpty = true;
+                    }
+                }
+            }
+        }
+        Evolution.info("Dependencies = {}", Integer.toBinaryString(dependencies));
+        this.unsaved = true;
+        this.propagateBeams(potentialBeams, confirmedBeams, dependencies);
     }
 
     /**
@@ -727,11 +943,233 @@ public abstract class Mixin_CFM_LevelChunk extends ChunkAccess implements PatchL
     }
 
     @Unique
+    private void propagateBeams(IList potentialBeams, ISet confirmedBeams, int dependencies) {
+        if (!potentialBeams.isEmpty() && dependencies == 0) {
+            Evolution.info("Chunk at {} has structure and no dependencies!", this.chunkPos);
+        }
+        ChunkHolder holder = HOLDER.get();
+        holder.reset();
+        while (true) {
+            boolean changed = true;
+            while (!potentialBeams.isEmpty()) {
+                if (!changed) {
+//                    if (this.tryToAdjustBeams(confirmedBeams, holder)) {
+//                        if (this.calculateBeams(potentialBeams, confirmedBeams, holder)) {
+//                            changed = true;
+//                            continue;
+//                        }
+//                    }
+                    break;
+                }
+                changed = this.calculateBeams(potentialBeams, confirmedBeams, holder);
+            }
+            if (dependencies == 0) {
+                if (potentialBeams.isEmpty()) {
+//                    this.propagateWeights(confirmedBeams);
+                    this.warnNeighbours();
+                    this.unsaved = true;
+                    return;
+                }
+                //Transform beams upwards
+                int len = potentialBeams.size();
+                int minY = Integer.MAX_VALUE;
+                int pos = -1;
+                int packedMinY = 0;
+                for (int i = 0; i < len; ++i) {
+                    int packed = potentialBeams.getInt(i);
+                    int y = IFillable.unpackY(packed);
+                    if (y < minY) {
+                        minY = y;
+                        pos = i;
+                        packedMinY = packed;
+                    }
+                }
+                int x = IFillable.unpackX(packedMinY);
+                int z = IFillable.unpackZ(packedMinY);
+                int index = this.getSectionIndex(minY);
+                assert !(index < 0 || index >= this.sections.length);
+                int localY = minY & 15;
+                LevelChunkSection section = this.sections[index];
+//                this.breakBlockUpdateLightAndHeightmap(section, x, localY, z, minY);
+                BlockState stateAbove = CapabilityChunkStorage.safeGetBlockstate((LevelChunk) (Object) this, section, holder, x, localY + 1, z, index, 0);
+                if (stateAbove.getBlock() instanceof IFillable) {
+                    potentialBeams.set(pos, IFillable.packInternalPos(x, minY + 1, z, 0, PropagationDirection.NONE, false));
+                }
+                continue;
+            }
+            //We have dependencies
+            this.storeDependencies(potentialBeams, confirmedBeams, dependencies);
+            this.warnNeighbours();
+            this.unsaved = true;
+            return;
+        }
+    }
+
+    @Unique
+    private void propagateWeights(ISet confirmedBeams) {
+        for (long it = confirmedBeams.beginIteration(); confirmedBeams.hasNextIteration(it); it = confirmedBeams.nextEntry(it)) {
+            int packed = confirmedBeams.getIteration(it);
+            int x = IFillable.unpackX(packed);
+            int originY = IFillable.unpackY(packed);
+            int z = IFillable.unpackZ(packed);
+            int oldIndex = this.getSectionIndex(originY);
+            assert !(oldIndex < 0 || oldIndex >= this.sections.length) : "Bad index, how did it get here?";
+            int localY = originY & 15;
+            LevelChunkSection oldSection = this.sections[oldIndex];
+            assert oldSection.getBlockState(x, localY, z).getBlock() instanceof IStructural;
+            int integrity = oldSection.getIntegrityStorage().get(x, localY, z);
+            int load = oldSection.getLoadFactorStorage().get(x, localY, z);
+            boolean stable = oldSection.getStabilityStorage().get(x, localY, z);
+            int y = originY;
+            int failY = originY + 1;
+            while (true) {
+                ++y;
+                int index = this.getSectionIndex(y);
+                LevelChunkSection section;
+                if (index == oldIndex) {
+                    section = oldSection;
+                }
+                else {
+                    if (index >= this.sections.length) {
+                        break;
+                    }
+                    section = this.sections[index];
+                    oldIndex = index;
+                    oldSection = section;
+                }
+                localY = y & 15;
+                BlockState state = section.hasOnlyAir() ? Blocks.AIR.defaultBlockState() : section.getBlockState(x, localY, z);
+                Block block = state.getBlock();
+                if (block instanceof IStable) {
+                    break;
+                }
+                if (block instanceof IStructural structural) {
+                    int newIntegrity = structural.getIntegrity(state);
+                    if (newIntegrity < integrity) {
+                        integrity = newIntegrity;
+                        failY = y;
+                    }
+                    if (stable) {
+                        load = 0;
+                    }
+                    else {
+                        ++load;
+                        if (load > integrity) {
+                            this.breakColumnAndReset(x, failY, z);
+                            break;
+                        }
+                    }
+                    section.getIntegrityStorage().set(x, localY, z, integrity);
+                    section.getLoadFactorStorage().set(x, localY, z, load);
+                }
+                else if (block instanceof IFillable) {
+                    if (stable) {
+                        load = 0;
+                    }
+                    else {
+                        ++load;
+                        if (load > integrity) {
+                            this.breakColumnAndReset(x, failY, z);
+                            break;
+                        }
+                    }
+                    section.getIntegrityStorage().set(x, localY, z, integrity);
+                    section.getLoadFactorStorage().set(x, localY, z, load);
+                }
+                else {
+                    break;
+                }
+            }
+        }
+        confirmedBeams.clear();
+    }
+
+    @Unique
     private void removeBlockEntityTicker_(long pos) {
         LevelChunk.RebindableTickingBlockEntityWrapper w = this.tickersInLevel_.remove(pos);
         if (w != null) {
             w.rebind(NULL_TICKER);
         }
+    }
+
+    @Unique
+    private void storeDependencies(IList potentialBeams, ISet confirmedBeams, int dependencies) {
+        potentialBeams.clear();
+        confirmedBeams.clear();
+        //TODO
+    }
+
+    @Unique
+    private boolean tryToAdjustBeams(ISet confirmedBeams, ChunkHolder holder) {
+        boolean changedEver = false;
+        boolean changed = true;
+        while (changed) {
+            changed = false;
+            for (long it = confirmedBeams.beginIteration(); confirmedBeams.hasNextIteration(it); it = confirmedBeams.nextEntry(it)) {
+                int packed = confirmedBeams.getIteration(it);
+                int x = IFillable.unpackX(packed);
+                int y = IFillable.unpackY(packed);
+                int z = IFillable.unpackZ(packed);
+                int index = this.getSectionIndex(y);
+                assert !(index < 0 || index >= this.sections.length) : "Bad index, how did it get here?";
+                int localY = y & 15;
+                LevelChunkSection section = this.sections[index];
+                int oldIntegrity = section.getIntegrityStorage().get(x, localY, z);
+                int oldLoad = section.getLoadFactorStorage().get(x, localY, z);
+                boolean oldStable = section.getStabilityStorage().get(x, localY, z);
+                BlockState state = section.getBlockState(x, localY, z);
+                assert state.getBlock() instanceof IStructural : "How did this block form a beam then?";
+                IStructural structural = (IStructural) state.getBlock();
+                int selfIntegrity = structural.getIntegrity(state);
+                int incrementForBeam = structural.getIncrementForBeam(state);
+                int newLoad = oldLoad;
+                int newIntegrity = oldIntegrity;
+                boolean newStable = oldStable;
+                int result = switch (structural.getBeamType(state)) {
+                    case NONE -> {
+                        throw new IllegalStateException("Structural block with no beam type formed a beam!? State = " + state + ", @ = (" + (this.chunkPos.getMinBlockX() + x) + ", " + y + ", " + (this.chunkPos.getMinBlockZ() + z) + ")");
+                    }
+                    case X_BEAM -> CapabilityChunkStorage.verifySimpleBeam(state, structural, (LevelChunk) (Object) this, section, holder, DirectionList.X_AXIS, index, x, localY, z, incrementForBeam, selfIntegrity, 255, selfIntegrity);
+                    case Z_BEAM -> CapabilityChunkStorage.verifySimpleBeam(state, structural, (LevelChunk) (Object) this, section, holder, DirectionList.Z_AXIS, index, x, localY, z, incrementForBeam, selfIntegrity, 255, selfIntegrity);
+                    case CARDINAL_BEAM -> CapabilityChunkStorage.verifySimpleBeam(state, structural, (LevelChunk) (Object) this, section, holder, DirectionList.HORIZONTAL, index, x, localY, z, incrementForBeam, selfIntegrity, 255, selfIntegrity);
+                    case X_ARCH -> CapabilityChunkStorage.verifyArch(state, structural, (LevelChunk) (Object) this, section, holder, index, x, localY, z, selfIntegrity, DirectionList.X_AXIS, incrementForBeam, structural.getIncrementForArch(state));
+                    case Z_ARCH -> CapabilityChunkStorage.verifyArch(state, structural, (LevelChunk) (Object) this, section, holder, index, x, localY, z, selfIntegrity, DirectionList.Z_AXIS, incrementForBeam, structural.getIncrementForArch(state));
+                    case CARDINAL_ARCH -> CapabilityChunkStorage.verifyArch(state, structural, (LevelChunk) (Object) this, section, holder, index, x, localY, z, selfIntegrity, DirectionList.HORIZONTAL, incrementForBeam, structural.getIncrementForArch(state));
+                };
+                newLoad = result >> 16;
+                newIntegrity = result & 0xFFFF;
+                if (newLoad == 255 || newLoad > newIntegrity) {
+                    throw new IllegalStateException("Block destabilized: State = " + state + ", @ = (" + (this.chunkPos.getMinBlockX() + x) + ", " + y + ", " + (this.chunkPos.getMinBlockZ() + z) + ")");
+                }
+                newStable = switch (structural.getStabilization(state)) {
+                    case NONE -> false;
+                    case BEAM -> CapabilityChunkStorage.canStabilize((LevelChunk) (Object) this, section, holder, structural, state, x, localY, z, index, newLoad);
+                    case ARCH -> CapabilityChunkStorage.canStabilizeArch((LevelChunk) (Object) this, section, holder, structural, state, x, localY, z, index, newLoad);
+                };
+                if (newLoad != oldLoad) {
+                    section.getLoadFactorStorage().set(x, localY, z, newLoad);
+                    changed = true;
+                    changedEver = true;
+                }
+                if (newIntegrity != oldIntegrity) {
+                    section.getIntegrityStorage().set(x, localY, z, newIntegrity);
+                    changed = true;
+                    changedEver = true;
+                }
+                if (newStable != oldStable) {
+                    if (oldStable) {
+                        Evolution.info("Block was stable and turned not stable!");
+                    }
+                    section.getStabilityStorage().set(x, localY, z, newStable);
+                    changed = true;
+                    changedEver = true;
+                }
+                if (newStable) {
+                    //TODO propagate stability upwards and probably remove from set
+                }
+            }
+        }
+        return changedEver;
     }
 
     /**
@@ -935,5 +1373,10 @@ public abstract class Mixin_CFM_LevelChunk extends ChunkAccess implements PatchL
         }
         toUpdate.removeElements(0, len);
         this.updateAtmFurther(toUpdate, holder);
+    }
+
+    @Unique
+    private void warnNeighbours() {
+        //TODO
     }
 }

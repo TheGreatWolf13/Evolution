@@ -300,7 +300,7 @@ public abstract class Mixin_CFM_ProtoChunk extends ChunkAccess {
             RSet<Heightmap.Types> toPrime = null;
             for (Heightmap.Types type : ArrayHelper.HEIGHTMAP) {
                 if (heightmaps.contains(type)) {
-                    Heightmap heightmap = this.heightmaps.get(type);
+                    Heightmap heightmap = this.heightmaps_().get(type);
                     if (heightmap == null) {
                         if (toPrime == null) {
                             toPrime = new SimpleEnumSet<>(Heightmap.Types.class);
@@ -314,7 +314,7 @@ public abstract class Mixin_CFM_ProtoChunk extends ChunkAccess {
             }
             for (Heightmap.Types type : ArrayHelper.HEIGHTMAP) {
                 if (heightmaps.contains(type)) {
-                    this.heightmaps.get(type).update(x & 15, y, z & 15, state);
+                    this.heightmaps_().get(type).update(x & 15, y, z & 15, state);
                 }
             }
             return oldState;

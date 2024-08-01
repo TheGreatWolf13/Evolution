@@ -9,10 +9,10 @@ import java.util.Arrays;
 
 public class IntegrityStorage {
 
-    private final ThreadingDetector threadingDetector = new ThreadingDetector("Storage");
     private byte @Nullable [] data;
     private boolean hasChanges;
     private short nonEmptyCount;
+    private final ThreadingDetector threadingDetector = new ThreadingDetector("Storage");
     private short totallyFullCount;
 
     @Contract("_ -> new")
@@ -83,6 +83,21 @@ public class IntegrityStorage {
 
     public void release() {
         this.threadingDetector.checkAndUnlock();
+    }
+
+    public void reset() {
+        this.acquire();
+        try {
+            if (this.data != null) {
+                Arrays.fill(this.data, (byte) 0);
+            }
+            this.nonEmptyCount = 0;
+            this.totallyFullCount = 0;
+            this.hasChanges = true;
+        }
+        finally {
+            this.release();
+        }
     }
 
     @Contract("-> new")

@@ -35,6 +35,7 @@ public final class CommandIntegrity {
             source.sendFailure(new TranslatableComponent("command.evolution.integrity.chunkEmpty"));
             return 0;
         }
+        chunk.primeStructural(true);
         int y = pos.getY();
         int index = chunk.getSectionIndex(y);
         LevelChunkSection section = chunk.getSection(index);

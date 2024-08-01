@@ -81,6 +81,112 @@ public class CapabilityChunkStorage {
     private final TickStorage pendingPreciseBlockTicks = new TickStorage();
     private byte updateTicks;
 
+    public static boolean canStabilize(LevelChunk chunk, LevelChunkSection section, ChunkHolder holder, IStructural structural, BlockState state, int x, int localY, int z, int index, int selfLoad) {
+        //Try to stabilize on the X axis
+        BlockState stateW = safeGetBlockstate(chunk, section, holder, x - 1, localY, z, index, 0);
+        if (stateW.getBlock() instanceof IFillable && structural.canMakeABeamWith(state, stateW)) {
+            int data = safeGetStructuralData(chunk, section, holder, x - 1, localY, z, index, 0);
+            if (IFillable.getIntegrity(data) != 0) {
+                int loadW = IFillable.getStableLoadFactor(data);
+                if (loadW <= selfLoad) {
+                    BlockState stateE = safeGetBlockstate(chunk, section, holder, x + 1, localY, z, index, 0);
+                    if (stateE.getBlock() instanceof IFillable && structural.canMakeABeamWith(state, stateE)) {
+                        int data2 = safeGetStructuralData(chunk, section, holder, x + 1, localY, z, index, 0);
+                        if (IFillable.getIntegrity(data2) != 0) {
+                            int loadE = IFillable.getStableLoadFactor(data2);
+                            if (loadE <= selfLoad) {
+                                if (loadE < selfLoad || loadW < selfLoad) {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        //Try to stabilize on the Z axis
+        BlockState stateN = safeGetBlockstate(chunk, section, holder, x, localY, z - 1, index, 0);
+        if (stateN.getBlock() instanceof IFillable && structural.canMakeABeamWith(state, stateN)) {
+            int data = safeGetStructuralData(chunk, section, holder, x, localY, z - 1, index, 0);
+            if (IFillable.getIntegrity(data) != 0) {
+                int loadN = IFillable.getStableLoadFactor(data);
+                if (loadN <= selfLoad) {
+                    BlockState stateS = safeGetBlockstate(chunk, section, holder, x, localY, z + 1, index, 0);
+                    if (stateS.getBlock() instanceof IFillable && structural.canMakeABeamWith(state, stateS)) {
+                        int data2 = safeGetStructuralData(chunk, section, holder, x, localY, z + 1, index, 0);
+                        if (IFillable.getIntegrity(data2) != 0) {
+                            int loadS = IFillable.getStableLoadFactor(data2);
+                            if (loadS <= selfLoad) {
+                                return loadS < selfLoad || loadN < selfLoad;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    public static boolean canStabilizeArch(LevelChunk chunk, LevelChunkSection section, ChunkHolder holder, IStructural structural, BlockState state, int x, int localY, int z, int index, int selfLoad) {
+        //Try to stabilize on the X axis
+        for (int j = -1; j <= 1; ++j) {
+            BlockState firstState = safeGetBlockstate(chunk, section, holder, x - 1, localY, z, index, j);
+            if (firstState.getBlock() instanceof IFillable && structural.canMakeABeamWith(state, firstState)) {
+                int data = safeGetStructuralData(chunk, section, holder, x - 1, localY, z, index, j);
+                if (IFillable.getIntegrity(data) != 0) {
+                    int loadW = IFillable.getStableLoadFactor(data);
+                    if (loadW <= selfLoad) {
+                        for (int i = -1; i <= 1; ++i) {
+                            if (j == 1 && i == 1) {
+                                continue;
+                            }
+                            BlockState secondState = safeGetBlockstate(chunk, section, holder, x + 1, localY, z, index, i);
+                            if (secondState.getBlock() instanceof IFillable && structural.canMakeABeamWith(state, secondState)) {
+                                int data2 = safeGetStructuralData(chunk, section, holder, x + 1, localY, z, index, i);
+                                if (IFillable.getIntegrity(data2) != 0) {
+                                    int loadE = IFillable.getStableLoadFactor(data2);
+                                    if (loadE <= selfLoad) {
+                                        if (loadE < selfLoad || loadW < selfLoad) {
+                                            return true;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        //Try to stabilize on the Z axis
+        for (int j = -1; j <= 1; ++j) {
+            BlockState firstState = safeGetBlockstate(chunk, section, holder, x, localY, z - 1, index, j);
+            if (firstState.getBlock() instanceof IFillable && structural.canMakeABeamWith(state, firstState)) {
+                int data = safeGetStructuralData(chunk, section, holder, x, localY, z - 1, index, j);
+                if (IFillable.getIntegrity(data) != 0) {
+                    int loadN = IFillable.getStableLoadFactor(data);
+                    if (loadN <= selfLoad) {
+                        for (int i = -1; i <= 1; ++i) {
+                            if (j == 1 && i == 1) {
+                                continue;
+                            }
+                            BlockState secondState = safeGetBlockstate(chunk, section, holder, x, localY, z + 1, index, i);
+                            if (secondState.getBlock() instanceof IFillable && structural.canMakeABeamWith(state, secondState)) {
+                                int data2 = safeGetStructuralData(chunk, section, holder, x, localY, z + 1, index, i);
+                                if (IFillable.getIntegrity(data2) != 0) {
+                                    int loadS = IFillable.getStableLoadFactor(data2);
+                                    if (loadS <= selfLoad) {
+                                        return loadS < selfLoad || loadN < selfLoad;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     /**
      * Retrieves the atm value to be used during Atm Priming. Always call after
      * {@link CapabilityChunkStorage#safeGetBlockstate(LevelChunk, LevelChunkSection, ChunkHolder, int, int, int, int, int)}.
@@ -151,6 +257,7 @@ public class CapabilityChunkStorage {
         }
         else if (y < 0) {
             if (index - 1 < 0) {
+                holder.rememberLastDir(Direction.DOWN);
                 //Accessing into the inferior void
                 return Blocks.BEDROCK.defaultBlockState();
             }
@@ -160,6 +267,7 @@ public class CapabilityChunkStorage {
         }
         else if (y > 15) {
             if (index + 1 >= chunk.getSections().length) {
+                holder.rememberLastDir(Direction.UP);
                 //Accessing into the superior void
                 return Blocks.BEDROCK.defaultBlockState();
             }
@@ -203,86 +311,60 @@ public class CapabilityChunkStorage {
         return section.getBlockState(x, y, z);
     }
 
-    private static boolean canStabilize(LevelChunk chunk, LevelChunkSection section, ChunkHolder holder, IStructural structural, BlockState state, int x, int y, int z, int index, int selfLoad) {
-        //Try to stabilize on the X axis
-        BlockState stateW = safeGetBlockstate(chunk, section, holder, x - 1, y, z, index, 0);
-        if (stateW.getBlock() instanceof IFillable && structural.canMakeABeamWith(state, stateW)) {
-            int loadW = IFillable.getStableLoadFactor(safeGetStructuralData(chunk, section, holder, x - 1, y, z, index, 0));
-            if (loadW <= selfLoad) {
-                BlockState stateE = safeGetBlockstate(chunk, section, holder, x + 1, y, z, index, 0);
-                if (stateE.getBlock() instanceof IFillable && structural.canMakeABeamWith(state, stateE)) {
-                    int loadE = IFillable.getStableLoadFactor(safeGetStructuralData(chunk, section, holder, x + 1, y, z, index, 0));
-                    if (loadE <= selfLoad) {
-                        if (loadE < selfLoad || loadW < selfLoad) {
-                            return true;
-                        }
-                    }
+    public static int verifyArch(BlockState state, IStructural structural, LevelChunk chunk, LevelChunkSection section, ChunkHolder holder, int index, int x, int localY, int z, int selfIntegrity, int directionList, int incrementForBeam, int incrementForArch) {
+        int load = 255;
+        int integrity = selfIntegrity;
+        float factor = (float) load / integrity;
+        int invalidList = 0;
+        while (!DirectionList.isEmpty(directionList)) {
+            int dirIndex = DirectionList.getLast(directionList);
+            Direction dir = DirectionList.get(directionList, dirIndex);
+            directionList = DirectionList.remove(directionList, dirIndex);
+            int x0 = x + dir.getStepX();
+            int z0 = z + dir.getStepZ();
+            BlockState otherState = safeGetBlockstate(chunk, section, holder, x0, localY, z0, index, -1);
+            if (otherState.getBlock() instanceof IStructural && structural.canMakeABeamWith(state, otherState)) {
+                int data = safeGetStructuralData(chunk, section, holder, x0, localY, z0, index, -1);
+                int l = IFillable.getLoadFactor(data) + incrementForArch;
+                int i = Math.min(IFillable.getIntegrity(data), selfIntegrity);
+                float f = (float) l / i;
+                if (f < factor) {
+                    factor = f;
+                    load = l;
+                    integrity = i;
                 }
             }
-        }
-        //Try to stabilize on the Z axis
-        BlockState stateN = safeGetBlockstate(chunk, section, holder, x, y, z - 1, index, 0);
-        if (stateN.getBlock() instanceof IFillable && structural.canMakeABeamWith(state, stateN)) {
-            int loadN = IFillable.getStableLoadFactor(safeGetStructuralData(chunk, section, holder, x, y, z - 1, index, 0));
-            if (loadN <= selfLoad) {
-                BlockState stateS = safeGetBlockstate(chunk, section, holder, x, y, z + 1, index, 0);
-                if (stateS.getBlock() instanceof IFillable && structural.canMakeABeamWith(state, stateS)) {
-                    int loadS = IFillable.getStableLoadFactor(safeGetStructuralData(chunk, section, holder, x, y, z + 1, index, 0));
-                    if (loadS <= selfLoad) {
-                        return loadS < selfLoad || loadN < selfLoad;
-                    }
-                }
+            else {
+                invalidList = DirectionList.add(invalidList, dir);
             }
         }
-        return false;
+        return verifySimpleBeam(state, structural, chunk, section, holder, invalidList, index, x, localY, z, incrementForBeam, selfIntegrity, load, integrity);
     }
 
-    private static boolean canStabilizeArch(LevelChunk chunk, LevelChunkSection section, ChunkHolder holder, IStructural structural, BlockState state, int x, int y, int z, int index, int selfLoad) {
-        //Try to stabilize on the X axis
-        for (int j = -1; j <= 1; ++j) {
-            BlockState firstState = safeGetBlockstate(chunk, section, holder, x - 1, y, z, index, j);
-            if (firstState.getBlock() instanceof IFillable && structural.canMakeABeamWith(state, firstState)) {
-                int loadW = IFillable.getStableLoadFactor(safeGetStructuralData(chunk, section, holder, x - 1, y, z, index, j));
-                if (loadW <= selfLoad) {
-                    for (int i = -1; i <= 1; ++i) {
-                        if (j == 1 && i == 1) {
-                            continue;
-                        }
-                        BlockState secondState = safeGetBlockstate(chunk, section, holder, x + 1, y, z, index, i);
-                        if (secondState.getBlock() instanceof IFillable && structural.canMakeABeamWith(state, secondState)) {
-                            int loadE = IFillable.getStableLoadFactor(safeGetStructuralData(chunk, section, holder, x + 1, y, z, index, i));
-                            if (loadE <= selfLoad) {
-                                if (loadE < selfLoad || loadW < selfLoad) {
-                                    return true;
-                                }
-                            }
-                        }
-                    }
+    public static int verifySimpleBeam(BlockState state, IStructural structural, LevelChunk chunk, LevelChunkSection section, ChunkHolder holder, int directionList, int index, int x, int localY, int z, int increment, int selfIntegrity, int minLoad, int correspondingIntegrity) {
+        int load = minLoad;
+        int integrity = correspondingIntegrity;
+        float factor = (float) load / integrity;
+        while (!DirectionList.isEmpty(directionList)) {
+            int dirIndex = DirectionList.getLast(directionList);
+            Direction dir = DirectionList.get(directionList, dirIndex);
+            directionList = DirectionList.remove(directionList, dirIndex);
+            int x0 = x + dir.getStepX();
+            int z0 = z + dir.getStepZ();
+            BlockState otherState = safeGetBlockstate(chunk, section, holder, x0, localY, z0, index, 0);
+            if (otherState.getBlock() instanceof IStructural && structural.canMakeABeamWith(state, otherState)) {
+                int data = safeGetStructuralData(chunk, section, holder, x0, localY, z0, index, 0);
+                int l = IFillable.getLoadFactor(data) + increment;
+                int i = Math.min(IFillable.getIntegrity(data), selfIntegrity);
+                float f = (float) l / i;
+                if (f < factor) {
+                    factor = f;
+                    load = l;
+                    integrity = i;
                 }
             }
         }
-        //Try to stabilize on the Z axis
-        for (int j = -1; j <= 1; ++j) {
-            BlockState firstState = safeGetBlockstate(chunk, section, holder, x, y, z - 1, index, j);
-            if (firstState.getBlock() instanceof IFillable && structural.canMakeABeamWith(state, firstState)) {
-                int loadN = IFillable.getStableLoadFactor(safeGetStructuralData(chunk, section, holder, x, y, z - 1, index, j));
-                if (loadN <= selfLoad) {
-                    for (int i = -1; i <= 1; ++i) {
-                        if (j == 1 && i == 1) {
-                            continue;
-                        }
-                        BlockState secondState = safeGetBlockstate(chunk, section, holder, x, y, z + 1, index, i);
-                        if (secondState.getBlock() instanceof IFillable && structural.canMakeABeamWith(state, secondState)) {
-                            int loadS = IFillable.getStableLoadFactor(safeGetStructuralData(chunk, section, holder, x, y, z + 1, index, i));
-                            if (loadS <= selfLoad) {
-                                return loadS < selfLoad || loadN < selfLoad;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return false;
+        return load << 16 | integrity;
     }
 
     private static void fail(Level level, int x, int y, int z) {
@@ -346,62 +428,6 @@ public class CapabilityChunkStorage {
             }
         }
         return (section.getStabilityStorage().get(x, y, z) ? 1 << 31 : 0) | section.getLoadFactorStorage().get(x, y, z) << 16 | section.getIntegrityStorage().get(x, y, z);
-    }
-
-    private static int verifyArch(BlockState state, IStructural structural, LevelChunk chunk, LevelChunkSection section, ChunkHolder holder, int index, int x, int y, int z, int selfIntegrity, int directionList, int incrementForBeam, int incrementForArch) {
-        int load = 255;
-        int integrity = selfIntegrity;
-        float factor = (float) load / integrity;
-        int invalidList = 0;
-        while (!DirectionList.isEmpty(directionList)) {
-            int dirIndex = DirectionList.getLast(directionList);
-            Direction dir = DirectionList.get(directionList, dirIndex);
-            directionList = DirectionList.remove(directionList, dirIndex);
-            int x0 = x + dir.getStepX();
-            int z0 = z + dir.getStepZ();
-            BlockState otherState = safeGetBlockstate(chunk, section, holder, x0, y, z0, index, -1);
-            if (otherState.getBlock() instanceof IStructural && structural.canMakeABeamWith(state, otherState)) {
-                int data = safeGetStructuralData(chunk, section, holder, x0, y, z0, index, -1);
-                int l = IFillable.getLoadFactor(data) + incrementForArch;
-                int i = Math.min(IFillable.getIntegrity(data), selfIntegrity);
-                float f = (float) l / i;
-                if (f < factor) {
-                    factor = f;
-                    load = l;
-                    integrity = i;
-                }
-            }
-            else {
-                invalidList = DirectionList.add(invalidList, dir);
-            }
-        }
-        return verifySimpleBeam(state, structural, chunk, section, holder, invalidList, index, x, y, z, incrementForBeam, selfIntegrity, load, integrity);
-    }
-
-    private static int verifySimpleBeam(BlockState state, IStructural structural, LevelChunk chunk, LevelChunkSection section, ChunkHolder holder, int directionList, int index, int x, int y, int z, int increment, int selfIntegrity, int minLoad, int correspondingIntegrity) {
-        int load = minLoad;
-        int integrity = correspondingIntegrity;
-        float factor = (float) load / integrity;
-        while (!DirectionList.isEmpty(directionList)) {
-            int dirIndex = DirectionList.getLast(directionList);
-            Direction dir = DirectionList.get(directionList, dirIndex);
-            directionList = DirectionList.remove(directionList, dirIndex);
-            int x0 = x + dir.getStepX();
-            int z0 = z + dir.getStepZ();
-            BlockState otherState = safeGetBlockstate(chunk, section, holder, x0, y, z0, index, 0);
-            if (otherState.getBlock() instanceof IStructural && structural.canMakeABeamWith(state, otherState)) {
-                int data = safeGetStructuralData(chunk, section, holder, x0, y, z0, index, 0);
-                int l = IFillable.getLoadFactor(data) + increment;
-                int i = Math.min(IFillable.getIntegrity(data), selfIntegrity);
-                float f = (float) l / i;
-                if (f < factor) {
-                    factor = f;
-                    load = l;
-                    integrity = i;
-                }
-            }
-        }
-        return load << 16 | integrity;
     }
 
     public void deserializeNBT(CompoundTag nbt) {
@@ -587,6 +613,8 @@ public class CapabilityChunkStorage {
                 case CARDINAL_ARCH -> {
                     this.propagateFailureArch(chunk, section, holder, state, structural, x, y, z, index, failure, selfIntegrity, section.getLoadFactorStorage().get(x, y, z), globalY, DirectionList.HORIZONTAL);
                 }
+                case NONE -> fail(chunk.getLevel(), x + chunk.getPos().getMinBlockX(), globalY, z + chunk.getPos().getMinBlockZ());
+                default -> throw new IncompatibleClassChangeError();
             }
         }
     }
@@ -715,8 +743,8 @@ public class CapabilityChunkStorage {
     }
 
     private void scheduleIntegrityTick(LevelChunk chunk, int x, int y, int z, int failure, PropagationDirection propDir, boolean oldFillable) {
-        this.pendingIntegrityTicks.add(IFillable.packInternalPos(x, y, z, failure, propDir, oldFillable));
-        chunk.setUnsaved(true);
+//        this.pendingIntegrityTicks.add(IFillable.packInternalPos(x, y, z, failure, propDir, oldFillable));
+//        chunk.setUnsaved(true);
     }
 
     private void schedulePhysicsUpdate(LevelChunk chunk, ChunkHolder holder, int x, int y, int z, int failure, PropagationDirection dir) {
@@ -878,50 +906,28 @@ public class CapabilityChunkStorage {
                 else if (block instanceof IStructural structural) {
                     int selfIntegrity = structural.getIntegrity(state);
                     int incrementForBeam = structural.getIncrementForBeam(state);
-                    switch (structural.getBeamType(state)) {
+                    int result = switch (structural.getBeamType(state)) {
                         case NONE -> {
                             structural.fail(level, state, x + minX, globalY, z + minZ);
-                            return;
+                            yield 0;
                         }
-                        case X_BEAM -> {
-                            int result = verifySimpleBeam(state, structural, chunk, section, holder, DirectionList.X_AXIS, index, x, y, z, incrementForBeam, selfIntegrity, 255, selfIntegrity);
-                            newLoad = result >> 16;
-                            newIntegrity = result & 0xFFFF;
-                        }
-                        case Z_BEAM -> {
-                            int result = verifySimpleBeam(state, structural, chunk, section, holder, DirectionList.Z_AXIS, index, x, y, z, incrementForBeam, selfIntegrity, 255, selfIntegrity);
-                            newLoad = result >> 16;
-                            newIntegrity = result & 0xFFFF;
-                        }
-                        case CARDINAL_BEAM -> {
-                            int result = verifySimpleBeam(state, structural, chunk, section, holder, DirectionList.HORIZONTAL, index, x, y, z, incrementForBeam, selfIntegrity, 255, selfIntegrity);
-                            newLoad = result >> 16;
-                            newIntegrity = result & 0xFFFF;
-                        }
-                        case X_ARCH -> {
-                            int result = verifyArch(state, structural, chunk, section, holder, index, x, y, z, selfIntegrity, DirectionList.X_AXIS, incrementForBeam, structural.getIncrementForArch(state));
-                            newLoad = result >> 16;
-                            newIntegrity = result & 0xFFFF;
-                        }
-                        case Z_ARCH -> {
-                            int result = verifyArch(state, structural, chunk, section, holder, index, x, y, z, selfIntegrity, DirectionList.Z_AXIS, incrementForBeam, structural.getIncrementForArch(state));
-                            newLoad = result >> 16;
-                            newIntegrity = result & 0xFFFF;
-                        }
-                        case CARDINAL_ARCH -> {
-                            int result = verifyArch(state, structural, chunk, section, holder, index, x, y, z, selfIntegrity, DirectionList.HORIZONTAL, incrementForBeam, structural.getIncrementForArch(state));
-                            newLoad = result >> 16;
-                            newIntegrity = result & 0xFFFF;
-                        }
+                        case X_BEAM -> verifySimpleBeam(state, structural, chunk, section, holder, DirectionList.X_AXIS, index, x, y, z, incrementForBeam, selfIntegrity, 255, selfIntegrity);
+                        case Z_BEAM -> verifySimpleBeam(state, structural, chunk, section, holder, DirectionList.Z_AXIS, index, x, y, z, incrementForBeam, selfIntegrity, 255, selfIntegrity);
+                        case CARDINAL_BEAM -> verifySimpleBeam(state, structural, chunk, section, holder, DirectionList.HORIZONTAL, index, x, y, z, incrementForBeam, selfIntegrity, 255, selfIntegrity);
+                        case X_ARCH -> verifyArch(state, structural, chunk, section, holder, index, x, y, z, selfIntegrity, DirectionList.X_AXIS, incrementForBeam, structural.getIncrementForArch(state));
+                        case Z_ARCH -> verifyArch(state, structural, chunk, section, holder, index, x, y, z, selfIntegrity, DirectionList.Z_AXIS, incrementForBeam, structural.getIncrementForArch(state));
+                        case CARDINAL_ARCH -> verifyArch(state, structural, chunk, section, holder, index, x, y, z, selfIntegrity, DirectionList.HORIZONTAL, incrementForBeam, structural.getIncrementForArch(state));
+                    };
+                    if (result == 0) {
+                        return;
                     }
-                    switch (structural.getStabilization(state)) {
-                        case BEAM -> {
-                            newStable = canStabilize(chunk, section, holder, structural, state, x, y, z, index, newLoad);
-                        }
-                        case ARCH -> {
-                            newStable = canStabilizeArch(chunk, section, holder, structural, state, x, y, z, index, newLoad);
-                        }
-                    }
+                    newLoad = result >> 16;
+                    newIntegrity = result & 0xFFFF;
+                    newStable = switch (structural.getStabilization(state)) {
+                        case NONE -> false;
+                        case BEAM -> canStabilize(chunk, section, holder, structural, state, x, y, z, index, newLoad);
+                        case ARCH -> canStabilizeArch(chunk, section, holder, structural, state, x, y, z, index, newLoad);
+                    };
                 }
                 else {
                     //Not structural block

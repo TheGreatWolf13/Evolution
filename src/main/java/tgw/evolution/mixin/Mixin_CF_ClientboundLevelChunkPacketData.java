@@ -15,12 +15,11 @@ import tgw.evolution.hooks.asm.ModifyConstructor;
 import tgw.evolution.hooks.asm.RestoreFinal;
 import tgw.evolution.patches.PatchClientboundLevelChunkPacketData;
 import tgw.evolution.patches.obj.IBlockEntityTagOutput;
-import tgw.evolution.util.collection.ArrayHelper;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.maps.L2OMap;
+import tgw.evolution.util.collection.maps.R2OMap;
 
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 
 @Mixin(ClientboundLevelChunkPacketData.class)
@@ -38,10 +37,13 @@ public abstract class Mixin_CF_ClientboundLevelChunkPacketData implements PatchC
     @ModifyConstructor
     public Mixin_CF_ClientboundLevelChunkPacketData(LevelChunk chunk) {
         this.heightmaps = new CompoundTag();
-        Map<Heightmap.Types, Heightmap> hm = chunk.heightmaps_();
-        for (Heightmap.Types types : ArrayHelper.HEIGHTMAP) {
+        R2OMap<Heightmap.Types, Heightmap> hm = chunk.heightmaps_();
+        for (long it = hm.beginIteration(); hm.hasNextIteration(it); it = hm.nextEntry(it)) {
+            Heightmap.Types types = hm.getIterationKey(it);
+            //noinspection DataFlowIssue
             if (types.sendToClient()) {
-                Heightmap heightmap = hm.get(types);
+                Heightmap heightmap = hm.getIterationValue(it);
+                //noinspection ConstantValue
                 if (heightmap != null) {
                     //noinspection ObjectAllocationInLoop
                     this.heightmaps.put(types.getSerializationKey(), new LongArrayTag(heightmap.getRawData()));

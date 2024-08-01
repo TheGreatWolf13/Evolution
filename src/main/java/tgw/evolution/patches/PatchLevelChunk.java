@@ -24,6 +24,10 @@ public interface PatchLevelChunk {
         throw new AbstractMethodError();
     }
 
+    default void primeStructural(boolean needsResetting) {
+        throw new AbstractMethodError();
+    }
+
     default void replaceWithPacketData_(FriendlyByteBuf buf, CompoundTag tag, Consumer<IBlockEntityTagOutput> consumer) {
         throw new AbstractMethodError();
     }

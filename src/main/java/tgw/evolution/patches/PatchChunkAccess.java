@@ -7,10 +7,9 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.util.collection.lists.LList;
 import tgw.evolution.util.collection.maps.L2OMap;
+import tgw.evolution.util.collection.maps.R2OMap;
 import tgw.evolution.world.lighting.SWMRNibbleArray;
 import tgw.evolution.world.lighting.SWMRShortArray;
-
-import java.util.Map;
 
 public interface PatchChunkAccess {
 
@@ -46,7 +45,7 @@ public interface PatchChunkAccess {
         throw new AbstractMethodError();
     }
 
-    default Map<Heightmap.Types, Heightmap> heightmaps_() {
+    default R2OMap<Heightmap.Types, Heightmap> heightmaps_() {
         throw new AbstractMethodError();
     }
 

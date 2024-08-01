@@ -9,10 +9,10 @@ import java.util.Arrays;
 
 public class StabilityStorage {
 
-    private final ThreadingDetector threadingDetector = new ThreadingDetector("Storage");
     private byte @Nullable [] data;
     private boolean hasChanges;
     private short nonEmptyCount;
+    private final ThreadingDetector threadingDetector = new ThreadingDetector("Storage");
 
     @Contract("_ -> new")
     public static StabilityStorage read(@Nullable CompoundTag nbt) {
@@ -79,6 +79,20 @@ public class StabilityStorage {
 
     public void release() {
         this.threadingDetector.checkAndUnlock();
+    }
+
+    public void reset() {
+        this.acquire();
+        try {
+            if (this.data != null) {
+                Arrays.fill(this.data, (byte) 0);
+            }
+            this.nonEmptyCount = 0;
+            this.hasChanges = true;
+        }
+        finally {
+            this.release();
+        }
     }
 
     @Contract("-> new")

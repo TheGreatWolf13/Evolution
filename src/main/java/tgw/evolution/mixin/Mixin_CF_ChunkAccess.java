@@ -1,6 +1,5 @@
 package tgw.evolution.mixin;
 
-import com.google.common.collect.Maps;
 import it.unimi.dsi.fastutil.longs.LongIterator;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import it.unimi.dsi.fastutil.shorts.ShortList;
@@ -30,15 +29,15 @@ import tgw.evolution.hooks.asm.DeleteField;
 import tgw.evolution.hooks.asm.ModifyConstructor;
 import tgw.evolution.hooks.asm.RestoreFinal;
 import tgw.evolution.patches.PatchChunkAccess;
-import tgw.evolution.util.collection.maps.L2OHashMap;
-import tgw.evolution.util.collection.maps.L2OMap;
-import tgw.evolution.util.collection.maps.O2OHashMap;
-import tgw.evolution.util.collection.maps.O2OMap;
+import tgw.evolution.util.collection.maps.*;
 import tgw.evolution.util.collection.sets.OHashSet;
 import tgw.evolution.util.collection.sets.OSet;
+import tgw.evolution.util.collection.sets.SimpleEnumSet;
 import tgw.evolution.world.lighting.SWMRNibbleArray;
 import tgw.evolution.world.lighting.SWMRShortArray;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -49,7 +48,7 @@ public abstract class Mixin_CF_ChunkAccess implements PatchChunkAccess, BlockGet
     @Shadow protected @Nullable BlendingData blendingData;
     @Shadow @Final @DeleteField protected Map<BlockPos, BlockEntity> blockEntities;
     @Mutable @Shadow @Final @RestoreFinal protected ChunkPos chunkPos;
-    @Mutable @Shadow @Final @RestoreFinal protected Map<Heightmap.Types, Heightmap> heightmaps;
+    @Shadow @Final @DeleteField protected Map<Heightmap.Types, Heightmap> heightmaps;
     @Mutable @Shadow @Final @RestoreFinal protected LevelHeightAccessor levelHeightAccessor;
     @Shadow @Final @DeleteField protected Map<BlockPos, CompoundTag> pendingBlockEntities;
     @Mutable @Shadow @Final @RestoreFinal protected ShortList[] postProcessing;
@@ -59,6 +58,7 @@ public abstract class Mixin_CF_ChunkAccess implements PatchChunkAccess, BlockGet
     @Unique private volatile boolean @Nullable [] blockEmptinessMap;
     @Unique private final L2OMap<BlockEntity> blockEntities_;
     @Unique private volatile SWMRShortArray[] blockShorts;
+    @Unique private final R2OMap<Heightmap.Types, Heightmap> heightmaps_;
     @Shadow private long inhabitedTime;
     @Unique private final L2OMap<CompoundTag> pendingBlockEntities_;
     //TODO very inefficient
@@ -69,7 +69,7 @@ public abstract class Mixin_CF_ChunkAccess implements PatchChunkAccess, BlockGet
 
     @ModifyConstructor
     public Mixin_CF_ChunkAccess(ChunkPos chunkPos, UpgradeData upgradeData, LevelHeightAccessor levelHeightAccessor, Registry<Biome> registry, long inhabitedTime, LevelChunkSection @Nullable [] levelChunkSections, @Nullable BlendingData blendingData) {
-        this.heightmaps = Maps.newEnumMap(Heightmap.Types.class);
+        this.heightmaps_ = new Enum2OMap<>(Heightmap.Types.class);
         this.structureStarts = new O2OHashMap<>();
         this.structuresRefences = new O2OHashMap<>();
         this.chunkPos = chunkPos;
@@ -170,14 +170,38 @@ public abstract class Mixin_CF_ChunkAccess implements PatchChunkAccess, BlockGet
 
     /**
      * @author TheGreatWolf
-     * @reason Remove computeIfAbsent
+     * @reason _
+     */
+    @Overwrite
+    public int getHeight(Heightmap.Types types, int i, int j) {
+        Heightmap heightmap = this.heightmaps_.get(types);
+        if (heightmap == null) {
+            Heightmap.primeHeightmaps((ChunkAccess) (Object) this, SimpleEnumSet.of(types));
+            heightmap = this.heightmaps_.get(types);
+        }
+        return heightmap.getFirstAvailable(i & 15, j & 15) - 1;
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public Collection<Map.Entry<Heightmap.Types, Heightmap>> getHeightmaps() {
+        Evolution.deprecatedMethod();
+        return Collections.emptySet();
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
      */
     @Overwrite
     public Heightmap getOrCreateHeightmapUnprimed(Heightmap.Types type) {
-        Heightmap heightmap = this.heightmaps.get(type);
+        Heightmap heightmap = this.heightmaps_.get(type);
         if (heightmap == null) {
             heightmap = new Heightmap((ChunkAccess) (Object) this, type);
-            this.heightmaps.put(type, heightmap);
+            this.heightmaps_.put(type, heightmap);
         }
         return heightmap;
     }
@@ -192,9 +216,18 @@ public abstract class Mixin_CF_ChunkAccess implements PatchChunkAccess, BlockGet
         return this.skyNibbles;
     }
 
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public boolean hasPrimedHeightmap(Heightmap.Types types) {
+        return this.heightmaps_.get(types) != null;
+    }
+
     @Override
-    public Map<Heightmap.Types, Heightmap> heightmaps_() {
-        return this.heightmaps;
+    public R2OMap<Heightmap.Types, Heightmap> heightmaps_() {
+        return this.heightmaps_;
     }
 
     /**
