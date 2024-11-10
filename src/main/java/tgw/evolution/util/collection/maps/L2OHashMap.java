@@ -10,6 +10,7 @@ import org.jetbrains.annotations.UnmodifiableView;
 import tgw.evolution.util.collection.lists.LArrayList;
 
 import java.util.ConcurrentModificationException;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 public class L2OHashMap<V> extends Long2ObjectOpenHashMap<V> implements L2OMap<V> {
@@ -127,6 +128,11 @@ public class L2OHashMap<V> extends Long2ObjectOpenHashMap<V> implements L2OMap<V
                 return (long) pos << 32 | size;
             }
         }
+    }
+
+    @Override
+    public void putAll(Map<? extends Long, ? extends V> m) {
+        L2OMap.super.putAll(m);
     }
 
     @Override

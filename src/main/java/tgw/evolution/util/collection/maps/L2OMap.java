@@ -2,8 +2,12 @@ package tgw.evolution.util.collection.maps;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMaps;
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.UnmodifiableView;
 
+import java.util.Iterator;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 public interface L2OMap<V> extends Long2ObjectMap<V>, MapEv {
@@ -22,6 +26,41 @@ public interface L2OMap<V> extends Long2ObjectMap<V>, MapEv {
     V getSampleValue();
 
     long nextEntry(long it);
+
+    default void preAllocate(int extraSize) {
+
+    }
+
+    default void putAll(L2OMap<? extends V> map) {
+        this.preAllocate(map.size());
+        for (long it = map.beginIteration(); map.hasNextIteration(it); it = map.nextEntry(it)) {
+            this.put(map.getIterationKey(it), map.getIterationValue(it));
+        }
+    }
+
+    @Override
+    default void putAll(@NotNull Map<? extends Long, ? extends V> m) {
+        if (m instanceof L2OMap map) {
+            this.putAll(map);
+            return;
+        }
+        this.preAllocate(m.size());
+        if (m instanceof Long2ObjectMap) {
+            ObjectIterator<Long2ObjectMap.Entry<V>> i = Long2ObjectMaps.fastIterator((Long2ObjectMap) m);
+            while (i.hasNext()) {
+                Long2ObjectMap.Entry<? extends V> e = i.next();
+                this.put(e.getKey(), e.getValue());
+            }
+        }
+        else {
+            int n = m.size();
+            Iterator<? extends Map.Entry<? extends Long, ? extends V>> i = m.entrySet().iterator();
+            while (n-- != 0) {
+                Map.Entry<? extends Long, ? extends V> e = i.next();
+                this.put(e.getKey(), e.getValue());
+            }
+        }
+    }
 
     long removeIteration(long it);
 
@@ -62,6 +101,11 @@ public interface L2OMap<V> extends Long2ObjectMap<V>, MapEv {
         @Override
         public long nextEntry(long it) {
             throw new NoSuchElementException();
+        }
+
+        @Override
+        public void putAll(Map<? extends Long, ? extends V> m) {
+            throw new UnsupportedOperationException();
         }
 
         @Override
@@ -128,6 +172,11 @@ public interface L2OMap<V> extends Long2ObjectMap<V>, MapEv {
         }
 
         @Override
+        public void putAll(Map<? extends Long, ? extends V> m) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
         public long removeIteration(long it) {
             throw new UnsupportedOperationException();
         }
@@ -185,6 +234,11 @@ public interface L2OMap<V> extends Long2ObjectMap<V>, MapEv {
         @Override
         public long nextEntry(long it) {
             return this.m.nextEntry(it);
+        }
+
+        @Override
+        public void putAll(Map<? extends Long, ? extends V> m) {
+            throw new UnsupportedOperationException();
         }
 
         @Override
