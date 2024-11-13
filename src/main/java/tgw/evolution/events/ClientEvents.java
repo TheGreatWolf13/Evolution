@@ -106,7 +106,7 @@ public class ClientEvents {
     public @Nullable EntityHitResult leftRayTrace;
     public @Nullable Entity rightPointedEntity;
     public @Nullable EntityHitResult rightRayTrace;
-    public int ticksToLoseConcious;
+    public int ticksToLoseConscious;
     private @Nullable IMelee.IAttackType cachedAttackType;
     private int cameraId = -1;
     private final ISet currentShaders = new IHashSet();
@@ -193,7 +193,7 @@ public class ClientEvents {
         }
         assert instance.mc.player != null;
         if (instance.mc.player.isDeadOrDying()) {
-            float f = 1.0f - Mth.cos(Mth.HALF_PI * instance.ticksToLoseConcious / 80.0f);
+            float f = 1.0f - Mth.cos(Mth.HALF_PI * instance.ticksToLoseConscious / 80.0f);
             return f * f * 0.5f + 0.5f;
         }
         return 1.0f;
@@ -208,7 +208,7 @@ public class ClientEvents {
         }
         assert instance.mc.player != null;
         if (instance.mc.player.isDeadOrDying()) {
-            float f = 1.0f - Mth.cos(Mth.HALF_PI * instance.ticksToLoseConcious / 80.0f);
+            float f = 1.0f - Mth.cos(Mth.HALF_PI * instance.ticksToLoseConscious / 80.0f);
             return f * f;
         }
         return 1.0f;
@@ -918,8 +918,8 @@ public class ClientEvents {
         if (!mc.isPaused()) {
             ++this.ticks;
             if (player.isDeadOrDying()) {
-                if (this.ticksToLoseConcious > 0) {
-                    --this.ticksToLoseConcious;
+                if (this.ticksToLoseConscious > 0) {
+                    --this.ticksToLoseConscious;
                 }
             }
             profiler.push("dimension");
@@ -1071,7 +1071,7 @@ public class ClientEvents {
     }
 
     public void startToLoseConscious() {
-        this.ticksToLoseConcious = 80;
+        this.ticksToLoseConscious = 80;
     }
 
     public void updateClientTickrate(float tickrate) {

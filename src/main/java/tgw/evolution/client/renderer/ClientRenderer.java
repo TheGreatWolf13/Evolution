@@ -481,7 +481,7 @@ public class ClientRenderer {
     public void renderDeathOverlay(PoseStack matrices, float partialTicks, int width, int height) {
         assert this.mc.player != null;
         if (this.mc.player.isDeadOrDying()) {
-            float ticks = (this.client.ticksToLoseConcious - partialTicks) / 80.0f;
+            float ticks = (this.client.ticksToLoseConscious - partialTicks) / 80.0f;
             if (ticks < 0) {
                 ticks = 0;
             }
