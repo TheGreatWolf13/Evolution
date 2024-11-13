@@ -59,6 +59,11 @@ public class L2OLinkedHashMap<V> extends Long2ObjectLinkedOpenHashMap<V> impleme
     }
 
     @Override
+    public L2OLinkedHashMap<V> clone() {
+        return (L2OLinkedHashMap<V>) super.clone();
+    }
+
+    @Override
     public long getIterationKey(long it) {
         int curr = (int) it;
         if (curr == -1) {
