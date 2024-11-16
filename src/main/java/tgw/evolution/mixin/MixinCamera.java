@@ -16,31 +16,59 @@ import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.FogType;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.*;
+import tgw.evolution.entities.util.IWrapCallback;
+import tgw.evolution.patches.PatchCamera;
 import tgw.evolution.patches.obj.NearPlane;
 import tgw.evolution.util.math.ClipContextMutable;
 import tgw.evolution.util.math.Vec3d;
 import tgw.evolution.util.math.VectorUtil;
 
 @Mixin(Camera.class)
-public abstract class MixinCamera {
+public abstract class MixinCamera implements PatchCamera {
 
-    @Unique private final ClipContextMutable clipContext = new ClipContextMutable();
-    @Unique private final NearPlane nearPlane = new NearPlane();
-    @Unique private final Quaternion quatX = new Quaternion(Vector3f.XP, 0, true);
-    @Unique private final Quaternion quatY = new Quaternion(Vector3f.YP, 0, true);
     @Shadow @Final private BlockPos.MutableBlockPos blockPosition;
+    @Unique private final ClipContextMutable clipContext = new ClipContextMutable();
     @Shadow private boolean detached;
-    @Shadow private Entity entity;
+    @Shadow private @Nullable Entity entity;
     @Shadow @Final private Vector3f forwards;
     @Shadow private boolean initialized;
+    @Unique private int lastAttachId = -1;
     @Shadow @Final private Vector3f left;
     @Shadow private BlockGetter level;
+    @Unique private final NearPlane nearPlane = new NearPlane();
     @Shadow private Vec3 position = new Vec3d(Vec3.ZERO);
+    @Unique private final Quaternion quatX = new Quaternion(Vector3f.XP, 0, true);
+    @Unique private final Quaternion quatY = new Quaternion(Vector3f.YP, 0, true);
     @Shadow @Final private Quaternion rotation;
     @Shadow @Final private Vector3f up;
     @Shadow private float xRot;
+    @Unique private byte xWrap;
     @Shadow private float yRot;
+    @Unique private byte zWrap;
+    @Unique private final IWrapCallback wrapCallback = new IWrapCallback() {
+
+        @Override
+        public void onX2NegativeWrap() {
+            MixinCamera.this.xWrap = -1;
+        }
+
+        @Override
+        public void onX2PositiveWrap() {
+            MixinCamera.this.xWrap = 1;
+        }
+
+        @Override
+        public void onZ2NegativeWrap() {
+            MixinCamera.this.zWrap = -1;
+        }
+
+        @Override
+        public void onZ2PositiveWrap() {
+            MixinCamera.this.zWrap = 1;
+        }
+    };
 
     /**
      * @reason _
@@ -75,12 +103,12 @@ public abstract class MixinCamera {
             dx *= 0.1F;
             dy *= 0.1F;
             dz *= 0.1F;
-            HitResult hitresult = this.level.clip(
-                    this.clipContext.set(this.position.x + dx, this.position.y + dy, this.position.z + dz,
-                                         this.position.x - this.forwards.x() * startingDistance + dx + dz,
-                                         this.position.y - this.forwards.y() * startingDistance + dy,
-                                         this.position.z - this.forwards.z() * startingDistance + dz,
-                                         ClipContext.Block.VISUAL, ClipContext.Fluid.NONE, this.entity));
+            HitResult hitresult = this.level.clip(this.clipContext.set(this.position.x + dx, this.position.y + dy, this.position.z + dz,
+                                                                       this.position.x - this.forwards.x() * startingDistance + dx + dz,
+                                                                       this.position.y - this.forwards.y() * startingDistance + dy,
+                                                                       this.position.z - this.forwards.z() * startingDistance + dz,
+                                                                       ClipContext.Block.VISUAL, ClipContext.Fluid.NONE, this.entity)
+            );
             this.clipContext.reset();
             if (hitresult.getType() != HitResult.Type.MISS) {
                 double dist = VectorUtil.dist(this.position, hitresult.x(), hitresult.y(), hitresult.z());
@@ -97,6 +125,16 @@ public abstract class MixinCamera {
 
     @Shadow
     public abstract Camera.NearPlane getNearPlane();
+
+    @Override
+    public int getXWrap() {
+        return this.xWrap;
+    }
+
+    @Override
+    public int getZWrap() {
+        return this.zWrap;
+    }
 
     /**
      * @author TheGreatWolf
@@ -155,15 +193,24 @@ public abstract class MixinCamera {
      */
     @Overwrite
     public void setup(BlockGetter level, Entity entity, boolean detached, boolean thirdPersonReverse, float partialTicks) {
+        this.xWrap = 0;
+        this.zWrap = 0;
         this.initialized = true;
         this.level = level;
-        this.entity = entity;
+        if (!entity.equals(this.entity)) {
+            if (this.entity != null && this.lastAttachId != -1) {
+                this.entity.detachWrapCallback(this.lastAttachId);
+            }
+            this.lastAttachId = entity.attachWrapCallback(this.wrapCallback);
+            this.entity = entity;
+        }
         this.detached = detached;
         this.setRotation(entity.getViewYRot(partialTicks), entity.getViewXRot(partialTicks));
         if (detached) {
             this.setPosition(Mth.lerp(partialTicks, entity.xo, entity.getX()),
                              Mth.lerp(partialTicks, entity.yo, entity.getY()) + entity.getEyeHeight(),
-                             Mth.lerp(partialTicks, entity.zo, entity.getZ()));
+                             Mth.lerp(partialTicks, entity.zo, entity.getZ())
+            );
         }
         else {
             Vec3 eyePosition = entity.getEyePosition(partialTicks);

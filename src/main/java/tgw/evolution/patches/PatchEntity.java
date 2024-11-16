@@ -9,10 +9,19 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.Nullable;
+import tgw.evolution.entities.util.IWrapCallback;
 import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 import tgw.evolution.util.physics.SI;
 
 public interface PatchEntity {
+
+    default int attachWrapCallback(IWrapCallback callback) {
+        throw new AbstractMethodError();
+    }
+
+    default void detachWrapCallback(int id) {
+        throw new AbstractMethodError();
+    }
 
     default double getAcceleration() {
         return 0;

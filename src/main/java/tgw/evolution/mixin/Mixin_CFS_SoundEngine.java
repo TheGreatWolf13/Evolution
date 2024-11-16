@@ -6,7 +6,9 @@ import com.mojang.blaze3d.audio.Channel;
 import com.mojang.blaze3d.audio.Library;
 import com.mojang.blaze3d.audio.Listener;
 import com.mojang.logging.LogUtils;
+import com.mojang.math.Vector3f;
 import net.minecraft.SharedConstants;
+import net.minecraft.client.Camera;
 import net.minecraft.client.Options;
 import net.minecraft.client.resources.sounds.Sound;
 import net.minecraft.client.resources.sounds.SoundInstance;
@@ -37,6 +39,7 @@ import tgw.evolution.util.collection.maps.O2OHashMap;
 import tgw.evolution.util.collection.maps.O2OMap;
 import tgw.evolution.util.collection.sets.OHashSet;
 import tgw.evolution.util.collection.sets.OSet;
+import tgw.evolution.util.physics.EarthHelper;
 
 import java.util.List;
 import java.util.Map;
@@ -227,21 +230,17 @@ public abstract class Mixin_CFS_SoundEngine {
                         }
                         else {
                             OList<SoundEventListener> listeners = this.listeners_;
-                            Vec3 pos = new Vec3(instance.getX(), instance.getY(), instance.getZ());
+                            double x = instance.getX();
+                            double y = instance.getY();
+                            double z = instance.getZ();
                             if (!listeners.isEmpty()) {
-                                if (isRelative || attenuation == SoundInstance.Attenuation.NONE || this.listener.getListenerPosition().distanceToSqr(pos) < actualVolume * actualVolume) {
+                                if (isRelative || attenuation == SoundInstance.Attenuation.NONE || this.listener.getListenerPosition().distanceToSqr(x, y, z) < actualVolume * actualVolume) {
                                     for (int i = 0, len = listeners.size(); i < len; ++i) {
                                         listeners.get(i).onPlaySound(instance, weighedSoundEvents);
                                     }
                                 }
-                                else {
-                                    LOGGER.debug(MARKER, "Did not notify listeners of soundEvent: {}, it is too far away to hear", resLoc);
-                                }
                             }
-                            if (this.listener.getGain() <= 0.0F) {
-                                LOGGER.debug(MARKER, "Skipped playing soundEvent: {}, master volume was zero", resLoc);
-                            }
-                            else {
+                            if (this.listener.getGain() > 0.0F) {
                                 boolean shouldLoopAutomatically = shouldLoopAutomatically(instance);
                                 boolean shouldStream = sound.shouldStream();
                                 ChannelAccess.ChannelHandle handle = this.channelAccess.createHandle(sound.shouldStream() ? Library.Pool.STREAMING : Library.Pool.STATIC).join();
@@ -251,7 +250,6 @@ public abstract class Mixin_CFS_SoundEngine {
                                     }
                                 }
                                 else {
-                                    LOGGER.debug(MARKER, "Playing sound {} for event {}", sound.getLocation(), resLoc);
                                     this.soundDeleteTime_.put(instance, this.tickCount + 20);
                                     this.instanceToChannel_.put(instance, handle);
                                     this.instanceBySource.put(soundSource, instance);
@@ -265,7 +263,7 @@ public abstract class Mixin_CFS_SoundEngine {
                                             channel.disableAttenuation();
                                         }
                                         channel.setLooping(shouldLoopAutomatically && !shouldStream);
-                                        channel.setSelfPosition(pos);
+                                        channel.setSelfPosition(x, y, z);
                                         channel.setRelative(isRelative);
                                     });
                                     if (!shouldStream) {
@@ -442,11 +440,13 @@ public abstract class Mixin_CFS_SoundEngine {
                 if (handle != null) {
                     float volume = this.calculateVolume(tickable);
                     float pitch = this.calculatePitch(tickable);
-                    Vec3 selfPos = new Vec3(tickable.getX(), tickable.getY(), tickable.getZ());
+                    double x = tickable.getX();
+                    double y = tickable.getY();
+                    double z = tickable.getZ();
                     handle.execute(channel -> {
                         channel.setVolume(volume);
                         channel.setPitch(pitch);
-                        channel.setSelfPosition(selfPos);
+                        channel.setSelfPosition(x, y, z);
                     });
                 }
             }
@@ -517,6 +517,38 @@ public abstract class Mixin_CFS_SoundEngine {
                     });
                 }
             }
+        }
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public void updateSource(Camera camera) {
+        if (this.loaded && camera.isInitialized()) {
+            Vec3 pos = camera.getPosition();
+            Vector3f look = camera.getLookVector();
+            Vector3f up = camera.getUpVector();
+            int xWrap = camera.getXWrap();
+            int zWrap = camera.getZWrap();
+            if (xWrap != 0 || zWrap != 0) {
+                O2OMap<SoundInstance, ChannelAccess.ChannelHandle> instanceToChannel = this.instanceToChannel_;
+                for (long it = instanceToChannel.beginIteration(); instanceToChannel.hasNextIteration(it); it = instanceToChannel.nextEntry(it)) {
+                    SoundInstance instance = instanceToChannel.getIterationKey(it);
+                    if (!(instance instanceof TickableSoundInstance)) {
+                        ChannelAccess.ChannelHandle handle = instanceToChannel.getIterationValue(it);
+                        double x = instance.getX() + xWrap * EarthHelper.WORLD_SIZE;
+                        double y = instance.getY();
+                        double z = instance.getZ() + zWrap * EarthHelper.WORLD_SIZE;
+                        handle.execute(channel -> channel.setSelfPosition(x, y, z));
+                    }
+                }
+            }
+            this.executor.execute(() -> {
+                this.listener.setListenerPosition(pos);
+                this.listener.setListenerOrientation(look, up);
+            });
         }
     }
 }

@@ -50,6 +50,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.IClimbable;
 import tgw.evolution.entities.EntityUtils;
+import tgw.evolution.entities.util.IWrapCallback;
 import tgw.evolution.hooks.LivingHooks;
 import tgw.evolution.hooks.asm.DeleteMethod;
 import tgw.evolution.init.EvolutionAttributes;
@@ -128,6 +129,8 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
     @Shadow public boolean wasInPowderSnow;
     @Shadow public boolean wasOnFire;
     @Shadow protected boolean wasTouchingWater;
+    @Unique private int wrapCallbackCount;
+    @Unique private final OList<IWrapCallback> wrapCallbacks = new OArrayList<>();
     @Shadow public double xOld;
     @Shadow public float xRotO;
     @Shadow public double xo;
@@ -223,6 +226,13 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
         this.setXRot(Mth.clamp(xRot, -90.0F - xDelta, 90.0F - xDelta) % 360.0F);
         this.yRotO = this.getYRot();
         this.xRotO = this.getXRot();
+    }
+
+    @Override
+    public int attachWrapCallback(IWrapCallback callback) {
+        this.wrapCallbacks.add(callback);
+        ++this.wrapCallbackCount;
+        return this.wrapCallbacks.size() - 1;
     }
 
     /**
@@ -373,6 +383,19 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
 
     @Shadow
     protected abstract Vec3 collide(Vec3 vec3);
+
+    @Override
+    public void detachWrapCallback(int id) {
+        if (id < this.wrapCallbacks.size()) {
+            this.wrapCallbacks.set(id, IWrapCallback.DUMMY);
+            if (--this.wrapCallbackCount == 0) {
+                this.wrapCallbacks.clear();
+            }
+        }
+        else {
+            Evolution.warn("Tried to detach wrap callback with id {}, but entity {} has only {} wrap callbacks!", id, this, this.wrapCallbacks.size());
+        }
+    }
 
     @Shadow
     protected abstract void doWaterSplashEffect();
@@ -1295,6 +1318,7 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
      */
     @Overwrite
     public final void setPosRaw(double x, double y, double z) {
+        OList<IWrapCallback> wrapCallbacks = this.wrapCallbacks;
         double xPrime = x;
         x = EarthHelper.wrapBlockCoordinate(x);
         if (xPrime != x) {
@@ -1302,10 +1326,16 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
             if (xPrime > 0) {
                 this.xo -= EarthHelper.WORLD_SIZE;
                 this.xOld -= EarthHelper.WORLD_SIZE;
+                for (int i = 0, len = wrapCallbacks.size(); i < len; ++i) {
+                    wrapCallbacks.get(i).onX2NegativeWrap();
+                }
             }
             else {
                 this.xo += EarthHelper.WORLD_SIZE;
                 this.xOld += EarthHelper.WORLD_SIZE;
+                for (int i = 0, len = wrapCallbacks.size(); i < len; ++i) {
+                    wrapCallbacks.get(i).onX2PositiveWrap();
+                }
             }
         }
         double zPrime = z;
@@ -1315,10 +1345,16 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
             if (zPrime > 0) {
                 this.zo -= EarthHelper.WORLD_SIZE;
                 this.zOld -= EarthHelper.WORLD_SIZE;
+                for (int i = 0, len = wrapCallbacks.size(); i < len; ++i) {
+                    wrapCallbacks.get(i).onZ2NegativeWrap();
+                }
             }
             else {
                 this.zo += EarthHelper.WORLD_SIZE;
                 this.zOld += EarthHelper.WORLD_SIZE;
+                for (int i = 0, len = wrapCallbacks.size(); i < len; ++i) {
+                    wrapCallbacks.get(i).onZ2PositiveWrap();
+                }
             }
         }
         if (this.position.x != x || this.position.y != y || this.position.z != z) {

@@ -429,6 +429,12 @@
       ],
       "com/mojang/blaze3d/vertex/VertexFormat": [
         "tgw/evolution/patches/PatchVertexFormat"
+      ],
+      "com/mojang/blaze3d/audio/Channel": [
+        "tgw/evolution/patches/PatchChannel"
+      ],
+      "net/minecraft/client/Camera": [
+        "tgw/evolution/patches/PatchCamera"
       ]
     }
   }
