@@ -8,6 +8,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import tgw.evolution.client.renderer.chunk.Visibility;
 import tgw.evolution.patches.PatchFrustum;
+import tgw.evolution.util.physics.EarthHelper;
 
 @Mixin(Frustum.class)
 public abstract class MixinFrustum implements PatchFrustum {
@@ -51,6 +52,21 @@ public abstract class MixinFrustum implements PatchFrustum {
             }
         }
         return true;
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public final boolean cubeInFrustum(double x0, double y0, double z0, double x1, double y1, double z1) {
+        float minX = (float) EarthHelper.deltaBlockCoordinate(x0, this.camX);
+        float maxX = (float) -EarthHelper.deltaBlockCoordinate(x1, this.camX);
+        float minY = (float) (y0 - this.camY);
+        float maxY = (float) (y1 - this.camY);
+        float minZ = (float) EarthHelper.deltaBlockCoordinate(z0, this.camZ);
+        float maxZ = (float) EarthHelper.deltaBlockCoordinate(z1, this.camZ);
+        return this.cubeInFrustum(minX, minY, minZ, maxX, maxY, maxZ);
     }
 
     /**

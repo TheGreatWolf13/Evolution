@@ -13,6 +13,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
+import tgw.evolution.util.physics.EarthHelper;
 
 @Mixin(SingleQuadParticle.class)
 public abstract class MixinSingleQuadParticle extends Particle {
@@ -82,16 +83,16 @@ public abstract class MixinSingleQuadParticle extends Particle {
     protected abstract float getV1();
 
     /**
-     * @author JellySquid
-     * @reason Optimize function
+     * @author TheGreatWolf
+     * @reason _
      */
     @Override
     @Overwrite
     public void render(VertexConsumer vertexConsumer, Camera camera, float tickDelta) {
-        Vec3 vec3d = camera.getPosition();
-        float x = (float) (Mth.lerp(tickDelta, this.xo, this.x) - vec3d.x());
-        float y = (float) (Mth.lerp(tickDelta, this.yo, this.y) - vec3d.y());
-        float z = (float) (Mth.lerp(tickDelta, this.zo, this.z) - vec3d.z());
+        Vec3 camPos = camera.getPosition();
+        float x = (float) EarthHelper.deltaBlockCoordinate(Mth.lerp(tickDelta, this.xo, this.x), camPos.x());
+        float y = (float) EarthHelper.deltaBlockCoordinate(Mth.lerp(tickDelta, this.yo, this.y), camPos.y());
+        float z = (float) EarthHelper.deltaBlockCoordinate(Mth.lerp(tickDelta, this.zo, this.z), camPos.z());
         Quaternion quaternion;
         if (this.roll == 0.0F) {
             quaternion = camera.rotation();

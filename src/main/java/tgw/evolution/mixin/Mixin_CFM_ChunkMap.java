@@ -712,17 +712,17 @@ public abstract class Mixin_CFM_ChunkMap extends ChunkStorage implements PatchCh
             int maxZ = currZ + this.viewDistance + 1;
             int dx = EarthHelper.deltaChunkCoordinate(currX, lastX);
             if (dx < 0) {
-                minX += dx;
+                maxX += dx;
             }
             else {
-                maxX += dx;
+                minX += dx;
             }
             int dz = EarthHelper.deltaChunkCoordinate(currZ, lastZ);
             if (dz < 0) {
-                minZ += dz;
+                maxZ += dz;
             }
             else {
-                maxZ += dz;
+                minZ += dz;
             }
             for (int x = minX; x <= maxX; ++x) {
                 for (int z = minZ; z <= maxZ; ++z) {
@@ -816,17 +816,17 @@ public abstract class Mixin_CFM_ChunkMap extends ChunkStorage implements PatchCh
                 int maxZ = currZ + this.viewDistance + 1;
                 int dx = EarthHelper.deltaChunkCoordinate(currX, lastX);
                 if (dx < 0) {
-                    minX += dx;
+                    maxX += dx;
                 }
                 else {
-                    maxX += dx;
+                    minX += dx;
                 }
                 int dz = EarthHelper.deltaChunkCoordinate(currZ, lastZ);
                 if (dz < 0) {
-                    minZ += dz;
+                    maxZ += dz;
                 }
                 else {
-                    maxZ += dz;
+                    minZ += dz;
                 }
                 for (int x = minX; x <= maxX; ++x) {
                     for (int z = minZ; z <= maxZ; ++z) {

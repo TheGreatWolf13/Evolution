@@ -95,7 +95,7 @@ public final class EarthHelper {
         double d = d0 - d1;
         double absD = Math.abs(d);
         if (absD > MAX_BLOCK + 1) {
-            return -d + Math.signum(d) * (2 * (MAX_BLOCK + 1));
+            return d - Math.signum(d) * (2 * (MAX_BLOCK + 1));
         }
         return d;
     }
@@ -104,7 +104,7 @@ public final class EarthHelper {
         int d = d0 - d1;
         int absD = Math.abs(d);
         if (absD > MAX_CHUNK + 1) {
-            return -d + Mth.sign(d) * 2 * (MAX_CHUNK + 1);
+            return d - Mth.sign(d) * 2 * (MAX_CHUNK + 1);
         }
         return d;
     }
