@@ -33,6 +33,7 @@ import tgw.evolution.util.collection.sets.RSet;
 import tgw.evolution.util.constants.RenderLayer;
 import tgw.evolution.util.math.FastRandom;
 import tgw.evolution.util.math.IRandom;
+import tgw.evolution.util.physics.EarthHelper;
 
 import java.util.ArrayDeque;
 import java.util.List;
@@ -43,24 +44,24 @@ import java.util.function.Function;
 
 public class EvChunkRenderDispatcher {
 
-    final ChunkBuilderPack fixedBuffers;
-    final EvLevelRenderer renderer;
-    private final Executor executor;
-    private final Queue<ChunkBuilderPack> freeBuffers;
-    private final EvVisGraph graph = new EvVisGraph();
-    private final ProcessorMailbox<Runnable> mailbox;
-    private final PoseStack matrices = new PoseStack();
-    private final IRandom random = new FastRandom();
-    private final PriorityBlockingQueue<RenderChunk.ChunkCompileTask> toBatchHighPriority = new PriorityBlockingQueue<>();
-    private final Queue<RenderChunk.ChunkCompileTask> toBatchLowPriority = new LinkedBlockingDeque<>();
-    private final Queue<Runnable> toUpload = new ConcurrentLinkedQueue<>();
-    ClientLevel level;
     private float camX;
     private float camY;
     private float camZ;
+    private final Executor executor;
+    private final ChunkBuilderPack fixedBuffers;
     private volatile int freeBufferCount;
+    private final Queue<ChunkBuilderPack> freeBuffers;
+    private final EvVisGraph graph = new EvVisGraph();
     private int highPriorityQuota = 2;
+    private ClientLevel level;
+    private final ProcessorMailbox<Runnable> mailbox;
+    private final PoseStack matrices = new PoseStack();
+    private final IRandom random = new FastRandom();
+    private final EvLevelRenderer renderer;
     private volatile int toBatchCount;
+    private final PriorityBlockingQueue<RenderChunk.ChunkCompileTask> toBatchHighPriority = new PriorityBlockingQueue<>();
+    private final Queue<RenderChunk.ChunkCompileTask> toBatchLowPriority = new LinkedBlockingDeque<>();
+    private final Queue<Runnable> toUpload = new ConcurrentLinkedQueue<>();
 
     public EvChunkRenderDispatcher(ClientLevel level, EvLevelRenderer renderer, Executor executor, boolean is64Bit, ChunkBuilderPack builderPack) {
         this(level, renderer, executor, is64Bit, builderPack, -1);
@@ -184,8 +185,7 @@ public class EvChunkRenderDispatcher {
                 this.toBatchCount = this.toBatchHighPriority.size() + this.toBatchLowPriority.size();
                 this.freeBufferCount = this.freeBuffers.size();
                 assert builderPack != null;
-                CompletableFuture.supplyAsync(Util.wrapThreadWithTaskName(compileTask.name(), () -> compileTask.doTask(builderPack)),
-                                              this.executor).thenCompose(Function.identity()).whenComplete((task, t) -> {
+                CompletableFuture.supplyAsync(Util.wrapThreadWithTaskName(compileTask.name(), () -> compileTask.doTask(builderPack)), this.executor).thenCompose(Function.identity()).whenComplete((task, t) -> {
                     if (t != null) {
                         CrashReport crashreport = CrashReport.forThrowable(t, "Batching chunks");
                         Minecraft.getInstance().delayCrash(() -> Minecraft.getInstance().fillReport(crashreport));
@@ -244,23 +244,7 @@ public class EvChunkRenderDispatcher {
         return CompletableFuture.runAsync(() -> {}, this.toUpload::add).thenCompose(v -> doUploadChunkLayer(builder, buffer));
     }
 
-    public enum ChunkTaskResult {
-        SUCCESSFUL,
-        CANCELLED
-    }
-
     public static class CompiledChunk {
-        public static final CompiledChunk UNCOMPILED = new CompiledChunk() {
-            @Override
-            public boolean facesCanSeeEachother(Direction face, Direction other) {
-                return false;
-            }
-
-            @Override
-            public boolean isEmpty(@RenderLayer int renderType) {
-                return true;
-            }
-        };
         public static final CompiledChunk EMPTY = new CompiledChunk() {
             @Override
             public boolean facesCanSeeEachother(Direction face, Direction other) {
@@ -272,8 +256,17 @@ public class EvChunkRenderDispatcher {
                 return true;
             }
         };
-        final OList<BlockEntity> renderableTEs = new OArrayList<>();
-        public @Nullable BufferBuilder.SortState transparencyState;
+        public static final CompiledChunk UNCOMPILED = new CompiledChunk() {
+            @Override
+            public boolean facesCanSeeEachother(Direction face, Direction other) {
+                return false;
+            }
+
+            @Override
+            public boolean isEmpty(@RenderLayer int renderType) {
+                return true;
+            }
+        };
         /**
          * Bits arranged as per {@link RenderLayer}.
          */
@@ -282,6 +275,8 @@ public class EvChunkRenderDispatcher {
          * Bits arranged as per {@link RenderLayer}.
          */
         protected byte hasLayer;
+        final OList<BlockEntity> renderableTEs = new OArrayList<>();
+        public @Nullable BufferBuilder.SortState transparencyState;
         private long visibilitySet;
 
         public boolean facesCanSeeEachother(Direction face, Direction other) {
@@ -298,14 +293,7 @@ public class EvChunkRenderDispatcher {
     }
 
     public class RenderChunk {
-        public final int index;
         private final VertexBuffer[] buffers = new VertexBuffer[5];
-        private final RSet<BlockEntity> globalBlockEntities = new RHashSet<>();
-        /**
-         * Only access from the Main Thread.
-         */
-        public @Visibility int visibility;
-        protected volatile CompiledChunk compiled = CompiledChunk.UNCOMPILED;
         /**
          * Only access from the Main Thread. <br>
          * Bit 0: hasSolid;<br>
@@ -317,10 +305,13 @@ public class EvChunkRenderDispatcher {
          * Bit 7: isUncompiled;<br>
          */
         private byte cachedFlags;
+        protected volatile CompiledChunk compiled = CompiledChunk.UNCOMPILED;
         /**
          * Only access from the Main Thread.
          */
         private boolean dirty = true;
+        private final RSet<BlockEntity> globalBlockEntities = new RHashSet<>();
+        public final int index;
         private @Nullable RebuildTask lastRebuildTask;
         private @Nullable ResortTransparencyTask lastResortTransparencyTask;
         /**
@@ -331,6 +322,10 @@ public class EvChunkRenderDispatcher {
          * Only access from the Main Thread.
          */
         private boolean playerChanged;
+        /**
+         * Only access from the Main Thread.
+         */
+        public @Visibility int visibility;
         private int x;
         private int y;
         private int z;
@@ -662,7 +657,9 @@ public class EvChunkRenderDispatcher {
          * This method only runs on the Main Thread.
          */
         public void setOrigin(int x, int y, int z) {
-            this.reset();
+            if (EarthHelper.wrapBlockCoordinate(this.x) != EarthHelper.wrapBlockCoordinate(x) || this.y != y || EarthHelper.wrapBlockCoordinate(this.z) != EarthHelper.wrapBlockCoordinate(z)) {
+                this.reset();
+            }
             this.x = x;
             this.y = y;
             this.z = z;
@@ -725,9 +722,9 @@ public class EvChunkRenderDispatcher {
 
         class RebuildTask extends ChunkCompileTask {
 
-            static final ThreadLocal<IRandom> RANDOM_CACHE = ThreadLocal.withInitial(FastRandom::new);
             static final ThreadLocal<EvVisGraph> GRAPH_CACHE = ThreadLocal.withInitial(EvVisGraph::new);
             static final ThreadLocal<PoseStack> MATRICES_CACHE = ThreadLocal.withInitial(PoseStack::new);
+            static final ThreadLocal<IRandom> RANDOM_CACHE = ThreadLocal.withInitial(FastRandom::new);
             protected @Nullable EvRenderChunkRegion region;
 
             public RebuildTask(double distAtCreation, @Nullable EvRenderChunkRegion region, boolean isHighPriority) {
@@ -941,5 +938,10 @@ public class EvChunkRenderDispatcher {
                 return "rend_chk_sort";
             }
         }
+    }
+
+    public enum ChunkTaskResult {
+        SUCCESSFUL,
+        CANCELLED
     }
 }

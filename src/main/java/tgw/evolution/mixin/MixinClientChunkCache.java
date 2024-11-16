@@ -20,6 +20,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.Evolution;
 import tgw.evolution.patches.PatchClientChunkCache;
 import tgw.evolution.patches.obj.IBlockEntityTagOutput;
+import tgw.evolution.util.physics.EarthHelper;
 
 import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.function.Consumer;
@@ -27,9 +28,9 @@ import java.util.function.Consumer;
 @Mixin(ClientChunkCache.class)
 public abstract class MixinClientChunkCache extends ChunkSource implements PatchClientChunkCache {
 
+    @Shadow @Final private LevelChunk emptyChunk;
     @Shadow @Final public ClientLevel level;
     @Shadow volatile ClientChunkCache.Storage storage;
-    @Shadow @Final private LevelChunk emptyChunk;
 
     @Shadow
     private static int calculateStorageRange(int i) {
@@ -46,7 +47,7 @@ public abstract class MixinClientChunkCache extends ChunkSource implements Patch
             return false;
         }
         ChunkPos chunkPos = chunk.getPos();
-        return chunkPos.x == x && chunkPos.z == z;
+        return chunkPos.x == EarthHelper.wrapChunkCoordinate(x) && chunkPos.z == EarthHelper.wrapChunkCoordinate(z);
     }
 
     /**
@@ -172,13 +173,22 @@ public abstract class MixinClientChunkCache extends ChunkSource implements Patch
             this.level.onChunkLoaded(pos);
             return chunk;
         }
-        Evolution.warn("Ignoring chunk since it's not in the view range: {}, {}", x, z);
         return null;
     }
 
     @Override
     public void updateCameraViewCenter(int x, int z) {
         this.storage.setCamViewCenter(x, z);
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public void updateViewCenter(int x, int z) {
+        this.storage.viewCenterX = x;
+        this.storage.viewCenterZ = z;
     }
 
     /**

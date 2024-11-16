@@ -134,6 +134,26 @@ public abstract class MixinFrustum implements PatchFrustum {
         return this.intersect((float) (minX - this.camX), (float) (minY - this.camY), (float) (minZ - this.camZ), (float) (maxX - this.camX), (float) (maxY - this.camY), (float) (maxZ - this.camZ));
     }
 
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public Frustum offsetToFullyIncludeCameraCube(int offset) {
+        double x0 = Math.floor(this.camX / offset) * offset;
+        double y0 = Math.floor(this.camY / offset) * offset;
+        double z0 = Math.floor(this.camZ / offset) * offset;
+        double x1 = Math.ceil(this.camX / offset) * offset;
+        double y1 = Math.ceil(this.camY / offset) * offset;
+        double z1 = Math.ceil(this.camZ / offset) * offset;
+        while (!this.cubeCompletelyInFrustum((float) (x0 - this.camX), (float) (y0 - this.camY), (float) (z0 - this.camZ), (float) (x1 - this.camX), (float) (y1 - this.camY), (float) (z1 - this.camZ))) {
+            this.camX -= this.viewVector.x() * 4.0F;
+            this.camY -= this.viewVector.y() * 4.0F;
+            this.camZ -= this.viewVector.z() * 4.0F;
+        }
+        return (Frustum) (Object) this;
+    }
+
     @Redirect(method = "<init>(Lcom/mojang/math/Matrix4f;Lcom/mojang/math/Matrix4f;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client" +
                                                                                                                             "/renderer/culling" +
                                                                                                                             "/Frustum;" +

@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.*;
 import tgw.evolution.Evolution;
 import tgw.evolution.hooks.asm.DeleteMethod;
+import tgw.evolution.util.physics.EarthHelper;
 import tgw.evolution.world.lighting.StarLightEngine;
 import tgw.evolution.world.lighting.StarLightInterface;
 
@@ -30,8 +31,8 @@ import java.util.function.Supplier;
 public abstract class Mixin_M_ThreadedLevelLightEngine extends LevelLightEngine implements AutoCloseable {
 
     @Shadow @Final private static Logger LOGGER;
-    @Unique private final Long2IntOpenHashMap chunksBeingWorkedOn = new Long2IntOpenHashMap();
     @Shadow @Final private ChunkMap chunkMap;
+    @Unique private final Long2IntOpenHashMap chunksBeingWorkedOn = new Long2IntOpenHashMap();
 
     public Mixin_M_ThreadedLevelLightEngine(LightChunkGetter lightChunkGetter, boolean bl, boolean bl2) {
         super(lightChunkGetter, bl, bl2);
@@ -51,9 +52,8 @@ public abstract class Mixin_M_ThreadedLevelLightEngine extends LevelLightEngine 
     @Override
     public void checkBlock_(long pos) {
         int x = BlockPos.getX(pos);
-        int y = BlockPos.getY(pos);
         int z = BlockPos.getZ(pos);
-        this.queueTaskForSection(x >> 4, y >> 4, z >> 4, () -> this.getLightEngine().blockChange(pos));
+        this.queueTaskForSection(x >> 4, z >> 4, () -> this.getLightEngine().blockChange(pos));
     }
 
     /**
@@ -74,6 +74,9 @@ public abstract class Mixin_M_ThreadedLevelLightEngine extends LevelLightEngine 
     @Overwrite
     public CompletableFuture<ChunkAccess> lightChunk(ChunkAccess chunk, boolean lit) {
         ChunkPos chunkPos = chunk.getPos();
+        if (EarthHelper.isChunkOutsideMapping(chunkPos)) {
+            return CompletableFuture.completedFuture(chunk);
+        }
         return CompletableFuture.supplyAsync(() -> {
             final Boolean[] emptySections = StarLightEngine.getEmptySectionsForChunk(chunk);
             if (!lit) {
@@ -123,8 +126,7 @@ public abstract class Mixin_M_ThreadedLevelLightEngine extends LevelLightEngine 
     }
 
     @Unique
-    private void queueTaskForSection(final int chunkX, final int chunkY, final int chunkZ, final Supplier<CompletableFuture<Void>> runnable) {
-        //noinspection TypeMayBeWeakened
+    private void queueTaskForSection(int chunkX, int chunkZ, Supplier<CompletableFuture<Void>> runnable) {
         ServerLevel level = (ServerLevel) this.getLightEngine().getLevel();
         ChunkAccess center = this.getLightEngine().getAnyChunkNow(chunkX, chunkZ);
         if (center == null || !center.getStatus().isOrAfter(ChunkStatus.LIGHT)) {
@@ -138,9 +140,10 @@ public abstract class Mixin_M_ThreadedLevelLightEngine extends LevelLightEngine 
             runnable.get();
             return;
         }
+        assert level != null;
         if (!level.getChunkSource().chunkMap.mainThreadExecutor.isSameThread()) {
             // ticket logic is not safe to run off-main, re-schedule
-            level.getChunkSource().chunkMap.mainThreadExecutor.execute(() -> this.queueTaskForSection(chunkX, chunkY, chunkZ, runnable));
+            level.getChunkSource().chunkMap.mainThreadExecutor.execute(() -> this.queueTaskForSection(chunkX, chunkZ, runnable));
             return;
         }
         long pos = ChunkPos.asLong(chunkX, chunkZ);
@@ -214,6 +217,6 @@ public abstract class Mixin_M_ThreadedLevelLightEngine extends LevelLightEngine 
 
     @Override
     public void updateSectionStatus_sec(int secX, int secY, int secZ, boolean notReady) {
-        this.queueTaskForSection(secX, secY, secZ, () -> this.getLightEngine().sectionChange(secX, secY, secZ, notReady));
+        this.queueTaskForSection(secX, secZ, () -> this.getLightEngine().sectionChange(secX, secY, secZ, notReady));
     }
 }

@@ -5,6 +5,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.lighting.DynamicGraphMinFixedPoint;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
+import tgw.evolution.util.physics.EarthHelper;
 
 @Mixin(ChunkTracker.class)
 public abstract class MixinChunkTracker extends DynamicGraphMinFixedPoint {
@@ -24,7 +25,7 @@ public abstract class MixinChunkTracker extends DynamicGraphMinFixedPoint {
         int chunkZ = ChunkPos.getZ(chunkPos);
         for (int dx = -1; dx <= 1; ++dx) {
             for (int dz = -1; dz <= 1; ++dz) {
-                long pos = ChunkPos.asLong(chunkX + dx, chunkZ + dz);
+                long pos = ChunkPos.asLong(EarthHelper.wrapChunkCoordinate(chunkX + dx), EarthHelper.wrapChunkCoordinate(chunkZ + dz));
                 if (pos != chunkPos) {
                     this.checkNeighbor(chunkPos, pos, i, bl);
                 }
@@ -44,7 +45,7 @@ public abstract class MixinChunkTracker extends DynamicGraphMinFixedPoint {
         int chunkZ = ChunkPos.getZ(chunkPos);
         for (int dx = -1; dx <= 1; ++dx) {
             for (int dz = -1; dz <= 1; ++dz) {
-                long pos = ChunkPos.asLong(chunkX + dx, chunkZ + dz);
+                long pos = ChunkPos.asLong(EarthHelper.wrapChunkCoordinate(chunkX + dx), EarthHelper.wrapChunkCoordinate(chunkZ + dz));
                 if (pos == chunkPos) {
                     pos = ChunkPos.INVALID_CHUNK_POS;
                 }

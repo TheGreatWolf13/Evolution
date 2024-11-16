@@ -23,6 +23,7 @@ import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.collection.sets.LHashSet;
 import tgw.evolution.util.collection.sets.LSet;
+import tgw.evolution.util.physics.EarthHelper;
 
 import java.util.ArrayDeque;
 import java.util.concurrent.CompletableFuture;
@@ -30,7 +31,6 @@ import java.util.concurrent.CompletableFuture;
 public final class StarLightInterface {
 
     public static final TicketType<ChunkPos> CHUNK_WORK_TICKET = PatchTicketType.create("starlight_chunk_work_ticket", Long::compare, 0);
-    public final LevelLightEngine lightEngine;
     private final LayerLightEventListener blockReader;
     private final @Nullable ArrayDeque<BlockStarLightEngine> cachedBlockPropagators;
     private final @Nullable ArrayDeque<SkyStarLightEngine> cachedSkyPropagators;
@@ -42,6 +42,7 @@ public final class StarLightInterface {
      */
     private final @Nullable Level level;
     private final @Nullable LightChunkGetter lightAccess;
+    public final LevelLightEngine lightEngine;
     private final LightQueue lightQueue = new LightQueue(this);
     private final int maxLightSection;
     private final int maxSection;
@@ -535,9 +536,9 @@ public final class StarLightInterface {
                         lightTasks.get(i).run();
                     }
                 }
-                long coordinate = task.chunkCoordinate;
-                int chunkX = ChunkPos.getX(coordinate);
-                int chunkZ = ChunkPos.getZ(coordinate);
+                long chunkPos = task.chunkCoordinate;
+                int chunkX = EarthHelper.wrapChunkCoordinate(ChunkPos.getX(chunkPos));
+                int chunkZ = EarthHelper.wrapChunkCoordinate(ChunkPos.getZ(chunkPos));
                 LSet positions = task.changedPositions;
                 Boolean[] sectionChanges = task.changedSectionSet;
                 if (skyEngine != null && (!positions.isEmpty() || sectionChanges != null)) {
@@ -634,7 +635,7 @@ public final class StarLightInterface {
         }
 
         public synchronized CompletableFuture<Void> queueSectionChange(int secX, int secY, int secZ, boolean newEmptyValue) {
-            long key = ChunkPos.asLong(secX, secZ);
+            long key = ChunkPos.asLong(EarthHelper.wrapChunkCoordinate(secX), EarthHelper.wrapChunkCoordinate(secZ));
             ChunkTasks tasks = this.chunkTasks.get(key);
             if (tasks == null) {
                 tasks = new ChunkTasks(key);
@@ -657,10 +658,10 @@ public final class StarLightInterface {
         protected static final class ChunkTasks {
 
             public final LSet changedPositions = new LHashSet();
-            public final long chunkCoordinate;
-            public final CompletableFuture<Void> onComplete = new CompletableFuture<>();
             public Boolean @Nullable [] changedSectionSet;
+            public final long chunkCoordinate;
             public @Nullable OList<Runnable> lightTasks;
+            public final CompletableFuture<Void> onComplete = new CompletableFuture<>();
             public @Nullable ShortOpenHashSet queuedEdgeChecksBlock;
             public @Nullable ShortOpenHashSet queuedEdgeChecksSky;
 

@@ -28,17 +28,23 @@ import tgw.evolution.Evolution;
 import tgw.evolution.blocks.tileentities.TEUtils;
 import tgw.evolution.hooks.asm.DeleteMethod;
 import tgw.evolution.util.constants.BlockFlags;
+import tgw.evolution.util.physics.EarthHelper;
 
+import java.util.List;
 import java.util.function.Supplier;
 
 @Mixin(WorldGenRegion.class)
 public abstract class Mixin_M_WorldGenRegion implements WorldGenLevel {
 
     @Shadow @Final private static Logger LOGGER;
+    @Shadow @Final private List<ChunkAccess> cache;
     @Shadow @Final private ChunkAccess center;
     @Shadow private @Nullable Supplier<String> currentlyGenerating;
+    @Shadow @Final private ChunkPos firstPos;
     @Shadow @Final private ChunkStatus generatingStatus;
+    @Shadow @Final private ChunkPos lastPos;
     @Shadow @Final private ServerLevel level;
+    @Shadow @Final private int size;
     @Shadow @Final private int writeRadiusCutoff;
 
     /**
@@ -82,6 +88,7 @@ public abstract class Mixin_M_WorldGenRegion implements WorldGenLevel {
      * @author TheGreatWolf
      * @reason Use non-BlockPos version
      */
+    @SuppressWarnings("removal")
     @Overwrite
     @Override
     public @Nullable BlockEntity getBlockEntity(BlockPos pos) {
@@ -123,6 +130,7 @@ public abstract class Mixin_M_WorldGenRegion implements WorldGenLevel {
      * @author TheGreatWolf
      * @reason Use non-BlockPos version
      */
+    @SuppressWarnings("removal")
     @Overwrite
     @Override
     public BlockState getBlockState(BlockPos pos) {
@@ -137,6 +145,36 @@ public abstract class Mixin_M_WorldGenRegion implements WorldGenLevel {
 
     @Shadow
     public abstract ChunkPos getCenter();
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Override
+    @Overwrite
+    public @Nullable ChunkAccess getChunk(int x, int z, ChunkStatus status, boolean forceLoad) {
+        ChunkAccess chunk;
+        if (this.hasChunk(x, z)) {
+            int dx = EarthHelper.wrapChunkCoordinate(x - this.firstPos.x);
+            int dz = EarthHelper.wrapChunkCoordinate(z - this.firstPos.z);
+            chunk = this.cache.get(dx + dz * this.size);
+            if (chunk.getStatus().isOrAfter(status)) {
+                return chunk;
+            }
+        }
+        else {
+            chunk = null;
+        }
+        if (!forceLoad) {
+            return null;
+        }
+        LOGGER.error("Requested chunk : {} {}", EarthHelper.wrapChunkCoordinate(x), EarthHelper.wrapChunkCoordinate(z));
+        LOGGER.error("Region bounds : {} {} | {} {}", this.firstPos.x, this.firstPos.z, this.lastPos.x, this.lastPos.z);
+        if (chunk != null) {
+            throw Util.pauseInIde(new RuntimeException(String.format("Chunk is not of correct status. Expecting %s, got %s | %s %s", status, chunk.getStatus(), EarthHelper.wrapChunkCoordinate(x), EarthHelper.wrapChunkCoordinate(z))));
+        }
+        throw Util.pauseInIde(new RuntimeException(String.format("We are asking a region for a chunk out of bound | %s %s", EarthHelper.wrapChunkCoordinate(x), EarthHelper.wrapChunkCoordinate(z))));
+    }
 
     /**
      * @reason _
@@ -161,6 +199,7 @@ public abstract class Mixin_M_WorldGenRegion implements WorldGenLevel {
      * @author TheGreatWolf
      * @reason Use non-BlockPos version
      */
+    @SuppressWarnings("removal")
     @Overwrite
     @Override
     public FluidState getFluidState(BlockPos pos) {
@@ -174,9 +213,20 @@ public abstract class Mixin_M_WorldGenRegion implements WorldGenLevel {
     }
 
     /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Override
+    @Overwrite
+    public boolean hasChunk(int x, int z) {
+        return EarthHelper.isInWrappedArea(this.firstPos.x, this.firstPos.z, this.lastPos.x, this.lastPos.z, EarthHelper.wrapChunkCoordinate(x), EarthHelper.wrapChunkCoordinate(z));
+    }
+
+    /**
      * @reason _
      * @author TheGreatWolf
      */
+    @SuppressWarnings("removal")
     @Override
     @Overwrite
     public void levelEvent(@Nullable Player player, int i, BlockPos blockPos, int j) {

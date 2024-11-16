@@ -87,6 +87,40 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
     @Shadow private int serverChunkRadius;
     @Shadow private int serverSimulationDistance;
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Overwrite
+    private void applyLightData(int i, int j, ClientboundLightUpdatePacketData packetData) {
+        LevelLightEngine levelLightEngine = this.level.getChunkSource().getLightEngine();
+        BitSet bitSet = packetData.getSkyYMask();
+        BitSet bitSet2 = packetData.getEmptySkyYMask();
+        this.readSectionList(i, j, levelLightEngine, LightLayer.SKY, bitSet, bitSet2, packetData.getSkyUpdates(), packetData.getTrustEdges());
+        BitSet bitSet3 = packetData.getBlockYMask();
+        BitSet bitSet4 = packetData.getEmptyBlockYMask();
+        this.readSectionList(i, j, levelLightEngine, LightLayer.BLOCK, bitSet3, bitSet4, packetData.getBlockUpdates(), packetData.getTrustEdges());
+        this.level.setLightReady(i, j);
+    }
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Overwrite
+    private void enableChunkLight(LevelChunk levelChunk, int i, int j) {
+        LevelLightEngine lightEngine = this.level.getChunkSource().getLightEngine();
+        LevelChunkSection[] sections = levelChunk.getSections();
+        ChunkPos chunkPos = levelChunk.getPos();
+        for (int index = 0, len = sections.length; index < len; ++index) {
+            LevelChunkSection section = sections[index];
+            int secY = this.level.getSectionYFromSectionIndex(index);
+            lightEngine.updateSectionStatus_sec(chunkPos.x, secY, chunkPos.z, section.hasOnlyAir());
+            this.level.setSectionDirtyWithNeighbors(i, secY, j);
+        }
+        this.level.setLightReady(i, j);
+    }
+
     @Override
     public void handleAddEffect(PacketSCAddEffect packet) {
         PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
@@ -257,12 +291,12 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
         LevelChunk chunk = (LevelChunk) this.level.getChunk(chunkX, chunkZ, ChunkStatus.FULL, false);
         if (chunk == null) {
             // failed to load
+            Evolution.warn("Chunk at {}, {} failed to load", chunkX, chunkZ);
             return;
         }
         // load in light data from packet immediately
         this.applyLightData(chunkX, chunkZ, packet.getLightData());
         this.level.getChunkSource().getLightEngine().clientChunkLoad(new ChunkPos(chunkX, chunkZ), chunk);
-        // we need this for the update chunk status call, so that it can tell starlight what sections are empty and such
         this.enableChunkLight(chunk, chunkX, chunkZ);
     }
 
@@ -761,40 +795,6 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
      * @author TheGreatWolf
      */
     @Overwrite
-    private void applyLightData(int i, int j, ClientboundLightUpdatePacketData packetData) {
-        LevelLightEngine levelLightEngine = this.level.getChunkSource().getLightEngine();
-        BitSet bitSet = packetData.getSkyYMask();
-        BitSet bitSet2 = packetData.getEmptySkyYMask();
-        this.readSectionList(i, j, levelLightEngine, LightLayer.SKY, bitSet, bitSet2, packetData.getSkyUpdates(), packetData.getTrustEdges());
-        BitSet bitSet3 = packetData.getBlockYMask();
-        BitSet bitSet4 = packetData.getEmptyBlockYMask();
-        this.readSectionList(i, j, levelLightEngine, LightLayer.BLOCK, bitSet3, bitSet4, packetData.getBlockUpdates(), packetData.getTrustEdges());
-        this.level.setLightReady(i, j);
-    }
-
-    /**
-     * @reason _
-     * @author TheGreatWolf
-     */
-    @Overwrite
-    private void enableChunkLight(LevelChunk levelChunk, int i, int j) {
-        LevelLightEngine lightEngine = this.level.getChunkSource().getLightEngine();
-        LevelChunkSection[] sections = levelChunk.getSections();
-        ChunkPos chunkPos = levelChunk.getPos();
-        for (int index = 0, len = sections.length; index < len; ++index) {
-            LevelChunkSection section = sections[index];
-            int secY = this.level.getSectionYFromSectionIndex(index);
-            lightEngine.updateSectionStatus_sec(chunkPos.x, secY, chunkPos.z, section.hasOnlyAir());
-            this.level.setSectionDirtyWithNeighbors(i, secY, j);
-        }
-        this.level.setLightReady(i, j);
-    }
-
-    /**
-     * @reason _
-     * @author TheGreatWolf
-     */
-    @Overwrite
     @DeleteMethod
     private void method_38545(int par1, int par2, ClientboundLightUpdatePacketData par3) {
         throw new AbstractMethodError();
@@ -868,8 +868,8 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
      * @author TheGreatWolf
      */
     @Overwrite
-    private void updateLevelChunk(int i, int j, ClientboundLevelChunkPacketData packet) {
-        this.level.getChunkSource().replaceWithPacketData_(i, j, packet.getReadBuffer(), packet.getHeightmaps(), packet.getBlockEntitiesTagsConsumer_(i, j));
+    private void updateLevelChunk(int x, int z, ClientboundLevelChunkPacketData packet) {
+        this.level.getChunkSource().replaceWithPacketData_(x, z, packet.getReadBuffer(), packet.getHeightmaps(), packet.getBlockEntitiesTagsConsumer_(x, z));
     }
 
     /**

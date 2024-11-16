@@ -41,6 +41,7 @@ import tgw.evolution.patches.PatchLevel;
 import tgw.evolution.util.constants.BlockFlags;
 import tgw.evolution.util.constants.LvlEvent;
 import tgw.evolution.util.math.DirectionUtil;
+import tgw.evolution.util.physics.EarthHelper;
 
 @Mixin(Level.class)
 public abstract class MixinLevel implements LevelAccessor, PatchLevel {
@@ -559,7 +560,7 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
              gottenState.useShapeForLightOcclusion() ||
              oldState.useShapeForLightOcclusion())) {
             this.getProfiler().push("queueCheckLight");
-            this.getChunkSource().getLightEngine().checkBlock_(BlockPos.asLong(x, y, z));
+            this.getChunkSource().getLightEngine().checkBlock_(BlockPos.asLong(EarthHelper.wrapBlockCoordinate(x), y, EarthHelper.wrapBlockCoordinate(z)));
             this.getProfiler().pop();
         }
         if (gottenState == state) {

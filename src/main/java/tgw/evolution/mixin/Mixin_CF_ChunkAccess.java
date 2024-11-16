@@ -47,25 +47,25 @@ public abstract class Mixin_CF_ChunkAccess implements PatchChunkAccess, BlockGet
 
     @Shadow @Final private static Logger LOGGER;
     @Shadow protected @Nullable BlendingData blendingData;
-    @Shadow @Final @DeleteField protected Map<BlockPos, BlockEntity> blockEntities;
-    @Mutable @Shadow @Final @RestoreFinal protected ChunkPos chunkPos;
-    @Mutable @Shadow @Final @RestoreFinal protected Map<Heightmap.Types, Heightmap> heightmaps;
-    @Mutable @Shadow @Final @RestoreFinal protected LevelHeightAccessor levelHeightAccessor;
-    @Shadow @Final @DeleteField protected Map<BlockPos, CompoundTag> pendingBlockEntities;
-    @Mutable @Shadow @Final @RestoreFinal protected ShortList[] postProcessing;
-    @Mutable @Shadow @Final @RestoreFinal protected LevelChunkSection[] sections;
-    @Mutable @Shadow @Final @RestoreFinal protected UpgradeData upgradeData;
     //TODO very inefficient
     @Unique private volatile boolean @Nullable [] blockEmptinessMap;
+    @Shadow @Final @DeleteField protected Map<BlockPos, BlockEntity> blockEntities;
     @Unique private final L2OMap<BlockEntity> blockEntities_;
     @Unique private volatile SWMRShortArray[] blockShorts;
+    @Mutable @Shadow @Final @RestoreFinal protected ChunkPos chunkPos;
+    @Mutable @Shadow @Final @RestoreFinal protected Map<Heightmap.Types, Heightmap> heightmaps;
     @Shadow private long inhabitedTime;
+    @Mutable @Shadow @Final @RestoreFinal protected LevelHeightAccessor levelHeightAccessor;
+    @Shadow @Final @DeleteField protected Map<BlockPos, CompoundTag> pendingBlockEntities;
     @Unique private final L2OMap<CompoundTag> pendingBlockEntities_;
+    @Mutable @Shadow @Final @RestoreFinal protected ShortList[] postProcessing;
+    @Mutable @Shadow @Final @RestoreFinal protected LevelChunkSection[] sections;
     //TODO very inefficient
     @Unique private volatile boolean @Nullable [] skyEmptinessMap;
     @Unique private volatile SWMRNibbleArray[] skyNibbles;
     @Mutable @Shadow @Final @RestoreFinal private Map<ConfiguredStructureFeature<?, ?>, StructureStart> structureStarts;
     @Mutable @Shadow @Final @RestoreFinal private Map<ConfiguredStructureFeature<?, ?>, LongSet> structuresRefences;
+    @Mutable @Shadow @Final @RestoreFinal protected UpgradeData upgradeData;
 
     @ModifyConstructor
     public Mixin_CF_ChunkAccess(ChunkPos chunkPos, UpgradeData upgradeData, LevelHeightAccessor levelHeightAccessor, Registry<Biome> registry, long inhabitedTime, LevelChunkSection @Nullable [] levelChunkSections, @Nullable BlendingData blendingData) {
@@ -93,8 +93,7 @@ public abstract class Mixin_CF_ChunkAccess implements PatchChunkAccess, BlockGet
     }
 
     @Shadow
-    private static void replaceMissingSections(LevelHeightAccessor levelHeightAccessor,
-                                               Registry<Biome> registry, LevelChunkSection[] levelChunkSections) {
+    private static void replaceMissingSections(LevelHeightAccessor levelHeightAccessor, Registry<Biome> registry, LevelChunkSection[] levelChunkSections) {
         throw new AbstractMethodError();
     }
 

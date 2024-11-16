@@ -138,6 +138,8 @@ accessible field net/minecraft/server/level/ChunkHolder chunkToSave Ljava/util/c
 accessible field net/minecraft/server/level/ChunkMap mainThreadExecutor Lnet/minecraft/util/thread/BlockableEventLoop;
 accessible field net/minecraft/server/level/ChunkMap viewDistance I
 accessible field net/minecraft/server/level/ChunkMap$TrackedEntity entity Lnet/minecraft/world/entity/Entity;
+accessible field net/minecraft/server/level/ChunkMap$TrackedEntity lastSectionPos Lnet/minecraft/core/SectionPos;
+accessible field net/minecraft/server/level/ChunkMap$TrackedEntity serverEntity Lnet/minecraft/server/level/ServerEntity;
 accessible field net/minecraft/server/level/DistanceManager mainThreadExecutor Ljava/util/concurrent/Executor;
 accessible field net/minecraft/server/level/DistanceManager PLAYER_TICKET_LEVEL I
 accessible field net/minecraft/server/level/DistanceManager ticketsToRelease Lit/unimi/dsi/fastutil/longs/LongSet;
@@ -268,6 +270,7 @@ accessible method net/minecraft/network/protocol/game/ClientboundLevelChunkPacke
 accessible method net/minecraft/network/protocol/game/ClientboundLevelChunkPacketData$BlockEntityInfo write (Lnet/minecraft/network/FriendlyByteBuf;)V
 accessible method net/minecraft/resources/ResourceKey <init> (Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/resources/ResourceLocation;)V
 accessible method net/minecraft/server/commands/AdvancementCommands$Action getKey ()Ljava/lang/String;
+accessible method net/minecraft/server/level/ChunkHolder addSaveDependency (Ljava/lang/String;Ljava/util/concurrent/CompletableFuture;)V
 accessible method net/minecraft/server/level/ChunkHolder updateFutures (Lnet/minecraft/server/level/ChunkMap;Ljava/util/concurrent/Executor;)V
 accessible method net/minecraft/server/level/ChunkMap anyPlayerCloseEnoughForSpawning (Lnet/minecraft/world/level/ChunkPos;)Z
 accessible method net/minecraft/server/level/ChunkMap getChunks ()Ljava/lang/Iterable;
@@ -275,14 +278,19 @@ accessible method net/minecraft/server/level/ChunkMap getUpdatingChunkIfPresent 
 accessible method net/minecraft/server/level/ChunkMap getVisibleChunkIfPresent (J)Lnet/minecraft/server/level/ChunkHolder;
 accessible method net/minecraft/server/level/ChunkMap releaseLightTicket (Lnet/minecraft/world/level/ChunkPos;)V
 accessible method net/minecraft/server/level/ChunkMap tick ()V
+accessible method net/minecraft/server/level/ChunkMap$DistanceManager <init> (Lnet/minecraft/server/level/ChunkMap;Ljava/util/concurrent/Executor;Ljava/util/concurrent/Executor;)V
 accessible method net/minecraft/server/level/ChunkTracker update (JIZ)V
 accessible method net/minecraft/server/level/DistanceManager addTicket (JLnet/minecraft/server/level/Ticket;)V
+accessible method net/minecraft/server/level/DistanceManager getTicketDebugString (J)Ljava/lang/String;
 accessible method net/minecraft/server/level/DistanceManager removeTicket (JLnet/minecraft/server/level/Ticket;)V
+accessible method net/minecraft/server/level/DistanceManager tickingTracker ()Lnet/minecraft/server/level/TickingTracker;
 accessible method net/minecraft/server/level/DistanceManager updatePlayerTickets (I)V
 accessible method net/minecraft/server/level/ServerPlayerGameMode setGameModeForPlayer (Lnet/minecraft/world/level/GameType;Lnet/minecraft/world/level/GameType;)V
+accessible method net/minecraft/server/level/ThreadedLevelLightEngine updateChunkStatus (Lnet/minecraft/world/level/ChunkPos;)V
 accessible method net/minecraft/server/level/Ticket <init> (Lnet/minecraft/server/level/TicketType;ILjava/lang/Object;)V
 accessible method net/minecraft/server/level/Ticket timedOut (J)Z
 accessible method net/minecraft/server/level/TicketType <init> (Ljava/lang/String;Ljava/util/Comparator;J)V
+accessible method net/minecraft/server/level/TickingTracker getLevel (J)I
 accessible method net/minecraft/server/MinecraftServer$TimeProfiler <init> (JI)V
 accessible method net/minecraft/server/packs/resources/FallbackResourceManager getMetadataLocation (Lnet/minecraft/resources/ResourceLocation;)Lnet/minecraft/resources/ResourceLocation;
 accessible method net/minecraft/server/packs/resources/FallbackResourceManager getWrappedResource (Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/server/packs/PackResources;)Ljava/io/InputStream;

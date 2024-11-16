@@ -1,6 +1,5 @@
 package tgw.evolution.world.lighting;
 
-import it.unimi.dsi.fastutil.longs.LongIterator;
 import it.unimi.dsi.fastutil.shorts.ShortCollection;
 import it.unimi.dsi.fastutil.shorts.ShortIterator;
 import net.minecraft.core.BlockPos;
@@ -44,12 +43,12 @@ import java.util.Arrays;
  */
 public final class SkyStarLightEngine extends StarLightEngine<SWMRNibbleArray> {
 
-    private final int[] heightMapBlockChange = new int[16 * 16];
-    private final boolean[] nullPropagationCheckCache;
     private long[] decrQueue = new long[16];
     private int decrQueueLen;
+    private final int[] heightMapBlockChange = new int[16 * 16];
     private long[] incrQueue = new long[16];
     private int incrQueueLen;
+    private final boolean[] nullPropagationCheckCache;
 
     public SkyStarLightEngine(Level world) {
         super(true, world);
@@ -815,8 +814,8 @@ public final class SkyStarLightEngine extends StarLightEngine<SWMRNibbleArray> {
         int chunkZ = atChunk.getPos().z;
         int heightMapOffset = chunkX * -16 + chunkZ * -16 * 16;
         // setup heightmap for changes
-        for (LongIterator it = positions.iterator(); it.hasNext(); ) {
-            long pos = it.nextLong();
+        for (long it = positions.beginIteration(); positions.hasNextIteration(it); it = positions.nextEntry(it)) {
+            long pos = positions.getIteration(it);
             int x = BlockPos.getX(pos);
             int y = BlockPos.getY(pos);
             int z = BlockPos.getZ(pos);
@@ -827,8 +826,8 @@ public final class SkyStarLightEngine extends StarLightEngine<SWMRNibbleArray> {
             }
         }
         // note: light sets are delayed while processing skylight source changes due to how
-        // nibbles are initialised, as we want to avoid clobbering nibble values so what when
-        // below nibbles are initialised they aren't reading from partially modified nibbles
+        // nibbles are initialized, as we want to avoid clobbering nibble values so what when
+        // below nibbles are initialized they aren't reading from partially modified nibbles
         // now we can recalculate the sources for the changed columns
         for (int index = 0; index < 16 * 16; ++index) {
             int maxY = this.heightMapBlockChange[index];
@@ -876,10 +875,9 @@ public final class SkyStarLightEngine extends StarLightEngine<SWMRNibbleArray> {
         // immediate light value
         this.processDelayedIncreases();
         this.processDelayedDecreases();
-        for (LongIterator it = positions.iterator(); it.hasNext(); ) {
-            long pos = it.nextLong();
+        for (long it = positions.beginIteration(); positions.hasNextIteration(it); it = positions.nextEntry(it)) {
+            long pos = positions.getIteration(it);
             this.checkBlock(lightAccess, BlockPos.getX(pos), BlockPos.getY(pos), BlockPos.getZ(pos));
-
         }
         this.performLightDecrease(lightAccess);
     }

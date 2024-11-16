@@ -15,25 +15,34 @@ import net.minecraft.world.level.storage.LevelData;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.*;
 import tgw.evolution.Evolution;
+import tgw.evolution.patches.PatchEither;
 import tgw.evolution.patches.PatchServerChunkCache;
 import tgw.evolution.util.collection.lists.custom.BiArrayList;
 import tgw.evolution.util.math.FastRandom;
+import tgw.evolution.util.physics.EarthHelper;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.random.RandomGenerator;
 
 @Mixin(ServerChunkCache.class)
 public abstract class MixinServerChunkCache extends ChunkSource implements PatchServerChunkCache {
 
     @Unique private static final ThreadLocal<BiArrayList<LevelChunk, ChunkHolder>> BILIST = ThreadLocal.withInitial(BiArrayList::new);
-    @Unique private final RandomGenerator randomForTicking = new FastRandom();
+    @Shadow @Final private static List<ChunkStatus> CHUNK_STATUSES;
     @Shadow @Final public ChunkMap chunkMap;
-    @Shadow @Final ServerLevel level;
     @Shadow @Final private DistanceManager distanceManager;
+    @Shadow @Final private ChunkAccess[] lastChunk;
+    @Shadow @Final private long[] lastChunkPos;
+    @Shadow @Final private ChunkStatus[] lastChunkStatus;
     @Shadow private long lastInhabitedUpdate;
     @Shadow private @Nullable NaturalSpawner.SpawnState lastSpawnState;
+    @Shadow @Final ServerLevel level;
+    @Shadow @Final Thread mainThread;
     @Shadow @Final private ServerChunkCache.MainThreadExecutor mainThreadProcessor;
+    @Unique private final RandomGenerator randomForTicking = new FastRandom();
     @Shadow private boolean spawnEnemies;
     @Shadow private boolean spawnFriendlies;
 
@@ -64,8 +73,8 @@ public abstract class MixinServerChunkCache extends ChunkSource implements Patch
 
     @Override
     public void blockChanged_(int x, int y, int z) {
-        int secX = SectionPos.blockToSectionCoord(x);
-        int secZ = SectionPos.blockToSectionCoord(z);
+        int secX = EarthHelper.wrapChunkCoordinate(SectionPos.blockToSectionCoord(x));
+        int secZ = EarthHelper.wrapChunkCoordinate(SectionPos.blockToSectionCoord(z));
         ChunkHolder chunkHolder = this.getVisibleChunkIfPresent(ChunkPos.asLong(secX, secZ));
         if (chunkHolder != null) {
             chunkHolder.blockChanged_(x, y, z);
@@ -77,10 +86,91 @@ public abstract class MixinServerChunkCache extends ChunkSource implements Patch
 
     /**
      * @author TheGreatWolf
+     * @reason _
+     */
+    @Override
+    @Overwrite
+    public @Nullable ChunkAccess getChunk(int x0, int z0, ChunkStatus status, boolean forceLoad) {
+        int x = EarthHelper.wrapChunkCoordinate(x0);
+        int z = EarthHelper.wrapChunkCoordinate(z0);
+        if (Thread.currentThread() != this.mainThread) {
+            return CompletableFuture.supplyAsync(() -> this.getChunk(x, z, status, forceLoad), this.mainThreadProcessor).join();
+        }
+        ProfilerFiller profiler = this.level.getProfiler();
+        profiler.incrementCounter("getChunk");
+        long pos = ChunkPos.asLong(x, z);
+        ChunkAccess chunk;
+        for (int k = 0; k < 4; ++k) {
+            if (pos == this.lastChunkPos[k] && status == this.lastChunkStatus[k]) {
+                chunk = this.lastChunk[k];
+                if (chunk != null || !forceLoad) {
+                    return chunk;
+                }
+            }
+        }
+        profiler.incrementCounter("getChunkCacheMiss");
+        CompletableFuture<Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure>> future = this.getChunkFutureMainThread(x, z, status, forceLoad);
+        this.mainThreadProcessor.managedBlock(future::isDone);
+        PatchEither<ChunkAccess, ChunkHolder.ChunkLoadingFailure> either = (PatchEither<ChunkAccess, ChunkHolder.ChunkLoadingFailure>) future.join();
+        if (either.isLeft()) {
+            chunk = either.getLeft();
+            this.storeInCache(pos, chunk, status);
+            return chunk;
+        }
+        if (forceLoad) {
+            throw Util.pauseInIde(new IllegalStateException("Chunk not there when requested: " + either.getRight()));
+        }
+        return null;
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Override
+    @Overwrite
+    public BlockGetter getChunkForLighting(int x, int z) {
+        long pos = ChunkPos.asLong(EarthHelper.wrapChunkCoordinate(x), EarthHelper.wrapChunkCoordinate(z));
+        ChunkHolder holder = this.getVisibleChunkIfPresent(pos);
+        if (holder == null) {
+            return null;
+        }
+        List<ChunkStatus> chunkStatuses = CHUNK_STATUSES;
+        for (int i = chunkStatuses.size() - 1; ; i--) {
+            ChunkStatus status = chunkStatuses.get(i);
+            ChunkAccess chunk = ((PatchEither<ChunkAccess, ChunkHolder.ChunkLoadingFailure>) holder.getFutureIfPresentUnchecked(status).getNow(ChunkHolder.UNLOADED_CHUNK)).leftOrNull();
+            if (chunk != null) {
+                return chunk;
+            }
+            if (status == ChunkStatus.LIGHT.getParent()) {
+                return null;
+            }
+        }
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public CompletableFuture<Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure>> getChunkFuture(int x0, int z0, ChunkStatus status, boolean forceLoad) {
+        int x = EarthHelper.wrapChunkCoordinate(x0);
+        int z = EarthHelper.wrapChunkCoordinate(z0);
+        if (Thread.currentThread() == this.mainThread) {
+            CompletableFuture<Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure>> future = this.getChunkFutureMainThread(x, z, status, forceLoad);
+            this.mainThreadProcessor.managedBlock(future::isDone);
+            return future;
+        }
+        return CompletableFuture.supplyAsync(() -> this.getChunkFutureMainThread(x, z, status, forceLoad), this.mainThreadProcessor).thenCompose(Function.identity());
+    }
+
+    /**
+     * @author TheGreatWolf
      * @reason Delay ChunkPos allocation
      */
     @Overwrite
     private CompletableFuture<Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure>> getChunkFutureMainThread(int x, int z, ChunkStatus status, boolean load) {
+        assert !EarthHelper.isChunkOutsideMapping(x, z);
         long longPos = ChunkPos.asLong(x, z);
         int ticketLevel = 33 + ChunkStatus.getDistance(status);
         ChunkHolder chunkholder = this.getVisibleChunkIfPresent(longPos);
@@ -98,16 +188,69 @@ public abstract class MixinServerChunkCache extends ChunkSource implements Patch
             }
         }
         //noinspection ConstantConditions
-        return this.chunkAbsent(chunkholder, ticketLevel) ?
-               ChunkHolder.UNLOADED_CHUNK_FUTURE :
-               chunkholder.getOrScheduleFuture(status, this.chunkMap);
+        return this.chunkAbsent(chunkholder, ticketLevel) ? ChunkHolder.UNLOADED_CHUNK_FUTURE : chunkholder.getOrScheduleFuture(status, this.chunkMap);
     }
 
-    @Shadow
-    protected abstract void getFullChunk(long p_8371_, Consumer<LevelChunk> p_8372_);
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Override
+    @Overwrite
+    public @Nullable LevelChunk getChunkNow(int x, int z) {
+        if (Thread.currentThread() != this.mainThread) {
+            return null;
+        }
+        this.level.getProfiler().incrementCounter("getChunkNow");
+        long pos = ChunkPos.asLong(EarthHelper.wrapChunkCoordinate(x), EarthHelper.wrapChunkCoordinate(z));
+        for (int i = 0; i < 4; ++i) {
+            if (pos == this.lastChunkPos[i] && this.lastChunkStatus[i] == ChunkStatus.FULL) {
+                ChunkAccess chunk = this.lastChunk[i];
+                return chunk instanceof LevelChunk c ? c : null;
+            }
+        }
+        ChunkHolder holder = this.getVisibleChunkIfPresent(pos);
+        if (holder == null) {
+            return null;
+        }
+        PatchEither<ChunkAccess, ChunkHolder.ChunkLoadingFailure> either = (PatchEither<ChunkAccess, ChunkHolder.ChunkLoadingFailure>) holder.getFutureIfPresent(ChunkStatus.FULL).getNow(null);
+        if (either == null) {
+            return null;
+        }
+        ChunkAccess chunk = either.leftOrNull();
+        if (chunk != null) {
+            this.storeInCache(pos, chunk, ChunkStatus.FULL);
+            if (chunk instanceof LevelChunk c) {
+                return c;
+            }
+        }
+        return null;
+    }
 
-    @Shadow
-    protected abstract @Nullable ChunkHolder getVisibleChunkIfPresent(long p_8365_);
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    private void getFullChunk(long pos, Consumer<LevelChunk> consumer) {
+        ChunkHolder holder = this.getVisibleChunkIfPresent(pos);
+        if (holder != null) {
+            PatchEither<LevelChunk, ChunkHolder.ChunkLoadingFailure> either = (PatchEither<LevelChunk, ChunkHolder.ChunkLoadingFailure>) holder.getFullChunkFuture().getNow(ChunkHolder.UNLOADED_LEVEL_CHUNK);
+            if (either.isLeft()) {
+                consumer.accept(either.getLeft());
+            }
+        }
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    private @Nullable ChunkHolder getVisibleChunkIfPresent(long pos) {
+        assert !EarthHelper.isChunkOutsideMapping(pos);
+        return this.chunkMap.getVisibleChunkIfPresent(pos);
+    }
 
     /**
      * @author TheGreatWolf
@@ -115,10 +258,27 @@ public abstract class MixinServerChunkCache extends ChunkSource implements Patch
      */
     @Override
     @Overwrite
-    public boolean hasChunk(int pX, int pZ) {
-        ChunkHolder holder = this.getVisibleChunkIfPresent(ChunkPos.asLong(pX, pZ));
+    public boolean hasChunk(int x, int z) {
+        ChunkHolder holder = this.getVisibleChunkIfPresent(ChunkPos.asLong(EarthHelper.wrapChunkCoordinate(x), EarthHelper.wrapChunkCoordinate(z)));
         int ticket = 33 + ChunkStatus.getDistance(ChunkStatus.FULL);
         return !this.chunkAbsent(holder, ticket);
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public boolean isPositionTicking(long pos) {
+        ChunkHolder chunkHolder = this.getVisibleChunkIfPresent(pos);
+        if (chunkHolder == null) {
+            return false;
+        }
+        if (!this.level.shouldTickBlocksAt(pos)) {
+            return false;
+        }
+        PatchEither<LevelChunk, ChunkHolder.ChunkLoadingFailure> either = (PatchEither<LevelChunk, ChunkHolder.ChunkLoadingFailure>) chunkHolder.getTickingChunkFuture().getNow(null);
+        return either != null && either.isLeft();
     }
 
     /**
@@ -135,7 +295,7 @@ public abstract class MixinServerChunkCache extends ChunkSource implements Patch
     @Override
     public void onLightUpdate_(LightLayer lightLayer, int secX, int secY, int secZ) {
         this.mainThreadProcessor.execute(() -> {
-            ChunkHolder chunkHolder = this.getVisibleChunkIfPresent(ChunkPos.asLong(secX, secZ));
+            ChunkHolder chunkHolder = this.getVisibleChunkIfPresent(ChunkPos.asLong(EarthHelper.wrapChunkCoordinate(secX), EarthHelper.wrapChunkCoordinate(secZ)));
             if (chunkHolder != null) {
                 chunkHolder.sectionLightChanged(lightLayer, secY);
             }
@@ -163,6 +323,9 @@ public abstract class MixinServerChunkCache extends ChunkSource implements Patch
     @Shadow
     public abstract void setSimulationDistance(int i);
 
+    @Shadow
+    protected abstract void storeInCache(long l, ChunkAccess chunkAccess, ChunkStatus chunkStatus);
+
     /**
      * @author TheGreatWolf
      * @reason Avoid allocations
@@ -184,8 +347,7 @@ public abstract class MixinServerChunkCache extends ChunkSource implements Patch
             boolean shouldSpawnAnimals = leveldata.getGameTime() % 400L == 0L;
             profiler.push("naturalSpawnCount");
             int chunkCount = this.distanceManager.getNaturalSpawnChunkCount();
-            NaturalSpawner.SpawnState state = NaturalSpawner.createState(chunkCount, this.level.getAllEntities(), this::getFullChunk,
-                                                                         new LocalMobCapCalculator(this.chunkMap));
+            NaturalSpawner.SpawnState state = NaturalSpawner.createState(chunkCount, this.level.getAllEntities(), this::getFullChunk, new LocalMobCapCalculator(this.chunkMap));
             this.lastSpawnState = state;
             profiler.popPush("filteringLoadedChunks");
             BiArrayList<LevelChunk, ChunkHolder> list = BILIST.get();

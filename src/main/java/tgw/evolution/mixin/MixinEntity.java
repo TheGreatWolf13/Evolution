@@ -63,6 +63,7 @@ import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.collection.sets.OHashSet;
 import tgw.evolution.util.collection.sets.OSet;
 import tgw.evolution.util.math.*;
+import tgw.evolution.util.physics.EarthHelper;
 import tgw.evolution.util.physics.Physics;
 import tgw.evolution.util.physics.SI;
 import tgw.evolution.world.util.LevelUtils;
@@ -75,63 +76,65 @@ import java.util.Set;
 public abstract class MixinEntity implements PatchEntity, EntityAccess {
 
     @Shadow @Final protected static EntityDataAccessor<Pose> DATA_POSE;
-    @Shadow public float flyDist;
-    @Shadow public boolean horizontalCollision;
-    @Shadow public boolean isInPowderSnow;
-    @Shadow public Level level;
-    @Shadow public boolean minorHorizontalCollision;
-    @Shadow public float moveDist;
-    @Shadow public boolean noPhysics;
-    @Shadow public int tickCount;
-    @Shadow public boolean verticalCollision;
-    @Shadow public boolean verticalCollisionBelow;
-    @Shadow public float walkDist;
-    @Shadow public float walkDistO;
-    @Shadow public boolean wasInPowderSnow;
-    @Shadow public boolean wasOnFire;
-    @Shadow public float xRotO;
-    @Shadow public double xo;
-    @Shadow public float yRotO;
-    @Shadow public double yo;
-    @Shadow public double zo;
-    @Shadow protected int boardingCooldown;
-    @Shadow @Final protected SynchedEntityData entityData;
-    @Shadow protected boolean firstTick;
-    @Shadow protected Object2DoubleMap<TagKey<Fluid>> fluidHeight;
-    @Unique protected boolean hasCollidedOnX;
-    @Unique protected boolean hasCollidedOnZ;
-    @Shadow protected boolean onGround;
-    @Shadow @Final protected Random random;
-    @Shadow protected Vec3 stuckSpeedMultiplier;
-    @Shadow protected boolean wasEyeInWater;
-    @Shadow protected boolean wasTouchingWater;
     @Shadow private AABB bb;
     @Unique private final AABBMutable bbForPose = new AABBMutable();
     @Shadow private BlockPos blockPosition;
+    @Shadow protected int boardingCooldown;
     @Unique private boolean cachedFluidOnEyes;
     @Shadow private ChunkPos chunkPosition;
     @Shadow private Vec3 deltaMovement;
     @Shadow private EntityDimensions dimensions;
+    @Shadow @Final protected SynchedEntityData entityData;
     @Unique private final BlockPos.MutableBlockPos eyeBlockPos = new BlockPos.MutableBlockPos();
     @Shadow private float eyeHeight;
     @Unique private final Vec3d eyePosition = new Vec3d(Vec3d.NULL);
     @Shadow private @Nullable BlockState feetBlockState;
+    @Shadow protected boolean firstTick;
     /**
      * In the future, can be changed to a O2ByteMap to store more flags as needed.
      */
     @Unique private final OSet<TagKey<Fluid>> fluidFullySubmerged = new OHashSet<>();
+    @Shadow protected Object2DoubleMap<TagKey<Fluid>> fluidHeight;
     @Shadow @Final private Set<TagKey<Fluid>> fluidOnEyes;
+    @Shadow public float flyDist;
+    @Unique protected boolean hasCollidedOnX;
+    @Unique protected boolean hasCollidedOnZ;
+    @Shadow public boolean horizontalCollision;
     @Unique private boolean isAddedToWorld;
+    @Shadow public boolean isInPowderSnow;
     @Unique private final BlockPos.MutableBlockPos landingPos = new BlockPos.MutableBlockPos();
     @Unique private float lastPartialTickEyePosition;
     @Unique private @Nullable Pose lastPose;
+    @Shadow public Level level;
     @Shadow private EntityInLevelCallback levelCallback;
+    @Shadow public boolean minorHorizontalCollision;
+    @Shadow public float moveDist;
     @Shadow private float nextStep;
+    @Shadow public boolean noPhysics;
+    @Shadow protected boolean onGround;
     @Unique private final Vec3d partialEyePosition = new Vec3d(Vec3d.NULL);
     @Shadow private Vec3 position;
+    @Shadow @Final protected Random random;
     @Shadow private int remainingFireTicks;
+    @Shadow protected Vec3 stuckSpeedMultiplier;
     @Unique private final OptionalMutableBlockPos supportingPos = new OptionalMutableBlockPos();
+    @Shadow public int tickCount;
+    @Shadow public boolean verticalCollision;
+    @Shadow public boolean verticalCollisionBelow;
     @Unique private final Vec3d viewVector = new Vec3d();
+    @Shadow public float walkDist;
+    @Shadow public float walkDistO;
+    @Shadow protected boolean wasEyeInWater;
+    @Shadow public boolean wasInPowderSnow;
+    @Shadow public boolean wasOnFire;
+    @Shadow protected boolean wasTouchingWater;
+    @Shadow public double xOld;
+    @Shadow public float xRotO;
+    @Shadow public double xo;
+    @Shadow public float yRotO;
+    @Shadow public double yo;
+    @Shadow public double zOld;
+    @Shadow public double zo;
 
     /**
      * @reason _
@@ -270,7 +273,7 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
             }
             if (this.getTicksFrozen() > 0) {
                 this.setTicksFrozen(0);
-                this.level.levelEvent(null, LevelEvent.SOUND_EXTINGUISH_FIRE, this.blockPosition, 1);
+                this.level.levelEvent_(null, LevelEvent.SOUND_EXTINGUISH_FIRE, this.blockPosition, 1);
             }
         }
         if (this.isInLava()) {
@@ -304,6 +307,13 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
         return this.viewVector.set(sinYaw * cosPitch, -sinPitch, cosYaw * cosPitch);
     }
 
+    @Unique
+    private boolean canClimb(BlockState state, int x, int y, int z) {
+        return state.is(BlockTags.CLIMBABLE) ||
+               state.is(Blocks.POWDER_SNOW) ||
+               state.getBlock() instanceof IClimbable climbable && climbable.isClimbable(state, this.level, x, y, z, (Entity) (Object) this);
+    }
+
     /**
      * @author TheGreatWolf
      * @reason Avoid allocations
@@ -315,6 +325,9 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
 
     @Shadow
     public abstract boolean canSpawnSprintParticle();
+
+    @Shadow
+    protected abstract void checkFallDamage(double pY, boolean pOnGround, BlockState pState, BlockPos pPos);
 
     /**
      * @reason _
@@ -357,6 +370,12 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
 
     @Shadow
     public abstract void clearFire();
+
+    @Shadow
+    protected abstract Vec3 collide(Vec3 vec3);
+
+    @Shadow
+    protected abstract void doWaterSplashEffect();
 
     /**
      * @author TheGreatWolf
@@ -407,6 +426,9 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
         return this.level.getBlockState_(this.blockPosition()).getBlock().getJumpFactor();
     }
 
+    @Shadow
+    protected abstract float getBlockSpeedFactor();
+
     /**
      * @author TheGreatWolf
      * @reason Use non-BlockPos version
@@ -449,6 +471,18 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
         return this.level.hasChunkAt(x, z) ? this.level.getBrightness_(x, Mth.floor(this.getEyeY()), z) : 0.0F;
     }
 
+    @Unique
+    @CanIgnoreReturnValue
+    private Vec3d getCameraPosition(float partialTicks) {
+        if (partialTicks == 1.0f) {
+            return MathHelper.getRelativeEyePosition((Entity) (Object) this, 1.0f, this.eyePosition).addMutable(this.position);
+        }
+        double x = Mth.lerp(partialTicks, this.xo, this.getX());
+        double y = Mth.lerp(partialTicks, this.yo, this.getY());
+        double z = Mth.lerp(partialTicks, this.zo, this.getZ());
+        return MathHelper.getRelativeEyePosition((Entity) (Object) this, partialTicks, this.partialEyePosition).addMutable(x, y, z);
+    }
+
     @Shadow
     public abstract @Nullable Entity getControllingPassenger();
 
@@ -460,6 +494,9 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
 
     @Shadow
     public abstract float getEyeHeight();
+
+    @Shadow
+    protected abstract float getEyeHeight(Pose pPose, EntityDimensions pDimensions);
 
     /**
      * @author TheGreatWolf
@@ -504,6 +541,9 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
         return this.feetBlockState;
     }
 
+    @Shadow
+    protected abstract int getFireImmuneTicks();
+
     @Override
     public float getFrictionModifier() {
         return 2.0f;
@@ -527,6 +567,9 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
         return this.blockPosition.asLong();
     }
 
+    @Shadow
+    protected abstract Entity.MovementEmission getMovementEmission();
+
     /**
      * @author TheGreatWolf
      * @reason _
@@ -540,8 +583,30 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
     @Shadow
     public abstract float getPickRadius();
 
+    @Unique
+    private long getPosWithYOffset(float offset) {
+        if (this.supportingPos.isPresent()) {
+            BlockPos sup = this.supportingPos.get();
+            if (offset > 1.0E-5f) {
+                BlockState state = this.level.getBlockState_(sup.getX(), sup.getY(), sup.getZ());
+                //TODO use proper tags or classes
+                if (offset <= 0.5 && (state.is(BlockTags.FENCES) || state.is(BlockTags.WALLS) || state.getBlock() instanceof FenceGateBlock)) {
+                    return sup.asLong();
+                }
+                return BlockPos.asLong(sup.getX(), Mth.floor(this.position.y - offset), sup.getZ());
+            }
+            return sup.asLong();
+        }
+        return BlockPos.asLong(Mth.floor(this.position.x), Mth.floor(this.position.y - offset), Mth.floor(this.position.z));
+    }
+
     @Shadow
     public abstract Pose getPose();
+
+    @Unique
+    private long getStepSoundPos(int x, int y, int z) {
+        return BlockPos.asLong(x, y, z);
+    }
 
     @Override
     public long getSteppingPos() {
@@ -593,6 +658,9 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
 
     @Shadow
     public abstract double getZ();
+
+    @Shadow
+    protected abstract void handleNetherPortal();
 
     @Override
     public boolean hasAnyFluidInEye() {
@@ -684,9 +752,21 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
         return this.fluidFullySubmerged.contains(fluid);
     }
 
+    @Shadow
+    protected abstract boolean isHorizontalCollisionMinor(Vec3 pDeltaMovement);
+
     @Override
     public boolean isInAnyFluid() {
         return !this.fluidHeight.isEmpty();
+    }
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Overwrite
+    private boolean isInBubbleColumn() {
+        return this.level.getBlockState_(this.blockPosition()).is(Blocks.BUBBLE_COLUMN);
     }
 
     @Shadow
@@ -764,6 +844,12 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
 
     @Shadow
     public abstract void lavaHurt();
+
+    @Shadow
+    protected abstract Vec3 limitPistonMovement(Vec3 pPos);
+
+    @Shadow
+    protected abstract Vec3 maybeBackOffFromEdge(Vec3 pVec, MoverType pMover);
 
     /**
      * @author TheGreatWolf
@@ -971,6 +1057,35 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
         this.isAddedToWorld = true;
     }
 
+    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/world/entity/Entity;chunkPosition:Lnet/minecraft/world/level/ChunkPos;", opcode = Opcodes.PUTFIELD))
+    private void onInit(Entity instance, ChunkPos value) {
+        this.chunkPosition = new ChunkPosMutable(value);
+    }
+
+    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/world/entity/Entity;blockPosition:Lnet/minecraft/core/BlockPos;", opcode = Opcodes.PUTFIELD))
+    private void onInit(Entity instance, BlockPos value) {
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        this.blockPosition = pos.set(value);
+    }
+
+    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/world/entity/Entity;bb:Lnet/minecraft/world/phys/AABB;", opcode = Opcodes.PUTFIELD))
+    private void onInit(Entity instance, AABB value) {
+        this.bb = new AABBMutable(value);
+    }
+
+    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/world/entity/Entity;deltaMovement:Lnet/minecraft/world/phys/Vec3;", opcode = Opcodes.PUTFIELD))
+    private void onInitMovement(Entity instance, Vec3 value) {
+        this.deltaMovement = new Vec3d(value);
+    }
+
+    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/world/entity/Entity;position:Lnet/minecraft/world/phys/Vec3;", opcode = Opcodes.PUTFIELD))
+    private void onInitPosition(Entity entity, Vec3 vec) {
+        this.position = new Vec3d(vec);
+    }
+
+    @Shadow
+    protected abstract void onInsideBlock(BlockState blockState);
+
     @Override
     public final void onRemovedFromWorld() {
         this.isAddedToWorld = false;
@@ -988,6 +1103,20 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
         return this.level.clip(new ClipContext(camera, to, ClipContext.Block.OUTLINE, checkFluids ? ClipContext.Fluid.ANY : ClipContext.Fluid.NONE,
                                                (Entity) (Object) this));
     }
+
+    @Shadow
+    protected abstract void playAmethystStepSound(BlockState pState);
+
+    @Unique
+    private void playCombinationStepSounds(BlockState primaryState, BlockState secondaryState) {
+        SoundType primarySoundType = primaryState.getSoundType();
+        SoundType secondarySoundType = secondaryState.getSoundType();
+        this.playSound(primarySoundType.getStepSound(), primarySoundType.getVolume() * 0.15f, primarySoundType.getPitch());
+        this.playSound(secondarySoundType.getStepSound(), secondarySoundType.getVolume() * 0.05f, secondarySoundType.getPitch() * 0.8f);
+    }
+
+    @Shadow
+    protected abstract void playEntityOnFireExtinguishedSound();
 
     @Shadow
     public abstract void playSound(SoundEvent pSound, float pVolume, float pPitch);
@@ -1011,8 +1140,53 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
         }
     }
 
+    @Unique
+    private void playStepSounds(int x, int y, int z, BlockState state) {
+        //noinspection ConstantConditions
+        if ((Object) this instanceof Player && state.is(EvolutionBlockTags.BLOCKS_COMBINED_STEP_SOUND)) {
+            this.playCombinationStepSounds(state, this.level.getBlockState_(x, y - 1, z));
+        }
+        else {
+            this.playStepSound(x, y, z, state);
+        }
+        this.playAmethystStepSound(state);
+    }
+
+    @Shadow
+    protected abstract void playSwimSound(float pVolume);
+
+    @Unique
+    private void playSwimSound() {
+        Entity entity;
+        Entity controller;
+        float mult;
+        if (this.isVehicle() && (controller = this.getControllingPassenger()) != null) {
+            entity = controller;
+            mult = 0.4f;
+        }
+        else {
+            entity = (Entity) (Object) this;
+            mult = 0.35f;
+        }
+        Vec3 velocity = entity.getDeltaMovement();
+        float vol = Math.min(1.0f, (float) Math.sqrt(velocity.x * velocity.x * 0.2 + velocity.y * velocity.y + velocity.z * velocity.z * 0.2) * mult);
+        this.playSwimSound(vol);
+    }
+
     @Shadow
     public abstract Vec3 position();
+
+    @Shadow
+    protected abstract void processFlappingMovement();
+
+    @Unique
+    private void refreshBoundingBox() {
+        float radius = this.dimensions.width / 2;
+        double x = this.position.x;
+        double y = this.position.y;
+        double z = this.position.z;
+        this.setBoundingBox(x - radius, y, z - radius, x + radius, y + this.dimensions.height, z + radius);
+    }
 
     /**
      * @author TheGreatWolf
@@ -1121,6 +1295,32 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
      */
     @Overwrite
     public final void setPosRaw(double x, double y, double z) {
+        double xPrime = x;
+        x = EarthHelper.wrapBlockCoordinate(x);
+        if (xPrime != x) {
+            //Crossed wrap boundary on X axis
+            if (xPrime > 0) {
+                this.xo -= EarthHelper.WORLD_SIZE;
+                this.xOld -= EarthHelper.WORLD_SIZE;
+            }
+            else {
+                this.xo += EarthHelper.WORLD_SIZE;
+                this.xOld += EarthHelper.WORLD_SIZE;
+            }
+        }
+        double zPrime = z;
+        z = EarthHelper.wrapBlockCoordinate(z);
+        if (zPrime != z) {
+            //Crossed wrap boundary on Z axis
+            if (zPrime > 0) {
+                this.zo -= EarthHelper.WORLD_SIZE;
+                this.zOld -= EarthHelper.WORLD_SIZE;
+            }
+            else {
+                this.zo += EarthHelper.WORLD_SIZE;
+                this.zOld += EarthHelper.WORLD_SIZE;
+            }
+        }
         if (this.position.x != x || this.position.y != y || this.position.z != z) {
             ((Vec3d) this.position).set(x, y, z);
             int i = Mth.floor(x);
@@ -1208,6 +1408,21 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
         }
     }
 
+    @Unique
+    private boolean stepOnBlock(int x, int y, int z, BlockState state, boolean playSound, Vec3 movement) {
+        if (state.isAir()) {
+            return false;
+        }
+        boolean climbable = this.canClimb(state, x, y, z);
+        if ((this.isOnGround() || climbable || this.isCrouching() && movement.y == 0) && !this.isSwimming()) {
+            if (playSound) {
+                this.playStepSounds(x, y, z, state);
+            }
+            return true;
+        }
+        return false;
+    }
+
     @Shadow
     public abstract void stopRiding();
 
@@ -1225,6 +1440,9 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
         return !this.level.hasChunksAt(minX, minZ, maxX, maxZ);
     }
 
+    @Shadow
+    protected abstract void tryCheckInsideBlocks();
+
     /**
      * @author TheGreatWolf
      * @reason Redirect
@@ -1232,247 +1450,6 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
     @Overwrite
     public boolean updateFluidHeightAndDoFluidPushing(TagKey<Fluid> fluid, double motionScale) {
         throw new IllegalStateException("Do not call! Call updateFluidHeightAndDoFluidPushing() instead and check if fluidHeight > 0");
-    }
-
-    /**
-     * @return Whether the entity is in a fluid.
-     * @author TheGreatWolf
-     * @reason Simplify to a single calculation
-     */
-    @Overwrite
-    public boolean updateInWaterStateAndDoFluidPushing() {
-        this.fluidHeight.clear();
-        this.fluidFullySubmerged.clear();
-        this.updateFluidHeightAndDoFluidPushing();
-        this.updateInWaterStateAndDoWaterCurrentPushing();
-        return this.isInWater() || this.fluidHeight.getDouble(FluidTags.LAVA) > 0;
-    }
-
-    /**
-     * @author TheGreatWolf
-     * @reason Simplify to a single calculation
-     */
-    @Overwrite
-    public void updateInWaterStateAndDoWaterCurrentPushing() {
-        if (this.getVehicle() instanceof Boat) {
-            this.wasTouchingWater = false;
-        }
-        else if (this.fluidHeight.getDouble(FluidTags.WATER) > 0) {
-            if (!this.wasTouchingWater && !this.firstTick) {
-                this.doWaterSplashEffect();
-            }
-            this.resetFallDistance();
-            this.wasTouchingWater = true;
-            this.clearFire();
-        }
-        else {
-            this.wasTouchingWater = false;
-        }
-    }
-
-    /**
-     * @author TheGreatWolf
-     * @reason Make it possible to start swimming when not submerged.
-     */
-    @Overwrite
-    public void updateSwimming() {
-        if (this.isSwimming()) {
-            this.setSwimming(this.isSprinting() && this.isInWater() && !this.isPassenger());
-        }
-        else {
-            this.setSwimming(this.isSprinting() &&
-                             !this.isPassenger() &&
-                             this.level.getFluidState_(this.blockPosition).is(FluidTags.WATER));
-        }
-    }
-
-    @Shadow
-    protected abstract void checkFallDamage(double pY, boolean pOnGround, BlockState pState, BlockPos pPos);
-
-    @Shadow
-    protected abstract Vec3 collide(Vec3 vec3);
-
-    @Shadow
-    protected abstract void doWaterSplashEffect();
-
-    @Shadow
-    protected abstract float getBlockSpeedFactor();
-
-    @Shadow
-    protected abstract float getEyeHeight(Pose pPose, EntityDimensions pDimensions);
-
-    @Shadow
-    protected abstract int getFireImmuneTicks();
-
-    @Shadow
-    protected abstract Entity.MovementEmission getMovementEmission();
-
-    @Shadow
-    protected abstract void handleNetherPortal();
-
-    @Shadow
-    protected abstract boolean isHorizontalCollisionMinor(Vec3 pDeltaMovement);
-
-    @Shadow
-    protected abstract Vec3 limitPistonMovement(Vec3 pPos);
-
-    @Shadow
-    protected abstract Vec3 maybeBackOffFromEdge(Vec3 pVec, MoverType pMover);
-
-    @Shadow
-    protected abstract void onInsideBlock(BlockState blockState);
-
-    @Shadow
-    protected abstract void playAmethystStepSound(BlockState pState);
-
-    @Shadow
-    protected abstract void playEntityOnFireExtinguishedSound();
-
-    @Shadow
-    protected abstract void playSwimSound(float pVolume);
-
-    @Shadow
-    protected abstract void processFlappingMovement();
-
-    @Shadow
-    protected abstract void tryCheckInsideBlocks();
-
-    @Unique
-    private boolean canClimb(BlockState state, int x, int y, int z) {
-        return state.is(BlockTags.CLIMBABLE) ||
-               state.is(Blocks.POWDER_SNOW) ||
-               state.getBlock() instanceof IClimbable climbable && climbable.isClimbable(state, this.level, x, y, z, (Entity) (Object) this);
-    }
-
-    @Unique
-    @CanIgnoreReturnValue
-    private Vec3d getCameraPosition(float partialTicks) {
-        if (partialTicks == 1.0f) {
-            return MathHelper.getRelativeEyePosition((Entity) (Object) this, 1.0f, this.eyePosition).addMutable(this.position);
-        }
-        double x = Mth.lerp(partialTicks, this.xo, this.getX());
-        double y = Mth.lerp(partialTicks, this.yo, this.getY());
-        double z = Mth.lerp(partialTicks, this.zo, this.getZ());
-        return MathHelper.getRelativeEyePosition((Entity) (Object) this, partialTicks, this.partialEyePosition).addMutable(x, y, z);
-    }
-
-    @Unique
-    private long getPosWithYOffset(float offset) {
-        if (this.supportingPos.isPresent()) {
-            BlockPos sup = this.supportingPos.get();
-            if (offset > 1.0E-5f) {
-                BlockState state = this.level.getBlockState_(sup.getX(), sup.getY(), sup.getZ());
-                //TODO use proper tags or classes
-                if (offset <= 0.5 && (state.is(BlockTags.FENCES) || state.is(BlockTags.WALLS) || state.getBlock() instanceof FenceGateBlock)) {
-                    return sup.asLong();
-                }
-                return BlockPos.asLong(sup.getX(), Mth.floor(this.position.y - offset), sup.getZ());
-            }
-            return sup.asLong();
-        }
-        return BlockPos.asLong(Mth.floor(this.position.x), Mth.floor(this.position.y - offset), Mth.floor(this.position.z));
-    }
-
-    @Unique
-    private long getStepSoundPos(int x, int y, int z) {
-        return BlockPos.asLong(x, y, z);
-    }
-
-    /**
-     * @reason _
-     * @author TheGreatWolf
-     */
-    @Overwrite
-    private boolean isInBubbleColumn() {
-        return this.level.getBlockState_(this.blockPosition()).is(Blocks.BUBBLE_COLUMN);
-    }
-
-    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/world/entity/Entity;chunkPosition:Lnet/minecraft/world/level/ChunkPos;", opcode = Opcodes.PUTFIELD))
-    private void onInit(Entity instance, ChunkPos value) {
-        this.chunkPosition = new ChunkPosMutable(value);
-    }
-
-    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/world/entity/Entity;blockPosition:Lnet/minecraft/core/BlockPos;", opcode = Opcodes.PUTFIELD))
-    private void onInit(Entity instance, BlockPos value) {
-        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
-        this.blockPosition = pos.set(value);
-    }
-
-    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/world/entity/Entity;bb:Lnet/minecraft/world/phys/AABB;", opcode = Opcodes.PUTFIELD))
-    private void onInit(Entity instance, AABB value) {
-        this.bb = new AABBMutable(value);
-    }
-
-    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/world/entity/Entity;deltaMovement:Lnet/minecraft/world/phys/Vec3;", opcode = Opcodes.PUTFIELD))
-    private void onInitMovement(Entity instance, Vec3 value) {
-        this.deltaMovement = new Vec3d(value);
-    }
-
-    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/world/entity/Entity;position:Lnet/minecraft/world/phys/Vec3;", opcode = Opcodes.PUTFIELD))
-    private void onInitPosition(Entity entity, Vec3 vec) {
-        this.position = new Vec3d(vec);
-    }
-
-    @Unique
-    private void playCombinationStepSounds(BlockState primaryState, BlockState secondaryState) {
-        SoundType primarySoundType = primaryState.getSoundType();
-        SoundType secondarySoundType = secondaryState.getSoundType();
-        this.playSound(primarySoundType.getStepSound(), primarySoundType.getVolume() * 0.15f, primarySoundType.getPitch());
-        this.playSound(secondarySoundType.getStepSound(), secondarySoundType.getVolume() * 0.05f, secondarySoundType.getPitch() * 0.8f);
-    }
-
-    @Unique
-    private void playStepSounds(int x, int y, int z, BlockState state) {
-        //noinspection ConstantConditions
-        if ((Object) this instanceof Player && state.is(EvolutionBlockTags.BLOCKS_COMBINED_STEP_SOUND)) {
-            this.playCombinationStepSounds(state, this.level.getBlockState_(x, y - 1, z));
-        }
-        else {
-            this.playStepSound(x, y, z, state);
-        }
-        this.playAmethystStepSound(state);
-    }
-
-    @Unique
-    private void playSwimSound() {
-        Entity entity;
-        Entity controller;
-        float mult;
-        if (this.isVehicle() && (controller = this.getControllingPassenger()) != null) {
-            entity = controller;
-            mult = 0.4f;
-        }
-        else {
-            entity = (Entity) (Object) this;
-            mult = 0.35f;
-        }
-        Vec3 velocity = entity.getDeltaMovement();
-        float vol = Math.min(1.0f, (float) Math.sqrt(velocity.x * velocity.x * 0.2 + velocity.y * velocity.y + velocity.z * velocity.z * 0.2) * mult);
-        this.playSwimSound(vol);
-    }
-
-    @Unique
-    private void refreshBoundingBox() {
-        float radius = this.dimensions.width / 2;
-        double x = this.position.x;
-        double y = this.position.y;
-        double z = this.position.z;
-        this.setBoundingBox(x - radius, y, z - radius, x + radius, y + this.dimensions.height, z + radius);
-    }
-
-    @Unique
-    private boolean stepOnBlock(int x, int y, int z, BlockState state, boolean playSound, Vec3 movement) {
-        if (state.isAir()) {
-            return false;
-        }
-        boolean climbable = this.canClimb(state, x, y, z);
-        if ((this.isOnGround() || climbable || this.isCrouching() && movement.y == 0) && !this.isSwimming()) {
-            if (playSound) {
-                this.playStepSounds(x, y, z, state);
-            }
-            return true;
-        }
-        return false;
     }
 
     @Unique
@@ -1671,6 +1648,42 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
         }
     }
 
+    /**
+     * @return Whether the entity is in a fluid.
+     * @author TheGreatWolf
+     * @reason Simplify to a single calculation
+     */
+    @Overwrite
+    public boolean updateInWaterStateAndDoFluidPushing() {
+        this.fluidHeight.clear();
+        this.fluidFullySubmerged.clear();
+        this.updateFluidHeightAndDoFluidPushing();
+        this.updateInWaterStateAndDoWaterCurrentPushing();
+        return this.isInWater() || this.fluidHeight.getDouble(FluidTags.LAVA) > 0;
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Simplify to a single calculation
+     */
+    @Overwrite
+    public void updateInWaterStateAndDoWaterCurrentPushing() {
+        if (this.getVehicle() instanceof Boat) {
+            this.wasTouchingWater = false;
+        }
+        else if (this.fluidHeight.getDouble(FluidTags.WATER) > 0) {
+            if (!this.wasTouchingWater && !this.firstTick) {
+                this.doWaterSplashEffect();
+            }
+            this.resetFallDistance();
+            this.wasTouchingWater = true;
+            this.clearFire();
+        }
+        else {
+            this.wasTouchingWater = false;
+        }
+    }
+
     @Unique
     private void updateSupportingBlockPos(boolean onGround) {
         if (onGround) {
@@ -1679,6 +1692,20 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
         }
         else {
             this.supportingPos.remove();
+        }
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Make it possible to start swimming when not submerged.
+     */
+    @Overwrite
+    public void updateSwimming() {
+        if (this.isSwimming()) {
+            this.setSwimming(this.isSprinting() && this.isInWater() && !this.isPassenger());
+        }
+        else {
+            this.setSwimming(this.isSprinting() && !this.isPassenger() && this.level.getFluidState_(this.blockPosition).is(FluidTags.WATER));
         }
     }
 }

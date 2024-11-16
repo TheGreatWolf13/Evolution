@@ -8,10 +8,12 @@ import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.collection.maps.L2OHashMap;
 import tgw.evolution.util.collection.maps.L2OMap;
+import tgw.evolution.util.physics.EarthHelper;
 
 import javax.annotation.Nullable;
 
 public class EvRenderRegionCache {
+    
     private final L2OMap<LevelChunk> chunkCache = new L2OHashMap<>();
     private final L2OMap<EvRenderChunk> renderCache = new L2OHashMap<>();
     private final OList<LevelChunk> tempList = new OArrayList<>();
@@ -31,11 +33,13 @@ public class EvRenderRegionCache {
         this.tempList.clear();
         boolean hasAtLeastOneNotEmpty = false;
         for (int x = x0; x <= x1; ++x) {
+            int xPrime = EarthHelper.wrapChunkCoordinate(x);
             for (int z = z0; z <= z1; ++z) {
-                long key = ChunkPos.asLong(x, z);
+                int zPrime = EarthHelper.wrapChunkCoordinate(z);
+                long key = ChunkPos.asLong(xPrime, zPrime);
                 LevelChunk chunk = this.chunkCache.get(key);
                 if (chunk == null) {
-                    chunk = level.getChunk(x, z);
+                    chunk = level.getChunk(xPrime, zPrime);
                     this.chunkCache.put(key, chunk);
                 }
                 if (!hasAtLeastOneNotEmpty && !chunk.isYSpaceEmpty(startY, endY)) {

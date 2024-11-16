@@ -3,6 +3,7 @@ package tgw.evolution.util.physics;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
+import net.minecraft.world.level.ChunkPos;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.client.renderer.DimensionOverworld;
 import tgw.evolution.util.math.MathHelper;
@@ -11,19 +12,48 @@ import tgw.evolution.util.time.Time;
 
 public final class EarthHelper {
 
+    private static final int BITS_BLOCK = 9;
+    private static final int BITS_CHUNK = BITS_BLOCK - 4;
+    private static final int MAX_CHUNK = (1 << BITS_CHUNK - 1) - 1;
+    private static final int MIN_CHUNK = -(1 << BITS_CHUNK - 1);
+    private static final int MASK_CHUNK = (1 << BITS_CHUNK) - 1;
     public static final float CELESTIAL_SPHERE_RADIUS = 100.0f;
     public static final float ECLIPTIC_INCLINATION = 23.5f; //º
+    private static final int MASK_BLOCK = (1 << BITS_BLOCK) - 1;
+    private static final int MAX_BLOCK = (1 << BITS_BLOCK - 1) - 1;
+    private static final int MIN_BLOCK = -(1 << BITS_BLOCK - 1);
+    private static final Vec3f MOON = new Vec3f(0, 0, 0);
     public static final int POLE = 100_000;
     public static final int POLAR_CIRCLE = (int) -calculateZFromLatitude(90 - ECLIPTIC_INCLINATION);
-    public static final int TROPIC = (int) -calculateLatitude(ECLIPTIC_INCLINATION);
-    private static final Vec3f ZENITH = new Vec3f(0, CELESTIAL_SPHERE_RADIUS, 0);
-    private static final Vec3f SUN = new Vec3f(0, 0, 0);
-    private static final Vec3f MOON = new Vec3f(0, 0, 0);
     private static final Vec3f SKY_COLOR = new Vec3f(0, 0, 0);
+    private static final Vec3f SUN = new Vec3f(0, 0, 0);
+    public static final int TROPIC = (int) -calculateLatitude(ECLIPTIC_INCLINATION);
+    public static final int WORLD_SIZE;
+    private static final Vec3f ZENITH = new Vec3f(0, CELESTIAL_SPHERE_RADIUS, 0);
     public static float sunX;
     public static float sunZ;
 
+    static {
+        WORLD_SIZE = 1 << BITS_BLOCK;
+    }
+
     private EarthHelper() {
+    }
+
+    public static double absDeltaBlockCoordinate(double d0, double d1) {
+        double d = Math.abs(d0 - d1);
+        if (d > MAX_BLOCK + 1) {
+            return -d + 2 * (MAX_BLOCK + 1);
+        }
+        return d;
+    }
+
+    public static int absDeltaChunkCoordinate(int d0, int d1) {
+        int d = Math.abs(d0 - d1);
+        if (d > MAX_CHUNK + 1) {
+            return -d + 2 * (MAX_CHUNK + 1);
+        }
+        return d;
     }
 
     /**
@@ -61,6 +91,24 @@ public final class EarthHelper {
         return PlanetsHelper.calculateZFromLatitude(POLE, latitude);
     }
 
+    public static double deltaBlockCoordinate(double d0, double d1) {
+        double d = d0 - d1;
+        double absD = Math.abs(d);
+        if (absD > MAX_BLOCK + 1) {
+            return -d + Math.signum(d) * (2 * (MAX_BLOCK + 1));
+        }
+        return d;
+    }
+
+    public static int deltaChunkCoordinate(int d0, int d1) {
+        int d = d0 - d1;
+        int absD = Math.abs(d);
+        if (absD > MAX_CHUNK + 1) {
+            return -d + Mth.sign(d) * 2 * (MAX_CHUNK + 1);
+        }
+        return d;
+    }
+
     /**
      * The current intensity of the eclipse, where negative means it's going to happen, 0 is full, and positive means it's already happened.
      *
@@ -86,20 +134,7 @@ public final class EarthHelper {
     }
 
     public static Vec3f getSkyColor(ClientLevel level, BlockPos pos, float partialTick, @Nullable DimensionOverworld dimension) {
-        float sunAngle = 1.0f;
-        float elevationAngle = dimension == null ? 0 : dimension.getSunAltitude();
-        if (elevationAngle > 80) {
-            sunAngle = -elevationAngle * elevationAngle / 784.0f + 10.0f * elevationAngle / 49.0f - 7.163_265f;
-            sunAngle = MathHelper.clamp(sunAngle, 0.0F, 1.0F);
-        }
-        if (dimension != null && dimension.isCloseToSolarEclipse()) {
-            float intensity = Math.max(0.2f, dimension.getSolarEclipseIntensity());
-            intensity -= 0.2f;
-            intensity = 1.0f - intensity;
-            if (intensity < sunAngle) {
-                sunAngle = intensity;
-            }
-        }
+        float sunAngle = getSunAngle(dimension);
         int color = level.getBiome_(pos.getX(), pos.getY(), pos.getZ()).value().getSkyColor();
         float r = (color >> 16 & 255) / 255.0F;
         r *= sunAngle;
@@ -151,8 +186,61 @@ public final class EarthHelper {
         return MathHelper.arcCosDeg(SUN.dotProduct(ZENITH) * SUN.inverseLength() * ZENITH.inverseLength());
     }
 
+    private static float getSunAngle(@Nullable DimensionOverworld dimension) {
+        float sunAngle = 1.0f;
+        float elevationAngle = dimension == null ? 0 : dimension.getSunAltitude();
+        if (elevationAngle > 80) {
+            sunAngle = -elevationAngle * elevationAngle / 784.0f + 10.0f * elevationAngle / 49.0f - 7.163_265f;
+            sunAngle = MathHelper.clamp(sunAngle, 0.0F, 1.0F);
+        }
+        if (dimension != null && dimension.isCloseToSolarEclipse()) {
+            float intensity = Math.max(0.2f, dimension.getSolarEclipseIntensity());
+            intensity -= 0.2f;
+            intensity = 1.0f - intensity;
+            if (intensity < sunAngle) {
+                return intensity;
+            }
+        }
+        return sunAngle;
+    }
+
     public static Vec3f getSunDir() {
         return SUN;
+    }
+
+    public static boolean isChunkOutsideMapping(ChunkPos pos) {
+        return isChunkOutsideMapping(pos.x, pos.z);
+    }
+
+    public static boolean isChunkOutsideMapping(int x, int z) {
+        if (x > MAX_CHUNK || x < MIN_CHUNK) {
+            return true;
+        }
+        return z > MAX_CHUNK || z < MIN_CHUNK;
+    }
+
+    public static boolean isChunkOutsideMapping(long pos) {
+        return isChunkOutsideMapping(ChunkPos.getX(pos), ChunkPos.getZ(pos));
+    }
+
+    /**
+     * Computes whether the point at (x, z) is in the oriented area defined by (x0, z0) and (x1, z1), in a wrapped space.
+     */
+    public static boolean isInWrappedArea(int x0, int z0, int x1, int z1, int x, int z) {
+        if (x0 > x1) {
+            if (x > x1 && x < x0) {
+                return false;
+            }
+        }
+        else {
+            if (x0 > x || x > x1) {
+                return false;
+            }
+        }
+        if (z0 > z1) {
+            return z <= z1 || z >= z0;
+        }
+        return z0 <= z && z <= z1;
     }
 
     /**
@@ -217,5 +305,29 @@ public final class EarthHelper {
         worldTime += Time.TICKS_PER_DAY;
         long yearTime = worldTime % Time.TICKS_PER_YEAR;
         return ECLIPTIC_INCLINATION * Mth.sin(Mth.TWO_PI / Time.TICKS_PER_YEAR * yearTime);
+    }
+
+    public static int wrapBlockCoordinate(int value) {
+        if (value < MIN_BLOCK || value > MAX_BLOCK) {
+            value &= MASK_BLOCK;
+            return value > MAX_BLOCK ? ~MASK_BLOCK | value : value;
+        }
+        return value;
+    }
+
+    public static double wrapBlockCoordinate(double value) {
+        if (value < MIN_BLOCK || value >= MAX_BLOCK + 1) {
+            int wholePart = (int) Math.floor(value);
+            return wrapBlockCoordinate(wholePart) + value - wholePart;
+        }
+        return value;
+    }
+
+    public static int wrapChunkCoordinate(int value) {
+        if (value < MIN_CHUNK || value > MAX_CHUNK) {
+            value &= MASK_CHUNK;
+            return value > MAX_CHUNK ? ~MASK_CHUNK | value : value;
+        }
+        return value;
     }
 }

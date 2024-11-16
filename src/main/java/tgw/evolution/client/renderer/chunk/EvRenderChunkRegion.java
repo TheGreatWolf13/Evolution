@@ -12,8 +12,10 @@ import net.minecraft.world.level.lighting.LevelLightEngine;
 import net.minecraft.world.level.material.FluidState;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
+import tgw.evolution.util.physics.EarthHelper;
 
 public class EvRenderChunkRegion implements BlockAndTintGetter {
+    
     protected final EvRenderChunk[][] chunks;
     protected final Level level;
     private final int startX;
@@ -26,6 +28,7 @@ public class EvRenderChunkRegion implements BlockAndTintGetter {
         this.chunks = chunks;
     }
 
+    @SuppressWarnings("removal")
     @Deprecated(forRemoval = true)
     @Override
     public @Nullable BlockEntity getBlockEntity(BlockPos pos) {
@@ -40,6 +43,7 @@ public class EvRenderChunkRegion implements BlockAndTintGetter {
         return this.chunks[i][j].getBlockEntity(x, y, z);
     }
 
+    @SuppressWarnings("removal")
     @Deprecated(forRemoval = true)
     @Override
     public BlockState getBlockState(BlockPos pos) {
@@ -49,8 +53,8 @@ public class EvRenderChunkRegion implements BlockAndTintGetter {
 
     @Override
     public BlockState getBlockState_(int x, int y, int z) {
-        int i = SectionPos.blockToSectionCoord(x) - this.startX;
-        int j = SectionPos.blockToSectionCoord(z) - this.startZ;
+        int i = EarthHelper.wrapChunkCoordinate(SectionPos.blockToSectionCoord(x) - this.startX);
+        int j = EarthHelper.wrapChunkCoordinate(SectionPos.blockToSectionCoord(z) - this.startZ);
         return this.chunks[i][j].getBlockState(x, y, z);
     }
 
@@ -65,6 +69,7 @@ public class EvRenderChunkRegion implements BlockAndTintGetter {
         return this.level.getBlockTint_(x, y, z, colorResolver);
     }
 
+    @SuppressWarnings("removal")
     @Deprecated(forRemoval = true)
     @Override
     public FluidState getFluidState(BlockPos pos) {
@@ -74,8 +79,8 @@ public class EvRenderChunkRegion implements BlockAndTintGetter {
 
     @Override
     public FluidState getFluidState_(int x, int y, int z) {
-        int i = SectionPos.blockToSectionCoord(x) - this.startX;
-        int j = SectionPos.blockToSectionCoord(z) - this.startZ;
+        int i = EarthHelper.wrapChunkCoordinate(SectionPos.blockToSectionCoord(x) - this.startX);
+        int j = EarthHelper.wrapChunkCoordinate(SectionPos.blockToSectionCoord(z) - this.startZ);
         return this.chunks[i][j].getBlockState(x, y, z).getFluidState();
     }
 
@@ -100,8 +105,8 @@ public class EvRenderChunkRegion implements BlockAndTintGetter {
     }
 
     public boolean isSectionEmpty(int posX, int posY, int posZ) {
-        int i = SectionPos.blockToSectionCoord(posX) - this.startX;
-        int j = SectionPos.blockToSectionCoord(posZ) - this.startZ;
+        int i = EarthHelper.wrapChunkCoordinate(SectionPos.blockToSectionCoord(posX) - this.startX);
+        int j = EarthHelper.wrapChunkCoordinate(SectionPos.blockToSectionCoord(posZ) - this.startZ);
         return this.chunks[i][j].isSectionEmpty(posY);
     }
 }

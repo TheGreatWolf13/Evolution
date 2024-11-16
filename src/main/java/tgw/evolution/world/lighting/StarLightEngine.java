@@ -22,19 +22,17 @@ import java.util.List;
 public abstract class StarLightEngine<T extends SWMRArray> {
 
     protected static final BlockState AIR_BLOCK_STATE = Blocks.AIR.defaultBlockState();
-
+    protected static final int ALL_DIRECTIONS_BITSET = (1 << 6) - 1;
     protected static final AxisDirection[] DIRECTIONS = AxisDirection.values();
     protected static final AxisDirection[] AXIS_DIRECTIONS = DIRECTIONS;
+    protected static final long FLAG_HAS_SIDED_TRANSPARENT_BLOCKS = Long.MIN_VALUE;
+    protected static final long FLAG_RECHECK_LEVEL = Long.MIN_VALUE >>> 1;
+    protected static final long FLAG_WRITE_LEVEL = Long.MIN_VALUE >>> 2;
+    protected static final AxisDirection[][] OLD_CHECK_DIRECTIONS = new AxisDirection[1 << 6][];
     protected static final AxisDirection[] ONLY_HORIZONTAL_DIRECTIONS = {
             AxisDirection.POSITIVE_X, AxisDirection.NEGATIVE_X,
             AxisDirection.POSITIVE_Z, AxisDirection.NEGATIVE_Z
     };
-
-    protected static final long FLAG_WRITE_LEVEL = Long.MIN_VALUE >>> 2;
-    protected static final long FLAG_RECHECK_LEVEL = Long.MIN_VALUE >>> 1;
-    protected static final long FLAG_HAS_SIDED_TRANSPARENT_BLOCKS = Long.MIN_VALUE;
-    protected static final AxisDirection[][] OLD_CHECK_DIRECTIONS = new AxisDirection[1 << 6][];
-    protected static final int ALL_DIRECTIONS_BITSET = (1 << 6) - 1;
 
     static {
         for (int i = 0; i < OLD_CHECK_DIRECTIONS.length; ++i) {
@@ -48,30 +46,31 @@ public abstract class StarLightEngine<T extends SWMRArray> {
         }
     }
 
-    protected final ChunkAccess[] chunkCache = new ChunkAccess[5 * 5];
-    protected final int[] chunkCheckDelayedUpdatesCenter = new int[16 * 16];
-    protected final int[] chunkCheckDelayedUpdatesNeighbour = new int[16 * 16];
-    protected final int emittedLightMask;
-    protected final boolean[][] emptinessMapCache = new boolean[5 * 5][];
-    protected final boolean isClientSide;
-    protected final Level level;
-    protected final int maxLightSection;
-    protected final int maxSection;
-    protected final int minLightSection;
-    protected final int minSection;
-    protected final boolean[] notifyUpdateCache;
-    protected final LevelChunkSection[] sectionCache;
-    protected final boolean skylightPropagator;
-    private final T[] nibbleCache;
+    private final ChunkAccess[] chunkCache = new ChunkAccess[5 * 5];
+    private final int[] chunkCheckDelayedUpdatesCenter = new int[16 * 16];
+    private final int[] chunkCheckDelayedUpdatesNeighbour = new int[16 * 16];
     protected int chunkIndexOffset;
     protected int chunkOffsetX;
     protected int chunkOffsetY;
     protected int chunkOffsetZ;
     protected int chunkSectionIndexOffset;
     protected int coordinateOffset;
+    protected final int emittedLightMask;
+    protected final boolean[][] emptinessMapCache = new boolean[5 * 5][];
     protected int encodeOffsetX;
     protected int encodeOffsetY;
     protected int encodeOffsetZ;
+    protected final boolean isClientSide;
+    protected final Level level;
+    protected final int maxLightSection;
+    protected final int maxSection;
+    protected final int minLightSection;
+    protected final int minSection;
+    private final T[] nibbleCache;
+    protected final boolean[] notifyUpdateCache;
+    protected final LevelChunkSection[] sectionCache;
+    protected final boolean skylightPropagator;
+
     protected StarLightEngine(boolean isSky, Level level) {
         this.skylightPropagator = isSky;
         this.emittedLightMask = isSky ? 0 : 0x7FFF;
@@ -146,6 +145,10 @@ public abstract class StarLightEngine<T extends SWMRArray> {
         return ret;
     }
 
+    public static SWMRShortArray[] getFilledEmptyLightShort(LevelHeightAccessor world) {
+        return getFilledEmptyLightShort(WorldUtil.getTotalLightSections(world));
+    }
+
     protected static SWMRShortArray[] getFilledEmptyLightShort(int totalLightSections) {
         SWMRShortArray[] ret = new SWMRShortArray[totalLightSections];
         for (int i = 0, len = ret.length; i < len; ++i) {
@@ -153,10 +156,6 @@ public abstract class StarLightEngine<T extends SWMRArray> {
             ret[i] = new SWMRShortArray(null, true);
         }
         return ret;
-    }
-
-    public static SWMRShortArray[] getFilledEmptyLightShort(LevelHeightAccessor world) {
-        return getFilledEmptyLightShort(WorldUtil.getTotalLightSections(world));
     }
 
     protected abstract void appendToIncreaseQueue(int x, int y, int z, int encodeOffset, int light, int directions, long flags);
@@ -287,33 +286,6 @@ public abstract class StarLightEngine<T extends SWMRArray> {
         }
     }
 
-    protected void checkChunkEdges(LightChunkGetter lightAccess, ChunkAccess chunk, ShortCollection sections) {
-        ChunkPos chunkPos = chunk.getPos();
-        int chunkX = chunkPos.x;
-        int chunkZ = chunkPos.z;
-        for (ShortIterator iterator = sections.iterator(); iterator.hasNext(); ) {
-            this.checkChunkEdge(lightAccess, chunkX, iterator.nextShort(), chunkZ);
-        }
-        this.performLightDecrease(lightAccess);
-    }
-
-    /**
-     * subclasses should not initialise caches, as this will always be done by the super call
-     * subclasses should not invoke updateVisible, as this will always be done by the super call
-     * verifies that light levels on these chunks edges are consistent with this chunk's neighbours
-     * edges. if they are not, they are decreased (effectively performing the logic in checkBlock).
-     * This does not resolve skylight source problems.
-     */
-    protected void checkChunkEdges(LightChunkGetter lightAccess, ChunkAccess chunk, int fromSection, int toSection) {
-        ChunkPos chunkPos = chunk.getPos();
-        int chunkX = chunkPos.x;
-        int chunkZ = chunkPos.z;
-        for (int currSectionY = toSection; currSectionY >= fromSection; --currSectionY) {
-            this.checkChunkEdge(lightAccess, chunkX, currSectionY, chunkZ);
-        }
-        this.performLightDecrease(lightAccess);
-    }
-
     public final void checkChunkEdges(LightChunkGetter lightAccess, int chunkX, int chunkZ) {
         this.setupCaches(lightAccess, chunkX * 16 + 7, chunkZ * 16 + 7, true, false);
         try {
@@ -342,6 +314,33 @@ public abstract class StarLightEngine<T extends SWMRArray> {
         finally {
             this.destroyCaches();
         }
+    }
+
+    protected void checkChunkEdges(LightChunkGetter lightAccess, ChunkAccess chunk, ShortCollection sections) {
+        ChunkPos chunkPos = chunk.getPos();
+        int chunkX = chunkPos.x;
+        int chunkZ = chunkPos.z;
+        for (ShortIterator iterator = sections.iterator(); iterator.hasNext(); ) {
+            this.checkChunkEdge(lightAccess, chunkX, iterator.nextShort(), chunkZ);
+        }
+        this.performLightDecrease(lightAccess);
+    }
+
+    /**
+     * subclasses should not initialise caches, as this will always be done by the super call
+     * subclasses should not invoke updateVisible, as this will always be done by the super call
+     * verifies that light levels on these chunks edges are consistent with this chunk's neighbours
+     * edges. if they are not, they are decreased (effectively performing the logic in checkBlock).
+     * This does not resolve skylight source problems.
+     */
+    protected void checkChunkEdges(LightChunkGetter lightAccess, ChunkAccess chunk, int fromSection, int toSection) {
+        ChunkPos chunkPos = chunk.getPos();
+        int chunkX = chunkPos.x;
+        int chunkZ = chunkPos.z;
+        for (int currSectionY = toSection; currSectionY >= fromSection; --currSectionY) {
+            this.checkChunkEdge(lightAccess, chunkX, currSectionY, chunkZ);
+        }
+        this.performLightDecrease(lightAccess);
     }
 
     protected final void destroyCaches() {
@@ -680,7 +679,7 @@ public abstract class StarLightEngine<T extends SWMRArray> {
         this.nibbleCache[index] = data;
     }
 
-    protected final void setBlocksForChunkInCache(int chunkX, int chunkZ, LevelChunkSection[] sections) {
+    private void setBlocksForChunkInCache(int chunkX, int chunkZ, LevelChunkSection[] sections) {
         for (int cy = this.minLightSection; cy <= this.maxLightSection; ++cy) {
             this.setChunkSectionInCache(chunkX, cy, chunkZ, cy >= this.minSection && cy <= this.maxSection ? sections[cy - this.minSection] : null);
         }
@@ -767,7 +766,7 @@ public abstract class StarLightEngine<T extends SWMRArray> {
         }
     }
 
-    protected final void setupEncodeOffset(int centerX, int centerZ) {
+    private void setupEncodeOffset(int centerX, int centerZ) {
         // 31 = center + encodeOffset
         this.encodeOffsetX = 31 - centerX;
         this.encodeOffsetY = -(this.minLightSection - 1) << 4; // we want 0 to be the smallest encoded value
@@ -784,7 +783,7 @@ public abstract class StarLightEngine<T extends SWMRArray> {
         this.chunkSectionIndexOffset = this.chunkIndexOffset + 5 * 5 * this.chunkOffsetY;
     }
 
-    protected final void updateVisible(LightChunkGetter lightAccess) {
+    private void updateVisible(LightChunkGetter lightAccess) {
         for (int index = 0, max = this.nibbleCache.length; index < max; ++index) {
             T nibble = this.nibbleCache[index];
             if (!this.notifyUpdateCache[index] && (nibble == null || !nibble.isDirty())) {
@@ -822,10 +821,10 @@ public abstract class StarLightEngine<T extends SWMRArray> {
         public final int everythingButTheOppositeDirection;
         public final int everythingButThisDirection;
         public final Direction nms;
+        private AxisDirection opposite;
         public final int x;
         public final int y;
         public final int z;
-        private AxisDirection opposite;
 
         AxisDirection(final int x, final int y, final int z) {
             this.x = x;

@@ -1,30 +1,46 @@
 package tgw.evolution.mixin;
 
 import net.minecraft.client.multiplayer.ClientChunkCache;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.chunk.LevelChunk;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.*;
+import tgw.evolution.hooks.asm.ModifyConstructor;
+import tgw.evolution.hooks.asm.RestoreFinal;
 import tgw.evolution.patches.PatchStorage;
+import tgw.evolution.util.physics.EarthHelper;
 
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
 @Mixin(ClientChunkCache.Storage.class)
-public abstract class MixinClientChunkCache_Storage implements PatchStorage {
+public abstract class Mixin_CF_ClientChunkCache_Storage implements PatchStorage {
 
-    @Shadow @Final public int chunkRadius;
-    @Shadow @Final public AtomicReferenceArray<LevelChunk> chunks;
+    @Mutable @Shadow @Final @RestoreFinal public int chunkRadius;
+    @Mutable @Shadow @Final @RestoreFinal public AtomicReferenceArray<LevelChunk> chunks;
+    @Shadow public volatile int viewCenterX;
+    @Shadow public volatile int viewCenterZ;
+    @Unique final int cacheLength;
     @Unique int cameraChunkCount;
     @Nullable @Unique AtomicReferenceArray<LevelChunk> cameraChunks;
     @Unique volatile int cameraViewCenterX;
     @Unique volatile int cameraViewCenterZ;
     @Shadow int chunkCount;
-    @Shadow(aliases = "this$0") @Final ClientChunkCache field_16254;
-    @Shadow @Final private int viewRange;
+    @Mutable @Shadow(aliases = "this$0") @Final @RestoreFinal ClientChunkCache field_16254;
+    @Mutable @Shadow @Final @RestoreFinal private int viewRange;
+
+    @ModifyConstructor
+    Mixin_CF_ClientChunkCache_Storage(ClientChunkCache parent, int i) {
+        this.field_16254 = parent;
+        this.chunkRadius = i;
+        this.viewRange = i * 2 + 1;
+        this.cacheLength = Mth.smallestEncompassingPowerOfTwo(this.viewRange);
+        this.chunks = new AtomicReferenceArray<>(this.cacheLength * this.cacheLength);
+    }
 
     @Override
     public LevelChunk cameraReplace(int index, LevelChunk oldChunk, @Nullable LevelChunk newChunk) {
         if (this.cameraChunks == null) {
-            this.cameraChunks = new AtomicReferenceArray<>(this.viewRange * this.viewRange);
+            this.cameraChunks = new AtomicReferenceArray<>(this.cacheLength * this.cacheLength);
         }
         if (this.cameraChunks.compareAndSet(index, oldChunk, newChunk) && newChunk == null) {
             this.chunkCount--;
@@ -40,7 +56,7 @@ public abstract class MixinClientChunkCache_Storage implements PatchStorage {
     @Override
     public void cameraReplace(int index, LevelChunk chunk) {
         if (this.cameraChunks == null) {
-            this.cameraChunks = new AtomicReferenceArray<>(this.viewRange * this.viewRange);
+            this.cameraChunks = new AtomicReferenceArray<>(this.cacheLength * this.cacheLength);
         }
         LevelChunk oldChunk = this.cameraChunks.getAndSet(index, chunk);
         if (oldChunk != null) {
@@ -79,16 +95,35 @@ public abstract class MixinClientChunkCache_Storage implements PatchStorage {
 
     @Override
     public int getCameraIndex(int x, int z) {
-        return Math.floorMod(z, this.viewRange) * this.viewRange + Math.floorMod(x, this.viewRange);
+        x = EarthHelper.wrapChunkCoordinate(x - this.cameraViewCenterX);
+        z = EarthHelper.wrapChunkCoordinate(z - this.cameraViewCenterZ);
+        return Math.floorMod(z + this.cameraViewCenterZ, this.cacheLength) * this.cacheLength + Math.floorMod(x + this.cameraViewCenterX, this.cacheLength);
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public int getIndex(int x, int z) {
+        x = EarthHelper.wrapChunkCoordinate(x);
+        z = EarthHelper.wrapChunkCoordinate(z);
+        return Math.floorMod(z, this.cacheLength) * this.cacheLength + Math.floorMod(x, this.cacheLength);
     }
 
     @Override
     public boolean inCameraRange(int x, int z) {
-        return Math.abs(x - this.cameraViewCenterX) <= this.chunkRadius && Math.abs(z - this.cameraViewCenterZ) <= this.chunkRadius;
+        return EarthHelper.absDeltaChunkCoordinate(x, this.cameraViewCenterX) <= this.chunkRadius && EarthHelper.absDeltaChunkCoordinate(z, this.cameraViewCenterZ) <= this.chunkRadius;
     }
 
-    @Shadow
-    public abstract boolean inRange(int pX, int pZ);
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public boolean inRange(int x, int z) {
+        return EarthHelper.absDeltaChunkCoordinate(x, this.viewCenterX) <= this.chunkRadius && EarthHelper.absDeltaChunkCoordinate(z, this.viewCenterZ) <= this.chunkRadius;
+    }
 
     /**
      * @author TheGreatWolf
