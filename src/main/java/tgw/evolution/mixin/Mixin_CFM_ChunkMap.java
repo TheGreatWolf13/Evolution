@@ -281,7 +281,7 @@ public abstract class Mixin_CFM_ChunkMap extends ChunkStorage implements PatchCh
         }
         O2ZMap<ServerPlayer> playerMap = this.playerMap.getPlayerMap();
         for (long it = playerMap.beginIteration(); playerMap.hasNextIteration(it); it = playerMap.nextEntry(it)) {
-            if (Mixin_CFM_ChunkMap.playerIsCloseEnoughForSpawning(playerMap.getIterationKey(it), chunkX, chunkZ)) {
+            if (playerIsCloseEnoughForSpawning(playerMap.getIterationKey(it), chunkX, chunkZ)) {
                 return true;
             }
         }
@@ -646,9 +646,7 @@ public abstract class Mixin_CFM_ChunkMap extends ChunkStorage implements PatchCh
         final BlockPos cameraPos = player.getCamera().blockPosition();
         final int currCamSecX = SectionPos.blockToSectionCoord(cameraPos.getX());
         final int currCamSecZ = SectionPos.blockToSectionCoord(cameraPos.getZ());
-        boolean shouldReport = false;
         if (diffSections || ignored != skip) {
-            shouldReport = true;
             updatePlayerPos_(player);
             player.connection.send(new PacketSCUpdateCameraViewCenter(currCamSecX, currCamSecZ));
             if (!ignored) {
@@ -701,18 +699,9 @@ public abstract class Mixin_CFM_ChunkMap extends ChunkStorage implements PatchCh
                     boolean load = isChunkInRange(x, z, currX, currZ, this.viewDistance);
                     if (load != wasLoaded) {
                         if (load) {
-                            if (shouldReport) {
-                                if (EarthHelper.wrapChunkCoordinate(x) == 0 && EarthHelper.wrapChunkCoordinate(z) == -16) {
-                                    Evolution.info("I found you");
-                                }
-                                Evolution.info("Should Load: {}, {}", EarthHelper.wrapChunkCoordinate(x), EarthHelper.wrapChunkCoordinate(z));
-                            }
                             chunksToLoad.add(ChunkPos.asLong(EarthHelper.wrapChunkCoordinate(x), EarthHelper.wrapChunkCoordinate(z)));
                         }
                         else {
-                            if (shouldReport) {
-                                Evolution.info("Should unload: {}, {}", EarthHelper.wrapChunkCoordinate(x), EarthHelper.wrapChunkCoordinate(z));
-                            }
                             chunksToUnload.add(ChunkPos.asLong(EarthHelper.wrapChunkCoordinate(x), EarthHelper.wrapChunkCoordinate(z)));
                         }
                     }
@@ -739,9 +728,6 @@ public abstract class Mixin_CFM_ChunkMap extends ChunkStorage implements PatchCh
                     }
                 }
             }
-        }
-        if (shouldReport) {
-            Evolution.info("Sizes L: {}, U: {}", chunksToLoad.size(), chunksToUnload.size());
         }
         //Handle camera chunks
         boolean shouldRemoveCameraTicket = false;
@@ -888,18 +874,11 @@ public abstract class Mixin_CFM_ChunkMap extends ChunkStorage implements PatchCh
         if (shouldAddCameraTicket) {
             this.distanceManager.addPlayer_(currCamSecX, currCamSecZ, player);
         }
-        if (shouldReport) {
-            Evolution.info("Sizes L: {}, U: {}", chunksToLoad.size(), chunksToUnload.size());
-        }
         for (long it = chunksToUnload.beginIteration(); chunksToUnload.hasNextIteration(it); it = chunksToUnload.nextEntry(it)) {
-            long pos = chunksToUnload.getIteration(it);
-            Evolution.info("Unloading {}, {}", ChunkPos.getX(pos), ChunkPos.getZ(pos));
-            this.updateChunkTrackingNoPkt(player, pos, true, false);
+            this.updateChunkTrackingNoPkt(player, chunksToUnload.getIteration(it), true, false);
         }
         for (long it = chunksToLoad.beginIteration(); chunksToLoad.hasNextIteration(it); it = chunksToLoad.nextEntry(it)) {
-            long pos = chunksToLoad.getIteration(it);
-            Evolution.info("Loading {}, {}", ChunkPos.getX(pos), ChunkPos.getZ(pos));
-            this.updateChunkTrackingNoPkt(player, pos, false, true);
+            this.updateChunkTrackingNoPkt(player, chunksToLoad.getIteration(it), false, true);
         }
     }
 
@@ -1393,11 +1372,7 @@ public abstract class Mixin_CFM_ChunkMap extends ChunkStorage implements PatchCh
                 chunkHolder.setTicketLevel(ticketLevel);
             }
             else {
-                ChunkPos chunkPos = new ChunkPos(pos);
-                if (chunkPos.x > 31 || chunkPos.z > 31 || chunkPos.x < -32 || chunkPos.z < -32) {
-                    Evolution.info("Invalid chunk?");
-                }
-                chunkHolder = new ChunkHolder(chunkPos, ticketLevel, this.level, this.lightEngine, this.queueSorter, this);
+                chunkHolder = new ChunkHolder(new ChunkPos(pos), ticketLevel, this.level, this.lightEngine, this.queueSorter, this);
             }
             this.updatingChunkMap_.put(pos, chunkHolder);
             this.modified = true;
