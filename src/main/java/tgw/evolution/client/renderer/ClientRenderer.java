@@ -68,13 +68,9 @@ public class ClientRenderer {
 
     private static @Nullable ClientRenderer instance;
     private static int slotMainHand;
+    private @Nullable RunnableAddingEffect addingEffect;
     private final ClientEvents client;
     private final OList<ClientEffectInstance> effects = new OArrayList<>();
-    private final Minecraft mc;
-    private final Random rand = new Random();
-    private final ListRunnable runnables = new ListRunnable();
-    public boolean isAddingEffect;
-    private @Nullable RunnableAddingEffect addingEffect;
     private byte healthFlashTicks;
     private short healthTick;
     private byte hitmarkerTick;
@@ -82,6 +78,7 @@ public class ClientRenderer {
     private float hungerFlashAlpha;
     private byte hungerFlashTicks;
     private short hungerTick;
+    public boolean isAddingEffect;
     private boolean isRenderingPlayer;
     private byte killmarkerTick;
     private short lastBeneficalCount;
@@ -91,8 +88,11 @@ public class ClientRenderer {
     private short lastNeutralCount;
     private int lastPlayerHealth;
     private ItemStack mainHandStack = ItemStack.EMPTY;
+    private final Minecraft mc;
     private short movingFinalCount;
     private ItemStack offhandStack = ItemStack.EMPTY;
+    private final Random rand = new Random();
+    private final ListRunnable runnables = new ListRunnable();
     private boolean shouldRenderLeftArm = true;
     private boolean shouldRenderRightArm = true;
     private byte thirstAlphaMult = 1;
