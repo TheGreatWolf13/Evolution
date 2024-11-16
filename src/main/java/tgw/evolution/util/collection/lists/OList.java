@@ -26,8 +26,7 @@ public interface OList<K> extends ObjectList<K>, ListEv {
             case 1 -> singleton(ks[0]);
             default -> {
                 OList<K> list = new OArrayList<>(ks);
-                list.trim();
-                yield list.view();
+                yield list.immutable();
             }
         };
     }
@@ -56,6 +55,11 @@ public interface OList<K> extends ObjectList<K>, ListEv {
      * Add many ({@code length}) equal elements ({@code value}) to the list efficiently.
      */
     void addMany(K value, int length);
+
+    default @UnmodifiableView OList<K> immutable() {
+        this.trim();
+        return this.view();
+    }
 
     /**
      * Start is inclusive, end is exclusive

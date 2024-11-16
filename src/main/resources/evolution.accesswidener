@@ -434,6 +434,7 @@ accessible method net/minecraft/world/level/lighting/LayerLightSectionStorage en
 accessible method net/minecraft/world/level/lighting/LayerLightSectionStorage getLightValue (J)I
 accessible method net/minecraft/world/level/lighting/LayerLightSectionStorage runAllUpdates ()V
 accessible method net/minecraft/world/level/lighting/LayerLightSectionStorage updateSectionStatus (JZ)V
+accessible method net/minecraft/world/level/LocalMobCapCalculator$MobCounts <init> ()V
 accessible method net/minecraft/world/level/storage/LevelVersion <init> (IJLjava/lang/String;ILjava/lang/String;Z)V
 accessible method net/minecraft/world/level/storage/loot/functions/CopyBlockState <init> ([Lnet/minecraft/world/level/storage/loot/predicates/LootItemCondition;Lnet/minecraft/world/level/block/Block;Ljava/util/Set;)V
 accessible method net/minecraft/world/level/storage/loot/functions/SetPotionFunction <init> ([Lnet/minecraft/world/level/storage/loot/predicates/LootItemCondition;Lnet/minecraft/world/item/alchemy/Potion;)V

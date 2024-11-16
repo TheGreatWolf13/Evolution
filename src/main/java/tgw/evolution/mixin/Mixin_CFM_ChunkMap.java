@@ -542,6 +542,37 @@ public abstract class Mixin_CFM_ChunkMap extends ChunkStorage implements PatchCh
         return list == null ? OList.emptyList() : list.view();
     }
 
+    @Override
+    public OList<ServerPlayer> getPlayersCloseForSpawning(int chunkX, int chunkZ) {
+        long pos = ChunkPos.asLong(chunkX, chunkZ);
+        if (!this.distanceManager.hasPlayersNearby(pos)) {
+            return OList.emptyList();
+        }
+        OList<ServerPlayer> list = OList.emptyList();
+        O2ZMap<ServerPlayer> playerMap = this.playerMap.getPlayerMap();
+        for (long it = playerMap.beginIteration(); playerMap.hasNextIteration(it); it = playerMap.nextEntry(it)) {
+            ServerPlayer player = playerMap.getIterationKey(it);
+            if (playerIsCloseEnoughForSpawning(player, chunkX, chunkZ)) {
+                if (list.isEmpty()) {
+                    //noinspection ObjectAllocationInLoop
+                    list = new OArrayList<>();
+                }
+                list.add(player);
+            }
+        }
+        return list.immutable();
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public List<ServerPlayer> getPlayersCloseForSpawning(ChunkPos pos) {
+        Evolution.deprecatedMethod();
+        return this.getPlayersCloseForSpawning(pos.x, pos.z);
+    }
+
     /**
      * @author TheGreatWolf
      * @reason _

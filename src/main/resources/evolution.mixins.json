@@ -43,6 +43,7 @@
     "Mixin_CFM_CrossCollisionBlock",
     "Mixin_CFM_FireBlock",
     "Mixin_CFM_LevelChunk",
+    "Mixin_CFM_LocalMobCapCalculator",
     "Mixin_CFM_MappedRegistry",
     "Mixin_CFM_ProtoChunk",
     "Mixin_CFM_RedStoneWireBlock",
