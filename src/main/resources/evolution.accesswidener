@@ -10,6 +10,7 @@ accessible class net/minecraft/client/renderer/block/ModelBlockRenderer$Cache
 accessible class net/minecraft/client/renderer/RenderStateShard$OutputStateShard
 accessible class net/minecraft/client/resources/model/ModelBakery$BlockStateDefinitionException
 accessible class net/minecraft/client/resources/model/ModelBakery$ModelGroupKey
+accessible class net/minecraft/client/sounds/SoundEngine$DeviceCheckState
 accessible class net/minecraft/commands/arguments/selector/options/EntitySelectorOptions$Option
 accessible class net/minecraft/server/commands/CloneCommands$Mode
 accessible class net/minecraft/server/commands/FillCommand$Mode
