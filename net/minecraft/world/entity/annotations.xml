@@ -1,0 +1,17 @@
+<root>
+    <item name='net.minecraft.world.entity.Entity void setBoundingBox(net.minecraft.world.phys.AABB)'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+    <item name='net.minecraft.world.entity.Entity void setDeltaMovement(net.minecraft.world.phys.Vec3)'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+    <item name='net.minecraft.world.entity.Entity void setPos(net.minecraft.world.phys.Vec3)'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+</root>

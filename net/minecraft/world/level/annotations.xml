@@ -1,0 +1,122 @@
+<root>
+    <item name='net.minecraft.world.level.BlockGetter int getLightEmission(net.minecraft.core.BlockPos)'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+    <item name='net.minecraft.world.level.BlockGetter java.util.Optional&lt;T&gt; getBlockEntity(net.minecraft.core.BlockPos, net.minecraft.world.level.block.entity.BlockEntityType&lt;T&gt;)'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+    <item name='net.minecraft.world.level.BlockGetter net.minecraft.world.level.block.entity.BlockEntity getBlockEntity(net.minecraft.core.BlockPos)'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+    <item name='net.minecraft.world.level.BlockGetter net.minecraft.world.level.block.state.BlockState getBlockState(net.minecraft.core.BlockPos)'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+    <item name='net.minecraft.world.level.BlockGetter net.minecraft.world.level.material.FluidState getFluidState(net.minecraft.core.BlockPos)'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+    <item name='net.minecraft.world.level.CollisionGetter boolean isUnobstructed(net.minecraft.world.level.block.state.BlockState, net.minecraft.core.BlockPos, net.minecraft.world.phys.shapes.CollisionContext)'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+    <item name='net.minecraft.world.level.CommonLevelAccessor java.util.Optional&lt;T&gt; getBlockEntity(net.minecraft.core.BlockPos, net.minecraft.world.level.block.entity.BlockEntityType&lt;T&gt;)'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+    <item name='net.minecraft.world.level.Level boolean hasNeighborSignal(net.minecraft.core.BlockPos)'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+    <item name='net.minecraft.world.level.Level boolean mayInteract(net.minecraft.world.entity.player.Player, net.minecraft.core.BlockPos)'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+    <item name='net.minecraft.world.level.Level boolean removeBlock(net.minecraft.core.BlockPos, boolean)'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+    <item name='net.minecraft.world.level.Level boolean setBlock(net.minecraft.core.BlockPos, net.minecraft.world.level.block.state.BlockState, int)'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+    <item name='net.minecraft.world.level.Level boolean setBlockAndUpdate(net.minecraft.core.BlockPos, net.minecraft.world.level.block.state.BlockState)'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+    <item name='net.minecraft.world.level.Level net.minecraft.world.level.block.entity.BlockEntity getBlockEntity(net.minecraft.core.BlockPos)'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+    <item name='net.minecraft.world.level.Level net.minecraft.world.level.block.state.BlockState getBlockState(net.minecraft.core.BlockPos)'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+    <item name='net.minecraft.world.level.Level net.minecraft.world.level.chunk.ChunkAccess getChunk(int, int, net.minecraft.world.level.chunk.ChunkStatus, boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_, _, _, true -&gt; !null&quot;"/>
+        </annotation>
+    </item>
+    <item name='net.minecraft.world.level.Level net.minecraft.world.level.material.FluidState getFluidState(net.minecraft.core.BlockPos)'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+    <item name='net.minecraft.world.level.Level void blockEntityChanged(net.minecraft.core.BlockPos)'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+    <item name='net.minecraft.world.level.Level void sendBlockUpdated(net.minecraft.core.BlockPos, net.minecraft.world.level.block.state.BlockState, net.minecraft.world.level.block.state.BlockState, int)'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+    <item name='net.minecraft.world.level.Level void updateNeighbourForOutputSignal(net.minecraft.core.BlockPos, net.minecraft.world.level.block.Block)'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+    <item name='net.minecraft.world.level.LevelAccessor void levelEvent(int, net.minecraft.core.BlockPos, int)'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+    <item name='net.minecraft.world.level.LevelAccessor void levelEvent(net.minecraft.world.entity.player.Player, int, net.minecraft.core.BlockPos, int)'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+    <item name='net.minecraft.world.level.LevelReader boolean isEmptyBlock(net.minecraft.core.BlockPos)'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+    <item name='net.minecraft.world.level.LevelWriter boolean destroyBlock(net.minecraft.core.BlockPos, boolean)'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+    <item name='net.minecraft.world.level.LevelWriter boolean setBlock(net.minecraft.core.BlockPos, net.minecraft.world.level.block.state.BlockState, int)'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+</root>

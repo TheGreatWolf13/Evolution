@@ -1,0 +1,7 @@
+<root>
+    <item name='net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket net.minecraft.core.BlockPos getPos()'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+</root>

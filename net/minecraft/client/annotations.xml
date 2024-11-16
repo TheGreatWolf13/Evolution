@@ -1,0 +1,12 @@
+<root>
+    <item name='net.minecraft.client.ClientRecipeBook java.util.List&lt;net.minecraft.client.gui.screens.recipebook.RecipeCollection&gt; getCollection(net.minecraft.client.RecipeBookCategories)'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+    <item name='net.minecraft.client.ClientRecipeBook java.util.List&lt;net.minecraft.client.gui.screens.recipebook.RecipeCollection&gt; getCollections()'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+</root>

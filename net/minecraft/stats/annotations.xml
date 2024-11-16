@@ -1,0 +1,23 @@
+<root>
+    <item name='net.minecraft.stats.Stat net.minecraft.stats.StatType&lt;T&gt; getType()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt; _&quot;"/>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='net.minecraft.stats.StatsCounter int getValue(net.minecraft.stats.Stat&lt;?&gt;)'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+    <item name='net.minecraft.stats.StatsCounter int getValue(net.minecraft.stats.StatType&lt;T&gt;, T)'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+    <item name='net.minecraft.stats.StatsCounter void setValue(net.minecraft.world.entity.player.Player, net.minecraft.stats.Stat&lt;?&gt;, int)'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+</root>

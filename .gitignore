@@ -22,8 +22,5 @@ eclipse
 run
 
 /src/generated/
-/net/
 /logs/
 /javac/
-/it/
-/com/

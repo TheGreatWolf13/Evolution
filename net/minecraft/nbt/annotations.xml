@@ -1,0 +1,17 @@
+<root>
+    <item name='net.minecraft.nbt.CompoundTag boolean contains(java.lang.String, int) 1'>
+        <annotation name='tgw.evolution.util.constants.NBTType'/>
+    </item>
+    <item name='net.minecraft.nbt.CompoundTag byte getTagType(java.lang.String)'>
+        <annotation name='tgw.evolution.util.constants.NBTType'/>
+    </item>
+    <item name='net.minecraft.nbt.CompoundTag net.minecraft.nbt.ListTag getList(java.lang.String, int) 1'>
+        <annotation name='tgw.evolution.util.constants.NBTType'/>
+    </item>
+    <item name='net.minecraft.nbt.ListTag byte getElementType()'>
+        <annotation name='tgw.evolution.util.constants.NBTType'/>
+    </item>
+    <item name='net.minecraft.nbt.Tag byte getId()'>
+        <annotation name='tgw.evolution.util.constants.NBTType'/>
+    </item>
+</root>

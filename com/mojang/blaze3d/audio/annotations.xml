@@ -1,0 +1,7 @@
+<root>
+    <item name='com.mojang.blaze3d.audio.Channel void setSelfPosition(net.minecraft.world.phys.Vec3)'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+</root>

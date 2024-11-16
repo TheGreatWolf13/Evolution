@@ -1,0 +1,12 @@
+<root>
+    <item name='net.minecraft.world.level.border.WorldBorder boolean isWithinBounds(net.minecraft.core.BlockPos)'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+    <item name='net.minecraft.world.level.border.WorldBorder boolean isWithinBounds(net.minecraft.world.phys.AABB)'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+</root>

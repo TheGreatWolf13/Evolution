@@ -1,0 +1,8 @@
+<root>
+    <item name='it.unimi.dsi.fastutil.longs.LongOpenHashSet it.unimi.dsi.fastutil.longs.LongIterator iterator()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt; new&quot;"/>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+</root>

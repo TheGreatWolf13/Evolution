@@ -1,0 +1,17 @@
+<root>
+    <item name='net.minecraft.client.gui.components.events.GuiEventListener boolean keyPressed(int, int, int) 0'>
+        <annotation name='tgw.evolution.client.util.Key'/>
+    </item>
+    <item name='net.minecraft.client.gui.components.events.GuiEventListener boolean keyPressed(int, int, int) 2'>
+        <annotation name='tgw.evolution.client.util.Modifiers'/>
+    </item>
+    <item name='net.minecraft.client.gui.components.events.GuiEventListener boolean keyReleased(int, int, int) 0'>
+        <annotation name='tgw.evolution.client.util.Key'/>
+    </item>
+    <item name='net.minecraft.client.gui.components.events.GuiEventListener boolean keyReleased(int, int, int) 2'>
+        <annotation name='tgw.evolution.client.util.Modifiers'/>
+    </item>
+    <item name='net.minecraft.client.gui.components.events.GuiEventListener boolean mouseClicked(double, double, int) 2'>
+        <annotation name='tgw.evolution.client.util.MouseButton'/>
+    </item>
+</root>
