@@ -61,7 +61,7 @@ public abstract class MixinFrustum implements PatchFrustum {
     @Overwrite
     public final boolean cubeInFrustum(double x0, double y0, double z0, double x1, double y1, double z1) {
         float minX = (float) EarthHelper.deltaBlockCoordinate(x0, this.camX);
-        float maxX = (float) -EarthHelper.deltaBlockCoordinate(x1, this.camX);
+        float maxX = (float) EarthHelper.deltaBlockCoordinate(x1, this.camX);
         float minY = (float) (y0 - this.camY);
         float maxY = (float) (y1 - this.camY);
         float minZ = (float) EarthHelper.deltaBlockCoordinate(z0, this.camZ);

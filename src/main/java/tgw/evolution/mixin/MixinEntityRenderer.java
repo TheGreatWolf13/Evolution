@@ -95,12 +95,12 @@ public abstract class MixinEntityRenderer<T extends Entity> implements HREntity<
             return true;
         }
         AABB aabb = entity.getBoundingBoxForCulling();
-        double minX = aabb.minX - 0.5;
-        double minY = aabb.minY - 0.5;
-        double minZ = aabb.minZ - 0.5;
-        double maxX = aabb.maxX + 0.5;
-        double maxY = aabb.maxY + 0.5;
-        double maxZ = aabb.maxZ + 0.5;
+        double minX;
+        double minY;
+        double minZ;
+        double maxX;
+        double maxY;
+        double maxZ;
         if (aabb.hasNaN()) {
             minX = entity.getX() - 2;
             minY = entity.getY() - 2;
@@ -108,6 +108,14 @@ public abstract class MixinEntityRenderer<T extends Entity> implements HREntity<
             maxX = entity.getX() + 2;
             maxY = entity.getY() + 2;
             maxZ = entity.getZ() + 2;
+        }
+        else {
+            minX = aabb.minX - 0.5;
+            minY = aabb.minY - 0.5;
+            minZ = aabb.minZ - 0.5;
+            maxX = aabb.maxX + 0.5;
+            maxY = aabb.maxY + 0.5;
+            maxZ = aabb.maxZ + 0.5;
         }
         if (!frustum.cubeInFrustum(minX, minY, minZ, maxX, maxY, maxZ)) {
             return false;

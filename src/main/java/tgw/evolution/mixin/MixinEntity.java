@@ -397,6 +397,18 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
         }
     }
 
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public double distanceToSqr(Vec3 pos) {
+        double dx = EarthHelper.absDeltaBlockCoordinate(this.getX(), pos.x);
+        double dy = this.getY() - pos.y;
+        double dz = EarthHelper.absDeltaBlockCoordinate(this.getZ(), pos.z);
+        return dx * dx + dy * dy + dz * dz;
+    }
+
     @Shadow
     protected abstract void doWaterSplashEffect();
 
@@ -1410,6 +1422,22 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
 
     @Shadow
     public abstract void setYRot(float pYRot);
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Overwrite
+    public boolean shouldRender(double camX, double camY, double camZ) {
+        double dx = EarthHelper.absDeltaBlockCoordinate(this.getX(), camX);
+        double dy = this.getY() - camY;
+        double dz = EarthHelper.absDeltaBlockCoordinate(this.getZ(), camZ);
+        double dSqr = dx * dx + dy * dy + dz * dz;
+        return this.shouldRenderAtSqrDistance(dSqr);
+    }
+
+    @Shadow
+    public abstract boolean shouldRenderAtSqrDistance(double d);
 
     /**
      * @author TheGreatWolf

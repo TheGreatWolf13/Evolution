@@ -97,6 +97,7 @@ import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 import tgw.evolution.util.math.DirectionUtil;
 import tgw.evolution.util.math.FastRandom;
 import tgw.evolution.util.math.VectorUtil;
+import tgw.evolution.util.physics.EarthHelper;
 import tgw.evolution.world.EvBlockDestructionProgress;
 
 import java.io.IOException;
@@ -1337,18 +1338,12 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
         }
     }
 
-    private void renderEntity(Entity entity,
-                              double camX,
-                              double camY,
-                              double camZ,
-                              float partialTick,
-                              PoseStack matrices,
-                              MultiBufferSource bufferSource) {
+    private void renderEntity(Entity entity, double camX, double camY, double camZ, float partialTick, PoseStack matrices, MultiBufferSource bufferSource) {
         double x = Mth.lerp(partialTick, entity.xOld, entity.getX());
         double y = Mth.lerp(partialTick, entity.yOld, entity.getY());
         double z = Mth.lerp(partialTick, entity.zOld, entity.getZ());
         float yRot = Mth.lerp(partialTick, entity.yRotO, entity.getYRot());
-        this.entityRenderDispatcher.render(entity, x - camX, y - camY, z - camZ, yRot, partialTick, matrices, bufferSource, this.entityRenderDispatcher.getPackedLightCoords(entity, partialTick));
+        this.entityRenderDispatcher.render(entity, EarthHelper.deltaBlockCoordinate(x, camX), y - camY, EarthHelper.deltaBlockCoordinate(z, camZ), yRot, partialTick, matrices, bufferSource, this.entityRenderDispatcher.getPackedLightCoords(entity, partialTick));
     }
 
     private void renderGlobalTileEntities(Frustum frustum, PoseStack matrices, MultiBufferSource buffer, float camX, float camY, float camZ, float partialTicks) {
@@ -1359,7 +1354,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
             }
             BlockPos bePos = blockEntity.getBlockPos();
             matrices.pushPose();
-            matrices.translate(bePos.getX() - camX, bePos.getY() - camY, bePos.getZ() - camZ);
+            matrices.translate(EarthHelper.deltaBlockCoordinate(bePos.getX(), camX), bePos.getY() - camY, EarthHelper.deltaBlockCoordinate(bePos.getZ(), camZ));
             this.blockEntityRenderDispatcher.render(blockEntity, partialTicks, matrices, buffer);
             matrices.popPose();
         }

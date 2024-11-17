@@ -175,8 +175,8 @@ public abstract class Mixin_CFM_ChunkMap extends ChunkStorage implements PatchCh
     private static double euclideanDistanceSquared(int chunkX, int chunkZ, Entity entity) {
         double x = SectionPos.sectionToBlockCoord(chunkX, 8);
         double z = SectionPos.sectionToBlockCoord(chunkZ, 8);
-        double dx = x - entity.getX();
-        double dz = z - entity.getZ();
+        double dx = EarthHelper.absDeltaBlockCoordinate(x, entity.getX());
+        double dz = EarthHelper.absDeltaBlockCoordinate(z, entity.getZ());
         return dx * dx + dz * dz;
     }
 
