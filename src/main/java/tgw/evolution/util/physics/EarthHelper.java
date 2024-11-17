@@ -28,14 +28,10 @@ public final class EarthHelper {
     private static final Vec3f SKY_COLOR = new Vec3f(0, 0, 0);
     private static final Vec3f SUN = new Vec3f(0, 0, 0);
     public static final int TROPIC = (int) -calculateLatitude(ECLIPTIC_INCLINATION);
-    public static final int WORLD_SIZE;
+    public static final int WORLD_SIZE = 1 << BITS_BLOCK;
     private static final Vec3f ZENITH = new Vec3f(0, CELESTIAL_SPHERE_RADIUS, 0);
     public static float sunX;
     public static float sunZ;
-
-    static {
-        WORLD_SIZE = 1 << BITS_BLOCK;
-    }
 
     private EarthHelper() {
     }

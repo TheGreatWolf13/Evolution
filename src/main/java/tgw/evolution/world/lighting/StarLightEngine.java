@@ -85,12 +85,6 @@ public abstract class StarLightEngine<T extends SWMRArray> {
         this.notifyUpdateCache = new boolean[5 * 5 * (this.maxLightSection - this.minLightSection + 1 + 2)]; // add two extra sections for buffer
     }
 
-    private static int branchlessAbs(int val) {
-        // -n = -1 ^ n + 1
-        int mask = val >> Integer.SIZE - 1; // -1 if < 0, 0 if >= 0
-        return (mask ^ val) - mask; // if val < 0, then (0 ^ val) - 0 else (-1 ^ val) + 1
-    }
-
     protected static AxisDirection[] decodeDirections(long encoded) {
         return OLD_CHECK_DIRECTIONS[(int) (encoded >>> 43 & 63)];
     }
@@ -745,7 +739,7 @@ public abstract class StarLightEngine<T extends SWMRArray> {
             for (int dx = -radius; dx <= radius; ++dx) {
                 int cx = centerChunkX + dx;
                 int cz = centerChunkZ + dz;
-                boolean isTwoRadius = Math.max(branchlessAbs(dx), branchlessAbs(dz)) == 2;
+                boolean isTwoRadius = Math.max(Math.abs(dx), Math.abs(dz)) == 2;
                 ChunkAccess chunk = (ChunkAccess) chunkProvider.getChunkForLighting(cx, cz);
                 if (chunk == null) {
                     if (relaxed | isTwoRadius) {
