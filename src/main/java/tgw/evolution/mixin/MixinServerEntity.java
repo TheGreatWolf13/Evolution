@@ -7,6 +7,7 @@ import net.minecraft.server.level.ServerEntity;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
+import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -31,6 +32,7 @@ import tgw.evolution.inventory.AdditionalSlotType;
 import tgw.evolution.network.PacketSCCustomEntity;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
+import tgw.evolution.util.collection.maps.R2OMap;
 import tgw.evolution.util.math.Vec3d;
 
 import java.util.Collection;
@@ -235,9 +237,10 @@ public abstract class MixinServerEntity {
             if (list != null) {
                 consumer.accept(new ClientboundSetEquipmentPacket(this.entity.getId(), list));
             }
-            for (MobEffectInstance effect : living.getActiveEffects()) {
+            R2OMap<MobEffect, MobEffectInstance> effects = (R2OMap<MobEffect, MobEffectInstance>) living.getActiveEffectsMap();
+            for (long it = effects.beginIteration(); effects.hasNextIteration(it); it = effects.nextEntry(it)) {
                 //noinspection ObjectAllocationInLoop
-                consumer.accept(new ClientboundUpdateMobEffectPacket(this.entity.getId(), effect));
+                consumer.accept(new ClientboundUpdateMobEffectPacket(this.entity.getId(), effects.getIterationValue(it)));
             }
         }
         if (!this.entity.getPassengers().isEmpty()) {
