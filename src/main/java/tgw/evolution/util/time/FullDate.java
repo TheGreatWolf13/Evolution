@@ -10,7 +10,7 @@ public class FullDate {
     public FullDate(Date date, Time hour) {
         this.date = date;
         this.hour = hour;
-        if (date.equals(Date.STARTING_DATE) && hour.toTicks() < 6_000) {
+        if (date.equals(Date.STARTING_DATE) && hour.toTicks() < Time.TICKS_PER_HOUR * 6) {
             throw new IllegalStateException("Time in day 1 starts at 06h and not midnight!");
         }
     }
