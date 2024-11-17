@@ -9,6 +9,11 @@
             <val name="forRemoval" val="true"/>
         </annotation>
     </item>
+    <item name='net.minecraft.world.level.block.state.BlockBehaviour.BlockStateBase boolean isSolidRender(net.minecraft.world.level.BlockGetter, net.minecraft.core.BlockPos)'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
     <item name='net.minecraft.world.level.block.state.BlockBehaviour.BlockStateBase net.minecraft.world.phys.shapes.VoxelShape getBlockSupportShape(net.minecraft.world.level.BlockGetter, net.minecraft.core.BlockPos)'>
         <annotation name='java.lang.Deprecated'>
             <val name="forRemoval" val="true"/>

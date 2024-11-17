@@ -3,6 +3,7 @@ package tgw.evolution.mixin;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.pathfinder.Node;
 import net.minecraft.world.level.pathfinder.Path;
 import org.jetbrains.annotations.Nullable;
@@ -17,8 +18,24 @@ import tgw.evolution.patches.PatchPathNavigation;
 public abstract class MixinPathNavigation implements PatchPathNavigation {
 
     @Shadow protected boolean hasDelayedRecomputation;
+    @Shadow @Final protected Level level;
     @Shadow @Final protected Mob mob;
     @Shadow protected @Nullable Path path;
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public boolean isStableDestination(BlockPos pos) {
+        Evolution.deprecatedMethod();
+        return this.isStableDestination(pos.getX(), pos.getY(), pos.getZ());
+    }
+
+    @Override
+    public boolean isStableDestination(int x, int y, int z) {
+        return this.level.getBlockState_(x, y - 1, z).isSolidRender_(this.level, x, y - 1, z);
+    }
 
     /**
      * @reason _
