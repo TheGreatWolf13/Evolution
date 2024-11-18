@@ -304,11 +304,9 @@ public final class EarthHelper {
     }
 
     public static int wrapBlockCoordinate(int value) {
-        if (value < MIN_BLOCK || value > MAX_BLOCK) {
-            value &= MASK_BLOCK;
-            return value > MAX_BLOCK ? ~MASK_BLOCK | value : value;
-        }
-        return value;
+        value &= MASK_BLOCK;
+        value <<= Integer.SIZE - BITS_BLOCK;
+        return value >> Integer.SIZE - BITS_BLOCK;
     }
 
     public static double wrapBlockCoordinate(double value) {
@@ -320,10 +318,8 @@ public final class EarthHelper {
     }
 
     public static int wrapChunkCoordinate(int value) {
-        if (value < MIN_CHUNK || value > MAX_CHUNK) {
-            value &= MASK_CHUNK;
-            return value > MAX_CHUNK ? ~MASK_CHUNK | value : value;
-        }
-        return value;
+        value &= MASK_CHUNK;
+        value <<= Integer.SIZE - BITS_CHUNK;
+        return value >> Integer.SIZE - BITS_CHUNK;
     }
 }
