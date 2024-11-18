@@ -1,0 +1,7 @@
+<root>
+    <item name='net.minecraft.util.ClassInstanceMultiMap java.util.Iterator&lt;T&gt; iterator()'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+</root>

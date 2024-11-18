@@ -435,6 +435,9 @@
       ],
       "net/minecraft/client/Camera": [
         "tgw/evolution/patches/PatchCamera"
+      ],
+      "net/minecraft/util/ClassInstanceMultiMap": [
+        "tgw/evolution/patches/PatchClassInstanceMultiMap"
       ]
     }
   }
