@@ -35,6 +35,10 @@ public final class VectorUtil {
         return vec.x() * x + vec.y() * y + vec.z() * z + vec.w();
     }
 
+    public static double horizontalLength(double x, double z) {
+        return Math.sqrt(x * x + z * z);
+    }
+
     public static double length(double x, double y, double z) {
         return Math.sqrt(x * x + y * y + z * z);
     }

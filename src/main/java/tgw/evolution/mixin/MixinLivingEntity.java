@@ -1061,11 +1061,8 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
                 accZ = Math.signum(accZ) * 0.001;
             }
             //Pseudo-forces
-            double accCoriolisX = physics.calcAccCoriolisX();
             double accCoriolisY = isFlyingPlayer ? 0 : physics.calcAccCoriolisY();
-            double accCoriolisZ = physics.calcAccCoriolisZ();
             double accCentrifugalY = isFlyingPlayer ? 0 : physics.calcAccCentrifugalY();
-            double accCentrifugalZ = physics.calcAccCentrifugalZ();
             //Dissipative Forces
             double legSlowDownX = 0;
             double legSlowDownZ = 0;
@@ -1091,9 +1088,9 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
                 dissipativeZ = motionZ;
             }
             //Update Motion
-            motionX += accX - dissipativeX + accCoriolisX;
+            motionX += accX - dissipativeX;
             motionY += accY + accCoriolisY + accCentrifugalY;
-            motionZ += accZ - dissipativeZ + accCoriolisZ + accCentrifugalZ;
+            motionZ += accZ - dissipativeZ;
             if (Double.isNaN(motionX)) {
                 motionX = 0;
             }

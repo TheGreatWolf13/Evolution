@@ -51,9 +51,7 @@ public final class Physics implements ILocked {
     private double sizeY;
     private double sizeZ;
     private double velX;
-    private double velY;
     private double velZ;
-    private double x;
     private double y;
     private double z;
 
@@ -67,25 +65,13 @@ public final class Physics implements ILocked {
         return 1.05;
     }
 
-    public static Physics getInstance(Level level,
-                                      double x,
-                                      double y,
-                                      double z,
-                                      double velX,
-                                      double velY,
-                                      double velZ,
-                                      double sizeX,
-                                      double sizeY,
-                                      double sizeZ,
-                                      Fluid fluid) {
+    public static Physics getInstance(Level level, double y, double z, double velX, double velZ, double sizeX, double sizeY, double sizeZ, Fluid fluid) {
         Physics physics = CACHE.get();
         assert !physics.isLocked() : "The local instance of Physics is locked, you probably forgot to unlock it! Use it with try-with-resources to unlock automatically.";
         physics.level = level;
-        physics.x = x;
         physics.y = y;
         physics.z = z;
         physics.velX = velX;
-        physics.velY = velY;
         physics.velZ = velZ;
         physics.sizeX = sizeX;
         physics.sizeY = sizeY;
@@ -97,7 +83,7 @@ public final class Physics implements ILocked {
 
     public static Physics getInstance(Entity entity, Fluid fluid) {
         Vec3 vel = entity.getDeltaMovement();
-        return getInstance(entity.level, entity.getX(), entity.getY(), entity.getZ(), vel.x, vel.y, vel.z, entity.getBbWidth(), entity.getBbHeight(), entity.getBbWidth(), fluid);
+        return getInstance(entity.level, entity.getY(), entity.getZ(), vel.x, vel.z, entity.getBbWidth(), entity.getBbHeight(), entity.getBbWidth(), fluid);
     }
 
     public static double getRestLocalGravity(Level level, double y, double z) {
@@ -106,6 +92,17 @@ public final class Physics implements ILocked {
         double gravity = -GRAVITATIONAL_CONSTANT * EARTH_MASS / (radius * radius);
         double centrifugal = EARTH_ROTATION_RATE * EARTH_ROTATION_RATE * radius * cosLat * cosLat;
         return gravity + centrifugal;
+    }
+
+    /**
+     * The actual equation is {@code sqrt((a^4*cos^2(lat)+b^4*sin^2(lat))/(a^2*cos^2(lat)+b^2*sin^2(lat)))} <br>
+     * A very good approximation of this formula for values of {@code a} and {@code b} very close to one another is: {@code (a-b) * cos^2(lat) + b}
+     * <br>
+     * In both these equations, the values of {@code a} and {@code b} are, respectively, the equatorial and polar radii of the planet.
+     */
+    private double baseRadius() {
+        float cosLat = this.cosLatitude();
+        return (EARTH_RADIUS_EQUATOR - EARTH_RADIUS_POLE) * cosLat * cosLat + EARTH_RADIUS_POLE;
     }
 
     public void calcAccAbsolute(Entity entity, Vec3d direction, double magnitude) {
@@ -164,24 +161,11 @@ public final class Physics implements ILocked {
         return this.cachedCentY;
     }
 
-    public double calcAccCentrifugalZ() {
-        double omega = this.rotationRate();
-        return omega * omega * this.radius() * this.sinLatitude() * this.cosLatitude();
-    }
-
-    public double calcAccCoriolisX() {
-        return -2 * this.rotationRate() * (this.velY * this.cosLatitude() + this.velZ * this.sinLatitude());
-    }
-
     public double calcAccCoriolisY() {
         if (Double.isNaN(this.cachedCorY)) {
             this.cachedCorY = 2 * this.rotationRate() * this.velX * this.cosLatitude();
         }
         return this.cachedCorY;
-    }
-
-    public double calcAccCoriolisZ() {
-        return 2 * this.rotationRate() * this.velX * this.sinLatitude();
     }
 
     public double calcAccGravity() {
@@ -398,16 +382,5 @@ public final class Physics implements ILocked {
             this.cachedSinLat = MathHelper.sinDeg(this.latitude());
         }
         return this.cachedSinLat;
-    }
-
-    /**
-     * The actual equation is {@code sqrt((a^4*cos^2(lat)+b^4*sin^2(lat))/(a^2*cos^2(lat)+b^2*sin^2(lat)))} <br>
-     * A very good approximation of this formula for values of {@code a} and {@code b} very close to one another is: {@code (a-b) * cos^2(lat) + b}
-     * <br>
-     * In both these equations, the values of {@code a} and {@code b} are, respectively, the equatorial and polar radii of the planet.
-     */
-    private double baseRadius() {
-        float cosLat = this.cosLatitude();
-        return (EARTH_RADIUS_EQUATOR - EARTH_RADIUS_POLE) * cosLat * cosLat + EARTH_RADIUS_POLE;
     }
 }

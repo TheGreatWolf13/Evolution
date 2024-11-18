@@ -67,21 +67,21 @@ public class EntityPlayerCorpse extends Entity implements IContainerCheckable, I
     private static @Nullable GameProfileCache profileCache;
     private static @Nullable MinecraftSessionService sessionService;
     private final ContainerChecker<EntityPlayerCorpse> containerChecker;
-    private final BasicContainer inventory;
     protected Component deathMessage = EvolutionTexts.EMPTY;
-    protected long gameDeathTime;
-    protected byte model;
-    protected String playerName = "";
-    protected UUID playerUUID = EntityUtils.UUID_ZERO;
-    protected int selected;
-    protected long systemDeathTime;
     private int deathTimer;
+    protected long gameDeathTime;
+    private final BasicContainer inventory;
     private boolean isSkeleton;
     private long lastTick;
+    protected byte model;
     private @Nullable EntityPlayerDummy player;
+    protected String playerName = "";
     private GameProfile playerProfile = EntityUtils.EMPTY_PROFILE;
+    protected UUID playerUUID = EntityUtils.UUID_ZERO;
     private byte recheckTime;
+    protected int selected;
     private @Nullable EntitySkeletonDummy skeleton;
+    protected long systemDeathTime;
 
     {
         this.containerChecker = new ContainerChecker<>() {
@@ -131,7 +131,7 @@ public class EntityPlayerCorpse extends Entity implements IContainerCheckable, I
         this.setPlayerProfile(player.getGameProfile());
         this.model = player.getEntityData().get(Player.DATA_PLAYER_MODE_CUSTOMISATION);
         if (player.getMainArm() == HumanoidArm.RIGHT) {
-            this.model |= 1 << 7;
+            this.model |= (byte) (1 << 7);
         }
         NonNullList<ItemStack> equip = NonNullList.withSize(AdditionalSlotType.SLOTS.length + AdditionalSlotType.VALUES.length, ItemStack.EMPTY);
         int i = 0;
@@ -291,11 +291,6 @@ public class EntityPlayerCorpse extends Entity implements IContainerCheckable, I
     @Override
     public ItemStack getItem(int slot) {
         return this.inventory.getItem(slot);
-    }
-
-    @Override
-    public double getLegSlowdown() {
-        return 0;
     }
 
     @Override
@@ -532,7 +527,7 @@ public class EntityPlayerCorpse extends Entity implements IContainerCheckable, I
             long currentTick = this.level.getGameTime();
             long passedTicks = currentTick - this.lastTick;
             if (!this.isSkeleton) {
-                this.deathTimer += passedTicks;
+                this.deathTimer += (int) passedTicks;
             }
             if (this.deathTimer >= 7 * Time.TICKS_PER_DAY) {
                 this.entityData.set(SKELETON, true);
@@ -559,11 +554,8 @@ public class EntityPlayerCorpse extends Entity implements IContainerCheckable, I
                 accY += physics.calcForceBuoyancy(this) / mass;
             }
             //Pseudo-forces
-            double accCoriolisX = physics.calcAccCoriolisX();
             double accCoriolisY = physics.calcAccCoriolisY();
-            double accCoriolisZ = physics.calcAccCoriolisZ();
             double accCentrifugalY = physics.calcAccCentrifugalY();
-            double accCentrifugalZ = physics.calcAccCentrifugalZ();
             //Dissipative Forces
             double dissipativeX = 0;
             double dissipativeZ = 0;
@@ -582,9 +574,9 @@ public class EntityPlayerCorpse extends Entity implements IContainerCheckable, I
                 }
             }
             //Update Motion
-            velX += -dissipativeX + accCoriolisX;
+            velX -= dissipativeX;
             velY += accY + accCoriolisY + accCentrifugalY;
-            velZ += -dissipativeZ + accCoriolisZ + accCentrifugalZ;
+            velZ -= dissipativeZ;
         }
         this.setDeltaMovement(velX, velY, velZ);
         this.move(MoverType.SELF, this.getDeltaMovement());

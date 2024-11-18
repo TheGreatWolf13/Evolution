@@ -84,11 +84,8 @@ public abstract class MixinItemEntity extends Entity {
                     accY += physics.calcForceBuoyancy(this) / this.getBaseMass();
                 }
                 //Pseudo-forces
-                double accCoriolisX = physics.calcAccCoriolisX();
                 double accCoriolisY = physics.calcAccCoriolisY();
-                double accCoriolisZ = physics.calcAccCoriolisZ();
                 double accCentrifugalY = physics.calcAccCentrifugalY();
-                double accCentrifugalZ = physics.calcAccCentrifugalZ();
                 //Dissipative Forces
                 double dissipativeX = 0;
                 double dissipativeZ = 0;
@@ -107,9 +104,9 @@ public abstract class MixinItemEntity extends Entity {
                     }
                 }
                 //Update Motion
-                velX += -dissipativeX + accCoriolisX;
+                velX -= dissipativeX;
                 velY += accY + accCoriolisY + accCentrifugalY;
-                velZ += -dissipativeZ + accCoriolisZ + accCentrifugalZ;
+                velZ -= dissipativeZ;
             }
             this.setDeltaMovement(velX, velY, velZ);
             if (!this.onGround || this.getDeltaMovement().horizontalDistanceSqr() > 1e-5 || (this.tickCount + this.getId()) % 4 == 0) {

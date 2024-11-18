@@ -47,7 +47,6 @@ import tgw.evolution.util.damage.DamageSourceEv;
 import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 import tgw.evolution.util.math.ClipContextMutable;
 import tgw.evolution.util.math.MathHelper;
-import tgw.evolution.util.math.Vec3d;
 import tgw.evolution.util.math.VectorUtil;
 import tgw.evolution.util.physics.Fluid;
 import tgw.evolution.util.physics.Physics;
@@ -57,19 +56,19 @@ import java.util.UUID;
 public abstract class EntityGenericProjectile extends Entity implements IEntitySpawnData {
     private static final EntityDataAccessor<Byte> PIERCE_LEVEL = SynchedEntityData.defineId(EntityGenericProjectile.class,
                                                                                             EntityDataSerializers.BYTE);
-    protected final ISet hitEntities = new IHashSet();
-    private final ClipContextMutable clipContext = new ClipContextMutable();
     public byte arrowShake;
+    private @Nullable LivingEntity cachedOwner;
+    private final ClipContextMutable clipContext = new ClipContextMutable();
+    private float damage = 2.0f;
+    private int despawnTicks;
+    protected final ISet hitEntities = new IHashSet();
+    private @Nullable BlockState inBlockState;
     public boolean inGround;
+    protected double mass = 1;
+    private @Nullable UUID ownerUUID;
     public PickupStatus pickupStatus = PickupStatus.ALLOWED;
     public int ticksInAir;
     public int timeInGround;
-    protected double mass = 1;
-    private @Nullable LivingEntity cachedOwner;
-    private float damage = 2.0f;
-    private int despawnTicks;
-    private @Nullable BlockState inBlockState;
-    private @Nullable UUID ownerUUID;
 
     public EntityGenericProjectile(EntityType<? extends EntityGenericProjectile> type,
                                    LivingEntity shooter,
@@ -171,11 +170,6 @@ public abstract class EntityGenericProjectile extends Entity implements IEntityS
     }
 
     @Override
-    public double getLegSlowdown() {
-        return 0;
-    }
-
-    @Override
     protected MovementEmission getMovementEmission() {
         return MovementEmission.NONE;
     }
@@ -222,12 +216,6 @@ public abstract class EntityGenericProjectile extends Entity implements IEntityS
             this.moveTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), this.getXRot());
             this.despawnTicks = 0;
         }
-    }
-
-    @Override
-    public void lerpTo(double x, double y, double z, float yaw, float pitch, int posRotationIncrements, boolean teleport) {
-        this.setPos(x, y, z);
-        this.setRot(yaw, pitch);
     }
 
     protected abstract void modifyMovementOnCollision();
@@ -407,8 +395,8 @@ public abstract class EntityGenericProjectile extends Entity implements IEntityS
 
     public void shoot(LivingEntity shooter, float pitch, float yaw, IProjectile throwable) {
         float stdDev = 1 - throwable.precision();
-        pitch += 12 * MathHelper.clamp(this.random.nextGaussian(), -3, 3) * stdDev;
-        yaw += 12 * MathHelper.clamp(this.random.nextGaussian(), -3, 3) * stdDev;
+        pitch += (float) (12 * MathHelper.clamp(this.random.nextGaussian(), -3, 3) * stdDev);
+        yaw += (float) (12 * MathHelper.clamp(this.random.nextGaussian(), -3, 3) * stdDev);
         float cosPitch = MathHelper.cosDeg(pitch);
         float x = -MathHelper.sinDeg(yaw) * cosPitch;
         float y = -MathHelper.sinDeg(pitch);
@@ -436,10 +424,13 @@ public abstract class EntityGenericProjectile extends Entity implements IEntityS
     }
 
     public void shoot(double x, double y, double z, IProjectile throwable) {
-        Vec3d velocity = new Vec3d(x, y, z).normalizeMutable().scaleMutable(throwable.projectileSpeed());
-        this.setDeltaMovement(velocity);
-        this.setYRot((float) MathHelper.atan2Deg(velocity.x, velocity.z));
-        this.setXRot((float) MathHelper.atan2Deg(velocity.y, velocity.horizontalDistance()));
+        double mul = throwable.projectileSpeed() * VectorUtil.norm(x, y, z);
+        x *= mul;
+        y *= mul;
+        z *= mul;
+        this.setDeltaMovement(x, y, z);
+        this.setYRot((float) MathHelper.atan2Deg(x, z));
+        this.setXRot((float) MathHelper.atan2Deg(y, VectorUtil.horizontalLength(x, z)));
         this.yRotO = this.getYRot();
         this.xRotO = this.getXRot();
         this.despawnTicks = 0;
@@ -466,9 +457,12 @@ public abstract class EntityGenericProjectile extends Entity implements IEntityS
             this.xRotO = this.getXRot();
         }
         BlockPos pos = this.blockPosition();
-        BlockState stateAtPos = this.level.getBlockState_(pos.getX(), pos.getY(), pos.getZ());
+        int x = pos.getX();
+        int y = pos.getY();
+        int z = pos.getZ();
+        BlockState stateAtPos = this.level.getBlockState_(x, y, z);
         if (!stateAtPos.isAir()) {
-            VoxelShape shape = stateAtPos.getCollisionShape(this.level, pos);
+            VoxelShape shape = stateAtPos.getCollisionShape_(this.level, x, y, z);
             if (!shape.isEmpty()) {
                 Vec3 positionVec = this.position();
                 for (AABB boundingBox : shape.toAabbs()) {
@@ -506,9 +500,7 @@ public abstract class EntityGenericProjectile extends Entity implements IEntityS
             double newPositionX = positionX + motion.x;
             double newPositionY = positionY + motion.y;
             double newPositionZ = positionZ + motion.z;
-            BlockHitResult blockHitResult = this.level.clip(this.clipContext.set(positionX, positionY, positionZ,
-                                                                                 newPositionX, newPositionY, newPositionZ,
-                                                                                 ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
+            BlockHitResult blockHitResult = this.level.clip(this.clipContext.set(positionX, positionY, positionZ, newPositionX, newPositionY, newPositionZ, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
             if (blockHitResult.getType() != HitResult.Type.MISS) {
                 newPositionX = blockHitResult.x();
                 newPositionY = blockHitResult.y();
@@ -545,11 +537,8 @@ public abstract class EntityGenericProjectile extends Entity implements IEntityS
                     accY += physics.calcForceBuoyancy(this) / this.mass;
                 }
                 //Pseudo-forces
-                double accCoriolisX = physics.calcAccCoriolisX();
                 double accCoriolisY = physics.calcAccCoriolisY();
-                double accCoriolisZ = physics.calcAccCoriolisZ();
                 double accCentrifugalY = physics.calcAccCentrifugalY();
-                double accCentrifugalZ = physics.calcAccCentrifugalZ();
                 //Drag
                 //TODO wind speed
 //                double windVelX = 0;
@@ -572,15 +561,21 @@ public abstract class EntityGenericProjectile extends Entity implements IEntityS
 //                }
                 if (this.isInWater()) {
                     for (int j = 0; j < 4; ++j) {
-                        this.level.addParticle(ParticleTypes.BUBBLE, this.getX() - motionX * 0.25, this.getY() - motionY * 0.25,
-                                               this.getZ() - motionZ * 0.25, motionX, motionY, motionZ);
+                        this.level.addParticle(ParticleTypes.BUBBLE,
+                                               this.getX() - motionX * 0.25,
+                                               this.getY() - motionY * 0.25,
+                                               this.getZ() - motionZ * 0.25,
+                                               motionX,
+                                               motionY,
+                                               motionZ
+                        );
                     }
                 }
                 this.setPos(this.getX() + motionX, this.getY() + motionY, this.getZ() + motionZ);
                 //Update Motion
-                motionX += /*dragX +*/ accCoriolisX;
+//                motionX += dragX;
                 motionY += accY + /*dragY +*/ accCoriolisY + accCentrifugalY;
-                motionZ += /*dragZ +*/ accCoriolisZ + accCentrifugalZ;
+//                motionZ += dragZ;
             }
             this.setDeltaMovement(motionX, motionY, motionZ);
             this.checkInsideBlocks();
@@ -591,21 +586,6 @@ public abstract class EntityGenericProjectile extends Entity implements IEntityS
         ++this.despawnTicks;
         if (this.despawnTicks >= 1_200) {
             this.discard();
-        }
-    }
-
-    public enum PickupStatus {
-        DISALLOWED,
-        ALLOWED,
-        CREATIVE_ONLY;
-
-        public static final PickupStatus[] VALUES = values();
-
-        public static PickupStatus getByOrdinal(int ordinal) {
-            if (ordinal < 0 || ordinal > VALUES.length) {
-                ordinal = 0;
-            }
-            return VALUES[ordinal];
         }
     }
 
@@ -642,6 +622,21 @@ public abstract class EntityGenericProjectile extends Entity implements IEntityS
         public void writeToBuffer(FriendlyByteBuf buf) {
             buf.writeVarInt(this.shooterId);
             buf.writeFloat(this.mass);
+        }
+    }
+
+    public enum PickupStatus {
+        DISALLOWED,
+        ALLOWED,
+        CREATIVE_ONLY;
+
+        public static final PickupStatus[] VALUES = values();
+
+        public static PickupStatus getByOrdinal(int ordinal) {
+            if (ordinal < 0 || ordinal > VALUES.length) {
+                ordinal = 0;
+            }
+            return VALUES[ordinal];
         }
     }
 }
