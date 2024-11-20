@@ -23,7 +23,7 @@ public final class EarthHelper {
     private static final int MAX_BLOCK = (1 << BITS_BLOCK - 1) - 1;
     private static final int MIN_BLOCK = -(1 << BITS_BLOCK - 1);
     private static final Vec3f MOON = new Vec3f(0, 0, 0);
-    public static final int POLE = 1 << BITS_BLOCK - 1;
+    public static final int POLE = 1 << BITS_BLOCK - 2;
     public static final int POLAR_CIRCLE = (int) -calculateZFromLatitude(90 - ECLIPTIC_INCLINATION);
     public static final int TROPIC = (int) -calculateLatitude(ECLIPTIC_INCLINATION);
     private static final Vec3f SKY_COLOR = new Vec3f(0, 0, 0);
@@ -45,7 +45,7 @@ public final class EarthHelper {
     }
 
     public static int absDeltaChunkCoordinate(int d0, int d1) {
-        int d = Math.abs(d0 - d1);
+        int d = MathHelper.abs(d0 - d1);
         int mul = d - (MAX_CHUNK + 2) >> Integer.SIZE - 1;
         return -mul * d + (mul + 1) * (-d + 2 * (MAX_CHUNK + 1));
     }
@@ -60,19 +60,29 @@ public final class EarthHelper {
         return PlanetsHelper.calculateLatitude(POLE, posZ);
     }
 
+    /**
+     * Calculates the current longitude of the position, given in degrees.
+     *
+     * @param posZ The target Z position.
+     * @return A {@code float} representing the latitude angle in degrees.
+     */
+    public static float calculateLongitude(double posX) {
+        return PlanetsHelper.calculateLatitude(-POLE, posX);
+    }
+
     public static float calculateMoonRightAscension(long worldTime) {
         worldTime += (long) (19.8 * Time.TICKS_PER_HOUR);
         long dayTime = worldTime % (long) (1.05f * Time.TICKS_PER_DAY);
         return Mth.wrapDegrees(360.0f / (long) (1.05f * Time.TICKS_PER_DAY) * dayTime);
     }
 
-    public static float calculateStarsRightAscension(long worldTime) {
+    public static float calculateStarsRightAscension(long worldTime, float longitude) {
         worldTime += Time.TICKS_PER_DAY;
         //In theory all these modulus shouldn't be necessary, but when the worldTime exceeds a few years, floating point errors start to make these
         // numbers jittery.
         long dayTime = worldTime % Time.TICKS_PER_DAY;
         long yearTime = worldTime % Time.TICKS_PER_YEAR;
-        return Mth.wrapDegrees(360.0f / Time.TICKS_PER_DAY * dayTime + 360.0f / Time.TICKS_PER_YEAR * yearTime);
+        return Mth.wrapDegrees(360.0f / Time.TICKS_PER_DAY * dayTime + 360.0f / Time.TICKS_PER_YEAR * yearTime + longitude);
     }
 
     public static float calculateSunRightAscension(long worldTime) {
@@ -115,10 +125,10 @@ public final class EarthHelper {
         return 9.0f / 7.0F * dRightAsc;
     }
 
-    public static float getMoonAltitude(float sinLatitude, float cosLatitude, float rightAscension, float celestialRadius, float declination) {
-        rightAscension -= 90;
-        float sinRightAsc = MathHelper.sinDeg(rightAscension);
-        MOON.x = celestialRadius * MathHelper.cosDeg(rightAscension);
+    public static float getMoonAltitude(float sinLatitude, float cosLatitude, float hourAngle, float celestialRadius, float declination) {
+        hourAngle -= 90;
+        float sinRightAsc = MathHelper.sinDeg(hourAngle);
+        MOON.x = celestialRadius * MathHelper.cosDeg(hourAngle);
         float yt = celestialRadius * sinRightAsc;
         MOON.y = yt * cosLatitude + declination * sinLatitude;
         MOON.z = declination * cosLatitude - celestialRadius * sinRightAsc * sinLatitude;

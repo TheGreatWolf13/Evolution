@@ -46,12 +46,12 @@ public final class PlanetsHelper {
     private static float ha4Mars;
     private static float ha5Jupiter;
     private static float ha6Saturn;
-    private static float ySun;
-    private static float xSun;
-    private static float localTime;
-    private static float sunRA;
     private static boolean is1MercuryTransiting;
     private static boolean is2VenusTransiting;
+    private static float localTime;
+    private static float sunRA;
+    private static float xSun;
+    private static float ySun;
 
     private PlanetsHelper() {
     }
@@ -61,7 +61,6 @@ public final class PlanetsHelper {
     }
 
     public static float calculateLatitude(int quarterCircunference, double posZ) {
-        posZ = MathHelper.clamp(posZ, -quarterCircunference, quarterCircunference);
         return -90.0f * (float) posZ / quarterCircunference;
     }
 
@@ -295,7 +294,7 @@ public final class PlanetsHelper {
         return is2VenusTransiting;
     }
 
-    public static void preCalculations(long worldTime) {
+    public static void preCalculations(long worldTime, float localTime) {
         float meanAnomaly = calculateMeanAnomaly0Sun(worldTime);
         float lonSun = meanAnomaly + ARGUMENT_PERIHELION_0SUN;
         //Geocentric
@@ -304,6 +303,6 @@ public final class PlanetsHelper {
         float xe = xSun;
         float ye = ySun * COS_ECLIPTIC;
         sunRA = (float) MathHelper.atan2Deg(ye, xe);
-        localTime = EarthHelper.calculateStarsRightAscension(worldTime);
+        PlanetsHelper.localTime = localTime;
     }
 }

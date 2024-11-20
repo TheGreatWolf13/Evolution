@@ -17,27 +17,27 @@ import tgw.evolution.util.physics.PlanetsHelper;
 public class DimensionOverworld {
 
     private static final float[] DUSK_DAWN_COLORS = new float[4];
-    private final Vec3f lastFogColor = new Vec3f(0, 0, 0);
     private float @Nullable [] duskDawnColors;
     private MoonPhase eclipsePhase = MoonPhase.FULL_MOON;
     private boolean isCloseToLunarEclipse;
     private boolean isCloseToSolarEclipse;
+    private final Vec3f lastFogColor = new Vec3f(0, 0, 0);
     private float latitude;
     private @Nullable ClientLevel level;
     private float[] lightBrightnessTable;
+    private float localTime;
     private float lunarEclipseDDeclination;
     private float lunarEclipseDRightAscension;
     private float moonAltitude;
     private float moonDeclinationOffset;
+    private float moonHA;
     private MoonPhase moonPhase = MoonPhase.NEW_MOON;
-    private float moonRightAscension;
     private float solarEclipseDDeclination;
     private float solarEclipseDRightAscension;
-    private float starsRightAscension;
     private float sunAltitude;
     private float sunAzimuth;
     private float sunDeclinationOffset;
-    private float sunRightAscension;
+    private float sunHA;
 
     public DimensionOverworld() {
         this.generateLightBrightnessTable();
@@ -79,6 +79,10 @@ public class DimensionOverworld {
         return this.lightBrightnessTable;
     }
 
+    public float getLocalTime() {
+        return this.localTime;
+    }
+
     public float getLunarEclipseDRightAscension() {
         return this.lunarEclipseDRightAscension;
     }
@@ -107,12 +111,12 @@ public class DimensionOverworld {
         return this.moonDeclinationOffset;
     }
 
-    public MoonPhase getMoonPhase() {
-        return this.moonPhase;
+    public float getMoonHA() {
+        return this.moonHA;
     }
 
-    public float getMoonRightAscension() {
-        return this.moonRightAscension;
+    public MoonPhase getMoonPhase() {
+        return this.moonPhase;
     }
 
     public float getSkyBrightness(float partialTicks) {
@@ -127,10 +131,6 @@ public class DimensionOverworld {
         float amplitudeMod = 8.0F - Math.abs(this.solarEclipseDDeclination);
         amplitudeMod = MathHelper.relativize(amplitudeMod, 4.5f, 7.75f);
         return angleMod * amplitudeMod;
-    }
-
-    public float getStarsRightAscension() {
-        return this.starsRightAscension;
     }
 
     /**
@@ -166,8 +166,8 @@ public class DimensionOverworld {
         return this.sunDeclinationOffset;
     }
 
-    public float getSunRightAscension() {
-        return this.sunRightAscension;
+    public float getSunHA() {
+        return this.sunHA;
     }
 
     public boolean isCloseToLunarEclipse() {
@@ -233,48 +233,54 @@ public class DimensionOverworld {
         profiler.push("init");
         long dayTime = this.level.getDayTime();
         Entity cameraEntity = Minecraft.getInstance().getCameraEntity();
-        this.latitude = -EarthHelper.calculateLatitude(cameraEntity == null ? 0 : cameraEntity.getZ());
+        float longitude;
+        if (cameraEntity == null) {
+            this.latitude = 0;
+            longitude = 0;
+        }
+        else {
+            this.latitude = -EarthHelper.calculateLatitude(cameraEntity.getZ());
+            longitude = EarthHelper.calculateLongitude(cameraEntity.getX());
+        }
         float sinLatitude = MathHelper.sinDeg(this.latitude);
         float cosLatitude = MathHelper.cosDeg(this.latitude);
         profiler.popPush("stars");
-        this.starsRightAscension = EarthHelper.calculateStarsRightAscension(dayTime);
+        this.localTime = EarthHelper.calculateStarsRightAscension(dayTime, longitude);
         profiler.popPush("sun");
-        this.sunRightAscension = EarthHelper.calculateSunRightAscension(dayTime);
+        this.sunHA = this.localTime - EarthHelper.calculateSunRightAscension(dayTime) + 90;
         float seasonDeclination = EarthHelper.sunSeasonalDeclination(dayTime);
         this.sunDeclinationOffset = -EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.tanDeg(seasonDeclination);
-        this.sunAltitude = EarthHelper.getSunAltitude(sinLatitude, cosLatitude, this.sunRightAscension, EarthHelper.CELESTIAL_SPHERE_RADIUS,
-                                                      this.sunDeclinationOffset);
+        this.sunAltitude = EarthHelper.getSunAltitude(sinLatitude, cosLatitude, this.sunHA, EarthHelper.CELESTIAL_SPHERE_RADIUS, this.sunDeclinationOffset);
         profiler.popPush("moon");
-        this.moonRightAscension = EarthHelper.calculateMoonRightAscension(dayTime);
+        this.moonHA = this.localTime - EarthHelper.calculateMoonRightAscension(dayTime) + 90;
         float monthlyDeclination = EarthHelper.lunarMonthlyDeclination(dayTime);
         this.moonDeclinationOffset = -EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.tanDeg(monthlyDeclination);
-        this.moonPhase = MoonPhase.byAngles(this.sunRightAscension, this.moonRightAscension);
-        this.moonAltitude = EarthHelper.getMoonAltitude(sinLatitude, cosLatitude, this.moonRightAscension, EarthHelper.CELESTIAL_SPHERE_RADIUS,
-                                                        this.moonDeclinationOffset);
+        this.moonPhase = MoonPhase.byAngles(this.sunHA, this.moonHA);
+        this.moonAltitude = EarthHelper.getMoonAltitude(sinLatitude, cosLatitude, this.moonHA, EarthHelper.CELESTIAL_SPHERE_RADIUS, this.moonDeclinationOffset);
         profiler.popPush("eclipse");
-        float dRightAscension = Mth.wrapDegrees(this.sunRightAscension - this.moonRightAscension);
+        float dHA = Mth.wrapDegrees(this.sunHA - this.moonHA);
         this.isCloseToSolarEclipse = false;
         this.isCloseToLunarEclipse = false;
-        if (Math.abs(dRightAscension) <= 8) {
+        if (Math.abs(dHA) <= 8) {
             float dDeclination = Mth.wrapDegrees(seasonDeclination - monthlyDeclination);
             if (Math.abs(dDeclination) <= 8) {
                 this.isCloseToSolarEclipse = true;
-                this.solarEclipseDRightAscension = dRightAscension;
+                this.solarEclipseDRightAscension = dHA;
                 this.solarEclipseDDeclination = dDeclination;
             }
         }
-        else if (176 <= Math.abs(dRightAscension)) {
+        else if (176 <= Math.abs(dHA)) {
             float dDeclination = Mth.wrapDegrees(seasonDeclination + monthlyDeclination);
             if (Math.abs(dDeclination) <= 8) {
-                if (dRightAscension > 0) {
-                    dRightAscension -= 180;
+                if (dHA > 0) {
+                    dHA -= 180;
                 }
                 else {
-                    dRightAscension += 180;
+                    dHA += 180;
                 }
-                dRightAscension = -dRightAscension;
+                dHA = -dHA;
                 this.isCloseToLunarEclipse = true;
-                this.lunarEclipseDRightAscension = dRightAscension;
+                this.lunarEclipseDRightAscension = dHA;
                 this.lunarEclipseDDeclination = dDeclination;
                 this.eclipsePhase = EarthHelper.phaseByEclipseIntensity(this.getLunarEclipseIntensity());
             }
@@ -287,7 +293,7 @@ public class DimensionOverworld {
         }
         if (EvolutionConfig.SHOW_PLANETS.get()) {
             profiler.popPush("planets");
-            PlanetsHelper.preCalculations(dayTime);
+            PlanetsHelper.preCalculations(dayTime, this.localTime);
             PlanetsHelper.calculateOrbit1Mercury(dayTime);
             PlanetsHelper.calculateOrbit2Venus(dayTime);
             PlanetsHelper.calculateOrbit4Mars(dayTime);

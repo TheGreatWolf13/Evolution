@@ -39,8 +39,8 @@ public class SkyRenderer {
     private static final Quaternion MOON_TRANSFORM = Vector3f.XP.rotationDegrees(180);
     private static float oldLatitude;
     private static float oldMoonRA;
-    private final DimensionOverworld dimension;
     private @Nullable VertexBuffer darkBuffer;
+    private final DimensionOverworld dimension;
     private boolean fogEnabled;
     private SkyFogSetup fogSetup;
     private @Nullable VertexBuffer skyBuffer;
@@ -338,11 +338,11 @@ public class SkyRenderer {
             oldLatitude = latitude;
             LATITUDE_TRANSFORM.set(Vector3f.ZP, latitude, true);
         }
-        float sunRightAscension = this.dimension.getSunRightAscension();
+        float sunRightAscension = this.dimension.getSunHA();
         float sunDeclinationOffset = this.dimension.getSunDeclinationOffset();
         Vec3f skyColor = EarthHelper.getSkyColor(level, mc.gameRenderer.getMainCamera().getBlockPosition(), partialTick, this.dimension);
         float moonDeclinationOffset = this.dimension.getMoonDeclinationOffset();
-        float moonRightAscension = this.dimension.getMoonRightAscension();
+        float moonRightAscension = this.dimension.getMoonHA();
         if (oldMoonRA != moonRightAscension) {
             oldMoonRA = moonRightAscension;
             MOON_TRANSFORM.set(Vector3f.XP, moonRightAscension + 180, true);
@@ -430,7 +430,7 @@ public class SkyRenderer {
         //Render background stars
         mc.getProfiler().popPush("stars");
         if (starBrightness > 0) {
-            float starsRightAscension = this.dimension.getStarsRightAscension();
+            float starsRightAscension = this.dimension.getLocalTime();
             RenderSystem.disableTexture();
             this.fog(false);
             //Pushed the matrix to draw the background stars
@@ -717,7 +717,7 @@ public class SkyRenderer {
             this.fog(false);
             matrices.pushPose();
             matrices.mulPoseX(-latitude);
-            matrices.mulPoseZ(this.dimension.getStarsRightAscension() + 180);
+            matrices.mulPoseZ(this.dimension.getLocalTime() + 180);
             matrices.mulPoseX(-23.5f);
             RenderSystem.setShaderColor(1.0f, 0.0f, 1.0f, 1.0f);
             Matrix4f matrix = matrices.last().pose();
