@@ -46,10 +46,8 @@ public final class EarthHelper {
 
     public static int absDeltaChunkCoordinate(int d0, int d1) {
         int d = Math.abs(d0 - d1);
-        if (d > MAX_CHUNK + 1) {
-            return -d + 2 * (MAX_CHUNK + 1);
-        }
-        return d;
+        int mul = d - (MAX_CHUNK + 2) >> Integer.SIZE - 1;
+        return -mul * d + (mul + 1) * (-d + 2 * (MAX_CHUNK + 1));
     }
 
     /**
