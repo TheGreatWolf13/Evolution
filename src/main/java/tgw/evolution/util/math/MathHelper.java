@@ -55,12 +55,21 @@ public final class MathHelper {
     public static final Random RANDOM = new Random();
     public static final DirectionDiagonal[][] DIAGONALS = {{DirectionDiagonal.NORTH_WEST, DirectionDiagonal.NORTH_EAST},
                                                            {DirectionDiagonal.SOUTH_WEST, DirectionDiagonal.SOUTH_EAST}};
-    public static final double SIN_60 = Math.sin(Math.toRadians(60));
+    public static final double SIN_60 = 0.866_025_403_784_438_6;
     private static final Predicate<Entity> PICKABLE_ENTITIES = e -> e != null && !e.isSpectator() && e.isPickable();
     private static final Predicate<Entity> ALIVE_ENTITIES = e -> e != null && !e.isSpectator() && e.isPickable() && e.isAlive();
     private static final Pattern DIACRITICAL_MARKS = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
 
     private MathHelper() {
+    }
+
+    /**
+     * Branchless version of abs for integers.
+     * Approximately 23% faster than the standard library version in my system.
+     */
+    public static int abs(int value) {
+        int mask = value >> Integer.SIZE - 1;
+        return (value ^ mask) - mask;
     }
 
     /**
@@ -72,12 +81,8 @@ public final class MathHelper {
      * @return The angle represented by this arc, in radians.
      */
     public static double arcCos(double value) {
-        double a = -0.939_115_566_365_855;
-        double b = 0.921_784_152_891_457_3;
-        double c = -1.284_590_624_469_083_7;
-        double d = 0.295_624_144_969_963_174;
         double valueSqr = value * value;
-        return Math.PI / 2.0 + (a * value + b * valueSqr * value) / (1 + c * valueSqr + d * valueSqr * valueSqr);
+        return Math.PI / 2.0 + (-0.939_115_566_365_855 * value + 0.921_784_152_891_457_3 * valueSqr * value) / (1 + -1.284_590_624_469_083_7 * valueSqr + 0.295_624_144_969_963_174 * valueSqr * valueSqr);
     }
 
     /**
@@ -819,7 +824,7 @@ public final class MathHelper {
                 number -= 5;
                 builder.append("V");
             }
-            else if (number >= 4) {
+            else if (number == 4) {
                 number -= 4;
                 builder.append("IV");
             }
@@ -1343,8 +1348,8 @@ public final class MathHelper {
         VoxelShape[] buffer = {shape, Shapes.empty()};
         int times = (to.get2DDataValue() - from.get2DDataValue() + 4) % 4;
         for (int i = 0; i < times; i++) {
-            //noinspection ObjectAllocationInLoop
             //TODO
+            //noinspection ObjectAllocationInLoop
             buffer[0].forAllBoxes(
                     (minX, minY, minZ, maxX, maxY, maxZ) -> buffer[1] = Shapes.or(buffer[1],
                                                                                   Shapes.box(1 - maxZ, minY, minX, 1 - minZ, maxY, maxX)));
@@ -1375,6 +1380,20 @@ public final class MathHelper {
             a[i - 1] = a[index];
             a[index] = b;
         }
+    }
+
+    /**
+     * Returns -1 if the number is negative and 1 otherwise.
+     */
+    public static int sign(int value) {
+        return value >> Integer.SIZE - 1 | 1;
+    }
+
+    /**
+     * Returns -1 if the number is negative and 1 otherwise.
+     */
+    public static int sign(double value) {
+        return (int) (Double.doubleToRawLongBits(value) >> Double.SIZE - 1 | 1);
     }
 
     /**

@@ -23,11 +23,11 @@ public final class EarthHelper {
     private static final int MAX_BLOCK = (1 << BITS_BLOCK - 1) - 1;
     private static final int MIN_BLOCK = -(1 << BITS_BLOCK - 1);
     private static final Vec3f MOON = new Vec3f(0, 0, 0);
-    public static final int POLE = 100_000;
+    public static final int POLE = 1 << BITS_BLOCK - 1;
     public static final int POLAR_CIRCLE = (int) -calculateZFromLatitude(90 - ECLIPTIC_INCLINATION);
+    public static final int TROPIC = (int) -calculateLatitude(ECLIPTIC_INCLINATION);
     private static final Vec3f SKY_COLOR = new Vec3f(0, 0, 0);
     private static final Vec3f SUN = new Vec3f(0, 0, 0);
-    public static final int TROPIC = (int) -calculateLatitude(ECLIPTIC_INCLINATION);
     public static final int WORLD_SIZE = 1 << BITS_BLOCK;
     private static final Vec3f ZENITH = new Vec3f(0, CELESTIAL_SPHERE_RADIUS, 0);
     public static float sunX;
@@ -89,20 +89,22 @@ public final class EarthHelper {
 
     public static double deltaBlockCoordinate(double d0, double d1) {
         double d = d0 - d1;
-        double absD = Math.abs(d);
-        if (absD > MAX_BLOCK + 1) {
-            return d - Math.signum(d) * (2 * (MAX_BLOCK + 1));
+        if (Math.abs(d) > MAX_BLOCK + 1) {
+            return d - 2 * (MAX_BLOCK + 1) * MathHelper.sign(d);
         }
         return d;
     }
 
+    public static int deltaBlockCoordinate(int d0, int d1) {
+        int d = d0 - d1;
+        int mul = MathHelper.abs(d) - (MAX_BLOCK + 2) >> Integer.SIZE - 1;
+        return -mul * d + (mul + 1) * (d - 2 * (MAX_BLOCK + 1) * MathHelper.sign(d));
+    }
+
     public static int deltaChunkCoordinate(int d0, int d1) {
         int d = d0 - d1;
-        int absD = Math.abs(d);
-        if (absD > MAX_CHUNK + 1) {
-            return d - Mth.sign(d) * 2 * (MAX_CHUNK + 1);
-        }
-        return d;
+        int mul = MathHelper.abs(d) - (MAX_CHUNK + 2) >> Integer.SIZE - 1;
+        return -mul * d + (mul + 1) * (d - 2 * (MAX_CHUNK + 1) * MathHelper.sign(d));
     }
 
     /**
@@ -310,8 +312,12 @@ public final class EarthHelper {
     }
 
     public static double wrapBlockCoordinate(double value) {
-        if (value < MIN_BLOCK || value >= MAX_BLOCK + 1) {
-            int wholePart = (int) Math.floor(value);
+        if (value < MIN_BLOCK) {
+            int wholePart = (int) (value + 2 * WORLD_SIZE) - 2 * WORLD_SIZE;
+            return wrapBlockCoordinate(wholePart) + value - wholePart;
+        }
+        if (value >= MAX_BLOCK + 1) {
+            int wholePart = (int) value;
             return wrapBlockCoordinate(wholePart) + value - wholePart;
         }
         return value;
