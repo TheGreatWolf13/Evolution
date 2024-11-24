@@ -42,7 +42,21 @@ public final class BlockUtils {
     public static final IStatePredicate NEVER = (state, level, x, y, z) -> false;
     public static final IStateArgumentPredicate<EntityType<?>> ALWAYS_SPAWN = (state, level, x, y, z, arg) -> true;
     public static final IStateArgumentPredicate<EntityType<?>> NEVER_SPAWN = (state, level, x, y, z, arg) -> false;
+    //Block Light
+    //  White
+    public static final ToIntFunction<BlockState> LIGHT_WHITE_1 = state -> 0b1_0001_1_0001_1_0001;
+    public static final ToIntFunction<BlockState> LIGHT_WHITE_7 = state -> 0b1_0111_1_0111_1_0111;
+    public static final ToIntFunction<BlockState> LIGHT_WHITE_14 = state -> 0b1_1110_1_1110_1_1110;
+    public static final ToIntFunction<BlockState> LIGHT_WHITE_15 = state -> 0b1_1111_1_1111_1_1111;
+    public static final ToIntFunction<BlockState> LIGHT_YELLOW_15 = state -> 0b0_0000_1_1111_1_1111;
+    //  Primary
+    public static final ToIntFunction<BlockState> LIGHT_RED_15 = state -> 0b0_0000_0_0000_1_1111;
+    public static final ToIntFunction<BlockState> LIGHT_GREEN_15 = state -> 0b0_0000_1_1111_0_0000;
+    public static final ToIntFunction<BlockState> LIGHT_BLUE_15 = state -> 0b1_1111_0_0000_0_0000;
+    //  Secondary
     public static final ToIntFunction<BlockState> LIGHT_CYAN_10 = state -> 0b1_1010_1_1010_0_0000;
+    public static final ToIntFunction<BlockState> LIGHT_CYAN_15 = state -> 0b1_1111_1_1111_0_0000;
+    //  Tertiary
     public static final ToIntFunction<BlockState> LIGHT_ORANGE_3 = state -> 0b0_0000_0_0011_1_0011;
     public static final ToIntFunction<BlockState> LIGHT_ORANGE_14 = state -> 0b0_0000_0_1110_1_1110;
     public static final ToIntFunction<BlockState> LIGHT_ORANGE_15 = state -> 0b0_0000_0_1111_1_1111;
@@ -52,12 +66,7 @@ public final class BlockUtils {
     public static final ToIntFunction<BlockState> LIGHT_PURPLE_5 = state -> 0b1_0101_0_0000_0_0101;
     public static final ToIntFunction<BlockState> LIGHT_PURPLE_10 = state -> 0b1_1010_0_0000_0_1010;
     public static final ToIntFunction<BlockState> LIGHT_PURPLE_11 = state -> 0b1_1011_0_0000_0_1011;
-    public static final ToIntFunction<BlockState> LIGHT_RED_15 = state -> 0b0_0000_0_0000_1_1111;
-    public static final ToIntFunction<BlockState> LIGHT_WHITE_1 = state -> 0b1_0001_1_0001_1_0001;
-    public static final ToIntFunction<BlockState> LIGHT_WHITE_7 = state -> 0b1_0111_1_0111_1_0111;
-    public static final ToIntFunction<BlockState> LIGHT_WHITE_14 = state -> 0b1_1110_1_1110_1_1110;
-    public static final ToIntFunction<BlockState> LIGHT_WHITE_15 = state -> 0b1_1111_1_1111_1_1111;
-    public static final ToIntFunction<BlockState> LIGHT_YELLOW_15 = state -> 0b0_0000_1_1111_1_1111;
+
     private static final ThreadLocal<TriKey2BLinkedHashCache<BlockState, BlockState, Direction>> OCCLUSION_CACHE = ThreadLocal.withInitial(() -> new TriKey2BLinkedHashCache<>(2_048, (byte) 127));
     private static final ItemDropper DROPPER = new ItemDropper();
 
