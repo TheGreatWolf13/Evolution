@@ -24,7 +24,7 @@ public final class CommandDate {
     }
 
     private static int addDate(CommandContext<CommandSourceStack> context, int type) {
-        int increment = IntegerArgumentType.getInteger(context, "increment");
+        long increment = IntegerArgumentType.getInteger(context, "increment");
         switch (type) {
             case 0 -> increment = (int) (increment * Time.TICKS_PER_HOUR / 60.0);
             case 1 -> increment *= Time.TICKS_PER_HOUR;
