@@ -247,12 +247,12 @@ public class DimensionOverworld {
         profiler.popPush("stars");
         this.localTime = EarthHelper.calculateStarsRightAscension(dayTime, longitude);
         profiler.popPush("sun");
-        this.sunHA = this.localTime - EarthHelper.calculateSunRightAscension(dayTime) + 90;
+        this.sunHA = longitude + EarthHelper.calculateSunRightAscension(dayTime);
         float seasonDeclination = EarthHelper.sunSeasonalDeclination(dayTime);
         this.sunDeclinationOffset = -EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.tanDeg(seasonDeclination);
         this.sunAltitude = EarthHelper.getSunAltitude(sinLatitude, cosLatitude, this.sunHA, EarthHelper.CELESTIAL_SPHERE_RADIUS, this.sunDeclinationOffset);
         profiler.popPush("moon");
-        this.moonHA = this.localTime - EarthHelper.calculateMoonRightAscension(dayTime) + 90;
+        this.moonHA = longitude + EarthHelper.calculateMoonRightAscension(dayTime);
         float monthlyDeclination = EarthHelper.lunarMonthlyDeclination(dayTime);
         this.moonDeclinationOffset = -EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.tanDeg(monthlyDeclination);
         this.moonPhase = MoonPhase.byAngles(this.sunHA, this.moonHA);
