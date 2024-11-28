@@ -85,16 +85,19 @@ public final class PlanetsHelper {
     }
 
     private static float calculateMeanAnomaly4Mars(long worldTime) {
+        worldTime += 13L * Time.TICKS_PER_MONTH;
         long yearTime = worldTime % Time.MARTIAN_YEAR;
         return MathHelper.wrapRadians(18.602_1f * SI.DEGREE + Mth.TWO_PI / Time.MARTIAN_YEAR * yearTime);
     }
 
     private static float calculateMeanAnomaly5Jupiter(long worldTime) {
+        worldTime += 8L * Time.TICKS_PER_YEAR;
         long yearTime = worldTime % Time.JUPITERIAN_YEAR;
         return MathHelper.wrapRadians(19.895_0f * SI.DEGREE + Mth.TWO_PI / Time.JUPITERIAN_YEAR * yearTime);
     }
 
     private static float calculateMeanAnomaly6Saturn(long worldTime) {
+        worldTime += 20L * Time.TICKS_PER_YEAR;
         long yearTime = worldTime % Time.SATURNIAN_YEAR;
         return MathHelper.wrapRadians(316.967_0f * SI.DEGREE + Mth.TWO_PI / Time.SATURNIAN_YEAR * yearTime);
     }
