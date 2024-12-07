@@ -46,7 +46,7 @@ import tgw.evolution.blocks.tileentities.TEKnapping;
 import tgw.evolution.blocks.tileentities.TEMolding;
 import tgw.evolution.blocks.tileentities.TEPuzzle;
 import tgw.evolution.blocks.tileentities.TESchematic;
-import tgw.evolution.events.EntityEvents;
+import tgw.evolution.entities.EntityUtils;
 import tgw.evolution.hooks.LivingHooks;
 import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.init.EvolutionDamage;
@@ -54,7 +54,6 @@ import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.inventory.extendedinventory.ContainerInventoryProvider;
 import tgw.evolution.network.*;
 import tgw.evolution.patches.PatchServerPacketListener;
-import tgw.evolution.util.EntityHelper;
 import tgw.evolution.util.PlayerHelper;
 import tgw.evolution.util.constants.BlockFlags;
 import tgw.evolution.util.math.BlockPosUtil;
@@ -63,7 +62,6 @@ import tgw.evolution.util.math.BlockPosUtil;
 public abstract class MixinServerGamePacketListenerImpl implements ServerGamePacketListener, PatchServerPacketListener {
 
     @Shadow @Final static Logger LOGGER;
-    @Shadow public ServerPlayer player;
     @Shadow private int aboveGroundTickCount;
     @Shadow private int aboveGroundVehicleTickCount;
     @Shadow private @Nullable Vec3 awaitingPositionFromClient;
@@ -79,6 +77,7 @@ public abstract class MixinServerGamePacketListenerImpl implements ServerGamePac
     @Shadow private long keepAliveTime;
     @Shadow private int knownMovePacketCount;
     @Shadow private @Nullable Entity lastVehicle;
+    @Shadow public ServerPlayer player;
     @Shadow private int receivedMovePacketCount;
     @Shadow @Final private MinecraftServer server;
     @Shadow private int tickCount;
@@ -305,12 +304,16 @@ public abstract class MixinServerGamePacketListenerImpl implements ServerGamePac
     @Override
     public void handleSetMoldingType(PacketCSSetMoldingType packet) {
         PacketUtils.ensureRunningOnSameThread(packet, this, this.player.getLevel());
-        BlockEntity tile = this.player.level.getBlockEntity(packet.pos);
+        long pos = packet.pos;
+        int x = BlockPos.getX(pos);
+        int y = BlockPos.getY(pos);
+        int z = BlockPos.getZ(pos);
+        BlockEntity tile = this.player.level.getBlockEntity_(x, y, z);
         if (tile instanceof TEMolding molding) {
             molding.setType(packet.molding);
         }
         else {
-            Evolution.warn("Could not find TEMolding at {}", packet.pos);
+            Evolution.warn("Could not find TEMolding at [{}, {}, {}]", x, y, z);
         }
     }
 
@@ -329,7 +332,7 @@ public abstract class MixinServerGamePacketListenerImpl implements ServerGamePac
     @Override
     public void handleSkinType(PacketCSSkinType packet) {
         PacketUtils.ensureRunningOnSameThread(packet, this, this.player.getLevel());
-        EntityEvents.SKIN_TYPE.put(this.player.getUUID(), packet.skin);
+        EntityUtils.SKIN_TYPE.put(this.player.getUUID(), packet.skin);
     }
 
     @Override
@@ -349,7 +352,7 @@ public abstract class MixinServerGamePacketListenerImpl implements ServerGamePac
         PacketUtils.ensureRunningOnSameThread(packet, this, this.player.getLevel());
         Entity victim = this.player.level.getEntity(packet.victimId);
         if (victim != null) {
-            EntityHelper.attackEntity(this.player, victim, packet.type, packet.hitboxSet);
+            tgw.evolution.util.EntityHelper.attackEntity(this.player, victim, packet.type, packet.hitboxSet);
         }
     }
 
@@ -362,9 +365,13 @@ public abstract class MixinServerGamePacketListenerImpl implements ServerGamePac
     @Override
     public void handleUpdatePuzzle(PacketCSUpdatePuzzle packet) {
         PacketUtils.ensureRunningOnSameThread(packet, this, this.player.getLevel());
-        BlockEntity tile = this.player.level.getBlockEntity(packet.pos);
+        long pos = packet.pos;
+        int x = BlockPos.getX(pos);
+        int y = BlockPos.getY(pos);
+        int z = BlockPos.getZ(pos);
+        BlockEntity tile = this.player.level.getBlockEntity_(x, y, z);
         if (!(tile instanceof TEPuzzle puzzle)) {
-            Evolution.warn("Could not find TEPuzzle at " + packet.pos);
+            Evolution.warn("Could not find TEPuzzle at [{}, {}, {}]", x, y, z);
             return;
         }
         puzzle.setAttachmentType(packet.attachmentType);
@@ -377,9 +384,12 @@ public abstract class MixinServerGamePacketListenerImpl implements ServerGamePac
     public void handleUpdateSchematicBlock(PacketCSUpdateSchematicBlock packet) {
         PacketUtils.ensureRunningOnSameThread(packet, this, this.player.getLevel());
         if (this.player.canUseGameMasterBlocks()) {
-            BlockPos tilePos = packet.tilePos;
-            BlockState state = this.player.level.getBlockState(tilePos);
-            BlockEntity tile = this.player.level.getBlockEntity(tilePos);
+            long tilePos = packet.tilePos;
+            int x = BlockPos.getX(tilePos);
+            int y = BlockPos.getY(tilePos);
+            int z = BlockPos.getZ(tilePos);
+            BlockState state = this.player.level.getBlockState_(x, y, z);
+            BlockEntity tile = this.player.level.getBlockEntity_(x, y, z);
             if (tile instanceof TESchematic teSchematic) {
                 teSchematic.setMode(packet.mode);
                 teSchematic.setName(packet.name);
@@ -428,7 +438,7 @@ public abstract class MixinServerGamePacketListenerImpl implements ServerGamePac
                     this.player.displayClientMessage(new TranslatableComponent("structure_block.invalid_structure_name", packet.name), false);
                 }
                 teSchematic.setChanged();
-                this.player.level.sendBlockUpdated(tilePos, state, state, BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE);
+                this.player.level.sendBlockUpdated_(x, y, z, state, state, BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE);
             }
         }
     }

@@ -5,7 +5,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
@@ -26,11 +25,11 @@ public class ScreenMolding extends Screen {
     private static final int WIDTH = 190;
     private static final int HEIGHT = 78;
     private final O2OMap<Button, ItemStack> buttons = new O2OHashMap<>();
-    private final BlockPos pos;
+    private final long pos;
     private final ResourceLocation resBackground = Evolution.getResource("textures/gui/molding.png");
     private final ItemStack[] stacks;
 
-    public ScreenMolding(BlockPos pos) {
+    public ScreenMolding(long pos) {
         super(new TranslatableComponent("evolution.gui.molding"));
         this.pos = pos;
         this.stacks = new ItemStack[EnumMolding.VALUES.length - 1];
@@ -39,7 +38,7 @@ public class ScreenMolding extends Screen {
         }
     }
 
-    public static void open(BlockPos pos) {
+    public static void open(long pos) {
         Minecraft.getInstance().setScreen(new ScreenMolding(pos));
     }
 

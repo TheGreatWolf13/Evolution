@@ -63,7 +63,6 @@ import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.client.renderer.ambient.DynamicLights;
 import tgw.evolution.entities.EffectHelper;
 import tgw.evolution.entities.EntityUtils;
-import tgw.evolution.events.EntityEvents;
 import tgw.evolution.hooks.LivingHooks;
 import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.init.EvolutionBlockTags;
@@ -279,7 +278,22 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
             return false;
         }
         MobEffectInstance oldInstance = this.activeEffects.get(effectInstance.getEffect());
-        EntityEvents.onEffectAdded((LivingEntity) (Object) this, oldInstance, effectInstance);
+        if (entity instanceof ServerPlayer player) {
+            if (oldInstance == null) {
+                player.connection.send(new PacketSCAddEffect(effectInstance, PacketSCAddEffect.Logic.ADD));
+            }
+            else {
+                MobEffectInstance newEffect = new MobEffectInstance(oldInstance);
+                newEffect.update(effectInstance);
+                boolean isSame = oldInstance.getAmplifier() == newEffect.getAmplifier();
+                if (isSame) {
+                    player.connection.send(new PacketSCAddEffect(newEffect, PacketSCAddEffect.Logic.UPDATE));
+                }
+                else {
+                    player.connection.send(new PacketSCAddEffect(newEffect, PacketSCAddEffect.Logic.REPLACE));
+                }
+            }
+        }
         if (oldInstance == null) {
             this.activeEffects.put(effectInstance.getEffect(), effectInstance);
             this.onEffectAdded(effectInstance, entity);
@@ -1941,7 +1955,12 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
                 //noinspection DataFlowIssue
                 if (!instance.tick((LivingEntity) (Object) this, null)) {
                     if (!this.level.isClientSide) {
-                        EntityEvents.onEffectExpired((LivingEntity) (Object) this, instance);
+                        if ((Object) this instanceof ServerPlayer player) {
+                            if (effect != null) {
+                                //noinspection ObjectAllocationInLoop
+                                player.connection.send(new PacketSCRemoveEffect(effect));
+                            }
+                        }
                         it = activeEffects.removeIteration(it);
                         this.onEffectRemoved(instance);
                     }

@@ -46,7 +46,7 @@ public class ItemClay extends ItemGenericPlaceable {
     @Override
     protected void successPlaceLogic(Level level, int x, int y, int z, Player player, ItemStack stack) {
         Evolution.deprecatedMethod();
-        ((ServerPlayer) player).connection.send(new PacketSCOpenMoldingGui(new BlockPos(x, y, z)));
+        ((ServerPlayer) player).connection.send(new PacketSCOpenMoldingGui(BlockPos.asLong(x, y, z)));
     }
 
     @Override

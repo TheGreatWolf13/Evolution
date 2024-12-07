@@ -21,16 +21,16 @@ import tgw.evolution.network.PacketCSUpdatePuzzle;
 
 public class ScreenPuzzle extends Screen {
 
-    private final Component textAttachmentType = new TranslatableComponent("evolution.gui.puzzle.attachmentType");
-    private final Component textCheckBB = new TranslatableComponent("evolution.gui.puzzle.checkBB");
-    private final Component textFinalState = new TranslatableComponent("evolution.gui.puzzle.finalState");
-    private final Component textTargetPool = new TranslatableComponent("evolution.gui.puzzle.targetPool");
-    private final TEPuzzle tile;
     private AdvEditBox attachmentTypeEdit;
     private boolean checkBB;
     private Button doneButton;
     private AdvEditBox finalStateEdit;
     private AdvEditBox targetPoolEdit;
+    private final Component textAttachmentType = new TranslatableComponent("evolution.gui.puzzle.attachmentType");
+    private final Component textCheckBB = new TranslatableComponent("evolution.gui.puzzle.checkBB");
+    private final Component textFinalState = new TranslatableComponent("evolution.gui.puzzle.finalState");
+    private final Component textTargetPool = new TranslatableComponent("evolution.gui.puzzle.targetPool");
+    private final TEPuzzle tile;
 
     public ScreenPuzzle(TEPuzzle tile) {
         super(NarratorChatListener.NO_TITLE);
@@ -140,11 +140,7 @@ public class ScreenPuzzle extends Screen {
         this.tile.setAttachmentType(attachmentType);
         this.tile.setFinalState(finalState);
         this.tile.setCheckBB(this.checkBB);
-        EvolutionClient.sendToServer(new PacketCSUpdatePuzzle(this.tile.getBlockPos(),
-                                                              attachmentType,
-                                                              targetPool,
-                                                              finalState,
-                                                              this.checkBB));
+        EvolutionClient.sendToServer(new PacketCSUpdatePuzzle(this.tile.getBlockPos().asLong(), attachmentType, targetPool, finalState, this.checkBB));
         this.onClose();
     }
 

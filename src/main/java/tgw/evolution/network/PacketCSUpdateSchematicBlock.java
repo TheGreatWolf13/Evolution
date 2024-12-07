@@ -25,21 +25,9 @@ public class PacketCSUpdateSchematicBlock implements Packet<ServerGamePacketList
     public final boolean showAir;
     public final boolean showBB;
     public final BlockPos size;
-    public final BlockPos tilePos;
+    public final long tilePos;
 
-    public PacketCSUpdateSchematicBlock(BlockPos tilePos,
-                                        TESchematic.UpdateCommand command,
-                                        SchematicMode mode,
-                                        String name,
-                                        BlockPos schematicPos,
-                                        BlockPos size,
-                                        Mirror mirror,
-                                        Rotation rotation,
-                                        boolean ignoresEntities,
-                                        boolean showAir,
-                                        boolean showBB,
-                                        float integrity,
-                                        long seed) {
+    public PacketCSUpdateSchematicBlock(long tilePos, TESchematic.UpdateCommand command, SchematicMode mode, String name, BlockPos schematicPos, BlockPos size, Mirror mirror, Rotation rotation, boolean ignoresEntities, boolean showAir, boolean showBB, float integrity, long seed) {
         this.tilePos = tilePos;
         this.command = command;
         this.mode = mode;
@@ -56,7 +44,7 @@ public class PacketCSUpdateSchematicBlock implements Packet<ServerGamePacketList
     }
 
     public PacketCSUpdateSchematicBlock(FriendlyByteBuf buf) {
-        this.tilePos = buf.readBlockPos();
+        this.tilePos = buf.readLong();
         this.command = buf.readEnum(TESchematic.UpdateCommand.class);
         this.mode = buf.readEnum(SchematicMode.class);
         this.name = buf.readUtf();
@@ -79,7 +67,7 @@ public class PacketCSUpdateSchematicBlock implements Packet<ServerGamePacketList
 
     @Override
     public void write(FriendlyByteBuf buf) {
-        buf.writeBlockPos(this.tilePos);
+        buf.writeLong(this.tilePos);
         buf.writeEnum(this.command);
         buf.writeEnum(this.mode);
         buf.writeUtf(this.name);

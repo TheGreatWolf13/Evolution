@@ -20,17 +20,21 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.util.collection.lists.OList;
+import tgw.evolution.util.collection.maps.O2OHashMap;
+import tgw.evolution.util.constants.SkinType;
 import tgw.evolution.util.math.Vec3d;
 import tgw.evolution.util.math.VectorUtil;
 import tgw.evolution.world.util.CollisionShapeCalculator;
 import tgw.evolution.world.util.LevelUtils;
 
+import java.util.Map;
 import java.util.UUID;
 
 public final class EntityUtils {
 
     public static final UUID UUID_ZERO = UUID.fromString("00000000-0000-0000-0000-000000000000");
     public static final GameProfile EMPTY_PROFILE = new GameProfile(UUID_ZERO, "");
+    public static final Map<UUID, SkinType> SKIN_TYPE = new O2OHashMap<>();
 
     private EntityUtils() {
     }

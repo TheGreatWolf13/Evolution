@@ -10,11 +10,14 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stat;
 import net.minecraft.stats.Stats;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
 import net.minecraft.util.Unit;
+import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -48,9 +51,10 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import tgw.evolution.Evolution;
 import tgw.evolution.EvolutionClient;
-import tgw.evolution.events.EntityEvents;
+import tgw.evolution.entities.EntityUtils;
 import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.init.EvolutionDamage;
+import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.items.ItemUtils;
 import tgw.evolution.network.Message;
@@ -562,9 +566,7 @@ public abstract class MixinPlayer extends LivingEntity implements PatchPlayer {
 
     @Override
     public @Nullable HitboxEntity<? extends Player> getHitboxes() {
-        return EntityEvents.SKIN_TYPE.getOrDefault(this.getUUID(), SkinType.STEVE) == SkinType.STEVE ?
-               EvolutionEntityHitboxes.PLAYER_STEVE.get((Player) (Object) this) :
-               EvolutionEntityHitboxes.PLAYER_ALEX.get((Player) (Object) this);
+        return EntityUtils.SKIN_TYPE.getOrDefault(this.getUUID(), SkinType.STEVE) == SkinType.STEVE ? EvolutionEntityHitboxes.PLAYER_STEVE.get((Player) (Object) this) : EvolutionEntityHitboxes.PLAYER_ALEX.get((Player) (Object) this);
     }
 
     @Override
@@ -658,6 +660,9 @@ public abstract class MixinPlayer extends LivingEntity implements PatchPlayer {
     public boolean isCrawling() {
         return this.isCrawling;
     }
+
+    @Shadow
+    public abstract boolean isCreative();
 
     @Override
     public boolean isDiscrete() {
@@ -780,7 +785,19 @@ public abstract class MixinPlayer extends LivingEntity implements PatchPlayer {
     @Overwrite
     public void tick() {
         //Event Pre Tick
-        EntityEvents.onPlayerTickStart((Player) (Object) this);
+        ProfilerFiller profiler = this.level.getProfiler();
+        profiler.push("preTick");
+        profiler.push("reach");
+        AttributeInstance reachDist = this.getAttribute(EvolutionAttributes.REACH_DISTANCE);
+        assert reachDist != null;
+        if (this.isCreative()) {
+            reachDist.setBaseValue(8);
+        }
+        else {
+            reachDist.setBaseValue(PlayerHelper.REACH_DISTANCE);
+        }
+        profiler.pop();
+        profiler.pop();
         //Main Tick
         this.noPhysics = this.isSpectator();
         if (this.isSpectator()) {
@@ -830,7 +847,85 @@ public abstract class MixinPlayer extends LivingEntity implements PatchPlayer {
             this.maxUpStep = 0.6f;
         }
         //Event Post Tick
-        EntityEvents.onPlayerTickEnd((Player) (Object) this);
+        Level level = this.level;
+        profiler.push("postTick");
+        profiler.push("stats");
+        this.awardStat(EvolutionStats.TIME_PLAYED);
+        if (this.getPose() == Pose.CROUCHING) {
+            this.setSprinting(false);
+            this.awardStat(EvolutionStats.TIME_SNEAKING);
+        }
+        if (!this.isSleeping()) {
+            if (this.isAlive()) {
+                this.awardStat(EvolutionStats.TIME_AWAKE);
+                this.awardStat(EvolutionStats.TIME_SINCE_LAST_REST);
+                Stat<ResourceLocation> lastRest = Stats.CUSTOM.get(EvolutionStats.TIME_SINCE_LAST_REST);
+                long time = this.getStat(lastRest);
+                Stat<ResourceLocation> maxAwake = Stats.CUSTOM.get(EvolutionStats.TIME_MAX_AWAKE);
+                long maxTime = this.getStat(maxAwake);
+                if (time > maxTime) {
+                    this.setStat(maxAwake, time);
+                }
+                PlayerHelper.takeStat((Player) (Object) this, Stats.CUSTOM.get(EvolutionStats.TIME_SINCE_LAST_AWAKENED));
+            }
+        }
+        else {
+            this.awardStat(EvolutionStats.TIME_SLEEPING);
+            this.awardStat(EvolutionStats.TIME_SINCE_LAST_AWAKENED);
+            Stat<ResourceLocation> lastAwakened = Stats.CUSTOM.get(EvolutionStats.TIME_SINCE_LAST_AWAKENED);
+            long time = this.getStat(lastAwakened);
+            Stat<ResourceLocation> maxSleep = Stats.CUSTOM.get(EvolutionStats.TIME_MAX_SLEEP);
+            long maxTime = this.getStat(maxSleep);
+            if (time > maxTime) {
+                this.setStat(maxSleep, time);
+            }
+            PlayerHelper.takeStat((Player) (Object) this, Stats.CUSTOM.get(EvolutionStats.TIME_SINCE_LAST_REST));
+        }
+        if (this.isAlive()) {
+            this.awardStat(EvolutionStats.TIME_SINCE_LAST_DEATH);
+        }
+        profiler.popPush("status");
+        //Handles Status Updates
+        if (!level.isClientSide) {
+            //Ticks Player systems
+            if (!this.isCreative() && !this.isSpectator()) {
+                //noinspection DataFlowIssue
+                ServerPlayer p = (ServerPlayer) (Object) this;
+                profiler.push("thirst");
+                p.getThirstStats().tick(p);
+                profiler.popPush("health");
+                p.getHealthStats().tick(p);
+                profiler.popPush("hunger");
+                p.getHungerStats().tick(p);
+                profiler.popPush("temperature");
+                p.getTemperatureStats().tick(p);
+                profiler.pop();
+            }
+        }
+        profiler.popPush("water");
+        if (!level.isClientSide) {
+            //Put off torches in Water
+            if (this.isEyeInFluid(FluidTags.WATER)) {
+                ItemStack mainHand = this.getMainHandItem();
+                ItemStack offHand = this.getOffhandItem();
+                boolean torch = false;
+                if (mainHand.getItem() == EvolutionItems.TORCH) {
+                    int count = mainHand.getCount();
+                    this.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(EvolutionItems.TORCH_UNLIT, count));
+                    torch = true;
+                }
+                if (offHand.getItem() == EvolutionItems.TORCH) {
+                    int count = offHand.getCount();
+                    this.setItemSlot(EquipmentSlot.OFFHAND, new ItemStack(EvolutionItems.TORCH_UNLIT, count));
+                    torch = true;
+                }
+                if (torch) {
+                    level.playSound(null, this.blockPosition(), SoundEvents.FIRE_EXTINGUISH, SoundSource.BLOCKS, 1.0F, 2.6F + (level.random.nextFloat() - level.random.nextFloat()) * 0.8F);
+                }
+            }
+        }
+        profiler.pop();
+        profiler.pop();
     }
 
     @Shadow

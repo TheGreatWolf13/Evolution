@@ -51,7 +51,6 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import tgw.evolution.events.EntityEvents;
 import tgw.evolution.hooks.TickrateChanger;
 import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.network.Message;
@@ -251,7 +250,15 @@ public abstract class MixinPlayerList {
             }
         }
         player.initInventoryMenu();
-        EntityEvents.onPlayerLogin(player);
+        if (!level.isClientSide) {
+            for (Player otherPlayer : level.players()) {
+                if (otherPlayer != player) {
+                    //noinspection ObjectAllocationInLoop
+                    player.connection.send(new PacketSCFixRotation(otherPlayer));
+                }
+            }
+            level.getChunkSource().broadcast(player, new PacketSCFixRotation(player));
+        }
     }
 
     /**
@@ -373,13 +380,13 @@ public abstract class MixinPlayerList {
     }
 
     @Shadow
+    protected abstract void save(ServerPlayer serverPlayer);
+
+    @Shadow
     public abstract void sendLevelInfo(ServerPlayer pPlayer, ServerLevel pLevel);
 
     @Shadow
     public abstract void sendPlayerPermissionLevel(ServerPlayer pPlayer);
-
-    @Shadow
-    protected abstract void save(ServerPlayer serverPlayer);
 
     @Shadow
     protected abstract void updateEntireScoreboard(ServerScoreboard pScoreboard, ServerPlayer pPlayer);

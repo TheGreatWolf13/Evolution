@@ -31,19 +31,6 @@ import java.util.Locale;
 public class ScreenSchematic extends Screen {
 
     private final DecimalFormat decimalFormat = new DecimalFormat("0.0###");
-    private final Component textDetectSize = new TranslatableComponent("evolution.gui.schematic.detectSize");
-    private final Component textEntities = new TranslatableComponent("evolution.gui.schematic.entities");
-    private final Component textIntegrity = new TranslatableComponent("evolution.gui.schematic.integrity");
-    private final Component textLoad = new TranslatableComponent("evolution.gui.schematic.load");
-    private final Component textMirror = new TranslatableComponent("evolution.gui.schematic.mirror");
-    private final Component textMode = new TranslatableComponent("evolution.gui.schematic.mode");
-    private final Component textName = new TranslatableComponent("evolution.gui.schematic.name");
-    private final Component textPos = new TranslatableComponent("evolution.gui.schematic.pos");
-    private final Component textSave = new TranslatableComponent("evolution.gui.schematic.save");
-    private final Component textShowAir = new TranslatableComponent("evolution.gui.schematic.showAir");
-    private final Component textShowBB = new TranslatableComponent("evolution.gui.schematic.showBB");
-    private final Component textSize = new TranslatableComponent("evolution.gui.schematic.size");
-    private final TESchematic tile;
     private Button detectSizeButton;
     private boolean ignoreEntities;
     private AdvEditBox integrityEdit;
@@ -71,6 +58,19 @@ public class ScreenSchematic extends Screen {
     private AdvEditBox sizeXEdit;
     private AdvEditBox sizeYEdit;
     private AdvEditBox sizeZEdit;
+    private final Component textDetectSize = new TranslatableComponent("evolution.gui.schematic.detectSize");
+    private final Component textEntities = new TranslatableComponent("evolution.gui.schematic.entities");
+    private final Component textIntegrity = new TranslatableComponent("evolution.gui.schematic.integrity");
+    private final Component textLoad = new TranslatableComponent("evolution.gui.schematic.load");
+    private final Component textMirror = new TranslatableComponent("evolution.gui.schematic.mirror");
+    private final Component textMode = new TranslatableComponent("evolution.gui.schematic.mode");
+    private final Component textName = new TranslatableComponent("evolution.gui.schematic.name");
+    private final Component textPos = new TranslatableComponent("evolution.gui.schematic.pos");
+    private final Component textSave = new TranslatableComponent("evolution.gui.schematic.save");
+    private final Component textShowAir = new TranslatableComponent("evolution.gui.schematic.showAir");
+    private final Component textShowBB = new TranslatableComponent("evolution.gui.schematic.showBB");
+    private final Component textSize = new TranslatableComponent("evolution.gui.schematic.size");
+    private final TESchematic tile;
 
     public ScreenSchematic(TESchematic tile) {
         super(new TranslatableComponent(EvolutionBlocks.SCHEMATIC_BLOCK.getDescriptionId()));
@@ -179,7 +179,7 @@ public class ScreenSchematic extends Screen {
                                                                            185,
                                                                            40,
                                                                            20,
-                                                                           new TextComponent("0\u00B0"),
+                                                                           new TextComponent("0°"),
                                                                            button -> {
                                                                                this.tile.setRotation(Rotation.NONE);
                                                                                this.updateDirectionButtons();
@@ -188,7 +188,7 @@ public class ScreenSchematic extends Screen {
                                                                              185,
                                                                              40,
                                                                              20,
-                                                                             new TextComponent("90\u00B0"),
+                                                                             new TextComponent("90°"),
                                                                              button -> {
                                                                                  this.tile.setRotation(Rotation.CLOCKWISE_90);
                                                                                  this.updateDirectionButtons();
@@ -197,7 +197,7 @@ public class ScreenSchematic extends Screen {
                                                                           185,
                                                                           40,
                                                                           20,
-                                                                          new TextComponent("180\u00B0"),
+                                                                          new TextComponent("180°"),
                                                                           button -> {
                                                                               this.tile.setRotation(Rotation.CLOCKWISE_180);
                                                                               this.updateDirectionButtons();
@@ -206,7 +206,7 @@ public class ScreenSchematic extends Screen {
                                                                           185,
                                                                           40,
                                                                           20,
-                                                                          new TextComponent("270\u00B0"),
+                                                                          new TextComponent("270°"),
                                                                           button -> {
                                                                               this.tile.setRotation(Rotation.COUNTERCLOCKWISE_90);
                                                                               this.updateDirectionButtons();
@@ -369,15 +369,11 @@ public class ScreenSchematic extends Screen {
     }
 
     private boolean sendUpdates(TESchematic.UpdateCommand command) {
-        BlockPos pos = new BlockPos(parseCoordinate(this.posXEdit.getValue()),
-                                    parseCoordinate(this.posYEdit.getValue()),
-                                    parseCoordinate(this.posZEdit.getValue()));
-        BlockPos size = new BlockPos(parseCoordinate(this.sizeXEdit.getValue()),
-                                     parseCoordinate(this.sizeYEdit.getValue()),
-                                     parseCoordinate(this.sizeZEdit.getValue()));
+        BlockPos pos = new BlockPos(parseCoordinate(this.posXEdit.getValue()), parseCoordinate(this.posYEdit.getValue()), parseCoordinate(this.posZEdit.getValue()));
+        BlockPos size = new BlockPos(parseCoordinate(this.sizeXEdit.getValue()), parseCoordinate(this.sizeYEdit.getValue()), parseCoordinate(this.sizeZEdit.getValue()));
         float integrity = parseIntegrity(this.integrityEdit.getValue());
         long seed = parseSeed(this.seedEdit.getValue());
-        EvolutionClient.sendToServer(new PacketCSUpdateSchematicBlock(this.tile.getBlockPos(),
+        EvolutionClient.sendToServer(new PacketCSUpdateSchematicBlock(this.tile.getBlockPos().asLong(),
                                                                       command,
                                                                       this.tile.getMode(),
                                                                       this.nameEdit.getValue(),
@@ -389,7 +385,8 @@ public class ScreenSchematic extends Screen {
                                                                       this.tile.showsAir(),
                                                                       this.tile.showsBoundingBox(),
                                                                       integrity,
-                                                                      seed));
+                                                                      seed)
+        );
         return true;
     }
 

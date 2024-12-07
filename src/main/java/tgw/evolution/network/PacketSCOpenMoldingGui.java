@@ -1,20 +1,19 @@
 package tgw.evolution.network;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 
 public class PacketSCOpenMoldingGui implements Packet<ClientGamePacketListener> {
 
-    public final BlockPos pos;
+    public final long pos;
 
-    public PacketSCOpenMoldingGui(BlockPos pos) {
+    public PacketSCOpenMoldingGui(long pos) {
         this.pos = pos;
     }
 
     public PacketSCOpenMoldingGui(FriendlyByteBuf buf) {
-        this.pos = buf.readBlockPos();
+        this.pos = buf.readLong();
     }
 
     @Override
@@ -24,6 +23,6 @@ public class PacketSCOpenMoldingGui implements Packet<ClientGamePacketListener> 
 
     @Override
     public void write(FriendlyByteBuf buf) {
-        buf.writeBlockPos(this.pos);
+        buf.writeLong(this.pos);
     }
 }

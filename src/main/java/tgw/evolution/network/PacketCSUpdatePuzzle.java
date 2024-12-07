@@ -1,6 +1,5 @@
 package tgw.evolution.network;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ServerGamePacketListener;
@@ -12,10 +11,10 @@ public class PacketCSUpdatePuzzle implements Packet<ServerGamePacketListener> {
     public final ResourceLocation attachmentType;
     public final boolean checkBB;
     public final String finalState;
-    public final BlockPos pos;
+    public final long pos;
     public final ResourceLocation targetPool;
 
-    public PacketCSUpdatePuzzle(BlockPos pos, ResourceLocation attachmentType, ResourceLocation targetPool, String finalState, boolean checkBB) {
+    public PacketCSUpdatePuzzle(long pos, ResourceLocation attachmentType, ResourceLocation targetPool, String finalState, boolean checkBB) {
         this.pos = pos;
         this.attachmentType = attachmentType;
         this.targetPool = targetPool;
@@ -24,7 +23,7 @@ public class PacketCSUpdatePuzzle implements Packet<ServerGamePacketListener> {
     }
 
     public PacketCSUpdatePuzzle(FriendlyByteBuf buf) {
-        this.pos = buf.readBlockPos();
+        this.pos = buf.readLong();
         this.attachmentType = buf.readResourceLocation();
         this.targetPool = buf.readResourceLocation();
         this.finalState = buf.readUtf();
@@ -38,7 +37,7 @@ public class PacketCSUpdatePuzzle implements Packet<ServerGamePacketListener> {
 
     @Override
     public void write(FriendlyByteBuf buf) {
-        buf.writeBlockPos(this.pos);
+        buf.writeLong(this.pos);
         buf.writeResourceLocation(this.attachmentType);
         buf.writeResourceLocation(this.targetPool);
         buf.writeUtf(this.finalState);
