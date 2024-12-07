@@ -120,9 +120,14 @@ public final class EvolutionStats {
     public static final ResourceLocation TOTAL_DISTANCE_TRAVELED = registerCustom("distance_total_traveled", DISTANCE);
     public static final ResourceLocation TOTAL_VEHICLE_RIDDEN_DISTANCE = registerCustom("distance_total_vehicle_ridden", DISTANCE);
     //Time
+    public static final ResourceLocation TIME_AWAKE = registerCustom("time_awake", TIME);
+    public static final ResourceLocation TIME_MAX_AWAKE = registerCustom("time_max_awake", TIME);
+    public static final ResourceLocation TIME_MAX_SLEEP = registerCustom("time_max_sleep", TIME);
     public static final ResourceLocation TIME_PLAYED = registerCustom("time_played", TIME);
+    public static final ResourceLocation TIME_SINCE_LAST_AWAKENED = registerCustom("time_since_last_awakened", TIME);
     public static final ResourceLocation TIME_SINCE_LAST_DEATH = registerCustom("time_since_last_death", TIME);
     public static final ResourceLocation TIME_SINCE_LAST_REST = registerCustom("time_since_last_rest", TIME);
+    public static final ResourceLocation TIME_SLEEPING = registerCustom("time_sleeping", TIME);
     public static final ResourceLocation TIME_SNEAKING = registerCustom("time_sneaking", TIME);
     public static final ResourceLocation TIME_WITH_WORLD_OPEN = registerCustom("time_with_world_open", TIME);
     //Generic
@@ -156,10 +161,6 @@ public final class EvolutionStats {
     private EvolutionStats() {
     }
 
-    public static void register() {
-        //This is called on the <clinit> of Stats.
-    }
-
     private static Map<EvolutionDamage.Type, ResourceLocation> genDamage(String pattern, EvolutionDamage.Type[] types) {
         Map<EvolutionDamage.Type, ResourceLocation> map = new EnumMap<>(EvolutionDamage.Type.class);
         for (EvolutionDamage.Type dmgType : types) {
@@ -168,6 +169,10 @@ public final class EvolutionStats {
             map.put(dmgType, registerCustom("damage_" + dmgType.getName() + "_" + pattern, DAMAGE));
         }
         return map;
+    }
+
+    public static void register() {
+        //This is called on the <clinit> of Stats.
     }
 
     private static ResourceLocation registerCustom(String key, StatFormatter formatter) {

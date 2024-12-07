@@ -25,6 +25,7 @@ import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.server.network.TextFilter;
 import net.minecraft.stats.ServerRecipeBook;
 import net.minecraft.stats.ServerStatsCounter;
+import net.minecraft.stats.Stat;
 import net.minecraft.stats.Stats;
 import net.minecraft.util.Unit;
 import net.minecraft.world.damagesource.DamageSource;
@@ -79,20 +80,18 @@ import java.util.List;
 public abstract class Mixin_CF_ServerPlayer extends Player implements PatchServerPlayer {
 
     @Shadow @Final private static Logger LOGGER;
-    @Shadow public ServerGamePacketListenerImpl connection;
-    @Shadow public @Nullable Vec3 enteredNetherPosition;
-    @Mutable @Shadow @Final @RestoreFinal public ServerPlayerGameMode gameMode;
-    @Shadow public boolean seenCredits;
-    @Mutable @Shadow @Final @RestoreFinal public MinecraftServer server;
     @Mutable @Shadow @Final @RestoreFinal private PlayerAdvancements advancements;
     @Shadow private boolean allowsListing;
     @Shadow private @Nullable Entity camera;
     @Unique private boolean cameraUnload;
     @Shadow private boolean canChatColor;
     @Shadow private ChatVisiblity chatVisibility;
+    @Shadow public ServerGamePacketListenerImpl connection;
     @Mutable @Shadow @Final @RestoreFinal private ContainerListener containerListener;
     @Mutable @Shadow @Final @RestoreFinal private ContainerSynchronizer containerSynchronizer;
+    @Shadow public @Nullable Vec3 enteredNetherPosition;
     @Unique private final CapabilityInventory extraInventory;
+    @Mutable @Shadow @Final @RestoreFinal public ServerPlayerGameMode gameMode;
     @Unique private final CapabilityHealth healthStats;
     @Unique private final CapabilityHunger hungerStats;
     @Shadow private long lastActionTime;
@@ -116,6 +115,8 @@ public abstract class Mixin_CF_ServerPlayer extends Player implements PatchServe
     @Shadow private ResourceKey<Level> respawnDimension;
     @Shadow private boolean respawnForced;
     @Shadow private @Nullable BlockPos respawnPosition;
+    @Shadow public boolean seenCredits;
+    @Mutable @Shadow @Final @RestoreFinal public MinecraftServer server;
     @Shadow private int spawnInvulnerableTime;
     @Unique private final CapabilityStamina staminaStats;
     @Mutable @Shadow @Final @RestoreFinal private ServerStatsCounter stats;
@@ -254,6 +255,12 @@ public abstract class Mixin_CF_ServerPlayer extends Player implements PatchServe
         this.awardRecipes(list);
     }
 
+    @Shadow
+    protected abstract boolean bedBlocked(BlockPos blockPos, Direction direction);
+
+    @Shadow
+    protected abstract boolean bedInRange(BlockPos blockPos, Direction direction);
+
     /**
      * @author TheGreatWolf
      * @reason Spawn Corpse
@@ -361,6 +368,9 @@ public abstract class Mixin_CF_ServerPlayer extends Player implements PatchServe
     }
 
     @Shadow
+    protected abstract void fudgeSpawnLocation(ServerLevel serverLevel);
+
+    @Shadow
     public abstract Entity getCamera();
 
     @Override
@@ -412,6 +422,11 @@ public abstract class Mixin_CF_ServerPlayer extends Player implements PatchServe
         return this.staminaStats;
     }
 
+    @Override
+    public long getStat(Stat<?> stat) {
+        return this.stats.getValue_(stat);
+    }
+
     @Shadow
     public abstract ServerStatsCounter getStats();
 
@@ -429,6 +444,9 @@ public abstract class Mixin_CF_ServerPlayer extends Player implements PatchServe
     public CapabilityToast getToastStats() {
         return this.toastStats;
     }
+
+    @Shadow
+    protected abstract void handleTeamKill(String string, String string2, ObjectiveCriteria[] objectiveCriterias);
 
     /**
      * @author TheGreatWolf
@@ -595,6 +613,11 @@ public abstract class Mixin_CF_ServerPlayer extends Player implements PatchServe
     @Shadow
     public abstract void setRespawnPosition(ResourceKey<Level> resourceKey, @Nullable BlockPos blockPos, float f, boolean bl, boolean bl2);
 
+    @Override
+    public void setStat(Stat<?> stat, long value) {
+        this.stats.setValue_(stat, value);
+    }
+
     /**
      * @author TheGreatWolf
      * @reason Modify stats.
@@ -638,6 +661,12 @@ public abstract class Mixin_CF_ServerPlayer extends Player implements PatchServe
         }
         return Either.left(Player.BedSleepingProblem.OTHER_PROBLEM);
     }
+
+    @Shadow
+    protected abstract void storeGameTypes(CompoundTag compoundTag);
+
+    @Shadow
+    protected abstract void tellNeutralMobsThatIDied();
 
     /**
      * @author TheGreatWolf
@@ -686,22 +715,4 @@ public abstract class Mixin_CF_ServerPlayer extends Player implements PatchServe
 
     @Shadow
     public abstract void trackStartFallingPosition();
-
-    @Shadow
-    protected abstract boolean bedBlocked(BlockPos blockPos, Direction direction);
-
-    @Shadow
-    protected abstract boolean bedInRange(BlockPos blockPos, Direction direction);
-
-    @Shadow
-    protected abstract void fudgeSpawnLocation(ServerLevel serverLevel);
-
-    @Shadow
-    protected abstract void handleTeamKill(String string, String string2, ObjectiveCriteria[] objectiveCriterias);
-
-    @Shadow
-    protected abstract void storeGameTypes(CompoundTag compoundTag);
-
-    @Shadow
-    protected abstract void tellNeutralMobsThatIDied();
 }

@@ -5,6 +5,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ObjectSelectionList;
 import net.minecraft.client.gui.screens.Screen;
@@ -93,12 +94,28 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
         this.refreshCacheCooldown = 30;
     }
 
+    private static int getCategoryOffset(int category, int max, int rowWidth) {
+        return rowWidth / 2 + 7 - 20 * (max - 1) + 40 * category;
+    }
+
     public static String getFormattedName(Stat<ResourceLocation> stat) {
         return I18n.get("stat." + stat.getValue().toString().replace(':', '.'));
     }
 
-    private static int getCategoryOffset(int category) {
-        return 115 + 40 * category;
+    private void blitSlot(PoseStack matrices, int x, int y, Item item) {
+        this.blitSlotIcon(matrices, x + 1, y + 1, 0, 0);
+        ItemStack stack = this.cachedModularItems.get(item);
+        if (stack == null) {
+            stack = item.getDefaultInstance();
+        }
+        this.itemRenderer.renderGuiItem(stack, x + 2, y + 2);
+    }
+
+    private void blitSlotIcon(PoseStack matrices, int x, int y, int u, int v) {
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+        RenderSystem.setShader(RenderHelper.SHADER_POSITION_TEX);
+        RenderSystem.setShaderTexture(0, this.resIcons);
+        blit(matrices, x, y, this.getBlitOffset(), u, v, 18, 18, 256, 128);
     }
 
     public ObjectSelectionList<?> byId(int displayId) {
@@ -114,8 +131,27 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
         };
     }
 
+    private void drawDamageSprite(PoseStack matrices, int x, int y, EvolutionDamage.Type type) {
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+        RenderSystem.setShaderTexture(0, this.resIcons);
+        blit(matrices, x, y, this.getBlitOffset(), 0, 0, 18, 18, 256, 128);
+        RenderSystem.enableBlend();
+        RenderSystem.setShaderTexture(0, this.resDamageIcons);
+        blit(matrices, x + 1, y + 1, this.getBlitOffset(), type.getTexX() * 16, type.getTexY() * 16, 16, 16, 128, 128);
+        RenderSystem.disableBlend();
+    }
+
     public @Nullable ObjectSelectionList<?> getDisplaySlot() {
         return this.displaySlot;
+    }
+
+    @Override
+    protected void init() {
+        this.doesGuiPauseGame = true;
+        assert this.minecraft != null;
+        ClientPacketListener connection = this.minecraft.getConnection();
+        assert connection != null;
+        connection.send(new ServerboundClientCommandPacket(ServerboundClientCommandPacket.Action.REQUEST_STATS));
     }
 
     public void initButtons() {
@@ -160,18 +196,19 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
         }
     }
 
+    private void refreshCachedItems() {
+        for (Item item : this.cachedModularItems.keySet()) {
+            this.cachedModularItems.put(item, item.getDefaultInstance());
+        }
+        this.refreshCacheCooldown = 30;
+    }
+
     @Override
     public void render(PoseStack matrices, int mouseX, int mouseY, float partialTicks) {
         if (this.doesGuiPauseGame) {
             this.renderBackground(matrices);
             drawCenteredString(matrices, this.font, I18n.get("multiplayer.downloadingStats"), this.width / 2, this.height / 2, 0xff_ffff);
-            drawCenteredString(matrices,
-                               this.font,
-                               LOADING_SYMBOLS[(int) (Util.getMillis() / 150L % LOADING_SYMBOLS.length)],
-                               this.width / 2,
-                               this.height / 2 + 9 * 2,
-                               0xff_ffff
-            );
+            drawCenteredString(matrices, this.font, LOADING_SYMBOLS[(int) (Util.getMillis() / 150L % LOADING_SYMBOLS.length)], this.width / 2, this.height / 2 + 9 * 2, 0xff_ffff);
         }
         else {
             if (this.displaySlot != null) {
@@ -211,68 +248,27 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
         super.tick();
     }
 
-    @Override
-    protected void init() {
-        this.doesGuiPauseGame = true;
-        assert this.minecraft != null;
-        ClientPacketListener connection = this.minecraft.getConnection();
-        assert connection != null;
-        connection.send(new ServerboundClientCommandPacket(ServerboundClientCommandPacket.Action.REQUEST_STATS));
-    }
+    abstract class EntryList<T extends ObjectSelectionList.Entry<T>> extends ObjectSelectionList<T> {
 
-    private void blitSlot(PoseStack matrices, int x, int y, Item item) {
-        this.blitSlotIcon(matrices, x + 1, y + 1, 0, 0);
-        ItemStack stack = this.cachedModularItems.get(item);
-        if (stack == null) {
-            stack = item.getDefaultInstance();
+        protected int rowWidth = -1;
+
+        public EntryList(Minecraft mc, int width, int height, int y0, int y1, int itemHeight) {
+            super(mc, width, height, y0, y1, itemHeight);
         }
-        this.itemRenderer.renderGuiItem(stack, x + 2, y + 2);
-    }
 
-    private void blitSlotIcon(PoseStack matrices, int x, int y, int u, int v) {
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-        RenderSystem.setShader(RenderHelper.SHADER_POSITION_TEX);
-        RenderSystem.setShaderTexture(0, this.resIcons);
-        blit(matrices, x, y, this.getBlitOffset(), u, v, 18, 18, 256, 128);
-    }
+        protected abstract int calculateRowWidth();
 
-    private void drawDamageSprite(PoseStack matrices, int x, int y, EvolutionDamage.Type type) {
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-        RenderSystem.setShaderTexture(0, this.resIcons);
-        blit(matrices, x, y, this.getBlitOffset(), 0, 0, 18, 18, 256, 128);
-        RenderSystem.enableBlend();
-        RenderSystem.setShaderTexture(0, this.resDamageIcons);
-        blit(matrices, x + 1, y + 1, this.getBlitOffset(), type.getTexX() * 16, type.getTexY() * 16, 16, 16, 128, 128);
-        RenderSystem.disableBlend();
-    }
-
-    private void refreshCachedItems() {
-        for (Item item : this.cachedModularItems.keySet()) {
-            this.cachedModularItems.put(item, item.getDefaultInstance());
+        @Override
+        public int getRowRight() {
+            return super.getRowRight() - 4;
         }
-        this.refreshCacheCooldown = 30;
-    }
 
-    class ListCustomStats extends ObjectSelectionList<ListCustomStats.Entry> {
-
-        public ListCustomStats(Minecraft mc) {
-            super(mc, ScreenStats.this.width, ScreenStats.this.height, 32, ScreenStats.this.height - 64, 12);
-            OList<Stat<ResourceLocation>> list = new OArrayList<>();
-            for (Stat<ResourceLocation> stat : Stats.CUSTOM) {
-                if (stat.getValue().getNamespace().equals(Evolution.MODID)) {
-                    if (!stat.getValue().getPath().startsWith("distance_") &&
-                        !stat.getValue().getPath().startsWith("time_") &&
-                        !stat.getValue().getPath().startsWith("death_") &&
-                        !stat.getValue().getPath().startsWith("damage_")) {
-                        list.add(stat);
-                    }
-                }
+        @Override
+        public int getRowWidth() {
+            if (this.rowWidth == -1) {
+                this.rowWidth = this.calculateRowWidth();
             }
-            list.sort((a, b) -> String.CASE_INSENSITIVE_ORDER.compare(getFormattedName(a), getFormattedName(b)));
-            for (int i = 0, l = list.size(); i < l; i++) {
-                //noinspection ObjectAllocationInLoop
-                this.addEntry(new Entry(list.get(i)));
-            }
+            return this.rowWidth;
         }
 
         @Override
@@ -285,14 +281,9 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             ScreenStats.this.renderBackground(matrices);
         }
 
-        final class Entry extends ObjectSelectionList.Entry<Entry> {
-            private final String title;
-            private final String value;
+        abstract static class Entry<E extends ObjectSelectionList.Entry<E>> extends ObjectSelectionList.Entry<E> {
 
-            private Entry(Stat<ResourceLocation> stat) {
-                this.title = getFormattedName(stat);
-                this.value = ((IEvoStatFormatter) stat.formatter).format(ScreenStats.this.stats.getValue_(stat));
-            }
+            protected abstract Font font();
 
             @Override
             public Component getNarration() {
@@ -300,31 +291,102 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             }
 
             @Override
-            public void render(PoseStack matrices,
-                               int index,
-                               int y,
-                               int x,
-                               int width,
-                               int height,
-                               int mouseX,
-                               int mouseY,
-                               boolean hovered,
-                               float partialTicks) {
+            public void render(PoseStack matrices, int index, int y, int x, int width, int height, int mouseX, int mouseY, boolean hovered, float partialTicks) {
                 int color = index % 2 == 0 ? 0xff_ffff : 0x75_7575;
-                drawString(matrices, ScreenStats.this.font, this.title, x + 2, y + 1, color);
-                drawString(matrices, ScreenStats.this.font, this.value, x + 2 + 213 - ScreenStats.this.font.width(this.value), y + 1, color);
+                Font font = this.font();
+                drawString(matrices, font, this.title(index), x, y + 1, color);
+                String value = this.value(index);
+                drawString(matrices, font, value, this.rowRight() - font.width(value), y + 1, color);
+            }
+
+            protected abstract int rowRight();
+
+            protected abstract String title(int index);
+
+            protected abstract String value(int index);
+        }
+    }
+
+    class ListCustomStats extends EntryList<ListCustomStats.Entry> {
+
+        private final OList<Stat<ResourceLocation>> list;
+
+        public ListCustomStats(Minecraft mc) {
+            super(mc, ScreenStats.this.width, ScreenStats.this.height, 32, ScreenStats.this.height - 64, 12);
+            this.list = new OArrayList<>();
+            for (Stat<ResourceLocation> stat : Stats.CUSTOM) {
+                if (stat.getValue().getNamespace().equals(Evolution.MODID)) {
+                    if (!stat.getValue().getPath().startsWith("distance_") &&
+                        !stat.getValue().getPath().startsWith("time_") &&
+                        !stat.getValue().getPath().startsWith("death_") &&
+                        !stat.getValue().getPath().startsWith("damage_")) {
+                        this.list.add(stat);
+                    }
+                }
+            }
+            this.list.sort((a, b) -> String.CASE_INSENSITIVE_ORDER.compare(getFormattedName(a), getFormattedName(b)));
+            for (int i = 0, l = this.list.size(); i < l; i++) {
+                //noinspection ObjectAllocationInLoop
+                this.addEntry(new Entry());
+            }
+        }
+
+        @Override
+        protected int calculateRowWidth() {
+            OList<Stat<ResourceLocation>> list = this.list;
+            int maxName = 0;
+            int maxValue = 0;
+            Font font = ScreenStats.this.font;
+            StatsCounter stats = ScreenStats.this.stats;
+            for (int i = 0, len = list.size(); i < len; ++i) {
+                Stat<ResourceLocation> stat = list.get(i);
+                String name = getFormattedName(stat);
+                int w = font.width(name);
+                if (w > maxName) {
+                    maxName = w;
+                }
+                String value = ((IEvoStatFormatter) stat.formatter).format(stats.getValue_(stat));
+                w = font.width(value);
+                if (w > maxValue) {
+                    maxValue = w;
+                }
+            }
+            return maxName + maxValue + 24;
+        }
+
+        final class Entry extends EntryList.Entry<Entry> {
+
+            @Override
+            protected Font font() {
+                return ScreenStats.this.font;
+            }
+
+            @Override
+            protected int rowRight() {
+                return ListCustomStats.this.getRowRight();
+            }
+
+            @Override
+            protected String title(int index) {
+                return getFormattedName(ListCustomStats.this.list.get(index));
+            }
+
+            @Override
+            protected String value(int index) {
+                Stat<ResourceLocation> stat = ListCustomStats.this.list.get(index);
+                return ((IEvoStatFormatter) stat.formatter).format(ScreenStats.this.stats.getValue_(stat));
             }
         }
     }
 
-    class ListDamageStats extends ObjectSelectionList<ScreenStats.ListDamageStats.Entry> {
+    class ListDamageStats extends EntryList<ScreenStats.ListDamageStats.Entry> {
         protected final Comparator<EvolutionDamage.Type> comparator = new ListComparator();
         protected int currentHeader = -1;
         protected final OList<EvolutionDamage.Type> damageList;
         protected final OList<Map<EvolutionDamage.Type, ResourceLocation>> damageStatList;
+        private final int[] headerTexture = {1, 2, 3};
         protected int sortOrder;
         protected @Nullable Map<EvolutionDamage.Type, ResourceLocation> sorting;
-        private final int[] headerTexture = {1, 2, 3};
 
         public ListDamageStats(Minecraft mc) {
             super(mc, ScreenStats.this.width, ScreenStats.this.height, 32, ScreenStats.this.height - 64, 20);
@@ -342,16 +404,16 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
         }
 
         @Override
-        public int getRowWidth() {
-            return super.getRowWidth() + 4 * 18;
+        protected int calculateRowWidth() {
+            return 200;
         }
 
         @Override
         protected void clickedHeader(int mouseX, int mouseY) {
             this.currentHeader = -1;
             if (mouseY < this.headerHeight + this.y0 + 3) {
-                for (int i = 0; i < this.headerTexture.length; i++) {
-                    int j = mouseX - getCategoryOffset(i);
+                for (int i = 0, len = this.headerTexture.length; i < len; i++) {
+                    int j = mouseX - getCategoryOffset(i, len, this.getRowWidth());
                     if (j >= -36 && j <= 0) {
                         this.currentHeader = i;
                         break;
@@ -365,22 +427,12 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
         }
 
         @Override
-        protected int getScrollbarPosition() {
-            return this.width - 6;
-        }
-
-        @Override
-        protected void renderBackground(PoseStack matrices) {
-            ScreenStats.this.renderBackground(matrices);
-        }
-
-        @Override
         protected void renderDecorations(PoseStack matrices, int mouseX, int mouseY) {
             if (mouseY >= this.y0 && mouseY <= this.y1) {
                 ScreenStats.ListDamageStats.Entry entryAtPos = this.getEntryAtPosition(mouseX, mouseY);
                 int i = (this.width - this.getRowWidth()) / 2;
                 if (entryAtPos != null) {
-                    if (mouseX < i + 40 || mouseX > i + 40 + 20) {
+                    if (mouseX < i || mouseX > i + 20) {
                         return;
                     }
                     EvolutionDamage.Type type = this.damageList.get(this.children().indexOf(entryAtPos));
@@ -390,8 +442,9 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
                     Component tooltip = null;
                     if (mouseY < this.headerHeight + this.y0 + 3) {
                         int j = mouseX - i;
-                        for (int k = 0; k < this.headerTexture.length; ++k) {
-                            int l = getCategoryOffset(k);
+                        int len = this.headerTexture.length;
+                        for (int k = 0; k < len; ++k) {
+                            int l = getCategoryOffset(k, len, this.getRowWidth());
                             if (j >= l - 18 && j <= l) {
                                 switch (k) {
                                     case 0 -> tooltip = ScreenStats.this.textDamageDealt;
@@ -414,17 +467,16 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             if (!this.minecraft.mouseHandler.isLeftPressed()) {
                 this.currentHeader = -1;
             }
-            for (int i = 0; i < this.headerTexture.length; ++i) {
-                ScreenStats.this.blitSlotIcon(matrices, mouseX + getCategoryOffset(i) - 18, mouseY + 1, 0, this.currentHeader == i ? 0 : 90);
+            int len = this.headerTexture.length;
+            for (int i = 0; i < len; ++i) {
+                ScreenStats.this.blitSlotIcon(matrices, mouseX + getCategoryOffset(i, len, this.getRowWidth()) - 18, mouseY + 1, 0, this.currentHeader == i ? 0 : 90);
             }
             if (this.sorting != null) {
-                int k = getCategoryOffset(this.damageStatList.indexOf(this.sorting)) - 36;
-                int j = this.sortOrder == 1 ? 2 : 1;
-                ScreenStats.this.blitSlotIcon(matrices, mouseX + k, mouseY + 1, 18 * j, 0);
+                ScreenStats.this.blitSlotIcon(matrices, mouseX + getCategoryOffset(this.damageStatList.indexOf(this.sorting), len, this.getRowWidth()) - 36, mouseY + 1, this.sortOrder == 1 ? 2 * 18 : 18, 0);
             }
-            for (int l = 0; l < this.headerTexture.length; ++l) {
-                int i1 = this.currentHeader == l ? 1 : 0;
-                ScreenStats.this.blitSlotIcon(matrices, mouseX + getCategoryOffset(l) - 18 + i1, mouseY + 1 + i1, 18 * this.headerTexture[l], 90);
+            for (int i = 0; i < len; ++i) {
+                int d = this.currentHeader == i ? 1 : 0;
+                ScreenStats.this.blitSlotIcon(matrices, mouseX + getCategoryOffset(i, len, this.getRowWidth()) - 18 + d, mouseY + 1 + d, 18 * this.headerTexture[i], 90);
             }
         }
 
@@ -443,42 +495,48 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             this.damageList.sort(this.comparator);
         }
 
-        final class Entry extends ObjectSelectionList.Entry<ScreenStats.ListDamageStats.Entry> {
+        final class Entry extends EntryList.Entry<ListDamageStats.Entry> {
 
             private Entry() {
             }
 
-            @Override
-            public Component getNarration() {
-                return EvolutionTexts.EMPTY;
+            private void drawStatCount(PoseStack matrices, @Nullable Stat<?> stat, int x, int y, boolean highlight) {
+                String s = stat == null ? "-" : EvolutionStats.METRIC.format(ScreenStats.this.stats.getValue_(stat));
+                drawString(matrices, ScreenStats.this.font, s, x - ScreenStats.this.font.width(s), y + 5, highlight ? 0xff_ffff : 0x75_7575);
             }
 
             @Override
-            public void render(PoseStack matrices,
-                               int index,
-                               int y,
-                               int x,
-                               int width,
-                               int height,
-                               int mouseX,
-                               int mouseY,
-                               boolean hovered,
-                               float partialTicks) {
+            protected Font font() {
+                return ScreenStats.this.font;
+            }
+
+            @Override
+            public void render(PoseStack matrices, int index, int y, int x, int width, int height, int mouseX, int mouseY, boolean hovered, float partialTicks) {
                 EvolutionDamage.Type type = ListDamageStats.this.damageList.get(index);
-                ScreenStats.this.drawDamageSprite(matrices, x + 40, y, type);
+                ScreenStats.this.drawDamageSprite(matrices, x, y, type);
                 for (int j = 0; j < ListDamageStats.this.damageStatList.size(); j++) {
                     Stat<?> stat = null;
                     ResourceLocation resLoc = ListDamageStats.this.damageStatList.get(j).get(type);
                     if (resLoc != null) {
                         stat = Stats.CUSTOM.get(resLoc);
                     }
-                    this.drawStatCount(matrices, stat, x + getCategoryOffset(j), y, index % 2 == 0);
+                    this.drawStatCount(matrices, stat, x + getCategoryOffset(j, ListDamageStats.this.headerTexture.length, ListDamageStats.this.getRowWidth()), y, index % 2 == 0);
                 }
             }
 
-            private void drawStatCount(PoseStack matrices, @Nullable Stat<?> stat, int x, int y, boolean highlight) {
-                String s = stat == null ? "-" : EvolutionStats.METRIC.format(ScreenStats.this.stats.getValue_(stat));
-                drawString(matrices, ScreenStats.this.font, s, x - ScreenStats.this.font.width(s), y + 5, highlight ? 0xff_ffff : 0x75_7575);
+            @Override
+            protected int rowRight() {
+                return ListDamageStats.this.getRowRight();
+            }
+
+            @Override
+            protected String title(int index) {
+                return "null";
+            }
+
+            @Override
+            protected String value(int index) {
+                return "null";
             }
         }
 
@@ -513,19 +571,32 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
                         j = -1;
                     }
                 }
-                return i == j ?
-                       String.CASE_INSENSITIVE_ORDER.compare(a.getTextComponent().getString(), b.getTextComponent().getString()) :
-                       ListDamageStats.this.sortOrder * Long.compare(i, j);
+                if (i == j) {
+                    if (a == EvolutionDamage.Type.TOTAL) {
+                        if (ListDamageStats.this.sortOrder > 0) {
+                            return 1;
+                        }
+                        return -1;
+                    }
+                    if (b == EvolutionDamage.Type.TOTAL) {
+                        if (ListDamageStats.this.sortOrder > 0) {
+                            return -1;
+                        }
+                        return 1;
+                    }
+                    return String.CASE_INSENSITIVE_ORDER.compare(a.getTextComponent().getString(), b.getTextComponent().getString());
+                }
+                return ListDamageStats.this.sortOrder * Long.compare(i, j);
             }
         }
     }
 
-    class ListDeathStats extends ObjectSelectionList<ListDeathStats.Entry> {
-        protected int currentHeader = -1;
-        protected int sortOrder;
+    class ListDeathStats extends EntryList<ListDeathStats.Entry> {
         private final Comparator<Stat<ResourceLocation>> comparator = new ListDeathStats.ListComparator();
+        protected int currentHeader = -1;
         private final OList<Stat<ResourceLocation>> deathList;
         private final int[] headerTexture = {1};
+        protected int sortOrder;
 
         public ListDeathStats(Minecraft mc) {
             super(mc, ScreenStats.this.width, ScreenStats.this.height, 32, ScreenStats.this.height - 64, 12);
@@ -544,16 +615,33 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
         }
 
         @Override
-        public int getRowWidth() {
-            return 260;
+        protected int calculateRowWidth() {
+            OList<Stat<ResourceLocation>> list = this.deathList;
+            int maxName = 0;
+            int maxValue = 0;
+            Font font = ScreenStats.this.font;
+            StatsCounter stats = ScreenStats.this.stats;
+            for (int i = 0, len = list.size(); i < len; ++i) {
+                Stat<ResourceLocation> stat = list.get(i);
+                int w = font.width(getFormattedName(stat));
+                if (w > maxName) {
+                    maxName = w;
+                }
+                w = font.width(EvolutionStats.DEFAULT.format(stats.getValue_(stat)));
+                if (w > maxValue) {
+                    maxValue = w;
+                }
+            }
+            return maxName + maxValue + 24;
         }
 
         @Override
         protected void clickedHeader(int mouseX, int mouseY) {
             this.currentHeader = -1;
             if (mouseY < this.headerHeight + this.y0 + 3) {
-                for (int i = 0; i < this.headerTexture.length; i++) {
-                    int j = mouseX - getCategoryOffset(i) - 18;
+                int len = this.headerTexture.length;
+                for (int i = 0; i < len; i++) {
+                    int j = mouseX - getCategoryOffset(i, len, this.getRowWidth());
                     if (j >= -36 && j <= 0) {
                         this.currentHeader = i;
                         break;
@@ -567,26 +655,20 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
         }
 
         @Override
-        protected int getScrollbarPosition() {
-            return this.width - 6;
-        }
-
-        @Override
-        protected void renderHeader(PoseStack matrices, int mouseX, int mouseY, Tesselator tesselator) {
+        protected void renderHeader(PoseStack matrices, int x, int y, Tesselator tesselator) {
             if (!this.minecraft.mouseHandler.isLeftPressed()) {
                 this.currentHeader = -1;
             }
-            for (int i = 0; i < this.headerTexture.length; ++i) {
-                ScreenStats.this.blitSlotIcon(matrices, mouseX + getCategoryOffset(i), mouseY + 1, 0, this.currentHeader == i ? 0 : 6 * 18);
+            int len = this.headerTexture.length;
+            for (int i = 0; i < len; ++i) {
+                ScreenStats.this.blitSlotIcon(matrices, x + getCategoryOffset(i, len, this.getRowWidth()) - 18, y + 1, 0, this.currentHeader == i ? 0 : 6 * 18);
             }
             if (this.sortOrder != 0) {
-                int k = getCategoryOffset(0) - 18;
-                int j = this.sortOrder == 1 ? 2 : 1;
-                ScreenStats.this.blitSlotIcon(matrices, mouseX + k, mouseY + 1, 18 * j, 0);
+                ScreenStats.this.blitSlotIcon(matrices, x + getCategoryOffset(0, len, this.getRowWidth()) - 18 * 2, y + 1, this.sortOrder == 1 ? 2 * 18 : 18, 0);
             }
-            for (int l = 0; l < this.headerTexture.length; ++l) {
-                int i1 = this.currentHeader == l ? 1 : 0;
-                ScreenStats.this.blitSlotIcon(matrices, mouseX + getCategoryOffset(l) + i1, mouseY + 1 + i1, 18 * this.headerTexture[l], 6 * 18);
+            for (int i = 0; i < len; ++i) {
+                int d = this.currentHeader == i ? 1 : 0;
+                ScreenStats.this.blitSlotIcon(matrices, x + getCategoryOffset(i, len, this.getRowWidth()) - 18 + d, y + 1 + d, 18 * this.headerTexture[i], 6 * 18);
             }
         }
 
@@ -599,35 +681,26 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             this.deathList.sort(this.comparator);
         }
 
-        class Entry extends ObjectSelectionList.Entry<ListDeathStats.Entry> {
+        class Entry extends EntryList.Entry<Entry> {
 
             @Override
-            public Component getNarration() {
-                return EvolutionTexts.EMPTY;
+            protected Font font() {
+                return ScreenStats.this.font;
             }
 
             @Override
-            public void render(PoseStack matrices,
-                               int index,
-                               int y,
-                               int x,
-                               int width,
-                               int height,
-                               int mouseX,
-                               int mouseY,
-                               boolean hovered,
-                               float partialTicks) {
-                String name = getFormattedName(ListDeathStats.this.deathList.get(index));
-                int color = index % 2 == 0 ? 0xff_ffff : 0x75_7575;
-                drawString(matrices, ScreenStats.this.font, name, x + 2, y + 1, color);
-                String value = EvolutionStats.DEFAULT.format(ScreenStats.this.stats.getValue_(ListDeathStats.this.deathList.get(index)));
-                drawString(matrices,
-                           ScreenStats.this.font,
-                           value,
-                           x + 2 + ListDeathStats.this.getRowWidth() - 7 - ScreenStats.this.font.width(value),
-                           y + 1,
-                           color
-                );
+            protected int rowRight() {
+                return ListDeathStats.this.getRowRight();
+            }
+
+            @Override
+            protected String title(int index) {
+                return getFormattedName(ListDeathStats.this.deathList.get(index));
+            }
+
+            @Override
+            protected String value(int index) {
+                return EvolutionStats.DEFAULT.format(ScreenStats.this.stats.getValue_(ListDeathStats.this.deathList.get(index)));
             }
         }
 
@@ -650,13 +723,13 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
         }
     }
 
-    class ListDistanceStats extends ObjectSelectionList<ListDistanceStats.Entry> {
+    class ListDistanceStats extends EntryList<ListDistanceStats.Entry> {
 
-        protected int currentHeader = -1;
-        protected int sortOrder;
         private final Comparator<Stat<ResourceLocation>> comparator = new ListComparator();
+        protected int currentHeader = -1;
         private final OList<Stat<ResourceLocation>> distanceList;
         private final int[] headerTexture = {1};
+        protected int sortOrder;
 
         public ListDistanceStats(Minecraft mc) {
             super(mc, ScreenStats.this.width, ScreenStats.this.height, 32, ScreenStats.this.height - 64, 12);
@@ -675,11 +748,33 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
         }
 
         @Override
+        protected int calculateRowWidth() {
+            OList<Stat<ResourceLocation>> list = this.distanceList;
+            int maxName = 0;
+            int maxValue = 0;
+            Font font = ScreenStats.this.font;
+            StatsCounter stats = ScreenStats.this.stats;
+            for (int i = 0, len = list.size(); i < len; ++i) {
+                Stat<ResourceLocation> stat = list.get(i);
+                int w = font.width(getFormattedName(stat));
+                if (w > maxName) {
+                    maxName = w;
+                }
+                w = font.width(EvolutionStats.DISTANCE.format(stats.getValue_(stat)));
+                if (w > maxValue) {
+                    maxValue = w;
+                }
+            }
+            return maxName + maxValue + 24;
+        }
+
+        @Override
         protected void clickedHeader(int mouseX, int mouseY) {
             this.currentHeader = -1;
             if (mouseY < this.headerHeight + this.y0 + 3) {
-                for (int i = 0; i < this.headerTexture.length; i++) {
-                    int j = mouseX - getCategoryOffset(i);
+                int len = this.headerTexture.length;
+                for (int i = 0; i < len; i++) {
+                    int j = mouseX - getCategoryOffset(i, len, this.getRowWidth());
                     if (j >= -36 && j <= 0) {
                         this.currentHeader = i;
                         break;
@@ -692,31 +787,21 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             }
         }
 
-        protected String getFormattedName(Stat<ResourceLocation> stat) {
-            return I18n.get("stat." + stat.getValue().toString().replace(':', '.'));
-        }
-
         @Override
-        protected int getScrollbarPosition() {
-            return this.width - 6;
-        }
-
-        @Override
-        protected void renderHeader(PoseStack matrices, int mouseX, int mouseY, Tesselator tesselator) {
+        protected void renderHeader(PoseStack matrices, int x, int y, Tesselator tesselator) {
             if (!this.minecraft.mouseHandler.isLeftPressed()) {
                 this.currentHeader = -1;
             }
-            for (int i = 0; i < this.headerTexture.length; ++i) {
-                ScreenStats.this.blitSlotIcon(matrices, mouseX + getCategoryOffset(i) - 18, mouseY + 1, 0, this.currentHeader == i ? 0 : 54);
+            int len = this.headerTexture.length;
+            for (int i = 0; i < len; ++i) {
+                ScreenStats.this.blitSlotIcon(matrices, x + getCategoryOffset(i, len, this.getRowWidth()) - 18, y + 1, 0, this.currentHeader == i ? 0 : 54);
             }
             if (this.sortOrder != 0) {
-                int k = getCategoryOffset(0) - 18 * 2;
-                int j = this.sortOrder == 1 ? 2 : 1;
-                ScreenStats.this.blitSlotIcon(matrices, mouseX + k, mouseY + 1, 18 * j, 0);
+                ScreenStats.this.blitSlotIcon(matrices, x + getCategoryOffset(0, len, this.getRowWidth()) - 18 * 2, y + 1, this.sortOrder == 1 ? 2 * 18 : 18, 0);
             }
-            for (int l = 0; l < this.headerTexture.length; ++l) {
-                int i1 = this.currentHeader == l ? 1 : 0;
-                ScreenStats.this.blitSlotIcon(matrices, mouseX + getCategoryOffset(l) - 18 + i1, mouseY + 1 + i1, 18 * this.headerTexture[l], 54);
+            for (int i = 0; i < len; ++i) {
+                int d = this.currentHeader == i ? 1 : 0;
+                ScreenStats.this.blitSlotIcon(matrices, x + getCategoryOffset(i, len, this.getRowWidth()) - 18 + d, y + 1 + d, 18 * this.headerTexture[i], 54);
             }
         }
 
@@ -729,20 +814,26 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             this.distanceList.sort(this.comparator);
         }
 
-        class Entry extends ObjectSelectionList.Entry<ScreenStats.ListDistanceStats.Entry> {
+        class Entry extends EntryList.Entry<Entry> {
 
             @Override
-            public Component getNarration() {
-                return EvolutionTexts.EMPTY;
+            protected Font font() {
+                return ScreenStats.this.font;
             }
 
             @Override
-            public void render(PoseStack matrices, int index, int y, int x, int width, int height, int mouseX, int mouseY, boolean hovered, float partialTicks) {
-                String name = ListDistanceStats.this.getFormattedName(ListDistanceStats.this.distanceList.get(index));
-                int color = index % 2 == 0 ? 0xff_ffff : 0x75_7575;
-                drawString(matrices, ScreenStats.this.font, name, x + 2, y + 1, color);
-                String value = EvolutionStats.DISTANCE.format(ScreenStats.this.stats.getValue_(ListDistanceStats.this.distanceList.get(index)));
-                drawString(matrices, ScreenStats.this.font, value, x + 2 + 213 - ScreenStats.this.font.width(value), y + 1, color);
+            protected int rowRight() {
+                return ListDistanceStats.this.getRowRight();
+            }
+
+            @Override
+            protected String title(int index) {
+                return getFormattedName(ListDistanceStats.this.distanceList.get(index));
+            }
+
+            @Override
+            protected String value(int index) {
+                return EvolutionStats.DISTANCE.format(ScreenStats.this.stats.getValue_(ListDistanceStats.this.distanceList.get(index)));
             }
         }
 
@@ -760,21 +851,21 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
                     i = ScreenStats.this.stats.getValue_(a);
                     j = ScreenStats.this.stats.getValue_(b);
                 }
-                return i == j ? String.CASE_INSENSITIVE_ORDER.compare(ListDistanceStats.this.getFormattedName(a), ListDistanceStats.this.getFormattedName(b)) : ListDistanceStats.this.sortOrder * Long.compare(i, j);
+                return i == j ? String.CASE_INSENSITIVE_ORDER.compare(getFormattedName(a), getFormattedName(b)) : ListDistanceStats.this.sortOrder * Long.compare(i, j);
             }
         }
     }
 
-    class ListMobStats extends ObjectSelectionList<ScreenStats.ListMobStats.Entry> {
+    class ListMobStats extends EntryList<ListMobStats.Entry> {
 
+        private final Comparator<EntityType<?>> comparator = new ListComparator();
         protected int currentHeader = -1;
-        protected final OList<StatType<EntityType<?>>> statTypes;
-        private final Comparator<EntityType<?>> comparator = new ListMobStats.ListComparator();
         private final R2OMap<EntityType<?>, LivingEntity> entities = new R2OHashMap<>();
         private final OList<EntityType<?>> entityList;
         private final int[] headerTexture = {1, 2, 3, 4};
         private int sortOrder;
         private @Nullable StatType<?> sorting;
+        protected final OList<StatType<EntityType<?>>> statTypes;
 
         public ListMobStats(Minecraft mc) {
             super(mc, ScreenStats.this.width, ScreenStats.this.height, 32, ScreenStats.this.height - 64, 9 * 6);
@@ -792,18 +883,34 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
                     assert ScreenStats.this.minecraft.level != null;
                     this.entities.put(entityType, GUIUtils.getEntity(ScreenStats.this.minecraft.level, entityType));
                     //noinspection ObjectAllocationInLoop
-                    this.addEntry(new ScreenStats.ListMobStats.Entry());
+                    this.addEntry(new ListMobStats.Entry());
                 }
             }
             this.entityList.sort(this.comparator);
         }
 
         @Override
+        protected int calculateRowWidth() {
+            OList<EntityType<?>> list = this.entityList;
+            int maxLine = 0;
+            Font font = ScreenStats.this.font;
+            for (int i = 0, len = list.size(); i < len; ++i) {
+                EntityType<?> type = list.get(i);
+                maxLine = Math.max(maxLine, font.width(ListMobStats.this.getDmgDealtValue(type)));
+                maxLine = Math.max(maxLine, font.width(ListMobStats.this.getDmgTakenValue(type)));
+                maxLine = Math.max(maxLine, font.width(ListMobStats.this.getKilledValue(type)));
+                maxLine = Math.max(maxLine, font.width(ListMobStats.this.getKilledByValue(type)));
+            }
+            return maxLine + 10 + 30;
+        }
+
+        @Override
         protected void clickedHeader(int mouseX, int mouseY) {
             this.currentHeader = -1;
             if (mouseY < this.headerHeight + this.y0 + 3) {
-                for (int i = 0; i < this.headerTexture.length; i++) {
-                    int j = mouseX - getCategoryOffset(i) + 18 * 3;
+                int len = this.headerTexture.length;
+                for (int i = 0; i < len; i++) {
+                    int j = mouseX - getCategoryOffset(i, len, this.getRowWidth());
                     if (j >= -36 && j <= 0) {
                         this.currentHeader = i;
                         break;
@@ -816,14 +923,20 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             }
         }
 
-        @Override
-        protected int getScrollbarPosition() {
-            return this.width - 6;
+        protected String getDmgDealtValue(EntityType<?> type) {
+            return I18n.get(EvolutionStats.DAMAGE_DEALT.getTranslationKey(), EvolutionStats.DAMAGE.format(ScreenStats.this.stats.getValue_(EvolutionStats.DAMAGE_DEALT.get(type))));
         }
 
-        @Override
-        protected void renderBackground(PoseStack matrices) {
-            ScreenStats.this.renderBackground(matrices);
+        protected String getDmgTakenValue(EntityType<?> type) {
+            return I18n.get(EvolutionStats.DAMAGE_TAKEN.getTranslationKey(), EvolutionStats.DAMAGE.format(ScreenStats.this.stats.getValue_(EvolutionStats.DAMAGE_TAKEN.get(type))));
+        }
+
+        protected String getKilledByValue(EntityType<?> type) {
+            return I18n.get(Stats.ENTITY_KILLED_BY.getTranslationKey(), EvolutionStats.DEFAULT.format(ScreenStats.this.stats.getValue_(Stats.ENTITY_KILLED_BY.get(type))));
+        }
+
+        protected String getKilledValue(EntityType<?> type) {
+            return I18n.get(Stats.ENTITY_KILLED.getTranslationKey(), EvolutionStats.DEFAULT.format(ScreenStats.this.stats.getValue_(Stats.ENTITY_KILLED.get(type))));
         }
 
         @Override
@@ -835,8 +948,9 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
                     Component text = null;
                     if (mouseY < this.headerHeight + this.y0 + 3) {
                         int j = mouseX - i;
-                        for (int k = 0; k < this.headerTexture.length; ++k) {
-                            int l = getCategoryOffset(k) - 18 * 3;
+                        int len = this.headerTexture.length;
+                        for (int k = 0; k < len; ++k) {
+                            int l = getCategoryOffset(k, len, this.getRowWidth());
                             if (j >= l - 18 && j <= l) {
                                 text = new TranslatableComponent(this.statTypes.get(k).getTranslationKey() + ".name");
                                 break;
@@ -851,22 +965,36 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
         }
 
         @Override
-        protected void renderHeader(PoseStack matrices, int mouseX, int mouseY, Tesselator tessellator) {
+        protected void renderHeader(PoseStack matrices, int x, int y, Tesselator tessellator) {
             if (!this.minecraft.mouseHandler.isLeftPressed()) {
                 this.currentHeader = -1;
             }
-            for (int i = 0; i < this.headerTexture.length; ++i) {
-                ScreenStats.this.blitSlotIcon(matrices, mouseX + getCategoryOffset(i) - 18 * 4, mouseY + 1, 0, this.currentHeader == i ? 0 : 36);
+            int len = this.headerTexture.length;
+            for (int i = 0; i < len; ++i) {
+                ScreenStats.this.blitSlotIcon(matrices, x + getCategoryOffset(i, len, this.getRowWidth()) - 18, y + 1, 0, this.currentHeader == i ? 0 : 36);
             }
             if (this.sorting != null) {
-                int k = getCategoryOffset(this.statTypes.indexOf(this.sorting)) - 18 * 5;
-                int j = this.sortOrder == 1 ? 2 : 1;
-                ScreenStats.this.blitSlotIcon(matrices, mouseX + k, mouseY + 1, 18 * j, 0);
+                int dx = getCategoryOffset(this.statTypes.indexOf(this.sorting), len, this.getRowWidth()) - 18 * 2;
+                int du = this.sortOrder == 1 ? 2 : 1;
+                ScreenStats.this.blitSlotIcon(matrices, x + dx, y + 1, 18 * du, 0);
             }
-            for (int l = 0; l < this.headerTexture.length; ++l) {
-                int i1 = this.currentHeader == l ? 1 : 0;
-                ScreenStats.this.blitSlotIcon(matrices, mouseX + getCategoryOffset(l) - 18 * 4 + i1, mouseY + 1 + i1, 18 * this.headerTexture[l], 36);
+            for (int i = 0; i < len; ++i) {
+                int d = this.currentHeader == i ? 1 : 0;
+                ScreenStats.this.blitSlotIcon(matrices, x + getCategoryOffset(i, len, this.getRowWidth()) - 18 + d, y + 1 + d, 18 * this.headerTexture[i], 36);
             }
+        }
+
+        private boolean shouldAddEntry(EntityType<?> type) {
+            if (ScreenStats.this.stats.getValue_(Stats.ENTITY_KILLED.get(type)) > 0) {
+                return true;
+            }
+            if (ScreenStats.this.stats.getValue_(Stats.ENTITY_KILLED_BY.get(type)) > 0) {
+                return true;
+            }
+            if (ScreenStats.this.stats.getValue_(EvolutionStats.DAMAGE_DEALT.get(type)) > 0) {
+                return true;
+            }
+            return ScreenStats.this.stats.getValue_(EvolutionStats.DAMAGE_TAKEN.get(type)) > 0;
         }
 
         protected void sortBy(StatType<?> statType) {
@@ -884,53 +1012,14 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             this.entityList.sort(this.comparator);
         }
 
-        private boolean shouldAddEntry(EntityType<?> type) {
-            if (ScreenStats.this.stats.getValue_(Stats.ENTITY_KILLED.get(type)) > 0) {
-                return true;
-            }
-            if (ScreenStats.this.stats.getValue_(Stats.ENTITY_KILLED_BY.get(type)) > 0) {
-                return true;
-            }
-            if (ScreenStats.this.stats.getValue_(EvolutionStats.DAMAGE_DEALT.get(type)) > 0) {
-                return true;
-            }
-            return ScreenStats.this.stats.getValue_(EvolutionStats.DAMAGE_TAKEN.get(type)) > 0;
-        }
-
-        class Entry extends ObjectSelectionList.Entry<ScreenStats.ListMobStats.Entry> {
+        class Entry extends EntryList.Entry<Entry> {
 
             public Entry() {
             }
 
-            private static String getDmgDealtValue(String plural, long dmgDealt) {
-                String s = EvolutionStats.DAMAGE_DEALT.getTranslationKey();
-                return dmgDealt == 0 ? I18n.get(s + ".none", plural) : I18n.get(s, EvolutionStats.DAMAGE.format(dmgDealt), plural);
-            }
-
-            private static String getDmgTakenValue(String plural, long dmgTaken) {
-                String s = EvolutionStats.DAMAGE_TAKEN.getTranslationKey();
-                return dmgTaken == 0 ? I18n.get(s + ".none", plural) : I18n.get(s, EvolutionStats.DAMAGE.format(dmgTaken), plural);
-            }
-
-            private static String getKilledByValue(String plural, long killedBy) {
-                String s = Stats.ENTITY_KILLED_BY.getTranslationKey();
-                if (killedBy == 0) {
-                    return I18n.get(s + ".none", plural);
-                }
-                return killedBy > 1 ? I18n.get(s, plural, killedBy) : I18n.get(s + ".once", plural);
-            }
-
-            private static String getKilledValue(String singular, String plural, long killed) {
-                String s = Stats.ENTITY_KILLED.getTranslationKey();
-                if (killed == 0) {
-                    return I18n.get(s + ".none", plural);
-                }
-                return killed > 1 ? I18n.get(s, killed, plural) : I18n.get(s + ".once", singular);
-            }
-
             @Override
-            public Component getNarration() {
-                return new TranslatableComponent("narrator.select");
+            protected Font font() {
+                return ScreenStats.this.font;
             }
 
             @Override
@@ -941,26 +1030,28 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
                     entity = ListMobStats.this.minecraft.player;
                 }
                 if (entity != null) {
-                    GUIUtils.drawEntityOnScreen(x - 30, y + 45, GUIUtils.getEntityScale(entity, 1.0f, 40, 35), mouseX, mouseY, entity);
+                    GUIUtils.drawEntityOnScreen(x, y + 45, GUIUtils.getEntityScale(entity, 1.0f, 40, 35), mouseX, mouseY, entity);
                 }
-                long dmgDealt = ScreenStats.this.stats.getValue_(EvolutionStats.DAMAGE_DEALT, type);
-                long dmgTaken = ScreenStats.this.stats.getValue_(EvolutionStats.DAMAGE_TAKEN, type);
-                long killed = ScreenStats.this.stats.getValue_(Stats.ENTITY_KILLED, type);
-                long killedBy = ScreenStats.this.stats.getValue_(Stats.ENTITY_KILLED_BY, type);
-                String entityName = I18n.get(Util.makeDescriptionId("entity", EntityType.getKey(type)));
-                String entityNamePlural = I18n.get(Util.makeDescriptionId("entity", EntityType.getKey(type)) + ".plural");
-                drawString(matrices, ScreenStats.this.font, entityName, x + 2, y + 1, 0xff_ffff);
-                int dmgColor = dmgDealt == dmgTaken ? dmgDealt == 0 ? 0x75_7575 : 0xc4_ad00 : dmgDealt > dmgTaken ? 0x33_b500 : 0xff_3030;
-                drawString(matrices, ScreenStats.this.font, getDmgDealtValue(entityNamePlural, dmgDealt), x + 2 + 10, y + 1 + 9, dmgColor);
-                drawString(matrices, ScreenStats.this.font, getDmgTakenValue(entityNamePlural, dmgTaken), x + 2 + 10, y + 1 + 9 * 2, dmgColor);
-                int killColor = killed == killedBy ? killed == 0 ? 0x75_7575 : 0xc4_ad00 : killed > killedBy ? 0x33_b500 : 0xff_3030;
-                drawString(matrices,
-                           ScreenStats.this.font,
-                           getKilledValue(entityName, entityNamePlural, killed),
-                           x + 2 + 10,
-                           y + 1 + 9 * 3,
-                           killColor);
-                drawString(matrices, ScreenStats.this.font, getKilledByValue(entityNamePlural, killedBy), x + 2 + 10, y + 1 + 9 * 4, killColor);
+                drawString(matrices, ScreenStats.this.font, I18n.get(Util.makeDescriptionId("entity", EntityType.getKey(type))), x + 30, y + 3, 0xff_ffff);
+                drawString(matrices, ScreenStats.this.font, ListMobStats.this.getDmgDealtValue(type), x + 30 + 10, y + 3 + 10, 0x75_7575);
+                drawString(matrices, ScreenStats.this.font, ListMobStats.this.getDmgTakenValue(type), x + 30 + 10, y + 3 + 10 * 2, 0x75_7575);
+                drawString(matrices, ScreenStats.this.font, ListMobStats.this.getKilledValue(type), x + 30 + 10, y + 3 + 10 * 3, 0x75_7575);
+                drawString(matrices, ScreenStats.this.font, ListMobStats.this.getKilledByValue(type), x + 30 + 10, y + 3 + 10 * 4, 0x75_7575);
+            }
+
+            @Override
+            protected int rowRight() {
+                return ListMobStats.this.getRowRight();
+            }
+
+            @Override
+            protected String title(int index) {
+                return "null";
+            }
+
+            @Override
+            protected String value(int index) {
+                return "null";
             }
         }
 
@@ -987,15 +1078,15 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
         }
     }
 
-    class ListStats extends ObjectSelectionList<ScreenStats.ListStats.Entry> {
+    class ListStats extends EntryList<ListStats.Entry> {
         protected final OList<StatType<Block>> blockStatList;
         protected final Comparator<Item> comparator = new ListComparator();
         protected int currentHeader = -1;
+        private final int[] headerTexture = {3, 7, 4, 1, 2, 5, 6};
         protected final OList<Item> itemList;
         protected final OList<StatType<Item>> itemStatList;
         protected int sortOrder;
         protected @Nullable StatType<?> sorting;
-        private final int[] headerTexture = {3, 7, 4, 1, 2, 5, 6};
 
         public ListStats(Minecraft mc) {
             super(mc, ScreenStats.this.width, ScreenStats.this.height, 32, ScreenStats.this.height - 64, 20);
@@ -1034,13 +1125,17 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             this.itemList = new OArrayList<>(set);
             for (int i = 0; i < this.itemList.size(); i++) {
                 //noinspection ObjectAllocationInLoop
-                this.addEntry(new ScreenStats.ListStats.Entry());
+                this.addEntry(new Entry());
             }
             this.itemList.sort(this.comparator);
         }
 
+        private StatType<?> byIndex(int index) {
+            return index < this.blockStatList.size() ? this.blockStatList.get(index) : this.itemStatList.get(index - this.blockStatList.size());
+        }
+
         @Override
-        public int getRowWidth() {
+        protected int calculateRowWidth() {
             return 425;
         }
 
@@ -1048,8 +1143,9 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
         protected void clickedHeader(int mouseX, int mouseY) {
             this.currentHeader = -1;
             if (mouseY < this.headerHeight + this.y0 + 3) {
-                for (int i = 0; i < this.headerTexture.length; i++) {
-                    int j = mouseX - getCategoryOffset(i);
+                int len = this.headerTexture.length;
+                for (int i = 0; i < len; i++) {
+                    int j = mouseX - getCategoryOffset(i, len, this.getRowWidth());
                     if (j >= -36 && j <= 0) {
                         this.currentHeader = i;
                         break;
@@ -1062,20 +1158,19 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             }
         }
 
-        @Override
-        protected int getScrollbarPosition() {
-            return this.width - 6;
-        }
-
-        @Override
-        protected void renderBackground(PoseStack matrices) {
-            ScreenStats.this.renderBackground(matrices);
+        private int indexOf(StatType<?> statType) {
+            int blockIndex = this.blockStatList.indexOf(statType);
+            if (blockIndex >= 0) {
+                return blockIndex;
+            }
+            int itemIndex = this.itemStatList.indexOf(statType);
+            return itemIndex >= 0 ? itemIndex + this.blockStatList.size() : -1;
         }
 
         @Override
         protected void renderDecorations(PoseStack matrices, int mouseX, int mouseY) {
             if (mouseY >= this.y0 && mouseY <= this.y1) {
-                ScreenStats.ListStats.Entry entryAtPos = this.getEntryAtPosition(mouseX, mouseY);
+                Entry entryAtPos = this.getEntryAtPosition(mouseX, mouseY);
                 int i = (this.width - this.getRowWidth()) / 2;
                 if (entryAtPos != null) {
                     if (mouseX < i + 40 || mouseX > i + 40 + 20) {
@@ -1090,8 +1185,9 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
                     Component name = null;
                     if (mouseY < this.headerHeight + this.y0 + 3) {
                         int j = mouseX - i;
-                        for (int k = 0; k < this.headerTexture.length; ++k) {
-                            int l = getCategoryOffset(k);
+                        int len = this.headerTexture.length;
+                        for (int k = 0; k < len; ++k) {
+                            int l = getCategoryOffset(k, len, this.getRowWidth());
                             if (j >= l - 18 && j <= l) {
                                 name = new TranslatableComponent(this.byIndex(k).getTranslationKey());
                                 break;
@@ -1110,17 +1206,16 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             if (!this.minecraft.mouseHandler.isLeftPressed()) {
                 this.currentHeader = -1;
             }
-            for (int i = 0; i < this.headerTexture.length; ++i) {
-                ScreenStats.this.blitSlotIcon(matrices, x + getCategoryOffset(i) - 18, y + 1, 0, this.currentHeader == i ? 0 : 18);
+            int len = this.headerTexture.length;
+            for (int i = 0; i < len; ++i) {
+                ScreenStats.this.blitSlotIcon(matrices, x + getCategoryOffset(i, len, this.getRowWidth()) - 18, y + 1, 0, this.currentHeader == i ? 0 : 18);
             }
             if (this.sorting != null) {
-                int k = getCategoryOffset(this.indexOf(this.sorting)) - 36;
-                int j = this.sortOrder == 1 ? 2 : 1;
-                ScreenStats.this.blitSlotIcon(matrices, x + k, y + 1, 18 * j, 0);
+                ScreenStats.this.blitSlotIcon(matrices, x + getCategoryOffset(this.indexOf(this.sorting), len, this.getRowWidth()) - 36, y + 1, this.sortOrder == 1 ? 2 * 18 : 18, 0);
             }
-            for (int l = 0; l < this.headerTexture.length; ++l) {
-                int i1 = this.currentHeader == l ? 1 : 0;
-                ScreenStats.this.blitSlotIcon(matrices, x + getCategoryOffset(l) - 18 + i1, y + 1 + i1, 18 * this.headerTexture[l], 18);
+            for (int i = 0; i < len; ++i) {
+                int d = this.currentHeader == i ? 1 : 0;
+                ScreenStats.this.blitSlotIcon(matrices, x + getCategoryOffset(i, len, this.getRowWidth()) - 18 + d, y + 1 + d, 18 * this.headerTexture[i], 18);
             }
         }
 
@@ -1139,27 +1234,19 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             this.itemList.sort(this.comparator);
         }
 
-        private StatType<?> byIndex(int index) {
-            return index < this.blockStatList.size() ? this.blockStatList.get(index) : this.itemStatList.get(index - this.blockStatList.size());
-        }
-
-        private int indexOf(StatType<?> statType) {
-            int blockIndex = this.blockStatList.indexOf(statType);
-            if (blockIndex >= 0) {
-                return blockIndex;
-            }
-            int itemIndex = this.itemStatList.indexOf(statType);
-            return itemIndex >= 0 ? itemIndex + this.blockStatList.size() : -1;
-        }
-
-        final class Entry extends ObjectSelectionList.Entry<ScreenStats.ListStats.Entry> {
+        final class Entry extends EntryList.Entry<Entry> {
 
             private Entry() {
             }
 
+            private void drawStatCount(PoseStack matrices, @Nullable Stat<?> stat, int x, int y, boolean highlight) {
+                String s = stat == null ? "-" : EvolutionStats.METRIC.format(ScreenStats.this.stats.getValue_(stat));
+                drawString(matrices, ScreenStats.this.font, s, x - ScreenStats.this.font.width(s), y + 5, highlight ? 0xff_ffff : 0x75_7575);
+            }
+
             @Override
-            public Component getNarration() {
-                return EvolutionTexts.EMPTY;
+            protected Font font() {
+                return ScreenStats.this.font;
             }
 
             @Override
@@ -1177,16 +1264,27 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
                     else {
                         stat = null;
                     }
-                    this.drawStatCount(matrices, stat, x + getCategoryOffset(i), y, index % 2 == 0);
+                    this.drawStatCount(matrices, stat, x + getCategoryOffset(i, ListStats.this.headerTexture.length, ListStats.this.getRowWidth()), y, index % 2 == 0);
                 }
-                for (int j = 0; j < ScreenStats.this.itemStats.itemStatList.size(); ++j) {
-                    this.drawStatCount(matrices, ScreenStats.this.itemStats.itemStatList.get(j).get(item), x + getCategoryOffset(j + ScreenStats.this.itemStats.blockStatList.size()), y, index % 2 == 0);
+                int size = ScreenStats.this.itemStats.itemStatList.size();
+                for (int j = 0; j < size; ++j) {
+                    this.drawStatCount(matrices, ScreenStats.this.itemStats.itemStatList.get(j).get(item), x + getCategoryOffset(j + ScreenStats.this.itemStats.blockStatList.size(), ListStats.this.headerTexture.length, ListStats.this.getRowWidth()), y, index % 2 == 0);
                 }
             }
 
-            private void drawStatCount(PoseStack matrices, @Nullable Stat<?> stat, int x, int y, boolean highlight) {
-                String s = stat == null ? "-" : EvolutionStats.METRIC.format(ScreenStats.this.stats.getValue_(stat));
-                drawString(matrices, ScreenStats.this.font, s, x - ScreenStats.this.font.width(s), y + 5, highlight ? 0xff_ffff : 0x75_7575);
+            @Override
+            protected int rowRight() {
+                return ListStats.this.getRowRight();
+            }
+
+            @Override
+            protected String title(int index) {
+                return "null";
+            }
+
+            @Override
+            protected String value(int index) {
+                return "null";
             }
         }
 
@@ -1199,17 +1297,17 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             public int compare(Item a, Item b) {
                 long i;
                 long j;
-                if (ScreenStats.ListStats.this.sorting == null) {
+                if (ListStats.this.sorting == null) {
                     i = 0;
                     j = 0;
                 }
-                else if (ScreenStats.ListStats.this.blockStatList.contains(ScreenStats.ListStats.this.sorting)) {
-                    StatType<Block> blockSorting = (StatType<Block>) ScreenStats.ListStats.this.sorting;
+                else if (ListStats.this.blockStatList.contains(ListStats.this.sorting)) {
+                    StatType<Block> blockSorting = (StatType<Block>) ListStats.this.sorting;
                     i = this.getBlockStats(blockSorting, a);
                     j = this.getBlockStats(blockSorting, b);
                 }
                 else {
-                    StatType<Item> itemSorting = (StatType<Item>) ScreenStats.ListStats.this.sorting;
+                    StatType<Item> itemSorting = (StatType<Item>) ListStats.this.sorting;
                     i = ScreenStats.this.stats.getValue_(itemSorting, a);
                     j = ScreenStats.this.stats.getValue_(itemSorting, b);
                 }
@@ -1228,11 +1326,11 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
         }
     }
 
-    class ListTimeStats extends ObjectSelectionList<ListTimeStats.Entry> {
+    class ListTimeStats extends EntryList<ListTimeStats.Entry> {
+        private final Comparator<Stat<ResourceLocation>> comparator = new ListComparator();
         protected int currentHeader = -1;
-        protected int sortOrder;
-        private final Comparator<Stat<ResourceLocation>> comparator = new ListTimeStats.ListComparator();
         private final int[] headerTexture = {1};
+        protected int sortOrder;
         private final OList<Stat<ResourceLocation>> timeList;
 
         public ListTimeStats(Minecraft mc) {
@@ -1252,11 +1350,31 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
         }
 
         @Override
+        protected int calculateRowWidth() {
+            OList<Stat<ResourceLocation>> list = this.timeList;
+            int maxName = 0;
+            int maxValue = 0;
+            for (int i = 0, len = list.size(); i < len; ++i) {
+                Stat<ResourceLocation> stat = list.get(i);
+                int w = ScreenStats.this.font.width(getFormattedName(stat));
+                if (w > maxName) {
+                    maxName = w;
+                }
+                w = ScreenStats.this.font.width(EvolutionStats.TIME.format(ScreenStats.this.stats.getValue_(stat)));
+                if (w > maxValue) {
+                    maxValue = w;
+                }
+            }
+            return maxName + maxValue + 24;
+        }
+
+        @Override
         protected void clickedHeader(int mouseX, int mouseY) {
             this.currentHeader = -1;
             if (mouseY < this.headerHeight + this.y0 + 3) {
-                for (int i = 0; i < this.headerTexture.length; i++) {
-                    int j = mouseX - getCategoryOffset(i);
+                int len = this.headerTexture.length;
+                for (int i = 0; i < len; i++) {
+                    int j = mouseX - getCategoryOffset(i, len, this.getRowWidth());
                     if (j >= -36 && j <= 0) {
                         this.currentHeader = i;
                         break;
@@ -1269,31 +1387,21 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             }
         }
 
-        protected String getFormattedName(Stat<ResourceLocation> stat) {
-            return I18n.get("stat." + stat.getValue().toString().replace(':', '.'));
-        }
-
-        @Override
-        protected int getScrollbarPosition() {
-            return this.width - 6;
-        }
-
         @Override
         protected void renderHeader(PoseStack matrices, int x, int y, Tesselator tesselator) {
             if (!this.minecraft.mouseHandler.isLeftPressed()) {
                 this.currentHeader = -1;
             }
-            for (int i = 0; i < this.headerTexture.length; ++i) {
-                ScreenStats.this.blitSlotIcon(matrices, x + getCategoryOffset(i) - 18, y + 1, 0, this.currentHeader == i ? 0 : 72);
+            int len = this.headerTexture.length;
+            for (int i = 0; i < len; ++i) {
+                ScreenStats.this.blitSlotIcon(matrices, x + getCategoryOffset(i, len, this.getRowWidth()) - 18, y + 1, 0, this.currentHeader == i ? 0 : 72);
             }
             if (this.sortOrder != 0) {
-                int k = getCategoryOffset(0) - 18 * 2;
-                int j = this.sortOrder == 1 ? 2 : 1;
-                ScreenStats.this.blitSlotIcon(matrices, x + k, y + 1, 18 * j, 0);
+                ScreenStats.this.blitSlotIcon(matrices, x + getCategoryOffset(0, len, this.getRowWidth()) - 18 * 2, y + 1, this.sortOrder == 1 ? 2 * 18 : 18, 0);
             }
-            for (int l = 0; l < this.headerTexture.length; ++l) {
-                int i1 = this.currentHeader == l ? 1 : 0;
-                ScreenStats.this.blitSlotIcon(matrices, x + getCategoryOffset(l) - 18 + i1, y + 1 + i1, 18 * this.headerTexture[l], 72);
+            for (int i = 0; i < len; ++i) {
+                int d = this.currentHeader == i ? 1 : 0;
+                ScreenStats.this.blitSlotIcon(matrices, x + getCategoryOffset(i, len, this.getRowWidth()) - 18 + d, y + 1 + d, 18 * this.headerTexture[i], 72);
             }
         }
 
@@ -1306,20 +1414,26 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             this.timeList.sort(this.comparator);
         }
 
-        class Entry extends ObjectSelectionList.Entry<ListTimeStats.Entry> {
+        class Entry extends EntryList.Entry<ListTimeStats.Entry> {
 
             @Override
-            public Component getNarration() {
-                return EvolutionTexts.EMPTY;
+            protected Font font() {
+                return ScreenStats.this.font;
             }
 
             @Override
-            public void render(PoseStack matrices, int index, int y, int x, int width, int height, int mouseX, int mouseY, boolean hovered, float partialTicks) {
-                String name = ListTimeStats.this.getFormattedName(ListTimeStats.this.timeList.get(index));
-                int color = index % 2 == 0 ? 0xff_ffff : 0x75_7575;
-                drawString(matrices, ScreenStats.this.font, name, x + 2, y + 1, color);
-                String value = EvolutionStats.TIME.format(ScreenStats.this.stats.getValue_(ListTimeStats.this.timeList.get(index)));
-                drawString(matrices, ScreenStats.this.font, value, x + 2 + 213 - ScreenStats.this.font.width(value), y + 1, color);
+            protected int rowRight() {
+                return ListTimeStats.this.getRowRight();
+            }
+
+            @Override
+            protected String title(int index) {
+                return getFormattedName(ListTimeStats.this.timeList.get(index));
+            }
+
+            @Override
+            protected String value(int index) {
+                return EvolutionStats.TIME.format(ScreenStats.this.stats.getValue_(ListTimeStats.this.timeList.get(index)));
             }
         }
 
@@ -1337,7 +1451,7 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
                     i = ScreenStats.this.stats.getValue_(a);
                     j = ScreenStats.this.stats.getValue_(b);
                 }
-                return i == j ? String.CASE_INSENSITIVE_ORDER.compare(ListTimeStats.this.getFormattedName(a), ListTimeStats.this.getFormattedName(b)) : ListTimeStats.this.sortOrder * Long.compare(i, j);
+                return i == j ? String.CASE_INSENSITIVE_ORDER.compare(getFormattedName(a), getFormattedName(b)) : ListTimeStats.this.sortOrder * Long.compare(i, j);
             }
         }
     }

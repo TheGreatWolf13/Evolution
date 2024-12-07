@@ -1,9 +1,11 @@
 package tgw.evolution.events;
 
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.stats.Stat;
 import net.minecraft.stats.Stats;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.profiling.ProfilerFiller;
@@ -96,10 +98,28 @@ public final class EntityEvents {
         }
         if (!player.isSleeping()) {
             if (player.isAlive()) {
+                player.awardStat(EvolutionStats.TIME_AWAKE);
                 player.awardStat(EvolutionStats.TIME_SINCE_LAST_REST);
+                Stat<ResourceLocation> lastRest = Stats.CUSTOM.get(EvolutionStats.TIME_SINCE_LAST_REST);
+                long time = player.getStat(lastRest);
+                Stat<ResourceLocation> maxAwake = Stats.CUSTOM.get(EvolutionStats.TIME_MAX_AWAKE);
+                long maxTime = player.getStat(maxAwake);
+                if (time > maxTime) {
+                    player.setStat(maxAwake, time);
+                }
+                PlayerHelper.takeStat(player, Stats.CUSTOM.get(EvolutionStats.TIME_SINCE_LAST_AWAKENED));
             }
         }
         else {
+            player.awardStat(EvolutionStats.TIME_SLEEPING);
+            player.awardStat(EvolutionStats.TIME_SINCE_LAST_AWAKENED);
+            Stat<ResourceLocation> lastAwakened = Stats.CUSTOM.get(EvolutionStats.TIME_SINCE_LAST_AWAKENED);
+            long time = player.getStat(lastAwakened);
+            Stat<ResourceLocation> maxSleep = Stats.CUSTOM.get(EvolutionStats.TIME_MAX_SLEEP);
+            long maxTime = player.getStat(maxSleep);
+            if (time > maxTime) {
+                player.setStat(maxSleep, time);
+            }
             PlayerHelper.takeStat(player, Stats.CUSTOM.get(EvolutionStats.TIME_SINCE_LAST_REST));
         }
         if (player.isAlive()) {

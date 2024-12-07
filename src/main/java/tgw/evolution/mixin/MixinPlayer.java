@@ -77,28 +77,28 @@ import java.util.Optional;
 @Mixin(Player.class)
 public abstract class MixinPlayer extends LivingEntity implements PatchPlayer {
 
+    @Shadow @Final private Abilities abilities;
     @Shadow public float bob;
     @Shadow public @Nullable AbstractContainerMenu containerMenu;
-    @Shadow public int experienceLevel;
-    @Shadow public float experienceProgress;
-    @Shadow @Final public InventoryMenu inventoryMenu;
-    @Shadow public float oBob;
-    @Shadow public int takeXpDelay;
-    @Shadow public int totalExperience;
+    @Shadow @Final private ItemCooldowns cooldowns;
     @Shadow protected int enchantmentSeed;
     @Shadow protected PlayerEnderChestContainer enderChestInventory;
-    @Shadow protected int jumpTriggerTime;
-    @Shadow @Final private Abilities abilities;
-    @Shadow @Final private ItemCooldowns cooldowns;
+    @Shadow public int experienceLevel;
+    @Shadow public float experienceProgress;
     @Unique private final AABBMutable hitboxForTouching = new AABBMutable();
     @Shadow @Final private Inventory inventory;
+    @Shadow @Final public InventoryMenu inventoryMenu;
     @Unique private boolean isCrawling;
     @Unique private boolean isMoving;
+    @Shadow protected int jumpTriggerTime;
     @Unique private double motionX;
     @Unique private double motionY;
     @Unique private double motionZ;
+    @Shadow public float oBob;
     @Shadow private int sleepCounter;
+    @Shadow public int takeXpDelay;
     @Shadow private long timeEntitySatOnShoulder;
+    @Shadow public int totalExperience;
 
     protected MixinPlayer(EntityType<? extends LivingEntity> type, Level level) {
         super(type, level);
@@ -399,6 +399,24 @@ public abstract class MixinPlayer extends LivingEntity implements PatchPlayer {
     }
 
     /**
+     * @author TheGreatWolf
+     * @reason Overwrite to use Evolution Stats.
+     */
+    @Overwrite
+    private void checkRidingStatistics(double dx, double dy, double dz) {
+        //noinspection ConstantConditions
+        if ((Object) this instanceof ServerPlayer player && this.isPassenger()) {
+            float dist = MathHelper.sqrt(dx * dx + dy * dy + dz * dz) * 1_000;
+            if (dist > 0) {
+                PlayerHelper.addStat(player, EvolutionStats.TOTAL_DISTANCE_TRAVELED, dist);
+            }
+        }
+    }
+
+    @Shadow
+    protected abstract void closeContainer();
+
+    /**
      * @reason _
      * @author TheGreatWolf
      */
@@ -454,6 +472,26 @@ public abstract class MixinPlayer extends LivingEntity implements PatchPlayer {
     @Override
     public double getBaseMass() {
         return PlayerHelper.MASS;
+    }
+
+    @Unique
+    private Pose getBasePose() {
+        if (this.isFallFlying()) {
+            return Pose.FALL_FLYING;
+        }
+        if (this.isSleeping()) {
+            return Pose.SLEEPING;
+        }
+        if (this.isSwimming() || this.isCrawling) {
+            return Pose.SWIMMING;
+        }
+        if (this.isAutoSpinAttack()) {
+            return Pose.SPIN_ATTACK;
+        }
+        if (this.isShiftKeyDown() && !this.abilities.flying) {
+            return Pose.CROUCHING;
+        }
+        return Pose.STANDING;
     }
 
     @Override
@@ -564,6 +602,22 @@ public abstract class MixinPlayer extends LivingEntity implements PatchPlayer {
     public abstract CompoundTag getShoulderEntityRight();
 
     @Override
+    public long getStat(Stat<?> stat) {
+        return 0;
+    }
+
+    @Unique
+    private float getStepHeightInternal() {
+        AttributeInstance massAttribute = this.getAttribute(EvolutionAttributes.MASS);
+        assert massAttribute != null;
+        double baseMass = massAttribute.getBaseValue();
+        double totalMass = massAttribute.getValue();
+        double equipMass = totalMass - baseMass;
+        double stepHeight = 1.062_5f - equipMass * 0.001_14f;
+        return (float) Math.max(stepHeight, 0.6);
+    }
+
+    @Override
     public double getVolume() {
         return PlayerHelper.VOLUME - PlayerHelper.LUNG_CAPACITY;
     }
@@ -645,6 +699,37 @@ public abstract class MixinPlayer extends LivingEntity implements PatchPlayer {
     @Shadow
     public abstract boolean mayBuild();
 
+    @Shadow
+    protected abstract void moveCloak();
+
+    @Inject(method = "startSleepInBed", at = @At("TAIL"))
+    private void onStartSleepInBed(BlockPos pos, CallbackInfoReturnable<Either<Player.BedSleepingProblem, Unit>> cir) {
+        if (!this.level.isClientSide) {
+            //noinspection ConstantConditions
+            ((ServerPlayer) (Object) this).connection.send(new PacketSCMovement(0, 0, 0));
+        }
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Avoid most allocations, check for empty tag to not perform a ton of calculations when no entity is on the shoulder.
+     */
+    @Overwrite
+    private void playShoulderEntityAmbientSound(@Nullable CompoundTag tag) {
+        if (tag != null && !tag.isEmpty() && (!tag.contains("Silent") || !tag.getBoolean("Silent")) && this.level.random.nextInt(200) == 0) {
+            String id = tag.getString("id");
+            Optional<EntityType<?>> entityType = EntityType.byString(id);
+            if (entityType.isPresent()) {
+                if (entityType.get() == EntityType.PARROT) {
+                    if (!Parrot.imitateNearbyMobs(this.level, this)) {
+                        this.level.playSound(null, this.getX(), this.getY(), this.getZ(), Parrot.getAmbient(this.level, this.level.random),
+                                             this.getSoundSource(), 1.0F, Parrot.getPitch(this.level.random));
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * @author TheGreatWolf
      * @reason _
@@ -665,9 +750,23 @@ public abstract class MixinPlayer extends LivingEntity implements PatchPlayer {
         }
     }
 
+    @Shadow
+    protected abstract void respawnEntityOnShoulder(CompoundTag compoundTag);
+
     @Override
     public void setCrawling(boolean crawling) {
         this.isCrawling = crawling;
+    }
+
+    @Shadow
+    protected abstract void setShoulderEntityLeft(CompoundTag compoundTag);
+
+    @Shadow
+    protected abstract void setShoulderEntityRight(CompoundTag compoundTag);
+
+    @Override
+    public void setStat(Stat<?> stat, long value) {
+
     }
 
     @Shadow
@@ -734,6 +833,9 @@ public abstract class MixinPlayer extends LivingEntity implements PatchPlayer {
         EntityEvents.onPlayerTickEnd((Player) (Object) this);
     }
 
+    @Shadow
+    protected abstract void touch(Entity pEntity);
+
     /**
      * @author TheGreatWolf
      * @reason Replace to handle Evolution's physics
@@ -756,6 +858,12 @@ public abstract class MixinPlayer extends LivingEntity implements PatchPlayer {
             super.travel(travelVector);
         }
     }
+
+    @Shadow
+    protected abstract void turtleHelmetTick();
+
+    @Shadow
+    protected abstract boolean updateIsUnderwater();
 
     /**
      * @author TheGreatWolf
@@ -781,104 +889,6 @@ public abstract class MixinPlayer extends LivingEntity implements PatchPlayer {
                 secondPose = firstPose;
             }
             this.setPose(secondPose);
-        }
-    }
-
-    @Shadow
-    protected abstract void closeContainer();
-
-    @Shadow
-    protected abstract void moveCloak();
-
-    @Shadow
-    protected abstract void respawnEntityOnShoulder(CompoundTag compoundTag);
-
-    @Shadow
-    protected abstract void setShoulderEntityLeft(CompoundTag compoundTag);
-
-    @Shadow
-    protected abstract void setShoulderEntityRight(CompoundTag compoundTag);
-
-    @Shadow
-    protected abstract void touch(Entity pEntity);
-
-    @Shadow
-    protected abstract void turtleHelmetTick();
-
-    @Shadow
-    protected abstract boolean updateIsUnderwater();
-
-    /**
-     * @author TheGreatWolf
-     * @reason Overwrite to use Evolution Stats.
-     */
-    @Overwrite
-    private void checkRidingStatistics(double dx, double dy, double dz) {
-        //noinspection ConstantConditions
-        if ((Object) this instanceof ServerPlayer player && this.isPassenger()) {
-            float dist = MathHelper.sqrt(dx * dx + dy * dy + dz * dz) * 1_000;
-            if (dist > 0) {
-                PlayerHelper.addStat(player, EvolutionStats.TOTAL_DISTANCE_TRAVELED, dist);
-            }
-        }
-    }
-
-    @Unique
-    private Pose getBasePose() {
-        if (this.isFallFlying()) {
-            return Pose.FALL_FLYING;
-        }
-        if (this.isSleeping()) {
-            return Pose.SLEEPING;
-        }
-        if (this.isSwimming() || this.isCrawling) {
-            return Pose.SWIMMING;
-        }
-        if (this.isAutoSpinAttack()) {
-            return Pose.SPIN_ATTACK;
-        }
-        if (this.isShiftKeyDown() && !this.abilities.flying) {
-            return Pose.CROUCHING;
-        }
-        return Pose.STANDING;
-    }
-
-    @Unique
-    private float getStepHeightInternal() {
-        AttributeInstance massAttribute = this.getAttribute(EvolutionAttributes.MASS);
-        assert massAttribute != null;
-        double baseMass = massAttribute.getBaseValue();
-        double totalMass = massAttribute.getValue();
-        double equipMass = totalMass - baseMass;
-        double stepHeight = 1.062_5f - equipMass * 0.001_14f;
-        return (float) Math.max(stepHeight, 0.6);
-    }
-
-    @Inject(method = "startSleepInBed", at = @At("TAIL"))
-    private void onStartSleepInBed(BlockPos pos, CallbackInfoReturnable<Either<Player.BedSleepingProblem, Unit>> cir) {
-        if (!this.level.isClientSide) {
-            //noinspection ConstantConditions
-            ((ServerPlayer) (Object) this).connection.send(new PacketSCMovement(0, 0, 0));
-        }
-    }
-
-    /**
-     * @author TheGreatWolf
-     * @reason Avoid most allocations, check for empty tag to not perform a ton of calculations when no entity is on the shoulder.
-     */
-    @Overwrite
-    private void playShoulderEntityAmbientSound(@Nullable CompoundTag tag) {
-        if (tag != null && !tag.isEmpty() && (!tag.contains("Silent") || !tag.getBoolean("Silent")) && this.level.random.nextInt(200) == 0) {
-            String id = tag.getString("id");
-            Optional<EntityType<?>> entityType = EntityType.byString(id);
-            if (entityType.isPresent()) {
-                if (entityType.get() == EntityType.PARROT) {
-                    if (!Parrot.imitateNearbyMobs(this.level, this)) {
-                        this.level.playSound(null, this.getX(), this.getY(), this.getZ(), Parrot.getAmbient(this.level, this.level.random),
-                                             this.getSoundSource(), 1.0F, Parrot.getPitch(this.level.random));
-                    }
-                }
-            }
         }
     }
 }
