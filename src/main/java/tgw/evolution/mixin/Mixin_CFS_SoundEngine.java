@@ -26,7 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
 import org.spongepowered.asm.mixin.*;
-import tgw.evolution.events.ClientEvents;
+import tgw.evolution.EvolutionClient;
 import tgw.evolution.hooks.asm.DeleteField;
 import tgw.evolution.hooks.asm.ModifyConstructor;
 import tgw.evolution.hooks.asm.ModifyStatic;
@@ -137,7 +137,7 @@ public abstract class Mixin_CFS_SoundEngine {
         if (soundInstance.getSource() == SoundSource.MASTER) {
             return Mth.clamp(soundInstance.getPitch(), 0.5F, 2.0F);
         }
-        float mul = ClientEvents.getPitchMul();
+        float mul = EvolutionClient.getPitchMul();
         return Mth.clamp(soundInstance.getPitch(), 0.5F, 2.0F) * mul;
     }
 
@@ -156,7 +156,7 @@ public abstract class Mixin_CFS_SoundEngine {
         if (soundSource == SoundSource.MASTER) {
             return 1.0f;
         }
-        float mul = ClientEvents.getVolumeMultiplier();
+        float mul = EvolutionClient.getVolumeMultiplier();
         if (mul <= 0) {
             return 0;
         }
@@ -443,6 +443,7 @@ public abstract class Mixin_CFS_SoundEngine {
                     double x = tickable.getX();
                     double y = tickable.getY();
                     double z = tickable.getZ();
+                    //noinspection ObjectAllocationInLoop
                     handle.execute(channel -> {
                         channel.setVolume(volume);
                         channel.setPitch(pitch);
@@ -507,6 +508,7 @@ public abstract class Mixin_CFS_SoundEngine {
                 O2OMap<SoundInstance, ChannelAccess.ChannelHandle> instanceToChannel = this.instanceToChannel_;
                 for (long it = instanceToChannel.beginIteration(); instanceToChannel.hasNextIteration(it); it = instanceToChannel.nextEntry(it)) {
                     float f = this.calculateVolume(instanceToChannel.getIterationKey(it));
+                    //noinspection ObjectAllocationInLoop
                     instanceToChannel.getIterationValue(it).execute(c -> {
                         if (f <= 0.0F) {
                             c.stop();
@@ -541,6 +543,7 @@ public abstract class Mixin_CFS_SoundEngine {
                         double x = instance.getX() + xWrap * EarthHelper.WORLD_SIZE;
                         double y = instance.getY();
                         double z = instance.getZ() + zWrap * EarthHelper.WORLD_SIZE;
+                        //noinspection ObjectAllocationInLoop
                         handle.execute(channel -> channel.setSelfPosition(x, y, z));
                     }
                 }

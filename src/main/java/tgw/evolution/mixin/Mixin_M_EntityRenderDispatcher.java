@@ -30,10 +30,10 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.spongepowered.asm.mixin.*;
+import tgw.evolution.EvolutionClient;
 import tgw.evolution.client.renderer.ambient.DynamicLights;
 import tgw.evolution.client.renderer.ambient.LightTextureEv;
 import tgw.evolution.client.renderer.chunk.EvLevelRenderer;
-import tgw.evolution.events.ClientEvents;
 import tgw.evolution.hooks.asm.DeleteMethod;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.math.Vec3d;
@@ -43,8 +43,8 @@ public abstract class Mixin_M_EntityRenderDispatcher {
 
     @Shadow @Final private static RenderType SHADOW_RENDER_TYPE;
     @Shadow public Camera camera;
-    @Shadow @Final public Options options;
     @Shadow private Level level;
+    @Shadow @Final public Options options;
     @Shadow private boolean renderHitBoxes;
     @Shadow private boolean shouldRenderShadow;
 
@@ -226,7 +226,7 @@ public abstract class Mixin_M_EntityRenderDispatcher {
             matrices.pushPose();
             matrices.translate(d2, d3, d0);
             renderer.render(entity, rotYaw, partialTicks, matrices, buffer, light);
-            if (entity.displayFireAnimation() && !ClientEvents.getInstance().getRenderer().isRenderingPlayer()) {
+            if (entity.displayFireAnimation() && !EvolutionClient.getRenderer().isRenderingPlayer()) {
                 this.renderFlame(matrices, buffer, entity);
             }
             matrices.translate(-vec3.x(), -vec3.y(), -vec3.z());

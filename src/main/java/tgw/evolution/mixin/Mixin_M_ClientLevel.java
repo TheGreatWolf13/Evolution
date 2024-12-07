@@ -41,7 +41,8 @@ import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import tgw.evolution.Evolution;
-import tgw.evolution.events.ClientEvents;
+import tgw.evolution.EvolutionClient;
+import tgw.evolution.client.renderer.DimensionOverworld;
 import tgw.evolution.hooks.asm.DeleteMethod;
 import tgw.evolution.patches.PatchClientLevel;
 import tgw.evolution.util.constants.BlockFlags;
@@ -119,6 +120,17 @@ public abstract class Mixin_M_ClientLevel extends Level implements PatchClientLe
     @Override
     public void addDestroyBlockEffect_(int x, int y, int z, BlockState state) {
         this.minecraft.particleEngine.destroy_(x, y, z, state);
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Call onAddedToWorld on entities
+     */
+    @Overwrite
+    private void addEntity(int i, Entity entity) {
+        this.removeEntity(i, Entity.RemovalReason.DISCARDED);
+        this.entityStorage.addEntity(entity);
+        entity.onAddedToWorld();
     }
 
     /**
@@ -227,6 +239,36 @@ public abstract class Mixin_M_ClientLevel extends Level implements PatchClientLe
         throw new AbstractMethodError();
     }
 
+    @Unique
+    private void doAnimateTick(int posX, int posY, int posZ, int range, RandomGenerator random, @Nullable Block particleBlock) {
+        int x = posX + this.random.nextInt(range) - this.random.nextInt(range);
+        int y = posY + this.random.nextInt(range) - this.random.nextInt(range);
+        int z = posZ + this.random.nextInt(range) - this.random.nextInt(range);
+        BlockState state = this.getBlockState_(x, y, z);
+        Block block = state.getBlock();
+        block.animateTick_(state, this, x, y, z, random);
+        FluidState fluidState = this.getFluidState_(x, y, z);
+        if (!fluidState.isEmpty()) {
+            fluidState.animateTick_(this, x, y, z, random);
+            ParticleOptions dripParticle = fluidState.getDripParticle();
+            if (dripParticle != null && this.random.nextInt(10) == 0) {
+                this.trySpawnDripParticles(x, y - 1, z, dripParticle, state.isFaceSturdy_(this, x, y, z, Direction.DOWN));
+            }
+        }
+        if (particleBlock == block) {
+            this.addParticle(new BlockParticleOption(ParticleTypes.BLOCK_MARKER, state), x + 0.5, y + 0.5, z + 0.5, 0, 0, 0);
+        }
+        if (!state.isCollisionShapeFullBlock_(this, x, y, z)) {
+            Optional<AmbientParticleSettings> ambientParticle = this.getBiome_(x, y, z).value().getAmbientParticle();
+            if (ambientParticle.isPresent()) {
+                AmbientParticleSettings settings = ambientParticle.get();
+                if (settings.canSpawn(this.random)) {
+                    this.addParticle(settings.getOptions(), x + this.random.nextDouble(), y + this.random.nextDouble(), z + this.random.nextDouble(), 0, 0, 0);
+                }
+            }
+        }
+    }
+
     @Override
     public final @Nullable ChunkAccess getAnyChunkImmediately(int chunkX, int chunkZ) {
         return this.getChunkSource().getChunk(chunkX, chunkZ, false);
@@ -254,6 +296,9 @@ public abstract class Mixin_M_ClientLevel extends Level implements PatchClientLe
         return this.getChunkSource().getChunk(chunkX, chunkZ, false);
     }
 
+    @Shadow
+    protected abstract @Nullable Block getMarkerParticleTarget();
+
     /**
      * @reason _
      * @author TheGreatWolf
@@ -278,8 +323,9 @@ public abstract class Mixin_M_ClientLevel extends Level implements PatchClientLe
      */
     @Overwrite
     public float getStarBrightness(float partialTicks) {
-        if (ClientEvents.getInstance().getDimension() != null) {
-            return ClientEvents.getInstance().getDimension().getSkyBrightness(partialTicks);
+        DimensionOverworld dimension = EvolutionClient.getDimension();
+        if (dimension != null) {
+            return dimension.getSkyBrightness(partialTicks);
         }
         float timeOfDay = this.getTimeOfDay(partialTicks);
         float f = 1.0F - (Mth.cos(timeOfDay * Mth.TWO_PI) * 2.0F + 0.25F);
@@ -330,6 +376,14 @@ public abstract class Mixin_M_ClientLevel extends Level implements PatchClientLe
             category.setDetail("Event data", data);
             throw new ReportedException(crash);
         }
+    }
+
+    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/client/multiplayer/ClientLevel;tintCaches:Lit/unimi/dsi/fastutil/objects/Object2ObjectArrayMap;", opcode = Opcodes.PUTFIELD))
+    private void onInit(ClientLevel instance, Object2ObjectArrayMap<ColorResolver, BlockTintCache> value) {
+        value.get(BiomeColors.GRASS_COLOR_RESOLVER).setSource((x, y, z) -> this.calculateBlockTint_(x, y, z, BiomeColors.GRASS_COLOR_RESOLVER));
+        value.get(BiomeColors.FOLIAGE_COLOR_RESOLVER).setSource((x, y, z) -> this.calculateBlockTint_(x, y, z, BiomeColors.FOLIAGE_COLOR_RESOLVER));
+        value.get(BiomeColors.WATER_COLOR_RESOLVER).setSource((x, y, z) -> this.calculateBlockTint_(x, y, z, BiomeColors.WATER_COLOR_RESOLVER));
+        this.tintCaches = value;
     }
 
     @Shadow
@@ -392,70 +446,8 @@ public abstract class Mixin_M_ClientLevel extends Level implements PatchClientLe
         this.minecraft.lvlRenderer().setSectionDirtyWithNeighbors(sectionX, sectionY, sectionZ);
     }
 
-    /**
-     * @reason _
-     * @author TheGreatWolf
-     */
-    @Overwrite
-    public void unload(LevelChunk chunk) {
-        chunk.clearAllBlockEntities();
-        this.entityStorage.stopTicking(chunk.getPos());
-    }
-
-    @Shadow
-    protected abstract @Nullable Block getMarkerParticleTarget();
-
     @Shadow
     protected abstract void spawnFluidParticle(double d, double e, double f, double g, double h, ParticleOptions particleOptions);
-
-    /**
-     * @author TheGreatWolf
-     * @reason Call onAddedToWorld on entities
-     */
-    @Overwrite
-    private void addEntity(int i, Entity entity) {
-        this.removeEntity(i, Entity.RemovalReason.DISCARDED);
-        this.entityStorage.addEntity(entity);
-        entity.onAddedToWorld();
-    }
-
-    @Unique
-    private void doAnimateTick(int posX, int posY, int posZ, int range, RandomGenerator random, @Nullable Block particleBlock) {
-        int x = posX + this.random.nextInt(range) - this.random.nextInt(range);
-        int y = posY + this.random.nextInt(range) - this.random.nextInt(range);
-        int z = posZ + this.random.nextInt(range) - this.random.nextInt(range);
-        BlockState state = this.getBlockState_(x, y, z);
-        Block block = state.getBlock();
-        block.animateTick_(state, this, x, y, z, random);
-        FluidState fluidState = this.getFluidState_(x, y, z);
-        if (!fluidState.isEmpty()) {
-            fluidState.animateTick_(this, x, y, z, random);
-            ParticleOptions dripParticle = fluidState.getDripParticle();
-            if (dripParticle != null && this.random.nextInt(10) == 0) {
-                this.trySpawnDripParticles(x, y - 1, z, dripParticle, state.isFaceSturdy_(this, x, y, z, Direction.DOWN));
-            }
-        }
-        if (particleBlock == block) {
-            this.addParticle(new BlockParticleOption(ParticleTypes.BLOCK_MARKER, state), x + 0.5, y + 0.5, z + 0.5, 0, 0, 0);
-        }
-        if (!state.isCollisionShapeFullBlock_(this, x, y, z)) {
-            Optional<AmbientParticleSettings> ambientParticle = this.getBiome_(x, y, z).value().getAmbientParticle();
-            if (ambientParticle.isPresent()) {
-                AmbientParticleSettings settings = ambientParticle.get();
-                if (settings.canSpawn(this.random)) {
-                    this.addParticle(settings.getOptions(), x + this.random.nextDouble(), y + this.random.nextDouble(), z + this.random.nextDouble(), 0, 0, 0);
-                }
-            }
-        }
-    }
-
-    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/client/multiplayer/ClientLevel;tintCaches:Lit/unimi/dsi/fastutil/objects/Object2ObjectArrayMap;", opcode = Opcodes.PUTFIELD))
-    private void onInit(ClientLevel instance, Object2ObjectArrayMap<ColorResolver, BlockTintCache> value) {
-        value.get(BiomeColors.GRASS_COLOR_RESOLVER).setSource((x, y, z) -> this.calculateBlockTint_(x, y, z, BiomeColors.GRASS_COLOR_RESOLVER));
-        value.get(BiomeColors.FOLIAGE_COLOR_RESOLVER).setSource((x, y, z) -> this.calculateBlockTint_(x, y, z, BiomeColors.FOLIAGE_COLOR_RESOLVER));
-        value.get(BiomeColors.WATER_COLOR_RESOLVER).setSource((x, y, z) -> this.calculateBlockTint_(x, y, z, BiomeColors.WATER_COLOR_RESOLVER));
-        this.tintCaches = value;
-    }
 
     /**
      * @reason _
@@ -506,5 +498,15 @@ public abstract class Mixin_M_ClientLevel extends Level implements PatchClientLe
     @DeleteMethod
     private void trySpawnDripParticles(BlockPos blockPos, BlockState blockState, ParticleOptions particleOptions, boolean bl) {
         throw new AbstractMethodError();
+    }
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Overwrite
+    public void unload(LevelChunk chunk) {
+        chunk.clearAllBlockEntities();
+        this.entityStorage.stopTicking(chunk.getPos());
     }
 }

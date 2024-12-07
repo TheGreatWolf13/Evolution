@@ -9,8 +9,8 @@ import net.minecraft.world.level.chunk.*;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
+import tgw.evolution.EvolutionClient;
 import tgw.evolution.client.renderer.ambient.DynamicLights;
-import tgw.evolution.events.ClientEvents;
 import tgw.evolution.util.collection.lists.LArrayList;
 import tgw.evolution.util.collection.lists.LList;
 import tgw.evolution.util.collection.sets.LSet;
@@ -162,9 +162,8 @@ public final class BlockStarLightEngine extends StarLightEngine<SWMRShortArray> 
     private int getEmittedLight(int x, int y, int z, BlockState state) {
         int dl = 0;
         if (this.level.isClientSide) {
-            ClientEvents client = ClientEvents.getInstance();
-            if (client.isInitialized()) {
-                dl = client.getDynamicLights().getLight(BlockPos.asLong(x, y, z));
+            if (EvolutionClient.isInitialized()) {
+                dl = EvolutionClient.getDynamicLights().getLight(BlockPos.asLong(x, y, z));
                 if (dl == 0b1_1111_1_1111_1_1111) {
                     return 0b1_1111_1_1111_1_1111;
                 }

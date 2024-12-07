@@ -63,6 +63,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL11C;
 import tgw.evolution.Evolution;
+import tgw.evolution.EvolutionClient;
 import tgw.evolution.blocks.BlockKnapping;
 import tgw.evolution.blocks.BlockMolding;
 import tgw.evolution.blocks.tileentities.TEKnapping;
@@ -73,7 +74,6 @@ import tgw.evolution.client.renderer.ambient.DynamicLights;
 import tgw.evolution.client.renderer.ambient.SkyRenderer;
 import tgw.evolution.client.util.Blending;
 import tgw.evolution.config.EvolutionConfig;
-import tgw.evolution.events.ClientEvents;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.mixin.AccessorRenderSystem;
 import tgw.evolution.resources.IKeyedReloadListener;
@@ -436,7 +436,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
             Vec3 camPos = this.mc.gameRenderer.getMainCamera().getPosition();
             this.viewArea.repositionCamera(camPos.x, camPos.z);
             this.renderCache.clear();
-            ClientEvents.getInstance().allChanged();
+            EvolutionClient.allChanged();
         }
     }
 
@@ -1364,8 +1364,8 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
         assert this.level != null;
         assert this.mc.hitResult != null;
         assert this.mc.player != null;
-        ClientEvents.storeProjMatrix(projectionMatrix);
-        ClientEvents.storeModelViewMatrix(matrices.last().pose());
+        EvolutionClient.storeProjMatrix(projectionMatrix);
+        EvolutionClient.storeModelViewMatrix(matrices.last().pose());
         RenderSystem.setShaderGameTime(this.level.getGameTime(), partialTicks);
         this.blockEntityRenderDispatcher.prepare(this.level, camera, this.mc.hitResult);
         //noinspection ConstantConditions
@@ -1454,7 +1454,6 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
             }
         }
         //Render player in first person
-        ClientEvents client = ClientEvents.getInstance();
         if (!camera.isDetached() && cameraEntity.isAlive()) {
             profiler.push(() -> Registry.ENTITY_TYPE.getKey(cameraEntity.getType()).toString());
             this.renderedEntities++;
@@ -1472,7 +1471,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
             else {
                 multiBufferSource = buffer;
             }
-            ClientRenderer renderer = client.getRenderer();
+            ClientRenderer renderer = EvolutionClient.getRenderer();
             renderer.setRenderingPlayer(true);
             this.renderEntity(cameraEntity, camX, camY, camZ, partialTicks, matrices, multiBufferSource);
             renderer.setRenderingPlayer(false);
@@ -1587,20 +1586,20 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
                     if (block instanceof BlockKnapping) {
                         TEKnapping tile = (TEKnapping) this.level.getBlockEntity_(x, y, z);
                         assert tile != null;
-                        client.getRenderer().renderOutlines(matrices, buffer, tile.type.getShape(), camera, x, y, z);
+                        EvolutionClient.getRenderer().renderOutlines(matrices, buffer, tile.type.getShape(), camera, x, y, z);
                     }
                     else if (block instanceof BlockMolding) {
                         TEMolding tile = (TEMolding) this.level.getBlockEntity_(x, y, z);
                         assert tile != null;
-                        client.getRenderer().renderOutlines(matrices, buffer, tile.molding.getShape(), camera, x, y, z);
+                        EvolutionClient.getRenderer().renderOutlines(matrices, buffer, tile.molding.getShape(), camera, x, y, z);
                     }
-                    client.getRenderer().renderBlockOutlines(matrices, buffer, camera, x, y, z);
+                    EvolutionClient.getRenderer().renderBlockOutlines(matrices, buffer, camera, x, y, z);
                 }
             }
             else if (hitResult.getType() == HitResult.Type.ENTITY) {
                 if (this.mc.getEntityRenderDispatcher().shouldRenderHitBoxes() && hitResult instanceof AdvancedEntityHitResult advRayTrace) {
                     if (advRayTrace.getHitbox() != null) {
-                        client.getRenderer().renderHitbox(matrices, buffer, advRayTrace.getEntity(), advRayTrace.getHitbox(), camera, partialTicks);
+                        EvolutionClient.getRenderer().renderHitbox(matrices, buffer, advRayTrace.getEntity(), advRayTrace.getHitbox(), camera, partialTicks);
                     }
                 }
             }
@@ -1610,7 +1609,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
                     this.mc.player.getOffhandItem().getItem() == EvolutionItems.DEBUG_ITEM) {
                     HitboxEntity<? extends Entity> hitboxes = this.mc.player.getHitboxes();
                     if (hitboxes != null) {
-                        client.getRenderer().renderHitbox(matrices, buffer, this.mc.player, hitboxes.getBoxes().get(0), camera, partialTicks);
+                        EvolutionClient.getRenderer().renderHitbox(matrices, buffer, this.mc.player, hitboxes.getBoxes().get(0), camera, partialTicks);
                     }
                 }
             }
@@ -1714,14 +1713,14 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
         if (Minecraft.getInstance().showOnlyReducedInfo() || this.level == null) {
             return;
         }
-        ClientEvents.CLIENT_INTEGRITY_STORAGE.render(this.level, matrices, buffer, camX, camY, camZ);
+        EvolutionClient.CLIENT_INTEGRITY_STORAGE.render(this.level, matrices, buffer, camX, camY, camZ);
     }
 
     public void renderSky(PoseStack matrices, float partialTicks, Camera camera, boolean isFoggy, SkyFogSetup skyFogSetup) {
         skyFogSetup.setup();
         assert this.level != null;
         if (this.level.effects().skyType() == DimensionSpecialEffects.SkyType.NORMAL) {
-            SkyRenderer skyRenderer = ClientEvents.getInstance().getSkyRenderer();
+            SkyRenderer skyRenderer = EvolutionClient.getSkyRenderer();
             if (skyRenderer != null) {
                 skyRenderer.render(partialTicks, matrices, this.level, this.mc, skyFogSetup);
             }

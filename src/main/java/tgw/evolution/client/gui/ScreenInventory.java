@@ -16,11 +16,11 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import org.lwjgl.glfw.GLFW;
 import tgw.evolution.Evolution;
+import tgw.evolution.EvolutionClient;
 import tgw.evolution.client.gui.recipebook.ComponentRecipeBook;
 import tgw.evolution.client.gui.recipebook.IRecipeBook;
 import tgw.evolution.client.gui.recipebook.IRecipeBookUpdateListener;
 import tgw.evolution.client.util.MouseButton;
-import tgw.evolution.events.ClientEvents;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.inventory.extendedinventory.ContainerInventory;
 import tgw.evolution.util.math.MathHelper;
@@ -28,9 +28,17 @@ import tgw.evolution.util.math.MathHelper;
 public class ScreenInventory extends ScreenDisplayEffects<ContainerInventory> implements IRecipeBookUpdateListener {
 
     private static final int NUM_TABS = 2;
+    private boolean buttonClicked;
+    private boolean justSwitchedTabs;
+    private float oldMouseX;
+    private float oldMouseY;
     private final ComponentRecipeBook recipeBook = new ComponentRecipeBook(this);
+    private ImageButton recipeBookButton;
     private final ResourceLocation recipeBookIcon = Evolution.getResource("textures/gui/recipe_button.png");
+    private boolean recipeBookVisible;
+    private boolean removeRecipeBook;
     private final ResourceLocation resCrafting = Evolution.getResource("textures/gui/inventory_crafting.png");
+    private int selectedTab = -1;
     private final ItemStack[] tabStacks = {
             new ItemStack(Items.CHEST),
             new ItemStack(Items.CRAFTING_TABLE)
@@ -39,19 +47,11 @@ public class ScreenInventory extends ScreenDisplayEffects<ContainerInventory> im
             new TranslatableComponent("evolution.gui.inventory.tabInventory"),
             new TranslatableComponent("evolution.gui.inventory.tabCrafting")
     };
+    private int tabX;
+    private int tabY;
     private final Component textCrafting = new TranslatableComponent("evolution.gui.crafting");
     private final Component textEquipment = new TranslatableComponent("evolution.gui.inventory.equipment");
     private final Component textInventory = new TranslatableComponent("evolution.gui.inventory");
-    private boolean buttonClicked;
-    private boolean justSwitchedTabs;
-    private float oldMouseX;
-    private float oldMouseY;
-    private ImageButton recipeBookButton;
-    private boolean recipeBookVisible;
-    private boolean removeRecipeBook;
-    private int selectedTab = -1;
-    private int tabX;
-    private int tabY;
     private boolean widthTooNarrow;
 
     public ScreenInventory(ContainerInventory container, Inventory inv, Component name) {
@@ -134,7 +134,7 @@ public class ScreenInventory extends ScreenDisplayEffects<ContainerInventory> im
             this.tabX = this.leftPos + 6;
             this.tabY = this.topPos - 28;
             this.recipeBookVisible = this.recipeBook.isVisible();
-            this.setSelectedTab(ClientEvents.getInstance().getLastInventoryTab(), false);
+            this.setSelectedTab(EvolutionClient.getLastInventoryTab(), false);
         }
     }
 
@@ -276,7 +276,7 @@ public class ScreenInventory extends ScreenDisplayEffects<ContainerInventory> im
                     this.tabX = this.leftPos + 6;
                 }
             }
-            ClientEvents.getInstance().setLastInventoryTab(selectedTab);
+            EvolutionClient.setLastInventoryTab(selectedTab);
         }
     }
 

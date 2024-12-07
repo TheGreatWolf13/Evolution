@@ -20,7 +20,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
-import tgw.evolution.events.ClientEvents;
+import tgw.evolution.EvolutionClient;
+import tgw.evolution.client.renderer.DimensionOverworld;
 import tgw.evolution.patches.obj.IVec3dFetcher;
 import tgw.evolution.util.math.Vec3d;
 import tgw.evolution.util.math.Vec3f;
@@ -32,11 +33,11 @@ public abstract class MixinFogRenderer {
     @Unique private static final double[] GAUSSIAN_SAMPLE_KERNEL = {0, 1, 4, 6, 4, 1, 0};
     @Unique private static final Vec3d VEC = new Vec3d();
     @Shadow private static long biomeChangedTime;
-    @Shadow private static int targetBiomeFog;
-    @Shadow private static int previousBiomeFog;
-    @Shadow private static float fogRed;
-    @Shadow private static float fogGreen;
     @Shadow private static float fogBlue;
+    @Shadow private static float fogGreen;
+    @Shadow private static float fogRed;
+    @Shadow private static int previousBiomeFog;
+    @Shadow private static int targetBiomeFog;
 
     @Unique
     private static Vec3d gaussianSampleVec3(double posX, double posY, double posZ, IVec3dFetcher fetcher) {
@@ -84,6 +85,7 @@ public abstract class MixinFogRenderer {
     public static void setupColor(Camera camera, float partialTicks, ClientLevel level, int renderDistance, float worldDarkenAmount) {
         FogType fogType = camera.getFluidInCamera();
         Entity entity = camera.getEntity();
+        DimensionOverworld dimension = EvolutionClient.getDimension();
         switch (fogType) {
             case WATER -> {
                 long i = Util.getMillis();
@@ -128,22 +130,17 @@ public abstract class MixinFogRenderer {
             default -> {
                 float f4 = 0.25F + 0.75F * renderDistance / 32.0F;
                 f4 = 1.0F - (float) Math.pow(f4, 0.25);
-                Vec3f skyColor = EarthHelper.getSkyColor(level, camera.getBlockPosition(), partialTicks, ClientEvents.getInstance().getDimension());
+                Vec3f skyColor = EarthHelper.getSkyColor(level, camera.getBlockPosition(), partialTicks, dimension);
                 float skyRed = skyColor.x;
                 float skyGreen = skyColor.y;
                 float skyBlue = skyColor.z;
-                if (ClientEvents.getInstance().getDimension() != null) {
+                if (dimension != null) {
                     BiomeManager biomeManager = level.getBiomeManager();
                     double posX = (camera.getPosition().x - 2) * 0.25;
                     double posY = (camera.getPosition().y - 2) * 0.25;
                     double posZ = (camera.getPosition().z - 2) * 0.25;
-                    float skyFogMult = ClientEvents.getInstance().getDimension().getSunBrightness(partialTicks);
-                    IVec3dFetcher fetcher = (x, y, z, vec) -> ClientEvents.getInstance()
-                                                                          .getDimension()
-                                                                          .getBrightnessDependentFogColor(Vec3d.fromRGB24(
-                                                                                                                  biomeManager.getNoiseBiomeAtQuart(x, y, z).value().getFogColor(),
-                                                                                                                  vec),
-                                                                                                          skyFogMult);
+                    float skyFogMult = dimension.getSunBrightness(partialTicks);
+                    IVec3dFetcher fetcher = (x, y, z, vec) -> dimension.getBrightnessDependentFogColor(Vec3d.fromRGB24(biomeManager.getNoiseBiomeAtQuart(x, y, z).value().getFogColor(), vec), skyFogMult);
                     Vec3d fogColor = gaussianSampleVec3(posX, posY, posZ, fetcher);
                     fogRed = (float) fogColor.x;
                     fogGreen = (float) fogColor.y;
@@ -191,9 +188,9 @@ public abstract class MixinFogRenderer {
                 d0 = 0;
             }
             d0 *= d0;
-            fogRed *= d0;
-            fogGreen *= d0;
-            fogBlue *= d0;
+            fogRed *= (float) d0;
+            fogGreen *= (float) d0;
+            fogBlue *= (float) d0;
         }
         if (worldDarkenAmount > 0.0F) {
             fogRed = fogRed * (1.0F - worldDarkenAmount) + fogRed * 0.7F * worldDarkenAmount;
@@ -225,8 +222,8 @@ public abstract class MixinFogRenderer {
             fogGreen = fogGreen * (1.0f - f6) + fogGreen * f8 * f6;
             fogBlue = fogBlue * (1.0f - f6) + fogBlue * f8 * f6;
         }
-        if (ClientEvents.getInstance().getDimension() != null) {
-            ClientEvents.getInstance().getDimension().setFogColor(fogRed, fogGreen, fogBlue);
+        if (dimension != null) {
+            dimension.setFogColor(fogRed, fogGreen, fogBlue);
         }
         RenderSystem.clearColor(fogRed, fogGreen, fogBlue, 0.0F);
     }

@@ -8,7 +8,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 import tgw.evolution.Evolution;
 import tgw.evolution.EvolutionClient;
-import tgw.evolution.events.ClientEvents;
 import tgw.evolution.items.IMelee;
 import tgw.evolution.network.PacketCSSpecialHit;
 import tgw.evolution.util.collection.maps.I2LHashMap;
@@ -24,12 +23,9 @@ import tgw.evolution.util.math.Vec3d;
 public class HitInformation implements IHitInfo {
 
     private final ClipContextMutable clipContext = new ClipContextMutable();
-    private final I2LMap data = new I2LHashMap();
-    private final Vec3d[] vertices = new Vec3d[8];
-    private final Vec3d[] verticesInHBVS = new Vec3d[8];
-    private final Vec3d[] verticesInHBVSPartial = new Vec3d[8];
     private @Nullable Hitbox collider;
     private @Nullable Matrix4d colliderTransform;
+    private final I2LMap data = new I2LHashMap();
     private @Nullable HitboxEntity<?> hitboxes;
     private double hitterX;
     private double hitterY;
@@ -37,6 +33,9 @@ public class HitInformation implements IHitInfo {
     private boolean prepared;
     private boolean preparedInHBVS;
     private @Nullable Matrix4d transform;
+    private final Vec3d[] vertices = new Vec3d[8];
+    private final Vec3d[] verticesInHBVS = new Vec3d[8];
+    private final Vec3d[] verticesInHBVSPartial = new Vec3d[8];
     private double victimX;
     private double victimY;
     private double victimZ;
@@ -66,7 +65,7 @@ public class HitInformation implements IHitInfo {
 
     @Override
     public void addHitbox(Entity entity, HitboxType hitbox) {
-        ClientEvents.getInstance().getRenderer().updateHitmarkers(false);
+        EvolutionClient.getRenderer().updateHitmarkers(false);
         Evolution.info("Collided with {} on {}", entity, hitbox);
         final int id = entity.getId();
         this.data.put(id, HitboxRegistry.append(entity.getType(), hitbox, this.data.get(id)));

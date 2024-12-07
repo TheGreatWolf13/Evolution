@@ -20,10 +20,10 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.Objective;
 import net.minecraft.world.scores.Score;
 import net.minecraft.world.scores.Scoreboard;
+import tgw.evolution.EvolutionClient;
 import tgw.evolution.client.layers.LayerItemInHandPlayer;
 import tgw.evolution.client.models.entities.ModelPlayer;
 import tgw.evolution.client.renderer.ClientRenderer;
-import tgw.evolution.events.ClientEvents;
 import tgw.evolution.util.ArmPose;
 import tgw.evolution.util.hitbox.hms.HMPlayer;
 import tgw.evolution.util.hitbox.hrs.HRPlayer;
@@ -104,7 +104,7 @@ public class RendererPlayer extends LivingEntityRenderer<AbstractClientPlayer, M
                        int light) {
         this.modelProperties(player);
         //When rendering the player in first person, hide certain parts of the player model to not clip into the camera in certain situations
-        ClientRenderer renderer = ClientEvents.getInstance().getRenderer();
+        ClientRenderer renderer = EvolutionClient.getRenderer();
         if (renderer.isRenderingPlayer()) {
             renderer.setVisibility(HumanoidArm.LEFT, true);
             renderer.setVisibility(HumanoidArm.RIGHT, true);

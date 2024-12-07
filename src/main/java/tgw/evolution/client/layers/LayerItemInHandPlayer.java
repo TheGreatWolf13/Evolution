@@ -15,7 +15,7 @@ import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import tgw.evolution.events.ClientEvents;
+import tgw.evolution.EvolutionClient;
 
 public class LayerItemInHandPlayer<P extends Player, M extends EntityModel<P> & ArmedModel & HeadedModel> extends LayerItemInHand<P, M> {
 
@@ -24,14 +24,8 @@ public class LayerItemInHandPlayer<P extends Player, M extends EntityModel<P> & 
     }
 
     @Override
-    protected void renderArmWithItem(P player,
-                                     ItemStack stack,
-                                     ItemTransforms.TransformType type,
-                                     HumanoidArm arm,
-                                     PoseStack matrices,
-                                     MultiBufferSource buffer,
-                                     int light) {
-        if (!ClientEvents.getInstance().getRenderer().shouldRenderArm(arm)) {
+    protected void renderArmWithItem(P player, ItemStack stack, ItemTransforms.TransformType type, HumanoidArm arm, PoseStack matrices, MultiBufferSource buffer, int light) {
+        if (!EvolutionClient.getRenderer().shouldRenderArm(arm)) {
             return;
         }
         if (stack.is(Items.SPYGLASS) && player.getUseItem() == stack && player.swingTime == 0) {
@@ -42,12 +36,7 @@ public class LayerItemInHandPlayer<P extends Player, M extends EntityModel<P> & 
         }
     }
 
-    private void renderArmWithSpyglass(P entity,
-                                       ItemStack stack,
-                                       HumanoidArm arm,
-                                       PoseStack matrices,
-                                       MultiBufferSource buffer,
-                                       int light) {
+    private void renderArmWithSpyglass(P entity, ItemStack stack, HumanoidArm arm, PoseStack matrices, MultiBufferSource buffer, int light) {
         matrices.pushPose();
         ModelPart head = this.getParentModel().getHead();
         float oldXRot = head.xRot;

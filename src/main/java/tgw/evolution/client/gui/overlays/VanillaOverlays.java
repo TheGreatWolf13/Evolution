@@ -35,11 +35,11 @@ import net.minecraft.world.scores.Objective;
 import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.scores.Scoreboard;
 import tgw.evolution.Evolution;
+import tgw.evolution.EvolutionClient;
 import tgw.evolution.client.gui.EvolutionGui;
 import tgw.evolution.client.gui.GUIUtils;
 import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.client.util.Blending;
-import tgw.evolution.events.ClientEvents;
 
 public final class VanillaOverlays {
 
@@ -124,6 +124,22 @@ public final class VanillaOverlays {
         }
     }
 
+    private static int getOpacity(EvolutionGui gui, float partialTicks, int titleTime) {
+        float age = titleTime - partialTicks;
+        int opacity = 255;
+        int titleFadeOutTime = gui.getTitleFadeOutTime();
+        int titleStayTime = gui.getTitleStayTime();
+        if (titleTime > titleFadeOutTime + titleStayTime) {
+            int titleFadeInTime = gui.getTitleFadeInTime();
+            opacity = (int) (((titleFadeInTime + titleStayTime + titleFadeOutTime) - age) * 255.0F / titleFadeInTime);
+        }
+        if (titleTime <= titleFadeOutTime) {
+            opacity = (int) (age * 255.0F / titleFadeOutTime);
+        }
+        opacity = Mth.clamp(opacity, 0, 255);
+        return opacity;
+    }
+
     private static void hotbar(Minecraft mc, EvolutionGui gui, PoseStack matrices, float partialTicks, int width, int height) {
         if (mc.options.hideGui) {
             return;
@@ -171,9 +187,8 @@ public final class VanillaOverlays {
             }
         }
         if (mc.options.attackIndicator == AttackIndicatorStatus.HOTBAR) {
-            ClientEvents client = ClientEvents.getInstance();
-            float mainhandPerc = client.getMainhandIndicatorPercentage(partialTicks);
-            float offhandPerc = client.getOffhandIndicatorPercentage(partialTicks);
+            float mainhandPerc = EvolutionClient.getMainhandIndicatorPercentage(partialTicks);
+            float offhandPerc = EvolutionClient.getOffhandIndicatorPercentage(partialTicks);
             boolean shouldRenderMain = mainhandPerc < 1;
             boolean shouldRenderOff = offhandPerc < 1;
             if (shouldRenderMain || shouldRenderOff) {
@@ -514,19 +529,7 @@ public final class VanillaOverlays {
         int titleTime = gui.getTitleTime();
         if (title != null && titleTime > 0) {
             Font font = mc.font;
-            float age = titleTime - partialTicks;
-            int opacity = 255;
-            int titleFadeOutTime = gui.getTitleFadeOutTime();
-            int titleStayTime = gui.getTitleStayTime();
-            if (titleTime > titleFadeOutTime + titleStayTime) {
-                int titleFadeInTime = gui.getTitleFadeInTime();
-                float f3 = (titleFadeInTime + titleStayTime + titleFadeOutTime) - age;
-                opacity = (int) (f3 * 255.0F / titleFadeInTime);
-            }
-            if (titleTime <= titleFadeOutTime) {
-                opacity = (int) (age * 255.0F / titleFadeOutTime);
-            }
-            opacity = Mth.clamp(opacity, 0, 255);
+            int opacity = getOpacity(gui, partialTicks, titleTime);
             if (opacity > 8) {
                 Blending.DEFAULT_1_0.apply();
                 matrices.pushPose();

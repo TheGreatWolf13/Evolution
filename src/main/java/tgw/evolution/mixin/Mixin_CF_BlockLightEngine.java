@@ -16,8 +16,8 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.spongepowered.asm.mixin.*;
 import tgw.evolution.Evolution;
+import tgw.evolution.EvolutionClient;
 import tgw.evolution.client.renderer.ambient.DynamicLights;
-import tgw.evolution.events.ClientEvents;
 import tgw.evolution.hooks.asm.DeleteField;
 import tgw.evolution.hooks.asm.ModifyConstructor;
 import tgw.evolution.patches.PatchBlockLightEngine;
@@ -76,7 +76,7 @@ public abstract class Mixin_CF_BlockLightEngine extends LayerLightEngine<BlockLi
     private int getLightEmission(long pos) {
         int dl = 0;
         if (this.isClientSide) {
-            dl = ClientEvents.getInstance().getDynamicLights().getLight(pos);
+            dl = EvolutionClient.getDynamicLights().getLight(pos);
             if (dl == 0b1_1111_1_1111_1_1111) {
                 return 0b1_1111_1_1111_1_1111;
             }

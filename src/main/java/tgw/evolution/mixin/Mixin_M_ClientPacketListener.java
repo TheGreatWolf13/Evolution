@@ -51,6 +51,7 @@ import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 import net.minecraft.world.scores.Scoreboard;
 import org.spongepowered.asm.mixin.*;
 import tgw.evolution.Evolution;
+import tgw.evolution.EvolutionClient;
 import tgw.evolution.capabilities.player.CapabilityHunger;
 import tgw.evolution.capabilities.player.CapabilityThirst;
 import tgw.evolution.capabilities.player.TemperatureClient;
@@ -61,7 +62,6 @@ import tgw.evolution.client.gui.recipebook.IRecipeBook;
 import tgw.evolution.client.gui.recipebook.IRecipeBookUpdateListener;
 import tgw.evolution.client.util.EvolutionInput;
 import tgw.evolution.entities.IEntitySpawnData;
-import tgw.evolution.events.ClientEvents;
 import tgw.evolution.hooks.asm.DeleteMethod;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.network.*;
@@ -124,7 +124,7 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
     @Override
     public void handleAddEffect(PacketSCAddEffect packet) {
         PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
-        ClientEvents.getInstance().onPotionAdded(packet.instance, packet.logic);
+        EvolutionClient.onPotionAdded(packet.instance, packet.logic);
     }
 
     /**
@@ -228,7 +228,7 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
     @Override
     public void handleChangeTickrate(PacketSCChangeTickrate packet) {
         PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
-        ClientEvents.getInstance().updateClientTickrate(packet.tickrate);
+        EvolutionClient.updateClientTickrate(packet.tickrate);
     }
 
     @Override
@@ -331,9 +331,9 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
     public void handleLoadFactor(PacketSCLoadFactor packet) {
         PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
         switch (packet.action) {
-            case CLEAR -> ClientEvents.CLIENT_INTEGRITY_STORAGE.clear();
-            case REMOVE -> ClientEvents.CLIENT_INTEGRITY_STORAGE.remove(packet.pos);
-            case ADD -> ClientEvents.CLIENT_INTEGRITY_STORAGE.put(packet.pos, packet.getLoadArray(), packet.getIntegrityArray(), packet.getStabilityArray());
+            case CLEAR -> EvolutionClient.CLIENT_INTEGRITY_STORAGE.clear();
+            case REMOVE -> EvolutionClient.CLIENT_INTEGRITY_STORAGE.remove(packet.pos);
+            case ADD -> EvolutionClient.CLIENT_INTEGRITY_STORAGE.put(packet.pos, packet.getLoadArray(), packet.getIntegrityArray(), packet.getStabilityArray());
         }
     }
 
@@ -527,7 +527,7 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
         Entity entity = this.level.getEntity(packet.getPlayerId());
         if (entity == this.minecraft.player) {
             if (this.minecraft.player.shouldShowDeathScreen()) {
-                ClientEvents.getInstance().startToLoseConscious();
+                EvolutionClient.startToLoseConscious();
                 this.minecraft.setScreen(new DeathScreen(packet.getMessage(), this.level.getLevelData().isHardcore()).setTimeAlive(packet.getTimeAlive()));
             }
             else {
@@ -540,7 +540,7 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
     public void handleRemoveEffect(PacketSCRemoveEffect packet) {
         PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
         if (packet.effect != null) {
-            ClientEvents.removePotionEffect(packet.effect);
+            EvolutionClient.removePotionEffect(packet.effect);
         }
     }
 
@@ -638,14 +638,14 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
             this.minecraft.setCameraEntity(entity);
         }
         else {
-            ClientEvents.getInstance().setNotLoadedCameraId(packet.cameraId);
+            EvolutionClient.setNotLoadedCameraId(packet.cameraId);
         }
     }
 
     @Override
     public void handleShader(PacketSCShader packet) {
         PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
-        ClientEvents.getInstance().handleShaderPacket(packet.shaderId);
+        EvolutionClient.handleShaderPacket(packet.shaderId);
     }
 
     @Override
@@ -653,8 +653,8 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
         PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
         switch (packet.message) {
             case GC -> System.gc();
-            case HITMARKER_KILL -> ClientEvents.getInstance().getRenderer().updateHitmarkers(true);
-            case HITMARKER_NORMAL -> ClientEvents.getInstance().getRenderer().updateHitmarkers(false);
+            case HITMARKER_KILL -> EvolutionClient.getRenderer().updateHitmarkers(true);
+            case HITMARKER_NORMAL -> EvolutionClient.getRenderer().updateHitmarkers(false);
             case MULTIPLAYER_RESUME -> {
                 if (!this.minecraft.isMultiplayerPaused()) {
                     return;
@@ -741,17 +741,17 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
     @Override
     public void handleToast(PacketSCToast packet) {
         PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
-        ClientEvents.getInstance().addCustomRecipeToast(packet.id);
+        EvolutionClient.addCustomRecipeToast(packet.id);
     }
 
     @Override
     public void handleUpdateBeltBackItem(PacketSCUpdateBeltBackItem packet) {
         PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
         if (packet.back) {
-            ClientEvents.BACK_ITEMS.put(packet.entityId, packet.stack);
+            EvolutionClient.BACK_ITEMS.put(packet.entityId, packet.stack);
         }
         else {
-            ClientEvents.BELT_ITEMS.put(packet.entityId, packet.stack);
+            EvolutionClient.BELT_ITEMS.put(packet.entityId, packet.stack);
         }
     }
 

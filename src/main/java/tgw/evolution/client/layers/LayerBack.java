@@ -12,7 +12,7 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.player.PlayerModelPart;
 import net.minecraft.world.item.ItemStack;
-import tgw.evolution.events.ClientEvents;
+import tgw.evolution.EvolutionClient;
 import tgw.evolution.util.constants.CommonRotations;
 
 public class LayerBack extends RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> {
@@ -35,7 +35,7 @@ public class LayerBack extends RenderLayer<AbstractClientPlayer, PlayerModel<Abs
         if (player.isModelPartShown(PlayerModelPart.CAPE) && player.getCloakTextureLocation() != null) {
             return;
         }
-        ItemStack backStack = ClientEvents.BACK_ITEMS.getOrDefault(player.getId(), ItemStack.EMPTY);
+        ItemStack backStack = EvolutionClient.BACK_ITEMS.getOrDefault(player.getId(), ItemStack.EMPTY);
         if (!backStack.isEmpty()) {
             int sideOffset = player.getMainArm() == HumanoidArm.RIGHT ? 1 : -1;
             matrices.pushPose();
@@ -54,7 +54,8 @@ public class LayerBack extends RenderLayer<AbstractClientPlayer, PlayerModel<Abs
                                    player.level,
                                    packetLight,
                                    OverlayTexture.NO_OVERLAY,
-                                   0);
+                                   0
+                     );
             matrices.popPose();
         }
     }

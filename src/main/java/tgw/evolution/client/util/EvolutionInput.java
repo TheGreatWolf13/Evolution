@@ -8,19 +8,17 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.phys.Vec3;
 import tgw.evolution.EvolutionClient;
-import tgw.evolution.events.ClientEvents;
 import tgw.evolution.init.EvolutionEffects;
 import tgw.evolution.network.Message;
 import tgw.evolution.network.PacketCSSimpleMessage;
 
 public class EvolutionInput extends Input {
 
-    private final Options options;
     private boolean crawl;
     private boolean crawlToggled;
     private boolean onClimbable;
+    private final Options options;
     private int tick;
 
     public EvolutionInput(Options options) {
@@ -45,7 +43,7 @@ public class EvolutionInput extends Input {
         boolean isCrawl = pose == Pose.SWIMMING && !player.isInWater();
         boolean isSwimming = !isCrawl && pose == Pose.SWIMMING && player.isInWater();
         if (this.crawl != isCrawl) {
-            ClientEvents.getInstance().resetCooldowns();
+            EvolutionClient.resetCooldowns();
             this.crawl = isCrawl;
         }
         //Default
@@ -94,7 +92,7 @@ public class EvolutionInput extends Input {
         //Ladders
         if (this.onClimbable) {
             if (this.shiftKeyDown && !wasShiftKeyDown) {
-                player.setDeltaMovement(Vec3.ZERO);
+                player.setDeltaMovement(0, 0, 0);
             }
         }
     }

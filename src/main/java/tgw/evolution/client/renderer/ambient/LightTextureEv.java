@@ -14,8 +14,8 @@ import net.minecraft.world.level.LevelReader;
 import org.jetbrains.annotations.Nullable;
 import org.jocl.*;
 import org.lwjgl.opengl.GL11C;
+import tgw.evolution.EvolutionClient;
 import tgw.evolution.client.renderer.DimensionOverworld;
-import tgw.evolution.events.ClientEvents;
 
 import java.nio.IntBuffer;
 
@@ -99,6 +99,8 @@ public class LightTextureEv extends LightTexture {
                         	}
                         }
             """;
+    private cl_command_queue commandQueue;
+    private cl_context context;
     private final float[] corrSkyBrightness = new float[1];
     private final Pointer corrSkyBrightnessPointer = Pointer.to(this.corrSkyBrightness);
     private final float[] darkenAmount = new float[1];
@@ -108,11 +110,18 @@ public class LightTextureEv extends LightTexture {
     private final Pointer gammaPointer = Pointer.to(this.gamma);
     private final long[] globalWorkSize = new long[3];
     private final Pointer imagePointer;
+    private cl_kernel kernel;
     private final DynamicTexture lightTexture;
     private final ResourceLocation lightTextureLocation;
     private final Minecraft mc;
+    private cl_mem memOut;
+    private Pointer memOutPointer;
+    private @Nullable cl_mem memTable;
+    private boolean needsUpdate;
     private final float[] nightVisionMod = new float[1];
     private final Pointer nightVisionPointer = Pointer.to(this.nightVisionMod);
+    private float[] oldTable;
+    private cl_program program;
     private final float[] skyBlue = new float[1];
     private final Pointer skyBluePointer = Pointer.to(this.skyBlue);
     private final float[] skyFlash = new float[1];
@@ -121,15 +130,6 @@ public class LightTextureEv extends LightTexture {
     private final Pointer skyGreenPointer = Pointer.to(this.skyGreen);
     private final float[] skyRed = new float[1];
     private final Pointer skyRedPointer = Pointer.to(this.skyRed);
-    private cl_command_queue commandQueue;
-    private cl_context context;
-    private cl_kernel kernel;
-    private cl_mem memOut;
-    private Pointer memOutPointer;
-    private @Nullable cl_mem memTable;
-    private boolean needsUpdate;
-    private float[] oldTable;
-    private cl_program program;
     private Pointer tablePointer;
 
     public LightTextureEv(GameRenderer gameRenderer, Minecraft mc) {
@@ -156,7 +156,7 @@ public class LightTextureEv extends LightTexture {
 
     public static float getLightBrightness(LevelReader level, int lightLevel) {
         if (level.dimensionType().natural()) {
-            DimensionOverworld dimension = ClientEvents.getInstance().getDimension();
+            DimensionOverworld dimension = EvolutionClient.getDimension();
             if (dimension != null) {
                 return dimension.getAmbientLight(lightLevel);
             }
@@ -166,7 +166,7 @@ public class LightTextureEv extends LightTexture {
 
     private static float[] getLightBrightnessTable(LevelReader level) {
         if (level.dimensionType().natural()) {
-            DimensionOverworld dimension = ClientEvents.getInstance().getDimension();
+            DimensionOverworld dimension = EvolutionClient.getDimension();
             if (dimension != null) {
                 return dimension.getLightBrightnessTable();
             }
@@ -176,8 +176,8 @@ public class LightTextureEv extends LightTexture {
 
     private static float getSunBrightness(ClientLevel world, float partialTicks) {
         if (world.dimensionType().natural()) {
-            assert ClientEvents.getInstance().getDimension() != null;
-            return ClientEvents.getInstance().getDimension().getSkyBrightness(partialTicks);
+            assert EvolutionClient.getDimension() != null;
+            return EvolutionClient.getDimension().getSkyBrightness(partialTicks);
         }
         return world.getSkyDarken(partialTicks);
     }
@@ -287,9 +287,8 @@ public class LightTextureEv extends LightTexture {
                 float r = 1.0f;
                 float g = 1.0f;
                 float b = 1.0f;
-                ClientEvents client = ClientEvents.getInstance();
-                if (client.isInitialized()) {
-                    DimensionOverworld dimension = client.getDimension();
+                if (EvolutionClient.isInitialized()) {
+                    DimensionOverworld dimension = EvolutionClient.getDimension();
                     assert dimension != null;
                     float[] duskDawnColors = dimension.getDuskDawnColors();
                     if (duskDawnColors != null) {

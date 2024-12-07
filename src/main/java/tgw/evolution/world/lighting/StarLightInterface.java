@@ -16,8 +16,8 @@ import net.minecraft.world.level.lighting.LayerLightEventListener;
 import net.minecraft.world.level.lighting.LevelLightEngine;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
+import tgw.evolution.EvolutionClient;
 import tgw.evolution.client.renderer.ambient.DynamicLights;
-import tgw.evolution.events.ClientEvents;
 import tgw.evolution.patches.PatchTicketType;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
@@ -212,9 +212,8 @@ public final class StarLightInterface {
             public int getLightValue_(long pos) {
                 int dl = 0;
                 if (StarLightInterface.this.level != null && StarLightInterface.this.level.isClientSide) {
-                    ClientEvents instance = ClientEvents.getInstance();
-                    if (instance.isInitialized()) {
-                        dl = instance.getDynamicLights().getLight(pos);
+                    if (EvolutionClient.isInitialized()) {
+                        dl = EvolutionClient.getDynamicLights().getLight(pos);
                         if (dl == 0b1_1111_1_1111_1_1111) {
                             return 15;
                         }

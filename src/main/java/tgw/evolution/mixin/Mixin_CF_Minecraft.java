@@ -111,7 +111,6 @@ import tgw.evolution.client.renderer.chunk.EvLevelRenderer;
 import tgw.evolution.client.util.TimerQuery;
 import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.datagen.DataGenerators;
-import tgw.evolution.events.ClientEvents;
 import tgw.evolution.hooks.ClientHooks;
 import tgw.evolution.hooks.asm.DeleteField;
 import tgw.evolution.hooks.asm.ModifyConstructor;
@@ -143,36 +142,13 @@ import java.util.function.Supplier;
 @Mixin(Minecraft.class)
 public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Runnable> implements PatchMinecraft, WindowEventHandler {
 
+    @Shadow @Final private static Logger LOGGER;
     @Shadow @Final public static boolean ON_OSX;
-    @Shadow private static Minecraft instance;
     @Shadow @Final private static ResourceLocation REGIONAL_COMPLIANCIES;
+    @Shadow @Final private static CompletableFuture<Unit> RESOURCE_RELOAD_INITIAL_TASK;
     @Shadow @Final private static Component SOCIAL_INTERACTIONS_NOT_AVAILABLE;
     @Shadow private static int fps;
-    @Shadow @Final private static Logger LOGGER;
-    @Shadow @Final private static CompletableFuture<Unit> RESOURCE_RELOAD_INITIAL_TASK;
-    @Shadow public @Nullable Entity crosshairPickEntity;
-    @Mutable @Shadow @Final @RestoreFinal public DebugRenderer debugRenderer;
-    @Mutable @Shadow @Final @RestoreFinal public Font font;
-    @Shadow public String fpsString;
-    @Mutable @Shadow @Final @RestoreFinal public FrameTimer frameTimer;
-    @Mutable @Shadow @Final @RestoreFinal public File gameDirectory;
-    @Shadow public @Nullable MultiPlayerGameMode gameMode;
-    @Mutable @Shadow @Final @RestoreFinal public GameRenderer gameRenderer;
-    @Mutable @Shadow @Final @RestoreFinal public Gui gui;
-    @Shadow public @Nullable HitResult hitResult;
-    @Mutable @Shadow @Final @RestoreFinal public KeyboardHandler keyboardHandler;
-    @Shadow public @Nullable ClientLevel level;
-    @Shadow @Final @DeleteField public LevelRenderer levelRenderer;
-    @Shadow public int missTime;
-    @Mutable @Shadow @Final @RestoreFinal public MouseHandler mouseHandler;
-    @Shadow public boolean noRender;
-    @Mutable @Shadow @Final @RestoreFinal public Options options;
-    @Mutable @Shadow @Final @RestoreFinal public ParticleEngine particleEngine;
-    @Shadow public float pausePartialTick;
-    @Shadow public @Nullable LocalPlayer player;
-    @Shadow public @Nullable Screen screen;
-    @Shadow public boolean smartCull;
-    @Mutable @Shadow @Final @RestoreFinal public Timer timer;
+    @Shadow private static Minecraft instance;
     @Mutable @Shadow @Final @RestoreFinal private boolean allowsChat;
     @Mutable @Shadow @Final @RestoreFinal private boolean allowsMultiplayer;
     @Unique private boolean attackKeyPressed;
@@ -182,48 +158,68 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
     @Mutable @Shadow @Final @RestoreFinal private BlockRenderDispatcher blockRenderer;
     @Unique private int cancelUseCooldown;
     @Mutable @Shadow @Final @RestoreFinal private ClientPackSource clientPackSource;
+    @Shadow public @Nullable Entity crosshairPickEntity;
     @Unique private @Nullable TimerQuery.FrameProfile currentFrameProfile;
     @Shadow private String debugPath;
+    @Mutable @Shadow @Final @RestoreFinal public DebugRenderer debugRenderer;
     @Shadow private @Nullable Supplier<CrashReport> delayedCrash;
     @Mutable @Shadow @Final @RestoreFinal private boolean demo;
     @Mutable @Shadow @Final @RestoreFinal private UUID deviceSessionId;
     @Mutable @Shadow @Final @RestoreFinal private EntityModelSet entityModels;
     @Mutable @Shadow @Final @RestoreFinal private EntityRenderDispatcher entityRenderDispatcher;
     @Mutable @Shadow @Final @RestoreFinal private DataFixer fixerUpper;
+    @Mutable @Shadow @Final @RestoreFinal public Font font;
     @Mutable @Shadow @Final @RestoreFinal private FontManager fontManager;
     @Mutable @Shadow @Final @RestoreFinal private ContinuousProfiler fpsPieProfiler;
     @Shadow private @Nullable ProfileResults fpsPieResults;
+    @Shadow public String fpsString;
+    @Mutable @Shadow @Final @RestoreFinal public FrameTimer frameTimer;
     @Shadow private int frames;
     @Mutable @Shadow @Final @RestoreFinal private Game game;
+    @Mutable @Shadow @Final @RestoreFinal public File gameDirectory;
+    @Shadow public @Nullable MultiPlayerGameMode gameMode;
+    @Mutable @Shadow @Final @RestoreFinal public GameRenderer gameRenderer;
     @Shadow private Thread gameThread;
     @Unique private double gpuUtilization;
     @Mutable @Shadow @Final @RestoreFinal private GpuWarnlistManager gpuWarnlistManager;
+    @Mutable @Shadow @Final @RestoreFinal public Gui gui;
+    @Shadow public @Nullable HitResult hitResult;
     @Mutable @Shadow @Final @RestoreFinal private HotbarManager hotbarManager;
     @Mutable @Shadow @Final @RestoreFinal private boolean is64bit;
     @Shadow private boolean isLocalServer;
     @Mutable @Shadow @Final @RestoreFinal private ItemColors itemColors;
     @Mutable @Shadow @Final @RestoreFinal private ItemInHandRenderer itemInHandRenderer;
     @Mutable @Shadow @Final @RestoreFinal private ItemRenderer itemRenderer;
+    @Mutable @Shadow @Final @RestoreFinal public KeyboardHandler keyboardHandler;
     @Mutable @Shadow @Final @RestoreFinal private LanguageManager languageManager;
     @Unique private int lastFrameRateLimit;
     @Unique private final OptionalMutableBlockPos lastHoldingPos;
     @Shadow private long lastNanoTime;
     @Shadow private long lastTime;
     @Mutable @Shadow @Final @RestoreFinal private String launchedVersion;
+    @Shadow public @Nullable ClientLevel level;
+    @Shadow @Final @DeleteField public LevelRenderer levelRenderer;
     @Mutable @Shadow @Final @RestoreFinal private LevelStorageSource levelSource;
     @Unique private final EvLevelRenderer lvlRenderer;
     @Mutable @Shadow @Final @RestoreFinal private RenderTarget mainRenderTarget;
     @Shadow private MetricsRecorder metricsRecorder;
     @Mutable @Shadow @Final @RestoreFinal private MinecraftSessionService minecraftSessionService;
+    @Shadow public int missTime;
     @Mutable @Shadow @Final @RestoreFinal private MobEffectTextureManager mobEffectTextures;
     @Mutable @Shadow @Final @RestoreFinal private ModelManager modelManager;
+    @Mutable @Shadow @Final @RestoreFinal public MouseHandler mouseHandler;
     @Unique private boolean multiplayerPause;
     @Mutable @Shadow @Final @RestoreFinal private MusicManager musicManager;
+    @Shadow public boolean noRender;
+    @Mutable @Shadow @Final @RestoreFinal public Options options;
     @Shadow private @Nullable Overlay overlay;
     @Mutable @Shadow @Final @RestoreFinal private PaintingTextureManager paintingTextures;
+    @Mutable @Shadow @Final @RestoreFinal public ParticleEngine particleEngine;
     @Shadow private boolean pause;
+    @Shadow public float pausePartialTick;
     @Shadow private @Nullable Connection pendingConnection;
     @Shadow private @Nullable CompletableFuture<Void> pendingReload;
+    @Shadow public @Nullable LocalPlayer player;
     @Mutable @Shadow @Final @RestoreFinal private PlayerSocialManager playerSocialManager;
     @Mutable @Shadow @Final @RestoreFinal private PropertyMap profileProperties;
     @Shadow private ProfilerFiller profiler;
@@ -240,13 +236,16 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
     @Shadow private int rightClickDelay;
     @Shadow private volatile boolean running;
     @Unique private long savedCpuDuration;
+    @Shadow public @Nullable Screen screen;
     @Mutable @Shadow @Final @RestoreFinal private SearchRegistry searchRegistry;
     @Shadow private @Nullable IntegratedServer singleplayerServer;
     @Mutable @Shadow @Final @RestoreFinal private SkinManager skinManager;
+    @Shadow public boolean smartCull;
     @Shadow private @Nullable TutorialToast socialInteractionsToast;
     @Mutable @Shadow @Final @RestoreFinal private SoundManager soundManager;
     @Mutable @Shadow @Final @RestoreFinal private SplashManager splashManager;
     @Mutable @Shadow @Final @RestoreFinal private TextureManager textureManager;
+    @Mutable @Shadow @Final @RestoreFinal public Timer timer;
     @Mutable @Shadow @Final @RestoreFinal private ToastComponent toast;
     @Mutable @Shadow @Final @RestoreFinal private Tutorial tutorial;
     /**
@@ -443,17 +442,17 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
     }
 
     @Shadow
-    public static void crash(CrashReport crashReport) {
-        throw new AbstractMethodError();
-    }
-
-    @Shadow
     private static boolean checkIs64Bit() {
         throw new AbstractMethodError();
     }
 
     @Shadow
     private static boolean countryEqualsISO3(Object object) {
+        throw new AbstractMethodError();
+    }
+
+    @Shadow
+    public static void crash(CrashReport crashReport) {
         throw new AbstractMethodError();
     }
 
@@ -503,6 +502,9 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
     }
 
     @Shadow
+    protected abstract Path archiveProfilingReport(SystemReport p_167857_, List<Path> p_167858_);
+
+    @Shadow
     public abstract void clearLevel(Screen p_213231_1_);
 
     /**
@@ -539,6 +541,52 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
             this.window.close();
         }
     }
+
+    @Shadow
+    protected abstract ProfilerFiller constructProfiler(boolean p_167971_, @Nullable SingleTickProfiler p_167972_);
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Overwrite
+    private void continueAttack(boolean leftClick) {
+        if (!leftClick || EvolutionClient.shouldRenderSpecialAttack()) {
+            this.missTime = 0;
+        }
+        assert this.player != null;
+        assert this.level != null;
+        assert this.gameMode != null;
+        boolean destroying = false;
+        if (this.missTime <= 0 && !this.player.isUsingItem()) {
+            if (leftClick && this.hitResult != null && this.hitResult.getType() == HitResult.Type.BLOCK) {
+                BlockHitResult blockRayTrace = (BlockHitResult) this.hitResult;
+                int x = blockRayTrace.posX();
+                int y = blockRayTrace.posY();
+                int z = blockRayTrace.posZ();
+                if (!this.level.isEmptyBlock_(x, y, z) && !this.player.shouldRenderSpecialAttack()) {
+                    Direction face = blockRayTrace.getDirection();
+                    if (this.gameMode.continueDestroyBlock_(x, y, z, face, blockRayTrace)) {
+                        destroying = true;
+                        this.particleEngine.crack_(x, y, z, face, blockRayTrace.x(), blockRayTrace.y(), blockRayTrace.z());
+                        this.player.swing(InteractionHand.MAIN_HAND);
+                    }
+                }
+            }
+        }
+        if (!destroying) {
+            this.gameMode.stopDestroyBlock();
+        }
+    }
+
+    @Shadow
+    protected abstract void createSearchTrees();
+
+    @Shadow
+    protected abstract String createTitle();
+
+    @Shadow
+    protected abstract UserApiService createUserApiService(YggdrasilAuthenticationService yggdrasilAuthenticationService, GameConfig gameConfig);
 
     /**
      * @reason _
@@ -592,6 +640,25 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
         return true;
     }
 
+    @Shadow
+    protected abstract void debugClientMetricsStop();
+
+    @Unique
+    private void displayCrashScreen(CrashReport report) {
+        try {
+            outputReport(report);
+            this.options.renderDebug = false;
+            this.options.renderDebugCharts = false;
+            this.options.renderFpsChart = false;
+            this.gui.getChat().clearMessages(true);
+            this.setScreen(new ScreenCrash(report));
+        }
+        catch (Throwable t) {
+            LOGGER.error("An uncaught exception occurred while displaying the crash screen, making normal report instead", t);
+            crash(report);
+        }
+    }
+
     /**
      * @reason _
      * @author TheGreatWolf
@@ -638,6 +705,9 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
     public abstract CrashReport fillReport(CrashReport p_71396_1_);
 
     @Shadow
+    protected abstract void finishProfilers(boolean p_91339_, @Nullable SingleTickProfiler p_91340_);
+
+    @Shadow
     public abstract BlockRenderDispatcher getBlockRenderer();
 
     @Shadow
@@ -648,6 +718,9 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
 
     @Shadow
     public abstract @Nullable ClientPacketListener getConnection();
+
+    @Shadow
+    protected abstract int getFramerateLimit();
 
     @Override
     public ItemColors getItemColors() {
@@ -769,415 +842,6 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
         }
     }
 
-    @Shadow
-    public abstract boolean hasSingleplayerServer();
-
-    @Shadow
-    public abstract boolean isEnforceUnicode();
-
-    @Override
-    public boolean isMultiplayerPaused() {
-        return this.multiplayerPause;
-    }
-
-    @Override
-    public EvLevelRenderer lvlRenderer() {
-        return this.lvlRenderer;
-    }
-
-    @SuppressWarnings("DeprecatedIsStillUsed")
-    @Shadow
-    @Deprecated
-    public abstract CompletableFuture<Void> reloadResourcePacks();
-
-    @Shadow
-    public abstract RenderBuffers renderBuffers();
-
-    @Override
-    public void resetUseHeld() {
-        this.useFlags = 0;
-    }
-
-    @Override
-    @Shadow
-    public abstract void resizeDisplay();
-
-    /**
-     * @author TheGreatWolf
-     * @reason Replaces Minecraft's run method to be able to catch more exceptions.
-     */
-    @Overwrite
-    public void run() {
-        this.gameThread = Thread.currentThread();
-        if (Runtime.getRuntime().availableProcessors() >= 4) {
-            this.gameThread.setPriority(10);
-        }
-        try {
-            boolean hasAlreadyBeenOutOfMemory = false;
-            while (this.running) {
-                if (this.delayedCrash != null) {
-                    this.emergencySave();
-                    LOGGER.error(LogUtils.FATAL_MARKER, "Exception thrown on another thread!");
-                    this.displayCrashScreen(this.delayedCrash.get());
-                    this.delayedCrash = null;
-                }
-                try {
-                    SingleTickProfiler singleTickProfiler = SingleTickProfiler.createTickProfiler("Renderer");
-                    boolean debugMode = this.shouldRenderFpsPie();
-                    //noinspection ConstantConditions
-                    this.profiler = this.constructProfiler(debugMode, singleTickProfiler);
-                    this.profiler.startTick();
-                    this.metricsRecorder.startTick();
-                    this.runTick(true);
-                    this.metricsRecorder.endTick();
-                    this.profiler.endTick();
-                    //noinspection ConstantConditions
-                    this.finishProfilers(debugMode, singleTickProfiler);
-                }
-                catch (OutOfMemoryError outOfMemory) {
-                    this.emergencySave();
-                    LOGGER.error(LogUtils.FATAL_MARKER, "Out of memory", outOfMemory);
-                    //noinspection ObjectAllocationInLoop
-                    this.setScreen(new ScreenOutOfMemory(hasAlreadyBeenOutOfMemory));
-                    System.gc();
-                    hasAlreadyBeenOutOfMemory = true;
-                }
-                catch (ReportedException exception) {
-                    this.fillReport(exception.getReport());
-                    LOGGER.error(LogUtils.FATAL_MARKER, "Reported exception thrown!", exception);
-                    this.emergencySave();
-                    this.displayCrashScreen(exception.getReport());
-                }
-                catch (Throwable t) {
-                    //noinspection ObjectAllocationInLoop
-                    CrashReport report = this.fillReport(new CrashReport("Unexpected error", t));
-                    LOGGER.error(LogUtils.FATAL_MARKER, "Unreported exception thrown!", t);
-                    this.emergencySave();
-                    this.displayCrashScreen(report);
-                }
-            }
-        }
-        catch (ReportedException reportedException) {
-            this.fillReport(reportedException.getReport());
-            LOGGER.error(LogUtils.FATAL_MARKER, "Reported exception thrown!", reportedException);
-            this.emergencySave();
-            crash(reportedException.getReport());
-        }
-        catch (Throwable throwable) {
-            CrashReport crashReport = this.fillReport(new CrashReport("Unexpected error", throwable));
-            LOGGER.error(LogUtils.FATAL_MARKER, "Unreported exception thrown!", throwable);
-            this.emergencySave();
-            crash(crashReport);
-        }
-    }
-
-    @Override
-    public void setMultiplayerPaused(boolean paused) {
-        this.multiplayerPause = paused;
-    }
-
-    @Shadow
-    public abstract void setOverlay(@Nullable Overlay pLoadingGui);
-
-    /**
-     * @author TheGreatWolf
-     * @reason Add screen handler
-     */
-    @Overwrite
-    public void setScreen(@Nullable Screen screen) {
-        if (SharedConstants.IS_RUNNING_IN_IDE && Thread.currentThread() != this.gameThread) {
-            LOGGER.error("setScreen called from non-game thread");
-        }
-        if (this.screen != null) {
-            this.screen.removed();
-        }
-        if (screen == null && this.level == null) {
-            screen = new TitleScreen();
-        }
-        else {
-            if (screen == null) {
-                assert this.player != null;
-                if (this.player.isDeadOrDying()) {
-                    if (this.player.shouldShowDeathScreen()) {
-                        screen = new DeathScreen(null, this.level.getLevelData().isHardcore()).setTimeAlive(-1);
-                    }
-                    else {
-                        this.player.respawn();
-                    }
-                }
-            }
-        }
-        ClientEvents.onGuiOpen(screen);
-        this.screen = screen;
-        BufferUploader.reset();
-        if (screen != null) {
-            this.mouseHandler.releaseMouse();
-            KeyMapping.releaseAll();
-            screen.init((Minecraft) (Object) this, this.window.getGuiScaledWidth(), this.window.getGuiScaledHeight());
-            this.noRender = false;
-        }
-        else {
-            this.soundManager.resume();
-            this.mouseHandler.grabMouse();
-        }
-        this.updateTitle();
-    }
-
-    @Override
-    @Shadow
-    public abstract void setWindowActive(boolean bl);
-
-    @Shadow
-    public abstract void stop();
-
-    /**
-     * @author TheGreatWolf
-     * @reason Handle multiplayer pause, avoid memory allocation when possible.
-     */
-    @Overwrite
-    public void tick() {
-        if (this.rightClickDelay > 0) {
-            --this.rightClickDelay;
-        }
-        this.profiler.push("preTick");
-        ClientEvents client = ClientEvents.getInstanceNullable();
-        if (client != null) {
-            client.preClientTick();
-        }
-        this.profiler.popPush("gui");
-        this.gui.tick(this.pause);
-        this.profiler.pop();
-        this.profiler.push("gameMode");
-        if ((!this.pause || this.multiplayerPause) && this.level != null) { //Added check for multiplayer pause
-            assert this.gameMode != null;
-            this.gameMode.tick();
-            //Added decrement for use cancel cooldown
-            if (this.cancelUseCooldown > 0) {
-                this.cancelUseCooldown--;
-            }
-        }
-        this.profiler.popPush("textures");
-        //noinspection VariableNotUsedInsideIf
-        if (this.level != null) {
-            this.textureManager.tick();
-        }
-        if (this.screen == null && this.player != null) {
-            if (this.player.isDeadOrDying() && !(this.screen instanceof DeathScreen)) {
-                this.setScreen(null);
-            }
-            else if (this.player.isSleeping() && this.level != null) {
-                this.setScreen(new InBedChatScreen());
-            }
-        }
-        else {
-            if (this.screen instanceof InBedChatScreen bedChatScreen) {
-                assert this.player != null;
-                if (!this.player.isSleeping()) {
-                    bedChatScreen.onPlayerWokeUp();
-                }
-            }
-        }
-        //noinspection VariableNotUsedInsideIf
-        if (this.screen != null) {
-            this.missTime = 10_000;
-        }
-        if (this.screen != null) {
-            try {
-                this.screen.tick();
-            }
-            catch (Throwable t) {
-                CrashReport crash = CrashReport.forThrowable(t, "Ticking screen");
-                CrashReportCategory category = crash.addCategory("Affected screen");
-                category.setDetail("Screen name", this.screen.getClass().getCanonicalName());
-                throw new ReportedException(crash);
-            }
-        }
-        if (!this.options.renderDebug) {
-            this.gui.clearCache();
-        }
-        if (this.overlay == null && (this.screen == null || this.screen.passEvents)) {
-            this.profiler.popPush("Keybindings");
-            this.handleKeybinds();
-            //Check for multiplayer pause
-            if (!this.multiplayerPause && this.missTime > 0) {
-                --this.missTime;
-            }
-        }
-        if (this.level != null) {
-            this.profiler.popPush("gameRenderer");
-            if (!this.pause) {
-                this.gameRenderer.tick();
-            }
-            this.profiler.popPush("levelRenderer");
-            if (!this.pause) {
-                this.lvlRenderer.tick();
-            }
-            this.profiler.popPush("level");
-            if (!this.pause) {
-                if (this.level.getSkyFlashTime() > 0) {
-                    this.level.setSkyFlashTime(this.level.getSkyFlashTime() - 1);
-                }
-                this.level.tickEntities();
-            }
-        }
-        else if (this.gameRenderer.currentEffect() != null) {
-            this.gameRenderer.shutdownEffect();
-        }
-        if (!this.pause) {
-            this.musicManager.tick();
-        }
-        this.soundManager.tick(this.pause);
-        if (this.level != null) {
-            if (!this.pause) {
-                if (!this.options.joinedFirstServer && this.isMultiplayerServer()) {
-                    Component title = new TranslatableComponent("tutorial.socialInteractions.title");
-                    Component message = new TranslatableComponent("tutorial.socialInteractions.description", Tutorial.key("socialInteractions"));
-                    this.socialInteractionsToast = new TutorialToast(TutorialToast.Icons.SOCIAL_INTERACTIONS, title, message, true);
-                    this.tutorial.addTimedToast(this.socialInteractionsToast, 160);
-                    this.options.joinedFirstServer = true;
-                    this.options.save();
-                }
-                this.tutorial.tick();
-                try {
-                    this.level.tick(() -> true);
-                }
-                catch (Throwable t) {
-                    CrashReport crash = CrashReport.forThrowable(t, "Exception in world tick");
-                    if (this.level == null) {
-                        CrashReportCategory category = crash.addCategory("Affected level");
-                        category.setDetail("Problem", "Level is null!");
-                    }
-                    else {
-                        this.level.fillReportDetails(crash);
-                    }
-                    throw new ReportedException(crash);
-                }
-            }
-            this.profiler.popPush("animateTick");
-            if (!this.pause && this.level != null) {
-                assert this.player != null;
-                BlockPos pos = this.player.blockPosition();
-                this.level.animateTick(pos.getX(), pos.getY(), pos.getZ());
-            }
-            this.profiler.popPush("particles");
-            if (!this.pause) {
-                this.particleEngine.tick();
-            }
-        }
-        else if (this.pendingConnection != null) {
-            this.profiler.popPush("pendingConnection");
-            this.pendingConnection.tick();
-        }
-        this.profiler.popPush("keyboard");
-        this.keyboardHandler.tick();
-        this.profiler.popPush("postTick");
-        if (client != null) {
-            client.postClientTick();
-        }
-        this.profiler.pop();
-    }
-
-    @Shadow
-    public abstract void updateTitle();
-
-    @Shadow
-    protected abstract Path archiveProfilingReport(SystemReport p_167857_, List<Path> p_167858_);
-
-    @Shadow
-    protected abstract ProfilerFiller constructProfiler(boolean p_167971_, @Nullable SingleTickProfiler p_167972_);
-
-    @Shadow
-    protected abstract void createSearchTrees();
-
-    @Shadow
-    protected abstract String createTitle();
-
-    @Shadow
-    protected abstract UserApiService createUserApiService(YggdrasilAuthenticationService yggdrasilAuthenticationService, GameConfig gameConfig);
-
-    @Shadow
-    protected abstract void debugClientMetricsStop();
-
-    @Shadow
-    protected abstract void finishProfilers(boolean p_91339_, @Nullable SingleTickProfiler p_91340_);
-
-    @Shadow
-    protected abstract int getFramerateLimit();
-
-    @Shadow
-    protected abstract boolean isMultiplayerServer();
-
-    @Shadow
-    protected abstract int method_16010();
-
-    @Shadow
-    protected abstract void method_24040(Optional par1);
-
-    @Shadow
-    protected abstract void onFullscreenError(int i, long l);
-
-    @Shadow
-    protected abstract void openChatScreen(String defaultText);
-
-    @Shadow
-    protected abstract void rollbackResourcePacks(Throwable p_91240_);
-
-    @Shadow
-    protected abstract boolean shouldRenderFpsPie();
-
-    @Shadow
-    abstract void selectMainFont(boolean bl);
-
-    /**
-     * @reason _
-     * @author TheGreatWolf
-     */
-    @Overwrite
-    private void continueAttack(boolean leftClick) {
-        if (!leftClick || ClientEvents.getInstance().shouldRenderSpecialAttack()) {
-            this.missTime = 0;
-        }
-        assert this.player != null;
-        assert this.level != null;
-        assert this.gameMode != null;
-        boolean destroying = false;
-        if (this.missTime <= 0 && !this.player.isUsingItem()) {
-            if (leftClick && this.hitResult != null && this.hitResult.getType() == HitResult.Type.BLOCK) {
-                BlockHitResult blockRayTrace = (BlockHitResult) this.hitResult;
-                int x = blockRayTrace.posX();
-                int y = blockRayTrace.posY();
-                int z = blockRayTrace.posZ();
-                if (!this.level.isEmptyBlock_(x, y, z) && !this.player.shouldRenderSpecialAttack()) {
-                    Direction face = blockRayTrace.getDirection();
-                    if (this.gameMode.continueDestroyBlock_(x, y, z, face, blockRayTrace)) {
-                        destroying = true;
-                        this.particleEngine.crack_(x, y, z, face, blockRayTrace.x(), blockRayTrace.y(), blockRayTrace.z());
-                        this.player.swing(InteractionHand.MAIN_HAND);
-                    }
-                }
-            }
-        }
-        if (!destroying) {
-            this.gameMode.stopDestroyBlock();
-        }
-    }
-
-    @Unique
-    private void displayCrashScreen(CrashReport report) {
-        try {
-            outputReport(report);
-            this.options.renderDebug = false;
-            this.options.renderDebugCharts = false;
-            this.options.renderFpsChart = false;
-            this.gui.getChat().clearMessages(true);
-            this.setScreen(new ScreenCrash(report));
-        }
-        catch (Throwable t) {
-            LOGGER.error("An uncaught exception occurred while displaying the crash screen, making normal report instead", t);
-            crash(report);
-        }
-    }
-
     /**
      * @reason _
      * @author TheGreatWolf
@@ -1187,7 +851,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
         assert this.player != null;
         assert this.gameMode != null;
         assert this.getConnection() != null;
-        boolean notPausedNorAttacking = !this.multiplayerPause && !ClientEvents.getInstance().shouldRenderSpecialAttack();
+        boolean notPausedNorAttacking = !this.multiplayerPause && !EvolutionClient.shouldRenderSpecialAttack();
         if (this.options.keyTogglePerspective.consumeAllClicks()) {
             CameraType view = this.options.getCameraType();
             this.options.setCameraType(view.cycle());
@@ -1281,7 +945,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
                     ItemStack usedStack = this.player.getUseItem();
                     if (usedStack.getItem() instanceof ICancelableUse cancelable) {
                         if (cancelable.isCancelable(usedStack, this.player) && this.cancelUseCooldown == 0) {
-                            ClientEvents.getInstance().resetCooldown(this.player.getUsedItemHand());
+                            EvolutionClient.resetCooldown(this.player.getUsedItemHand());
                             this.player.stopUsingItem();
                             this.cancelUseCooldown = 20;
                             this.player.connection.send(new PacketCSSimpleMessage(Message.C2S.STOP_USING_ITEM));
@@ -1317,11 +981,11 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
                             shouldContinueAttacking = false;
                             IMelee.ChargeAttackType chargeAttackType = melee.getChargeAttackType(mainhandStack);
                             if (chargeAttackType != null) {
-                                if (!this.attackKeyPressed && ClientEvents.getInstance().getMainhandIndicatorPercentage(0.0f) >= 1.0f) {
+                                if (!this.attackKeyPressed && EvolutionClient.getMainhandIndicatorPercentage(0.0f) >= 1.0f) {
                                     if (++this.attackKeyTicks >= autoAttackTime) {
                                         //Hold Attack
                                         if (this.missTime == 0) {
-                                            ClientEvents.getInstance().startChargeAttack(chargeAttackType);
+                                            EvolutionClient.startChargeAttack(chargeAttackType);
                                             this.attackKeyPressed = true;
                                         }
                                     }
@@ -1340,18 +1004,18 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
                     else {
                         if (!this.multiplayerPause) {
                             if (!this.attackKeyPressed) {
-                                if (ClientEvents.getInstance().getMainhandIndicatorPercentage(0.0f) >= 1.0f) {
+                                if (EvolutionClient.getMainhandIndicatorPercentage(0.0f) >= 1.0f) {
                                     if (this.attackKeyTicks >= minAttackTime) {
                                         IMelee.ChargeAttackType chargeAttackType = melee.getChargeAttackType(mainhandStack);
                                         if (chargeAttackType != null) {
                                             //Hold Attack
-                                            ClientEvents.getInstance().startChargeAttack(chargeAttackType);
+                                            EvolutionClient.startChargeAttack(chargeAttackType);
                                         }
                                     }
                                     else if (this.attackKeyTicks > 0) {
                                         //Short Attack
-                                        if (ClientEvents.getInstance().checkHitResultBeforeShortAttack()) {
-                                            ClientEvents.getInstance().startShortAttack(mainhandStack);
+                                        if (EvolutionClient.checkHitResultBeforeShortAttack()) {
+                                            EvolutionClient.startShortAttack(mainhandStack);
                                         }
                                         else {
                                             shouldContinueAttacking = this.startAttack();
@@ -1374,7 +1038,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
                 }
             }
             isAttackKeyDown = this.options.keyAttack.isDown();
-            if (ClientEvents.getInstance().getMainhandIndicatorPercentage(0.0f) < 1) {
+            if (EvolutionClient.getMainhandIndicatorPercentage(0.0f) < 1) {
                 this.options.keyAttack.consumeAllClicks();
             }
             if (this.options.keyUse.consumeAllClicks()) {
@@ -1406,6 +1070,37 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
         this.continueAttack(this.screen == null && shouldContinueAttacking && isAttackKeyDown && this.mouseHandler.isMouseGrabbed() && !this.multiplayerPause);
     }
 
+    @Shadow
+    public abstract boolean hasSingleplayerServer();
+
+    @Shadow
+    public abstract boolean isEnforceUnicode();
+
+    @Override
+    public boolean isMultiplayerPaused() {
+        return this.multiplayerPause;
+    }
+
+    @Shadow
+    protected abstract boolean isMultiplayerServer();
+
+    @Override
+    public EvLevelRenderer lvlRenderer() {
+        return this.lvlRenderer;
+    }
+
+    @Shadow
+    protected abstract int method_16010();
+
+    @Shadow
+    protected abstract void method_24040(Optional par1);
+
+    @Shadow
+    protected abstract void onFullscreenError(int i, long l);
+
+    @Shadow
+    protected abstract void openChatScreen(String defaultText);
+
     /**
      * @author TheGreatWolf
      * @reason Replace to handle Evolution's input.
@@ -1418,6 +1113,11 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
             ClientHooks.onPickBlock(this.hitResult, this.player, this.level);
         }
     }
+
+    @SuppressWarnings("DeprecatedIsStillUsed")
+    @Shadow
+    @Deprecated
+    public abstract CompletableFuture<Void> reloadResourcePacks();
 
     /**
      * @author TheGreatWolf
@@ -1447,6 +1147,9 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
                                            }), true));
         return future;
     }
+
+    @Shadow
+    public abstract RenderBuffers renderBuffers();
 
     /**
      * @author TheGreatWolf
@@ -1550,6 +1253,87 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
             this.font.drawInBatch(s2, x + 160 - this.font.width(s2), y1, color, true, matrix, buffer, false, 0, DynamicLights.FULL_LIGHTMAP, false);
         }
         buffer.endBatch();
+    }
+
+    @Override
+    public void resetUseHeld() {
+        this.useFlags = 0;
+    }
+
+    @Override
+    @Shadow
+    public abstract void resizeDisplay();
+
+    @Shadow
+    protected abstract void rollbackResourcePacks(Throwable p_91240_);
+
+    /**
+     * @author TheGreatWolf
+     * @reason Replaces Minecraft's run method to be able to catch more exceptions.
+     */
+    @Overwrite
+    public void run() {
+        this.gameThread = Thread.currentThread();
+        if (Runtime.getRuntime().availableProcessors() >= 4) {
+            this.gameThread.setPriority(10);
+        }
+        try {
+            boolean hasAlreadyBeenOutOfMemory = false;
+            while (this.running) {
+                if (this.delayedCrash != null) {
+                    this.emergencySave();
+                    LOGGER.error(LogUtils.FATAL_MARKER, "Exception thrown on another thread!");
+                    this.displayCrashScreen(this.delayedCrash.get());
+                    this.delayedCrash = null;
+                }
+                try {
+                    SingleTickProfiler singleTickProfiler = SingleTickProfiler.createTickProfiler("Renderer");
+                    boolean debugMode = this.shouldRenderFpsPie();
+                    //noinspection ConstantConditions
+                    this.profiler = this.constructProfiler(debugMode, singleTickProfiler);
+                    this.profiler.startTick();
+                    this.metricsRecorder.startTick();
+                    this.runTick(true);
+                    this.metricsRecorder.endTick();
+                    this.profiler.endTick();
+                    //noinspection ConstantConditions
+                    this.finishProfilers(debugMode, singleTickProfiler);
+                }
+                catch (OutOfMemoryError outOfMemory) {
+                    this.emergencySave();
+                    LOGGER.error(LogUtils.FATAL_MARKER, "Out of memory", outOfMemory);
+                    //noinspection ObjectAllocationInLoop
+                    this.setScreen(new ScreenOutOfMemory(hasAlreadyBeenOutOfMemory));
+                    System.gc();
+                    hasAlreadyBeenOutOfMemory = true;
+                }
+                catch (ReportedException exception) {
+                    this.fillReport(exception.getReport());
+                    LOGGER.error(LogUtils.FATAL_MARKER, "Reported exception thrown!", exception);
+                    this.emergencySave();
+                    this.displayCrashScreen(exception.getReport());
+                }
+                catch (Throwable t) {
+                    //noinspection ObjectAllocationInLoop
+                    CrashReport report = this.fillReport(new CrashReport("Unexpected error", t));
+                    LOGGER.error(LogUtils.FATAL_MARKER, "Unreported exception thrown!", t);
+                    this.emergencySave();
+                    this.displayCrashScreen(report);
+                }
+            }
+        }
+        catch (ReportedException reportedException) {
+            this.fillReport(reportedException.getReport());
+            LOGGER.error(LogUtils.FATAL_MARKER, "Reported exception thrown!", reportedException);
+            this.emergencySave();
+            crash(reportedException.getReport());
+        }
+        catch (Throwable throwable) {
+            CrashReport crashReport = this.fillReport(new CrashReport("Unexpected error", throwable));
+            LOGGER.error(LogUtils.FATAL_MARKER, "Unreported exception thrown!", throwable);
+            this.emergencySave();
+            crash(crashReport);
+        }
     }
 
     /**
@@ -1692,6 +1476,68 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
         this.profiler.pop();
     }
 
+    @Shadow
+    abstract void selectMainFont(boolean bl);
+
+    @Override
+    public void setMultiplayerPaused(boolean paused) {
+        this.multiplayerPause = paused;
+    }
+
+    @Shadow
+    public abstract void setOverlay(@Nullable Overlay pLoadingGui);
+
+    /**
+     * @author TheGreatWolf
+     * @reason Add screen handler
+     */
+    @Overwrite
+    public void setScreen(@Nullable Screen screen) {
+        if (SharedConstants.IS_RUNNING_IN_IDE && Thread.currentThread() != this.gameThread) {
+            LOGGER.error("setScreen called from non-game thread");
+        }
+        if (this.screen != null) {
+            this.screen.removed();
+        }
+        if (screen == null && this.level == null) {
+            screen = new TitleScreen();
+        }
+        else {
+            if (screen == null) {
+                assert this.player != null;
+                if (this.player.isDeadOrDying()) {
+                    if (this.player.shouldShowDeathScreen()) {
+                        screen = new DeathScreen(null, this.level.getLevelData().isHardcore()).setTimeAlive(-1);
+                    }
+                    else {
+                        this.player.respawn();
+                    }
+                }
+            }
+        }
+        EvolutionClient.onGuiOpen(screen);
+        this.screen = screen;
+        BufferUploader.reset();
+        if (screen != null) {
+            this.mouseHandler.releaseMouse();
+            KeyMapping.releaseAll();
+            screen.init((Minecraft) (Object) this, this.window.getGuiScaledWidth(), this.window.getGuiScaledHeight());
+            this.noRender = false;
+        }
+        else {
+            this.soundManager.resume();
+            this.mouseHandler.grabMouse();
+        }
+        this.updateTitle();
+    }
+
+    @Override
+    @Shadow
+    public abstract void setWindowActive(boolean bl);
+
+    @Shadow
+    protected abstract boolean shouldRenderFpsPie();
+
     /**
      * @author TheGreatWolf
      * @reason Replace to handle Evolution's input.
@@ -1721,7 +1567,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
                 assert this.gameMode != null;
                 if (this.gameMode.getPlayerMode() != GameType.SPECTATOR) {
                     if (!this.attackKeyPressed) {
-                        ClientEvents.getInstance().startShortAttack(this.player.getMainHandItem());
+                        EvolutionClient.startShortAttack(this.player.getMainHandItem());
                         swingHand = false;
                     }
                     else {
@@ -1756,7 +1602,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
                 }
                 ItemStack mainHandItem = this.player.getMainHandItem();
                 if (!this.player.isCreative() && (mainHandItem.isEmpty() || mainHandItem.getItem() instanceof IMelee)) {
-                    ClientEvents.getInstance().startShortAttack(mainHandItem);
+                    EvolutionClient.startShortAttack(mainHandItem);
                 }
                 swingHand = false;
                 break;
@@ -1819,7 +1665,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
                             this.player.swing(hand);
                             if ((this.useFlags & 2) != 0 && (this.repeatedUse = ItemUtils.getRepeatedUse(stack)) != ItemUtils.RepeatedUse.NEVER) {
                                 this.useFlags |= 1;
-                                Direction direction = ClientEvents.getDirectionFromInput(this.player.getDirection(), this.player.input);
+                                Direction direction = EvolutionClient.getDirectionFromInput(this.player.getDirection(), this.player.input);
                                 if (direction != null) {
                                     this.useFlags |= (byte) (direction.ordinal() + 1 << 2);
                                 }
@@ -1836,12 +1682,12 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
         }
         for (InteractionHand hand : ArrayHelper.HANDS_OFF_PRIORITY) {
             if (hand == InteractionHand.MAIN_HAND) {
-                if (ClientEvents.getInstance().getMainhandIndicatorPercentage(0) < 1) {
+                if (EvolutionClient.getMainhandIndicatorPercentage(0) < 1) {
                     return;
                 }
             }
             else {
-                if (ClientEvents.getInstance().getOffhandIndicatorPercentage(0) < 1) {
+                if (EvolutionClient.getOffhandIndicatorPercentage(0) < 1) {
                     return;
                 }
             }
@@ -1879,7 +1725,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
         }
         Direction direction;
         if ((this.useFlags >> 2 & 0b111) == 0) {
-            direction = ClientEvents.getDirectionFromInput(this.player.getDirection(), this.player.input);
+            direction = EvolutionClient.getDirectionFromInput(this.player.getDirection(), this.player.input);
             if (direction != null) {
                 this.useFlags |= (byte) (direction.ordinal() + 1 << 2);
             }
@@ -1924,6 +1770,151 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
         return false;
     }
 
+    @Shadow
+    public abstract void stop();
+
+    /**
+     * @author TheGreatWolf
+     * @reason Handle multiplayer pause, avoid memory allocation when possible.
+     */
+    @Overwrite
+    public void tick() {
+        if (this.rightClickDelay > 0) {
+            --this.rightClickDelay;
+        }
+        this.profiler.push("preTick");
+        EvolutionClient.preClientTick();
+        this.profiler.popPush("gui");
+        this.gui.tick(this.pause);
+        this.profiler.pop();
+        this.profiler.push("gameMode");
+        if ((!this.pause || this.multiplayerPause) && this.level != null) { //Added check for multiplayer pause
+            assert this.gameMode != null;
+            this.gameMode.tick();
+            //Added decrement for use cancel cooldown
+            if (this.cancelUseCooldown > 0) {
+                this.cancelUseCooldown--;
+            }
+        }
+        this.profiler.popPush("textures");
+        //noinspection VariableNotUsedInsideIf
+        if (this.level != null) {
+            this.textureManager.tick();
+        }
+        if (this.screen == null && this.player != null) {
+            if (this.player.isDeadOrDying() && !(this.screen instanceof DeathScreen)) {
+                this.setScreen(null);
+            }
+            else if (this.player.isSleeping() && this.level != null) {
+                this.setScreen(new InBedChatScreen());
+            }
+        }
+        else {
+            if (this.screen instanceof InBedChatScreen bedChatScreen) {
+                assert this.player != null;
+                if (!this.player.isSleeping()) {
+                    bedChatScreen.onPlayerWokeUp();
+                }
+            }
+        }
+        //noinspection VariableNotUsedInsideIf
+        if (this.screen != null) {
+            this.missTime = 10_000;
+        }
+        if (this.screen != null) {
+            try {
+                this.screen.tick();
+            }
+            catch (Throwable t) {
+                CrashReport crash = CrashReport.forThrowable(t, "Ticking screen");
+                CrashReportCategory category = crash.addCategory("Affected screen");
+                category.setDetail("Screen name", this.screen.getClass().getCanonicalName());
+                throw new ReportedException(crash);
+            }
+        }
+        if (!this.options.renderDebug) {
+            this.gui.clearCache();
+        }
+        if (this.overlay == null && (this.screen == null || this.screen.passEvents)) {
+            this.profiler.popPush("Keybindings");
+            this.handleKeybinds();
+            //Check for multiplayer pause
+            if (!this.multiplayerPause && this.missTime > 0) {
+                --this.missTime;
+            }
+        }
+        if (this.level != null) {
+            this.profiler.popPush("gameRenderer");
+            if (!this.pause) {
+                this.gameRenderer.tick();
+            }
+            this.profiler.popPush("levelRenderer");
+            if (!this.pause) {
+                this.lvlRenderer.tick();
+            }
+            this.profiler.popPush("level");
+            if (!this.pause) {
+                if (this.level.getSkyFlashTime() > 0) {
+                    this.level.setSkyFlashTime(this.level.getSkyFlashTime() - 1);
+                }
+                this.level.tickEntities();
+            }
+        }
+        else if (this.gameRenderer.currentEffect() != null) {
+            this.gameRenderer.shutdownEffect();
+        }
+        if (!this.pause) {
+            this.musicManager.tick();
+        }
+        this.soundManager.tick(this.pause);
+        if (this.level != null) {
+            if (!this.pause) {
+                if (!this.options.joinedFirstServer && this.isMultiplayerServer()) {
+                    Component title = new TranslatableComponent("tutorial.socialInteractions.title");
+                    Component message = new TranslatableComponent("tutorial.socialInteractions.description", Tutorial.key("socialInteractions"));
+                    this.socialInteractionsToast = new TutorialToast(TutorialToast.Icons.SOCIAL_INTERACTIONS, title, message, true);
+                    this.tutorial.addTimedToast(this.socialInteractionsToast, 160);
+                    this.options.joinedFirstServer = true;
+                    this.options.save();
+                }
+                this.tutorial.tick();
+                try {
+                    this.level.tick(() -> true);
+                }
+                catch (Throwable t) {
+                    CrashReport crash = CrashReport.forThrowable(t, "Exception in world tick");
+                    if (this.level == null) {
+                        CrashReportCategory category = crash.addCategory("Affected level");
+                        category.setDetail("Problem", "Level is null!");
+                    }
+                    else {
+                        this.level.fillReportDetails(crash);
+                    }
+                    throw new ReportedException(crash);
+                }
+            }
+            this.profiler.popPush("animateTick");
+            if (!this.pause && this.level != null) {
+                assert this.player != null;
+                BlockPos pos = this.player.blockPosition();
+                this.level.animateTick(pos.getX(), pos.getY(), pos.getZ());
+            }
+            this.profiler.popPush("particles");
+            if (!this.pause) {
+                this.particleEngine.tick();
+            }
+        }
+        else if (this.pendingConnection != null) {
+            this.profiler.popPush("pendingConnection");
+            this.pendingConnection.tick();
+        }
+        this.profiler.popPush("keyboard");
+        this.keyboardHandler.tick();
+        this.profiler.popPush("postTick");
+        EvolutionClient.postClientTick();
+        this.profiler.pop();
+    }
+
     /**
      * @author TheGreatWolf
      * @reason Replace LevelRenderer
@@ -1935,4 +1926,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
         this.blockEntityRenderDispatcher.setLevel(level);
         this.updateTitle();
     }
+
+    @Shadow
+    public abstract void updateTitle();
 }

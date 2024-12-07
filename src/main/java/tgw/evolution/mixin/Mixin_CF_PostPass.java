@@ -15,8 +15,8 @@ import net.minecraft.world.level.material.FogType;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.*;
+import tgw.evolution.EvolutionClient;
 import tgw.evolution.client.renderer.RenderHelper;
-import tgw.evolution.events.ClientEvents;
 import tgw.evolution.hooks.asm.DeleteField;
 import tgw.evolution.hooks.asm.ModifyConstructor;
 import tgw.evolution.hooks.asm.RestoreFinal;
@@ -35,17 +35,17 @@ import java.util.function.IntSupplier;
 @Mixin(PostPass.class)
 public abstract class Mixin_CF_PostPass implements AutoCloseable {
 
+    @Shadow @Final @DeleteField private List<IntSupplier> auxAssets;
     @Unique private final OList<IntSupplier> auxAssets_;
+    @Shadow @Final @DeleteField private List<Integer> auxHeights;
     @Unique private final IList auxHeights_;
+    @Shadow @Final @DeleteField private List<String> auxNames;
     @Unique private final OList<String> auxNames_;
+    @Shadow @Final @DeleteField private List<Integer> auxWidths;
     @Unique private final IList auxWidths_;
+    @Mutable @Shadow @Final @RestoreFinal private EffectInstance effect;
     @Mutable @Shadow @Final @RestoreFinal public RenderTarget inTarget;
     @Mutable @Shadow @Final @RestoreFinal public RenderTarget outTarget;
-    @Shadow @Final @DeleteField private List<IntSupplier> auxAssets;
-    @Shadow @Final @DeleteField private List<Integer> auxHeights;
-    @Shadow @Final @DeleteField private List<String> auxNames;
-    @Shadow @Final @DeleteField private List<Integer> auxWidths;
-    @Mutable @Shadow @Final @RestoreFinal private EffectInstance effect;
     @Shadow private @Nullable Matrix4f shaderOrthoMatrix;
 
     @ModifyConstructor
@@ -112,11 +112,11 @@ public abstract class Mixin_CF_PostPass implements AutoCloseable {
         }
         Uniform REAL_PROJ_MAT = this.effect.getUniform("RealProjMat");
         if (REAL_PROJ_MAT != null) {
-            REAL_PROJ_MAT.set(ClientEvents.retrieveProjMatrix());
+            REAL_PROJ_MAT.set(EvolutionClient.retrieveProjMatrix());
         }
         Uniform MODEL_VIEW = this.effect.getUniform("ModelViewM");
         if (MODEL_VIEW != null) {
-            MODEL_VIEW.set(ClientEvents.retrieveModelViewMatrix());
+            MODEL_VIEW.set(EvolutionClient.retrieveModelViewMatrix());
         }
         Uniform SUN_DIR = this.effect.getUniform("SunDir");
         if (SUN_DIR != null) {
@@ -132,7 +132,7 @@ public abstract class Mixin_CF_PostPass implements AutoCloseable {
         }
         Uniform FOV = this.effect.getUniform("Fov");
         if (FOV != null) {
-            FOV.set(ClientEvents.retrieveFov());
+            FOV.set(EvolutionClient.retrieveFov());
         }
         Uniform FOG_COLOR = this.effect.getUniform("FogColor");
         if (FOG_COLOR != null) {

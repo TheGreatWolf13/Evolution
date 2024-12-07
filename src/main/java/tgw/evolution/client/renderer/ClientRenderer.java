@@ -35,6 +35,7 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL14;
+import tgw.evolution.EvolutionClient;
 import tgw.evolution.capabilities.player.CapabilityHunger;
 import tgw.evolution.capabilities.player.CapabilityThirst;
 import tgw.evolution.capabilities.player.TemperatureClient;
@@ -46,7 +47,6 @@ import tgw.evolution.client.renderer.ambient.DynamicLights;
 import tgw.evolution.client.util.Blending;
 import tgw.evolution.client.util.ClientEffectInstance;
 import tgw.evolution.config.EvolutionConfig;
-import tgw.evolution.events.ClientEvents;
 import tgw.evolution.init.EvolutionEffects;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionResources;
@@ -69,7 +69,6 @@ public class ClientRenderer {
     private static @Nullable ClientRenderer instance;
     private static int slotMainHand;
     private @Nullable RunnableAddingEffect addingEffect;
-    private final ClientEvents client;
     private final OList<ClientEffectInstance> effects = new OArrayList<>();
     private byte healthFlashTicks;
     private short healthTick;
@@ -100,10 +99,9 @@ public class ClientRenderer {
     private byte thirstFlashTicks;
     private short thirstTick;
 
-    public ClientRenderer(Minecraft mc, ClientEvents client) {
+    public ClientRenderer(Minecraft mc) {
         instance = this;
         this.mc = mc;
-        this.client = client;
     }
 
     private static void blit(PoseStack matrices, int x, int y, int textureX, int textureY, int sizeX, int sizeY) {
@@ -122,25 +120,14 @@ public class ClientRenderer {
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
     }
 
-    public static <T extends Entity> void drawHitbox(PoseStack matrices,
-                                                     VertexConsumer buffer,
-                                                     Hitbox hitbox,
-                                                     float x,
-                                                     float y,
-                                                     float z,
-                                                     float red,
-                                                     float green,
-                                                     float blue,
-                                                     float alpha,
-                                                     T entity,
-                                                     float partialTicks) {
+    public static <T extends Entity> void drawHitbox(PoseStack matrices, VertexConsumer buffer, Hitbox hitbox, float x, float y, float z, float red, float green, float blue, float alpha, T entity, float partialTicks) {
         HitboxEntity<T> hitboxes = (HitboxEntity<T>) entity.getHitboxes();
         if (hitboxes == null) {
             return;
         }
-        assert Minecraft.getInstance().player != null;
-        boolean renderAll = Minecraft.getInstance().player.getMainHandItem().getItem() == EvolutionItems.DEBUG_ITEM ||
-                            Minecraft.getInstance().player.getOffhandItem().getItem() == EvolutionItems.DEBUG_ITEM;
+        LocalPlayer player = Minecraft.getInstance().player;
+        assert player != null;
+        boolean renderAll = player.getMainHandItem().getItem() == EvolutionItems.DEBUG_ITEM || player.getOffhandItem().getItem() == EvolutionItems.DEBUG_ITEM;
         if (!renderAll) {
             hitboxes.drawBox(hitbox, entity, partialTicks, buffer, matrices, x, y, z, red, green, blue, alpha);
         }
@@ -149,28 +136,11 @@ public class ClientRenderer {
         }
     }
 
-    private static void drawSelectionBox(PoseStack matrices,
-                                         VertexConsumer buffer,
-                                         Entity entity,
-                                         double x,
-                                         double y,
-                                         double z,
-                                         int pX, int pY, int pZ,
-                                         BlockState state) {
-        drawShape(matrices, buffer, state.getShape_(entity.level, pX, pY, pZ, entity), pX - x, pY - y, pZ - z,
-                  0.0F, 0.0F, 0.0F, 0.4F);
+    private static void drawSelectionBox(PoseStack matrices, VertexConsumer buffer, Entity entity, double x, double y, double z, int pX, int pY, int pZ, BlockState state) {
+        drawShape(matrices, buffer, state.getShape_(entity.level, pX, pY, pZ, entity), pX - x, pY - y, pZ - z, 0.0F, 0.0F, 0.0F, 0.4F);
     }
 
-    private static void drawShape(PoseStack matrices,
-                                  VertexConsumer buffer,
-                                  VoxelShape shape,
-                                  double x,
-                                  double y,
-                                  double z,
-                                  float red,
-                                  float green,
-                                  float blue,
-                                  float alpha) {
+    private static void drawShape(PoseStack matrices, VertexConsumer buffer, VoxelShape shape, double x, double y, double z, float red, float green, float blue, float alpha) {
         Matrix4f mat = matrices.last().pose();
         Matrix3f normal = matrices.last().normal();
         shape.forAllEdges((x0, y0, z0, x1, y1, z1) -> {
@@ -206,8 +176,7 @@ public class ClientRenderer {
     }
 
     public static void floatBlit(PoseStack matrices, float x, float y, int blitOffset, int width, int height, TextureAtlasSprite sprite) {
-        GUIUtils.innerFloatBlit(matrices.last().pose(), x, x + width, y, y + height, blitOffset, sprite.getU0(), sprite.getU1(), sprite.getV0(),
-                                sprite.getV1());
+        GUIUtils.innerFloatBlit(matrices.last().pose(), x, x + width, y, y + height, blitOffset, sprite.getU0(), sprite.getU1(), sprite.getV0(), sprite.getV1());
     }
 
     public static ClientRenderer getInstance() {
@@ -440,15 +409,15 @@ public class ClientRenderer {
                     blitInBatch(matrix, x, y, 0, EvolutionResources.ICON_17_17, 17, 17);
                     //Interaction indicator
                     //noinspection VariableNotUsedInsideIf
-                    if (this.client.leftPointedEntity != null) {
+                    if (EvolutionClient.leftPointedEntity != null) {
                         assert this.mc.hitResult != null;
                         if (this.mc.hitResult.getType() != HitResult.Type.BLOCK) {
                             blitInBatch(matrix, x, y, 4 * 17, EvolutionResources.ICON_17_17, 17, 17);
                         }
                     }
                     if (this.mc.options.attackIndicator == AttackIndicatorStatus.CROSSHAIR) {
-                        float mainhandPerc = this.client.getMainhandIndicatorPercentage(partialTicks);
-                        float offhandPerc = this.client.getOffhandIndicatorPercentage(partialTicks);
+                        float mainhandPerc = EvolutionClient.getMainhandIndicatorPercentage(partialTicks);
+                        float offhandPerc = EvolutionClient.getOffhandIndicatorPercentage(partialTicks);
                         boolean shouldRenderMain = mainhandPerc < 1;
                         boolean shouldRenderOff = offhandPerc < 1;
                         y += 17;
@@ -461,7 +430,7 @@ public class ClientRenderer {
                     }
                     GUIUtils.endBlitBatch();
                     //FollowUp Indicator
-                    if (EvolutionConfig.FOLLOW_UPS.get() && this.client.shouldRenderSpecialAttack()) {
+                    if (EvolutionConfig.FOLLOW_UPS.get() && EvolutionClient.shouldRenderSpecialAttack()) {
                         IMelee.IAttackType type = player.getSpecialAttackType();
                         if (type != null) {
                             if (type.getFollowUps() > 0) {
@@ -481,7 +450,7 @@ public class ClientRenderer {
     public void renderDeathOverlay(PoseStack matrices, float partialTicks, int width, int height) {
         assert this.mc.player != null;
         if (this.mc.player.isDeadOrDying()) {
-            float ticks = (this.client.ticksToLoseConscious - partialTicks) / 80.0f;
+            float ticks = (EvolutionClient.ticksToLoseConscious - partialTicks) / 80.0f;
             if (ticks < 0) {
                 ticks = 0;
             }
@@ -500,30 +469,30 @@ public class ClientRenderer {
         else {
             this.addingEffect.discard();
         }
-        while (!ClientEvents.EFFECTS_TO_ADD.isEmpty()) {
-            ClientEffectInstance addingInstance = ClientEvents.EFFECTS_TO_ADD.get(0);
+        while (!EvolutionClient.EFFECTS_TO_ADD.isEmpty()) {
+            ClientEffectInstance addingInstance = EvolutionClient.EFFECTS_TO_ADD.get(0);
             MobEffect addingEffect = addingInstance.getEffect();
             if (!addingInstance.isShowIcon()) {
-                ClientEvents.EFFECTS_TO_ADD.remove(addingInstance);
-                ClientEvents.EFFECTS.add(addingInstance);
-                this.client.effectToAddTicks = 0;
+                EvolutionClient.EFFECTS_TO_ADD.remove(addingInstance);
+                EvolutionClient.EFFECTS.add(addingInstance);
+                EvolutionClient.effectToAddTicks = 0;
                 continue;
             }
             if (!this.isAddingEffect) {
                 this.isAddingEffect = true;
-                this.client.effectToAddTicks = 0;
+                EvolutionClient.effectToAddTicks = 0;
             }
             float alpha;
             float x0 = (width - 24) / 2.0f;
             float y0 = Math.max((height - 24) / 3.0f, 1 + 26 * 3 + 12 + (this.mc.isDemo() ? 15 : 0));
             float x = x0;
             float y = y0;
-            if (this.client.effectToAddTicks < 5) {
-                alpha = (this.client.effectToAddTicks + partialTicks) / 5.0f;
+            if (EvolutionClient.effectToAddTicks < 5) {
+                alpha = (EvolutionClient.effectToAddTicks + partialTicks) / 5.0f;
             }
-            else if (this.client.effectToAddTicks < 15) {
+            else if (EvolutionClient.effectToAddTicks < 15) {
                 alpha = 1.0f;
-                if (this.client.effectToAddTicks == 14) {
+                if (EvolutionClient.effectToAddTicks == 14) {
                     movingInstance = addingInstance;
                 }
             }
@@ -531,37 +500,37 @@ public class ClientRenderer {
                 movingInstance = addingInstance;
                 alpha = 1.0f;
                 float x1 = width - 25 * this.movingFinalCount;
-                float t = (this.client.effectToAddTicks - 15 + partialTicks) / 5.0f;
+                float t = (EvolutionClient.effectToAddTicks - 15 + partialTicks) / 5.0f;
                 t = MathHelper.clamp(t, 0, 1);
                 x = (x1 - x0) * t + x0;
                 float y1 = this.getYPosForEffect(addingEffect);
                 y = (y1 - y0) * t + y0;
             }
             this.addingEffect.set(matrices, x, y, alpha, addingInstance, effectTextures.get(addingEffect), this.mc.font);
-            if (this.client.effectToAddTicks >= 20) {
+            if (EvolutionClient.effectToAddTicks >= 20) {
                 movingInstance = null;
-                this.client.effectToAddTicks = 0;
+                EvolutionClient.effectToAddTicks = 0;
                 this.isAddingEffect = false;
-                ClientEvents.removeEffect(ClientEvents.EFFECTS, addingEffect);
-                for (int i = 0, l = ClientEvents.EFFECTS_TO_ADD.size(); i < l; i++) {
-                    ClientEffectInstance instance = ClientEvents.EFFECTS_TO_ADD.get(i);
+                EvolutionClient.removeEffect(EvolutionClient.EFFECTS, addingEffect);
+                for (int i = 0, l = EvolutionClient.EFFECTS_TO_ADD.size(); i < l; i++) {
+                    ClientEffectInstance instance = EvolutionClient.EFFECTS_TO_ADD.get(i);
                     for (int j = 0; j < 20; j++) {
                         instance.tick();
                     }
                 }
-                ClientEvents.EFFECTS_TO_ADD.remove(addingInstance);
-                ClientEvents.EFFECTS.add(addingInstance);
+                EvolutionClient.EFFECTS_TO_ADD.remove(addingInstance);
+                EvolutionClient.EFFECTS.add(addingInstance);
             }
             break;
         }
-        if (!ClientEvents.EFFECTS.isEmpty()) {
+        if (!EvolutionClient.EFFECTS.isEmpty()) {
             RenderSystem.enableBlend();
             this.effects.clear();
-            this.effects.addAll(ClientEvents.EFFECTS);
+            this.effects.addAll(EvolutionClient.EFFECTS);
             MobEffectCategory movingCategory = null;
             MobEffect repeated = null;
             if (movingInstance != null) {
-                if (ClientEvents.containsEffect(this.effects, movingInstance.getEffect())) {
+                if (EvolutionClient.containsEffect(this.effects, movingInstance.getEffect())) {
                     repeated = movingInstance.getEffect();
                 }
                 else {
@@ -598,7 +567,7 @@ public class ClientRenderer {
                             this.movingFinalCount = beneficalCount;
                         }
                         if (isMoving && movingCategory == MobEffectCategory.BENEFICIAL) {
-                            x += 25 * Math.min(1.0f - (this.client.effectToAddTicks + partialTicks - 15) / 5.0f, 1);
+                            x += 25 * Math.min(1.0f - (EvolutionClient.effectToAddTicks + partialTicks - 15) / 5.0f, 1);
                         }
                     }
                     case NEUTRAL -> {
@@ -607,14 +576,14 @@ public class ClientRenderer {
                         if (this.lastBeneficalCount > 0) {
                             y += 26;
                             if (this.lastBeneficalCount == 1 && movingCategory == MobEffectCategory.BENEFICIAL) {
-                                y -= 26 * Math.min(1.0f - (this.client.effectToAddTicks + partialTicks - 15) / 5.0f, 1);
+                                y -= 26 * Math.min(1.0f - (EvolutionClient.effectToAddTicks + partialTicks - 15) / 5.0f, 1);
                             }
                         }
                         if (effectInstance == movingInstance || effect == repeated) {
                             this.movingFinalCount = neutralCount;
                         }
                         if (isMoving && movingCategory == MobEffectCategory.NEUTRAL) {
-                            x += 25 * Math.min(1.0f - (this.client.effectToAddTicks + partialTicks - 15) / 5.0f, 1);
+                            x += 25 * Math.min(1.0f - (EvolutionClient.effectToAddTicks + partialTicks - 15) / 5.0f, 1);
                         }
                     }
                     case HARMFUL -> {
@@ -623,20 +592,20 @@ public class ClientRenderer {
                         if (this.lastBeneficalCount > 0) {
                             y += 26;
                             if (this.lastBeneficalCount == 1 && movingCategory == MobEffectCategory.BENEFICIAL) {
-                                y -= 26 * Math.min(1.0f - (this.client.effectToAddTicks + partialTicks - 15) / 5.0f, 1);
+                                y -= 26 * Math.min(1.0f - (EvolutionClient.effectToAddTicks + partialTicks - 15) / 5.0f, 1);
                             }
                         }
                         if (this.lastNeutralCount > 0) {
                             y += 26;
                             if (this.lastNeutralCount == 1 && movingCategory == MobEffectCategory.NEUTRAL) {
-                                y -= 26 * Math.min(1.0f - (this.client.effectToAddTicks + partialTicks - 15) / 5.0f, 1);
+                                y -= 26 * Math.min(1.0f - (EvolutionClient.effectToAddTicks + partialTicks - 15) / 5.0f, 1);
                             }
                         }
                         if (effectInstance == movingInstance || effect == repeated) {
                             this.movingFinalCount = harmfulCount;
                         }
                         if (isMoving && movingCategory == MobEffectCategory.HARMFUL) {
-                            x += 25 * Math.min(1.0f - (this.client.effectToAddTicks + partialTicks - 15) / 5.0f, 1);
+                            x += 25 * Math.min(1.0f - (EvolutionClient.effectToAddTicks + partialTicks - 15) / 5.0f, 1);
                         }
                     }
                 }
@@ -652,9 +621,7 @@ public class ClientRenderer {
                         floatBlit(matrices, x, y, 156, 180, 24, 24, 0);
                         if (effectInstance.getDuration() <= 200) {
                             int remainingSeconds = 10 - effectInstance.getDuration() / 20;
-                            alpha = MathHelper.clamp(effectInstance.getDuration() / 100.0F, 0.0F, 0.5F) +
-                                    Mth.cos(effectInstance.getDuration() * Mth.PI / 5.0F) *
-                                    MathHelper.clamp(remainingSeconds / 40.0F, 0.0F, 0.25F);
+                            alpha = MathHelper.clamp(effectInstance.getDuration() / 100.0F, 0.0F, 0.5F) + Mth.cos(effectInstance.getDuration() * Mth.PI / 5.0F) * MathHelper.clamp(remainingSeconds / 40.0F, 0.0F, 0.25F);
                         }
                     }
                     TextureAtlasSprite atlasSprite = effectTextures.get(effect);
@@ -712,7 +679,7 @@ public class ClientRenderer {
         int holdingLevel = CapabilityHunger.hungerLevel(Math.min(value + extraValue + holdingValue, CapabilityHunger.HUNGER_CAPACITY));
         int extraLevel = CapabilityHunger.saturationLevel(extraValue);
         int extraHoldingLevel = CapabilityHunger.saturationLevel(Math.min(extraValue + holdingValue, CapabilityHunger.SATURATION_CAPACITY));
-        boolean shake = this.client.getTicks() % Math.max(level * level, 1) == 0;
+        boolean shake = EvolutionClient.getTicks() % Math.max(level * level, 1) == 0;
         //Flash
         if (level > this.lastDisplayedHunger) {
             this.hungerFlashTicks = 11; //Two flashes that start immediately
@@ -844,7 +811,7 @@ public class ClientRenderer {
         holdingLevel = CapabilityThirst.thirstLevel(Math.min(value + extraValue + holdingValue, CapabilityThirst.THIRST_CAPACITY));
         extraLevel = CapabilityThirst.hydrationLevel(extraValue);
         extraHoldingLevel = CapabilityThirst.hydrationLevel(Math.min(extraValue + holdingValue, CapabilityThirst.HYDRATION_CAPACITY));
-        shake = this.client.getTicks() % Math.max(level * level, 1) == 0;
+        shake = EvolutionClient.getTicks() % Math.max(level * level, 1) == 0;
         //Flash
         if (level > this.lastDisplayedThirst) {
             this.thirstFlashTicks = 11; //Two flashes that start immediately
@@ -986,7 +953,7 @@ public class ClientRenderer {
         int top = height - gui.getLeftHeightAndIncrease(rowHeight * heartRows + 10 - rowHeight);
         int regen = -1;
         if (player.hasEffect(MobEffects.REGENERATION)) {
-            regen = this.client.getTicks() % Math.max(normalHearts + absorbHearts, 25);
+            regen = EvolutionClient.getTicks() % Math.max(normalHearts + absorbHearts, 25);
         }
         assert this.mc.level != null;
         boolean hardcore = this.mc.level.getLevelData().isHardcore();
@@ -1001,7 +968,7 @@ public class ClientRenderer {
             icon = 9 * 18;
         }
         int absorbRemaining = roundToHearts(absorb);
-        this.rand.setSeed(312_871L * this.client.getTicks());
+        this.rand.setSeed(312_871L * EvolutionClient.getTicks());
         int left = width / 2 - 91;
         GUIUtils.startBlitBatch(Tesselator.getInstance().getBuilder());
         Matrix4f matrix = matrices.last().pose();
@@ -1070,9 +1037,7 @@ public class ClientRenderer {
         double posX = Mth.lerp(partialTicks, entity.xOld, entity.getX());
         double posY = Mth.lerp(partialTicks, entity.yOld, entity.getY());
         double posZ = Mth.lerp(partialTicks, entity.zOld, entity.getZ());
-        drawHitbox(matrices, buffer.getBuffer(RenderType.lines()), hitbox, (float) (posX - projX), (float) (posY - projY), (float) (posZ - projZ),
-                   1.0F, 1.0F, 0.0F, 1.0F, entity,
-                   partialTicks);
+        drawHitbox(matrices, buffer.getBuffer(RenderType.lines()), hitbox, (float) (posX - projX), (float) (posY - projY), (float) (posZ - projZ), 1.0F, 1.0F, 0.0F, 1.0F, entity, partialTicks);
         RenderSystem.enableTexture();
         RenderSystem.disableBlend();
     }
@@ -1135,7 +1100,7 @@ public class ClientRenderer {
         }
         else {
             GUIUtils.endBlitBatch();
-            RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, MathHelper.sinDeg(this.client.getTicks() * 9));
+            RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, MathHelper.sinDeg(EvolutionClient.getTicks() * 9));
             RenderSystem.enableBlend();
             if (currentTemp < 0) {
                 //Draw too cold indicator
@@ -1188,30 +1153,28 @@ public class ClientRenderer {
             boolean requipM = shouldReequip(this.mainHandStack, mainhandStack, player.getInventory().selected);
             boolean requipO = shouldReequip(this.offhandStack, offhandStack, -1);
             if (requipM) {
-                this.client.resetCooldown(InteractionHand.MAIN_HAND);
+                EvolutionClient.resetCooldown(InteractionHand.MAIN_HAND);
                 if (!ItemStack.matches(this.mainHandStack, mainhandStack)) {
                     if (mainhandStack.getItem() instanceof IMelee melee && melee.shouldPlaySheatheSound(mainhandStack)) {
-                        this.mc.getSoundManager()
-                               .play(new SoundEntityEmitted(this.mc.player, EvolutionSounds.SWORD_UNSHEATHE, SoundSource.PLAYERS, 0.8f, 1.0f));
+                        this.mc.getSoundManager().play(new SoundEntityEmitted(this.mc.player, EvolutionSounds.SWORD_UNSHEATHE, SoundSource.PLAYERS, 0.8f, 1.0f));
                         player.connection.send(new PacketCSPlaySoundEntityEmitted(EvolutionSounds.SWORD_UNSHEATHE, SoundSource.PLAYERS, 0.8f, 1.0f));
                     }
                 }
             }
             else {
-                this.client.incrementCooldown(InteractionHand.MAIN_HAND);
+                EvolutionClient.incrementCooldown(InteractionHand.MAIN_HAND);
             }
             if (requipO) {
-                this.client.resetCooldown(InteractionHand.OFF_HAND);
+                EvolutionClient.resetCooldown(InteractionHand.OFF_HAND);
                 if (!ItemStack.matches(this.offhandStack, offhandStack)) {
                     if (offhandStack.getItem() instanceof IMelee melee && melee.shouldPlaySheatheSound(offhandStack)) {
-                        this.mc.getSoundManager()
-                               .play(new SoundEntityEmitted(this.mc.player, EvolutionSounds.SWORD_UNSHEATHE, SoundSource.PLAYERS, 0.8f, 1.0f));
+                        this.mc.getSoundManager().play(new SoundEntityEmitted(this.mc.player, EvolutionSounds.SWORD_UNSHEATHE, SoundSource.PLAYERS, 0.8f, 1.0f));
                         player.connection.send(new PacketCSPlaySoundEntityEmitted(EvolutionSounds.SWORD_UNSHEATHE, SoundSource.PLAYERS, 0.8f, 1.0f));
                     }
                 }
             }
             else {
-                this.client.incrementCooldown(InteractionHand.OFF_HAND);
+                EvolutionClient.incrementCooldown(InteractionHand.OFF_HAND);
             }
             this.offhandStack = offhandStack;
             this.mainHandStack = mainhandStack;

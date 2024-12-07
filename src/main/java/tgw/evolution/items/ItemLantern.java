@@ -1,7 +1,7 @@
 package tgw.evolution.items;
 
 import net.minecraft.world.item.ItemStack;
-import tgw.evolution.events.ClientEvents;
+import tgw.evolution.EvolutionClient;
 
 public class ItemLantern extends ItemGeneric {
 
@@ -14,7 +14,7 @@ public class ItemLantern extends ItemGeneric {
 
     @Override
     public short getLightEmission(ItemStack stack) {
-        int ticks = ClientEvents.getInstance().getTicks();
+        int ticks = EvolutionClient.getTicks();
         int steps = 12;
         int time = 20;
         ticks %= steps * time;

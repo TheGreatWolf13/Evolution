@@ -16,10 +16,10 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import tgw.evolution.EvolutionClient;
 import tgw.evolution.client.util.Action;
 import tgw.evolution.client.util.Modifiers;
 import tgw.evolution.client.util.MouseButton;
-import tgw.evolution.events.ClientEvents;
 
 import static org.lwjgl.glfw.GLFW.GLFW_MOD_CONTROL;
 
@@ -79,15 +79,9 @@ public abstract class MixinMouseHandler {
             if (this.activeButton != -1 && this.mousePressedTime > 0) {
                 double dx = (xPos - this.xpos) * window.getGuiScaledWidth() / window.getScreenWidth();
                 double dz = (yPos - this.ypos) * window.getGuiScaledHeight() / window.getScreenHeight();
-                ClientEvents client = ClientEvents.getInstanceNullable();
-                outer:
                 try {
-                    if (client != null) {
-                        client.onGUIMouseDragPre(x, y, this.activeButton);
-                    }
-                    if (screen.mouseDragged(x, y, this.activeButton, dx, dz)) {
-                        break outer;
-                    }
+                    EvolutionClient.onGUIMouseDragPre(x, y, this.activeButton);
+                    screen.mouseDragged(x, y, this.activeButton, dx, dz);
                 }
                 catch (Throwable t) {
                     CrashReport crash = CrashReport.forThrowable(t, "mouseDragged event handler");
@@ -156,13 +150,10 @@ public abstract class MixinMouseHandler {
                 double dx = this.xpos * window.getGuiScaledWidth() / window.getScreenWidth();
                 double dy = this.ypos * window.getGuiScaledHeight() / window.getScreenHeight();
                 Screen screen = this.minecraft.screen;
-                ClientEvents client = ClientEvents.getInstanceNullable();
                 if (press) {
                     screen.afterMouseAction();
                     try {
-                        if (client != null) {
-                            shouldReturn = client.onGUIMouseClickedPre(dx, dy, button);
-                        }
+                        shouldReturn = EvolutionClient.onGUIMouseClickedPre(dx, dy, button);
                         if (!shouldReturn) {
                             shouldReturn = this.minecraft.screen.mouseClicked(dx, dy, button);
                         }
@@ -176,9 +167,7 @@ public abstract class MixinMouseHandler {
                 }
                 else {
                     try {
-                        if (client != null) {
-                            shouldReturn = client.onGUIMouseReleasedPre(button);
-                        }
+                        shouldReturn = EvolutionClient.onGUIMouseReleasedPre(button);
                         if (!shouldReturn) {
                             shouldReturn = this.minecraft.screen.mouseReleased(dx, dy, button);
                         }
@@ -235,10 +224,7 @@ public abstract class MixinMouseHandler {
                 if (this.minecraft.screen.mouseScrolled(x, y, d)) {
                     return;
                 }
-                ClientEvents client = ClientEvents.getInstanceNullable();
-                if (client != null) {
-                    client.onGUIMouseScrollPost(x, y, d);
-                }
+                EvolutionClient.onGUIMouseScrollPost(x, y, d);
             }
             else if (this.minecraft.player != null) {
                 if (this.accumulatedScroll != 0 && Math.signum(d) != Math.signum(this.accumulatedScroll)) {

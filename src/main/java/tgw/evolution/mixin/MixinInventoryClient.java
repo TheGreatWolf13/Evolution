@@ -5,7 +5,7 @@ import net.minecraft.world.entity.player.Inventory;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import tgw.evolution.events.ClientEvents;
+import tgw.evolution.EvolutionClient;
 import tgw.evolution.patches.PatchMinecraft;
 
 @Mixin(Inventory.class)
@@ -21,7 +21,7 @@ public abstract class MixinInventoryClient {
     public void swapPaint(double dir) {
         PatchMinecraft instance = Minecraft.getInstance();
         instance.resetUseHeld();
-        if (instance.isMultiplayerPaused() || ClientEvents.getInstance().shouldRenderSpecialAttack()) {
+        if (instance.isMultiplayerPaused() || EvolutionClient.shouldRenderSpecialAttack()) {
             return;
         }
         if (dir > 0) {
