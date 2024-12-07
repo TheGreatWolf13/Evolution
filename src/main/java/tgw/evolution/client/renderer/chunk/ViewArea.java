@@ -7,22 +7,22 @@ import net.minecraft.world.level.Level;
 
 import javax.annotation.Nullable;
 
-public class EvViewArea {
-    
-    public EvChunkRenderDispatcher.RenderChunk[] chunks;
+public class ViewArea {
+
+    public ChunkRenderDispatcher.RenderChunk[] chunks;
     private int height;
     private final Level level;
     private int width;
 
-    public EvViewArea(EvChunkRenderDispatcher dispatcher, Level level, int viewDistance) {
+    public ViewArea(ChunkRenderDispatcher dispatcher, Level level, int viewDistance) {
         this.level = level;
         this.setViewDistance(viewDistance);
         this.createChunks(dispatcher);
     }
 
-    protected void createChunks(EvChunkRenderDispatcher dispatcher) {
+    protected void createChunks(ChunkRenderDispatcher dispatcher) {
         assert Minecraft.getInstance().isSameThread() : "createChunks called from wrong thread: " + Thread.currentThread().getName();
-        this.chunks = new EvChunkRenderDispatcher.RenderChunk[this.width * this.height * this.width];
+        this.chunks = new ChunkRenderDispatcher.RenderChunk[this.width * this.height * this.width];
         for (int x = 0; x < this.width; ++x) {
             for (int y = 0; y < this.height; ++y) {
                 for (int z = 0; z < this.width; ++z) {
@@ -39,7 +39,7 @@ public class EvViewArea {
     }
 
     @Nullable
-    public EvChunkRenderDispatcher.RenderChunk getRenderChunkAt(int posX, int posY, int posZ) {
+    public ChunkRenderDispatcher.RenderChunk getRenderChunkAt(int posX, int posY, int posZ) {
         int y = posY - this.level.getMinBuildHeight() >> 4;
         if (y >= 0 && y < this.height) {
             return this.chunks[this.getChunkIndex(Mth.positiveModulo(posX >> 4, this.width), y, Mth.positiveModulo(posZ >> 4, this.width))];
@@ -48,12 +48,12 @@ public class EvViewArea {
     }
 
     @Nullable
-    public EvChunkRenderDispatcher.RenderChunk getRenderChunkAt(BlockPos pos) {
+    public ChunkRenderDispatcher.RenderChunk getRenderChunkAt(BlockPos pos) {
         return this.getRenderChunkAt(pos.getX(), pos.getY(), pos.getZ());
     }
 
     public void releaseAllBuffers() {
-        for (EvChunkRenderDispatcher.RenderChunk chunk : this.chunks) {
+        for (ChunkRenderDispatcher.RenderChunk chunk : this.chunks) {
             chunk.releaseBuffers();
         }
     }
@@ -72,7 +72,7 @@ public class EvViewArea {
                 int originZ = zOffset + Math.floorMod(z * 16 - zOffset, zSize);
                 for (int y = 0, height = this.height; y < height; ++y) {
                     int originY = this.level.getMinBuildHeight() + y * 16;
-                    EvChunkRenderDispatcher.RenderChunk chunk = this.chunks[this.getChunkIndex(x, y, z)];
+                    ChunkRenderDispatcher.RenderChunk chunk = this.chunks[this.getChunkIndex(x, y, z)];
                     if (originX != chunk.getX() || originY != chunk.getY() || originZ != chunk.getZ()) {
                         chunk.setOrigin(originX, originY, originZ);
                     }
@@ -82,7 +82,7 @@ public class EvViewArea {
     }
 
     public void resetVisibility() {
-        for (EvChunkRenderDispatcher.RenderChunk chunk : this.chunks) {
+        for (ChunkRenderDispatcher.RenderChunk chunk : this.chunks) {
             chunk.visibility = Visibility.OUTSIDE;
         }
     }
@@ -91,7 +91,7 @@ public class EvViewArea {
         int i = Math.floorMod(sectionX, this.width);
         int j = Math.floorMod(sectionY - this.level.getMinSection(), this.height);
         int k = Math.floorMod(sectionZ, this.width);
-        EvChunkRenderDispatcher.RenderChunk chunk = this.chunks[this.getChunkIndex(i, j, k)];
+        ChunkRenderDispatcher.RenderChunk chunk = this.chunks[this.getChunkIndex(i, j, k)];
         chunk.setDirty(reRenderOnMainThread);
     }
 

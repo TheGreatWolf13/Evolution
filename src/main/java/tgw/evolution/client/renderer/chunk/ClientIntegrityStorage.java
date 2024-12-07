@@ -90,11 +90,11 @@ public class ClientIntegrityStorage {
                             int index = x - x0 + (z - z0) * 16 + (y - y0) * 16 * 16;
                             int i = Byte.toUnsignedInt(integ[index]);
                             int colour = getColour(Byte.toUnsignedInt(loadF[index]), 0, i);
-                            EvLevelRenderer.renderLineBox(matrices, lines, x - camX, y - camY, z - camZ, x + 1 - camX, y + 1 - camY, z + 1 - camZ, (colour >> 16 & 0xFF) / 255.0f, (colour >> 8 & 0xFF) / 255.0f, (colour & 0xFF) / 255.0f, (colour >> 24 & 0xFF) / 255.0f);
+                            LevelRenderer.renderLineBox(matrices, lines, x - camX, y - camY, z - camZ, x + 1 - camX, y + 1 - camY, z + 1 - camZ, (colour >> 16 & 0xFF) / 255.0f, (colour >> 8 & 0xFF) / 255.0f, (colour & 0xFF) / 255.0f, (colour >> 24 & 0xFF) / 255.0f);
                             if (colour != 0xffff_ffff && (stab[(x - x0 >> 3) + (z - z0) * 2 + (y - y0) * 2 * 16] & 1 << (x - x0 & 7)) != 0) {
-                                EvLevelRenderer.renderLineBox(matrices, lines, x - camX + 0.45, y - camY, z - camZ, x + 1 - camX - 0.45, y + 1 - camY, z + 1 - camZ, 0.0f, 0.0f, 1.0f, 1.0f);
-                                EvLevelRenderer.renderLineBox(matrices, lines, x - camX, y - camY + 0.45, z - camZ, x + 1 - camX, y + 1 - camY - 0.45, z + 1 - camZ, 0.0f, 0.0f, 1.0f, 1.0f);
-                                EvLevelRenderer.renderLineBox(matrices, lines, x - camX, y - camY, z - camZ + 0.45, x + 1 - camX, y + 1 - camY, z + 1 - camZ - 0.45, 0.0f, 0.0f, 1.0f, 1.0f);
+                                LevelRenderer.renderLineBox(matrices, lines, x - camX + 0.45, y - camY, z - camZ, x + 1 - camX - 0.45, y + 1 - camY, z + 1 - camZ, 0.0f, 0.0f, 1.0f, 1.0f);
+                                LevelRenderer.renderLineBox(matrices, lines, x - camX, y - camY + 0.45, z - camZ, x + 1 - camX, y + 1 - camY - 0.45, z + 1 - camZ, 0.0f, 0.0f, 1.0f, 1.0f);
+                                LevelRenderer.renderLineBox(matrices, lines, x - camX, y - camY, z - camZ + 0.45, x + 1 - camX, y + 1 - camY, z + 1 - camZ - 0.45, 0.0f, 0.0f, 1.0f, 1.0f);
                             }
                         }
                     }

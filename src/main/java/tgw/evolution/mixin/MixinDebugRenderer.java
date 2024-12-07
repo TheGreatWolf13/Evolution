@@ -7,7 +7,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.debug.DebugRenderer;
 import org.spongepowered.asm.mixin.*;
 import tgw.evolution.client.renderer.RenderHelper;
-import tgw.evolution.client.renderer.chunk.EvLevelRenderer;
+import tgw.evolution.client.renderer.chunk.LevelRenderer;
 import tgw.evolution.patches.PatchDebugRenderer;
 
 @Mixin(DebugRenderer.class)
@@ -37,7 +37,7 @@ public abstract class MixinDebugRenderer implements PatchDebugRenderer {
         BufferBuilder builder = tesselator.getBuilder();
         RenderSystem.setShader(RenderHelper.SHADER_POSITION_COLOR);
         builder.begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR);
-        EvLevelRenderer.addChainedFilledBoxVertices(builder, minX, minY, minZ, maxX, maxY, maxZ, r, g, b, a);
+        LevelRenderer.addChainedFilledBoxVertices(builder, minX, minY, minZ, maxX, maxY, maxZ, r, g, b, a);
         tesselator.end();
     }
 

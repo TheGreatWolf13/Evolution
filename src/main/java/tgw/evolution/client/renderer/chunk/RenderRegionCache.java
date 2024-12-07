@@ -12,8 +12,8 @@ import tgw.evolution.util.physics.EarthHelper;
 
 import javax.annotation.Nullable;
 
-public class EvRenderRegionCache {
-    
+public class RenderRegionCache {
+
     private final L2OMap<LevelChunk> chunkCache = new L2OHashMap<>();
     private final L2OMap<EvRenderChunk> renderCache = new L2OHashMap<>();
     private final OList<LevelChunk> tempList = new OArrayList<>();
@@ -25,7 +25,7 @@ public class EvRenderRegionCache {
     }
 
     @Nullable
-    public EvRenderChunkRegion createRegion(Level level, int startX, int startY, int startZ, int endX, int endY, int endZ, int offset) {
+    public RenderChunkRegion createRegion(Level level, int startX, int startY, int startZ, int endX, int endY, int endZ, int offset) {
         int x0 = SectionPos.blockToSectionCoord(startX - offset);
         int z0 = SectionPos.blockToSectionCoord(startZ - offset);
         int x1 = SectionPos.blockToSectionCoord(endX + offset);
@@ -66,6 +66,6 @@ public class EvRenderRegionCache {
                 renderChunks[x - x0][z - z0] = renderChunk;
             }
         }
-        return new EvRenderChunkRegion(level, x0, z0, renderChunks);
+        return new RenderChunkRegion(level, x0, z0, renderChunks);
     }
 }

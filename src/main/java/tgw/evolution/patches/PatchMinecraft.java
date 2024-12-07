@@ -1,7 +1,7 @@
 package tgw.evolution.patches;
 
 import net.minecraft.client.color.item.ItemColors;
-import tgw.evolution.client.renderer.chunk.EvLevelRenderer;
+import tgw.evolution.client.renderer.chunk.LevelRenderer;
 
 public interface PatchMinecraft {
 
@@ -13,7 +13,7 @@ public interface PatchMinecraft {
         throw new AbstractMethodError();
     }
 
-    default EvLevelRenderer lvlRenderer() {
+    default LevelRenderer lvlRenderer() {
         throw new AbstractMethodError();
     }
 

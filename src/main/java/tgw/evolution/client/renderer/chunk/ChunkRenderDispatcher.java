@@ -42,7 +42,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
-public class EvChunkRenderDispatcher {
+public class ChunkRenderDispatcher {
 
     private float camX;
     private float camY;
@@ -51,23 +51,23 @@ public class EvChunkRenderDispatcher {
     private final ChunkBuilderPack fixedBuffers;
     private volatile int freeBufferCount;
     private final Queue<ChunkBuilderPack> freeBuffers;
-    private final EvVisGraph graph = new EvVisGraph();
+    private final VisGraph graph = new VisGraph();
     private int highPriorityQuota = 2;
     private ClientLevel level;
     private final ProcessorMailbox<Runnable> mailbox;
     private final PoseStack matrices = new PoseStack();
     private final IRandom random = new FastRandom();
-    private final EvLevelRenderer renderer;
+    private final LevelRenderer renderer;
     private volatile int toBatchCount;
     private final PriorityBlockingQueue<RenderChunk.ChunkCompileTask> toBatchHighPriority = new PriorityBlockingQueue<>();
     private final Queue<RenderChunk.ChunkCompileTask> toBatchLowPriority = new LinkedBlockingDeque<>();
     private final Queue<Runnable> toUpload = new ConcurrentLinkedQueue<>();
 
-    public EvChunkRenderDispatcher(ClientLevel level, EvLevelRenderer renderer, Executor executor, boolean is64Bit, ChunkBuilderPack builderPack) {
+    public ChunkRenderDispatcher(ClientLevel level, LevelRenderer renderer, Executor executor, boolean is64Bit, ChunkBuilderPack builderPack) {
         this(level, renderer, executor, is64Bit, builderPack, -1);
     }
 
-    public EvChunkRenderDispatcher(ClientLevel level, EvLevelRenderer renderer, Executor executor, boolean is64Bit, ChunkBuilderPack builderPack, int countRenderBuilders) {
+    public ChunkRenderDispatcher(ClientLevel level, LevelRenderer renderer, Executor executor, boolean is64Bit, ChunkBuilderPack builderPack, int countRenderBuilders) {
         this.level = level;
         this.renderer = renderer;
         int sizeNeeded = 0;
@@ -363,12 +363,12 @@ public class EvChunkRenderDispatcher {
         public void compileSync() {
             int chunkX = SectionPos.blockToSectionCoord(this.x);
             int chunkZ = SectionPos.blockToSectionCoord(this.z);
-            LevelChunk chunk = EvChunkRenderDispatcher.this.level.getChunk(chunkX, chunkZ);
+            LevelChunk chunk = ChunkRenderDispatcher.this.level.getChunk(chunkX, chunkZ);
             if (chunk.isYSpaceEmpty(this.y, this.y + 15)) {
                 RenderChunk.this.updateGlobalBlockEntities(RSet.emptySet());
                 RenderChunk.this.compiled = CompiledChunk.EMPTY;
                 RenderChunk.this.cachedFlags = 0;
-                EvChunkRenderDispatcher.this.renderer.addRecentlyCompiledChunk(RenderChunk.this);
+                ChunkRenderDispatcher.this.renderer.addRecentlyCompiledChunk(RenderChunk.this);
                 return;
             }
             CompiledChunk oldChunk = this.compiled;
@@ -384,16 +384,16 @@ public class EvChunkRenderDispatcher {
                 compiledChunk.renderableTEs.clear();
                 compiledChunk.transparencyState = null;
             }
-            ChunkBuilderPack fixedBuffers = EvChunkRenderDispatcher.this.fixedBuffers;
+            ChunkBuilderPack fixedBuffers = ChunkRenderDispatcher.this.fixedBuffers;
             RSet<BlockEntity> blockEntities = null;
             int posX = this.x;
             int posY = this.y;
             int posZ = this.z;
-            EvVisGraph visgraph = EvChunkRenderDispatcher.this.graph;
+            VisGraph visgraph = ChunkRenderDispatcher.this.graph;
             visgraph.reset();
-            PoseStack matrices = EvChunkRenderDispatcher.this.matrices.reset();
+            PoseStack matrices = ChunkRenderDispatcher.this.matrices.reset();
             ModelBlockRenderer.enableCaching();
-            IRandom random = EvChunkRenderDispatcher.this.random;
+            IRandom random = ChunkRenderDispatcher.this.random;
             BlockRenderDispatcher dispatcher = Minecraft.getInstance().getBlockRenderer();
             for (int dx = 0; dx < 16; ++dx) {
                 int px = posX + dx;
@@ -402,7 +402,7 @@ public class EvChunkRenderDispatcher {
                     for (int dz = 0; dz < 16; ++dz) {
                         int pz = posZ + dz;
                         BlockState blockState = chunk.getBlockState_(px, py, pz);
-                        if (blockState.isSolidRender_(EvChunkRenderDispatcher.this.level, px, py, pz)) {
+                        if (blockState.isSolidRender_(ChunkRenderDispatcher.this.level, px, py, pz)) {
                             visgraph.setOpaque(dx, dy, dz);
                         }
                         if (blockState.hasBlockEntity()) {
@@ -431,7 +431,7 @@ public class EvChunkRenderDispatcher {
                                     compiledChunk.hasLayer |= (byte) (1 << i);
                                     RenderChunk.this.beginLayer(builder);
                                 }
-                                if (dispatcher.renderLiquid(px, py, pz, EvChunkRenderDispatcher.this.level, builder, blockState, fluidState)) {
+                                if (dispatcher.renderLiquid(px, py, pz, ChunkRenderDispatcher.this.level, builder, blockState, fluidState)) {
                                     compiledChunk.hasBlocks |= (byte) (1 << i);
                                 }
                             }
@@ -444,7 +444,7 @@ public class EvChunkRenderDispatcher {
                                 }
                                 matrices.pushPose();
                                 matrices.translate(dx, dy, dz);
-                                if (dispatcher.renderBatched(blockState, px, py, pz, EvChunkRenderDispatcher.this.level, matrices, builder, true, random)) {
+                                if (dispatcher.renderBatched(blockState, px, py, pz, ChunkRenderDispatcher.this.level, matrices, builder, true, random)) {
                                     compiledChunk.hasBlocks |= (byte) (1 << i);
                                 }
                                 matrices.popPose();
@@ -456,7 +456,7 @@ public class EvChunkRenderDispatcher {
             compiledChunk.visibilitySet = visgraph.resolve();
             if ((compiledChunk.hasBlocks & 1 << RenderLayer.TRANSLUCENT) != 0) {
                 BufferBuilder builder = fixedBuffers.builder(RenderLayer.TRANSLUCENT);
-                builder.setQuadSortOrigin(EvChunkRenderDispatcher.this.camX - posX, EvChunkRenderDispatcher.this.camY - posY, EvChunkRenderDispatcher.this.camZ - posZ);
+                builder.setQuadSortOrigin(ChunkRenderDispatcher.this.camX - posX, ChunkRenderDispatcher.this.camY - posY, ChunkRenderDispatcher.this.camZ - posZ);
                 compiledChunk.transparencyState = builder.getSortState();
             }
             for (int i = RenderLayer.SOLID, len = ChunkBuilderPack.RENDER_TYPES.length; i < len; i++) {
@@ -474,11 +474,11 @@ public class EvChunkRenderDispatcher {
             }
             RenderChunk.this.compiled = compiledChunk;
             RenderChunk.this.needsUpdate = true;
-            EvChunkRenderDispatcher.this.renderer.addRecentlyCompiledChunk(RenderChunk.this);
+            ChunkRenderDispatcher.this.renderer.addRecentlyCompiledChunk(RenderChunk.this);
         }
 
         private boolean doesChunkExistAt(int posX, int posZ) {
-            return EvChunkRenderDispatcher.this.level.getChunk(SectionPos.blockToSectionCoord(posX), SectionPos.blockToSectionCoord(posZ), ChunkStatus.FULL, false) != null;
+            return ChunkRenderDispatcher.this.level.getChunk(SectionPos.blockToSectionCoord(posX), SectionPos.blockToSectionCoord(posZ), ChunkStatus.FULL, false) != null;
         }
 
         public VertexBuffer getBuffer(@RenderLayer int renderType) {
@@ -567,14 +567,14 @@ public class EvChunkRenderDispatcher {
         /**
          * This method only runs on the Main Thread.
          */
-        public void rebuildChunkAsync(EvChunkRenderDispatcher dispatcher, EvRenderRegionCache cache) {
+        public void rebuildChunkAsync(ChunkRenderDispatcher dispatcher, RenderRegionCache cache) {
             boolean canceled = this.cancelTasks();
-            EvRenderChunkRegion region = cache.createRegion(EvChunkRenderDispatcher.this.level, this.x - 1, this.y - 1, this.z - 1, this.x + 16, this.y + 16, this.z + 16, 1);
+            RenderChunkRegion region = cache.createRegion(ChunkRenderDispatcher.this.level, this.x - 1, this.y - 1, this.z - 1, this.x + 16, this.y + 16, this.z + 16, 1);
             if (region == null) {
                 RenderChunk.this.updateGlobalBlockEntities(RSet.emptySet());
                 RenderChunk.this.cachedFlags = 0;
                 RenderChunk.this.compiled = CompiledChunk.EMPTY;
-                EvChunkRenderDispatcher.this.renderer.addRecentlyCompiledChunk(RenderChunk.this);
+                ChunkRenderDispatcher.this.renderer.addRecentlyCompiledChunk(RenderChunk.this);
                 return;
             }
             this.lastRebuildTask = new RenderChunk.RebuildTask(this.getDistToCameraSqr(), region, canceled || this.compiled != CompiledChunk.UNCOMPILED);
@@ -604,7 +604,7 @@ public class EvChunkRenderDispatcher {
         /**
          * This method only runs on the Main Thread.
          */
-        public boolean resortTransparency(EvChunkRenderDispatcher dispatcher, boolean onThread) {
+        public boolean resortTransparency(ChunkRenderDispatcher dispatcher, boolean onThread) {
             if (this.lastResortTransparencyTask != null) {
                 this.lastResortTransparencyTask.cancel();
             }
@@ -618,16 +618,13 @@ public class EvChunkRenderDispatcher {
                 CompiledChunk compiled = this.compiled;
                 BufferBuilder.SortState sortState = compiled.transparencyState;
                 if (sortState != null) {
-                    BufferBuilder builder = EvChunkRenderDispatcher.this.fixedBuffers.builder(RenderLayer.TRANSLUCENT);
+                    BufferBuilder builder = ChunkRenderDispatcher.this.fixedBuffers.builder(RenderLayer.TRANSLUCENT);
                     RenderChunk.this.beginLayer(builder);
                     builder.restoreSortState(sortState);
-                    builder.setQuadSortOrigin(EvChunkRenderDispatcher.this.camX - RenderChunk.this.x,
-                                              EvChunkRenderDispatcher.this.camY - RenderChunk.this.y,
-                                              EvChunkRenderDispatcher.this.camZ - RenderChunk.this.z);
+                    builder.setQuadSortOrigin(ChunkRenderDispatcher.this.camX - RenderChunk.this.x, ChunkRenderDispatcher.this.camY - RenderChunk.this.y, ChunkRenderDispatcher.this.camZ - RenderChunk.this.z);
                     compiled.transparencyState = builder.getSortState();
                     builder.end();
-                    RenderChunk.this.getBuffer(RenderLayer.TRANSLUCENT)
-                                    .upload(EvChunkRenderDispatcher.this.fixedBuffers.builder(RenderLayer.TRANSLUCENT));
+                    RenderChunk.this.getBuffer(RenderLayer.TRANSLUCENT).upload(ChunkRenderDispatcher.this.fixedBuffers.builder(RenderLayer.TRANSLUCENT));
                 }
                 return true;
             }
@@ -691,10 +688,10 @@ public class EvChunkRenderDispatcher {
                     this.globalBlockEntities.clear();
                     this.globalBlockEntities.addAll(blockEntities);
                 }
-                EvChunkRenderDispatcher.this.renderer.updateGlobalBlockEntities(toRemove, toAdd);
+                ChunkRenderDispatcher.this.renderer.updateGlobalBlockEntities(toRemove, toAdd);
             }
             else {
-                EvChunkRenderDispatcher.this.renderer.updateGlobalBlockEntities(this.globalBlockEntities, blockEntities);
+                ChunkRenderDispatcher.this.renderer.updateGlobalBlockEntities(this.globalBlockEntities, blockEntities);
             }
         }
 
@@ -722,12 +719,12 @@ public class EvChunkRenderDispatcher {
 
         class RebuildTask extends ChunkCompileTask {
 
-            static final ThreadLocal<EvVisGraph> GRAPH_CACHE = ThreadLocal.withInitial(EvVisGraph::new);
+            static final ThreadLocal<VisGraph> GRAPH_CACHE = ThreadLocal.withInitial(VisGraph::new);
             static final ThreadLocal<PoseStack> MATRICES_CACHE = ThreadLocal.withInitial(PoseStack::new);
             static final ThreadLocal<IRandom> RANDOM_CACHE = ThreadLocal.withInitial(FastRandom::new);
-            protected @Nullable EvRenderChunkRegion region;
+            protected @Nullable RenderChunkRegion region;
 
-            public RebuildTask(double distAtCreation, @Nullable EvRenderChunkRegion region, boolean isHighPriority) {
+            public RebuildTask(double distAtCreation, @Nullable RenderChunkRegion region, boolean isHighPriority) {
                 super(distAtCreation, isHighPriority);
                 this.region = region;
             }
@@ -742,13 +739,13 @@ public class EvChunkRenderDispatcher {
 
             private RSet<BlockEntity> compile(float camX, float camY, float camZ, CompiledChunk compiledChunk, ChunkBuilderPack builderPack) {
                 RSet<BlockEntity> blockEntities = null;
-                EvRenderChunkRegion region = this.region;
+                RenderChunkRegion region = this.region;
                 this.region = null;
                 int posX = RenderChunk.this.x;
                 int posY = RenderChunk.this.y;
                 int posZ = RenderChunk.this.z;
                 if (region != null && !region.isSectionEmpty(posX, posY, posZ)) {
-                    EvVisGraph visgraph = GRAPH_CACHE.get();
+                    VisGraph visgraph = GRAPH_CACHE.get();
                     visgraph.reset();
                     PoseStack matrices = MATRICES_CACHE.get().reset();
                     ModelBlockRenderer.enableCaching();
@@ -845,9 +842,9 @@ public class EvChunkRenderDispatcher {
                     return CompletableFuture.completedFuture(ChunkTaskResult.CANCELLED);
                 }
                 CompiledChunk compiledChunk = new CompiledChunk();
-                RenderChunk.this.updateGlobalBlockEntities(this.compile(EvChunkRenderDispatcher.this.camX,
-                                                                        EvChunkRenderDispatcher.this.camY,
-                                                                        EvChunkRenderDispatcher.this.camZ,
+                RenderChunk.this.updateGlobalBlockEntities(this.compile(ChunkRenderDispatcher.this.camX,
+                                                                        ChunkRenderDispatcher.this.camY,
+                                                                        ChunkRenderDispatcher.this.camZ,
                                                                         compiledChunk, builderPack));
                 if (this.isCancelled.get()) {
                     return CompletableFuture.completedFuture(ChunkTaskResult.CANCELLED);
@@ -855,7 +852,7 @@ public class EvChunkRenderDispatcher {
                 OList<CompletableFuture<Void>> list = new OArrayList<>();
                 for (int i = RenderLayer.SOLID, len = ChunkBuilderPack.RENDER_TYPES.length; i < len; i++) {
                     if ((compiledChunk.hasLayer & 1 << i) != 0) {
-                        list.add(EvChunkRenderDispatcher.this.uploadChunkLayer(builderPack.builder(i), RenderChunk.this.getBuffer(i)));
+                        list.add(ChunkRenderDispatcher.this.uploadChunkLayer(builderPack.builder(i), RenderChunk.this.getBuffer(i)));
                     }
                 }
                 return Util.sequenceFailFast(list).handle((l, t) -> {
@@ -868,7 +865,7 @@ public class EvChunkRenderDispatcher {
                     }
                     RenderChunk.this.compiled = compiledChunk;
                     RenderChunk.this.needsUpdate = true;
-                    EvChunkRenderDispatcher.this.renderer.addRecentlyCompiledChunk(RenderChunk.this);
+                    ChunkRenderDispatcher.this.renderer.addRecentlyCompiledChunk(RenderChunk.this);
                     return ChunkTaskResult.SUCCESSFUL;
                 });
             }
@@ -910,18 +907,18 @@ public class EvChunkRenderDispatcher {
                     BufferBuilder builder = builderPack.builder(RenderLayer.TRANSLUCENT);
                     RenderChunk.this.beginLayer(builder);
                     builder.restoreSortState(sortState);
-                    builder.setQuadSortOrigin(EvChunkRenderDispatcher.this.camX - RenderChunk.this.x,
-                                              EvChunkRenderDispatcher.this.camY - RenderChunk.this.y,
-                                              EvChunkRenderDispatcher.this.camZ - RenderChunk.this.z);
+                    builder.setQuadSortOrigin(ChunkRenderDispatcher.this.camX - RenderChunk.this.x,
+                                              ChunkRenderDispatcher.this.camY - RenderChunk.this.y,
+                                              ChunkRenderDispatcher.this.camZ - RenderChunk.this.z);
                     this.compiledChunk.transparencyState = builder.getSortState();
                     builder.end();
                     if (this.isCancelled.get()) {
                         return CompletableFuture.completedFuture(ChunkTaskResult.CANCELLED);
                     }
                     CompletableFuture<ChunkTaskResult> future =
-                            EvChunkRenderDispatcher.this.uploadChunkLayer(builderPack.builder(RenderLayer.TRANSLUCENT),
-                                                                          RenderChunk.this.getBuffer(RenderLayer.TRANSLUCENT))
-                                                        .thenApply(v -> ChunkTaskResult.CANCELLED);
+                            ChunkRenderDispatcher.this.uploadChunkLayer(builderPack.builder(RenderLayer.TRANSLUCENT),
+                                                                        RenderChunk.this.getBuffer(RenderLayer.TRANSLUCENT))
+                                                      .thenApply(v -> ChunkTaskResult.CANCELLED);
                     return future.handle((r, t) -> {
                         if (t != null && !(t instanceof CancellationException) && !(t instanceof InterruptedException)) {
                             CrashReport crash = CrashReport.forThrowable(t, "Rendering chunk");

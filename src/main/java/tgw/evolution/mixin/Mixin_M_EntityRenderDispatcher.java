@@ -32,8 +32,8 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.spongepowered.asm.mixin.*;
 import tgw.evolution.EvolutionClient;
 import tgw.evolution.client.renderer.ambient.DynamicLights;
-import tgw.evolution.client.renderer.ambient.LightTextureEv;
-import tgw.evolution.client.renderer.chunk.EvLevelRenderer;
+import tgw.evolution.client.renderer.ambient.LightingTexture;
+import tgw.evolution.client.renderer.chunk.LevelRenderer;
 import tgw.evolution.hooks.asm.DeleteMethod;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.math.Vec3d;
@@ -81,7 +81,7 @@ public abstract class Mixin_M_EntityRenderDispatcher {
         if (shapeBelow.isEmpty()) {
             return;
         }
-        float f = LightTextureEv.getLightBrightness(level, brightness);
+        float f = LightingTexture.getLightBrightness(level, brightness);
         float alpha = weight * 0.5f * f;
         if (alpha >= 0.0F) {
             if (alpha > 1.0F) {
@@ -124,7 +124,7 @@ public abstract class Mixin_M_EntityRenderDispatcher {
         double maxX = bb.maxX - px;
         double maxY = bb.maxY - py;
         double maxZ = bb.maxZ - pz;
-        EvLevelRenderer.renderLineBox(matrices, buffer, minX, minY, minZ, maxX, maxY, maxZ, 1.0F, 1.0F, 1.0F, 1.0F);
+        LevelRenderer.renderLineBox(matrices, buffer, minX, minY, minZ, maxX, maxY, maxZ, 1.0F, 1.0F, 1.0F, 1.0F);
         if (entity instanceof EnderDragon dragon) {
             double x = -Mth.lerp(partialTicks, entity.xOld, px);
             double y = -Mth.lerp(partialTicks, entity.yOld, py);
@@ -145,7 +145,7 @@ public abstract class Mixin_M_EntityRenderDispatcher {
                 double partMaxX = partBB.maxX - partX;
                 double partMaxY = partBB.maxY - partY;
                 double partMaxZ = partBB.maxZ - partZ;
-                EvLevelRenderer.renderLineBox(matrices, buffer, partMinX, partMinY, partMinZ, partMaxX, partMaxY, partMaxZ, 0.25F, 1.0F, 0.0F, 1.0F);
+                LevelRenderer.renderLineBox(matrices, buffer, partMinX, partMinY, partMinZ, partMaxX, partMaxY, partMaxZ, 0.25F, 1.0F, 0.0F, 1.0F);
                 matrices.popPose();
             }
         }
@@ -154,7 +154,7 @@ public abstract class Mixin_M_EntityRenderDispatcher {
             float eyeX = (float) cameraPosition.x;
             double eyeHeight = cameraPosition.y;
             float eyeZ = (float) cameraPosition.z;
-            EvLevelRenderer.renderLineBox(matrices, buffer, minX, eyeHeight - 0.01, minZ, maxX, eyeHeight + 0.01, maxZ, 1.0F, 0.0F, 0.0F, 1.0F);
+            LevelRenderer.renderLineBox(matrices, buffer, minX, eyeHeight - 0.01, minZ, maxX, eyeHeight + 0.01, maxZ, 1.0F, 0.0F, 0.0F, 1.0F);
             Vec3 view = entity.getViewVector(partialTicks);
             Matrix4f pose = matrices.last().pose();
             Matrix3f normal = matrices.last().normal();

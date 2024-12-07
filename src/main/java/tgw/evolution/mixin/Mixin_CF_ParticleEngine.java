@@ -44,7 +44,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.*;
 import tgw.evolution.Evolution;
-import tgw.evolution.client.renderer.chunk.EvLevelRenderer;
+import tgw.evolution.client.renderer.chunk.LevelRenderer;
 import tgw.evolution.hooks.asm.DeleteField;
 import tgw.evolution.hooks.asm.DeleteMethod;
 import tgw.evolution.hooks.asm.ModifyConstructor;
@@ -408,7 +408,7 @@ public abstract class Mixin_CF_ParticleEngine implements PreparableReloadListene
         internalMat.pushPose();
         internalMat.mulPoseMatrix(matrices.last().pose());
         RenderSystem.applyModelViewMatrix();
-        EvLevelRenderer levelRenderer = Minecraft.getInstance().lvlRenderer();
+        LevelRenderer levelRenderer = Minecraft.getInstance().lvlRenderer();
         this.renderedParticles = 0;
         for (int i = 0, len = RENDER_ORDER.size(); i < len; i++) {
             ParticleRenderType type = RENDER_ORDER.get(i);

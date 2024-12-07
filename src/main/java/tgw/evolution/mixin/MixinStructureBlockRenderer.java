@@ -15,7 +15,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.StructureMode;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
-import tgw.evolution.client.renderer.chunk.EvLevelRenderer;
+import tgw.evolution.client.renderer.chunk.LevelRenderer;
 
 @Mixin(StructureBlockRenderer.class)
 public abstract class MixinStructureBlockRenderer {
@@ -89,8 +89,8 @@ public abstract class MixinStructureBlockRenderer {
                     }
                     VertexConsumer builder = bufferSource.getBuffer(RenderType.lines());
                     if (tile.getMode() == StructureMode.SAVE || tile.getShowBoundingBox()) {
-                        EvLevelRenderer.renderLineBox(matrices, builder, minX, minY, minZ, maxX, maxY, maxZ,
-                                                      0.9F, 0.9F, 0.9F, 1.0F, 0.5F, 0.5F, 0.5F);
+                        LevelRenderer.renderLineBox(matrices, builder, minX, minY, minZ, maxX, maxY, maxZ,
+                                                    0.9F, 0.9F, 0.9F, 1.0F, 0.5F, 0.5F, 0.5F);
                     }
                     if (tile.getMode() == StructureMode.SAVE && tile.getShowAir()) {
                         this.renderInvisibleBlocks(tile, builder, pos, matrices);
@@ -134,10 +134,10 @@ public abstract class MixinStructureBlockRenderer {
                 double y1 = (blockpos2.getY() - blockpos.getY()) + 0.55F + offset;
                 double z1 = (blockpos2.getZ() - blockpos.getZ()) + 0.55F + offset;
                 switch (i) {
-                    case 1 -> EvLevelRenderer.renderLineBox(matrices, builder, x0, y0, z0, x1, y1, z1, 0.5F, 0.5F, 1.0F, 1.0F, 0.5F, 0.5F, 1.0F);
-                    case 2 -> EvLevelRenderer.renderLineBox(matrices, builder, x0, y0, z0, x1, y1, z1, 1.0F, 0.75F, 0.75F, 1.0F, 1.0F, 0.75F, 0.75F);
-                    case 3 -> EvLevelRenderer.renderLineBox(matrices, builder, x0, y0, z0, x1, y1, z1, 1.0F, 0.0F, 0.0F, 1.0F, 1.0F, 0.0F, 0.0F);
-                    default -> EvLevelRenderer.renderLineBox(matrices, builder, x0, y0, z0, x1, y1, z1, 1.0F, 1.0F, 0.0F, 1.0F, 1.0F, 1.0F, 0.0F);
+                    case 1 -> LevelRenderer.renderLineBox(matrices, builder, x0, y0, z0, x1, y1, z1, 0.5F, 0.5F, 1.0F, 1.0F, 0.5F, 0.5F, 1.0F);
+                    case 2 -> LevelRenderer.renderLineBox(matrices, builder, x0, y0, z0, x1, y1, z1, 1.0F, 0.75F, 0.75F, 1.0F, 1.0F, 0.75F, 0.75F);
+                    case 3 -> LevelRenderer.renderLineBox(matrices, builder, x0, y0, z0, x1, y1, z1, 1.0F, 0.0F, 0.0F, 1.0F, 1.0F, 0.0F, 0.0F);
+                    default -> LevelRenderer.renderLineBox(matrices, builder, x0, y0, z0, x1, y1, z1, 1.0F, 1.0F, 0.0F, 1.0F, 1.0F, 1.0F, 0.0F);
                 }
             }
         }

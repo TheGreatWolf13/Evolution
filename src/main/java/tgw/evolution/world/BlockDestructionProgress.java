@@ -6,7 +6,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
-public class EvBlockDestructionProgress implements Comparable<EvBlockDestructionProgress> {
+public class BlockDestructionProgress implements Comparable<BlockDestructionProgress> {
 
     private int createdTick;
     private @Nullable Direction face;
@@ -17,13 +17,13 @@ public class EvBlockDestructionProgress implements Comparable<EvBlockDestruction
     private final long pos;
     private int progress;
 
-    public EvBlockDestructionProgress(int id, long pos) {
+    public BlockDestructionProgress(int id, long pos) {
         this.id = id;
         this.pos = pos;
     }
 
     @Override
-    public int compareTo(EvBlockDestructionProgress o) {
+    public int compareTo(BlockDestructionProgress o) {
         return this.progress != o.progress ? Integer.compare(this.progress, o.progress) : Integer.compare(this.id, o.id);
     }
 
@@ -32,7 +32,7 @@ public class EvBlockDestructionProgress implements Comparable<EvBlockDestruction
         if (this == o) {
             return true;
         }
-        if (o instanceof EvBlockDestructionProgress a) {
+        if (o instanceof BlockDestructionProgress a) {
             return this.id == a.id;
         }
         return false;

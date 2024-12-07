@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.*;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.BlockGrass;
 import tgw.evolution.blocks.BlockGrassClay;
-import tgw.evolution.client.renderer.chunk.EvLevelRenderer;
+import tgw.evolution.client.renderer.chunk.LevelRenderer;
 import tgw.evolution.hooks.asm.DeleteField;
 import tgw.evolution.hooks.asm.ModifyConstructor;
 import tgw.evolution.hooks.asm.RestoreFinal;
@@ -67,7 +67,7 @@ public abstract class Mixin_CF_TerrainParticle extends TextureSheetParticle impl
     @Overwrite
     public int getLightColor(float partialTick) {
         int i = super.getLightColor(partialTick);
-        return i == 0 && this.level.hasChunkAt(this.posX, this.posZ) ? EvLevelRenderer.getLightColor(this.level, this.posX, this.posY, this.posZ) : i;
+        return i == 0 && this.level.hasChunkAt(this.posX, this.posZ) ? LevelRenderer.getLightColor(this.level, this.posX, this.posY, this.posZ) : i;
     }
 
     @Override

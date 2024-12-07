@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
-import tgw.evolution.client.renderer.chunk.EvLevelRenderer;
+import tgw.evolution.client.renderer.chunk.LevelRenderer;
 import tgw.evolution.util.math.AABBMutable;
 
 import java.util.List;
@@ -24,6 +24,7 @@ public abstract class MixinParticle {
     @Shadow @Final private static AABB INITIAL_AABB;
     @Shadow @Final private static double MAXIMUM_COLLISION_VELOCITY_SQUARED;
     @Shadow protected int age;
+    @Shadow private AABB bb;
     @Shadow protected float bbHeight;
     @Shadow protected float bbWidth;
     @Shadow protected float friction;
@@ -33,6 +34,7 @@ public abstract class MixinParticle {
     @Shadow protected int lifetime;
     @Shadow protected boolean onGround;
     @Shadow protected boolean speedUpWhenYMotionIsBlocked;
+    @Shadow private boolean stoppedByCollision;
     @Shadow protected double x;
     @Shadow protected double xd;
     @Shadow protected double xo;
@@ -42,8 +44,6 @@ public abstract class MixinParticle {
     @Shadow protected double z;
     @Shadow protected double zd;
     @Shadow protected double zo;
-    @Shadow private AABB bb;
-    @Shadow private boolean stoppedByCollision;
 
     @Shadow
     public abstract AABB getBoundingBox();
@@ -56,7 +56,7 @@ public abstract class MixinParticle {
     public int getLightColor(float partialTick) {
         int x = Mth.floor(this.x);
         int z = Mth.floor(this.z);
-        return this.level.hasChunkAt(x, z) ? EvLevelRenderer.getLightColor(this.level, x, Mth.floor(this.y), z) : 0;
+        return this.level.hasChunkAt(x, z) ? LevelRenderer.getLightColor(this.level, x, Mth.floor(this.y), z) : 0;
     }
 
     /**

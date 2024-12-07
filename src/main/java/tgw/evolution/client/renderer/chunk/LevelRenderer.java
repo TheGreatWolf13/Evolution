@@ -98,7 +98,7 @@ import tgw.evolution.util.math.DirectionUtil;
 import tgw.evolution.util.math.FastRandom;
 import tgw.evolution.util.math.VectorUtil;
 import tgw.evolution.util.physics.EarthHelper;
-import tgw.evolution.world.EvBlockDestructionProgress;
+import tgw.evolution.world.BlockDestructionProgress;
 
 import java.io.IOException;
 import java.util.*;
@@ -107,7 +107,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Environment(EnvType.CLIENT)
-public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerReloadListener, AutoCloseable {
+public class LevelRenderer implements IKeyedReloadListener, ResourceManagerReloadListener, AutoCloseable {
 
     private static final ResourceLocation CLOUDS_LOCATION = new ResourceLocation("textures/environment/clouds.png");
     private static final OList<ResourceLocation> DEPENDENCY = OList.of(ReloadListernerKeys.TEXTURES);
@@ -119,13 +119,13 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
     private final BlockEntityRenderDispatcher blockEntityRenderDispatcher;
     private final SheetedDecalTextureGenerator[] breakingBuffers = new SheetedDecalTextureGenerator[10];
     private final BufferHolder bufferHolder;
-    private @Nullable EvChunkRenderDispatcher chunkRenderDispatcher;
+    private @Nullable ChunkRenderDispatcher chunkRenderDispatcher;
     private @Nullable VertexBuffer cloudBuffer;
     private @Nullable RenderTarget cloudsTarget;
     private final RenderChunkInfoComparator comparator = new RenderChunkInfoComparator();
     private final Frustum cullingFrustum = new Frustum(new Matrix4f(), new Matrix4f());
-    private final I2OMap<EvBlockDestructionProgress> destroyingBlocks = new I2OHashMap<>();
-    private final L2OMap<SortedSet<EvBlockDestructionProgress>> destructionProgress = new L2OHashMap<>();
+    private final I2OMap<BlockDestructionProgress> destroyingBlocks = new I2OHashMap<>();
+    private final L2OMap<SortedSet<BlockDestructionProgress>> destructionProgress = new L2OHashMap<>();
     private @Nullable PostChain entityEffect;
     private final EntityRenderDispatcher entityRenderDispatcher;
     private @Nullable RenderTarget entityTarget;
@@ -169,23 +169,23 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
     private final float[] rainSizeX = new float[1_024];
     private final float[] rainSizeZ = new float[1_024];
     private int rainSoundTime;
-    private final OList<EvChunkRenderDispatcher.RenderChunk> recentlyCompiledChunks = new OArrayList<>();
-    private final EvRenderRegionCache renderCache = new EvRenderRegionCache();
+    private final OList<ChunkRenderDispatcher.RenderChunk> recentlyCompiledChunks = new OArrayList<>();
+    private final RenderRegionCache renderCache = new RenderRegionCache();
     private volatile @Nullable RenderChunkStorage renderChunkStorage;
-    private final OList<EvChunkRenderDispatcher.RenderChunk> renderChunksInFrustum = new OArrayList<>();
+    private final OList<ChunkRenderDispatcher.RenderChunk> renderChunksInFrustum = new OArrayList<>();
     private boolean renderOnThread;
     private int renderedEntities;
     private final SkyFogSetup skyFog = new SkyFogSetup();
     private int ticks;
     private @Nullable RenderTarget translucentTarget;
     private @Nullable PostChain transparencyChain;
-    private @Nullable EvViewArea viewArea;
+    private @Nullable ViewArea viewArea;
     private @Nullable RenderTarget weatherTarget;
     private double xTransparentOld;
     private double yTransparentOld;
     private double zTransparentOld;
 
-    public EvLevelRenderer(Minecraft mc, RenderBuffers buffers) {
+    public LevelRenderer(Minecraft mc, RenderBuffers buffers) {
         this.mc = mc;
         this.listener = new LevelEventListener(mc);
         this.entityRenderDispatcher = mc.getEntityRenderDispatcher();
@@ -381,7 +381,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
         });
     }
 
-    public void addRecentlyCompiledChunk(EvChunkRenderDispatcher.RenderChunk chunk) {
+    public void addRecentlyCompiledChunk(ChunkRenderDispatcher.RenderChunk chunk) {
         if (this.renderOnThread) {
             this.recentlyCompiledChunks.add(chunk);
         }
@@ -402,7 +402,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
             this.graphicsChanged();
             this.level.clearTintCaches();
             if (this.chunkRenderDispatcher == null) {
-                this.chunkRenderDispatcher = new EvChunkRenderDispatcher(this.level, this, Util.backgroundExecutor(), this.mc.is64Bit(), this.bufferHolder.chunkBuilderPack());
+                this.chunkRenderDispatcher = new ChunkRenderDispatcher(this.level, this, Util.backgroundExecutor(), this.mc.is64Bit(), this.bufferHolder.chunkBuilderPack());
             }
             else {
                 this.chunkRenderDispatcher.setLevel(this.level);
@@ -421,7 +421,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
             synchronized (this.globalBlockEntities) {
                 this.globalBlockEntities.clear();
             }
-            this.viewArea = new EvViewArea(this.chunkRenderDispatcher, this.level, this.mc.options.getEffectiveRenderDistance());
+            this.viewArea = new ViewArea(this.chunkRenderDispatcher, this.level, this.mc.options.getEffectiveRenderDistance());
             if (this.lastFullRenderChunkUpdate != null) {
                 try {
                     this.lastFullRenderChunkUpdate.get();
@@ -449,9 +449,9 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
         RenderChunkStorage storage = this.renderChunkStorage;
         this.layersInFrustum = 0;
         if (storage != null) {
-            OList<EvChunkRenderDispatcher.RenderChunk> renderChunks = storage.renderChunks;
+            OList<ChunkRenderDispatcher.RenderChunk> renderChunks = storage.renderChunks;
             for (int i = 0, len = renderChunks.size(); i < len; i++) {
-                EvChunkRenderDispatcher.RenderChunk chunk = renderChunks.get(i);
+                ChunkRenderDispatcher.RenderChunk chunk = renderChunks.get(i);
                 if (chunk.isCompletelyEmpty() && !chunk.isDirty()) {
                     chunk.visibility = Visibility.OUTSIDE;
                     continue;
@@ -678,7 +678,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
         }
     }
 
-    private boolean closeToBorder(int posX, int posZ, EvChunkRenderDispatcher.RenderChunk chunk) {
+    private boolean closeToBorder(int posX, int posZ, ChunkRenderDispatcher.RenderChunk chunk) {
         int secX = SectionPos.blockToSectionCoord(posX);
         int secZ = SectionPos.blockToSectionCoord(posZ);
         int oriX = SectionPos.blockToSectionCoord(chunk.getX());
@@ -693,7 +693,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
         profiler.push("populate_chunks_to_compile");
         BlockPos cameraPos = camera.getBlockPosition();
         for (int i = 0, l = this.renderChunksInFrustum.size(); i < l; i++) {
-            EvChunkRenderDispatcher.RenderChunk chunk = this.renderChunksInFrustum.get(i);
+            ChunkRenderDispatcher.RenderChunk chunk = this.renderChunksInFrustum.get(i);
             int chunkX = SectionPos.blockToSectionCoord(chunk.getX());
             int chunkZ = SectionPos.blockToSectionCoord(chunk.getZ());
             if (chunk.isDirty() && this.level.getChunk(chunkX, chunkZ).isClientLightReady()) {
@@ -768,18 +768,18 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
 
     public void destroyBlockProgress(int breakerId, long pos, int progress, @Nullable Direction face, double hitX, double hitY, double hitZ) {
         if (progress >= 0 && progress < 10) {
-            EvBlockDestructionProgress blockDestructionProgress = this.destroyingBlocks.get(breakerId);
+            BlockDestructionProgress blockDestructionProgress = this.destroyingBlocks.get(breakerId);
             if (blockDestructionProgress != null) {
                 this.removeProgress(blockDestructionProgress);
             }
             if (blockDestructionProgress == null || blockDestructionProgress.getPos() != pos) {
-                blockDestructionProgress = new EvBlockDestructionProgress(breakerId, pos);
+                blockDestructionProgress = new BlockDestructionProgress(breakerId, pos);
                 this.destroyingBlocks.put(breakerId, blockDestructionProgress);
             }
             blockDestructionProgress.setLocation(face, hitX, hitY, hitZ);
             blockDestructionProgress.setProgress(progress);
             blockDestructionProgress.updateTick(this.ticks);
-            SortedSet<EvBlockDestructionProgress> blockDestructionProgresses = this.destructionProgress.get(blockDestructionProgress.getPos());
+            SortedSet<BlockDestructionProgress> blockDestructionProgresses = this.destructionProgress.get(blockDestructionProgress.getPos());
             if (blockDestructionProgresses == null) {
                 blockDestructionProgresses = new TreeSet<>();
                 this.destructionProgress.put(blockDestructionProgress.getPos(), blockDestructionProgresses);
@@ -787,7 +787,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
             blockDestructionProgresses.add(blockDestructionProgress);
         }
         else {
-            EvBlockDestructionProgress destructionProgress = this.destroyingBlocks.remove(breakerId);
+            BlockDestructionProgress destructionProgress = this.destroyingBlocks.remove(breakerId);
             if (destructionProgress != null) {
                 this.removeProgress(destructionProgress);
             }
@@ -833,7 +833,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
                                       float camX,
                                       float camY,
                                       float camZ) {
-        EvChunkRenderDispatcher.RenderChunk chunk = this.renderChunksInFrustum.get(i);
+        ChunkRenderDispatcher.RenderChunk chunk = this.renderChunksInFrustum.get(i);
         if (!chunk.isEmpty(renderType)) {
             VertexBuffer buffer = chunk.getBuffer(renderType);
             if (uniform != null) {
@@ -851,7 +851,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
         return this.entityTarget;
     }
 
-    public @Nullable EvChunkRenderDispatcher getChunkRenderDispatcher() {
+    public @Nullable ChunkRenderDispatcher getChunkRenderDispatcher() {
         return this.chunkRenderDispatcher;
     }
 
@@ -921,9 +921,9 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
      * @return the specified {@code chunk} offset in the specified {@code facing}, or {@code null} if it can't
      * be seen by the camera at the specified {@code cameraChunkPos}
      */
-    private @Nullable EvChunkRenderDispatcher.RenderChunk getRelativeFrom(int camX, int camY, int camZ,
-                                                                          EvChunkRenderDispatcher.RenderChunk chunk,
-                                                                          Direction facing) {
+    private @Nullable ChunkRenderDispatcher.RenderChunk getRelativeFrom(int camX, int camY, int camZ,
+                                                                        ChunkRenderDispatcher.RenderChunk chunk,
+                                                                        Direction facing) {
         int originX = chunk.getX();
         int originY = chunk.getY();
         int originZ = chunk.getZ();
@@ -1061,7 +1061,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
         catch (Exception exception) {
             //noinspection InstanceofCatchParameter
             String message = "Failed to " + (exception instanceof JsonSyntaxException ? "parse" : "load") + " shader: " + shader;
-            EvLevelRenderer.TransparencyShaderException shaderException = new EvLevelRenderer.TransparencyShaderException(message, exception);
+            LevelRenderer.TransparencyShaderException shaderException = new LevelRenderer.TransparencyShaderException(message, exception);
             if (this.mc.getResourcePackRepository().getSelectedIds().size() > 1) {
                 Component component;
                 try {
@@ -1089,7 +1089,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
         assert this.viewArea != null;
         Vec3 camPos = camera.getPosition();
         BlockPos camBlockPos = camera.getBlockPosition();
-        EvChunkRenderDispatcher.RenderChunk chunk = this.viewArea.getRenderChunkAt(camBlockPos);
+        ChunkRenderDispatcher.RenderChunk chunk = this.viewArea.getRenderChunkAt(camBlockPos);
         if (chunk == null) {
             int x = Mth.floor(camPos.x / 16) * 16;
             int y = camBlockPos.getY() > this.level.getMinBuildHeight() ? this.level.getMaxBuildHeight() - 8 : this.level.getMinBuildHeight() + 8;
@@ -1097,9 +1097,9 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
             OList<RenderChunkInfo> list = new OArrayList<>();
             for (int i1 = -this.lastViewDistance; i1 <= this.lastViewDistance; ++i1) {
                 for (int j1 = -this.lastViewDistance; j1 <= this.lastViewDistance; ++j1) {
-                    EvChunkRenderDispatcher.RenderChunk otherChunk = this.viewArea.getRenderChunkAt(x + SectionPos.sectionToBlockCoord(i1, 8),
-                                                                                                    y,
-                                                                                                    z + SectionPos.sectionToBlockCoord(j1, 8));
+                    ChunkRenderDispatcher.RenderChunk otherChunk = this.viewArea.getRenderChunkAt(x + SectionPos.sectionToBlockCoord(i1, 8),
+                                                                                                  y,
+                                                                                                  z + SectionPos.sectionToBlockCoord(j1, 8));
                     if (otherChunk != null) {
                         //noinspection ObjectAllocationInLoop
                         list.add(new RenderChunkInfo(otherChunk, null, 0));
@@ -1110,14 +1110,14 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
             queue.enqueueMany(list);
         }
         else {
-            queue.enqueue(new EvLevelRenderer.RenderChunkInfo(chunk, null, 0));
+            queue.enqueue(new LevelRenderer.RenderChunkInfo(chunk, null, 0));
         }
     }
 
     public boolean isChunkCompiled(BlockPos pos) {
         assert this.viewArea != null;
-        EvChunkRenderDispatcher.RenderChunk chunk = this.viewArea.getRenderChunkAt(pos);
-        return chunk != null && chunk.compiled != EvChunkRenderDispatcher.CompiledChunk.UNCOMPILED;
+        ChunkRenderDispatcher.RenderChunk chunk = this.viewArea.getRenderChunkAt(pos);
+        return chunk != null && chunk.compiled != ChunkRenderDispatcher.CompiledChunk.UNCOMPILED;
     }
 
     public void levelEvent(@LvlEvent int type, int x, int y, int z, int data) {
@@ -1163,7 +1163,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
             OArrayFIFOQueue<RenderChunkInfo> queue = QUEUE_CACHE.get();
             assert queue.isEmpty();
             for (int i = 0, len = this.recentlyCompiledChunks.size(); i < len; i++) {
-                EvChunkRenderDispatcher.RenderChunk chunk = this.recentlyCompiledChunks.get(i);
+                ChunkRenderDispatcher.RenderChunk chunk = this.recentlyCompiledChunks.get(i);
                 RenderChunkInfo renderChunkInfo = storage.renderInfoMap.get(chunk);
                 if (renderChunkInfo != null && renderChunkInfo.chunk == chunk) {
                     queue.enqueue(renderChunkInfo);
@@ -1181,9 +1181,9 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
         this.cullingFrustum.prepare(camPos.x, camPos.y, camPos.z);
     }
 
-    private void removeProgress(EvBlockDestructionProgress progress) {
+    private void removeProgress(BlockDestructionProgress progress) {
         long i = progress.getPos();
-        Set<EvBlockDestructionProgress> set = this.destructionProgress.get(i);
+        Set<BlockDestructionProgress> set = this.destructionProgress.get(i);
         set.remove(progress);
         if (set.isEmpty()) {
             this.destructionProgress.remove(i);
@@ -1485,7 +1485,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
         buffer.endBatch(RenderType.entitySmoothCutout(TextureAtlas.LOCATION_BLOCKS));
         profiler.popPush("block_entities");
         for (int i = 0, l = this.renderChunksInFrustum.size(); i < l; i++) {
-            EvChunkRenderDispatcher.RenderChunk renderChunk = this.renderChunksInFrustum.get(i);
+            ChunkRenderDispatcher.RenderChunk renderChunk = this.renderChunksInFrustum.get(i);
             if (!renderChunk.hasRenderableTEs()) {
                 continue;
             }
@@ -1503,7 +1503,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
                     MultiBufferSource multiBufferSource = buffer;
                     matrices.pushPose();
                     matrices.translate(bePos.getX() - camX, bePos.getY() - camY, bePos.getZ() - camZ);
-                    SortedSet<EvBlockDestructionProgress> destructionProgresses = this.destructionProgress.get(bePos.asLong());
+                    SortedSet<BlockDestructionProgress> destructionProgresses = this.destructionProgress.get(bePos.asLong());
                     if (destructionProgresses != null && !destructionProgresses.isEmpty()) {
                         int progress = destructionProgresses.last().getProgress();
                         if (progress >= 0) {
@@ -1548,7 +1548,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
             this.mc.getMainRenderTarget().bindWrite(false);
         }
         profiler.popPush("destroyProgress");
-        L2OMap<SortedSet<EvBlockDestructionProgress>> destructions = this.destructionProgress;
+        L2OMap<SortedSet<BlockDestructionProgress>> destructions = this.destructionProgress;
         for (long it = destructions.beginIteration(); destructions.hasNextIteration(it); it = destructions.nextEntry(it)) {
             long pos = destructions.getIterationKey(it);
             int x = BlockPos.getX(pos);
@@ -1558,9 +1558,9 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
             double deltaY = y - camY;
             double deltaZ = z - camZ;
             if (!(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ > 1_024.0)) {
-                SortedSet<EvBlockDestructionProgress> destructionProgresses = destructions.getIterationValue(it);
+                SortedSet<BlockDestructionProgress> destructionProgresses = destructions.getIterationValue(it);
                 if (!destructionProgresses.isEmpty()) {
-                    EvBlockDestructionProgress last = destructionProgresses.last();
+                    BlockDestructionProgress last = destructionProgresses.last();
                     int progress = last.getProgress();
                     matrices.pushPose();
                     matrices.translate(deltaX, deltaY, deltaZ);
@@ -2186,9 +2186,9 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
     public void tick() {
         ++this.ticks;
         if (this.ticks % 20 == 0) {
-            I2OMap<EvBlockDestructionProgress> destroyingBlocks = this.destroyingBlocks;
+            I2OMap<BlockDestructionProgress> destroyingBlocks = this.destroyingBlocks;
             for (long it = destroyingBlocks.beginIteration(); destroyingBlocks.hasNextIteration(it); it = destroyingBlocks.nextEntry(it)) {
-                EvBlockDestructionProgress progress = destroyingBlocks.getIterationValue(it);
+                BlockDestructionProgress progress = destroyingBlocks.getIterationValue(it);
                 int i = progress.getUpdatedRenderTick();
                 if (this.ticks - i > 400) {
                     it = destroyingBlocks.removeIteration(it);
@@ -2282,7 +2282,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
         RenderInfoMap infoMap = storage.renderInfoMap;
         while (!queue.isEmpty()) {
             RenderChunkInfo info = queue.dequeue();
-            EvChunkRenderDispatcher.RenderChunk chunk = info.chunk;
+            ChunkRenderDispatcher.RenderChunk chunk = info.chunk;
             storage.add(chunk);
             int chunkX = chunk.getX();
             int chunkY = chunk.getY();
@@ -2292,7 +2292,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
             boolean askedForUpdate = false;
             directions:
             for (Direction dir : DirectionUtil.ALL) {
-                EvChunkRenderDispatcher.RenderChunk chunkAtDir = this.getRelativeFrom(cameraX, cameraY, cameraZ, chunk, dir);
+                ChunkRenderDispatcher.RenderChunk chunkAtDir = this.getRelativeFrom(cameraX, cameraY, cameraZ, chunk, dir);
                 if (chunkAtDir == null) {
                     if (!askedForUpdate && !this.closeToBorder(cameraX, cameraZ, chunk)) {
                         this.nextFullUpdateMillis.set(System.currentTimeMillis() + 500L);
@@ -2303,7 +2303,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
                     if (!shouldCull || !info.hasDirection(dir.getOpposite())) {
                         if (shouldCull) {
                             if (info.hasSourceDirections()) {
-                                EvChunkRenderDispatcher.CompiledChunk compiled = chunk.compiled;
+                                ChunkRenderDispatcher.CompiledChunk compiled = chunk.compiled;
                                 boolean cull = false;
                                 for (Direction dirForCull : DirectionUtil.ALL) {
                                     if (info.hasSourceDirection(dirForCull) && compiled.facesCanSeeEachother(dirForCull.getOpposite(), dir)) {
@@ -2317,8 +2317,8 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
                             }
                             if (far) {
                                 if (info.hasSourceDirections() && !info.hasSourceDirection(nearestDir)) {
-                                    EvChunkRenderDispatcher.RenderChunk chunkAtNearest = this.getRelativeFrom(cameraX, cameraY, cameraZ, chunk,
-                                                                                                              nearestDir.getOpposite());
+                                    ChunkRenderDispatcher.RenderChunk chunkAtNearest = this.getRelativeFrom(cameraX, cameraY, cameraZ, chunk,
+                                                                                                            nearestDir.getOpposite());
                                     if (chunkAtNearest == null) {
                                         continue;
                                     }
@@ -2381,9 +2381,9 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
                                     if (chunkAtDirY > this.level.getMaxBuildHeight() || chunkAtDirY < this.level.getMinBuildHeight()) {
                                         break;
                                     }
-                                    EvChunkRenderDispatcher.RenderChunk chunkAt = this.viewArea.getRenderChunkAt(Mth.floor(chunkAtDirX),
-                                                                                                                 Mth.floor(chunkAtDirY),
-                                                                                                                 Mth.floor(chunkAtDirZ));
+                                    ChunkRenderDispatcher.RenderChunk chunkAt = this.viewArea.getRenderChunkAt(Mth.floor(chunkAtDirX),
+                                                                                                               Mth.floor(chunkAtDirY),
+                                                                                                               Mth.floor(chunkAtDirZ));
                                     if (chunkAt == null || infoMap.get(chunkAt) == null) {
                                         continue directions;
                                     }
@@ -2418,7 +2418,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
 
     public boolean visibleOcclusionCulling(double x, double y, double z) {
         assert this.viewArea != null;
-        EvChunkRenderDispatcher.RenderChunk chunk = this.viewArea.getRenderChunkAt(Mth.floor(x), Mth.floor(y), Mth.floor(z));
+        ChunkRenderDispatcher.RenderChunk chunk = this.viewArea.getRenderChunkAt(Mth.floor(x), Mth.floor(y), Mth.floor(z));
         if (chunk == null || chunk.isCompletelyEmpty()) {
             return true;
         }
@@ -2442,7 +2442,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
         for (int x = x0, secX = secX0; secX <= secX1; ++secX, x += 16) {
             for (int y = y0, secY = secY0; secY <= secY1; ++secY, y += 16) {
                 for (int z = z0, secZ = secZ0; secZ <= secZ1; ++secZ, z += 16) {
-                    EvChunkRenderDispatcher.RenderChunk chunk = this.viewArea.getRenderChunkAt(x, y, z);
+                    ChunkRenderDispatcher.RenderChunk chunk = this.viewArea.getRenderChunkAt(x, y, z);
                     if (chunk == null || chunk.isCompletelyEmpty()) {
                         return true;
                     }
@@ -2456,12 +2456,12 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
     }
 
     public static class RenderChunkInfo {
-        public final EvChunkRenderDispatcher.RenderChunk chunk;
+        public final ChunkRenderDispatcher.RenderChunk chunk;
         private byte directions;
         private byte sourceDirections;
         public final int step;
 
-        public RenderChunkInfo(EvChunkRenderDispatcher.RenderChunk chunk, @Nullable Direction sourceDir, int step) {
+        public RenderChunkInfo(ChunkRenderDispatcher.RenderChunk chunk, @Nullable Direction sourceDir, int step) {
             this.chunk = chunk;
             if (sourceDir != null) {
                 this.addSourceDirection(sourceDir);
@@ -2478,8 +2478,8 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
             if (!(o instanceof RenderChunkInfo other)) {
                 return false;
             }
-            EvChunkRenderDispatcher.RenderChunk chunk = this.chunk;
-            EvChunkRenderDispatcher.RenderChunk otherChunk = other.chunk;
+            ChunkRenderDispatcher.RenderChunk chunk = this.chunk;
+            ChunkRenderDispatcher.RenderChunk otherChunk = other.chunk;
             return chunk.getX() == otherChunk.getX() && chunk.getY() == otherChunk.getY() && chunk.getZ() == otherChunk.getZ();
         }
 
@@ -2497,7 +2497,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
 
         @Override
         public int hashCode() {
-            EvChunkRenderDispatcher.RenderChunk chunk = this.chunk;
+            ChunkRenderDispatcher.RenderChunk chunk = this.chunk;
             return (chunk.getY() + chunk.getZ() * 31) * 31 + chunk.getX();
         }
 
@@ -2512,9 +2512,9 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
 
         @Override
         public int compare(RenderChunkInfo o1, RenderChunkInfo o2) {
-            EvChunkRenderDispatcher.RenderChunk chunk1 = o1.chunk;
+            ChunkRenderDispatcher.RenderChunk chunk1 = o1.chunk;
             double dist1 = this.cameraPos.distToLowCornerSqr(chunk1.getX() + 8, chunk1.getY() + 8, chunk1.getZ() + 8);
-            EvChunkRenderDispatcher.RenderChunk chunk2 = o2.chunk;
+            ChunkRenderDispatcher.RenderChunk chunk2 = o2.chunk;
             double dist2 = this.cameraPos.distToLowCornerSqr(chunk2.getX() + 8, chunk2.getY() + 8, chunk2.getZ() + 8);
             return Double.compare(dist1, dist2);
         }
@@ -2526,7 +2526,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
     }
 
     public static class RenderChunkStorage {
-        private final OList<EvChunkRenderDispatcher.RenderChunk> renderChunks;
+        private final OList<ChunkRenderDispatcher.RenderChunk> renderChunks;
         public final RenderInfoMap renderInfoMap;
         private final LSet visited = new LHashSet();
 
@@ -2535,7 +2535,7 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
             this.renderChunks = new OArrayList<>(size);
         }
 
-        public void add(EvChunkRenderDispatcher.RenderChunk chunk) {
+        public void add(ChunkRenderDispatcher.RenderChunk chunk) {
             if (this.visited.add(BlockPos.asLong(chunk.getX(), chunk.getY(), chunk.getZ()))) {
                 this.renderChunks.add(chunk);
             }
@@ -2549,12 +2549,12 @@ public class EvLevelRenderer implements IKeyedReloadListener, ResourceManagerRel
             this.infos = new RenderChunkInfo[size];
         }
 
-        public @Nullable RenderChunkInfo get(EvChunkRenderDispatcher.RenderChunk renderChunk) {
+        public @Nullable RenderChunkInfo get(ChunkRenderDispatcher.RenderChunk renderChunk) {
             int i = renderChunk.index;
             return i >= 0 && i < this.infos.length ? this.infos[i] : null;
         }
 
-        public void put(EvChunkRenderDispatcher.RenderChunk renderChunk, RenderChunkInfo info) {
+        public void put(ChunkRenderDispatcher.RenderChunk renderChunk, RenderChunkInfo info) {
             this.infos[renderChunk.index] = info;
         }
     }

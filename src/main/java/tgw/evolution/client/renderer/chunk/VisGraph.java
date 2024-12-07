@@ -8,7 +8,7 @@ import tgw.evolution.util.math.DirectionUtil;
 
 import java.util.BitSet;
 
-public class EvVisGraph {
+public class VisGraph {
     private static final int[] INDEX_OF_EDGES;
 
     static {
@@ -27,8 +27,8 @@ public class EvVisGraph {
     }
 
     private final BitSet bitSet = new BitSet(4_096);
-    private final IntPriorityQueue queue = new IArrayFIFOQueue();
     private int empty = 4_096;
+    private final IntPriorityQueue queue = new IArrayFIFOQueue();
 
     private static byte addEdges(int index, byte faces) {
         int i = index & 15;

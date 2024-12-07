@@ -14,14 +14,14 @@ import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.util.physics.EarthHelper;
 
-public class EvRenderChunkRegion implements BlockAndTintGetter {
-    
+public class RenderChunkRegion implements BlockAndTintGetter {
+
     protected final EvRenderChunk[][] chunks;
     protected final Level level;
     private final int startX;
     private final int startZ;
 
-    EvRenderChunkRegion(Level level, int startX, int startZ, EvRenderChunk[][] chunks) {
+    RenderChunkRegion(Level level, int startX, int startZ, EvRenderChunk[][] chunks) {
         this.level = level;
         this.startX = startX;
         this.startZ = startZ;

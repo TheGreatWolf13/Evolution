@@ -14,7 +14,7 @@ import net.minecraft.world.entity.decoration.Painting;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import tgw.evolution.client.renderer.chunk.EvLevelRenderer;
+import tgw.evolution.client.renderer.chunk.LevelRenderer;
 
 @Mixin(PaintingRenderer.class)
 public abstract class MixinPaintingRenderer extends EntityRenderer<Painting> {
@@ -72,7 +72,7 @@ public abstract class MixinPaintingRenderer extends EntityRenderer<Painting> {
                     case SOUTH -> x = Mth.floor(painting.getX() - (f15 + f16) / 32.0F);
                     case EAST -> z = Mth.floor(painting.getZ() + (f15 + f16) / 32.0F);
                 }
-                int l1 = EvLevelRenderer.getLightColor(painting.level, x, y, z);
+                int l1 = LevelRenderer.getLightColor(painting.level, x, y, z);
                 float f19 = sprite.getU(d0 * (i - k));
                 float f20 = sprite.getU(d0 * (i - (k + 1)));
                 float f21 = sprite.getV(d1 * (j - l));

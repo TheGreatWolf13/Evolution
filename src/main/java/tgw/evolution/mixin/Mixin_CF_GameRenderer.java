@@ -49,8 +49,8 @@ import org.spongepowered.asm.mixin.*;
 import tgw.evolution.EvolutionClient;
 import tgw.evolution.client.gui.EvolutionGui;
 import tgw.evolution.client.gui.overlays.Overlays;
-import tgw.evolution.client.renderer.ambient.LightTextureEv;
-import tgw.evolution.client.renderer.chunk.EvLevelRenderer;
+import tgw.evolution.client.renderer.ambient.LightingTexture;
+import tgw.evolution.client.renderer.chunk.LevelRenderer;
 import tgw.evolution.client.util.Shader;
 import tgw.evolution.hooks.asm.DeleteField;
 import tgw.evolution.hooks.asm.ModifyConstructor;
@@ -182,7 +182,7 @@ public abstract class Mixin_CF_GameRenderer implements PatchGameRenderer {
         this.resourceManager = resourceManager;
         this.itemInHandRenderer = minecraft.getItemInHandRenderer();
         this.mapRenderer = new MapRenderer(minecraft.getTextureManager());
-        this.lightTexture = new LightTextureEv((GameRenderer) (Object) this, minecraft);
+        this.lightTexture = new LightingTexture((GameRenderer) (Object) this, minecraft);
         this.renderBuffers = renderBuffers;
         this.postEffect = null;
     }
@@ -615,7 +615,7 @@ public abstract class Mixin_CF_GameRenderer implements PatchGameRenderer {
         if (matrix3f.invert()) {
             RenderSystem.setInverseViewRotationMatrix(matrix3f);
         }
-        EvLevelRenderer levelRenderer = this.minecraft.lvlRenderer();
+        LevelRenderer levelRenderer = this.minecraft.lvlRenderer();
         levelRenderer.prepareCullFrustum(matrices, camera.getPosition(), this.getProjectionMatrix(Math.max(fov, this.minecraft.options.fov)));
         levelRenderer.renderLevel(matrices, partialTicks, endTickTime, shouldRenderOutline, camera, (GameRenderer) (Object) this, this.lightTexture, projMatrix);
         this.minecraft.getProfiler().pop();
@@ -713,7 +713,7 @@ public abstract class Mixin_CF_GameRenderer implements PatchGameRenderer {
      */
     @Overwrite
     private void takeAutoScreenshot(Path path) {
-        EvLevelRenderer levelRenderer = this.minecraft.lvlRenderer();
+        LevelRenderer levelRenderer = this.minecraft.lvlRenderer();
         if (levelRenderer.countRenderedChunks() > 10 && levelRenderer.hasRenderedAllChunks()) {
             NativeImage screenshot = Screenshot.takeScreenshot(this.minecraft.getMainRenderTarget());
             Util.ioPool().execute(() -> {

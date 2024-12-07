@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.client.renderer.RenderHelper;
-import tgw.evolution.client.renderer.chunk.EvLevelRenderer;
+import tgw.evolution.client.renderer.chunk.LevelRenderer;
 
 import java.util.Map;
 
@@ -93,9 +93,9 @@ public abstract class MixinHeightMapRenderer {
                         for (int dz = 0; dz < 16; ++dz) {
                             int z = SectionPos.sectionToBlockCoord(pos.z, dz);
                             double y = level.getHeight(heightmap, x, z) + heightmap.ordinal() * 0.093_75F - camY;
-                            EvLevelRenderer.addChainedFilledBoxVertices(builder, x + 0.25F - camX, y, z + 0.25F - camZ,
-                                                                        x + 0.75F - camX, y + 0.093_75F, (z + 0.75F) - camZ,
-                                                                        r, g, b, 1.0F);
+                            LevelRenderer.addChainedFilledBoxVertices(builder, x + 0.25F - camX, y, z + 0.25F - camZ,
+                                                                      x + 0.75F - camX, y + 0.093_75F, (z + 0.75F) - camZ,
+                                                                      r, g, b, 1.0F);
                         }
                     }
                 }

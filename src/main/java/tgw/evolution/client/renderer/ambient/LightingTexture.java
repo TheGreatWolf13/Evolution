@@ -19,7 +19,7 @@ import tgw.evolution.client.renderer.DimensionOverworld;
 
 import java.nio.IntBuffer;
 
-public class LightTextureEv extends LightTexture {
+public class LightingTexture extends LightTexture {
 
     private static final String CL_SOURCE = """
                         inline float invGamma(float value) {
@@ -132,7 +132,7 @@ public class LightTextureEv extends LightTexture {
     private final Pointer skyRedPointer = Pointer.to(this.skyRed);
     private Pointer tablePointer;
 
-    public LightTextureEv(GameRenderer gameRenderer, Minecraft mc) {
+    public LightingTexture(GameRenderer gameRenderer, Minecraft mc) {
         super(gameRenderer, mc);
         this.gameRenderer = gameRenderer;
         this.mc = mc;

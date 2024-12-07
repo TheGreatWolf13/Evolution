@@ -23,9 +23,9 @@ import org.jetbrains.annotations.Contract;
 import org.spongepowered.asm.mixin.*;
 import tgw.evolution.ColorManager;
 import tgw.evolution.Evolution;
-import tgw.evolution.client.renderer.EvAmbientOcclusionFace;
+import tgw.evolution.client.renderer.AmbientOcclusionFace;
 import tgw.evolution.client.renderer.ambient.DynamicLights;
-import tgw.evolution.client.renderer.chunk.EvLevelRenderer;
+import tgw.evolution.client.renderer.chunk.LevelRenderer;
 import tgw.evolution.hooks.asm.DeleteMethod;
 import tgw.evolution.patches.PatchLiquidBlockRenderer;
 import tgw.evolution.util.math.DirectionUtil;
@@ -35,20 +35,10 @@ import tgw.evolution.util.math.Vec3d;
 public abstract class Mixin_M_LiquidBlockRenderer implements PatchLiquidBlockRenderer {
 
     @Unique private static final ThreadLocal<Vec3d> VEC = ThreadLocal.withInitial(Vec3d::new);
-    @Unique private static final ThreadLocal<EvAmbientOcclusionFace> AO_FACE = ThreadLocal.withInitial(EvAmbientOcclusionFace::new);
+    @Unique private static final ThreadLocal<AmbientOcclusionFace> AO_FACE = ThreadLocal.withInitial(AmbientOcclusionFace::new);
     @Shadow @Final private TextureAtlasSprite[] lavaIcons;
     @Shadow @Final private TextureAtlasSprite[] waterIcons;
     @Shadow private TextureAtlasSprite waterOverlay;
-
-    /**
-     * @reason _
-     * @author TheGreatWolf
-     */
-    @Overwrite
-    @DeleteMethod
-    public static boolean shouldRenderFace(BlockAndTintGetter blockAndTintGetter, BlockPos blockPos, FluidState fluidState, BlockState blockState, Direction direction, FluidState fluidState2) {
-        return !isFaceOccludedBySelf(blockAndTintGetter, blockPos, blockState, direction) && !isNeighborSameFluid(fluidState, fluidState2);
-    }
 
     @Unique
     private static long addWeightedHeight(long a, float f) {
@@ -103,7 +93,7 @@ public abstract class Mixin_M_LiquidBlockRenderer implements PatchLiquidBlockRen
 
     @Unique
     private static int getLightColor(BlockAndTintGetter level, int x, int y, int z) {
-        return DynamicLights.combineLightMap(EvLevelRenderer.getLightColor(level, x, y, z), EvLevelRenderer.getLightColor(level, x, y + 1, z));
+        return DynamicLights.combineLightMap(LevelRenderer.getLightColor(level, x, y, z), LevelRenderer.getLightColor(level, x, y + 1, z));
     }
 
     /**
@@ -178,6 +168,16 @@ public abstract class Mixin_M_LiquidBlockRenderer implements PatchLiquidBlockRen
         return false;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Overwrite
+    @DeleteMethod
+    public static boolean shouldRenderFace(BlockAndTintGetter blockAndTintGetter, BlockPos blockPos, FluidState fluidState, BlockState blockState, Direction direction, FluidState fluidState2) {
+        return !isFaceOccludedBySelf(blockAndTintGetter, blockPos, blockState, direction) && !isNeighborSameFluid(fluidState, fluidState2);
+    }
+
     @Unique
     private static boolean shouldRenderFace(BlockAndTintGetter level, int x, int y, int z, FluidState fluid, BlockState state, Direction direction, FluidState fluidAtDir) {
         return !isFaceOccludedBySelf(level, x, y, z, state, direction) && !isNeighborSameFluid(fluid, fluidAtDir);
@@ -188,9 +188,49 @@ public abstract class Mixin_M_LiquidBlockRenderer implements PatchLiquidBlockRen
      * @author TheGreatWolf
      */
     @Overwrite
-    public boolean tesselate(BlockAndTintGetter level, BlockPos pos, VertexConsumer builder, BlockState state, FluidState fluidState) {
-        Evolution.deprecatedMethod();
-        return this.tesselate(level, pos.getX(), pos.getY(), pos.getZ(), builder, state, fluidState);
+    @DeleteMethod
+    private void addWeightedHeight(float[] fs, float f) {
+        throw new AbstractMethodError();
+    }
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Overwrite
+    @DeleteMethod
+    private float calculateAverageHeight(BlockAndTintGetter blockAndTintGetter, Fluid fluid, float f, float g, float h, BlockPos blockPos) {
+        throw new AbstractMethodError();
+    }
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Overwrite
+    @DeleteMethod
+    private float getHeight(BlockAndTintGetter blockAndTintGetter, Fluid fluid, BlockPos blockPos) {
+        throw new AbstractMethodError();
+    }
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Overwrite
+    @DeleteMethod
+    private float getHeight(BlockAndTintGetter blockAndTintGetter, Fluid fluid, BlockPos blockPos, BlockState blockState, FluidState fluidState) {
+        throw new AbstractMethodError();
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Replace LevelRenderer
+     */
+    @Overwrite
+    @DeleteMethod
+    private int getLightColor(BlockAndTintGetter level, BlockPos pos) {
+        throw new AbstractMethodError();
     }
 
     @Override
@@ -281,7 +321,7 @@ public abstract class Mixin_M_LiquidBlockRenderer implements PatchLiquidBlockRen
                 b3 = shadeU;
             }
             else {
-                EvAmbientOcclusionFace aoFace = AO_FACE.get();
+                AmbientOcclusionFace aoFace = AO_FACE.get();
                 aoFace.calculate(level, state, x, y, z, Direction.UP, null, (byte) 0, true);
                 lm0 = aoFace.lightmap0;
                 lm1 = aoFace.lightmap1;
@@ -463,56 +503,16 @@ public abstract class Mixin_M_LiquidBlockRenderer implements PatchLiquidBlockRen
         return rendered;
     }
 
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Overwrite
+    public boolean tesselate(BlockAndTintGetter level, BlockPos pos, VertexConsumer builder, BlockState state, FluidState fluidState) {
+        Evolution.deprecatedMethod();
+        return this.tesselate(level, pos.getX(), pos.getY(), pos.getZ(), builder, state, fluidState);
+    }
+
     @Shadow
     protected abstract void vertex(VertexConsumer vertexConsumer, double d, double e, double f, float g, float h, float i, float j, float k, int l);
-
-    /**
-     * @reason _
-     * @author TheGreatWolf
-     */
-    @Overwrite
-    @DeleteMethod
-    private void addWeightedHeight(float[] fs, float f) {
-        throw new AbstractMethodError();
-    }
-
-    /**
-     * @reason _
-     * @author TheGreatWolf
-     */
-    @Overwrite
-    @DeleteMethod
-    private float calculateAverageHeight(BlockAndTintGetter blockAndTintGetter, Fluid fluid, float f, float g, float h, BlockPos blockPos) {
-        throw new AbstractMethodError();
-    }
-
-    /**
-     * @reason _
-     * @author TheGreatWolf
-     */
-    @Overwrite
-    @DeleteMethod
-    private float getHeight(BlockAndTintGetter blockAndTintGetter, Fluid fluid, BlockPos blockPos) {
-        throw new AbstractMethodError();
-    }
-
-    /**
-     * @reason _
-     * @author TheGreatWolf
-     */
-    @Overwrite
-    @DeleteMethod
-    private float getHeight(BlockAndTintGetter blockAndTintGetter, Fluid fluid, BlockPos blockPos, BlockState blockState, FluidState fluidState) {
-        throw new AbstractMethodError();
-    }
-
-    /**
-     * @author TheGreatWolf
-     * @reason Replace LevelRenderer
-     */
-    @Overwrite
-    @DeleteMethod
-    private int getLightColor(BlockAndTintGetter level, BlockPos pos) {
-        throw new AbstractMethodError();
-    }
 }

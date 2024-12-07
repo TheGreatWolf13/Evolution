@@ -106,8 +106,8 @@ import tgw.evolution.client.gui.advancements.ScreenAdvancements;
 import tgw.evolution.client.renderer.ICrashReset;
 import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.client.renderer.ambient.DynamicLights;
-import tgw.evolution.client.renderer.chunk.EvClientMetricsSamplersProvider;
-import tgw.evolution.client.renderer.chunk.EvLevelRenderer;
+import tgw.evolution.client.renderer.chunk.ClientMetricsSamplersProvider;
+import tgw.evolution.client.renderer.chunk.LevelRenderer;
 import tgw.evolution.client.util.TimerQuery;
 import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.datagen.DataGenerators;
@@ -198,9 +198,9 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
     @Shadow private long lastTime;
     @Mutable @Shadow @Final @RestoreFinal private String launchedVersion;
     @Shadow public @Nullable ClientLevel level;
-    @Shadow @Final @DeleteField public LevelRenderer levelRenderer;
+    @Shadow @Final @DeleteField public net.minecraft.client.renderer.LevelRenderer levelRenderer;
     @Mutable @Shadow @Final @RestoreFinal private LevelStorageSource levelSource;
-    @Unique private final EvLevelRenderer lvlRenderer;
+    @Unique private final LevelRenderer lvlRenderer;
     @Mutable @Shadow @Final @RestoreFinal private RenderTarget mainRenderTarget;
     @Shadow private MetricsRecorder metricsRecorder;
     @Mutable @Shadow @Final @RestoreFinal private MinecraftSessionService minecraftSessionService;
@@ -389,7 +389,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
         this.playerSocialManager = new PlayerSocialManager((Minecraft) (Object) this, this.userApiService);
         this.blockRenderer = new BlockRenderDispatcher(this.modelManager.getBlockModelShaper(), blockEntityWithoutLevelRenderer, this.blockColors);
         this.resourceManager.registerReloadListener(this.blockRenderer);
-        this.lvlRenderer = new EvLevelRenderer((Minecraft) (Object) this, this.renderBuffers);
+        this.lvlRenderer = new LevelRenderer((Minecraft) (Object) this, this.renderBuffers);
         this.resourceManager.registerReloadListener(this.lvlRenderer);
         this.createSearchTrees();
         this.resourceManager.registerReloadListener(this.searchRegistry);
@@ -631,7 +631,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
             this.singleplayerServer.startRecordingMetrics(p -> {}, completablefuture1::complete);
             consumer3 = completablefuture::complete;
         }
-        this.metricsRecorder = ActiveMetricsRecorder.createStarted(new EvClientMetricsSamplersProvider(Util.timeSource, this.lvlRenderer),
+        this.metricsRecorder = ActiveMetricsRecorder.createStarted(new ClientMetricsSamplersProvider(Util.timeSource, this.lvlRenderer),
                                                                    Util.timeSource, Util.ioPool(), new MetricsPersister("client"),
                                                                    p_210757_ -> {
                                                                        this.metricsRecorder = InactiveMetricsRecorder.INSTANCE;
@@ -1085,7 +1085,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
     protected abstract boolean isMultiplayerServer();
 
     @Override
-    public EvLevelRenderer lvlRenderer() {
+    public LevelRenderer lvlRenderer() {
         return this.lvlRenderer;
     }
 

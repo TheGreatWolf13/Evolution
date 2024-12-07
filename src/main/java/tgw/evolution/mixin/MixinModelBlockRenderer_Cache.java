@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import tgw.evolution.client.renderer.chunk.EvLevelRenderer;
+import tgw.evolution.client.renderer.chunk.LevelRenderer;
 import tgw.evolution.hooks.asm.DeleteMethod;
 import tgw.evolution.patches.PatchModelBlockRendererCache;
 
@@ -40,7 +40,7 @@ public abstract class MixinModelBlockRenderer_Cache implements PatchModelBlockRe
                 return color;
             }
         }
-        int color = EvLevelRenderer.getLightColor(level, state, x, y, z, true);
+        int color = LevelRenderer.getLightColor(level, state, x, y, z, true);
         if (this.enabled) {
             if (this.colorCache.size() == 100) {
                 this.colorCache.removeFirstInt();

@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.client.renderer.ambient.DynamicLights;
-import tgw.evolution.client.renderer.chunk.EvLevelRenderer;
+import tgw.evolution.client.renderer.chunk.LevelRenderer;
 
 import javax.annotation.Nullable;
 
@@ -35,7 +35,7 @@ public abstract class MixinBlockEntityRenderDispatcher {
         int light;
         if (level != null) {
             BlockPos pos = tile.getBlockPos();
-            light = EvLevelRenderer.getLightColor(level, pos.getX(), pos.getY(), pos.getZ());
+            light = LevelRenderer.getLightColor(level, pos.getX(), pos.getY(), pos.getZ());
         }
         else {
             light = DynamicLights.FULL_LIGHTMAP;
