@@ -110,6 +110,10 @@ public final class EvolutionTexts {
     private EvolutionTexts() {
     }
 
+    private static MutableComponent arrow(MobEffectCategory category) {
+        return new TextComponent(" ► ").withStyle(category == BENEFICIAL ? DARK_GREEN : category == HARMFUL ? RED : DARK_YELLOW);
+    }
+
     public static FormattedText basicAttack() {
         return new TranslatableComponent("evolution.tooltip.basicAttack", Minecraft.getInstance().options.keyAttack.getTranslatedKeyMessage());
     }
@@ -154,10 +158,6 @@ public final class EvolutionTexts {
         return new TranslatableComponent(damage, TWO_PLACES.format(amount)).setStyle(DARK_RED);
     }
 
-    public static Component dmgMultiplier(double mult) {
-        return new TranslatableComponent("evolution.tooltip.damageMultiplier", TWO_PLACES.format(mult)).setStyle(AQUA);
-    }
-
 //    public static Component container(IItemFluidContainer container, ItemStack stack) {
 //        return new TranslatableComponent("evolution.tooltip.containerAmount",
 //                                         VOLUME.format(container.getAmount(stack) / 100.0f),
@@ -165,6 +165,10 @@ public final class EvolutionTexts {
 //                                         ((FluidGeneric) container.getFluid()).getTextComp() :
 //                                         "null").setStyle(BLUE);
 //    }
+
+    public static Component dmgMultiplier(double mult) {
+        return new TranslatableComponent("evolution.tooltip.damageMultiplier", TWO_PLACES.format(mult)).setStyle(AQUA);
+    }
 
     public static Component drink(int amount) {
         return new TextComponent(DRINK.format(amount));
@@ -317,6 +321,20 @@ public final class EvolutionTexts {
         return new TextComponent("   ").append(new TranslatableComponent("evolution.tooltip.sharp", sharpAmount, hardness)).setStyle(DARK_AQUA);
     }
 
+    public static Component structuralArchCost(int min, int max) {
+        if (min == max) {
+            return new TranslatableComponent("evolution.tooltip.structuralArchCost", min).setStyle(LIGHT_GREY);
+        }
+        return new TranslatableComponent("evolution.tooltip.structuralArchCostRange", min, max).setStyle(LIGHT_GREY);
+    }
+
+    public static Component structuralBeamCost(int min, int max) {
+        if (min == max) {
+            return new TranslatableComponent("evolution.tooltip.structuralBeamCost", min).setStyle(LIGHT_GREY);
+        }
+        return new TranslatableComponent("evolution.tooltip.structuralBeamCostRange", min, max).setStyle(LIGHT_GREY);
+    }
+
     public static Component structuralIntegrity(int min, int max) {
         if (min == max) {
             return new TranslatableComponent("evolution.tooltip.structuralIntegrity", min).setStyle(LIGHT_GREY);
@@ -362,9 +380,5 @@ public final class EvolutionTexts {
 
     public static MutableComponent transl(String text) {
         return new TranslatableComponent(text);
-    }
-
-    private static MutableComponent arrow(MobEffectCategory category) {
-        return new TextComponent(" ► ").withStyle(category == BENEFICIAL ? DARK_GREEN : category == HARMFUL ? RED : DARK_YELLOW);
     }
 }

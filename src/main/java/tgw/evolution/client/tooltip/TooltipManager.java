@@ -34,6 +34,8 @@ public final class TooltipManager {
         registerTooltipFactory(TooltipMass.class, TooltipMass::setup);
         registerTooltipFactory(TooltipMining.class, EvolutionTooltipRenderer.MINING::setTooltip);
         registerTooltipFactory(TooltipPrecision.class, EvolutionTooltipRenderer.PRECISION::setTooltip);
+        registerTooltipFactory(TooltipStructuralArchCost.class, EvolutionTooltipRenderer.STRUCTURAL_ARCH_COST::setTooltip);
+        registerTooltipFactory(TooltipStructuralBeamCost.class, EvolutionTooltipRenderer.STRUCTURAL_BEAM_COST::setTooltip);
         registerTooltipFactory(TooltipStructuralIntegrity.class, EvolutionTooltipRenderer.STRUCTURAL_INTEGRITY::setTooltip);
         registerTooltipFactory(TooltipStructureType.class, EvolutionTooltipRenderer.STRUCTURAL_TYPE::setTooltip);
         registerTooltipFactory(TooltipThrowSpeed.class, EvolutionTooltipRenderer.THROW_SPEED::setTooltip);

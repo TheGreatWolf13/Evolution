@@ -28,6 +28,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.IStructural;
+import tgw.evolution.client.tooltip.TooltipStructuralArchCost;
+import tgw.evolution.client.tooltip.TooltipStructuralBeamCost;
 import tgw.evolution.client.tooltip.TooltipStructuralIntegrity;
 import tgw.evolution.client.tooltip.TooltipStructureType;
 import tgw.evolution.init.EvolutionStats;
@@ -84,6 +86,10 @@ public class ItemBlock extends ItemGeneric {
         this.block.appendHoverText(stack, level, list, flag);
     }
 
+    protected boolean canPlace(LevelReader level, int x, int y, int z, Player player, BlockState blockState) {
+        return (!this.mustSurvive() || blockState.canSurvive_(level, x, y, z)) && level.isUnobstructed_(blockState, x, y, z, player);
+    }
+
     @Override
     public void fillItemCategory(CreativeModeTab tab, NonNullList<ItemStack> list) {
         if (this.allowdedIn(tab)) {
@@ -100,6 +106,14 @@ public class ItemBlock extends ItemGeneric {
         return this.block.getDescriptionId();
     }
 
+    protected SoundEvent getPlaceSound(BlockState state) {
+        return state.getSoundType().getPlaceSound();
+    }
+
+    protected @Nullable BlockState getPlacementState(Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult) {
+        return this.block.getStateForPlacement_(level, x, y, z, player, hand, hitResult);
+    }
+
     public void makeTooltip(EitherList<FormattedText, TooltipComponent> tooltip, boolean expanded) {
         if (this.block instanceof IStructural structural) {
             tooltip.addLeft(EvolutionTexts.EMPTY);
@@ -107,6 +121,10 @@ public class ItemBlock extends ItemGeneric {
                 tooltip.addLeft(EvolutionTexts.TOOLTIP_STRUCTURAL);
                 int min = Integer.MAX_VALUE;
                 int max = 0;
+                int minArch = Integer.MAX_VALUE;
+                int maxArch = 0;
+                int minBeam = Integer.MAX_VALUE;
+                int maxBeam = 0;
                 RSet<IStructural.BeamType> types = BEAM_TYPES;
                 types.clear();
                 types.add(IStructural.BeamType.NONE);
@@ -121,6 +139,20 @@ public class ItemBlock extends ItemGeneric {
                     if (integrity > max) {
                         max = integrity;
                     }
+                    int arch = structural.getIncrementForArch(state);
+                    if (arch < minArch) {
+                        minArch = arch;
+                    }
+                    if (arch > maxArch) {
+                        maxArch = arch;
+                    }
+                    int beam = structural.getIncrementForBeam(state);
+                    if (beam < minBeam) {
+                        minBeam = beam;
+                    }
+                    if (beam > maxBeam) {
+                        maxBeam = beam;
+                    }
                 }
                 if (types.contains(IStructural.BeamType.CARDINAL_ARCH)) {
                     types.add(IStructural.BeamType.CARDINAL_BEAM);
@@ -133,11 +165,21 @@ public class ItemBlock extends ItemGeneric {
                 }
                 tooltip.addRight(TooltipStructuralIntegrity.setup(min, max));
                 tooltip.addRight(TooltipStructureType.setup(types));
+                if (types.contains(IStructural.BeamType.CARDINAL_ARCH) || types.contains(IStructural.BeamType.X_ARCH) || types.contains(IStructural.BeamType.Z_ARCH)) {
+                    tooltip.addRight(TooltipStructuralArchCost.setup(minArch, maxArch));
+                }
+                if (types.contains(IStructural.BeamType.CARDINAL_BEAM) || types.contains(IStructural.BeamType.X_BEAM) || types.contains(IStructural.BeamType.Z_BEAM)) {
+                    tooltip.addRight(TooltipStructuralBeamCost.setup(minBeam, maxBeam));
+                }
             }
             else {
                 tooltip.addLeft(EvolutionTexts.TOOLTIP_SHOW_STRUCTURAL);
             }
         }
+    }
+
+    protected boolean mustSurvive() {
+        return true;
     }
 
     public InteractionResult place(Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult, boolean canPlace) {
@@ -173,8 +215,16 @@ public class ItemBlock extends ItemGeneric {
         return level.isClientSide ? InteractionResult.SUCCESS : InteractionResult.CONSUME_PARTIAL;
     }
 
+    protected boolean placeBlock(LevelWriter level, int x, int y, int z, BlockState state) {
+        return level.setBlock_(x, y, z, state, BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE | BlockFlags.RENDER_MAINTHREAD);
+    }
+
     public void registerBlocks(Map<Block, Item> map, Item item) {
         map.put(this.block, item);
+    }
+
+    protected void updateCustomBlockEntityTag(int x, int y, int z, Level level, Player player, ItemStack stack, BlockState state) {
+        updateCustomBlockEntityTag(level, player, x, y, z, stack);
     }
 
     @Override
@@ -195,29 +245,5 @@ public class ItemBlock extends ItemGeneric {
             return secondaryResult == InteractionResult.CONSUME ? InteractionResult.CONSUME_PARTIAL : secondaryResult;
         }
         return placeResult;
-    }
-
-    protected boolean canPlace(LevelReader level, int x, int y, int z, Player player, BlockState blockState) {
-        return (!this.mustSurvive() || blockState.canSurvive_(level, x, y, z)) && level.isUnobstructed_(blockState, x, y, z, player);
-    }
-
-    protected SoundEvent getPlaceSound(BlockState state) {
-        return state.getSoundType().getPlaceSound();
-    }
-
-    protected @Nullable BlockState getPlacementState(Level level, int x, int y, int z, Player player, InteractionHand hand, BlockHitResult hitResult) {
-        return this.block.getStateForPlacement_(level, x, y, z, player, hand, hitResult);
-    }
-
-    protected boolean mustSurvive() {
-        return true;
-    }
-
-    protected boolean placeBlock(LevelWriter level, int x, int y, int z, BlockState state) {
-        return level.setBlock_(x, y, z, state, BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE | BlockFlags.RENDER_MAINTHREAD);
-    }
-
-    protected void updateCustomBlockEntityTag(int x, int y, int z, Level level, Player player, ItemStack stack, BlockState state) {
-        updateCustomBlockEntityTag(level, player, x, y, z, stack);
     }
 }
