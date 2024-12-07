@@ -17,11 +17,11 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import tgw.evolution.blocks.util.BlockUtils;
-import tgw.evolution.events.ItemEvents;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionTEs;
 import tgw.evolution.items.ItemLog;
+import tgw.evolution.items.ItemUtils;
 import tgw.evolution.items.modular.ItemModular;
 import tgw.evolution.util.constants.WoodVariant;
 
@@ -44,8 +44,7 @@ public class TEChopping extends BlockEntity {
             int z = pos.getZ();
             BlockUtils.dropItemStack(this.level, x, y, z, stack, 0.5);
             Block block = WoodVariant.byId(this.id).get(EvolutionBlocks.LOGS);
-            ItemEvents.damageItem(player.getMainHandItem(), player, ItemModular.DamageCause.BREAK_BLOCK, EquipmentSlot.MAINHAND,
-                                  block.getHarvestLevel(block.defaultBlockState(), this.level, x, y, z));
+            ItemUtils.damageItem(player.getMainHandItem(), player, ItemModular.DamageCause.BREAK_BLOCK, EquipmentSlot.MAINHAND, block.getHarvestLevel(block.defaultBlockState(), this.level, x, y, z));
             player.awardStat(Stats.ITEM_CRAFTED.get(firewood), 16);
         }
         this.id = -1;

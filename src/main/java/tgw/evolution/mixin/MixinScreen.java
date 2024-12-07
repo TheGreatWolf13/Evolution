@@ -18,8 +18,8 @@ import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.*;
 import tgw.evolution.client.renderer.RenderHelper;
-import tgw.evolution.events.ItemEvents;
 import tgw.evolution.items.IEvolutionItem;
+import tgw.evolution.items.ItemUtils;
 
 import java.util.List;
 import java.util.Optional;
@@ -27,14 +27,14 @@ import java.util.Optional;
 @Mixin(Screen.class)
 public abstract class MixinScreen extends AbstractContainerEventHandler implements Widget {
 
-    @Shadow public int height;
-    @Shadow @Final public List<Widget> renderables;
-    @Shadow public int width;
-    @Shadow protected Font font;
-    @Shadow protected ItemRenderer itemRenderer;
     @Shadow @Final private List<GuiEventListener> children;
+    @Shadow protected Font font;
+    @Shadow public int height;
+    @Shadow protected ItemRenderer itemRenderer;
     @Shadow @Final private List<NarratableEntry> narratables;
+    @Shadow @Final public List<Widget> renderables;
     @Unique private ItemStack tooltipStack = ItemStack.EMPTY;
+    @Shadow public int width;
 
     /**
      * @reason _
@@ -118,7 +118,7 @@ public abstract class MixinScreen extends AbstractContainerEventHandler implemen
      */
     @Overwrite
     public void renderTooltip(PoseStack matrices, List<Component> tooltip, Optional<TooltipComponent> image, int mouseX, int mouseY) {
-        this.renderTooltipInternal(matrices, ItemEvents.gatherTooltipComponents(this.tooltipStack, tooltip, image, mouseX, this.width, this.font), mouseX, mouseY);
+        this.renderTooltipInternal(matrices, ItemUtils.gatherTooltipComponents(this.tooltipStack, tooltip, image, mouseX, this.width, this.font), mouseX, mouseY);
     }
 
     /**

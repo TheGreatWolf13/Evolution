@@ -15,7 +15,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.Nullable;
-import tgw.evolution.events.ItemEvents;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionEntities;
 import tgw.evolution.init.EvolutionSounds;
@@ -80,23 +79,8 @@ public class EntitySpear extends EntityGenericProjectile implements IAerodynamic
     }
 
     @Override
-    public float getFrictionModifier() {
-        return 0;
-    }
-
-    @Override
     protected SoundEvent getHitBlockSound() {
         return this.isStone ? EvolutionSounds.STONE_WEAPON_HIT_BLOCK : EvolutionSounds.METAL_WEAPON_HIT_BLOCK;
-    }
-
-    @Override
-    public double getLegSlowdown() {
-        return 0;
-    }
-
-    @Override
-    protected MovementEmission getMovementEmission() {
-        return MovementEmission.NONE;
     }
 
     @Override
@@ -129,8 +113,7 @@ public class EntitySpear extends EntityGenericProjectile implements IAerodynamic
     protected void onBlockHit(BlockState state, int x, int y, int z) {
         LivingEntity shooter = this.getShooter();
         if (shooter != null) {
-            ItemEvents.damageItem(this.stack, shooter, ItemModular.DamageCause.HIT_BLOCK, null,
-                                  state.getBlock().getHarvestLevel(state, this.level, x, y, z));
+            ItemUtils.damageItem(this.stack, shooter, ItemModular.DamageCause.HIT_BLOCK, null, state.getBlock().getHarvestLevel(state, this.level, x, y, z));
         }
     }
 
@@ -144,7 +127,7 @@ public class EntitySpear extends EntityGenericProjectile implements IAerodynamic
         LivingEntity shooter = this.getShooter();
         if (attackSuccessful && shooter != null) {
             //TODO harvest level based on what got hit
-            ItemEvents.damageItem(this.stack, shooter, ItemModular.DamageCause.HIT_ENTITY, null, HarvestLevel.HAND);
+            ItemUtils.damageItem(this.stack, shooter, ItemModular.DamageCause.HIT_ENTITY, null, HarvestLevel.HAND);
         }
         if (this.stack.isEmpty()) {
             this.playSound(SoundEvents.ITEM_BREAK, 0.8F, 0.8F + this.level.random.nextFloat() * 0.4F);
