@@ -15,7 +15,7 @@ import javax.annotation.Nullable;
 public class RenderRegionCache {
 
     private final L2OMap<LevelChunk> chunkCache = new L2OHashMap<>();
-    private final L2OMap<EvRenderChunk> renderCache = new L2OHashMap<>();
+    private final L2OMap<RenderChunk> renderCache = new L2OHashMap<>();
     private final OList<LevelChunk> tempList = new OArrayList<>();
 
     public void clear() {
@@ -51,21 +51,22 @@ public class RenderRegionCache {
         if (!hasAtLeastOneNotEmpty) {
             return null;
         }
-        EvRenderChunk[][] renderChunks = new EvRenderChunk[x1 - x0 + 1][z1 - z0 + 1];
+        int off = x1 - x0 + 1;
+        RenderChunk[] renderChunks = new RenderChunk[off * (z1 - z0 + 1)];
         int i = 0;
         for (int x = x0; x <= x1; ++x) {
             for (int z = z0; z <= z1; ++z) {
                 LevelChunk chunk = this.tempList.get(i++);
-                EvRenderChunk renderChunk = this.renderCache.get(chunk.getPos().toLong());
+                RenderChunk renderChunk = this.renderCache.get(chunk.getPos().toLong());
                 if (renderChunk == null) {
-                    renderChunk = EvRenderChunk.renderChunk(chunk);
+                    renderChunk = RenderChunk.renderChunk(chunk);
                     if (!renderChunk.isEmpty()) {
                         this.renderCache.put(chunk.getPos().toLong(), renderChunk);
                     }
                 }
-                renderChunks[x - x0][z - z0] = renderChunk;
+                renderChunks[(x - x0) * off + z - z0] = renderChunk;
             }
         }
-        return new RenderChunkRegion(level, x0, z0, renderChunks);
+        return new RenderChunkRegion(level, x0, z0, renderChunks, off);
     }
 }

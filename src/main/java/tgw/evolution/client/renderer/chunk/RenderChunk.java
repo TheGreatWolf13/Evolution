@@ -17,10 +17,10 @@ import tgw.evolution.util.collection.maps.L2OMap;
 
 import java.util.List;
 
-public final class EvRenderChunk {
+public final class RenderChunk {
 
-    private static final EvRenderChunk DEBUG = new EvRenderChunk(false, true);
-    private static final EvRenderChunk EMPTY = new EvRenderChunk(true, false);
+    private static final RenderChunk DEBUG = new RenderChunk(false, true);
+    private static final RenderChunk EMPTY = new RenderChunk(true, false);
     private final @Nullable L2OMap<BlockEntity> blockEntities;
     /**
      * Bit 0: Empty;<br>
@@ -30,7 +30,7 @@ public final class EvRenderChunk {
     private final @Nullable List<PalettedContainer<BlockState>> sections;
     private final @Nullable LevelChunk wrapped;
 
-    private EvRenderChunk(boolean empty, boolean debug) {
+    private RenderChunk(boolean empty, boolean debug) {
         if (empty) {
             this.flags = 1;
         }
@@ -43,7 +43,7 @@ public final class EvRenderChunk {
         this.wrapped = null;
     }
 
-    private EvRenderChunk(LevelChunk wrapped) {
+    private RenderChunk(LevelChunk wrapped) {
         this.wrapped = wrapped;
         this.flags = 0;
         this.blockEntities = wrapped.blockEntities_();
@@ -54,14 +54,14 @@ public final class EvRenderChunk {
         }
     }
 
-    public static EvRenderChunk renderChunk(LevelChunk chunk) {
+    public static RenderChunk renderChunk(LevelChunk chunk) {
         if (chunk.getLevel().isDebug()) {
             return DEBUG;
         }
         if (chunk.isEmpty()) {
             return EMPTY;
         }
-        return new EvRenderChunk(chunk);
+        return new RenderChunk(chunk);
     }
 
     public @Nullable BlockEntity getBlockEntity(int x, int y, int z) {
