@@ -11,7 +11,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.level.LevelReader;
-import org.jetbrains.annotations.Nullable;
 import org.jocl.*;
 import org.lwjgl.opengl.GL11C;
 import tgw.evolution.EvolutionClient;
@@ -21,22 +20,38 @@ import java.nio.IntBuffer;
 
 public class LightingTexture extends LightTexture {
 
+    private static final int SKY_FLASH = 16;
+    private static final int SKY_BRIGHTNESS = 17;
+    private static final int SKY_RED = 18;
+    private static final int SKY_GREEN = 19;
+    private static final int SKY_BLUE = 20;
+    private static final int DARKEN_AMOUNT = 21;
+    private static final int NIGHT_VISION_MOD = 22;
+    private static final int GAMMA = 23;
     private static final String CL_SOURCE = """
                         inline float invGamma(float value) {
                         	float f = 1.0F - value;
                         	return 1.0F - f * f * f;
                         }
                         			
-                        kernel void computeLightmap(global const float* table, float skyFlash, float corrSkyBrightness, float skyRed, float skyGreen, float skyBlue, float darkenAmount, float nightVisionMod, float gamma, global int* lightmap) {
+                        kernel void computeLightmap(global const float* data, global int* lightmap) {
                         	int x = get_global_id(0);
                         	int y = get_global_id(1);
                         	int bl = get_global_id(2);
+                        	float skyFlash = data[16];
+                        	float skyBrightness = data[17];
+                        	float skyRed = data[18];
+                        	float skyGreen = data[19];
+                        	float skyBlue = data[20];
+                        	float darkenAmount = data[21];
+                        	float nightVisionMod = data[22];
+                        	float gamma = data[23];
                         	for (int sl = 0; sl < 16; ++sl) {
-                        		float skyLight = table[sl] * skyFlash;
-                        		float bLRed = bl < 16 ? table[bl] * 0.5f : table[bl - 16];
-                        		float bLGreen = x < 16 ? table[x] * 0.5f : table[x - 16];
-                        		float bLBlue = y < 16 ? table[y] * 0.5f : table[y - 16];
-                        		float addend = corrSkyBrightness * skyLight;
+                        		float skyLight = data[sl] * skyFlash;
+                        		float bLRed = bl < 16 ? data[bl] * 0.5f : data[bl - 16];
+                        		float bLGreen = x < 16 ? data[x] * 0.5f : data[x - 16];
+                        		float bLBlue = y < 16 ? data[y] * 0.5f : data[y - 16];
+                        		float addend = skyBrightness * skyLight;
                         		float redMod = addend * skyRed;
                         		float greenMod = addend * skyGreen;
                         		float blueMod = addend * skyBlue;
@@ -101,13 +116,11 @@ public class LightingTexture extends LightTexture {
             """;
     private cl_command_queue commandQueue;
     private cl_context context;
-    private final float[] corrSkyBrightness = new float[1];
-    private final Pointer corrSkyBrightnessPointer = Pointer.to(this.corrSkyBrightness);
-    private final float[] darkenAmount = new float[1];
-    private final Pointer darkenAmountPointer = Pointer.to(this.darkenAmount);
+    private final float[] data = new float[24];
+    private cl_mem dataMem;
+    private Pointer dataPointerDevice;
+    private final Pointer dataPointerHost = Pointer.to(this.data);
     private final GameRenderer gameRenderer;
-    private final float[] gamma = new float[1];
-    private final Pointer gammaPointer = Pointer.to(this.gamma);
     private final long[] globalWorkSize = new long[3];
     private final Pointer imagePointer;
     private cl_kernel kernel;
@@ -116,21 +129,9 @@ public class LightingTexture extends LightTexture {
     private final Minecraft mc;
     private cl_mem memOut;
     private Pointer memOutPointer;
-    private @Nullable cl_mem memTable;
     private boolean needsUpdate;
-    private final float[] nightVisionMod = new float[1];
-    private final Pointer nightVisionPointer = Pointer.to(this.nightVisionMod);
     private float[] oldTable;
     private cl_program program;
-    private final float[] skyBlue = new float[1];
-    private final Pointer skyBluePointer = Pointer.to(this.skyBlue);
-    private final float[] skyFlash = new float[1];
-    private final Pointer skyFlashPointer = Pointer.to(this.skyFlash);
-    private final float[] skyGreen = new float[1];
-    private final Pointer skyGreenPointer = Pointer.to(this.skyGreen);
-    private final float[] skyRed = new float[1];
-    private final Pointer skyRedPointer = Pointer.to(this.skyRed);
-    private Pointer tablePointer;
 
     public LightingTexture(GameRenderer gameRenderer, Minecraft mc) {
         super(gameRenderer, mc);
@@ -184,9 +185,7 @@ public class LightingTexture extends LightTexture {
 
     @Override
     public void close() {
-        if (this.memTable != null) {
-            CL.clReleaseMemObject(this.memTable);
-        }
+        CL.clReleaseMemObject(this.dataMem);
         CL.clReleaseMemObject(this.memOut);
         CL.clReleaseKernel(this.kernel);
         CL.clReleaseProgram(this.program);
@@ -215,6 +214,8 @@ public class LightingTexture extends LightTexture {
         CL.clGetDeviceIDs(platform, deviceType, numDevices, devices, null);
         cl_device_id device = devices[deviceIndex];
         this.context = CL.clCreateContext(contextProperties, 1, new cl_device_id[]{device}, null, null, null);
+        this.dataMem = CL.clCreateBuffer(this.context, CL.CL_MEM_READ_ONLY | CL.CL_MEM_USE_HOST_PTR, Sizeof.cl_float * 24, this.dataPointerHost, null);
+        this.dataPointerDevice = Pointer.to(this.dataMem);
         cl_queue_properties properties = new cl_queue_properties();
         properties.addProperty(CL.CL_QUEUE_PROFILING_ENABLE, 1);
         properties.addProperty(CL.CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 1);
@@ -255,18 +256,14 @@ public class LightingTexture extends LightTexture {
                 //noinspection ArrayEquality
                 if (table != this.oldTable) {
                     this.oldTable = table;
-                    if (this.memTable != null) {
-                        CL.clReleaseMemObject(this.memTable);
-                    }
-                    this.memTable = CL.clCreateBuffer(this.context, CL.CL_MEM_READ_ONLY | CL.CL_MEM_USE_HOST_PTR, Sizeof.cl_float * 16, Pointer.to(table), null);
-                    this.tablePointer = Pointer.to(this.memTable);
+                    System.arraycopy(table, 0, this.data, 0, table.length);
                 }
                 float skyBrightness = getSunBrightness(level, partialTicks);
                 if (level.getSkyFlashTime() > 0) {
-                    this.skyFlash[0] = 1.0F;
+                    this.data[SKY_FLASH] = 1.0F;
                 }
                 else {
-                    this.skyFlash[0] = skyBrightness;
+                    this.data[SKY_FLASH] = skyBrightness;
                 }
                 assert this.mc.player != null;
                 float waterBrightness = this.mc.player.getWaterVision();
@@ -280,10 +277,10 @@ public class LightingTexture extends LightTexture {
                 else {
                     nightVisionMod = 0.0F;
                 }
-                this.nightVisionMod[0] = nightVisionMod;
-                this.corrSkyBrightness[0] = skyBrightness * 0.65f + 0.35f;
-                this.darkenAmount[0] = this.gameRenderer.getDarkenWorldAmount(partialTicks);
-                this.gamma[0] = (float) this.mc.options.gamma;
+                this.data[NIGHT_VISION_MOD] = nightVisionMod;
+                this.data[SKY_BRIGHTNESS] = skyBrightness * 0.65f + 0.35f;
+                this.data[DARKEN_AMOUNT] = this.gameRenderer.getDarkenWorldAmount(partialTicks);
+                this.data[GAMMA] = (float) this.mc.options.gamma;
                 float r = 1.0f;
                 float g = 1.0f;
                 float b = 1.0f;
@@ -306,23 +303,15 @@ public class LightingTexture extends LightTexture {
                         b += alpha * duskDawnColors[2];
                     }
                 }
-                this.skyRed[0] = r;
-                this.skyGreen[0] = g;
-                this.skyBlue[0] = b;
-                cl_kernel kernel = this.kernel;
-                CL.clSetKernelArg(kernel, 0, Sizeof.cl_mem, this.tablePointer);
-                CL.clSetKernelArg(kernel, 1, Sizeof.cl_float, this.skyFlashPointer);
-                CL.clSetKernelArg(kernel, 2, Sizeof.cl_float, this.corrSkyBrightnessPointer);
-                CL.clSetKernelArg(kernel, 3, Sizeof.cl_float, this.skyRedPointer);
-                CL.clSetKernelArg(kernel, 4, Sizeof.cl_float, this.skyGreenPointer);
-                CL.clSetKernelArg(kernel, 5, Sizeof.cl_float, this.skyBluePointer);
-                CL.clSetKernelArg(kernel, 6, Sizeof.cl_float, this.darkenAmountPointer);
-                CL.clSetKernelArg(kernel, 7, Sizeof.cl_float, this.nightVisionPointer);
-                CL.clSetKernelArg(kernel, 8, Sizeof.cl_float, this.gammaPointer);
-                CL.clSetKernelArg(kernel, 9, Sizeof.cl_mem, this.memOutPointer);
-                CL.clEnqueueNDRangeKernel(this.commandQueue, kernel, 3, null, this.globalWorkSize, null, 0, null, null);
+                this.data[SKY_RED] = r;
+                this.data[SKY_GREEN] = g;
+                this.data[SKY_BLUE] = b;
+                CL.clEnqueueWriteBuffer(this.commandQueue, this.dataMem, true, 0, 24 * Sizeof.cl_float, this.dataPointerHost, 0, null, null);
+                CL.clSetKernelArg(this.kernel, 0, Sizeof.cl_mem, this.dataPointerDevice);
+                CL.clSetKernelArg(this.kernel, 1, Sizeof.cl_mem, this.memOutPointer);
+                CL.clEnqueueNDRangeKernel(this.commandQueue, this.kernel, 3, null, this.globalWorkSize, null, 0, null, null);
                 // Read the output data
-                CL.clEnqueueReadBuffer(this.commandQueue, this.memOut, CL.CL_TRUE, 0, 1_024 * 512 * Sizeof.cl_int, this.imagePointer, 0, null, null);
+                CL.clEnqueueReadBuffer(this.commandQueue, this.memOut, true, 0, 1_024 * 512 * Sizeof.cl_int, this.imagePointer, 0, null, null);
                 this.lightTexture.upload();
             }
             profiler.pop();
