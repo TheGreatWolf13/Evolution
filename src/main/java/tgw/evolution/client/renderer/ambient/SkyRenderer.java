@@ -84,10 +84,8 @@ public class SkyRenderer {
         for (int i = 0; i < 45; i++) {
             builder.vertex(matrix, -0.5f, celestialRadius * MathHelper.cosDeg(8 * i), celestialRadius * MathHelper.sinDeg(8 * i)).endVertex();
             builder.vertex(matrix, 0.5f, celestialRadius * MathHelper.cosDeg(8 * i), celestialRadius * MathHelper.sinDeg(8 * i)).endVertex();
-            builder.vertex(matrix, 0.5f, celestialRadius * MathHelper.cosDeg(8 * (i + 1)), celestialRadius * MathHelper.sinDeg(8 * (i + 1)))
-                   .endVertex();
-            builder.vertex(matrix, -0.5f, celestialRadius * MathHelper.cosDeg(8 * (i + 1)), celestialRadius * MathHelper.sinDeg(8 * (i + 1)))
-                   .endVertex();
+            builder.vertex(matrix, 0.5f, celestialRadius * MathHelper.cosDeg(8 * (i + 1)), celestialRadius * MathHelper.sinDeg(8 * (i + 1))).endVertex();
+            builder.vertex(matrix, -0.5f, celestialRadius * MathHelper.cosDeg(8 * (i + 1)), celestialRadius * MathHelper.sinDeg(8 * (i + 1))).endVertex();
         }
         builder.end();
         BufferUploader.end(builder);
@@ -366,8 +364,8 @@ public class SkyRenderer {
         //Bit 0: Moon
         //Bit 1: Sun
         //Bit 2: Moon on Sunlight (for Solar Eclipses)
-        //Bit 3: Mercury and Venus
-        //Bit 4: Earth Shadow
+        //Bit 3: Mercury and Venus (for transits)
+        //Bit 4: Earth Shadow (for Lunar Eclipses)
         RenderSystem.clear(GL11.GL_STENCIL_BUFFER_BIT, false);
         mc.getProfiler().popPush("stencil");
         if (planetStarBrightness > 0 || starBrightness > 0 || this.dimension.isCloseToSolarEclipse()) {
@@ -641,18 +639,18 @@ public class SkyRenderer {
             this.fog(false);
             //Pushed matrix to draw dusk and dawn
             matrices.pushPose();
-            matrices.mulPose(CommonRotations.XN90);
+            matrices.mulPoseX(-90);
             matrices.mulPoseZ(this.dimension.getSunAzimuth());
             Matrix4f duskDawnMatrix = matrices.last().pose();
             builder.begin(VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION_COLOR);
             builder.vertex(duskDawnMatrix, 0, EarthHelper.CELESTIAL_SPHERE_RADIUS, 0)
                    .color(duskDawnColors[0], duskDawnColors[1], duskDawnColors[2], duskDawnColors[3])
                    .endVertex();
-            for (int j = 0; j <= 16; j++) {
-                float f6 = j * Mth.TWO_PI / 16.0F;
-                float f7 = Mth.sin(f6);
-                float f8 = Mth.cos(f6);
-                builder.vertex(duskDawnMatrix, -f7 * 120.0F, f8 * 120.0F, f8 * 120.0F * duskDawnColors[3])
+            for (int i = 0; i <= 16; i++) {
+                float angle = Mth.TWO_PI / 16.0F * i;
+                float sin = Mth.sin(angle);
+                float cos = Mth.cos(angle);
+                builder.vertex(duskDawnMatrix, -sin * 120, cos * 120, cos * 120 * duskDawnColors[3])
                        .color(duskDawnColors[0], duskDawnColors[1], duskDawnColors[2], 0.0F)
                        .endVertex();
             }
@@ -675,7 +673,7 @@ public class SkyRenderer {
             this.fog(false);
             //Pushed matrix to draw celestial equator and poles
             matrices.pushPose();
-            matrices.mulPose(CommonRotations.YN90);
+            matrices.mulPoseY(-90);
             //Translate the sun in the sky based on season.
             matrices.mulPose(LATITUDE_TRANSFORM);
             //Draw the celestial equator
@@ -686,7 +684,7 @@ public class SkyRenderer {
             if (poles) {
                 RenderSystem.setShaderColor(0.0f, 0.0f, 1.0f, 1.0f);
                 drawPole(matrices.last().pose(), builder);
-                matrices.mulPose(CommonRotations.YP180);
+                matrices.mulPoseY(180);
                 RenderSystem.setShaderColor(1.0f, 0.0f, 0.0f, 1.0f);
                 drawPole(matrices.last().pose(), builder);
             }
@@ -700,7 +698,7 @@ public class SkyRenderer {
             this.fog(false);
             //Pushed matrix to draw the sun path
             matrices.pushPose();
-            matrices.mulPose(CommonRotations.YN90);
+            matrices.mulPoseY(-90);
             //Translate the sun in the sky based on season.
             matrices.mulPose(LATITUDE_TRANSFORM);
             matrices.translate(sunDeclinationOffset, 0, 0);
@@ -724,18 +722,10 @@ public class SkyRenderer {
             AccessorRenderSystem.setShader(GameRenderer.getPositionShader());
             builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION);
             for (int i = 0; i < 45; i++) {
-                builder.vertex(matrix,
-                               EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.cosDeg(8 * i),
-                               EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.sinDeg(8 * i), -0.5f).endVertex();
-                builder.vertex(matrix,
-                               EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.cosDeg(8 * i),
-                               EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.sinDeg(8 * i), 0.5f).endVertex();
-                builder.vertex(matrix,
-                               EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.cosDeg(8 * (i + 1)),
-                               EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.sinDeg(8 * (i + 1)), 0.5f).endVertex();
-                builder.vertex(matrix,
-                               EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.cosDeg(8 * (i + 1)),
-                               EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.sinDeg(8 * (i + 1)), -0.5f).endVertex();
+                builder.vertex(matrix, EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.cosDeg(8 * i), EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.sinDeg(8 * i), -0.5f).endVertex();
+                builder.vertex(matrix, EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.cosDeg(8 * i), EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.sinDeg(8 * i), 0.5f).endVertex();
+                builder.vertex(matrix, EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.cosDeg(8 * (i + 1)), EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.sinDeg(8 * (i + 1)), 0.5f).endVertex();
+                builder.vertex(matrix, EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.cosDeg(8 * (i + 1)), EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.sinDeg(8 * (i + 1)), -0.5f).endVertex();
             }
             builder.end();
             BufferUploader.end(builder);
