@@ -1,13 +1,17 @@
 package tgw.evolution.util;
 
 import org.jetbrains.annotations.Nullable;
-import tgw.evolution.util.collection.IArrayFIFOQueue;
+import tgw.evolution.util.collection.queues.IArrayQueue;
+import tgw.evolution.util.collection.queues.IQueue;
 
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.List;
 import java.util.function.Predicate;
 
 public final class RecipeMatcher {
+
+    private static final ThreadLocal<IQueue> QUEUE_CACHE = ThreadLocal.withInitial(IArrayQueue::new);
 
     private RecipeMatcher() {}
 
@@ -35,10 +39,11 @@ public final class RecipeMatcher {
     }
 
     private static boolean claim(int[] ret, BitSet data, int claimed, int elements) {
-        IArrayFIFOQueue pending = new IArrayFIFOQueue();
+        IQueue pending = QUEUE_CACHE.get();
+        pending.clear();
         pending.enqueue(claimed);
         while (!pending.isEmpty()) {
-            int test = pending.dequeueInt();
+            int test = pending.dequeue();
             int offset = (test + 2) * elements;
             int used = data.nextSetBit(offset) - offset;
             if (used >= elements || used < 0) {
@@ -58,7 +63,7 @@ public final class RecipeMatcher {
                         }
                     }
                     if (count == 0) {
-                        return false; //Claiming this caused another test to lose its last match..
+                        return false; //Claiming this caused another test to lose its last match...
                     }
                     if (count == 1) {
                         pending.enqueue(x);
@@ -75,9 +80,7 @@ public final class RecipeMatcher {
             return null;
         }
         int[] ret = new int[elements];
-        for (int x = 0; x < elements; ++x) {
-            ret[x] = -1;
-        }
+        Arrays.fill(ret, -1);
         // [UnusedInputs] [UnusedIngredients] [IngredientMatchMask]...
         BitSet data = new BitSet((elements + 2) * elements);
         for (int x = 0; x < elements; x++) {

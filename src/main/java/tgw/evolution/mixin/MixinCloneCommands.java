@@ -21,9 +21,10 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.util.CloneBlockInfo;
 import tgw.evolution.util.MutableBlockInWorld;
-import tgw.evolution.util.collection.LArrayFIFOQueue;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
+import tgw.evolution.util.collection.queues.LArrayQueue;
+import tgw.evolution.util.collection.queues.LQueue;
 import tgw.evolution.util.constants.BlockFlags;
 
 import java.util.function.Predicate;
@@ -31,11 +32,9 @@ import java.util.function.Predicate;
 @Mixin(CloneCommands.class)
 public abstract class MixinCloneCommands {
 
-    @Shadow @Final private static SimpleCommandExceptionType ERROR_OVERLAP;
-
     @Shadow @Final private static Dynamic2CommandExceptionType ERROR_AREA_TOO_LARGE;
-
     @Shadow @Final private static SimpleCommandExceptionType ERROR_FAILED;
+    @Shadow @Final private static SimpleCommandExceptionType ERROR_OVERLAP;
 
     /**
      * @author TheGreatWolf
@@ -70,9 +69,9 @@ public abstract class MixinCloneCommands {
         OList<CloneBlockInfo> listNormal = new OArrayList<>();
         OList<CloneBlockInfo> listWithTE = new OArrayList<>();
         OList<CloneBlockInfo> listNotSolid = new OArrayList<>();
-        LArrayFIFOQueue deque;
+        LQueue deque;
         if (mode == CloneCommands.Mode.MOVE) {
-            deque = new LArrayFIFOQueue();
+            deque = new LArrayQueue();
         }
         else {
             deque = null;
@@ -117,9 +116,8 @@ public abstract class MixinCloneCommands {
             }
         }
         if (mode == CloneCommands.Mode.MOVE) {
-            int len = deque.size();
-            for (int i = 0; i < len; ++i) {
-                long pos = deque.getDirect(i);
+            for (long it = deque.beginIteration(); deque.hasNextIteration(it); it = deque.nextEntry(it)) {
+                long pos = deque.getIteration(it);
                 int x = BlockPos.getX(pos);
                 int y = BlockPos.getY(pos);
                 int z = BlockPos.getZ(pos);
@@ -128,7 +126,7 @@ public abstract class MixinCloneCommands {
                 level.setBlock_(x, y, z, Blocks.BARRIER.defaultBlockState(), BlockFlags.BLOCK_UPDATE);
             }
             while (!deque.isEmpty()) {
-                long pos = deque.dequeueLong();
+                long pos = deque.dequeue();
                 level.setBlock_(BlockPos.getX(pos), BlockPos.getY(pos), BlockPos.getZ(pos), Blocks.AIR.defaultBlockState(), BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE);
             }
         }

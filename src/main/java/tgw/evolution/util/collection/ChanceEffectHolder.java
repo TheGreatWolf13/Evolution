@@ -12,9 +12,7 @@ public class ChanceEffectHolder extends EffectHolder {
 
     private final Int2FloatFunction chanceMaker;
 
-    public ChanceEffectHolder(int minAmplifier,
-                              MobEffect effect, Int2FloatFunction chanceMaker,
-                              IntFunction<@Nullable MobEffectInstance> effectMaker) {
+    public ChanceEffectHolder(int minAmplifier, MobEffect effect, Int2FloatFunction chanceMaker, IntFunction<@Nullable MobEffectInstance> effectMaker) {
         super(minAmplifier, effect, effectMaker);
         this.chanceMaker = chanceMaker;
     }

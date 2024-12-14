@@ -1,9 +1,9 @@
 package tgw.evolution.client.renderer.chunk;
 
-import it.unimi.dsi.fastutil.ints.IntPriorityQueue;
 import net.minecraft.core.Direction;
 import org.jetbrains.annotations.Contract;
-import tgw.evolution.util.collection.IArrayFIFOQueue;
+import tgw.evolution.util.collection.queues.IArrayQueue;
+import tgw.evolution.util.collection.queues.IQueue;
 import tgw.evolution.util.math.DirectionUtil;
 
 import java.util.BitSet;
@@ -28,7 +28,7 @@ public class VisGraph {
 
     private final BitSet bitSet = new BitSet(4_096);
     private int empty = 4_096;
-    private final IntPriorityQueue queue = new IArrayFIFOQueue();
+    private final IQueue queue = new IArrayQueue();
 
     private static byte addEdges(int index, byte faces) {
         int i = index & 15;
@@ -108,7 +108,7 @@ public class VisGraph {
         this.queue.enqueue(index);
         this.bitSet.set(index, true);
         while (!this.queue.isEmpty()) {
-            int i = this.queue.dequeueInt();
+            int i = this.queue.dequeue();
             set = addEdges(i, set);
             for (Direction direction : DirectionUtil.ALL) {
                 int j = getNeighborIndexAtFace(i, direction);
