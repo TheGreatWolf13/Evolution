@@ -18,14 +18,9 @@ import static org.objectweb.asm.Opcodes.*;
 @EvolutionHook
 public class CoreModMixinExtension implements IClassTransformer {
 
-    private Method method;
+    private @Nullable Method method;
 
-    private static @Nullable AbstractInsnNode patchInst(AbstractInsnNode inst,
-                                                        String originalOwner,
-                                                        String originalParam,
-                                                        String mixinOwner,
-                                                        String mixinParam,
-                                                        MutableBoolean b) {
+    private static @Nullable AbstractInsnNode patchInst(AbstractInsnNode inst, String originalOwner, String originalParam, String mixinOwner, String mixinParam, MutableBoolean b) {
         boolean wasLastThis = b.booleanValue();
         b.setFalse();
         return switch (inst.getOpcode()) {
@@ -301,16 +296,12 @@ public class CoreModMixinExtension implements IClassTransformer {
     }
 
     @Override
-    public void transformClass(ClassNode classNode,
-                               String className,
-                               String mixinClassName,
-                               IMixinInfo info) {
+    public void transformClass(ClassNode classNode, String className, String mixinClassName, IMixinInfo info) {
         this.log("Patching class: " + className + " from " + mixinClassName);
         int index = mixinClassName.lastIndexOf('.');
         assert mixinClassName.charAt(index + 6) == '_';
         String modifiers = mixinClassName.substring(index + 7, mixinClassName.indexOf('_', index + 7));
-        boolean hasConstructor = modifiers.indexOf('C') >= 0;
-        if (hasConstructor) {
+        if (modifiers.indexOf('C') >= 0) {
             ClassNode mixinNode = this.readMixin(info, mixinClassName);
             if (mixinNode == null) {
                 return;
