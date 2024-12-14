@@ -8,10 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 import tgw.evolution.util.collection.lists.LArrayList;
 
-import java.util.Collection;
-import java.util.ConcurrentModificationException;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 public class LHashSet extends LongOpenHashSet implements LSet {
 
@@ -124,10 +121,55 @@ public class LHashSet extends LongOpenHashSet implements LSet {
         throw new IllegalStateException("Should never reach here");
     }
 
+    protected void iterationShiftKeys(int pos) {
+        // Shift entries with the same hash.
+        final long[] key = this.key;
+        while (true) {
+            int last;
+            pos = (last = pos) + 1 & this.mask;
+            long curr;
+            while (true) {
+                if ((curr = key[pos]) == 0L) {
+                    key[last] = 0L;
+                    return;
+                }
+                int slot = (int) HashCommon.mix(curr) & this.mask;
+                if (last <= pos ? last >= slot || slot > pos : last >= slot && slot > pos) {
+                    break;
+                }
+                pos = pos + 1 & this.mask;
+            }
+            if (pos < last) {
+                if (this.wrappedEntries == null) {
+                    this.wrappedEntries = new LArrayList(2);
+                }
+                this.wrappedEntries.add(key[pos]);
+            }
+            key[last] = curr;
+        }
+    }
+
     @Override
     public LongIterator iterator() {
         this.deprecatedMethod();
         return super.iterator();
+    }
+
+    public void loadFrom(LHashSet set) {
+        this.view = null;
+        this.wrappedEntries = null;
+        if (this.key.length < set.key.length) {
+            this.key = new long[set.key.length];
+        }
+        System.arraycopy(set.key, 0, this.key, 0, set.key.length);
+        if (this.key.length > set.key.length) {
+            Arrays.fill(this.key, set.key.length, this.key.length, 0L);
+        }
+        this.containsNull = set.containsNull;
+        this.mask = set.mask;
+        this.n = set.n;
+        this.maxFill = set.maxFill;
+        this.size = set.size;
     }
 
     @Override
@@ -191,33 +233,5 @@ public class LHashSet extends LongOpenHashSet implements LSet {
             this.view = new View(this);
         }
         return this.view;
-    }
-
-    protected void iterationShiftKeys(int pos) {
-        // Shift entries with the same hash.
-        final long[] key = this.key;
-        while (true) {
-            int last;
-            pos = (last = pos) + 1 & this.mask;
-            long curr;
-            while (true) {
-                if ((curr = key[pos]) == 0L) {
-                    key[last] = 0L;
-                    return;
-                }
-                int slot = (int) HashCommon.mix(curr) & this.mask;
-                if (last <= pos ? last >= slot || slot > pos : last >= slot && slot > pos) {
-                    break;
-                }
-                pos = pos + 1 & this.mask;
-            }
-            if (pos < last) {
-                if (this.wrappedEntries == null) {
-                    this.wrappedEntries = new LArrayList(2);
-                }
-                this.wrappedEntries.add(key[pos]);
-            }
-            key[last] = curr;
-        }
     }
 }

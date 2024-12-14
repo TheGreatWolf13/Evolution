@@ -6,7 +6,7 @@ import org.jetbrains.annotations.UnmodifiableView;
 
 import java.util.NoSuchElementException;
 
-public interface O2LMap<K> extends Object2LongMap<K>, MapEv {
+public interface O2LMap<K> extends Object2LongMap<K>, MapExtension {
 
     long beginIteration();
 
@@ -25,7 +25,8 @@ public interface O2LMap<K> extends Object2LongMap<K>, MapEv {
 
     long removeIteration(long it);
 
-    @UnmodifiableView O2LMap<K> view();
+    @UnmodifiableView
+    O2LMap<K> view();
 
     class EmptyMap<K> extends Object2LongMaps.EmptyMap<K> implements O2LMap<K> {
 

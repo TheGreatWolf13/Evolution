@@ -8,7 +8,7 @@ import org.jetbrains.annotations.UnmodifiableView;
 
 import java.util.NoSuchElementException;
 
-public interface ISet extends IntSet, SetEv {
+public interface ISet extends IntSet, SetExtension {
 
     static @UnmodifiableView ISet emptySet() {
         return ISet.EmptySet.EMPTY;

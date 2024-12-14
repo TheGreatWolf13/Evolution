@@ -2,6 +2,8 @@ package tgw.evolution.client.renderer.chunk;
 
 import com.google.common.primitives.Doubles;
 import com.mojang.blaze3d.vertex.*;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.CrashReport;
 import net.minecraft.Util;
 import net.minecraft.client.Camera;
@@ -12,6 +14,7 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.block.ModelBlockRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
+import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
 import net.minecraft.util.thread.ProcessorMailbox;
@@ -42,7 +45,8 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
-public class ChunkRenderDispatcher {
+@Environment(EnvType.CLIENT)
+public class SectionRenderDispatcher {
 
     private float camX;
     private float camY;
@@ -59,15 +63,15 @@ public class ChunkRenderDispatcher {
     private final IRandom random = new FastRandom();
     private final LevelRenderer renderer;
     private volatile int toBatchCount;
-    private final PriorityBlockingQueue<RenderChunk.ChunkCompileTask> toBatchHighPriority = new PriorityBlockingQueue<>();
-    private final Queue<RenderChunk.ChunkCompileTask> toBatchLowPriority = new LinkedBlockingDeque<>();
+    private final PriorityBlockingQueue<RenderSection.ChunkCompileTask> toBatchHighPriority = new PriorityBlockingQueue<>();
+    private final Queue<RenderSection.ChunkCompileTask> toBatchLowPriority = new LinkedBlockingDeque<>();
     private final Queue<Runnable> toUpload = new ConcurrentLinkedQueue<>();
 
-    public ChunkRenderDispatcher(ClientLevel level, LevelRenderer renderer, Executor executor, boolean is64Bit, ChunkBuilderPack builderPack) {
+    public SectionRenderDispatcher(ClientLevel level, LevelRenderer renderer, Executor executor, boolean is64Bit, ChunkBuilderPack builderPack) {
         this(level, renderer, executor, is64Bit, builderPack, -1);
     }
 
-    public ChunkRenderDispatcher(ClientLevel level, LevelRenderer renderer, Executor executor, boolean is64Bit, ChunkBuilderPack builderPack, int countRenderBuilders) {
+    public SectionRenderDispatcher(ClientLevel level, LevelRenderer renderer, Executor executor, boolean is64Bit, ChunkBuilderPack builderPack, int countRenderBuilders) {
         this.level = level;
         this.renderer = renderer;
         int sizeNeeded = 0;
@@ -116,13 +120,13 @@ public class ChunkRenderDispatcher {
 
     private void clearBatchQueue() {
         while (!this.toBatchHighPriority.isEmpty()) {
-            RenderChunk.ChunkCompileTask compileTask = this.toBatchHighPriority.poll();
+            RenderSection.ChunkCompileTask compileTask = this.toBatchHighPriority.poll();
             if (compileTask != null) {
                 compileTask.cancel();
             }
         }
         while (!this.toBatchLowPriority.isEmpty()) {
-            RenderChunk.ChunkCompileTask compileTask = this.toBatchLowPriority.poll();
+            RenderSection.ChunkCompileTask compileTask = this.toBatchLowPriority.poll();
             if (compileTask != null) {
                 compileTask.cancel();
             }
@@ -156,15 +160,15 @@ public class ChunkRenderDispatcher {
         return this.toBatchCount == 0 && this.toUpload.isEmpty();
     }
 
-    private @Nullable RenderChunk.ChunkCompileTask pollTask() {
+    private @Nullable SectionRenderDispatcher.RenderSection.ChunkCompileTask pollTask() {
         if (this.highPriorityQuota <= 0) {
-            RenderChunk.ChunkCompileTask compileTask = this.toBatchLowPriority.poll();
+            RenderSection.ChunkCompileTask compileTask = this.toBatchLowPriority.poll();
             if (compileTask != null) {
                 this.highPriorityQuota = 2;
                 return compileTask;
             }
         }
-        RenderChunk.ChunkCompileTask compileTask = this.toBatchHighPriority.poll();
+        RenderSection.ChunkCompileTask compileTask = this.toBatchHighPriority.poll();
         if (compileTask != null) {
             --this.highPriorityQuota;
             return compileTask;
@@ -173,13 +177,13 @@ public class ChunkRenderDispatcher {
         return this.toBatchLowPriority.poll();
     }
 
-    public void rebuildChunkSync(RenderChunk chunk) {
+    public void rebuildChunkSync(RenderSection chunk) {
         chunk.compileSync();
     }
 
     private void runTask() {
         if (!this.freeBuffers.isEmpty()) {
-            RenderChunk.ChunkCompileTask compileTask = this.pollTask();
+            RenderSection.ChunkCompileTask compileTask = this.pollTask();
             if (compileTask != null) {
                 ChunkBuilderPack builderPack = this.freeBuffers.poll();
                 this.toBatchCount = this.toBatchHighPriority.size() + this.toBatchLowPriority.size();
@@ -211,7 +215,7 @@ public class ChunkRenderDispatcher {
     /**
      * This method only runs on the Main Thread. It schedules work to be done off-thread.
      */
-    private void schedule(RenderChunk.ChunkCompileTask compileTask) {
+    private void schedule(RenderSection.ChunkCompileTask compileTask) {
         this.mailbox.tell(() -> {
             if (compileTask.isHighPriority) {
                 this.toBatchHighPriority.offer(compileTask);
@@ -244,8 +248,8 @@ public class ChunkRenderDispatcher {
         return CompletableFuture.runAsync(() -> {}, this.toUpload::add).thenCompose(v -> doUploadChunkLayer(builder, buffer));
     }
 
-    public static class CompiledChunk {
-        public static final CompiledChunk EMPTY = new CompiledChunk() {
+    public static class CompiledSection {
+        public static final CompiledSection EMPTY = new CompiledSection() {
             @Override
             public boolean facesCanSeeEachother(Direction face, Direction other) {
                 return true;
@@ -256,7 +260,7 @@ public class ChunkRenderDispatcher {
                 return true;
             }
         };
-        public static final CompiledChunk UNCOMPILED = new CompiledChunk() {
+        public static final CompiledSection UNCOMPILED = new CompiledSection() {
             @Override
             public boolean facesCanSeeEachother(Direction face, Direction other) {
                 return false;
@@ -292,7 +296,8 @@ public class ChunkRenderDispatcher {
         }
     }
 
-    public class RenderChunk {
+    @Environment(EnvType.CLIENT)
+    public class RenderSection implements Octree.Node {
         private final VertexBuffer[] buffers = new VertexBuffer[5];
         /**
          * Only access from the Main Thread. <br>
@@ -305,7 +310,7 @@ public class ChunkRenderDispatcher {
          * Bit 7: isUncompiled;<br>
          */
         private byte cachedFlags;
-        protected volatile CompiledChunk compiled = CompiledChunk.UNCOMPILED;
+        protected volatile CompiledSection compiled = CompiledSection.UNCOMPILED;
         /**
          * Only access from the Main Thread.
          */
@@ -322,6 +327,7 @@ public class ChunkRenderDispatcher {
          * Only access from the Main Thread.
          */
         private boolean playerChanged;
+        private long sectionPos = SectionPos.asLong(-1, -1, -1);
         /**
          * Only access from the Main Thread.
          */
@@ -330,13 +336,13 @@ public class ChunkRenderDispatcher {
         private int y;
         private int z;
 
-        public RenderChunk(int index, int x, int y, int z) {
+        public RenderSection(int index, long secPos) {
             for (int i = 0, len = this.buffers.length; i < len; i++) {
                 //noinspection ObjectAllocationInLoop,resource
                 this.buffers[i] = new VertexBuffer();
             }
             this.index = index;
-            this.setOrigin(x, y, z);
+            this.setSectionNode(secPos);
         }
 
         public void beginLayer(BufferBuilder builder) {
@@ -363,37 +369,37 @@ public class ChunkRenderDispatcher {
         public void compileSync() {
             int chunkX = SectionPos.blockToSectionCoord(this.x);
             int chunkZ = SectionPos.blockToSectionCoord(this.z);
-            LevelChunk chunk = ChunkRenderDispatcher.this.level.getChunk(chunkX, chunkZ);
+            LevelChunk chunk = SectionRenderDispatcher.this.level.getChunk(chunkX, chunkZ);
             if (chunk.isYSpaceEmpty(this.y, this.y + 15)) {
-                RenderChunk.this.updateGlobalBlockEntities(RSet.emptySet());
-                RenderChunk.this.compiled = CompiledChunk.EMPTY;
-                RenderChunk.this.cachedFlags = 0;
-                ChunkRenderDispatcher.this.renderer.addRecentlyCompiledChunk(RenderChunk.this);
+                RenderSection.this.updateGlobalBlockEntities(RSet.emptySet());
+                RenderSection.this.compiled = CompiledSection.EMPTY;
+                RenderSection.this.cachedFlags = 0;
+                SectionRenderDispatcher.this.renderer.addRecentlyCompiledChunk(RenderSection.this);
                 return;
             }
-            CompiledChunk oldChunk = this.compiled;
-            CompiledChunk compiledChunk;
-            if (oldChunk == CompiledChunk.UNCOMPILED || oldChunk == CompiledChunk.EMPTY) {
-                compiledChunk = new CompiledChunk();
+            CompiledSection oldChunk = this.compiled;
+            CompiledSection compiledSection;
+            if (oldChunk == CompiledSection.UNCOMPILED || oldChunk == CompiledSection.EMPTY) {
+                compiledSection = new CompiledSection();
             }
             else {
-                compiledChunk = oldChunk;
-                compiledChunk.visibilitySet = 0;
-                compiledChunk.hasBlocks = 0;
-                compiledChunk.hasLayer = 0;
-                compiledChunk.renderableTEs.clear();
-                compiledChunk.transparencyState = null;
+                compiledSection = oldChunk;
+                compiledSection.visibilitySet = 0;
+                compiledSection.hasBlocks = 0;
+                compiledSection.hasLayer = 0;
+                compiledSection.renderableTEs.clear();
+                compiledSection.transparencyState = null;
             }
-            ChunkBuilderPack fixedBuffers = ChunkRenderDispatcher.this.fixedBuffers;
+            ChunkBuilderPack fixedBuffers = SectionRenderDispatcher.this.fixedBuffers;
             RSet<BlockEntity> blockEntities = null;
             int posX = this.x;
             int posY = this.y;
             int posZ = this.z;
-            VisGraph visgraph = ChunkRenderDispatcher.this.graph;
+            VisGraph visgraph = SectionRenderDispatcher.this.graph;
             visgraph.reset();
-            PoseStack matrices = ChunkRenderDispatcher.this.matrices.reset();
+            PoseStack matrices = SectionRenderDispatcher.this.matrices.reset();
             ModelBlockRenderer.enableCaching();
-            IRandom random = ChunkRenderDispatcher.this.random;
+            IRandom random = SectionRenderDispatcher.this.random;
             BlockRenderDispatcher dispatcher = Minecraft.getInstance().getBlockRenderer();
             for (int dx = 0; dx < 16; ++dx) {
                 int px = posX + dx;
@@ -402,7 +408,7 @@ public class ChunkRenderDispatcher {
                     for (int dz = 0; dz < 16; ++dz) {
                         int pz = posZ + dz;
                         BlockState blockState = chunk.getBlockState_(px, py, pz);
-                        if (blockState.isSolidRender_(ChunkRenderDispatcher.this.level, px, py, pz)) {
+                        if (blockState.isSolidRender_(SectionRenderDispatcher.this.level, px, py, pz)) {
                             visgraph.setOpaque(dx, dy, dz);
                         }
                         if (blockState.hasBlockEntity()) {
@@ -417,7 +423,7 @@ public class ChunkRenderDispatcher {
                                         blockEntities.add(tile);
                                     }
                                     else {
-                                        compiledChunk.renderableTEs.add(tile);
+                                        compiledSection.renderableTEs.add(tile);
                                     }
                                 }
                             }
@@ -427,25 +433,25 @@ public class ChunkRenderDispatcher {
                             RenderType renderType = ChunkBuilderPack.RENDER_TYPES[i];
                             if (!fluidState.isEmpty() && ItemBlockRenderTypes.getRenderLayer(fluidState) == renderType) {
                                 BufferBuilder builder = fixedBuffers.builder(i);
-                                if ((compiledChunk.hasLayer & 1 << i) == 0) {
-                                    compiledChunk.hasLayer |= (byte) (1 << i);
-                                    RenderChunk.this.beginLayer(builder);
+                                if ((compiledSection.hasLayer & 1 << i) == 0) {
+                                    compiledSection.hasLayer |= (byte) (1 << i);
+                                    RenderSection.this.beginLayer(builder);
                                 }
-                                if (dispatcher.renderLiquid(px, py, pz, ChunkRenderDispatcher.this.level, builder, blockState, fluidState)) {
-                                    compiledChunk.hasBlocks |= (byte) (1 << i);
+                                if (dispatcher.renderLiquid(px, py, pz, SectionRenderDispatcher.this.level, builder, blockState, fluidState)) {
+                                    compiledSection.hasBlocks |= (byte) (1 << i);
                                 }
                             }
                             if (blockState.getRenderShape() != RenderShape.INVISIBLE &&
                                 ItemBlockRenderTypes.getChunkRenderType(blockState) == renderType) {
                                 BufferBuilder builder = fixedBuffers.builder(i);
-                                if ((compiledChunk.hasLayer & 1 << i) == 0) {
-                                    compiledChunk.hasLayer |= (byte) (1 << i);
-                                    RenderChunk.this.beginLayer(builder);
+                                if ((compiledSection.hasLayer & 1 << i) == 0) {
+                                    compiledSection.hasLayer |= (byte) (1 << i);
+                                    RenderSection.this.beginLayer(builder);
                                 }
                                 matrices.pushPose();
                                 matrices.translate(dx, dy, dz);
-                                if (dispatcher.renderBatched(blockState, px, py, pz, ChunkRenderDispatcher.this.level, matrices, builder, true, random)) {
-                                    compiledChunk.hasBlocks |= (byte) (1 << i);
+                                if (dispatcher.renderBatched(blockState, px, py, pz, SectionRenderDispatcher.this.level, matrices, builder, true, random)) {
+                                    compiledSection.hasBlocks |= (byte) (1 << i);
                                 }
                                 matrices.popPose();
                             }
@@ -453,32 +459,32 @@ public class ChunkRenderDispatcher {
                     }
                 }
             }
-            compiledChunk.visibilitySet = visgraph.resolve();
-            if ((compiledChunk.hasBlocks & 1 << RenderLayer.TRANSLUCENT) != 0) {
+            compiledSection.visibilitySet = visgraph.resolve();
+            if ((compiledSection.hasBlocks & 1 << RenderLayer.TRANSLUCENT) != 0) {
                 BufferBuilder builder = fixedBuffers.builder(RenderLayer.TRANSLUCENT);
-                builder.setQuadSortOrigin(ChunkRenderDispatcher.this.camX - posX, ChunkRenderDispatcher.this.camY - posY, ChunkRenderDispatcher.this.camZ - posZ);
-                compiledChunk.transparencyState = builder.getSortState();
+                builder.setQuadSortOrigin(SectionRenderDispatcher.this.camX - posX, SectionRenderDispatcher.this.camY - posY, SectionRenderDispatcher.this.camZ - posZ);
+                compiledSection.transparencyState = builder.getSortState();
             }
             for (int i = RenderLayer.SOLID, len = ChunkBuilderPack.RENDER_TYPES.length; i < len; i++) {
-                if ((compiledChunk.hasLayer & 1 << i) != 0) {
+                if ((compiledSection.hasLayer & 1 << i) != 0) {
                     fixedBuffers.builder(i).end();
                 }
             }
             ModelBlockRenderer.clearCache();
             blockEntities = blockEntities == null ? RSet.emptySet() : blockEntities;
-            RenderChunk.this.updateGlobalBlockEntities(blockEntities);
+            RenderSection.this.updateGlobalBlockEntities(blockEntities);
             for (int i = RenderLayer.SOLID, len = ChunkBuilderPack.RENDER_TYPES.length; i < len; i++) {
-                if ((compiledChunk.hasLayer & 1 << i) != 0) {
-                    RenderChunk.this.getBuffer(i).upload(fixedBuffers.builder(i));
+                if ((compiledSection.hasLayer & 1 << i) != 0) {
+                    RenderSection.this.getBuffer(i).upload(fixedBuffers.builder(i));
                 }
             }
-            RenderChunk.this.compiled = compiledChunk;
-            RenderChunk.this.needsUpdate = true;
-            ChunkRenderDispatcher.this.renderer.addRecentlyCompiledChunk(RenderChunk.this);
+            RenderSection.this.compiled = compiledSection;
+            RenderSection.this.needsUpdate = true;
+            SectionRenderDispatcher.this.renderer.addRecentlyCompiledChunk(RenderSection.this);
         }
 
         private boolean doesChunkExistAt(int posX, int posZ) {
-            return ChunkRenderDispatcher.this.level.getChunk(SectionPos.blockToSectionCoord(posX), SectionPos.blockToSectionCoord(posZ), ChunkStatus.FULL, false) != null;
+            return SectionRenderDispatcher.this.level.getChunk(SectionPos.blockToSectionCoord(posX), SectionPos.blockToSectionCoord(posZ), ChunkStatus.FULL, false) != null;
         }
 
         public VertexBuffer getBuffer(@RenderLayer int renderType) {
@@ -494,6 +500,10 @@ public class ChunkRenderDispatcher {
             return x * x + y * y + z * z;
         }
 
+        public long getNeighborSectionNode(Direction direction) {
+            return SectionPos.offset(this.sectionPos, direction);
+        }
+
         public byte getRenderLayers() {
             if (this.needsUpdate) {
                 this.updateCache();
@@ -501,16 +511,55 @@ public class ChunkRenderDispatcher {
             return (byte) (this.cachedFlags & 0b1_1111);
         }
 
+        @Override
+        public @Nullable SectionRenderDispatcher.RenderSection getSection() {
+            return this;
+        }
+
+        public long getSectionPos() {
+            return this.sectionPos;
+        }
+
         public int getX() {
             return this.x;
+        }
+
+        @Override
+        public double getX0() {
+            return this.x;
+        }
+
+        @Override
+        public double getX1() {
+            return this.x + 16;
         }
 
         public int getY() {
             return this.y;
         }
 
+        @Override
+        public double getY0() {
+            return this.y;
+        }
+
+        @Override
+        public double getY1() {
+            return this.y + 16;
+        }
+
         public int getZ() {
             return this.z;
+        }
+
+        @Override
+        public double getZ0() {
+            return this.z;
+        }
+
+        @Override
+        public double getZ1() {
+            return this.z + 16;
         }
 
         public boolean hasAllNeighbors() {
@@ -564,20 +613,27 @@ public class ChunkRenderDispatcher {
             return (this.cachedFlags & 1 << renderType) == 0;
         }
 
+        public boolean isUncompiled() {
+            if (this.needsUpdate) {
+                this.updateCache();
+            }
+            return (this.cachedFlags & 1 << 7) != 0;
+        }
+
         /**
          * This method only runs on the Main Thread.
          */
-        public void rebuildChunkAsync(ChunkRenderDispatcher dispatcher, RenderRegionCache cache) {
+        public void rebuildChunkAsync(SectionRenderDispatcher dispatcher, RenderRegionCache cache) {
             boolean canceled = this.cancelTasks();
-            RenderChunkRegion region = cache.createRegion(ChunkRenderDispatcher.this.level, this.x - 1, this.y - 1, this.z - 1, this.x + 16, this.y + 16, this.z + 16, 1);
+            RenderChunkRegion region = cache.createRegion(SectionRenderDispatcher.this.level, this.x - 1, this.y - 1, this.z - 1, this.x + 16, this.y + 16, this.z + 16, 1);
             if (region == null) {
-                RenderChunk.this.updateGlobalBlockEntities(RSet.emptySet());
-                RenderChunk.this.cachedFlags = 0;
-                RenderChunk.this.compiled = CompiledChunk.EMPTY;
-                ChunkRenderDispatcher.this.renderer.addRecentlyCompiledChunk(RenderChunk.this);
+                RenderSection.this.updateGlobalBlockEntities(RSet.emptySet());
+                RenderSection.this.cachedFlags = 0;
+                RenderSection.this.compiled = CompiledSection.EMPTY;
+                SectionRenderDispatcher.this.renderer.addRecentlyCompiledChunk(RenderSection.this);
                 return;
             }
-            this.lastRebuildTask = new RenderChunk.RebuildTask(this.getDistToCameraSqr(), region, canceled || this.compiled != CompiledChunk.UNCOMPILED);
+            this.lastRebuildTask = new RenderSection.RebuildTask(this.getDistToCameraSqr(), region, canceled || this.compiled != CompiledSection.UNCOMPILED);
             dispatcher.schedule(this.lastRebuildTask);
         }
 
@@ -596,7 +652,7 @@ public class ChunkRenderDispatcher {
          */
         private void reset() {
             this.cancelTasks();
-            this.compiled = CompiledChunk.UNCOMPILED;
+            this.compiled = CompiledSection.UNCOMPILED;
             this.cachedFlags = (byte) (1 << 7);
             this.dirty = true;
         }
@@ -604,7 +660,7 @@ public class ChunkRenderDispatcher {
         /**
          * This method only runs on the Main Thread.
          */
-        public boolean resortTransparency(ChunkRenderDispatcher dispatcher, boolean onThread) {
+        public boolean resortTransparency(SectionRenderDispatcher dispatcher, boolean onThread) {
             if (this.lastResortTransparencyTask != null) {
                 this.lastResortTransparencyTask.cancel();
             }
@@ -612,19 +668,19 @@ public class ChunkRenderDispatcher {
                 return false;
             }
             if (onThread) {
-                if (!RenderChunk.this.hasAllNeighbors()) {
+                if (!RenderSection.this.hasAllNeighbors()) {
                     return true;
                 }
-                CompiledChunk compiled = this.compiled;
+                CompiledSection compiled = this.compiled;
                 BufferBuilder.SortState sortState = compiled.transparencyState;
                 if (sortState != null) {
-                    BufferBuilder builder = ChunkRenderDispatcher.this.fixedBuffers.builder(RenderLayer.TRANSLUCENT);
-                    RenderChunk.this.beginLayer(builder);
+                    BufferBuilder builder = SectionRenderDispatcher.this.fixedBuffers.builder(RenderLayer.TRANSLUCENT);
+                    RenderSection.this.beginLayer(builder);
                     builder.restoreSortState(sortState);
-                    builder.setQuadSortOrigin(ChunkRenderDispatcher.this.camX - RenderChunk.this.x, ChunkRenderDispatcher.this.camY - RenderChunk.this.y, ChunkRenderDispatcher.this.camZ - RenderChunk.this.z);
+                    builder.setQuadSortOrigin(SectionRenderDispatcher.this.camX - RenderSection.this.x, SectionRenderDispatcher.this.camY - RenderSection.this.y, SectionRenderDispatcher.this.camZ - RenderSection.this.z);
                     compiled.transparencyState = builder.getSortState();
                     builder.end();
-                    RenderChunk.this.getBuffer(RenderLayer.TRANSLUCENT).upload(ChunkRenderDispatcher.this.fixedBuffers.builder(RenderLayer.TRANSLUCENT));
+                    RenderSection.this.getBuffer(RenderLayer.TRANSLUCENT).upload(SectionRenderDispatcher.this.fixedBuffers.builder(RenderLayer.TRANSLUCENT));
                 }
                 return true;
             }
@@ -653,10 +709,14 @@ public class ChunkRenderDispatcher {
         /**
          * This method only runs on the Main Thread.
          */
-        public void setOrigin(int x, int y, int z) {
+        public void setSectionNode(long secPos) {
+            int x = SectionPos.sectionToBlockCoord(SectionPos.x(secPos));
+            int y = SectionPos.sectionToBlockCoord(SectionPos.y(secPos));
+            int z = SectionPos.sectionToBlockCoord(SectionPos.z(secPos));
             if (EarthHelper.wrapBlockCoordinate(this.x) != EarthHelper.wrapBlockCoordinate(x) || this.y != y || EarthHelper.wrapBlockCoordinate(this.z) != EarthHelper.wrapBlockCoordinate(z)) {
                 this.reset();
             }
+            this.sectionPos = secPos;
             this.x = x;
             this.y = y;
             this.z = z;
@@ -667,9 +727,9 @@ public class ChunkRenderDispatcher {
          */
         private void updateCache() {
             this.needsUpdate = false;
-            CompiledChunk compiled = this.compiled;
+            CompiledSection compiled = this.compiled;
             this.cachedFlags = compiled.hasBlocks;
-            if (compiled == CompiledChunk.UNCOMPILED) {
+            if (compiled == CompiledSection.UNCOMPILED) {
                 this.cachedFlags |= (byte) (1 << 7);
             }
             else if (!compiled.renderableTEs.isEmpty()) {
@@ -688,11 +748,23 @@ public class ChunkRenderDispatcher {
                     this.globalBlockEntities.clear();
                     this.globalBlockEntities.addAll(blockEntities);
                 }
-                ChunkRenderDispatcher.this.renderer.updateGlobalBlockEntities(toRemove, toAdd);
+                SectionRenderDispatcher.this.renderer.updateGlobalBlockEntities(toRemove, toAdd);
             }
             else {
-                ChunkRenderDispatcher.this.renderer.updateGlobalBlockEntities(this.globalBlockEntities, blockEntities);
+                SectionRenderDispatcher.this.renderer.updateGlobalBlockEntities(this.globalBlockEntities, blockEntities);
             }
+        }
+
+        @Override
+        public int visitNodes(Octree.OctreeVisitor octreeVisitor, @Visibility int visibility, Frustum frustum, int depth, int count) {
+            if (visibility == Visibility.INSIDE) {
+                return octreeVisitor.visit(this, visibility, depth, count);
+            }
+            ++count;
+            if ((visibility = frustum.intersectWith(this.getX0(), this.getY0(), this.getZ0(), this.getX1(), this.getY1(), this.getZ1())) > Visibility.OUTSIDE) {
+                return octreeVisitor.visit(this, visibility, depth, count);
+            }
+            return count;
         }
 
         public abstract static class ChunkCompileTask implements Comparable<ChunkCompileTask> {
@@ -733,17 +805,17 @@ public class ChunkRenderDispatcher {
             public void cancel() {
                 this.region = null;
                 if (this.isCancelled.compareAndSet(false, true)) {
-                    RenderChunk.this.setDirty(false);
+                    RenderSection.this.setDirty(false);
                 }
             }
 
-            private RSet<BlockEntity> compile(float camX, float camY, float camZ, CompiledChunk compiledChunk, ChunkBuilderPack builderPack) {
+            private RSet<BlockEntity> compile(float camX, float camY, float camZ, CompiledSection compiledSection, ChunkBuilderPack builderPack) {
                 RSet<BlockEntity> blockEntities = null;
                 RenderChunkRegion region = this.region;
                 this.region = null;
-                int posX = RenderChunk.this.x;
-                int posY = RenderChunk.this.y;
-                int posZ = RenderChunk.this.z;
+                int posX = RenderSection.this.x;
+                int posY = RenderSection.this.y;
+                int posZ = RenderSection.this.z;
                 if (region != null && !region.isSectionEmpty(posX, posY, posZ)) {
                     VisGraph visgraph = GRAPH_CACHE.get();
                     visgraph.reset();
@@ -773,7 +845,7 @@ public class ChunkRenderDispatcher {
                                                 blockEntities.add(tile);
                                             }
                                             else {
-                                                compiledChunk.renderableTEs.add(tile);
+                                                compiledSection.renderableTEs.add(tile);
                                             }
                                         }
                                     }
@@ -783,24 +855,24 @@ public class ChunkRenderDispatcher {
                                     RenderType renderType = ChunkBuilderPack.RENDER_TYPES[i];
                                     if (!fluidState.isEmpty() && ItemBlockRenderTypes.getRenderLayer(fluidState) == renderType) {
                                         BufferBuilder builder = builderPack.builder(i);
-                                        if ((compiledChunk.hasLayer & 1 << i) == 0) {
-                                            compiledChunk.hasLayer |= (byte) (1 << i);
-                                            RenderChunk.this.beginLayer(builder);
+                                        if ((compiledSection.hasLayer & 1 << i) == 0) {
+                                            compiledSection.hasLayer |= (byte) (1 << i);
+                                            RenderSection.this.beginLayer(builder);
                                         }
                                         if (dispatcher.renderLiquid(px, py, pz, region, builder, blockState, fluidState)) {
-                                            compiledChunk.hasBlocks |= (byte) (1 << i);
+                                            compiledSection.hasBlocks |= (byte) (1 << i);
                                         }
                                     }
                                     if (blockState.getRenderShape() != RenderShape.INVISIBLE && ItemBlockRenderTypes.getChunkRenderType(blockState) == renderType) {
                                         BufferBuilder builder = builderPack.builder(i);
-                                        if ((compiledChunk.hasLayer & 1 << i) == 0) {
-                                            compiledChunk.hasLayer |= (byte) (1 << i);
-                                            RenderChunk.this.beginLayer(builder);
+                                        if ((compiledSection.hasLayer & 1 << i) == 0) {
+                                            compiledSection.hasLayer |= (byte) (1 << i);
+                                            RenderSection.this.beginLayer(builder);
                                         }
                                         matrices.pushPose();
                                         matrices.translate(dx, dy, dz);
                                         if (dispatcher.renderBatched(blockState, px, py, pz, region, matrices, builder, true, random)) {
-                                            compiledChunk.hasBlocks |= (byte) (1 << i);
+                                            compiledSection.hasBlocks |= (byte) (1 << i);
                                         }
                                         matrices.popPose();
                                     }
@@ -808,21 +880,21 @@ public class ChunkRenderDispatcher {
                             }
                         }
                     }
-                    compiledChunk.visibilitySet = visgraph.resolve();
-                    if ((compiledChunk.hasBlocks & 1 << RenderLayer.TRANSLUCENT) != 0) {
+                    compiledSection.visibilitySet = visgraph.resolve();
+                    if ((compiledSection.hasBlocks & 1 << RenderLayer.TRANSLUCENT) != 0) {
                         BufferBuilder builder = builderPack.builder(RenderLayer.TRANSLUCENT);
                         builder.setQuadSortOrigin(camX - posX, camY - posY, camZ - posZ);
-                        compiledChunk.transparencyState = builder.getSortState();
+                        compiledSection.transparencyState = builder.getSortState();
                     }
                     for (int i = RenderLayer.SOLID, len = ChunkBuilderPack.RENDER_TYPES.length; i < len; i++) {
-                        if ((compiledChunk.hasLayer & 1 << i) != 0) {
+                        if ((compiledSection.hasLayer & 1 << i) != 0) {
                             builderPack.builder(i).end();
                         }
                     }
                     ModelBlockRenderer.clearCache();
                 }
                 else {
-                    compiledChunk.visibilitySet = 0b111111_111111_111111_111111_111111_111111L;
+                    compiledSection.visibilitySet = 0b111111_111111_111111_111111_111111_111111L;
                 }
                 return blockEntities == null ? RSet.emptySet() : blockEntities;
             }
@@ -832,27 +904,24 @@ public class ChunkRenderDispatcher {
                 if (this.isCancelled.get()) {
                     return CompletableFuture.completedFuture(ChunkTaskResult.CANCELLED);
                 }
-                if (!RenderChunk.this.hasAllNeighbors()) {
+                if (!RenderSection.this.hasAllNeighbors()) {
                     this.region = null;
-                    RenderChunk.this.setDirty(false);
+                    RenderSection.this.setDirty(false);
                     this.isCancelled.set(true);
                     return CompletableFuture.completedFuture(ChunkTaskResult.CANCELLED);
                 }
                 if (this.isCancelled.get()) {
                     return CompletableFuture.completedFuture(ChunkTaskResult.CANCELLED);
                 }
-                CompiledChunk compiledChunk = new CompiledChunk();
-                RenderChunk.this.updateGlobalBlockEntities(this.compile(ChunkRenderDispatcher.this.camX,
-                                                                        ChunkRenderDispatcher.this.camY,
-                                                                        ChunkRenderDispatcher.this.camZ,
-                                                                        compiledChunk, builderPack));
+                CompiledSection compiledSection = new CompiledSection();
+                RenderSection.this.updateGlobalBlockEntities(this.compile(SectionRenderDispatcher.this.camX, SectionRenderDispatcher.this.camY, SectionRenderDispatcher.this.camZ, compiledSection, builderPack));
                 if (this.isCancelled.get()) {
                     return CompletableFuture.completedFuture(ChunkTaskResult.CANCELLED);
                 }
                 OList<CompletableFuture<Void>> list = new OArrayList<>();
                 for (int i = RenderLayer.SOLID, len = ChunkBuilderPack.RENDER_TYPES.length; i < len; i++) {
-                    if ((compiledChunk.hasLayer & 1 << i) != 0) {
-                        list.add(ChunkRenderDispatcher.this.uploadChunkLayer(builderPack.builder(i), RenderChunk.this.getBuffer(i)));
+                    if ((compiledSection.hasLayer & 1 << i) != 0) {
+                        list.add(SectionRenderDispatcher.this.uploadChunkLayer(builderPack.builder(i), RenderSection.this.getBuffer(i)));
                     }
                 }
                 return Util.sequenceFailFast(list).handle((l, t) -> {
@@ -863,9 +932,9 @@ public class ChunkRenderDispatcher {
                     if (this.isCancelled.get()) {
                         return ChunkTaskResult.CANCELLED;
                     }
-                    RenderChunk.this.compiled = compiledChunk;
-                    RenderChunk.this.needsUpdate = true;
-                    ChunkRenderDispatcher.this.renderer.addRecentlyCompiledChunk(RenderChunk.this);
+                    RenderSection.this.compiled = compiledSection;
+                    RenderSection.this.needsUpdate = true;
+                    SectionRenderDispatcher.this.renderer.addRecentlyCompiledChunk(RenderSection.this);
                     return ChunkTaskResult.SUCCESSFUL;
                 });
             }
@@ -878,11 +947,11 @@ public class ChunkRenderDispatcher {
 
         class ResortTransparencyTask extends ChunkCompileTask {
 
-            private final CompiledChunk compiledChunk;
+            private final CompiledSection compiledSection;
 
-            public ResortTransparencyTask(double distAtCreation, CompiledChunk compiledChunk) {
+            public ResortTransparencyTask(double distAtCreation, CompiledSection compiledSection) {
                 super(distAtCreation, true);
-                this.compiledChunk = compiledChunk;
+                this.compiledSection = compiledSection;
             }
 
             @Override
@@ -895,30 +964,30 @@ public class ChunkRenderDispatcher {
                 if (this.isCancelled.get()) {
                     return CompletableFuture.completedFuture(ChunkTaskResult.CANCELLED);
                 }
-                if (!RenderChunk.this.hasAllNeighbors()) {
+                if (!RenderSection.this.hasAllNeighbors()) {
                     this.isCancelled.set(true);
                     return CompletableFuture.completedFuture(ChunkTaskResult.CANCELLED);
                 }
                 if (this.isCancelled.get()) {
                     return CompletableFuture.completedFuture(ChunkTaskResult.CANCELLED);
                 }
-                BufferBuilder.SortState sortState = this.compiledChunk.transparencyState;
-                if (sortState != null && (this.compiledChunk.hasBlocks & 1 << RenderLayer.TRANSLUCENT) != 0) {
+                BufferBuilder.SortState sortState = this.compiledSection.transparencyState;
+                if (sortState != null && (this.compiledSection.hasBlocks & 1 << RenderLayer.TRANSLUCENT) != 0) {
                     BufferBuilder builder = builderPack.builder(RenderLayer.TRANSLUCENT);
-                    RenderChunk.this.beginLayer(builder);
+                    RenderSection.this.beginLayer(builder);
                     builder.restoreSortState(sortState);
-                    builder.setQuadSortOrigin(ChunkRenderDispatcher.this.camX - RenderChunk.this.x,
-                                              ChunkRenderDispatcher.this.camY - RenderChunk.this.y,
-                                              ChunkRenderDispatcher.this.camZ - RenderChunk.this.z);
-                    this.compiledChunk.transparencyState = builder.getSortState();
+                    builder.setQuadSortOrigin(SectionRenderDispatcher.this.camX - RenderSection.this.x,
+                                              SectionRenderDispatcher.this.camY - RenderSection.this.y,
+                                              SectionRenderDispatcher.this.camZ - RenderSection.this.z);
+                    this.compiledSection.transparencyState = builder.getSortState();
                     builder.end();
                     if (this.isCancelled.get()) {
                         return CompletableFuture.completedFuture(ChunkTaskResult.CANCELLED);
                     }
                     CompletableFuture<ChunkTaskResult> future =
-                            ChunkRenderDispatcher.this.uploadChunkLayer(builderPack.builder(RenderLayer.TRANSLUCENT),
-                                                                        RenderChunk.this.getBuffer(RenderLayer.TRANSLUCENT))
-                                                      .thenApply(v -> ChunkTaskResult.CANCELLED);
+                            SectionRenderDispatcher.this.uploadChunkLayer(builderPack.builder(RenderLayer.TRANSLUCENT),
+                                                                          RenderSection.this.getBuffer(RenderLayer.TRANSLUCENT))
+                                                        .thenApply(v -> ChunkTaskResult.CANCELLED);
                     return future.handle((r, t) -> {
                         if (t != null && !(t instanceof CancellationException) && !(t instanceof InterruptedException)) {
                             CrashReport crash = CrashReport.forThrowable(t, "Rendering chunk");

@@ -8,7 +8,7 @@ import tgw.evolution.util.collection.lists.OList;
 import java.util.Collection;
 import java.util.NoSuchElementException;
 
-public interface OSet<K> extends ObjectSet<K>, SetEv {
+public interface OSet<K> extends ObjectSet<K>, SetExtension {
 
     static <K> @UnmodifiableView OSet<K> emptySet() {
         return EmptySet.EMPTY;

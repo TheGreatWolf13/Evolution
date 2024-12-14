@@ -1,9 +1,9 @@
-package tgw.evolution.util.collection.maps;
+package tgw.evolution.util.collection.sets;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import tgw.evolution.Evolution;
 
-public interface MapEv {
+public interface SetExtension {
 
     boolean CHECKS = false;
 

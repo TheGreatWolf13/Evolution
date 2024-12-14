@@ -6,7 +6,7 @@ import org.jetbrains.annotations.UnmodifiableView;
 
 import java.util.NoSuchElementException;
 
-public interface BSet extends ByteSet, SetEv {
+public interface BSet extends ByteSet, SetExtension {
 
     static @UnmodifiableView BSet emptySet() {
         return EmptySet.EMPTY;

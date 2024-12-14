@@ -6,7 +6,7 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntLists;
 import org.jetbrains.annotations.UnmodifiableView;
 
-public interface IList extends IntList, ListEv {
+public interface IList extends IntList, ListExtension {
 
     static @UnmodifiableView IList emptyList() {
         return EmptyList.EMPTY_LIST;

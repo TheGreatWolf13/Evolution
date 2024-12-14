@@ -2,7 +2,7 @@ package tgw.evolution.util.collection.lists;
 
 import tgw.evolution.Evolution;
 
-public interface ListEv {
+public interface ListExtension {
 
     boolean CHECKS = false;
 

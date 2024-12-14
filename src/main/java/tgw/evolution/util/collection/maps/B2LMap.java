@@ -6,7 +6,7 @@ import org.jetbrains.annotations.UnmodifiableView;
 
 import java.util.NoSuchElementException;
 
-public interface B2LMap extends Byte2LongMap, MapEv {
+public interface B2LMap extends Byte2LongMap, MapExtension {
 
     long beginIteration();
 
@@ -25,7 +25,8 @@ public interface B2LMap extends Byte2LongMap, MapEv {
 
     long removeIteration(long it);
 
-    @UnmodifiableView B2LMap view();
+    @UnmodifiableView
+    B2LMap view();
 
     class EmptyMap extends Byte2LongMaps.EmptyMap implements B2LMap {
 

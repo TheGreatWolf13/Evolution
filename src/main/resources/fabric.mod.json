@@ -438,6 +438,9 @@
       ],
       "net/minecraft/util/ClassInstanceMultiMap": [
         "tgw/evolution/patches/PatchClassInstanceMultiMap"
+      ],
+      "net/minecraft/world/level/entity/TransientEntitySectionManager": [
+        "tgw/evolution/patches/PatchTransientEntitySectionManager"
       ]
     }
   }

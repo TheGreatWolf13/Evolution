@@ -6,7 +6,7 @@ import it.unimi.dsi.fastutil.doubles.DoubleList;
 import it.unimi.dsi.fastutil.doubles.DoubleLists;
 import org.jetbrains.annotations.UnmodifiableView;
 
-public interface DList extends DoubleList, ListEv {
+public interface DList extends DoubleList, ListExtension {
 
     static @UnmodifiableView DList emptyList() {
         return EmptyList.EMPTY_LIST;

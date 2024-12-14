@@ -30,7 +30,6 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
 import net.minecraft.sounds.SoundEvents;
@@ -79,32 +78,29 @@ import tgw.evolution.mixin.AccessorRenderSystem;
 import tgw.evolution.resources.IKeyedReloadListener;
 import tgw.evolution.resources.ReloadListernerKeys;
 import tgw.evolution.util.AdvancedEntityHitResult;
-import tgw.evolution.util.collection.OArrayFIFOQueue;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.collection.maps.I2OHashMap;
 import tgw.evolution.util.collection.maps.I2OMap;
 import tgw.evolution.util.collection.maps.L2OHashMap;
 import tgw.evolution.util.collection.maps.L2OMap;
-import tgw.evolution.util.collection.sets.LHashSet;
-import tgw.evolution.util.collection.sets.LSet;
 import tgw.evolution.util.collection.sets.RHashSet;
 import tgw.evolution.util.collection.sets.RSet;
 import tgw.evolution.util.constants.BlockFlags;
 import tgw.evolution.util.constants.LvlEvent;
 import tgw.evolution.util.constants.RenderLayer;
 import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
-import tgw.evolution.util.math.DirectionUtil;
 import tgw.evolution.util.math.FastRandom;
+import tgw.evolution.util.math.Metric;
 import tgw.evolution.util.math.VectorUtil;
 import tgw.evolution.util.physics.EarthHelper;
 import tgw.evolution.world.BlockDestructionProgress;
 
 import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.List;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 @Environment(EnvType.CLIENT)
 public class LevelRenderer implements IKeyedReloadListener, ResourceManagerReloadListener, AutoCloseable {
@@ -113,16 +109,13 @@ public class LevelRenderer implements IKeyedReloadListener, ResourceManagerReloa
     private static final OList<ResourceLocation> DEPENDENCY = OList.of(ReloadListernerKeys.TEXTURES);
     private static final ResourceLocation END_SKY_LOCATION = new ResourceLocation("textures/environment/end_sky.png");
     private static final ResourceLocation FORCEFIELD_LOCATION = new ResourceLocation("textures/misc/forcefield.png");
-    private static final ThreadLocal<OArrayFIFOQueue<RenderChunkInfo>> QUEUE_CACHE = ThreadLocal.withInitial(OArrayFIFOQueue::new);
     private static final ResourceLocation RAIN_LOCATION = new ResourceLocation("textures/environment/rain.png");
     private static final ResourceLocation SNOW_LOCATION = new ResourceLocation("textures/environment/snow.png");
     private final BlockEntityRenderDispatcher blockEntityRenderDispatcher;
     private final SheetedDecalTextureGenerator[] breakingBuffers = new SheetedDecalTextureGenerator[10];
     private final BufferHolder bufferHolder;
-    private @Nullable ChunkRenderDispatcher chunkRenderDispatcher;
     private @Nullable VertexBuffer cloudBuffer;
     private @Nullable RenderTarget cloudsTarget;
-    private final RenderChunkInfoComparator comparator = new RenderChunkInfoComparator();
     private final Frustum cullingFrustum = new Frustum(new Matrix4f(), new Matrix4f());
     private final I2OMap<BlockDestructionProgress> destroyingBlocks = new I2OHashMap<>();
     private final L2OMap<SortedSet<BlockDestructionProgress>> destructionProgress = new L2OHashMap<>();
@@ -141,7 +134,6 @@ public class LevelRenderer implements IKeyedReloadListener, ResourceManagerReloa
     private int lastCameraChunkX = Integer.MIN_VALUE;
     private int lastCameraChunkY = Integer.MIN_VALUE;
     private int lastCameraChunkZ = Integer.MIN_VALUE;
-    private @Nullable Future<?> lastFullRenderChunkUpdate;
     private int lastTransparencyTick;
     private int lastViewDistance = -1;
     /**
@@ -151,9 +143,6 @@ public class LevelRenderer implements IKeyedReloadListener, ResourceManagerReloa
     private @Nullable ClientLevel level;
     private final LevelEventListener listener;
     private final Minecraft mc;
-    private final AtomicBoolean needsFrustumUpdate = new AtomicBoolean(false);
-    private boolean needsFullRenderChunkUpdate = true;
-    private final AtomicLong nextFullUpdateMillis = new AtomicLong(0L);
     private @Nullable RenderTarget particlesTarget;
     private double prevCamRotX = Double.MIN_VALUE;
     private double prevCamRotY = Double.MIN_VALUE;
@@ -169,12 +158,12 @@ public class LevelRenderer implements IKeyedReloadListener, ResourceManagerReloa
     private final float[] rainSizeX = new float[1_024];
     private final float[] rainSizeZ = new float[1_024];
     private int rainSoundTime;
-    private final OList<ChunkRenderDispatcher.RenderChunk> recentlyCompiledChunks = new OArrayList<>();
     private final RenderRegionCache renderCache = new RenderRegionCache();
-    private volatile @Nullable RenderChunkStorage renderChunkStorage;
-    private final OList<ChunkRenderDispatcher.RenderChunk> renderChunksInFrustum = new OArrayList<>();
     private boolean renderOnThread;
     private int renderedEntities;
+    private final SectionOcclusionGraph sectionOcclusionGraph = new SectionOcclusionGraph(this);
+    private @Nullable SectionRenderDispatcher sectionRenderDispatcher;
+    private final OList<SectionRenderDispatcher.RenderSection> sectionsInFrustum = new OArrayList<>();
     private final SkyFogSetup skyFog = new SkyFogSetup();
     private int ticks;
     private @Nullable RenderTarget translucentTarget;
@@ -381,15 +370,8 @@ public class LevelRenderer implements IKeyedReloadListener, ResourceManagerReloa
         });
     }
 
-    public void addRecentlyCompiledChunk(ChunkRenderDispatcher.RenderChunk chunk) {
-        if (this.renderOnThread) {
-            this.recentlyCompiledChunks.add(chunk);
-        }
-        else {
-            synchronized (this.recentlyCompiledChunks) {
-                this.recentlyCompiledChunks.add(chunk);
-            }
-        }
+    public void addRecentlyCompiledChunk(SectionRenderDispatcher.RenderSection section) {
+        this.sectionOcclusionGraph.schedulePropagationFrom(section);
     }
 
     /**
@@ -401,40 +383,27 @@ public class LevelRenderer implements IKeyedReloadListener, ResourceManagerReloa
             this.mc.debugRenderer.setRenderHeightmap(EvolutionConfig.RENDER_HEIGHTMAP.get());
             this.graphicsChanged();
             this.level.clearTintCaches();
-            if (this.chunkRenderDispatcher == null) {
-                this.chunkRenderDispatcher = new ChunkRenderDispatcher(this.level, this, Util.backgroundExecutor(), this.mc.is64Bit(), this.bufferHolder.chunkBuilderPack());
+            if (this.sectionRenderDispatcher == null) {
+                this.sectionRenderDispatcher = new SectionRenderDispatcher(this.level, this, Util.backgroundExecutor(), this.mc.is64Bit(), this.bufferHolder.chunkBuilderPack());
             }
             else {
-                this.chunkRenderDispatcher.setLevel(this.level);
+                this.sectionRenderDispatcher.setLevel(this.level);
             }
-            this.needsFullRenderChunkUpdate = true;
             this.generateClouds = true;
-            synchronized (this.recentlyCompiledChunks) {
-                this.recentlyCompiledChunks.clear();
-            }
             ItemBlockRenderTypes.setFancy(Minecraft.useFancyGraphics());
             this.lastViewDistance = this.mc.options.getEffectiveRenderDistance();
             if (this.viewArea != null) {
                 this.viewArea.releaseAllBuffers();
             }
-            this.chunkRenderDispatcher.blockUntilClear();
+            this.sectionRenderDispatcher.blockUntilClear();
             synchronized (this.globalBlockEntities) {
                 this.globalBlockEntities.clear();
             }
-            this.viewArea = new ViewArea(this.chunkRenderDispatcher, this.level, this.mc.options.getEffectiveRenderDistance());
-            if (this.lastFullRenderChunkUpdate != null) {
-                try {
-                    this.lastFullRenderChunkUpdate.get();
-                    this.lastFullRenderChunkUpdate = null;
-                }
-                catch (Exception exception) {
-                    Evolution.warn("Full update failed", exception);
-                }
-            }
-            this.renderChunkStorage = new RenderChunkStorage(this.viewArea.chunks.length);
-            this.renderChunksInFrustum.clear();
+            this.viewArea = new ViewArea(this.sectionRenderDispatcher, this.level, this, this.mc.options.getEffectiveRenderDistance());
+            this.sectionOcclusionGraph.waitAndReset(this.viewArea);
+            this.sectionsInFrustum.clear();
             Vec3 camPos = this.mc.gameRenderer.getMainCamera().getPosition();
-            this.viewArea.repositionCamera(camPos.x, camPos.z);
+            this.viewArea.repositionCamera(camPos.x, camPos.y, camPos.z);
             this.renderCache.clear();
             EvolutionClient.allChanged();
         }
@@ -445,28 +414,9 @@ public class LevelRenderer implements IKeyedReloadListener, ResourceManagerReloa
         this.mc.getProfiler().push("apply_frustum");
         assert this.viewArea != null;
         this.viewArea.resetVisibility();
-        this.renderChunksInFrustum.clear();
-        RenderChunkStorage storage = this.renderChunkStorage;
+        this.sectionsInFrustum.clear();
         this.layersInFrustum = 0;
-        if (storage != null) {
-            OList<ChunkRenderDispatcher.RenderChunk> renderChunks = storage.renderChunks;
-            for (int i = 0, len = renderChunks.size(); i < len; i++) {
-                ChunkRenderDispatcher.RenderChunk chunk = renderChunks.get(i);
-                if (chunk.isCompletelyEmpty() && !chunk.isDirty()) {
-                    chunk.visibility = Visibility.OUTSIDE;
-                    continue;
-                }
-                int x = chunk.getX();
-                int y = chunk.getY();
-                int z = chunk.getZ();
-                @Visibility int visibility = frustum.intersectWith(x, y, z, x + 16, y + 16, z + 16);
-                chunk.visibility = visibility;
-                if (visibility != Visibility.OUTSIDE) {
-                    this.renderChunksInFrustum.add(chunk);
-                    this.layersInFrustum |= chunk.getRenderLayers();
-                }
-            }
-        }
+        this.sectionOcclusionGraph.addSectionsInFrustum(frustum, this.sectionsInFrustum);
         this.mc.getProfiler().pop();
     }
 
@@ -678,28 +628,20 @@ public class LevelRenderer implements IKeyedReloadListener, ResourceManagerReloa
         }
     }
 
-    private boolean closeToBorder(int posX, int posZ, ChunkRenderDispatcher.RenderChunk chunk) {
-        int secX = SectionPos.blockToSectionCoord(posX);
-        int secZ = SectionPos.blockToSectionCoord(posZ);
-        int oriX = SectionPos.blockToSectionCoord(chunk.getX());
-        int oriZ = SectionPos.blockToSectionCoord(chunk.getZ());
-        return !ChunkMap.isChunkInRange(oriX, oriZ, secX, secZ, this.lastViewDistance - 2);
-    }
-
-    private void compileChunks(Camera camera, long endTickTime) {
+    private void compileSections(Camera camera, long endTickTime) {
         assert this.level != null;
-        assert this.chunkRenderDispatcher != null;
+        assert this.sectionRenderDispatcher != null;
         ProfilerFiller profiler = this.mc.getProfiler();
-        profiler.push("populate_chunks_to_compile");
+        profiler.push("populate_sections_to_compile");
         BlockPos cameraPos = camera.getBlockPosition();
-        for (int i = 0, l = this.renderChunksInFrustum.size(); i < l; i++) {
-            ChunkRenderDispatcher.RenderChunk chunk = this.renderChunksInFrustum.get(i);
+        for (int i = 0, l = this.sectionsInFrustum.size(); i < l; i++) {
+            SectionRenderDispatcher.RenderSection chunk = this.sectionsInFrustum.get(i);
             int chunkX = SectionPos.blockToSectionCoord(chunk.getX());
             int chunkZ = SectionPos.blockToSectionCoord(chunk.getZ());
             if (chunk.isDirty() && this.level.getChunk(chunkX, chunkZ).isClientLightReady()) {
                 if (this.renderOnThread) {
                     profiler.push("build_on_thread");
-                    this.chunkRenderDispatcher.rebuildChunkSync(chunk);
+                    this.sectionRenderDispatcher.rebuildChunkSync(chunk);
                     chunk.setNotDirty();
                     if (Util.getNanos() - endTickTime >= -1_000_000) {
                         profiler.pop();
@@ -717,15 +659,15 @@ public class LevelRenderer implements IKeyedReloadListener, ResourceManagerReloa
                     }
                     if (buildSync) {
                         profiler.push("build_near_sync");
-                        this.chunkRenderDispatcher.rebuildChunkSync(chunk);
+                        this.sectionRenderDispatcher.rebuildChunkSync(chunk);
                         chunk.setNotDirty();
                         profiler.pop();
                     }
                     else {
                         profiler.push("schedule_async_compile");
-                        chunk.rebuildChunkAsync(this.chunkRenderDispatcher, this.renderCache);
+                        chunk.rebuildChunkAsync(this.sectionRenderDispatcher, this.renderCache);
                         chunk.setNotDirty();
-                        if (this.chunkRenderDispatcher.getToBatchCount() > 100 || Util.getNanos() - endTickTime >= -1_000_000) {
+                        if (this.sectionRenderDispatcher.getToBatchCount() > 100 || Util.getNanos() - endTickTime >= -1_000_000) {
                             profiler.pop();
                             break;
                         }
@@ -736,12 +678,12 @@ public class LevelRenderer implements IKeyedReloadListener, ResourceManagerReloa
         }
         this.renderCache.clear();
         profiler.popPush("upload");
-        this.chunkRenderDispatcher.uploadAllPendingUploads();
+        this.sectionRenderDispatcher.uploadAllPendingUploads();
         profiler.pop();
     }
 
     public int countRenderedChunks() {
-        return this.renderChunksInFrustum.size();
+        return this.sectionsInFrustum.size();
     }
 
     private void deinitTransparency() {
@@ -803,12 +745,7 @@ public class LevelRenderer implements IKeyedReloadListener, ResourceManagerReloa
         }
     }
 
-    private boolean drawLayer(int size,
-                              @Nullable Uniform uniform,
-                              @RenderLayer int renderType,
-                              float camX,
-                              float camY,
-                              float camZ) {
+    private boolean drawLayer(int size, @Nullable Uniform uniform, @RenderLayer int renderType, float camX, float camY, float camZ) {
         boolean drewStuff = false;
         if (renderType != RenderLayer.TRANSLUCENT) {
             for (int i = 0; i < size; ++i) {
@@ -827,13 +764,8 @@ public class LevelRenderer implements IKeyedReloadListener, ResourceManagerReloa
         return drewStuff;
     }
 
-    private boolean drawLayerInternal(int i,
-                                      @Nullable Uniform uniform,
-                                      @RenderLayer int renderType,
-                                      float camX,
-                                      float camY,
-                                      float camZ) {
-        ChunkRenderDispatcher.RenderChunk chunk = this.renderChunksInFrustum.get(i);
+    private boolean drawLayerInternal(int i, @Nullable Uniform uniform, @RenderLayer int renderType, float camX, float camY, float camZ) {
+        SectionRenderDispatcher.RenderSection chunk = this.sectionsInFrustum.get(i);
         if (!chunk.isEmpty(renderType)) {
             VertexBuffer buffer = chunk.getBuffer(renderType);
             if (uniform != null) {
@@ -851,8 +783,8 @@ public class LevelRenderer implements IKeyedReloadListener, ResourceManagerReloa
         return this.entityTarget;
     }
 
-    public @Nullable ChunkRenderDispatcher getChunkRenderDispatcher() {
-        return this.chunkRenderDispatcher;
+    public @Nullable SectionRenderDispatcher getChunkRenderDispatcher() {
+        return this.sectionRenderDispatcher;
     }
 
     /**
@@ -861,16 +793,21 @@ public class LevelRenderer implements IKeyedReloadListener, ResourceManagerReloa
      */
     public String getChunkStatistics() {
         assert this.viewArea != null;
-        int totalChunks = this.viewArea.chunks.length;
+        int totalChunks = this.viewArea.sections.length;
         int visibleChunks = this.countRenderedChunks();
+        int frustumChecks = this.sectionOcclusionGraph.getNumberOfFrustumChecks();
         return "C: " +
                visibleChunks +
                "/" +
                totalChunks +
-               " D: " +
+               "(" +
+               frustumChecks +
+               ", " +
+               Metric.PERCENT_ONE_PLACE.format((double) frustumChecks / totalChunks) +
+               ") D: " +
                this.lastViewDistance +
                ", " +
-               (this.chunkRenderDispatcher == null ? "null" : this.chunkRenderDispatcher.getStats());
+               (this.sectionRenderDispatcher == null ? "null" : this.sectionRenderDispatcher.getStats());
     }
 
     public RenderTarget getCloudsTarget() {
@@ -916,46 +853,13 @@ public class LevelRenderer implements IKeyedReloadListener, ResourceManagerReloa
         return this.particlesTarget;
     }
 
-    /**
-     * @param cameraChunkPos the minimum block position of the chunk the camera is in
-     * @return the specified {@code chunk} offset in the specified {@code facing}, or {@code null} if it can't
-     * be seen by the camera at the specified {@code cameraChunkPos}
-     */
-    private @Nullable ChunkRenderDispatcher.RenderChunk getRelativeFrom(int camX, int camY, int camZ,
-                                                                        ChunkRenderDispatcher.RenderChunk chunk,
-                                                                        Direction facing) {
-        int originX = chunk.getX();
-        int originY = chunk.getY();
-        int originZ = chunk.getZ();
-        switch (facing) {
-            case UP -> originY += 16;
-            case DOWN -> originY -= 16;
-            case EAST -> originX += 16;
-            case WEST -> originX -= 16;
-            case SOUTH -> originZ += 16;
-            case NORTH -> originZ -= 16;
-        }
-        int view = this.lastViewDistance * 16;
-        if (Mth.abs(camX - originX) > view) {
-            return null;
-        }
-        if (Mth.abs(camY - originY) > view) {
-            return null;
-        }
-        if (Mth.abs(camZ - originZ) > view) {
-            return null;
-        }
-        assert this.level != null;
-        if (originY >= this.level.getMinBuildHeight() && originY < this.level.getMaxBuildHeight()) {
-            assert this.viewArea != null;
-            return this.viewArea.getRenderChunkAt(originX, originY, originZ);
-        }
-        return null;
+    public SectionOcclusionGraph getSectionOcclusionGraph() {
+        return this.sectionOcclusionGraph;
     }
 
     public double getTotalChunks() {
         assert this.viewArea != null;
-        return this.viewArea.chunks.length;
+        return this.viewArea.sections.length;
     }
 
     public RenderTarget getTranslucentTarget() {
@@ -990,10 +894,10 @@ public class LevelRenderer implements IKeyedReloadListener, ResourceManagerReloa
                     double d4 = camera.getPosition().x;
                     double d5 = camera.getPosition().y;
                     double d6 = camera.getPosition().z;
-                    if (d3 > 0.0D) {
-                        d4 += d0 / d3 * 2.0D;
-                        d5 += d1 / d3 * 2.0D;
-                        d6 += d2 / d3 * 2.0D;
+                    if (d3 > 0.0) {
+                        d4 += d0 / d3 * 2.0;
+                        d5 += d1 / d3 * 2.0;
+                        d6 += d2 / d3 * 2.0;
                     }
                     if (type == LevelEvent.SOUND_WITHER_BOSS_SPAWN) {
                         this.level.playLocalSound(d4, d5, d6, SoundEvents.WITHER_SPAWN, SoundSource.HOSTILE, 1.0F, 1.0F, false);
@@ -1019,8 +923,8 @@ public class LevelRenderer implements IKeyedReloadListener, ResourceManagerReloa
     }
 
     public boolean hasRenderedAllChunks() {
-        assert this.chunkRenderDispatcher != null;
-        return this.chunkRenderDispatcher.isQueueEmpty();
+        assert this.sectionRenderDispatcher != null;
+        return this.sectionRenderDispatcher.isQueueEmpty();
     }
 
     public void initOutline() {
@@ -1084,40 +988,10 @@ public class LevelRenderer implements IKeyedReloadListener, ResourceManagerReloa
         }
     }
 
-    private void initializeQueueForFullUpdate(Camera camera, OArrayFIFOQueue queue) {
-        assert this.level != null;
+    public boolean isChunkCompiled(int x, int y, int z) {
         assert this.viewArea != null;
-        Vec3 camPos = camera.getPosition();
-        BlockPos camBlockPos = camera.getBlockPosition();
-        ChunkRenderDispatcher.RenderChunk chunk = this.viewArea.getRenderChunkAt(camBlockPos);
-        if (chunk == null) {
-            int x = Mth.floor(camPos.x / 16) * 16;
-            int y = camBlockPos.getY() > this.level.getMinBuildHeight() ? this.level.getMaxBuildHeight() - 8 : this.level.getMinBuildHeight() + 8;
-            int z = Mth.floor(camPos.z / 16) * 16;
-            OList<RenderChunkInfo> list = new OArrayList<>();
-            for (int i1 = -this.lastViewDistance; i1 <= this.lastViewDistance; ++i1) {
-                for (int j1 = -this.lastViewDistance; j1 <= this.lastViewDistance; ++j1) {
-                    ChunkRenderDispatcher.RenderChunk otherChunk = this.viewArea.getRenderChunkAt(x + SectionPos.sectionToBlockCoord(i1, 8),
-                                                                                                  y,
-                                                                                                  z + SectionPos.sectionToBlockCoord(j1, 8));
-                    if (otherChunk != null) {
-                        //noinspection ObjectAllocationInLoop
-                        list.add(new RenderChunkInfo(otherChunk, null, 0));
-                    }
-                }
-            }
-            list.sort(this.comparator.setCameraPos(camBlockPos));
-            queue.enqueueMany(list);
-        }
-        else {
-            queue.enqueue(new LevelRenderer.RenderChunkInfo(chunk, null, 0));
-        }
-    }
-
-    public boolean isChunkCompiled(BlockPos pos) {
-        assert this.viewArea != null;
-        ChunkRenderDispatcher.RenderChunk chunk = this.viewArea.getRenderChunkAt(pos);
-        return chunk != null && chunk.compiled != ChunkRenderDispatcher.CompiledChunk.UNCOMPILED;
+        SectionRenderDispatcher.RenderSection chunk = this.viewArea.getRenderSectionAt(x, y, z);
+        return chunk != null && chunk.compiled != SectionRenderDispatcher.CompiledSection.UNCOMPILED;
     }
 
     public void levelEvent(@LvlEvent int type, int x, int y, int z, int data) {
@@ -1128,26 +1002,13 @@ public class LevelRenderer implements IKeyedReloadListener, ResourceManagerReloa
         return this.listener;
     }
 
-    private boolean needsFrustumUpdate(Camera camera) {
-        double camRotX = Math.floor(camera.getXRot() / 2.0F);
-        double camRotY = Math.floor(camera.getYRot() / 2.0F);
-        if (camRotX != this.prevCamRotX || camRotY != this.prevCamRotY) {
-            this.prevCamRotX = camRotX;
-            this.prevCamRotY = camRotY;
-            this.needsFrustumUpdate.set(false);
-            return true;
-        }
-        if (this.needsFrustumUpdate.compareAndSet(true, false)) {
-            this.prevCamRotX = camRotX;
-            this.prevCamRotY = camRotY;
-            return true;
-        }
-        return false;
+    public void needsUpdate() {
+        this.sectionOcclusionGraph.invalidate();
+        this.generateClouds = true;
     }
 
-    public void needsUpdate() {
-        this.needsFullRenderChunkUpdate = true;
-        this.generateClouds = true;
+    public void onChunkLoaded(int chunkX, int chunkZ) {
+        this.sectionOcclusionGraph.onChunkLoaded(chunkX, chunkZ);
     }
 
     @Override
@@ -1158,21 +1019,11 @@ public class LevelRenderer implements IKeyedReloadListener, ResourceManagerReloa
         }
     }
 
-    private void partialUpdate(RenderChunkStorage storage, Vec3 camPos, boolean smartCull) {
-        if (!this.recentlyCompiledChunks.isEmpty()) {
-            OArrayFIFOQueue<RenderChunkInfo> queue = QUEUE_CACHE.get();
-            assert queue.isEmpty();
-            for (int i = 0, len = this.recentlyCompiledChunks.size(); i < len; i++) {
-                ChunkRenderDispatcher.RenderChunk chunk = this.recentlyCompiledChunks.get(i);
-                RenderChunkInfo renderChunkInfo = storage.renderInfoMap.get(chunk);
-                if (renderChunkInfo != null && renderChunkInfo.chunk == chunk) {
-                    queue.enqueue(renderChunkInfo);
-                }
-            }
-            this.recentlyCompiledChunks.clear();
-            this.updateRenderChunks(storage, camPos, queue, smartCull);
-            this.needsFrustumUpdate.set(true);
-            queue.clear();
+    public void onSectionBecomingNonEmpty(long secPos) {
+        assert this.viewArea != null;
+        SectionRenderDispatcher.RenderSection section = this.viewArea.getRenderSection(secPos);
+        if (section != null) {
+            this.sectionOcclusionGraph.schedulePropagationFrom(section);
         }
     }
 
@@ -1192,12 +1043,12 @@ public class LevelRenderer implements IKeyedReloadListener, ResourceManagerReloa
 
     private void renderChunkLayer(RenderType renderType, @RenderLayer int renderLayer, PoseStack matrices, float camX, float camY, float camZ, Matrix4f projectionMatrix) {
         assert RenderSystem.isOnRenderThread();
-        assert this.chunkRenderDispatcher != null;
+        assert this.sectionRenderDispatcher != null;
         if ((this.layersInFrustum & 1 << renderLayer) == 0) {
             return;
         }
         renderType.setupRenderState();
-        int size = this.renderChunksInFrustum.size();
+        int size = this.sectionsInFrustum.size();
         ProfilerFiller profiler = this.mc.getProfiler();
         if (renderLayer == RenderLayer.TRANSLUCENT) {
             profiler.push("translucent_sort");
@@ -1207,7 +1058,10 @@ public class LevelRenderer implements IKeyedReloadListener, ResourceManagerReloa
                 this.zTransparentOld = camZ;
                 int j = 0;
                 for (int i = 0; i < size; i++) {
-                    if (j < 15 && this.renderChunksInFrustum.get(i).resortTransparency(this.chunkRenderDispatcher, this.renderOnThread)) {
+                    if (j >= 15) {
+                        break;
+                    }
+                    if (this.sectionsInFrustum.get(i).resortTransparency(this.sectionRenderDispatcher, this.renderOnThread)) {
                         ++j;
                     }
                 }
@@ -1395,7 +1249,7 @@ public class LevelRenderer implements IKeyedReloadListener, ResourceManagerReloa
         Frustum frustum = this.cullingFrustum;
         this.setupRender(camera, frustum, this.mc.player.isSpectator());
         profiler.popPush("compile_chunks");
-        this.compileChunks(camera, endTickTime);
+        this.compileSections(camera, endTickTime);
         profiler.popPush("terrain");
         this.renderChunkLayer(RenderType.solid(), RenderLayer.SOLID, matrices, camX, camY, camZ, projectionMatrix);
         this.renderChunkLayer(RenderType.cutoutMipped(), RenderLayer.CUTOUT_MIPPED, matrices, camX, camY, camZ, projectionMatrix);
@@ -1484,18 +1338,18 @@ public class LevelRenderer implements IKeyedReloadListener, ResourceManagerReloa
         buffer.endBatch(RenderType.entityCutoutNoCull(TextureAtlas.LOCATION_BLOCKS));
         buffer.endBatch(RenderType.entitySmoothCutout(TextureAtlas.LOCATION_BLOCKS));
         profiler.popPush("block_entities");
-        for (int i = 0, l = this.renderChunksInFrustum.size(); i < l; i++) {
-            ChunkRenderDispatcher.RenderChunk renderChunk = this.renderChunksInFrustum.get(i);
-            if (!renderChunk.hasRenderableTEs()) {
+        for (int i = 0, l = this.sectionsInFrustum.size(); i < l; i++) {
+            SectionRenderDispatcher.RenderSection renderSection = this.sectionsInFrustum.get(i);
+            if (!renderSection.hasRenderableTEs()) {
                 continue;
             }
-            List<BlockEntity> blockEntities = renderChunk.compiled.getRenderableTEs();
+            List<BlockEntity> blockEntities = renderSection.compiled.getRenderableTEs();
             if (!blockEntities.isEmpty()) {
                 for (int j = 0, len = blockEntities.size(); j < len; j++) {
                     BlockEntity blockEntity = blockEntities.get(j);
                     //noinspection ObjectAllocationInLoop,ConstantConditions
                     profiler.push(() -> Registry.BLOCK_ENTITY_TYPE.getKey(blockEntity.getType()).toString());
-                    if (renderChunk.visibility != Visibility.INSIDE && !frustum.isVisible(blockEntity.getRenderBoundingBox())) {
+                    if (renderSection.visibility != Visibility.INSIDE && !frustum.isVisible(blockEntity.getRenderBoundingBox())) {
                         profiler.pop();
                         continue;
                     }
@@ -2038,24 +1892,13 @@ public class LevelRenderer implements IKeyedReloadListener, ResourceManagerReloa
                 this.viewArea.releaseAllBuffers();
                 this.viewArea = null;
             }
-            if (this.chunkRenderDispatcher != null) {
-                this.chunkRenderDispatcher.dispose();
-                this.chunkRenderDispatcher = null;
+            if (this.sectionRenderDispatcher != null) {
+                this.sectionRenderDispatcher.dispose();
+                this.sectionRenderDispatcher = null;
             }
             this.globalBlockEntities.clear();
-            this.renderChunkStorage = null;
-            this.renderChunksInFrustum.clear();
-            if (this.lastFullRenderChunkUpdate != null) {
-                try {
-                    this.lastFullRenderChunkUpdate.get();
-                }
-                catch (Exception ignored) {
-                }
-                finally {
-                    this.lastFullRenderChunkUpdate = null;
-                }
-            }
-            this.recentlyCompiledChunks.clear();
+            this.sectionOcclusionGraph.waitAndReset(null);
+            this.sectionsInFrustum.clear();
             this.destroyingBlocks.clear();
             this.destructionProgress.clear();
             this.renderCache.clear();
@@ -2084,7 +1927,7 @@ public class LevelRenderer implements IKeyedReloadListener, ResourceManagerReloa
 
     private void setupRender(Camera camera, Frustum frustum, boolean isSpectator) {
         assert this.level != null;
-        assert this.chunkRenderDispatcher != null;
+        assert this.sectionRenderDispatcher != null;
         assert this.viewArea != null;
         if (this.mc.options.getEffectiveRenderDistance() != this.lastViewDistance) {
             this.allChanged();
@@ -2102,21 +1945,16 @@ public class LevelRenderer implements IKeyedReloadListener, ResourceManagerReloa
             this.lastCameraChunkX = secX;
             this.lastCameraChunkY = secY;
             this.lastCameraChunkZ = secZ;
-            this.viewArea.repositionCamera(camX, camZ);
+            this.viewArea.repositionCamera(camX, camY, camZ);
         }
-        this.chunkRenderDispatcher.setCamera((float) camX, (float) camY, (float) camZ);
+        this.sectionRenderDispatcher.setCamera((float) camX, (float) camY, (float) camZ);
         profiler.popPush("culling");
         double currentCamX = Math.floor(camX / 8.0);
         double currentCamY = Math.floor(camY / 8.0);
         double currentCamZ = Math.floor(camZ / 8.0);
-        this.needsFullRenderChunkUpdate = this.needsFullRenderChunkUpdate || currentCamX != this.prevCamX || currentCamY != this.prevCamY || currentCamZ != this.prevCamZ;
-        this.nextFullUpdateMillis.updateAndGet(l -> {
-            if (l > 0L && System.currentTimeMillis() > l) {
-                this.needsFullRenderChunkUpdate = true;
-                return 0L;
-            }
-            return l;
-        });
+        if (currentCamX != this.prevCamX || currentCamY != this.prevCamY || currentCamZ != this.prevCamZ) {
+            this.sectionOcclusionGraph.invalidate();
+        }
         this.prevCamX = currentCamX;
         this.prevCamY = currentCamY;
         this.prevCamZ = currentCamZ;
@@ -2132,35 +1970,15 @@ public class LevelRenderer implements IKeyedReloadListener, ResourceManagerReloa
             int z = pos.getZ();
             smartCull = !this.level.getBlockState_(x, y, z).isSolidRender_(this.level, x, y, z);
         }
-        if (this.needsFullRenderChunkUpdate && (this.lastFullRenderChunkUpdate == null || this.lastFullRenderChunkUpdate.isDone())) {
-            profiler.push("full_update_schedule");
-            this.needsFullRenderChunkUpdate = false;
-            this.lastFullRenderChunkUpdate = Util.backgroundExecutor().submit(() -> {
-                OArrayFIFOQueue<RenderChunkInfo> queue = QUEUE_CACHE.get();
-                queue.clear();
-                this.initializeQueueForFullUpdate(camera, queue);
-                RenderChunkStorage renderChunkStorage = new RenderChunkStorage(this.viewArea.chunks.length);
-                this.updateRenderChunks(renderChunkStorage, camPos, queue, smartCull);
-                queue.clear();
-                this.renderChunkStorage = renderChunkStorage;
-                this.needsFrustumUpdate.set(true);
-            });
-            profiler.pop();
-        }
-        profiler.push("partial_update");
-        RenderChunkStorage storage = this.renderChunkStorage;
-        assert storage != null;
-        if (this.renderOnThread) {
-            this.partialUpdate(storage, camPos, smartCull);
-        }
-        else {
-            synchronized (this.recentlyCompiledChunks) {
-                this.partialUpdate(storage, camPos, smartCull);
-            }
-        }
+        profiler.push("section_occlusion_graph");
+        this.sectionOcclusionGraph.update(smartCull, camera, frustum, this.sectionsInFrustum, this.level.getChunkSource().getLoadedEmptySections());
         profiler.pop();
-        if (this.needsFrustumUpdate(camera)) {
+        double pitch = Math.floor(camera.getXRot() / 2.0);
+        double yaw = Math.floor(camera.getYRot() / 2.0);
+        if (this.sectionOcclusionGraph.consumeFrustumUpdate() || pitch != this.prevCamRotX || yaw != this.prevCamRotY || this.layersInFrustum == 0) {
             this.applyFrustum(frustum.offsetToFullyIncludeCameraCube(8));
+            this.prevCamRotX = pitch;
+            this.prevCamRotY = yaw;
         }
         profiler.pop();
     }
@@ -2266,150 +2084,8 @@ public class LevelRenderer implements IKeyedReloadListener, ResourceManagerReloa
         }
     }
 
-    private void updateRenderChunks(RenderChunkStorage storage,
-                                    Vec3 viewVector,
-                                    OArrayFIFOQueue<RenderChunkInfo> queue,
-                                    boolean shouldCull) {
-        assert this.level != null;
-        assert this.viewArea != null;
-        int cameraX = Mth.floor(viewVector.x / 16) * 16;
-        int cameraY = Mth.floor(viewVector.y / 16) * 16;
-        int cameraZ = Mth.floor(viewVector.z / 16) * 16;
-        int centerX = cameraX + 8;
-        int centerY = cameraY + 8;
-        int centerZ = cameraZ + 8;
-        Entity.setViewScale(Mth.clamp(this.mc.options.getEffectiveRenderDistance() / 8.0, 1, 2.5) * this.mc.options.entityDistanceScaling);
-        RenderInfoMap infoMap = storage.renderInfoMap;
-        while (!queue.isEmpty()) {
-            RenderChunkInfo info = queue.dequeue();
-            ChunkRenderDispatcher.RenderChunk chunk = info.chunk;
-            storage.add(chunk);
-            int chunkX = chunk.getX();
-            int chunkY = chunk.getY();
-            int chunkZ = chunk.getZ();
-            Direction nearestDir = Direction.getNearest(chunkX - cameraX, chunkY - cameraY, chunkZ - cameraZ);
-            boolean far = Math.abs(chunkX - cameraX) > 60 || Math.abs(chunkY - cameraY) > 60 || Math.abs(chunkZ - cameraZ) > 60;
-            boolean askedForUpdate = false;
-            directions:
-            for (Direction dir : DirectionUtil.ALL) {
-                ChunkRenderDispatcher.RenderChunk chunkAtDir = this.getRelativeFrom(cameraX, cameraY, cameraZ, chunk, dir);
-                if (chunkAtDir == null) {
-                    if (!askedForUpdate && !this.closeToBorder(cameraX, cameraZ, chunk)) {
-                        this.nextFullUpdateMillis.set(System.currentTimeMillis() + 500L);
-                        askedForUpdate = true;
-                    }
-                }
-                else {
-                    if (!shouldCull || !info.hasDirection(dir.getOpposite())) {
-                        if (shouldCull) {
-                            if (info.hasSourceDirections()) {
-                                ChunkRenderDispatcher.CompiledChunk compiled = chunk.compiled;
-                                boolean cull = false;
-                                for (Direction dirForCull : DirectionUtil.ALL) {
-                                    if (info.hasSourceDirection(dirForCull) && compiled.facesCanSeeEachother(dirForCull.getOpposite(), dir)) {
-                                        cull = true;
-                                        break;
-                                    }
-                                }
-                                if (!cull) {
-                                    continue;
-                                }
-                            }
-                            if (far) {
-                                if (info.hasSourceDirections() && !info.hasSourceDirection(nearestDir)) {
-                                    ChunkRenderDispatcher.RenderChunk chunkAtNearest = this.getRelativeFrom(cameraX, cameraY, cameraZ, chunk,
-                                                                                                            nearestDir.getOpposite());
-                                    if (chunkAtNearest == null) {
-                                        continue;
-                                    }
-                                    if (infoMap.get(chunkAtNearest) == null) {
-                                        continue;
-                                    }
-                                }
-                                byte dx = 0;
-                                byte dy = 0;
-                                byte dz = 0;
-                                switch (dir.getAxis()) {
-                                    case X -> {
-                                        if (centerX > chunkAtDir.getX()) {
-                                            dx = 16;
-                                        }
-                                        if (centerY < chunkAtDir.getY()) {
-                                            dy = 16;
-                                        }
-                                        if (centerZ < chunkAtDir.getZ()) {
-                                            dz = 16;
-                                        }
-                                    }
-                                    case Y -> {
-                                        if (centerX < chunkAtDir.getX()) {
-                                            dx = 16;
-                                        }
-                                        if (centerY > chunkAtDir.getY()) {
-                                            dy = 16;
-                                        }
-                                        if (centerZ < chunkAtDir.getZ()) {
-                                            dz = 16;
-                                        }
-                                    }
-                                    case Z -> {
-                                        if (centerX < chunkAtDir.getX()) {
-                                            dx = 16;
-                                        }
-                                        if (centerY < chunkAtDir.getY()) {
-                                            dy = 16;
-                                        }
-                                        if (centerZ > chunkAtDir.getZ()) {
-                                            dz = 16;
-                                        }
-                                    }
-                                }
-                                double chunkAtDirX = chunkAtDir.getX() + dx;
-                                double chunkAtDirY = chunkAtDir.getY() + dy;
-                                double chunkAtDirZ = chunkAtDir.getZ() + dz;
-                                double deltaX = viewVector.x - chunkAtDirX;
-                                double deltaY = viewVector.y - chunkAtDirY;
-                                double deltaZ = viewVector.z - chunkAtDirZ;
-                                double norm = VectorUtil.norm(deltaX, deltaY, deltaZ) * 28;
-                                deltaX *= norm;
-                                deltaY *= norm;
-                                deltaZ *= norm;
-                                while (VectorUtil.subtractLengthSqr(viewVector, chunkAtDirX, chunkAtDirY, chunkAtDirZ) > 3_600) {
-                                    chunkAtDirX += deltaX;
-                                    chunkAtDirY += deltaY;
-                                    chunkAtDirZ += deltaZ;
-                                    if (chunkAtDirY > this.level.getMaxBuildHeight() || chunkAtDirY < this.level.getMinBuildHeight()) {
-                                        break;
-                                    }
-                                    ChunkRenderDispatcher.RenderChunk chunkAt = this.viewArea.getRenderChunkAt(Mth.floor(chunkAtDirX),
-                                                                                                               Mth.floor(chunkAtDirY),
-                                                                                                               Mth.floor(chunkAtDirZ));
-                                    if (chunkAt == null || infoMap.get(chunkAt) == null) {
-                                        continue directions;
-                                    }
-                                }
-                            }
-                        }
-                        RenderChunkInfo infoAtDir = infoMap.get(chunkAtDir);
-                        if (infoAtDir != null) {
-                            infoAtDir.addSourceDirection(dir);
-                        }
-                        else if (!chunkAtDir.hasAllNeighbors()) {
-                            if (!this.closeToBorder(cameraX, cameraZ, chunk)) {
-                                this.nextFullUpdateMillis.set(System.currentTimeMillis() + 500L);
-                            }
-                        }
-                        else {
-                            //noinspection ObjectAllocationInLoop
-                            RenderChunkInfo newInfo = new RenderChunkInfo(chunkAtDir, dir, info.step + 1);
-                            newInfo.setDirections(info.directions, dir);
-                            queue.enqueue(newInfo);
-                            infoMap.put(chunkAtDir, newInfo);
-                        }
-                    }
-                }
-            }
-        }
+    public void updateLayersInFrustum(byte layersInFrustum) {
+        this.layersInFrustum |= layersInFrustum;
     }
 
     public boolean visibleFrustumCulling(AABB bb) {
@@ -2418,11 +2094,11 @@ public class LevelRenderer implements IKeyedReloadListener, ResourceManagerReloa
 
     public boolean visibleOcclusionCulling(double x, double y, double z) {
         assert this.viewArea != null;
-        ChunkRenderDispatcher.RenderChunk chunk = this.viewArea.getRenderChunkAt(Mth.floor(x), Mth.floor(y), Mth.floor(z));
-        if (chunk == null || chunk.isCompletelyEmpty()) {
+        SectionRenderDispatcher.RenderSection section = this.viewArea.getRenderSectionAt(Mth.floor(x), Mth.floor(y), Mth.floor(z));
+        if (section == null || section.isCompletelyEmpty()) {
             return true;
         }
-        return chunk.visibility != Visibility.OUTSIDE;
+        return section.visibility != Visibility.OUTSIDE;
     }
 
     public boolean visibleOcclusionCulling(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
@@ -2442,7 +2118,7 @@ public class LevelRenderer implements IKeyedReloadListener, ResourceManagerReloa
         for (int x = x0, secX = secX0; secX <= secX1; ++secX, x += 16) {
             for (int y = y0, secY = secY0; secY <= secY1; ++secY, y += 16) {
                 for (int z = z0, secZ = secZ0; secZ <= secZ1; ++secZ, z += 16) {
-                    ChunkRenderDispatcher.RenderChunk chunk = this.viewArea.getRenderChunkAt(x, y, z);
+                    SectionRenderDispatcher.RenderSection chunk = this.viewArea.getRenderSectionAt(x, y, z);
                     if (chunk == null || chunk.isCompletelyEmpty()) {
                         return true;
                     }
@@ -2453,110 +2129,6 @@ public class LevelRenderer implements IKeyedReloadListener, ResourceManagerReloa
             }
         }
         return false;
-    }
-
-    public static class RenderChunkInfo {
-        public final ChunkRenderDispatcher.RenderChunk chunk;
-        private byte directions;
-        private byte sourceDirections;
-        public final int step;
-
-        public RenderChunkInfo(ChunkRenderDispatcher.RenderChunk chunk, @Nullable Direction sourceDir, int step) {
-            this.chunk = chunk;
-            if (sourceDir != null) {
-                this.addSourceDirection(sourceDir);
-            }
-            this.step = step;
-        }
-
-        public void addSourceDirection(Direction direction) {
-            this.sourceDirections |= (byte) (this.sourceDirections | 1 << direction.ordinal());
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (!(o instanceof RenderChunkInfo other)) {
-                return false;
-            }
-            ChunkRenderDispatcher.RenderChunk chunk = this.chunk;
-            ChunkRenderDispatcher.RenderChunk otherChunk = other.chunk;
-            return chunk.getX() == otherChunk.getX() && chunk.getY() == otherChunk.getY() && chunk.getZ() == otherChunk.getZ();
-        }
-
-        public boolean hasDirection(Direction facing) {
-            return (this.directions & 1 << facing.ordinal()) != 0;
-        }
-
-        public boolean hasSourceDirection(Direction dir) {
-            return (this.sourceDirections & 1 << dir.ordinal()) > 0;
-        }
-
-        public boolean hasSourceDirections() {
-            return this.sourceDirections != 0;
-        }
-
-        @Override
-        public int hashCode() {
-            ChunkRenderDispatcher.RenderChunk chunk = this.chunk;
-            return (chunk.getY() + chunk.getZ() * 31) * 31 + chunk.getX();
-        }
-
-        public void setDirections(byte dir, Direction facing) {
-            this.directions |= (byte) (dir | 1 << facing.ordinal());
-        }
-    }
-
-    private static class RenderChunkInfoComparator implements Comparator<RenderChunkInfo> {
-
-        private BlockPos cameraPos = BlockPos.ZERO;
-
-        @Override
-        public int compare(RenderChunkInfo o1, RenderChunkInfo o2) {
-            ChunkRenderDispatcher.RenderChunk chunk1 = o1.chunk;
-            double dist1 = this.cameraPos.distToLowCornerSqr(chunk1.getX() + 8, chunk1.getY() + 8, chunk1.getZ() + 8);
-            ChunkRenderDispatcher.RenderChunk chunk2 = o2.chunk;
-            double dist2 = this.cameraPos.distToLowCornerSqr(chunk2.getX() + 8, chunk2.getY() + 8, chunk2.getZ() + 8);
-            return Double.compare(dist1, dist2);
-        }
-
-        public RenderChunkInfoComparator setCameraPos(BlockPos pos) {
-            this.cameraPos = pos;
-            return this;
-        }
-    }
-
-    public static class RenderChunkStorage {
-        private final OList<ChunkRenderDispatcher.RenderChunk> renderChunks;
-        public final RenderInfoMap renderInfoMap;
-        private final LSet visited = new LHashSet();
-
-        public RenderChunkStorage(int size) {
-            this.renderInfoMap = new RenderInfoMap(size);
-            this.renderChunks = new OArrayList<>(size);
-        }
-
-        public void add(ChunkRenderDispatcher.RenderChunk chunk) {
-            if (this.visited.add(BlockPos.asLong(chunk.getX(), chunk.getY(), chunk.getZ()))) {
-                this.renderChunks.add(chunk);
-            }
-        }
-    }
-
-    public static class RenderInfoMap {
-        private final RenderChunkInfo[] infos;
-
-        RenderInfoMap(int size) {
-            this.infos = new RenderChunkInfo[size];
-        }
-
-        public @Nullable RenderChunkInfo get(ChunkRenderDispatcher.RenderChunk renderChunk) {
-            int i = renderChunk.index;
-            return i >= 0 && i < this.infos.length ? this.infos[i] : null;
-        }
-
-        public void put(ChunkRenderDispatcher.RenderChunk renderChunk, RenderChunkInfo info) {
-            this.infos[renderChunk.index] = info;
-        }
     }
 
     public static class TransparencyShaderException extends RuntimeException {

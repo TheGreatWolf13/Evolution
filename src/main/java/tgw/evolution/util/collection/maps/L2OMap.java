@@ -10,7 +10,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-public interface L2OMap<V> extends Long2ObjectMap<V>, MapEv {
+public interface L2OMap<V> extends Long2ObjectMap<V>, MapExtension {
 
     long beginIteration();
 
@@ -64,7 +64,8 @@ public interface L2OMap<V> extends Long2ObjectMap<V>, MapEv {
 
     long removeIteration(long it);
 
-    @UnmodifiableView L2OMap<V> view();
+    @UnmodifiableView
+    L2OMap<V> view();
 
     class EmptyMap<V> extends Long2ObjectMaps.EmptyMap<V> implements L2OMap<V> {
 

@@ -6,7 +6,7 @@ import it.unimi.dsi.fastutil.floats.FloatList;
 import it.unimi.dsi.fastutil.floats.FloatLists;
 import org.jetbrains.annotations.UnmodifiableView;
 
-public interface FList extends FloatList, ListEv {
+public interface FList extends FloatList, ListExtension {
 
     static @UnmodifiableView FList emptyList() {
         return EmptyList.EMPTY_LIST;

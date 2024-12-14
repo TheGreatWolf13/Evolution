@@ -7,7 +7,7 @@ import org.jetbrains.annotations.UnmodifiableView;
 import java.util.Collection;
 import java.util.NoSuchElementException;
 
-public interface RSet<K> extends ReferenceSet<K>, SetEv {
+public interface RSet<K> extends ReferenceSet<K>, SetExtension {
 
     static <K> @UnmodifiableView RSet<K> emptySet() {
         return EmptySet.EMPTY;

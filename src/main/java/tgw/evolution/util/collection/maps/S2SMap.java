@@ -6,7 +6,7 @@ import org.jetbrains.annotations.UnmodifiableView;
 
 import java.util.NoSuchElementException;
 
-public interface S2SMap extends Short2ShortMap, MapEv {
+public interface S2SMap extends Short2ShortMap, MapExtension {
 
     long beginIteration();
 
@@ -25,7 +25,8 @@ public interface S2SMap extends Short2ShortMap, MapEv {
 
     long removeIteration(long it);
 
-    @UnmodifiableView S2SMap view();
+    @UnmodifiableView
+    S2SMap view();
 
     class EmptyMap extends Short2ShortMaps.EmptyMap implements S2SMap {
 

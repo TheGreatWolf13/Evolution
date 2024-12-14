@@ -9,6 +9,14 @@ public interface PatchClientLevel {
         throw new AbstractMethodError();
     }
 
+    default void onChunkLoaded(int chunkX, int chunkZ) {
+        throw new AbstractMethodError();
+    }
+
+    default void onSectionBecomingNonEmpty(long secPos) {
+        throw new AbstractMethodError();
+    }
+
     default void setKnownState_(int x, int y, int z, BlockState state) {
         throw new AbstractMethodError();
     }

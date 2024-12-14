@@ -6,7 +6,7 @@ import org.jetbrains.annotations.UnmodifiableView;
 
 import java.util.NoSuchElementException;
 
-public interface I2OMap<V> extends Int2ObjectMap<V>, MapEv {
+public interface I2OMap<V> extends Int2ObjectMap<V>, MapExtension {
 
     long beginIteration();
 
@@ -25,7 +25,8 @@ public interface I2OMap<V> extends Int2ObjectMap<V>, MapEv {
 
     long removeIteration(long it);
 
-    @UnmodifiableView I2OMap<V> view();
+    @UnmodifiableView
+    I2OMap<V> view();
 
     class EmptyMap<V> extends Int2ObjectMaps.EmptyMap<V> implements I2OMap<V> {
 

@@ -6,7 +6,7 @@ import org.jetbrains.annotations.UnmodifiableView;
 
 import java.util.NoSuchElementException;
 
-public interface R2SMap<K> extends Reference2ShortMap<K>, MapEv {
+public interface R2SMap<K> extends Reference2ShortMap<K>, MapExtension {
 
     long beginIteration();
 
@@ -25,7 +25,8 @@ public interface R2SMap<K> extends Reference2ShortMap<K>, MapEv {
 
     long removeIteration(long it);
 
-    @UnmodifiableView R2SMap<K> view();
+    @UnmodifiableView
+    R2SMap<K> view();
 
     class EmptyMap<K> extends Reference2ShortMaps.EmptyMap<K> implements R2SMap<K> {
 

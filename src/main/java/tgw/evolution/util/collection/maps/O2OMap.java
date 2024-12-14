@@ -11,7 +11,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-public interface O2OMap<K, V> extends Object2ObjectMap<K, V>, MapEv {
+public interface O2OMap<K, V> extends Object2ObjectMap<K, V>, MapExtension {
 
     static @UnmodifiableView <K, V> O2OMap<K, V> emptyMap() {
         return EmptyMap.EMPTY;
@@ -88,7 +88,8 @@ public interface O2OMap<K, V> extends Object2ObjectMap<K, V>, MapEv {
 
     long removeIteration(long it);
 
-    @UnmodifiableView O2OMap<K, V> view();
+    @UnmodifiableView
+    O2OMap<K, V> view();
 
     class EmptyMap<K, V> extends Object2ObjectMaps.EmptyMap<K, V> implements O2OMap<K, V> {
 

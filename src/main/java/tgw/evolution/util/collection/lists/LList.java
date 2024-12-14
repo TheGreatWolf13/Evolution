@@ -6,7 +6,7 @@ import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.longs.LongLists;
 import org.jetbrains.annotations.UnmodifiableView;
 
-public interface LList extends LongList, ListEv {
+public interface LList extends LongList, ListExtension {
 
     static @UnmodifiableView LList emptyList() {
         return EmptyList.EMPTY_LIST;

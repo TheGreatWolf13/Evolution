@@ -20,6 +20,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.Evolution;
 import tgw.evolution.patches.PatchClientChunkCache;
 import tgw.evolution.patches.obj.IBlockEntityTagOutput;
+import tgw.evolution.util.collection.sets.LHashSet;
 import tgw.evolution.util.physics.EarthHelper;
 
 import java.util.concurrent.atomic.AtomicReferenceArray;
@@ -61,8 +62,7 @@ public abstract class MixinClientChunkCache extends ChunkSource implements Patch
             int index = storage.getIndex(x, z);
             LevelChunk chunk = storage.getChunk(index);
             if (isValidChunk(chunk, x, z)) {
-                //Unload event
-                storage.replace(index, chunk, null);
+                storage.drop(index, chunk);
             }
         }
         else if (storage.inCameraRange(x, z)) {
@@ -70,7 +70,7 @@ public abstract class MixinClientChunkCache extends ChunkSource implements Patch
             LevelChunk chunk = storage.getCameraChunk(index);
             if (isValidChunk(chunk, x, z)) {
                 //Unload event
-                storage.cameraReplace(index, chunk, null);
+                storage.cameraDrop(index, chunk);
             }
         }
     }
@@ -111,6 +111,11 @@ public abstract class MixinClientChunkCache extends ChunkSource implements Patch
         return load ? this.emptyChunk : null;
     }
 
+    @Override
+    public LHashSet getLoadedEmptySections() {
+        return this.storage.getLoadedEmptySections();
+    }
+
     /**
      * @reason _
      * @author TheGreatWolf
@@ -125,6 +130,11 @@ public abstract class MixinClientChunkCache extends ChunkSource implements Patch
     @Override
     public void onLightUpdate_(LightLayer lightLayer, int secX, int secY, int secZ) {
         Minecraft.getInstance().lvlRenderer().setSectionDirty(secX, secY, secZ);
+    }
+
+    @Override
+    public void onSectionEmptinessChanged(int secX, int secY, int secZ, boolean empty) {
+        this.storage.onSectionEmptinessChanged(secX, secY, secZ, empty);
     }
 
     /**

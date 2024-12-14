@@ -6,7 +6,7 @@ import it.unimi.dsi.fastutil.shorts.ShortList;
 import it.unimi.dsi.fastutil.shorts.ShortLists;
 import org.jetbrains.annotations.UnmodifiableView;
 
-public interface SList extends ShortList, ListEv {
+public interface SList extends ShortList, ListExtension {
 
     static @UnmodifiableView SList emptyList() {
         return EmptyList.EMPTY_LIST;

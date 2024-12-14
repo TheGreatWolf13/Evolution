@@ -1,66 +1,112 @@
 package tgw.evolution.client.renderer.chunk;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
+import net.minecraft.core.SectionPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
-
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 public class ViewArea {
 
-    public ChunkRenderDispatcher.RenderChunk[] chunks;
+    private int camSecX;
+    private int camSecY;
+    private int camSecZ;
     private int height;
-    private final Level level;
+    public final Level level;
+    private final LevelRenderer levelRenderer;
+    private int renderDistance;
+    public SectionRenderDispatcher.RenderSection[] sections;
     private int width;
 
-    public ViewArea(ChunkRenderDispatcher dispatcher, Level level, int viewDistance) {
+    public ViewArea(SectionRenderDispatcher dispatcher, Level level, LevelRenderer levelRenderer, int viewDistance) {
         this.level = level;
+        this.levelRenderer = levelRenderer;
         this.setViewDistance(viewDistance);
-        this.createChunks(dispatcher);
+        this.createSections(dispatcher);
+        this.camSecX = viewDistance + 1;
+        this.camSecY = 0;
+        this.camSecZ = viewDistance + 1;
     }
 
-    protected void createChunks(ChunkRenderDispatcher dispatcher) {
+    private boolean containsSection(int secX, int secY, int secZ) {
+        if (secY >= this.level.getMinSection() && secY <= this.level.getMaxSection()) {
+            return secX >= this.camSecX - this.renderDistance && secX <= this.camSecX + this.renderDistance && secZ >= this.camSecZ - this.renderDistance && secZ <= this.camSecZ + this.renderDistance;
+        }
+        return false;
+    }
+
+    protected void createSections(SectionRenderDispatcher dispatcher) {
         assert Minecraft.getInstance().isSameThread() : "createChunks called from wrong thread: " + Thread.currentThread().getName();
-        this.chunks = new ChunkRenderDispatcher.RenderChunk[this.width * this.height * this.width];
+        this.sections = new SectionRenderDispatcher.RenderSection[this.width * this.height * this.width];
         for (int x = 0; x < this.width; ++x) {
             for (int y = 0; y < this.height; ++y) {
                 for (int z = 0; z < this.width; ++z) {
-                    int index = this.getChunkIndex(x, y, z);
+                    int index = this.getSectionIndex(x, y, z);
                     //noinspection ObjectAllocationInLoop
-                    this.chunks[index] = dispatcher.new RenderChunk(index, x * 16, y * 16, z * 16);
+                    this.sections[index] = dispatcher.new RenderSection(index, SectionPos.asLong(x, y + this.level.getMinSection(), z));
                 }
             }
         }
     }
 
-    private int getChunkIndex(int x, int y, int z) {
-        return (z * this.height + y) * this.width + x;
+    public int getCamSecX() {
+        return this.camSecX;
     }
 
-    @Nullable
-    public ChunkRenderDispatcher.RenderChunk getRenderChunkAt(int posX, int posY, int posZ) {
+    public int getCamSecY() {
+        return this.camSecY;
+    }
+
+    public int getCamSecZ() {
+        return this.camSecZ;
+    }
+
+    public int getHeight() {
+        return this.height;
+    }
+
+    public int getRenderDistance() {
+        return this.renderDistance;
+    }
+
+    protected @Nullable SectionRenderDispatcher.RenderSection getRenderSection(long secPos) {
+        int secX = SectionPos.x(secPos);
+        int secY = SectionPos.y(secPos);
+        int secZ = SectionPos.z(secPos);
+        return this.getRenderSection(secX, secY, secZ);
+    }
+
+    private @Nullable SectionRenderDispatcher.RenderSection getRenderSection(int secX, int secY, int secZ) {
+        if (!this.containsSection(secX, secY, secZ)) {
+            return null;
+        }
+        int i = Math.floorMod(secX, this.width);
+        int j = secY - this.level.getMinSection();
+        int k = Math.floorMod(secZ, this.width);
+        return this.sections[this.getSectionIndex(i, j, k)];
+    }
+
+    public @Nullable SectionRenderDispatcher.RenderSection getRenderSectionAt(int posX, int posY, int posZ) {
         int y = posY - this.level.getMinBuildHeight() >> 4;
         if (y >= 0 && y < this.height) {
-            return this.chunks[this.getChunkIndex(Mth.positiveModulo(posX >> 4, this.width), y, Mth.positiveModulo(posZ >> 4, this.width))];
+            return this.sections[this.getSectionIndex(Mth.positiveModulo(posX >> 4, this.width), y, Mth.positiveModulo(posZ >> 4, this.width))];
         }
         return null;
     }
 
-    @Nullable
-    public ChunkRenderDispatcher.RenderChunk getRenderChunkAt(BlockPos pos) {
-        return this.getRenderChunkAt(pos.getX(), pos.getY(), pos.getZ());
+    private int getSectionIndex(int x, int y, int z) {
+        return (z * this.height + y) * this.width + x;
     }
 
     public void releaseAllBuffers() {
-        for (ChunkRenderDispatcher.RenderChunk chunk : this.chunks) {
-            chunk.releaseBuffers();
+        for (SectionRenderDispatcher.RenderSection section : this.sections) {
+            section.releaseBuffers();
         }
     }
 
-    public void repositionCamera(double viewEntityX, double viewEntityZ) {
-        int camX = Mth.ceil(viewEntityX);
-        int camZ = Mth.ceil(viewEntityZ);
+    public void repositionCamera(double camEntityX, double camEntityY, double camEntityZ) {
+        int camX = Mth.ceil(camEntityX);
+        int camZ = Mth.ceil(camEntityZ);
         int width = this.width;
         int xSize = width * 16;
         int zSize = width * 16;
@@ -72,17 +118,21 @@ public class ViewArea {
                 int originZ = zOffset + Math.floorMod(z * 16 - zOffset, zSize);
                 for (int y = 0, height = this.height; y < height; ++y) {
                     int originY = this.level.getMinBuildHeight() + y * 16;
-                    ChunkRenderDispatcher.RenderChunk chunk = this.chunks[this.getChunkIndex(x, y, z)];
+                    SectionRenderDispatcher.RenderSection chunk = this.sections[this.getSectionIndex(x, y, z)];
                     if (originX != chunk.getX() || originY != chunk.getY() || originZ != chunk.getZ()) {
-                        chunk.setOrigin(originX, originY, originZ);
+                        chunk.setSectionNode(SectionPos.asLong(SectionPos.blockToSectionCoord(originX), SectionPos.blockToSectionCoord(originY), SectionPos.blockToSectionCoord(originZ)));
                     }
                 }
             }
         }
+        this.camSecX = SectionPos.blockToSectionCoord(camX);
+        this.camSecY = SectionPos.blockToSectionCoord(Mth.ceil(camEntityY));
+        this.camSecZ = SectionPos.blockToSectionCoord(camZ);
+        this.levelRenderer.getSectionOcclusionGraph().invalidate();
     }
 
     public void resetVisibility() {
-        for (ChunkRenderDispatcher.RenderChunk chunk : this.chunks) {
+        for (SectionRenderDispatcher.RenderSection chunk : this.sections) {
             chunk.visibility = Visibility.OUTSIDE;
         }
     }
@@ -91,11 +141,12 @@ public class ViewArea {
         int i = Math.floorMod(sectionX, this.width);
         int j = Math.floorMod(sectionY - this.level.getMinSection(), this.height);
         int k = Math.floorMod(sectionZ, this.width);
-        ChunkRenderDispatcher.RenderChunk chunk = this.chunks[this.getChunkIndex(i, j, k)];
+        SectionRenderDispatcher.RenderSection chunk = this.sections[this.getSectionIndex(i, j, k)];
         chunk.setDirty(reRenderOnMainThread);
     }
 
     protected void setViewDistance(int renderDistance) {
+        this.renderDistance = renderDistance;
         this.width = Mth.smallestEncompassingPowerOfTwo(renderDistance * 2 + 1);
         this.height = this.level.getSectionsCount();
     }

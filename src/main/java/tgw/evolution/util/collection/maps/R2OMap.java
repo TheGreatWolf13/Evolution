@@ -10,7 +10,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-public interface R2OMap<K, V> extends Reference2ObjectMap<K, V>, MapEv {
+public interface R2OMap<K, V> extends Reference2ObjectMap<K, V>, MapExtension {
 
     static @UnmodifiableView <K, V> R2OMap<K, V> emptyMap() {
         return EmptyMap.EMPTY;
@@ -25,11 +25,13 @@ public interface R2OMap<K, V> extends Reference2ObjectMap<K, V>, MapEv {
     @Override
     void clear();
 
-    @Nullable K getIterationKey(long it);
+    @Nullable
+    K getIterationKey(long it);
 
     V getIterationValue(long it);
 
-    @Nullable K getSampleKey();
+    @Nullable
+    K getSampleKey();
 
     V getSampleValue();
 
@@ -72,7 +74,8 @@ public interface R2OMap<K, V> extends Reference2ObjectMap<K, V>, MapEv {
 
     long removeIteration(long it);
 
-    @UnmodifiableView R2OMap<K, V> view();
+    @UnmodifiableView
+    R2OMap<K, V> view();
 
     class EmptyMap<K, V> extends Reference2ObjectMaps.EmptyMap<K, V> implements R2OMap<K, V> {
 

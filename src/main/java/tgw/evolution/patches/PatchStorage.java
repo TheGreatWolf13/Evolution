@@ -1,17 +1,20 @@
 package tgw.evolution.patches;
 
-import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import net.minecraft.world.level.chunk.LevelChunk;
 import org.jetbrains.annotations.Nullable;
+import tgw.evolution.util.collection.sets.LHashSet;
 
 public interface PatchStorage {
 
-    @CanIgnoreReturnValue
-    default LevelChunk cameraReplace(int index, LevelChunk oldChunk, @Nullable LevelChunk newChunk) {
+    default void cameraDrop(int index, LevelChunk chunk) {
         throw new AbstractMethodError();
     }
 
-    default void cameraReplace(int index, LevelChunk chunk) {
+    default void cameraReplace(int index, @Nullable LevelChunk chunk) {
+        throw new AbstractMethodError();
+    }
+
+    default void drop(int index, LevelChunk chunk) {
         throw new AbstractMethodError();
     }
 
@@ -35,7 +38,15 @@ public interface PatchStorage {
         throw new AbstractMethodError();
     }
 
+    default LHashSet getLoadedEmptySections() {
+        throw new AbstractMethodError();
+    }
+
     default boolean inCameraRange(int x, int z) {
+        throw new AbstractMethodError();
+    }
+
+    default void onSectionEmptinessChanged(int secX, int secY, int secZ, boolean empty) {
         throw new AbstractMethodError();
     }
 

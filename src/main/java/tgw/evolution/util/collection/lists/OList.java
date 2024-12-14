@@ -5,7 +5,7 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
 import org.jetbrains.annotations.UnmodifiableView;
 
-public interface OList<K> extends ObjectList<K>, ListEv {
+public interface OList<K> extends ObjectList<K>, ListExtension {
 
     static <K> @UnmodifiableView OList<K> emptyList() {
         return EmptyList.EMPTY_LIST;

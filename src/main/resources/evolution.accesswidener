@@ -242,6 +242,7 @@ accessible method net/minecraft/client/multiplayer/ClientChunkCache$Storage repl
 accessible method net/minecraft/client/multiplayer/ClientChunkCache$Storage replace (ILnet/minecraft/world/level/chunk/LevelChunk;Lnet/minecraft/world/level/chunk/LevelChunk;)Lnet/minecraft/world/level/chunk/LevelChunk;
 accessible method net/minecraft/client/multiplayer/ClientLevel addMapData (Ljava/util/Map;)V
 accessible method net/minecraft/client/multiplayer/ClientLevel getAllMapData ()Ljava/util/Map;
+accessible method net/minecraft/client/multiplayer/ClientLevel$EntityCallbacks <init> (Lnet/minecraft/client/multiplayer/ClientLevel;)V
 accessible method net/minecraft/client/Option genericValueLabel (I)Lnet/minecraft/network/chat/Component;
 accessible method net/minecraft/client/Option genericValueLabel (Lnet/minecraft/network/chat/Component;)Lnet/minecraft/network/chat/Component;
 accessible method net/minecraft/client/Options$FieldAccess process (Ljava/lang/String;Z)Z

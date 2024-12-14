@@ -6,7 +6,7 @@ import org.jetbrains.annotations.UnmodifiableView;
 
 import java.util.NoSuchElementException;
 
-public interface FSet extends FloatSet, SetEv {
+public interface FSet extends FloatSet, SetExtension {
 
     static @UnmodifiableView FSet emptySet() {
         return EmptySet.EMPTY;

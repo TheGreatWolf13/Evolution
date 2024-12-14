@@ -6,7 +6,7 @@ import it.unimi.dsi.fastutil.bytes.ByteList;
 import it.unimi.dsi.fastutil.bytes.ByteLists;
 import org.jetbrains.annotations.UnmodifiableView;
 
-public interface BList extends ByteList, ListEv {
+public interface BList extends ByteList, ListExtension {
 
     static @UnmodifiableView BList emptyList() {
         return EmptyList.EMPTY_LIST;

@@ -4,11 +4,11 @@ import it.unimi.dsi.fastutil.Arrays;
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import it.unimi.dsi.fastutil.objects.ObjectArrays;
 import org.jetbrains.annotations.Contract;
-import tgw.evolution.util.collection.lists.ListEv;
+import tgw.evolution.util.collection.lists.ListExtension;
 
 import java.util.random.RandomGenerator;
 
-public class WeightedList<K> implements ListEv {
+public class WeightedList<K> implements ListExtension {
 
     /**
      * The backing array of elements.
@@ -78,31 +78,6 @@ public class WeightedList<K> implements ListEv {
         throw new IllegalStateException("Should not reach here");
     }
 
-    @Contract(pure = true)
-    public boolean isEmpty() {
-        return this.size == 0;
-    }
-
-    @Contract(pure = true)
-    public int size() {
-        return this.size;
-    }
-
-    @Contract(pure = true)
-    @Override
-    public void trim() {
-        if (0 == this.a.length || this.size == this.a.length) {
-            return;
-        }
-        final K[] t = (K[]) new Object[this.size];
-        System.arraycopy(this.a, 0, t, 0, this.size);
-        this.a = t;
-        final int[] u = new int[this.size];
-        System.arraycopy(this.w, 0, u, 0, this.size);
-        this.w = u;
-        assert this.size <= this.a.length;
-    }
-
     /**
      * Grows this array list, ensuring that it can contain the given number of
      * entries without resizing, and in case increasing the current capacity at
@@ -130,5 +105,30 @@ public class WeightedList<K> implements ListEv {
         this.w = u;
         assert this.size <= this.a.length;
         assert this.size <= this.w.length;
+    }
+
+    @Contract(pure = true)
+    public boolean isEmpty() {
+        return this.size == 0;
+    }
+
+    @Contract(pure = true)
+    public int size() {
+        return this.size;
+    }
+
+    @Contract(pure = true)
+    @Override
+    public void trim() {
+        if (0 == this.a.length || this.size == this.a.length) {
+            return;
+        }
+        final K[] t = (K[]) new Object[this.size];
+        System.arraycopy(this.a, 0, t, 0, this.size);
+        this.a = t;
+        final int[] u = new int[this.size];
+        System.arraycopy(this.w, 0, u, 0, this.size);
+        this.w = u;
+        assert this.size <= this.a.length;
     }
 }

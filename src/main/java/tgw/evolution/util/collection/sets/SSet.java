@@ -6,7 +6,7 @@ import org.jetbrains.annotations.UnmodifiableView;
 
 import java.util.NoSuchElementException;
 
-public interface SSet extends ShortSet, SetEv {
+public interface SSet extends ShortSet, SetExtension {
 
     static @UnmodifiableView SSet emptySet() {
         return EmptySet.EMPTY;

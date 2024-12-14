@@ -6,7 +6,7 @@ import org.jetbrains.annotations.UnmodifiableView;
 
 import java.util.NoSuchElementException;
 
-public interface R2FMap<K> extends Reference2FloatMap<K>, MapEv {
+public interface R2FMap<K> extends Reference2FloatMap<K>, MapExtension {
 
     long beginIteration();
 
@@ -25,7 +25,8 @@ public interface R2FMap<K> extends Reference2FloatMap<K>, MapEv {
 
     long removeIteration(long it);
 
-    @UnmodifiableView R2FMap<K> view();
+    @UnmodifiableView
+    R2FMap<K> view();
 
     class EmptyMap<K> extends Reference2FloatMaps.EmptyMap<K> implements R2FMap<K> {
 

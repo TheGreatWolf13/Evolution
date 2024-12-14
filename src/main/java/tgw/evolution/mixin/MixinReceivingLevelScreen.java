@@ -8,7 +8,6 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import tgw.evolution.patches.PatchMinecraft;
 
 @Mixin(ReceivingLevelScreen.class)
 public abstract class MixinReceivingLevelScreen extends Screen {
@@ -33,7 +32,7 @@ public abstract class MixinReceivingLevelScreen extends Screen {
             this.minecraft.player != null) {
             BlockPos pos = this.minecraft.player.blockPosition();
             if (this.minecraft.level != null && this.minecraft.level.isOutsideBuildHeight(pos.getY()) ||
-                ((PatchMinecraft) this.minecraft).lvlRenderer().isChunkCompiled(pos)) {
+                this.minecraft.lvlRenderer().isChunkCompiled(pos.getX(), pos.getY(), pos.getZ())) {
                 this.onClose();
             }
             if (this.loadingPacketsReceived) {

@@ -6,7 +6,7 @@ import org.jetbrains.annotations.UnmodifiableView;
 
 import java.util.NoSuchElementException;
 
-public interface DSet extends DoubleSet, SetEv {
+public interface DSet extends DoubleSet, SetExtension {
 
     static @UnmodifiableView DSet emptySet() {
         return EmptySet.EMPTY;

@@ -6,7 +6,7 @@ import org.jetbrains.annotations.UnmodifiableView;
 
 import java.util.NoSuchElementException;
 
-public interface L2IMap extends Long2IntMap, MapEv {
+public interface L2IMap extends Long2IntMap, MapExtension {
 
     long beginIteration();
 
@@ -25,7 +25,8 @@ public interface L2IMap extends Long2IntMap, MapEv {
 
     long removeIteration(long it);
 
-    @UnmodifiableView L2IMap view();
+    @UnmodifiableView
+    L2IMap view();
 
     class EmptyMap extends Long2IntMaps.EmptyMap implements L2IMap {
 

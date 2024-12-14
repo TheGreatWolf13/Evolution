@@ -29,11 +29,11 @@ public class ClientMetricsSamplersProvider implements MetricsSamplerProvider {
         this.samplers.add(MetricSampler.create("totalChunks", MetricCategory.CHUNK_RENDERING, this.levelRenderer, LevelRenderer::getTotalChunks));
         this.samplers.add(MetricSampler.create("renderedChunks", MetricCategory.CHUNK_RENDERING, this.levelRenderer, LevelRenderer::countRenderedChunks));
         this.samplers.add(MetricSampler.create("lastViewDistance", MetricCategory.CHUNK_RENDERING, this.levelRenderer, LevelRenderer::getLastViewDistance));
-        ChunkRenderDispatcher chunkrenderdispatcher = this.levelRenderer.getChunkRenderDispatcher();
+        SectionRenderDispatcher chunkrenderdispatcher = this.levelRenderer.getChunkRenderDispatcher();
         assert chunkrenderdispatcher != null;
-        this.samplers.add(MetricSampler.create("toUpload", MetricCategory.CHUNK_RENDERING_DISPATCHING, chunkrenderdispatcher, ChunkRenderDispatcher::getToUpload));
-        this.samplers.add(MetricSampler.create("freeBufferCount", MetricCategory.CHUNK_RENDERING_DISPATCHING, chunkrenderdispatcher, ChunkRenderDispatcher::getFreeBufferCount));
-        this.samplers.add(MetricSampler.create("toBatchCount", MetricCategory.CHUNK_RENDERING_DISPATCHING, chunkrenderdispatcher, ChunkRenderDispatcher::getToBatchCount));
+        this.samplers.add(MetricSampler.create("toUpload", MetricCategory.CHUNK_RENDERING_DISPATCHING, chunkrenderdispatcher, SectionRenderDispatcher::getToUpload));
+        this.samplers.add(MetricSampler.create("freeBufferCount", MetricCategory.CHUNK_RENDERING_DISPATCHING, chunkrenderdispatcher, SectionRenderDispatcher::getFreeBufferCount));
+        this.samplers.add(MetricSampler.create("toBatchCount", MetricCategory.CHUNK_RENDERING_DISPATCHING, chunkrenderdispatcher, SectionRenderDispatcher::getToBatchCount));
     }
 
     @Override

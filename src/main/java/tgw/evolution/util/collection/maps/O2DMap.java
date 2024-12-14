@@ -6,7 +6,7 @@ import org.jetbrains.annotations.UnmodifiableView;
 
 import java.util.NoSuchElementException;
 
-public interface O2DMap<K> extends Object2DoubleMap<K>, MapEv {
+public interface O2DMap<K> extends Object2DoubleMap<K>, MapExtension {
 
     long beginIteration();
 
@@ -25,7 +25,8 @@ public interface O2DMap<K> extends Object2DoubleMap<K>, MapEv {
 
     long removeIteration(long it);
 
-    @UnmodifiableView O2DMap<K> view();
+    @UnmodifiableView
+    O2DMap<K> view();
 
     class EmptyMap<K> extends Object2DoubleMaps.EmptyMap<K> implements O2DMap<K> {
 

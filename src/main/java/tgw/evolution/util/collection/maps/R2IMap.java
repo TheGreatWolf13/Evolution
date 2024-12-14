@@ -6,7 +6,7 @@ import org.jetbrains.annotations.UnmodifiableView;
 
 import java.util.NoSuchElementException;
 
-public interface R2IMap<K> extends Reference2IntMap<K>, MapEv {
+public interface R2IMap<K> extends Reference2IntMap<K>, MapExtension {
 
     long beginIteration();
 
@@ -25,7 +25,8 @@ public interface R2IMap<K> extends Reference2IntMap<K>, MapEv {
 
     long removeIteration(long it);
 
-    @UnmodifiableView R2IMap<K> view();
+    @UnmodifiableView
+    R2IMap<K> view();
 
     class EmptyMap<K> extends Reference2IntMaps.EmptyMap<K> implements R2IMap<K> {
 

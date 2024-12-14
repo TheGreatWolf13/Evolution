@@ -51,10 +51,11 @@ import tgw.evolution.hooks.asm.ModifyConstructor;
 import tgw.evolution.hooks.asm.RestoreFinal;
 import tgw.evolution.patches.PatchParticleEngine;
 import tgw.evolution.patches.PatchTerrainParticle;
-import tgw.evolution.util.collection.OArrayLimitedQueue;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.collection.maps.*;
+import tgw.evolution.util.collection.queues.OArrayLimitedQueue;
+import tgw.evolution.util.collection.queues.OQueue;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -71,7 +72,7 @@ public abstract class Mixin_CF_ParticleEngine implements PreparableReloadListene
     @Shadow @Final @DeleteField private Map<ParticleRenderType, Queue<Particle>> particles;
     @Shadow @Final @DeleteField private Queue<Particle> particlesToAdd;
     @Unique private final OList<Particle> particlesToAdd_;
-    @Unique private final R2OMap<ParticleRenderType, OArrayLimitedQueue<Particle>> particles_;
+    @Unique private final R2OMap<ParticleRenderType, OQueue<Particle>> particles_;
     @Shadow @Final @DeleteField private Int2ObjectMap<ParticleProvider<?>> providers;
     @Unique private final I2OMap<ParticleProvider<?>> providers_;
     @Mutable @Shadow @Final @RestoreFinal private Random random;
@@ -126,7 +127,7 @@ public abstract class Mixin_CF_ParticleEngine implements PreparableReloadListene
     @Overwrite
     public String countParticles() {
         int count = 0;
-        R2OMap<ParticleRenderType, OArrayLimitedQueue<Particle>> particles = this.particles_;
+        R2OMap<ParticleRenderType, OQueue<Particle>> particles = this.particles_;
         for (long it = particles.beginIteration(); particles.hasNextIteration(it); it = particles.nextEntry(it)) {
             count += particles.getIterationValue(it).size();
         }
@@ -294,6 +295,7 @@ public abstract class Mixin_CF_ParticleEngine implements PreparableReloadListene
                 reader.close();
             }
             catch (Throwable e) {
+                //noinspection ConstantValue
                 if (resource != null) {
                     try {
                         resource.close();
@@ -412,16 +414,15 @@ public abstract class Mixin_CF_ParticleEngine implements PreparableReloadListene
         this.renderedParticles = 0;
         for (int i = 0, len = RENDER_ORDER.size(); i < len; i++) {
             ParticleRenderType type = RENDER_ORDER.get(i);
-            OArrayLimitedQueue<Particle> queue = this.particles_.get(type);
+            OQueue<Particle> queue = this.particles_.get(type);
             if (queue == null || queue.isEmpty()) {
                 continue;
             }
             boolean began = false;
             Tesselator tesselator = Tesselator.getInstance();
             BufferBuilder builder = tesselator.getBuilder();
-            OList<Particle> list = queue.internalList();
-            for (int j = 0, len2 = list.size(); j < len2; ++j) {
-                Particle particle = list.get(j);
+            for (long it = queue.beginIteration(); queue.hasNextIteration(it); it = queue.nextEntry(it)) {
+                Particle particle = queue.getIteration(it);
                 AABB bb = particle.getBoundingBox();
                 if (!levelRenderer.visibleFrustumCulling(bb)) {
                     continue;
@@ -484,7 +485,7 @@ public abstract class Mixin_CF_ParticleEngine implements PreparableReloadListene
     @Overwrite
     public void tick() {
         assert this.level != null;
-        R2OMap<ParticleRenderType, OArrayLimitedQueue<Particle>> particles = this.particles_;
+        R2OMap<ParticleRenderType, OQueue<Particle>> particles = this.particles_;
         for (long it = particles.beginIteration(); particles.hasNextIteration(it); it = particles.nextEntry(it)) {
             //noinspection DataFlowIssue
             this.level.getProfiler().push(particles.getIterationKey(it).toString());
@@ -505,12 +506,12 @@ public abstract class Mixin_CF_ParticleEngine implements PreparableReloadListene
         if (!particlesToAdd.isEmpty()) {
             for (int i = 0, len = particlesToAdd.size(); i < len; ++i) {
                 Particle particle = particlesToAdd.get(i);
-                OArrayLimitedQueue<Particle> queue = particles.get(particle.getRenderType());
+                OQueue<Particle> queue = particles.get(particle.getRenderType());
                 if (queue == null) {
                     queue = new OArrayLimitedQueue<>(16_384);
                     particles.put(particle.getRenderType(), queue);
                 }
-                queue.add(particle);
+                queue.enqueue(particle);
             }
             particlesToAdd.clear();
         }
@@ -520,19 +521,16 @@ public abstract class Mixin_CF_ParticleEngine implements PreparableReloadListene
     protected abstract void tickParticle(Particle pParticle);
 
     @Unique
-    private void tickParticleList(OArrayLimitedQueue<Particle> particles) {
-        if (!particles.isEmpty()) {
-            OList<Particle> list = particles.internalList();
-            for (int i = 0; i < list.size(); ++i) {
-                Particle particle = list.get(i);
-                this.tickParticle(particle);
-                if (!particle.isAlive()) {
-                    Optional<ParticleGroup> particleGroup = particle.getParticleGroup();
-                    if (particleGroup.isPresent()) {
-                        this.updateCount(particleGroup.get(), -1);
-                    }
-                    list.remove(i--);
+    private void tickParticleList(OQueue<Particle> particles) {
+        for (long it = particles.beginIteration(); particles.hasNextIteration(it); it = particles.nextEntry(it)) {
+            Particle particle = particles.getIteration(it);
+            this.tickParticle(particle);
+            if (!particle.isAlive()) {
+                Optional<ParticleGroup> particleGroup = particle.getParticleGroup();
+                if (particleGroup.isPresent()) {
+                    this.updateCount(particleGroup.get(), -1);
                 }
+                it = particles.removeIteration(it);
             }
         }
     }

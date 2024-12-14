@@ -6,7 +6,7 @@ import org.jetbrains.annotations.UnmodifiableView;
 
 import java.util.NoSuchElementException;
 
-public interface LSet extends LongSet, SetEv {
+public interface LSet extends LongSet, SetExtension {
 
     static @UnmodifiableView LSet emptySet() {
         return EmptySet.EMPTY;
