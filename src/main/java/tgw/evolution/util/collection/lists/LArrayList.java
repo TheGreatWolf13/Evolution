@@ -3,7 +3,6 @@ package tgw.evolution.util.collection.lists;
 import it.unimi.dsi.fastutil.longs.*;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
-import tgw.evolution.Evolution;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -70,7 +69,7 @@ public class LArrayList extends LongArrayList implements LList {
 
     @Override
     public Long get(int index) {
-        Evolution.deprecatedMethod();
+        this.deprecatedMethod();
         return super.get(index);
     }
 

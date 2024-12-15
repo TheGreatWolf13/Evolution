@@ -3,7 +3,6 @@ package tgw.evolution.util.collection.lists;
 import it.unimi.dsi.fastutil.doubles.*;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
-import tgw.evolution.Evolution;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -70,7 +69,7 @@ public class DArrayList extends DoubleArrayList implements DList {
 
     @Override
     public Double get(int index) {
-        Evolution.deprecatedMethod();
+        this.deprecatedMethod();
         return super.get(index);
     }
 
