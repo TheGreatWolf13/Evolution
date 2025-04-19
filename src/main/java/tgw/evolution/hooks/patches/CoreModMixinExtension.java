@@ -103,6 +103,7 @@ public class CoreModMixinExtension implements IClassTransformer {
 
     private void handleConstructors(ClassNode original, String originalName, ClassNode mixin, String mixinName) {
         List<MethodNode> mixinMethods = mixin.methods;
+        boolean found = false;
         for (int i = 0, len = mixinMethods.size(); i < len; ++i) {
             MethodNode mixinMethod = mixinMethods.get(i);
             if ("<init>".equals(mixinMethod.name)) {
@@ -122,6 +123,7 @@ public class CoreModMixinExtension implements IClassTransformer {
                                 method.tryCatchBlocks.clear();
                                 patchMixin(method.instructions, originalName, mixinMethod.instructions, mixinName);
                                 method.tryCatchBlocks.addAll(mixinMethod.tryCatchBlocks);
+                                found = true;
                                 break a;
                             }
                         }
@@ -129,6 +131,9 @@ public class CoreModMixinExtension implements IClassTransformer {
                     }
                 }
             }
+        }
+        if (!found) {
+            throw new RuntimeException("Class is marked to modify constructor, but no available constructor found for modifying!\n\nClass: " + originalName);
         }
     }
 
