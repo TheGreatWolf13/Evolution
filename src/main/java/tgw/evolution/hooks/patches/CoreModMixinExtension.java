@@ -11,6 +11,7 @@ import tgw.evolution.hooks.asm.IClassTransformer;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.objectweb.asm.Opcodes.*;
@@ -19,6 +20,37 @@ import static org.objectweb.asm.Opcodes.*;
 public class CoreModMixinExtension implements IClassTransformer {
 
     private @Nullable Method method;
+
+    private static List<Type> getParametersFromDesc(String desc) {
+        List<Type> list = new ArrayList<>();
+        boolean obj = false;
+        for (int i = 1, len = desc.length(); i < len; ++i) {
+            char c = desc.charAt(i);
+            if (obj) {
+                if (c == ';') {
+                    obj = false;
+                }
+                continue;
+            }
+            switch (c) {
+                case 'Z' -> list.add(Type.BYTE);
+                case 'S' -> list.add(Type.SHORT);
+                case 'C' -> list.add(Type.CHAR);
+                case 'I' -> list.add(Type.INT);
+                case 'J' -> list.add(Type.LONG);
+                case 'F' -> list.add(Type.FLOAT);
+                case 'D' -> list.add(Type.DOUBLE);
+                case 'L' -> {
+                    list.add(Type.OBJECT);
+                    obj = true;
+                }
+                case ')' -> {
+                    return list;
+                }
+            }
+        }
+        throw new IllegalStateException("Should never reach here!");
+    }
 
     private static @Nullable AbstractInsnNode patchInst(AbstractInsnNode inst, String originalOwner, String originalParam, String mixinOwner, String mixinParam, MutableBoolean b) {
         boolean wasLastThis = b.booleanValue();
@@ -129,11 +161,20 @@ public class CoreModMixinExtension implements IClassTransformer {
                         }
                         CoreModLoader.LOGGER.warn("Could not find constructor in the original class matching {}", mixinMethod.desc);
                     }
+                    else if ("Ltgw/evolution/hooks/asm/NewConstructor;".equals(annotation.desc)) {
+                        InsnList mixinInst = mixinMethod.instructions;
+                        InsnList newInst = new InsnList();
+                        patchMixin(newInst, originalName, mixinInst, mixinName);
+                        mixinMethod.instructions = newInst;
+                        original.methods.add(mixinMethod);
+                        found = true;
+                        break;
+                    }
                 }
             }
         }
         if (!found) {
-            throw new RuntimeException("Class is marked to modify constructor, but no available constructor found for modifying!\n\nClass: " + originalName);
+            throw new RuntimeException("Class is marked to modify constructor, but no available constructor found for modifying or adding!\n\nClass: " + originalName);
         }
     }
 
@@ -203,6 +244,29 @@ public class CoreModMixinExtension implements IClassTransformer {
                 AnnotationNode annotation = annotations.get(j);
                 if ("Ltgw/evolution/hooks/asm/DeleteMethod;".equals(annotation.desc)) {
                     delete = true;
+                    break;
+                }
+                if ("Ltgw/evolution/hooks/asm/NewConstructor;".equals(annotation.desc)) {
+                    method.localVariables.clear();
+                    method.tryCatchBlocks.clear();
+                    method.exceptions.clear();
+                    InsnList instructions = method.instructions;
+                    instructions.clear();
+                    int closeIndex = method.desc.indexOf(')');
+                    String owner = method.desc.substring(closeIndex + 2, method.desc.length() - 1);
+                    String desc = method.desc.substring(method.desc.indexOf('('), closeIndex + 1);
+                    instructions.add(new TypeInsnNode(NEW, owner));
+                    instructions.add(new InsnNode(DUP));
+                    List<Type> parameters = getParametersFromDesc(desc);
+                    int index = 0;
+                    for (int k = 0, len2 = parameters.size(); k < len2; ++k) {
+                        Type type = parameters.get(k);
+                        //noinspection ObjectAllocationInLoop
+                        instructions.add(new VarInsnNode(type.loadOpcode, index));
+                        index += type.size;
+                    }
+                    instructions.add(new MethodInsnNode(INVOKESPECIAL, owner, "<init>", desc + "V", false));
+                    instructions.add(new InsnNode(ARETURN));
                     break;
                 }
             }
@@ -321,6 +385,25 @@ public class CoreModMixinExtension implements IClassTransformer {
         }
         if (modifiers.indexOf('M') >= 0) {
             this.handleMethods(classNode);
+        }
+    }
+
+    private enum Type {
+        BYTE(1, ILOAD),
+        SHORT(1, ILOAD),
+        CHAR(1, ILOAD),
+        INT(1, ILOAD),
+        LONG(2, LLOAD),
+        FLOAT(1, FLOAD),
+        DOUBLE(2, DLOAD),
+        OBJECT(1, ALOAD);
+
+        private final int loadOpcode;
+        private final int size;
+
+        Type(int size, int loadOpcode) {
+            this.size = size;
+            this.loadOpcode = loadOpcode;
         }
     }
 }
