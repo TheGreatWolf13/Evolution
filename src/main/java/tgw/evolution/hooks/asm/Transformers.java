@@ -5,6 +5,8 @@ import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
 
+import java.util.List;
+
 public final class Transformers {
 
     private static final OList<IClassTransformer> TRANSFORMERS = new OArrayList<>();
@@ -17,6 +19,13 @@ public final class Transformers {
     }
 
     public static void transform(String name, ClassNode classNode, String mixinClassName, IMixinInfo info) {
+        List<String> interfaces = classNode.interfaces;
+        for (int i = 0; i < interfaces.size(); ++i) {
+            String s = interfaces.get(i);
+            if (s.indexOf('<') != -1) {
+                interfaces.remove(i--);
+            }
+        }
         for (int i = 0; i < TRANSFORMERS.size(); i++) {
             IClassTransformer transformer = TRANSFORMERS.get(i);
             if (transformer.handlesClass(name, mixinClassName)) {
