@@ -416,7 +416,7 @@
         "tgw/evolution/patches/PatchGameRules"
       ],
       "net/minecraft/core/IdMap": [
-        "tgw/evolution/patches/PatchIdMap"
+        "tgw/evolution/patches/PatchIdMap<TT;>"
       ],
       "net/minecraft/world/effect/MobEffect": [
         "tgw/evolution/patches/PatchMobEffect"

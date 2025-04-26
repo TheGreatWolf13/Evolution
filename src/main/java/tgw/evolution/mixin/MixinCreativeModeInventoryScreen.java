@@ -10,6 +10,10 @@ import net.minecraft.client.gui.screens.inventory.CreativeInventoryListener;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.client.gui.screens.inventory.EffectRenderingInventoryScreen;
 import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.searchtree.MutableSearchTree;
+import net.minecraft.client.searchtree.SearchRegistry;
+import net.minecraft.core.DefaultedRegistry;
+import net.minecraft.core.Registry;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.chat.TranslatableComponent;
@@ -31,6 +35,7 @@ import tgw.evolution.network.PacketCSSimpleMessage;
 import tgw.evolution.util.collection.lists.OList;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -204,6 +209,38 @@ public abstract class MixinCreativeModeInventoryScreen extends EffectRenderingIn
      * @reason _
      * @author TheGreatWolf
      */
+    @Overwrite
+    private void refreshSearchResults() {
+        this.menu.items.clear();
+        this.visibleTags.clear();
+        String search = this.searchBox.getValue();
+        if (search.isEmpty()) {
+            DefaultedRegistry<Item> items = Registry.ITEM;
+            for (long it = items.beginIteration(); items.hasNextIteration(it); it = items.nextEntry(it)) {
+                items.getIteration(it).fillItemCategory(CreativeModeTab.TAB_SEARCH, this.menu.items);
+            }
+        }
+        else {
+            assert this.minecraft != null;
+            MutableSearchTree<ItemStack> searchTree;
+            if (search.startsWith("#")) {
+                search = search.substring(1);
+                searchTree = this.minecraft.getSearchTree(SearchRegistry.CREATIVE_TAGS);
+                this.updateVisibleTags(search);
+            }
+            else {
+                searchTree = this.minecraft.getSearchTree(SearchRegistry.CREATIVE_NAMES);
+            }
+            this.menu.items.addAll(searchTree.search(search.toLowerCase(Locale.ROOT)));
+        }
+        this.scrollOffs = 0.0f;
+        this.menu.scrollTo(0.0f);
+    }
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
     public void render(PoseStack matrices, int mouseX, int mouseY, float partialTicks) {
@@ -356,4 +393,7 @@ public abstract class MixinCreativeModeInventoryScreen extends EffectRenderingIn
             }
         }
     }
+
+    @Shadow
+    protected abstract void updateVisibleTags(String string);
 }

@@ -1,9 +1,12 @@
 package tgw.evolution.mixin;
 
+import net.minecraft.core.DefaultedRegistry;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.Registry;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.alchemy.PotionUtils;
@@ -20,21 +23,21 @@ import tgw.evolution.hooks.asm.RestoreFinal;
 @Mixin(CreativeModeTab.class)
 public abstract class Mixin_CFS_CreativeModeTab {
 
-    @Shadow @Final @DeleteField public static CreativeModeTab[] TABS;
-    @Mutable @Shadow @Final @RestoreFinal public static CreativeModeTab TAB_BUILDING_BLOCKS;
-    @Mutable @Shadow @Final @RestoreFinal public static CreativeModeTab TAB_DECORATIONS;
-    @Mutable @Shadow @Final @RestoreFinal public static CreativeModeTab TAB_REDSTONE;
-    @Mutable @Shadow @Final @RestoreFinal public static CreativeModeTab TAB_TRANSPORTATION;
-    @Mutable @Shadow @Final @RestoreFinal public static CreativeModeTab TAB_MISC;
-    @Mutable @Shadow @Final @RestoreFinal public static CreativeModeTab TAB_SEARCH;
-    @Mutable @Shadow @Final @RestoreFinal public static CreativeModeTab TAB_FOOD;
-    @Mutable @Shadow @Final @RestoreFinal public static CreativeModeTab TAB_TOOLS;
-    @Mutable @Shadow @Final @RestoreFinal public static CreativeModeTab TAB_COMBAT;
-    @Mutable @Shadow @Final @RestoreFinal public static CreativeModeTab TAB_BREWING;
-    @Mutable @Shadow @Final @RestoreFinal public static CreativeModeTab TAB_MATERIALS;
-    @Mutable @Shadow @Final @RestoreFinal public static CreativeModeTab TAB_INVENTORY;
-    @Mutable @Shadow @Final @RestoreFinal public static CreativeModeTab TAB_HOTBAR;
     @Unique @RestoreFinal private static EnchantmentCategory[] EMPTY_ENCH;
+    @Shadow @Final @DeleteField public static CreativeModeTab[] TABS;
+    @Mutable @Shadow @Final @RestoreFinal public static CreativeModeTab TAB_BREWING;
+    @Mutable @Shadow @Final @RestoreFinal public static CreativeModeTab TAB_BUILDING_BLOCKS;
+    @Mutable @Shadow @Final @RestoreFinal public static CreativeModeTab TAB_COMBAT;
+    @Mutable @Shadow @Final @RestoreFinal public static CreativeModeTab TAB_DECORATIONS;
+    @Mutable @Shadow @Final @RestoreFinal public static CreativeModeTab TAB_FOOD;
+    @Mutable @Shadow @Final @RestoreFinal public static CreativeModeTab TAB_HOTBAR;
+    @Mutable @Shadow @Final @RestoreFinal public static CreativeModeTab TAB_INVENTORY;
+    @Mutable @Shadow @Final @RestoreFinal public static CreativeModeTab TAB_MATERIALS;
+    @Mutable @Shadow @Final @RestoreFinal public static CreativeModeTab TAB_MISC;
+    @Mutable @Shadow @Final @RestoreFinal public static CreativeModeTab TAB_REDSTONE;
+    @Mutable @Shadow @Final @RestoreFinal public static CreativeModeTab TAB_SEARCH;
+    @Mutable @Shadow @Final @RestoreFinal public static CreativeModeTab TAB_TOOLS;
+    @Mutable @Shadow @Final @RestoreFinal public static CreativeModeTab TAB_TRANSPORTATION;
     @Shadow private String backgroundSuffix;
     @Shadow private boolean canScroll;
     @Mutable @Shadow @Final @RestoreFinal private Component displayName;
@@ -140,6 +143,18 @@ public abstract class Mixin_CFS_CreativeModeTab {
             }
         };
         TAB_MATERIALS = TAB_MISC;
+    }
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Overwrite
+    public void fillItemList(NonNullList<ItemStack> list) {
+        DefaultedRegistry<Item> items = Registry.ITEM;
+        for (long it = items.beginIteration(); items.hasNextIteration(it); it = items.nextEntry(it)) {
+            items.getIteration(it).fillItemCategory((CreativeModeTab) (Object) this, list);
+        }
     }
 
     /**
