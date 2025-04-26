@@ -301,6 +301,12 @@ public class LightTexture implements AutoCloseable {
                         g += alpha * duskDawnColors[1];
                         b += alpha * duskDawnColors[2];
                     }
+                    float moonlightAntiAlpha = (dimension.moonlightMult() - 0.7f) * (1 / 0.27f * 0.4f) + 0.6f;
+                    float moonlightAlpha = 1 - moonlightAntiAlpha;
+                    r *= moonlightAntiAlpha;
+                    g *= moonlightAntiAlpha;
+                    b *= moonlightAntiAlpha;
+                    b += moonlightAlpha;
                 }
                 this.data[SKY_RED] = r;
                 this.data[SKY_GREEN] = g;
