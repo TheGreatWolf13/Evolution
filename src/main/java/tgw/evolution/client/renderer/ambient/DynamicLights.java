@@ -28,6 +28,16 @@ public class DynamicLights {
         this.level = level;
     }
 
+    private static boolean atLeastOneMatches(short l1, short l2) {
+        if ((l1 & 0b1111) == (l2 & 0b1111)) {
+            return true;
+        }
+        if ((l1 & 0b1111_0_0000) == (l2 & 0b1111_0_0000)) {
+            return true;
+        }
+        return (l1 & 0b1111_0_0000_0_0000) == (l2 & 0b1111_0_0000_0_0000);
+    }
+
     public static boolean canSpread(int light) {
         return (light & 0xF) > 1;
     }
@@ -141,9 +151,9 @@ public class DynamicLights {
 
     public static int removeComponent(int light, @RGB int colour) {
         return switch (colour) {
-            case RGB.RED -> light & -32;
-            case RGB.GREEN -> light & -993;
-            case RGB.BLUE -> light & -31_745;
+            case RGB.RED -> light & ~0b1_1111;
+            case RGB.GREEN -> light & ~0b11_1110_0000;
+            case RGB.BLUE -> light & ~0b111_1100_0000_0000;
             default -> throw new IllegalArgumentException("Unknown colour!");
         };
     }
@@ -156,16 +166,6 @@ public class DynamicLights {
             return false;
         }
         return (light >> 10 & 15) != 15;
-    }
-
-    private static boolean atLeastOneMatches(short l1, short l2) {
-        if ((l1 & 0b1111) == (l2 & 0b1111)) {
-            return true;
-        }
-        if ((l1 & 0b1111_0_0000) == (l2 & 0b1111_0_0000)) {
-            return true;
-        }
-        return (l1 & 0b1111_0_0000_0_0000) == (l2 & 0b1111_0_0000_0_0000);
     }
 
     public void clear() {
@@ -186,6 +186,42 @@ public class DynamicLights {
 
     public short getLight(long pos) {
         return this.lights.get(pos);
+    }
+
+    private void handleAdd(long pos, short light) {
+        short currLight = this.lights.get(pos);
+        if (isLightGreater(light, currLight)) {
+            this.lights.put(pos, combine(light, currLight));
+            this.modified.add(pos);
+        }
+        else {
+            short maxAdded = this.added.get(pos);
+            if (isLightGreater(light, maxAdded)) {
+                this.added.put(pos, combine(light, maxAdded));
+            }
+        }
+    }
+
+    private void handleRemove(long pos, short light) {
+        short currLight = this.lights.get(pos);
+        if (atLeastOneMatches(currLight, light)) {
+            this.removed.add(pos);
+        }
+    }
+
+    private void handleReplace(long pos, short oldLight, short light) {
+        short currLight = this.lights.get(pos);
+        if (isLightGreater(light, currLight)) {
+            this.lights.put(pos, light);
+            this.modified.add(pos);
+        }
+        else if (atLeastOneMatches(oldLight, currLight)) {
+            this.handleRemove(pos, oldLight);
+            short maxAdded = this.added.get(pos);
+            if (isLightGreater(light, maxAdded)) {
+                this.added.put(pos, combine(light, maxAdded));
+            }
+        }
     }
 
     public void tickEnd() {
@@ -270,42 +306,6 @@ public class DynamicLights {
         short maxAdded = this.added.get(pos);
         if (isLightGreater(light, maxAdded)) {
             this.added.put(pos, combine(light, maxAdded));
-        }
-    }
-
-    private void handleAdd(long pos, short light) {
-        short currLight = this.lights.get(pos);
-        if (isLightGreater(light, currLight)) {
-            this.lights.put(pos, combine(light, currLight));
-            this.modified.add(pos);
-        }
-        else {
-            short maxAdded = this.added.get(pos);
-            if (isLightGreater(light, maxAdded)) {
-                this.added.put(pos, combine(light, maxAdded));
-            }
-        }
-    }
-
-    private void handleRemove(long pos, short light) {
-        short currLight = this.lights.get(pos);
-        if (atLeastOneMatches(currLight, light)) {
-            this.removed.add(pos);
-        }
-    }
-
-    private void handleReplace(long pos, short oldLight, short light) {
-        short currLight = this.lights.get(pos);
-        if (isLightGreater(light, currLight)) {
-            this.lights.put(pos, light);
-            this.modified.add(pos);
-        }
-        else if (atLeastOneMatches(oldLight, currLight)) {
-            this.handleRemove(pos, oldLight);
-            short maxAdded = this.added.get(pos);
-            if (isLightGreater(light, maxAdded)) {
-                this.added.put(pos, combine(light, maxAdded));
-            }
         }
     }
 }
