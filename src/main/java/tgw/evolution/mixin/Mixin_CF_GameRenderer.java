@@ -213,7 +213,12 @@ public abstract class Mixin_CF_GameRenderer implements ResourceManagerReloadList
         }
     }
 
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
     @Override
+    @Overwrite
     public void close() {
         this.lightTexture_.close();
         this.mapRenderer.close();
