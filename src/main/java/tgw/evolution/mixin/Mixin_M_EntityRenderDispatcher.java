@@ -32,7 +32,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.spongepowered.asm.mixin.*;
 import tgw.evolution.EvolutionClient;
 import tgw.evolution.client.renderer.ambient.DynamicLights;
-import tgw.evolution.client.renderer.ambient.LightingTexture;
+import tgw.evolution.client.renderer.ambient.LightTexture;
 import tgw.evolution.client.renderer.chunk.LevelRenderer;
 import tgw.evolution.hooks.asm.DeleteMethod;
 import tgw.evolution.util.math.MthUtil;
@@ -81,7 +81,7 @@ public abstract class Mixin_M_EntityRenderDispatcher {
         if (shapeBelow.isEmpty()) {
             return;
         }
-        float f = LightingTexture.getLightBrightness(level, brightness);
+        float f = LightTexture.getLightBrightness(level, brightness);
         float alpha = weight * 0.5f * f;
         if (alpha >= 0.0F) {
             if (alpha > 1.0F) {

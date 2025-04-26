@@ -129,7 +129,7 @@ public abstract class MixinClientChunkCache extends ChunkSource implements Patch
 
     @Override
     public void onLightUpdate_(LightLayer lightLayer, int secX, int secY, int secZ) {
-        Minecraft.getInstance().lvlRenderer().setSectionDirty(secX, secY, secZ);
+        Minecraft.getInstance().levelRenderer().setSectionDirty(secX, secY, secZ);
     }
 
     @Override

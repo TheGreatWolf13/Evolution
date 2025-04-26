@@ -27,6 +27,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
 import net.minecraft.server.packs.resources.ResourceProvider;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffects;
@@ -49,7 +50,7 @@ import org.spongepowered.asm.mixin.*;
 import tgw.evolution.EvolutionClient;
 import tgw.evolution.client.gui.EvolutionGui;
 import tgw.evolution.client.gui.overlays.Overlays;
-import tgw.evolution.client.renderer.ambient.LightingTexture;
+import tgw.evolution.client.renderer.ambient.LightTexture;
 import tgw.evolution.client.renderer.chunk.LevelRenderer;
 import tgw.evolution.client.util.Shader;
 import tgw.evolution.hooks.asm.DeleteField;
@@ -74,7 +75,7 @@ import java.util.Random;
 import java.util.function.Consumer;
 
 @Mixin(GameRenderer.class)
-public abstract class Mixin_CF_GameRenderer implements PatchGameRenderer {
+public abstract class Mixin_CF_GameRenderer implements ResourceManagerReloadListener, AutoCloseable, PatchGameRenderer {
 
     @Unique private static final Vector3f NAUSEA_VECTOR = new Vector3f(0.0F, Mth.SQRT_OF_TWO / 2.0F, Mth.SQRT_OF_TWO / 2.0F);
     @Shadow @Final public static int EFFECT_NONE;
@@ -133,6 +134,7 @@ public abstract class Mixin_CF_GameRenderer implements PatchGameRenderer {
     @Shadow private static @Nullable ShaderInstance rendertypeTranslucentShader;
     @Shadow private static @Nullable ShaderInstance rendertypeTripwireShader;
     @Shadow private static @Nullable ShaderInstance rendertypeWaterMaskShader;
+    @Shadow public @Nullable ShaderInstance blitShader;
     @Shadow private float darkenWorldAmount;
     @Shadow private float darkenWorldAmountO;
     @Shadow public boolean effectActive;
@@ -143,7 +145,8 @@ public abstract class Mixin_CF_GameRenderer implements PatchGameRenderer {
     @Shadow private int itemActivationTicks;
     @Mutable @Shadow @Final @RestoreFinal public ItemInHandRenderer itemInHandRenderer;
     @Shadow private long lastActiveTime;
-    @Mutable @Shadow @Final @RestoreFinal private LightTexture lightTexture;
+    @Shadow @Final @DeleteField private net.minecraft.client.renderer.LightTexture lightTexture;
+    @Unique private final LightTexture lightTexture_;
     @Mutable @Shadow @Final @RestoreFinal private Camera mainCamera;
     @Mutable @Shadow @Final @RestoreFinal private MapRenderer mapRenderer;
     @Unique private final PoseStack matrices = new PoseStack();
@@ -182,7 +185,7 @@ public abstract class Mixin_CF_GameRenderer implements PatchGameRenderer {
         this.resourceManager = resourceManager;
         this.itemInHandRenderer = minecraft.getItemInHandRenderer();
         this.mapRenderer = new MapRenderer(minecraft.getTextureManager());
-        this.lightTexture = new LightingTexture((GameRenderer) (Object) this, minecraft);
+        this.lightTexture_ = new LightTexture((GameRenderer) (Object) this, minecraft);
         this.renderBuffers = renderBuffers;
         this.postEffect = null;
     }
@@ -207,6 +210,18 @@ public abstract class Mixin_CF_GameRenderer implements PatchGameRenderer {
             matrices.mulPoseY(-hurtDir);
             matrices.mulPoseZ(-hurtTime * 14.0F);
             matrices.mulPoseY(hurtDir);
+        }
+    }
+
+    @Override
+    public void close() {
+        this.lightTexture_.close();
+        this.mapRenderer.close();
+        this.overlayTexture.close();
+        this.shutdownEffect();
+        this.shutdownShaders();
+        if (this.blitShader != null) {
+            this.blitShader.close();
         }
     }
 
@@ -251,6 +266,11 @@ public abstract class Mixin_CF_GameRenderer implements PatchGameRenderer {
     @Overwrite
     public @Nullable ShaderInstance getShader(@Nullable String name) {
         return name == null ? null : this.shaders_.get(name);
+    }
+
+    @Override
+    public LightTexture lightTexture_() {
+        return this.lightTexture_;
     }
 
     /**
@@ -466,7 +486,7 @@ public abstract class Mixin_CF_GameRenderer implements PatchGameRenderer {
                 this.minecraft.getProfiler().push("level");
                 this.renderLevel(partialTicks, startTime, this.matrices.reset());
                 this.tryTakeScreenshotIfNeeded();
-                this.minecraft.lvlRenderer().doEntityOutline();
+                this.minecraft.levelRenderer().doEntityOutline();
                 RenderSystem.clear(GL11C.GL_DEPTH_BUFFER_BIT, Minecraft.ON_OSX);
                 Matrix4f orthoMat = Matrix4f.orthographic(0.0F, (float) (width / guiScale), 0.0F, (float) (height / guiScale), 1_000, 3_000);
                 RenderSystem.setProjectionMatrix(orthoMat);
@@ -575,7 +595,7 @@ public abstract class Mixin_CF_GameRenderer implements PatchGameRenderer {
      */
     @Overwrite
     public void renderLevel(float partialTicks, long endTickTime, PoseStack matrices) {
-        this.lightTexture.updateLightTexture(partialTicks);
+        this.lightTexture_.updateLightTexture(partialTicks);
         assert this.minecraft.player != null;
         if (this.minecraft.getCameraEntity() == null) {
             this.minecraft.setCameraEntity(this.minecraft.player);
@@ -615,9 +635,9 @@ public abstract class Mixin_CF_GameRenderer implements PatchGameRenderer {
         if (matrix3f.invert()) {
             RenderSystem.setInverseViewRotationMatrix(matrix3f);
         }
-        LevelRenderer levelRenderer = this.minecraft.lvlRenderer();
+        LevelRenderer levelRenderer = this.minecraft.levelRenderer();
         levelRenderer.prepareCullFrustum(matrices, camera.getPosition(), this.getProjectionMatrix(Math.max(fov, this.minecraft.options.fov)));
-        levelRenderer.renderLevel(matrices, partialTicks, endTickTime, shouldRenderOutline, camera, (GameRenderer) (Object) this, this.lightTexture, projMatrix);
+        levelRenderer.renderLevel(matrices, partialTicks, endTickTime, shouldRenderOutline, camera, (GameRenderer) (Object) this, this.lightTexture_, projMatrix);
         this.minecraft.getProfiler().pop();
     }
 
@@ -637,7 +657,7 @@ public abstract class Mixin_CF_GameRenderer implements PatchGameRenderer {
         for (long it = postEffects.beginIteration(); postEffects.hasNextIteration(it); it = postEffects.nextEntry(it)) {
             postEffects.getIterationValue(it).resize(width, height);
         }
-        this.minecraft.lvlRenderer().resize(width, height);
+        this.minecraft.levelRenderer().resize(width, height);
     }
 
     /**
@@ -685,6 +705,9 @@ public abstract class Mixin_CF_GameRenderer implements PatchGameRenderer {
         postEffects.clear();
     }
 
+    @Shadow
+    public abstract void shutdownEffect();
+
     @Override
     public void shutdownShader(@Shader int shaderId) {
         PostChain shader = this.postEffects.remove(shaderId);
@@ -713,7 +736,7 @@ public abstract class Mixin_CF_GameRenderer implements PatchGameRenderer {
      */
     @Overwrite
     private void takeAutoScreenshot(Path path) {
-        LevelRenderer levelRenderer = this.minecraft.lvlRenderer();
+        LevelRenderer levelRenderer = this.minecraft.levelRenderer();
         if (levelRenderer.countRenderedChunks() > 10 && levelRenderer.hasRenderedAllChunks()) {
             NativeImage screenshot = Screenshot.takeScreenshot(this.minecraft.getMainRenderTarget());
             Util.ioPool().execute(() -> {
@@ -764,15 +787,14 @@ public abstract class Mixin_CF_GameRenderer implements PatchGameRenderer {
     @Overwrite
     public void tick() {
         this.tickFov();
-        this.lightTexture.tick();
+        this.lightTexture_.tick();
         if (this.minecraft.getCameraEntity() == null) {
             assert this.minecraft.player != null;
             this.minecraft.setCameraEntity(this.minecraft.player);
         }
         this.mainCamera.tick();
         ++this.tick;
-//        this.itemInHandRenderer.tick();
-        this.minecraft.lvlRenderer().tickRain(this.mainCamera);
+        this.minecraft.levelRenderer().tickRain(this.mainCamera);
         this.darkenWorldAmountO = this.darkenWorldAmount;
         if (this.minecraft.gui.getBossOverlay().shouldDarkenScreen()) {
             this.darkenWorldAmount += 0.05F;

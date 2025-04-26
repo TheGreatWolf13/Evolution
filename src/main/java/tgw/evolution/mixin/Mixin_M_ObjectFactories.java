@@ -5,7 +5,7 @@ import org.jetbrains.annotations.Contract;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import tgw.evolution.hooks.asm.NewConstructor;
-import tgw.evolution.patches.mixin.ObjectFactories;
+import tgw.evolution.patches.replace.ObjectFactories;
 import tgw.evolution.util.collection.lists.OList;
 
 @Mixin(ObjectFactories.class)

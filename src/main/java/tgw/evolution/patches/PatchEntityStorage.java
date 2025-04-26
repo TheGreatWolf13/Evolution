@@ -1,6 +1,6 @@
 package tgw.evolution.patches;
 
-import tgw.evolution.patches.mixin.ChunkEntities;
+import tgw.evolution.patches.replace.ChunkEntities;
 
 import java.util.concurrent.CompletableFuture;
 

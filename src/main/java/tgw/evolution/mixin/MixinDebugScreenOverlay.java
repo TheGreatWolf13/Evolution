@@ -50,18 +50,18 @@ import java.util.concurrent.CompletableFuture;
 public abstract class MixinDebugScreenOverlay extends GuiComponent {
 
     @Unique private final AllocationRateCalculator allocationRateCalculator = new AllocationRateCalculator();
-    @Unique private final OList<String> gameInfo = new OArrayList<>();
-    @Unique private final OList<String> systemInfo = new OArrayList<>();
     @Shadow public HitResult block;
-    @Shadow public HitResult liquid;
     @Unique private @Nullable String cpu;
     @Unique private @Nullable String evolution;
+    @Unique private final OList<String> gameInfo = new OArrayList<>();
     @Unique private @Nullable String javaVersion;
     @Shadow private @Nullable ChunkPos lastPos = new ChunkPosMutable();
+    @Shadow public HitResult liquid;
     @Unique private @Nullable String mc;
     @Unique private @Nullable String mcFull;
     @Shadow @Final private Minecraft minecraft;
     @Shadow private @Nullable CompletableFuture<LevelChunk> serverChunk;
+    @Unique private final OList<String> systemInfo = new OArrayList<>();
 
     @Contract(value = "_ -> _", pure = true)
     @Shadow
@@ -133,9 +133,9 @@ public abstract class MixinDebugScreenOverlay extends GuiComponent {
             this.gameInfo.add(this.getEvolution());
             this.gameInfo.add(this.minecraft.fpsString);
             this.gameInfo.add(pct);
-            this.gameInfo.add(this.minecraft.lvlRenderer().getChunkStatistics());
-            this.gameInfo.add(this.minecraft.lvlRenderer().getEntityStatistics());
-            this.gameInfo.add("P: " + this.minecraft.particleEngine.getRenderedParticles() + "/" + this.minecraft.particleEngine.countParticles());
+            this.gameInfo.add(this.minecraft.levelRenderer().getChunkStatistics());
+            this.gameInfo.add(this.minecraft.levelRenderer().getEntityStatistics());
+            this.gameInfo.add("P: " + this.minecraft.particleEngine().getRenderedParticles() + "/" + this.minecraft.particleEngine().countParticles());
             this.gameInfo.add(this.minecraft.level.gatherChunkSourceStats());
             this.gameInfo.add("");
             this.gameInfo.add("Chunk-relative: " + (pos.getX() & 15) + " " + (pos.getY() & 15) + " " + (pos.getZ() & 15));
@@ -162,9 +162,9 @@ public abstract class MixinDebugScreenOverlay extends GuiComponent {
         this.gameInfo.add(this.getEvolution());
         this.gameInfo.add(this.minecraft.fpsString);
         this.gameInfo.add(pct);
-        this.gameInfo.add(this.minecraft.lvlRenderer().getChunkStatistics());
-        this.gameInfo.add(this.minecraft.lvlRenderer().getEntityStatistics());
-        this.gameInfo.add("P: " + this.minecraft.particleEngine.getRenderedParticles() + "/" + this.minecraft.particleEngine.countParticles());
+        this.gameInfo.add(this.minecraft.levelRenderer().getChunkStatistics());
+        this.gameInfo.add(this.minecraft.levelRenderer().getEntityStatistics());
+        this.gameInfo.add("P: " + this.minecraft.particleEngine().getRenderedParticles() + "/" + this.minecraft.particleEngine().countParticles());
         this.gameInfo.add(this.minecraft.level.dimension().location() + " FC: " + forcedChunks);
         this.gameInfo.add("");
         this.gameInfo.add("XYZ: " +

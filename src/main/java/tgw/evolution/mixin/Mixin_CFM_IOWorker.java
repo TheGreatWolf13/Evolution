@@ -19,7 +19,7 @@ import tgw.evolution.hooks.asm.DeleteMethod;
 import tgw.evolution.hooks.asm.ModifyConstructor;
 import tgw.evolution.hooks.asm.RestoreFinal;
 import tgw.evolution.patches.PatchIOWorker;
-import tgw.evolution.patches.mixin.RegionFileStorage;
+import tgw.evolution.patches.replace.RegionFileStorage;
 import tgw.evolution.util.collection.ArrayHelper;
 import tgw.evolution.util.collection.maps.L2OLinkedHashMap;
 import tgw.evolution.util.collection.maps.L2OMap;

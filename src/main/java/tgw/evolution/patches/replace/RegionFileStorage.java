@@ -1,4 +1,4 @@
-package tgw.evolution.patches.mixin;
+package tgw.evolution.patches.replace;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;

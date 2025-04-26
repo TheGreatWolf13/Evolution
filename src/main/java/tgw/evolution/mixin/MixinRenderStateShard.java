@@ -11,26 +11,25 @@ import tgw.evolution.patches.PatchMinecraft;
 @Mixin(RenderStateShard.class)
 public abstract class MixinRenderStateShard {
 
-    @Mutable @Shadow @Final public static RenderStateShard.OutputStateShard PARTICLES_TARGET;
-    @Mutable @Shadow @Final public static RenderStateShard.OutputStateShard WEATHER_TARGET;
     @Mutable @Shadow @Final public static RenderStateShard.OutputStateShard CLOUDS_TARGET;
-    @Mutable @Shadow @Final protected static RenderStateShard.OutputStateShard OUTLINE_TARGET;
-    @Mutable @Shadow @Final protected static RenderStateShard.OutputStateShard TRANSLUCENT_TARGET;
-
     @Mutable @Shadow @Final protected static RenderStateShard.OutputStateShard ITEM_ENTITY_TARGET;
+    @Mutable @Shadow @Final protected static RenderStateShard.OutputStateShard OUTLINE_TARGET;
+    @Mutable @Shadow @Final public static RenderStateShard.OutputStateShard PARTICLES_TARGET;
+    @Mutable @Shadow @Final protected static RenderStateShard.OutputStateShard TRANSLUCENT_TARGET;
+    @Mutable @Shadow @Final public static RenderStateShard.OutputStateShard WEATHER_TARGET;
 
     static {
         OUTLINE_TARGET = new RenderStateShard.OutputStateShard("outline_target",
-                                                               () -> ((PatchMinecraft) Minecraft.getInstance()).lvlRenderer()
-                                                                                                               .entityTarget()
-                                                                                                               .bindWrite(false),
+                                                               () -> Minecraft.getInstance().levelRenderer()
+                                                                              .entityTarget()
+                                                                              .bindWrite(false),
                                                                () -> Minecraft.getInstance().getMainRenderTarget().bindWrite(false));
         TRANSLUCENT_TARGET = new RenderStateShard.OutputStateShard("translucent_target",
                                                                    () -> {
                                                                        if (Minecraft.useShaderTransparency()) {
-                                                                           ((PatchMinecraft) Minecraft.getInstance()).lvlRenderer()
-                                                                                                                     .getTranslucentTarget()
-                                                                                                                     .bindWrite(false);
+                                                                           Minecraft.getInstance().levelRenderer()
+                                                                                    .getTranslucentTarget()
+                                                                                    .bindWrite(false);
                                                                        }
                                                                    },
                                                                    () -> {
@@ -41,9 +40,9 @@ public abstract class MixinRenderStateShard {
         PARTICLES_TARGET = new RenderStateShard.OutputStateShard("particles_target",
                                                                  () -> {
                                                                      if (Minecraft.useShaderTransparency()) {
-                                                                         ((PatchMinecraft) Minecraft.getInstance()).lvlRenderer()
-                                                                                                                   .getParticlesTarget()
-                                                                                                                   .bindWrite(false);
+                                                                         Minecraft.getInstance().levelRenderer()
+                                                                                  .getParticlesTarget()
+                                                                                  .bindWrite(false);
                                                                      }
                                                                  },
                                                                  () -> {
@@ -54,9 +53,9 @@ public abstract class MixinRenderStateShard {
         WEATHER_TARGET = new RenderStateShard.OutputStateShard("weather_target",
                                                                () -> {
                                                                    if (Minecraft.useShaderTransparency()) {
-                                                                       ((PatchMinecraft) Minecraft.getInstance()).lvlRenderer()
-                                                                                                                 .getWeatherTarget()
-                                                                                                                 .bindWrite(false);
+                                                                       Minecraft.getInstance().levelRenderer()
+                                                                                .getWeatherTarget()
+                                                                                .bindWrite(false);
                                                                    }
                                                                },
                                                                () -> {
@@ -67,9 +66,9 @@ public abstract class MixinRenderStateShard {
         CLOUDS_TARGET = new RenderStateShard.OutputStateShard("clouds_target",
                                                               () -> {
                                                                   if (Minecraft.useShaderTransparency()) {
-                                                                      ((PatchMinecraft) Minecraft.getInstance()).lvlRenderer()
-                                                                                                                .getCloudsTarget()
-                                                                                                                .bindWrite(false);
+                                                                      Minecraft.getInstance().levelRenderer()
+                                                                               .getCloudsTarget()
+                                                                               .bindWrite(false);
                                                                   }
                                                               },
                                                               () -> {
@@ -80,9 +79,9 @@ public abstract class MixinRenderStateShard {
         ITEM_ENTITY_TARGET = new RenderStateShard.OutputStateShard("item_entity_target",
                                                                    () -> {
                                                                        if (Minecraft.useShaderTransparency()) {
-                                                                           ((PatchMinecraft) Minecraft.getInstance()).lvlRenderer()
-                                                                                                                     .getItemEntityTarget()
-                                                                                                                     .bindWrite(false);
+                                                                           Minecraft.getInstance().levelRenderer()
+                                                                                    .getItemEntityTarget()
+                                                                                    .bindWrite(false);
                                                                        }
                                                                    },
                                                                    () -> {

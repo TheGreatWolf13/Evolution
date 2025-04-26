@@ -18,7 +18,7 @@ import org.spongepowered.asm.mixin.*;
 import tgw.evolution.Evolution;
 import tgw.evolution.hooks.asm.DeleteMethod;
 import tgw.evolution.patches.PatchEntityType;
-import tgw.evolution.patches.mixin.ChunkEntities;
+import tgw.evolution.patches.replace.ChunkEntities;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
 

@@ -2,6 +2,7 @@ package tgw.evolution.patches;
 
 import net.minecraft.client.color.item.ItemColors;
 import tgw.evolution.client.renderer.chunk.LevelRenderer;
+import tgw.evolution.patches.replace.net.minecraft.client.particle.ParticleEngine;
 
 public interface PatchMinecraft {
 
@@ -13,7 +14,11 @@ public interface PatchMinecraft {
         throw new AbstractMethodError();
     }
 
-    default LevelRenderer lvlRenderer() {
+    default LevelRenderer levelRenderer() {
+        throw new AbstractMethodError();
+    }
+
+    default ParticleEngine particleEngine() {
         throw new AbstractMethodError();
     }
 

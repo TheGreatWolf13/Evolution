@@ -5,7 +5,6 @@ accessible class net/minecraft/client/color/block/BlockTintCache$CacheData
 accessible class net/minecraft/client/gui/screens/MenuScreens$ScreenConstructor
 accessible class net/minecraft/client/model/geom/ModelPart$Polygon
 accessible class net/minecraft/client/model/geom/ModelPart$Vertex
-accessible class net/minecraft/client/particle/ParticleEngine$SpriteParticleRegistration
 accessible class net/minecraft/client/renderer/block/ModelBlockRenderer$Cache
 accessible class net/minecraft/client/renderer/RenderStateShard$OutputStateShard
 accessible class net/minecraft/client/resources/model/ModelBakery$BlockStateDefinitionException
@@ -251,7 +250,6 @@ accessible method net/minecraft/client/multiplayer/ClientLevel$EntityCallbacks <
 accessible method net/minecraft/client/Option genericValueLabel (I)Lnet/minecraft/network/chat/Component;
 accessible method net/minecraft/client/Option genericValueLabel (Lnet/minecraft/network/chat/Component;)Lnet/minecraft/network/chat/Component;
 accessible method net/minecraft/client/Options$FieldAccess process (Ljava/lang/String;Z)Z
-accessible method net/minecraft/client/particle/ParticleEngine$MutableSpriteSet <init> ()V
 accessible method net/minecraft/client/renderer/block/model/BlockElement uvsByFace (Lnet/minecraft/core/Direction;)[F
 accessible method net/minecraft/client/renderer/blockentity/BlockEntityRenderers register (Lnet/minecraft/world/level/block/entity/BlockEntityType;Lnet/minecraft/client/renderer/blockentity/BlockEntityRendererProvider;)V
 accessible method net/minecraft/client/renderer/culling/Frustum calculateFrustum (Lcom/mojang/math/Matrix4f;Lcom/mojang/math/Matrix4f;)V

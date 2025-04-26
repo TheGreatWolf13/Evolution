@@ -23,17 +23,16 @@ import java.util.stream.Stream;
 @Mixin(Option.class)
 public abstract class MixinOption {
 
+    @Mutable @Shadow @Final public static CycleOption<AmbientOcclusionStatus> AMBIENT_OCCLUSION;
     @Mutable @Shadow @Final public static ProgressOption BIOME_BLEND_RADIUS;
     @Mutable @Shadow @Final public static ProgressOption FOV;
-    @Mutable @Shadow @Final public static CycleOption<NarratorStatus> NARRATOR;
-    @Mutable @Shadow @Final public static ProgressOption RENDER_DISTANCE;
-    @Mutable @Shadow @Final public static CycleOption<AmbientOcclusionStatus> AMBIENT_OCCLUSION;
     @Mutable @Shadow @Final public static CycleOption<GraphicsStatus> GRAPHICS;
-    @Mutable @Shadow @Final public static CycleOption<CloudStatus> RENDER_CLOUDS;
-
-    @Shadow @Final private static Component GRAPHICS_TOOLTIP_FAST;
-    @Shadow @Final private static Component GRAPHICS_TOOLTIP_FANCY;
     @Shadow @Final private static Component GRAPHICS_TOOLTIP_FABULOUS;
+    @Shadow @Final private static Component GRAPHICS_TOOLTIP_FANCY;
+    @Shadow @Final private static Component GRAPHICS_TOOLTIP_FAST;
+    @Mutable @Shadow @Final public static CycleOption<NarratorStatus> NARRATOR;
+    @Mutable @Shadow @Final public static CycleOption<CloudStatus> RENDER_CLOUDS;
+    @Mutable @Shadow @Final public static ProgressOption RENDER_DISTANCE;
 
     static {
         BIOME_BLEND_RADIUS = new ProgressOption("options.biomeBlendRadius",
@@ -43,7 +42,7 @@ public abstract class MixinOption {
                                                 op -> (double) op.biomeBlendRadius,
                                                 (op, d) -> {
                                                     op.biomeBlendRadius = Mth.clamp(d.intValue(), 0, 7);
-                                                    ((PatchMinecraft) Minecraft.getInstance()).lvlRenderer().allChanged();
+                                                    Minecraft.getInstance().levelRenderer().allChanged();
                                                 },
                                                 (ops, op) -> {
                                                     double value = op.get(ops);
@@ -57,7 +56,7 @@ public abstract class MixinOption {
                                  op -> op.fov,
                                  (ops, d) -> {
                                      ops.fov = d;
-                                     ((PatchMinecraft) Minecraft.getInstance()).lvlRenderer().needsUpdate();
+                                     Minecraft.getInstance().levelRenderer().needsUpdate();
                                  },
                                  (ops, op) -> {
                                      double value = op.get(ops);
@@ -85,7 +84,7 @@ public abstract class MixinOption {
                                              op -> (double) op.renderDistance,
                                              (op, d) -> {
                                                  op.renderDistance = d.intValue();
-                                                 ((PatchMinecraft) Minecraft.getInstance()).lvlRenderer().needsUpdate();
+                                                 Minecraft.getInstance().levelRenderer().needsUpdate();
                                              },
                                              (ops, op) -> {
                                                  double value = op.get(ops);
@@ -97,7 +96,7 @@ public abstract class MixinOption {
                                                op -> op.ambientOcclusion,
                                                (ops, op, st) -> {
                                                    ops.ambientOcclusion = st;
-                                                   ((PatchMinecraft) Minecraft.getInstance()).lvlRenderer().allChanged();
+                                                   Minecraft.getInstance().levelRenderer().allChanged();
                                                });
         GRAPHICS = CycleOption.create("options.graphics",
                                       Arrays.asList(GraphicsStatus.values()),
@@ -120,7 +119,7 @@ public abstract class MixinOption {
                                           }
                                           else {
                                               ops.graphicsMode = status;
-                                              ((PatchMinecraft) mc).lvlRenderer().allChanged();
+                                              mc.levelRenderer().allChanged();
                                           }
                                       }).setTooltip(mc -> status -> switch (status) {
             case FANCY -> Minecraft.getInstance().font.split(GRAPHICS_TOOLTIP_FANCY, 200);
@@ -134,7 +133,7 @@ public abstract class MixinOption {
                                            (ops, op, status) -> {
                                                ops.renderClouds = status;
                                                if (Minecraft.useShaderTransparency()) {
-                                                   RenderTarget target = ((PatchMinecraft) Minecraft.getInstance()).lvlRenderer().getCloudsTarget();
+                                                   RenderTarget target = Minecraft.getInstance().levelRenderer().getCloudsTarget();
                                                    target.clear(Minecraft.ON_OSX);
                                                }
                                            });

@@ -40,7 +40,6 @@ import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
-import net.minecraft.client.particle.ParticleEngine;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
@@ -89,7 +88,6 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.GameType;
@@ -127,6 +125,7 @@ import tgw.evolution.items.ItemUtils;
 import tgw.evolution.network.Message;
 import tgw.evolution.network.PacketCSSimpleMessage;
 import tgw.evolution.patches.PatchMinecraft;
+import tgw.evolution.patches.replace.net.minecraft.client.particle.ParticleEngine;
 import tgw.evolution.util.OptionalMutableBlockPos;
 import tgw.evolution.util.collection.ArrayHelper;
 import tgw.evolution.util.math.DirectionUtil;
@@ -221,7 +220,8 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
     @Mutable @Shadow @Final @RestoreFinal public Options options;
     @Shadow private @Nullable Overlay overlay;
     @Mutable @Shadow @Final @RestoreFinal private PaintingTextureManager paintingTextures;
-    @Mutable @Shadow @Final @RestoreFinal public ParticleEngine particleEngine;
+    @Shadow @Final @DeleteField public net.minecraft.client.particle.ParticleEngine particleEngine;
+    @Unique private final ParticleEngine particleEngine_;
     @Shadow private boolean pause;
     @Shadow public float pausePartialTick;
     @Shadow private @Nullable Connection pendingConnection;
@@ -400,8 +400,8 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
         this.resourceManager.registerReloadListener(this.lvlRenderer);
         this.createSearchTrees();
         this.resourceManager.registerReloadListener(this.searchRegistry);
-        this.particleEngine = new ParticleEngine(this.level, this.textureManager);
-        this.resourceManager.registerReloadListener(this.particleEngine);
+        this.particleEngine_ = new ParticleEngine(this.level, this.textureManager);
+        this.resourceManager.registerReloadListener(this.particleEngine_);
         this.paintingTextures = new PaintingTextureManager(this.textureManager);
         this.resourceManager.registerReloadListener(this.paintingTextures);
         this.mobEffectTextures = new MobEffectTextureManager(this.textureManager);
@@ -532,7 +532,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
             this.lvlRenderer.close();
             this.soundManager.destroy();
             this.resourcePackRepository.close();
-            this.particleEngine.close();
+            this.particleEngine_.close();
             this.mobEffectTextures.close();
             this.paintingTextures.close();
             this.textureManager.close();
@@ -575,7 +575,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
                     Direction face = blockRayTrace.getDirection();
                     if (this.gameMode.continueDestroyBlock_(x, y, z, face, blockRayTrace)) {
                         destroying = true;
-                        this.particleEngine.crack_(x, y, z, face, blockRayTrace.x(), blockRayTrace.y(), blockRayTrace.z());
+                        this.particleEngine_.crack(x, y, z, face, blockRayTrace.x(), blockRayTrace.y(), blockRayTrace.z());
                         this.player.swing(InteractionHand.MAIN_HAND);
                     }
                 }
@@ -600,7 +600,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
         MutableSearchTree<ItemStack> tagTree = new ReloadableIdSearchTree<>(itemStack -> itemStack.getTags().map(TagKey::location));
         NonNullList<ItemStack> stackList = NonNullList.create();
         for (long it = Registry.ITEM.beginIteration(); Registry.ITEM.hasNextIteration(it); it = Registry.ITEM.nextEntry(it)) {
-            ((Item) Registry.ITEM.getIteration(it)).fillItemCategory(CreativeModeTab.TAB_SEARCH, stackList);
+            Registry.ITEM.getIteration(it).fillItemCategory(CreativeModeTab.TAB_SEARCH, stackList);
         }
         for (int i = 0, len = stackList.size(); i < len; ++i) {
             ItemStack stack = stackList.get(i);
@@ -1121,7 +1121,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
     protected abstract boolean isMultiplayerServer();
 
     @Override
-    public LevelRenderer lvlRenderer() {
+    public LevelRenderer levelRenderer() {
         return this.lvlRenderer;
     }
 
@@ -1136,6 +1136,11 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
 
     @Shadow
     protected abstract void openChatScreen(String defaultText);
+
+    @Override
+    public ParticleEngine particleEngine() {
+        return this.particleEngine_;
+    }
 
     /**
      * @author TheGreatWolf
@@ -1937,7 +1942,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
             }
             this.profiler.popPush("particles");
             if (!this.pause) {
-                this.particleEngine.tick();
+                this.particleEngine_.tick();
             }
         }
         else if (this.pendingConnection != null) {
@@ -1958,7 +1963,7 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
     @Overwrite
     private void updateLevelInEngines(@Nullable ClientLevel level) {
         this.lvlRenderer.setLevel(level);
-        this.particleEngine.setLevel(level);
+        this.particleEngine_.setLevel(level);
         this.blockEntityRenderDispatcher.setLevel(level);
         this.updateTitle();
     }

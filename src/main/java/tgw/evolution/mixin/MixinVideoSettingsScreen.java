@@ -14,7 +14,6 @@ import net.minecraft.client.renderer.GpuWarnlistManager;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TranslatableComponent;
 import org.spongepowered.asm.mixin.*;
-import tgw.evolution.patches.PatchMinecraft;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
 
@@ -93,7 +92,7 @@ public abstract class MixinVideoSettingsScreen extends OptionsSubScreen {
                 this.minecraft.setScreen(
                         new PopupScreen(WARNING_TITLE, list, ImmutableList.of(new PopupScreen.ButtonOption(BUTTON_ACCEPT, b -> {
                             this.options.graphicsMode = GraphicsStatus.FABULOUS;
-                            Minecraft.getInstance().lvlRenderer().allChanged();
+                            Minecraft.getInstance().levelRenderer().allChanged();
                             this.gpuWarnlistManager.dismissWarning();
                             this.minecraft.setScreen(this);
                         }), new PopupScreen.ButtonOption(BUTTON_CANCEL, b -> {

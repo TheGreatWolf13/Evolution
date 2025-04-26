@@ -1,4 +1,4 @@
-package tgw.evolution.patches.mixin;
+package tgw.evolution.patches.replace;
 
 import net.minecraft.world.level.entity.ChunkEntities;
 import org.jetbrains.annotations.Contract;

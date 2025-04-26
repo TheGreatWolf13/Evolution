@@ -5,7 +5,6 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.profiling.ProfilerFiller;
@@ -18,7 +17,7 @@ import tgw.evolution.client.renderer.DimensionOverworld;
 
 import java.nio.IntBuffer;
 
-public class LightingTexture extends LightTexture {
+public class LightTexture implements AutoCloseable {
 
     private static final int SKY_FLASH = 16;
     private static final int SKY_BRIGHTNESS = 17;
@@ -133,8 +132,7 @@ public class LightingTexture extends LightTexture {
     private float[] oldTable;
     private cl_program program;
 
-    public LightingTexture(GameRenderer gameRenderer, Minecraft mc) {
-        super(gameRenderer, mc);
+    public LightTexture(GameRenderer gameRenderer, Minecraft mc) {
         this.gameRenderer = gameRenderer;
         this.mc = mc;
         this.lightTexture = new DynamicTexture(1_024, 512, true);
@@ -230,12 +228,14 @@ public class LightingTexture extends LightTexture {
         this.memOutPointer = Pointer.to(this.memOut);
     }
 
-    @Override
     public void tick() {
         this.needsUpdate = true;
     }
 
-    @Override
+    public void turnOffLightLayer() {
+        RenderSystem.setShaderTexture(2, 0);
+    }
+
     public void turnOnLightLayer() {
         RenderSystem.setShaderTexture(2, this.lightTextureLocation);
         this.mc.getTextureManager().bindForSetup(this.lightTextureLocation);
@@ -244,7 +244,6 @@ public class LightingTexture extends LightTexture {
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
     }
 
-    @Override
     public void updateLightTexture(float partialTicks) {
         if (this.needsUpdate) {
             this.needsUpdate = false;

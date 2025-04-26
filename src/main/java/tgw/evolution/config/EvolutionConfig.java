@@ -46,14 +46,14 @@ public final class EvolutionConfig {
     public static final ConfigBoolean ECLIPTIC = new ConfigBoolean(SKY, "ecliptic", false);
     public static final ConfigBoolean SUN_PATH = new ConfigBoolean(SKY, "sunPath", false);
     public static final ConfigBoolean PLANETS = new ConfigBoolean(SKY, "planets", false);
-    //
-    public static boolean toggleCrawl = true;
-    public static int version;
     private static final RSet<IConfigItem> DIRTY = new RHashSet<>();
     private static final RSet<IConfigItem> NEEDS_RESTORATION = new RHashSet<>();
     private static final int VERSION = 1;
     private static boolean isDirty;
     private static byte needsRestoration = -1;
+    //
+    public static boolean toggleCrawl = true;
+    public static int version;
 
     static {
         CELESTIAL_FORCE_ALL.setPriority(IConfigItem.Priority.HIGH);
@@ -62,6 +62,21 @@ public final class EvolutionConfig {
     }
 
     private EvolutionConfig() {
+    }
+
+    private static void analyseFolder(ConfigFolder folder) {
+        OList<IConfigItem> items = folder.items();
+        for (int i = 0, len = items.size(); i < len; ++i) {
+            IConfigItem item = items.get(i);
+            if (item.type() == IConfigItem.Type.FOLDER) {
+                analyseFolder((ConfigFolder) item);
+            }
+            else {
+                if (!item.isDefault()) {
+                    NEEDS_RESTORATION.add(item);
+                }
+            }
+        }
     }
 
     public static void discardDirty() {
@@ -164,27 +179,12 @@ public final class EvolutionConfig {
             isDirty = false;
             Minecraft mc = Minecraft.getInstance();
             mc.options.save();
-            mc.lvlRenderer().allChanged();
+            mc.levelRenderer().allChanged();
         }
     }
 
     public static void updateWelcome() {
         version = VERSION;
         Minecraft.getInstance().options.save();
-    }
-
-    private static void analyseFolder(ConfigFolder folder) {
-        OList<IConfigItem> items = folder.items();
-        for (int i = 0, len = items.size(); i < len; ++i) {
-            IConfigItem item = items.get(i);
-            if (item.type() == IConfigItem.Type.FOLDER) {
-                analyseFolder((ConfigFolder) item);
-            }
-            else {
-                if (!item.isDefault()) {
-                    NEEDS_RESTORATION.add(item);
-                }
-            }
-        }
     }
 }

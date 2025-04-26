@@ -126,7 +126,7 @@ public abstract class Mixin_CFM_ClientLevel extends Level implements PatchClient
     @Override
     @Overwrite
     public void addAlwaysVisibleParticle(ParticleOptions particleData, double x, double y, double z, double velX, double velY, double velZ) {
-        this.minecraft.lvlRenderer().listener().addParticle(particleData, false, true, x, y, z, velX, velY, velZ);
+        this.minecraft.levelRenderer().listener().addParticle(particleData, false, true, x, y, z, velX, velY, velZ);
     }
 
     /**
@@ -136,7 +136,7 @@ public abstract class Mixin_CFM_ClientLevel extends Level implements PatchClient
     @Override
     @Overwrite
     public void addAlwaysVisibleParticle(ParticleOptions particleData, boolean ignoreRange, double x, double y, double z, double velX, double velY, double velZ) {
-        this.minecraft.lvlRenderer().listener().addParticle(particleData, particleData.getType().getOverrideLimiter() || ignoreRange, true, x, y, z, velX, velY, velZ);
+        this.minecraft.levelRenderer().listener().addParticle(particleData, particleData.getType().getOverrideLimiter() || ignoreRange, true, x, y, z, velX, velY, velZ);
     }
 
     /**
@@ -152,7 +152,7 @@ public abstract class Mixin_CFM_ClientLevel extends Level implements PatchClient
 
     @Override
     public void addDestroyBlockEffect_(int x, int y, int z, BlockState state) {
-        this.minecraft.particleEngine.destroy_(x, y, z, state);
+        this.minecraft.particleEngine().destroy(x, y, z, state);
     }
 
     /**
@@ -182,7 +182,7 @@ public abstract class Mixin_CFM_ClientLevel extends Level implements PatchClient
     @Override
     @Overwrite
     public void addParticle(ParticleOptions particleData, double x, double y, double z, double velX, double velY, double velZ) {
-        this.minecraft.lvlRenderer().listener().addParticle(particleData, particleData.getType().getOverrideLimiter(), false, x, y, z, velX, velY, velZ);
+        this.minecraft.levelRenderer().listener().addParticle(particleData, particleData.getType().getOverrideLimiter(), false, x, y, z, velX, velY, velZ);
     }
 
     /**
@@ -192,7 +192,7 @@ public abstract class Mixin_CFM_ClientLevel extends Level implements PatchClient
     @Override
     @Overwrite
     public void addParticle(ParticleOptions particleData, boolean force, double x, double y, double z, double velX, double velY, double velZ) {
-        this.minecraft.lvlRenderer().listener().addParticle(particleData, particleData.getType().getOverrideLimiter() || force, false, x, y, z, velX, velY, velZ);
+        this.minecraft.levelRenderer().listener().addParticle(particleData, particleData.getType().getOverrideLimiter() || force, false, x, y, z, velX, velY, velZ);
     }
 
     /**
@@ -282,7 +282,7 @@ public abstract class Mixin_CFM_ClientLevel extends Level implements PatchClient
 
     @Override
     public void destroyBlockProgress(int breakerId, long pos, int progress, @Nullable Direction face, double hitX, double hitY, double hitZ) {
-        this.minecraft.lvlRenderer().destroyBlockProgress(breakerId, pos, progress, face, hitX, hitY, hitZ);
+        this.minecraft.levelRenderer().destroyBlockProgress(breakerId, pos, progress, face, hitX, hitY, hitZ);
     }
 
     /**
@@ -421,7 +421,7 @@ public abstract class Mixin_CFM_ClientLevel extends Level implements PatchClient
 
     @Override
     public void globalLevelEvent_(@LvlEvent int event, int x, int y, int z, int data) {
-        this.minecraft.lvlRenderer().globalLevelEvent(event, x, y, z);
+        this.minecraft.levelRenderer().globalLevelEvent(event, x, y, z);
     }
 
     /**
@@ -439,7 +439,7 @@ public abstract class Mixin_CFM_ClientLevel extends Level implements PatchClient
     @Override
     public void levelEvent_(@Nullable Player player, int event, int x, int y, int z, int data) {
         try {
-            this.minecraft.lvlRenderer().levelEvent(event, x, y, z, data);
+            this.minecraft.levelRenderer().levelEvent(event, x, y, z, data);
         }
         catch (Throwable t) {
             CrashReport crash = CrashReport.forThrowable(t, "Playing level event");
@@ -469,12 +469,12 @@ public abstract class Mixin_CFM_ClientLevel extends Level implements PatchClient
             this.tintCaches_.getIterationValue(it).invalidateForChunk(chunkX, chunkZ);
         }
         this.entityStorage.startTicking(chunkX, chunkZ);
-        this.minecraft.lvlRenderer().onChunkLoaded(chunkX, chunkZ);
+        this.minecraft.levelRenderer().onChunkLoaded(chunkX, chunkZ);
     }
 
     @Override
     public void onSectionBecomingNonEmpty(long secPos) {
-        this.minecraft.lvlRenderer().onSectionBecomingNonEmpty(secPos);
+        this.minecraft.levelRenderer().onSectionBecomingNonEmpty(secPos);
     }
 
     @Shadow
@@ -494,7 +494,7 @@ public abstract class Mixin_CFM_ClientLevel extends Level implements PatchClient
 
     @Override
     public void sendBlockUpdated_(int x, int y, int z, BlockState oldState, BlockState newState, @BlockFlags int flags) {
-        this.minecraft.lvlRenderer().blockChanged(x, y, z, oldState, newState, flags);
+        this.minecraft.levelRenderer().blockChanged(x, y, z, oldState, newState, flags);
     }
 
     /**
@@ -510,7 +510,7 @@ public abstract class Mixin_CFM_ClientLevel extends Level implements PatchClient
 
     @Override
     public void setBlocksDirty_(int x, int y, int z, BlockState oldState, BlockState newState) {
-        this.minecraft.lvlRenderer().setBlockDirty(x, y, z, oldState, newState);
+        this.minecraft.levelRenderer().setBlockDirty(x, y, z, oldState, newState);
     }
 
     @Shadow
@@ -547,7 +547,7 @@ public abstract class Mixin_CFM_ClientLevel extends Level implements PatchClient
      */
     @Overwrite
     public void setSectionDirtyWithNeighbors(int sectionX, int sectionY, int sectionZ) {
-        this.minecraft.lvlRenderer().setSectionDirtyWithNeighbors(sectionX, sectionY, sectionZ);
+        this.minecraft.levelRenderer().setSectionDirtyWithNeighbors(sectionX, sectionY, sectionZ);
     }
 
     @Shadow

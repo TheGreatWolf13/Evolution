@@ -1,4 +1,4 @@
-package tgw.evolution.patches.mixin;
+package tgw.evolution.patches.replace;
 
 import com.mojang.logging.LogUtils;
 import net.minecraft.Util;

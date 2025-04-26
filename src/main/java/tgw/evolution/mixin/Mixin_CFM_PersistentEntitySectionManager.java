@@ -17,7 +17,7 @@ import tgw.evolution.hooks.asm.DeleteMethod;
 import tgw.evolution.hooks.asm.ModifyConstructor;
 import tgw.evolution.hooks.asm.RestoreFinal;
 import tgw.evolution.patches.PatchPersistentEntitySectionManager;
-import tgw.evolution.patches.mixin.ChunkEntities;
+import tgw.evolution.patches.replace.ChunkEntities;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.collection.maps.L2OHashMap;

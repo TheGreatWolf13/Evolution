@@ -120,6 +120,6 @@ public abstract class MixinEntityRenderer<T extends Entity> implements HREntity<
         if (!frustum.cubeInFrustum(minX, minY, minZ, maxX, maxY, maxZ)) {
             return false;
         }
-        return Minecraft.getInstance().lvlRenderer().visibleOcclusionCulling(minX, minY, minZ, maxX, maxY, maxZ);
+        return Minecraft.getInstance().levelRenderer().visibleOcclusionCulling(minX, minY, minZ, maxX, maxY, maxZ);
     }
 }

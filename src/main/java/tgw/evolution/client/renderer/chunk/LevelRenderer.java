@@ -70,6 +70,7 @@ import tgw.evolution.blocks.tileentities.TEMolding;
 import tgw.evolution.client.renderer.ClientRenderer;
 import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.client.renderer.ambient.DynamicLights;
+import tgw.evolution.client.renderer.ambient.LightTexture;
 import tgw.evolution.client.renderer.ambient.SkyRenderer;
 import tgw.evolution.client.util.Blending;
 import tgw.evolution.config.EvolutionConfig;
@@ -1505,7 +1506,7 @@ public class LevelRenderer implements IKeyedReloadListener, ResourceManagerReloa
             this.particlesTarget.copyDepthFrom(this.mc.getMainRenderTarget());
             RenderStateShard.PARTICLES_TARGET.setupRenderState();
             profiler.popPush("particles");
-            this.mc.particleEngine.render(matrices, buffer, lightTexture, camera, partialTicks);
+            this.mc.particleEngine().render(matrices, lightTexture, camera, partialTicks);
             RenderStateShard.PARTICLES_TARGET.clearRenderState();
         }
         else {
@@ -1519,7 +1520,7 @@ public class LevelRenderer implements IKeyedReloadListener, ResourceManagerReloa
             profiler.popPush("tripwire");
             this.renderChunkLayer(RenderType.tripwire(), RenderLayer.TRIPWIRE, matrices, camX, camY, camZ, projectionMatrix);
             profiler.popPush("particles");
-            this.mc.particleEngine.render(matrices, buffer, lightTexture, camera, partialTicks);
+            this.mc.particleEngine().render(matrices, lightTexture, camera, partialTicks);
         }
         internalMat.pushPose();
         internalMat.mulPoseMatrix(matrices.last().pose());

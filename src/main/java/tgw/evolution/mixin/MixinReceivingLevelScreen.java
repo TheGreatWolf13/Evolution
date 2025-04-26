@@ -32,7 +32,7 @@ public abstract class MixinReceivingLevelScreen extends Screen {
             this.minecraft.player != null) {
             BlockPos pos = this.minecraft.player.blockPosition();
             if (this.minecraft.level != null && this.minecraft.level.isOutsideBuildHeight(pos.getY()) ||
-                this.minecraft.lvlRenderer().isChunkCompiled(pos.getX(), pos.getY(), pos.getZ())) {
+                this.minecraft.levelRenderer().isChunkCompiled(pos.getX(), pos.getY(), pos.getZ())) {
                 this.onClose();
             }
             if (this.loadingPacketsReceived) {

@@ -91,7 +91,7 @@ public abstract class MixinKeyboardHandler {
         }
         return switch (key) {
             case GLFW.GLFW_KEY_A -> {
-                this.minecraft.lvlRenderer().allChanged();
+                this.minecraft.levelRenderer().allChanged();
                 this.debugFeedbackTranslated("debug.reload_chunks.message");
                 yield true;
             }
