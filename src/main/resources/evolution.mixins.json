@@ -582,7 +582,6 @@
     "Mixin_CF_PostPass",
     "Mixin_CF_SimpleBakedModel",
     "Mixin_CF_SimpleBakedModel_Builder",
-    "Mixin_CF_SuffixArray",
     "Mixin_CF_TerrainParticle",
     "Mixin_CF_VertexFormat",
     "Mixin_CFM_ClientLevel",

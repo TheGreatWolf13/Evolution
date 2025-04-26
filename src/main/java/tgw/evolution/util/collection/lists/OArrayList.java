@@ -6,9 +6,11 @@ import it.unimi.dsi.fastutil.objects.ObjectCollection;
 import it.unimi.dsi.fastutil.objects.ObjectListIterator;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
+import tgw.evolution.util.collection.sets.OSet;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 
 public class OArrayList<K> extends ObjectArrayList<K> implements OList<K> {
 
@@ -19,6 +21,10 @@ public class OArrayList<K> extends ObjectArrayList<K> implements OList<K> {
         this.addAll(c);
     }
 
+    public OArrayList(Iterator<? extends K> i) {
+        super(i);
+    }
+
     public OArrayList(Iterable<? extends K> i) {
         super();
         this.addAll(i);
@@ -26,6 +32,11 @@ public class OArrayList<K> extends ObjectArrayList<K> implements OList<K> {
 
     public OArrayList(final int capacity) {
         super(capacity);
+    }
+
+    public OArrayList(OSet<? extends K> set) {
+        super();
+        this.addAll(set);
     }
 
     public OArrayList(ObjectCollection<? extends K> c) {

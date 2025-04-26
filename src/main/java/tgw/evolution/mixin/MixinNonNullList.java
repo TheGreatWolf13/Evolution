@@ -2,6 +2,7 @@ package tgw.evolution.mixin;
 
 import net.minecraft.core.NonNullList;
 import org.apache.commons.lang3.Validate;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -11,6 +12,7 @@ import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
 
 import java.util.AbstractList;
+import java.util.Collection;
 import java.util.List;
 
 @Mixin(NonNullList.class)
@@ -58,6 +60,11 @@ public abstract class MixinNonNullList<E> extends AbstractList<E> {
         OList list = new OArrayList(i);
         list.addMany(object, i);
         return new NonNullList<>(list, object);
+    }
+
+    @Override
+    public boolean addAll(@NotNull Collection<? extends E> c) {
+        return this.list.addAll(c);
     }
 
     /**

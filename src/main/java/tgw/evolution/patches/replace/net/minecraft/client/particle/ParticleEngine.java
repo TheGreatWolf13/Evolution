@@ -57,6 +57,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.random.RandomGenerator;
 
+@Environment(EnvType.CLIENT)
 public class ParticleEngine implements PreparableReloadListener {
     private static final int MAX_PARTICLES_PER_LAYER = 16_384;
     private static final OList<ParticleRenderType> RENDER_ORDER = OList.of(ParticleRenderType.TERRAIN_SHEET, ParticleRenderType.PARTICLE_SHEET_OPAQUE, ParticleRenderType.PARTICLE_SHEET_LIT, ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT, ParticleRenderType.CUSTOM);
