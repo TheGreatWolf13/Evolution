@@ -228,7 +228,7 @@ public abstract class Mixin_CF_SuffixArray<T> {
             m = j;
             ISet intSet = new IHashSet();
             for (int o = l; o < m; ++o) {
-                intSet.add(this.suffixToT.getInt(o));
+                intSet.add(this.suffixToT_.getInt(o));
             }
             int[] is = intSet.toIntArray();
             java.util.Arrays.sort(is);
