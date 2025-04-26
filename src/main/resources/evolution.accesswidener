@@ -30,6 +30,8 @@ accessible class net/minecraft/world/level/levelgen/structure/pools/JigsawPlacem
 accessible class net/minecraft/world/level/levelgen/SurfaceRules$SurfaceRule
 accessible class net/minecraft/world/level/lighting/BlockLightSectionStorage$BlockDataLayerStorageMap
 accessible class net/minecraft/world/level/lighting/SkyLightSectionStorage$SkyDataLayerStorageMap
+accessible class net/minecraft/world/level/chunk/storage/IOWorker$PendingStore
+accessible class net/minecraft/world/level/chunk/storage/IOWorker$Priority
 
 #Fields
 accessible field com/mojang/blaze3d/platform/NativeImage pixels J
@@ -185,6 +187,7 @@ accessible field net/minecraft/world/level/block/state/StateDefinition NAME_PATT
 accessible field net/minecraft/world/level/chunk/LevelChunkSection states Lnet/minecraft/world/level/chunk/PalettedContainer;
 accessible field net/minecraft/world/level/dimension/DimensionType brightnessRamp [F
 accessible field net/minecraft/world/level/GameRules rules Ljava/util/Map;
+accessible field net/minecraft/world/level/levelgen/WorldGenSettings legacyCustomOptions Ljava/util/Optional;
 accessible field net/minecraft/world/entity/ai/village/poi/PoiType TYPE_BY_STATE Ljava/util/Map;
 accessible field net/minecraft/world/entity/Entity portalEntrancePos Lnet/minecraft/core/BlockPos;
 accessible field net/minecraft/world/entity/LivingEntity swimAmount F
@@ -208,6 +211,8 @@ accessible field net/minecraft/world/level/levelgen/Heightmap isOpaque Ljava/uti
 accessible field net/minecraft/world/level/lighting/LayerLightEngine storage Lnet/minecraft/world/level/lighting/LayerLightSectionStorage;
 accessible field net/minecraft/world/level/lighting/SkyLightSectionStorage$SkyDataLayerStorageMap currentLowestY I
 accessible field net/minecraft/world/level/lighting/SkyLightSectionStorage$SkyDataLayerStorageMap topSections Lit/unimi/dsi/fastutil/longs/Long2IntOpenHashMap;
+accessible field net/minecraft/world/level/chunk/storage/IOWorker$PendingStore data Lnet/minecraft/nbt/CompoundTag;
+accessible field net/minecraft/world/level/chunk/storage/IOWorker$PendingStore result Ljava/util/concurrent/CompletableFuture;
 
 #Methods
 accessible method com/mojang/blaze3d/platform/InputConstants$Key <init> (Ljava/lang/String;Lcom/mojang/blaze3d/platform/InputConstants$Type;I)V
@@ -445,3 +450,7 @@ accessible method net/minecraft/world/level/timers/TimerQueue loadEvent (Lnet/mi
 accessible method net/minecraft/world/phys/AABB clipPoint ([DLnet/minecraft/core/Direction;DDDDDDDDLnet/minecraft/core/Direction;DDD)Lnet/minecraft/core/Direction;
 accessible method net/minecraft/world/phys/BlockHitResult <init> (ZLnet/minecraft/world/phys/Vec3;Lnet/minecraft/core/Direction;Lnet/minecraft/core/BlockPos;Z)V
 accessible method net/minecraft/world/phys/shapes/SubShape <init> (Lnet/minecraft/world/phys/shapes/DiscreteVoxelShape;IIIIII)V
+accessible method net/minecraft/world/level/chunk/storage/IOWorker loadAsync (Lnet/minecraft/world/level/ChunkPos;)Ljava/util/concurrent/CompletableFuture;
+accessible method net/minecraft/world/level/chunk/storage/RegionFileStorage <init> (Ljava/nio/file/Path;Z)V
+accessible method net/minecraft/world/level/chunk/storage/IOWorker <init> (Ljava/nio/file/Path;ZLjava/lang/String;)V
+accessible method net/minecraft/nbt/ListTag <init> (Ljava/util/List;B)V

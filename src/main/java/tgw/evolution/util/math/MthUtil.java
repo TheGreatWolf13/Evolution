@@ -42,15 +42,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.text.Collator;
-import java.text.Normalizer;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 import java.util.random.RandomGenerator;
-import java.util.regex.Pattern;
 
-public final class MathHelper {
+public final class MthUtil {
 
     public static final Random RANDOM = new Random();
     public static final DirectionDiagonal[][] DIAGONALS = {{DirectionDiagonal.NORTH_WEST, DirectionDiagonal.NORTH_EAST},
@@ -58,9 +55,8 @@ public final class MathHelper {
     public static final double SIN_60 = 0.866_025_403_784_438_6;
     private static final Predicate<Entity> PICKABLE_ENTITIES = e -> e != null && !e.isSpectator() && e.isPickable();
     private static final Predicate<Entity> ALIVE_ENTITIES = e -> e != null && !e.isSpectator() && e.isPickable() && e.isAlive();
-    private static final Pattern DIACRITICAL_MARKS = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
 
-    private MathHelper() {
+    private MthUtil() {
     }
 
     /**
@@ -479,36 +475,6 @@ public final class MathHelper {
     }
 
     /**
-     * Compares two strings, ignoring case and accentuation.
-     */
-    public static int compare(String a, String b) {
-        Collator collator = Collator.getInstance(Locale.ROOT);
-        collator.setStrength(Collator.PRIMARY);
-        return collator.compare(a, b);
-    }
-
-    /**
-     * Whether string a contains string b, ignoring case and accentuation.
-     */
-    public static boolean contains(String a, String b, @Nullable StringBuilder builder) {
-        StringBuilder sb = builder == null ? new StringBuilder() : builder;
-        return stripAccents(a, sb).toLowerCase(Locale.ROOT).contains(stripAccents(b, sb).toLowerCase(Locale.ROOT));
-    }
-
-    private static void convertRemainingAccentCharacters(StringBuilder decomposed) {
-        for (int i = 0; i < decomposed.length(); ++i) {
-            if (decomposed.charAt(i) == 321) {
-                decomposed.deleteCharAt(i);
-                decomposed.insert(i, 'L');
-            }
-            else if (decomposed.charAt(i) == 322) {
-                decomposed.deleteCharAt(i);
-                decomposed.insert(i, 'l');
-            }
-        }
-    }
-
-    /**
      * Approximates the trigonometric function cosine.
      *
      * @param deg The argument of the cosine, given in degrees.
@@ -839,11 +805,11 @@ public final class MathHelper {
     /**
      * Offsets a hit position to be within a bounding box.
      *
-     * @param axis      The desired {@link Axis} to offset.
+     * @param axis      The desired {@link Direction.Axis} to offset.
      * @param hit       The position of the hit.
      * @param direction The {@link Direction} from where the hit came from.
      * @return A hit position offset in the desired {@link Direction}
-     * if the {@link Direction} is in the desired {@link Axis}.
+     * if the {@link Direction} is in the desired {@link Direction.Axis}.
      * If it is not, the position will not change.
      */
     public static double hitOffset(Direction.Axis axis, double hit, Direction direction) {
@@ -1415,20 +1381,6 @@ public final class MathHelper {
      */
     public static float sqrt(double value) {
         return (float) Math.sqrt(value);
-    }
-
-    public static String stripAccents(String input, @Nullable StringBuilder builder) {
-        StringBuilder decomposed;
-        if (builder == null) {
-            decomposed = new StringBuilder(Normalizer.normalize(input, Normalizer.Form.NFD));
-        }
-        else {
-            decomposed = builder;
-            builder.setLength(0);
-            builder.append(Normalizer.normalize(input, Normalizer.Form.NFD));
-        }
-        convertRemainingAccentCharacters(decomposed);
-        return DIACRITICAL_MARKS.matcher(decomposed).replaceAll("");
     }
 
     /**

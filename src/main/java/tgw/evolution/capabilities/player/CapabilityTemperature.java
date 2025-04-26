@@ -10,7 +10,7 @@ import tgw.evolution.init.EvolutionEffects;
 import tgw.evolution.network.PacketSCTemperatureData;
 import tgw.evolution.patches.PatchLivingEntity;
 import tgw.evolution.util.Temperature;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 import tgw.evolution.util.physics.ClimateZone;
 
 public class CapabilityTemperature {
@@ -138,7 +138,7 @@ public class CapabilityTemperature {
 
     public void setCurrentMaxComfort(double maxComfort) {
         double old = this.currentMaxComfort;
-        this.currentMaxComfort = MathHelper.clamp(maxComfort, Math.max(-70, this.currentMinComfort), 110);
+        this.currentMaxComfort = MthUtil.clamp(maxComfort, Math.max(-70, this.currentMinComfort), 110);
         if (Math.round(old) != this.getCurrentMaxComfort()) {
             this.needsUpdate = true;
         }
@@ -146,7 +146,7 @@ public class CapabilityTemperature {
 
     public void setCurrentMinComfort(double minComfort) {
         double old = this.currentMinComfort;
-        this.currentMinComfort = MathHelper.clamp(minComfort, -70, Math.min(110, this.currentMaxComfort));
+        this.currentMinComfort = MthUtil.clamp(minComfort, -70, Math.min(110, this.currentMaxComfort));
         if (Math.round(old) != this.getCurrentMinComfort()) {
             this.needsUpdate = true;
         }
@@ -154,7 +154,7 @@ public class CapabilityTemperature {
 
     public void setCurrentTemperature(double temp) {
         double old = this.currentTemperature;
-        this.currentTemperature = MathHelper.clamp(temp, -273, 1_000_000_000 - 273);
+        this.currentTemperature = MthUtil.clamp(temp, -273, 1_000_000_000 - 273);
         if (Math.round(old) != this.getCurrentTemperature()) {
             this.needsUpdate = true;
         }

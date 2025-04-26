@@ -7,7 +7,7 @@ import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 import tgw.evolution.client.gui.ScreenEvolution;
 import tgw.evolution.client.util.MouseButton;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 public class AdvEditBox extends EditBox {
 
@@ -27,7 +27,7 @@ public class AdvEditBox extends EditBox {
             return true;
         }
         if (this.visible && this.active && button == GLFW.GLFW_MOUSE_BUTTON_2) {
-            if (MathHelper.isMouseInArea(mouseX, mouseY, this.x, this.y, this.width, this.height)) {
+            if (MthUtil.isMouseInArea(mouseX, mouseY, this.x, this.y, this.width, this.height)) {
                 this.setValue("");
                 this.setFocus(true);
                 return true;

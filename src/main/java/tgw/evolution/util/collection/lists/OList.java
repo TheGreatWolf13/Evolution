@@ -4,6 +4,9 @@ import it.unimi.dsi.fastutil.objects.ObjectIterable;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
 import org.jetbrains.annotations.UnmodifiableView;
+import tgw.evolution.util.collection.sets.OSet;
+
+import java.util.Collection;
 
 public interface OList<K> extends ObjectList<K>, ListExtension {
 
@@ -33,6 +36,37 @@ public interface OList<K> extends ObjectList<K>, ListExtension {
 
     static @UnmodifiableView <K> OList<K> singleton(K k) {
         return new Singleton<>(k);
+    }
+
+    @Override
+    default boolean addAll(Collection<? extends K> it) {
+        if (it instanceof OList<? extends K> list) {
+            return this.addAll(list);
+        }
+        if (it instanceof OSet<? extends K> set) {
+            return this.addAll(set);
+        }
+        boolean added = false;
+        for (K k : it) {
+            added |= this.add(k);
+        }
+        return added;
+    }
+
+    default boolean addAll(OList<? extends K> list) {
+        boolean added = false;
+        for (int i = 0, len = list.size(); i < len; ++i) {
+            added |= this.add(list.get(i));
+        }
+        return added;
+    }
+
+    default boolean addAll(OSet<? extends K> set) {
+        boolean added = false;
+        for (long it = set.beginIteration(); set.hasNextIteration(it); it = set.nextEntry(it)) {
+            added |= this.add(set.getIteration(it));
+        }
+        return added;
     }
 
     default boolean addAll(ObjectIterable<? extends K> it) {
@@ -76,6 +110,11 @@ public interface OList<K> extends ObjectList<K>, ListExtension {
         }
 
         @Override
+        public boolean addAll(Collection<? extends K> c) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
         public boolean addAll(Iterable<? extends K> it) {
             throw new UnsupportedOperationException();
         }
@@ -112,6 +151,11 @@ public interface OList<K> extends ObjectList<K>, ListExtension {
         }
 
         @Override
+        public boolean addAll(Collection<? extends K> c) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
         public void addMany(K value, int length) {
             throw new UnsupportedOperationException();
         }
@@ -135,6 +179,11 @@ public interface OList<K> extends ObjectList<K>, ListExtension {
 
         protected View(OList<K> l) {
             super(l);
+        }
+
+        @Override
+        public boolean addAll(Collection<? extends K> c) {
+            throw new UnsupportedOperationException();
         }
 
         @Override

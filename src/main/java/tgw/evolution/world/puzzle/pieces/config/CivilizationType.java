@@ -1,6 +1,6 @@
 package tgw.evolution.world.puzzle.pieces.config;
 
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 import java.util.random.RandomGenerator;
 
@@ -15,7 +15,7 @@ public enum CivilizationType {
     private final int weight;
 
     CivilizationType(int id, int weight) {
-        this.id = MathHelper.toByteExact(id);
+        this.id = MthUtil.toByteExact(id);
         this.weight = weight;
     }
 

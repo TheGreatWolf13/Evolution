@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.StrUtil;
 
 import java.util.Comparator;
 
@@ -15,7 +15,7 @@ public final class ConfigFolder implements IConfigItem {
     private static final Comparator<IConfigItem> COMPARATOR = (o1, o2) -> {
         if (o1.type() == Type.FOLDER) {
             if (o2.type() == Type.FOLDER) {
-                return MathHelper.compare(o1.name().getString(), o2.name().getString());
+                return StrUtil.compare(o1.name().getString(), o2.name().getString());
             }
             return -1;
         }
@@ -24,7 +24,7 @@ public final class ConfigFolder implements IConfigItem {
         }
         int priority = o1.priority().compareTo(o2.priority());
         if (priority == 0) {
-            return MathHelper.compare(o1.name().getString(), o2.name().getString());
+            return StrUtil.compare(o1.name().getString(), o2.name().getString());
         }
         return priority;
     };

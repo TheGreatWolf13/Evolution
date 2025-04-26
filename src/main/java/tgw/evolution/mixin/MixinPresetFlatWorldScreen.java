@@ -47,7 +47,7 @@ public abstract class MixinPresetFlatWorldScreen extends Screen {
         String blockName = strings[strings.length - 1];
         Block block;
         try {
-            block = (Block) Registry.BLOCK.getNullable(new ResourceLocation(blockName));
+            block = Registry.BLOCK.getNullable(new ResourceLocation(blockName));
         }
         catch (Exception e) {
             LOGGER.error("Error while parsing flat world string => {}", e.getMessage());

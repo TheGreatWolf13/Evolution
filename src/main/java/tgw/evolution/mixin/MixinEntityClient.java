@@ -19,7 +19,7 @@ import tgw.evolution.EvolutionClient;
 import tgw.evolution.blocks.IClimbable;
 import tgw.evolution.hooks.LivingHooks;
 import tgw.evolution.patches.PatchLivingEntity;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 import javax.annotation.Nullable;
 
@@ -105,7 +105,7 @@ public abstract class MixinEntityClient implements EntityAccess {
                     if (partialYaw >= 180) {
                         partialYaw -= 360;
                     }
-                    float newYaw = MathHelper.clampAngle(partialYaw, sweepAngle, dir);
+                    float newYaw = MthUtil.clampAngle(partialYaw, sweepAngle, dir);
                     if (partialYaw < 0) {
                         partialYaw += 360;
                     }
@@ -130,7 +130,7 @@ public abstract class MixinEntityClient implements EntityAccess {
                         newYaw -= 360;
                     }
                     this.yRot += newYaw;
-                    this.xRot = MathHelper.clamp(this.xRot, -90.0F, 90.0F);
+                    this.xRot = MthUtil.clamp(this.xRot, -90.0F, 90.0F);
                     this.xRotO += dPitch;
                     this.yRotO += dYaw;
                     partialYaw = this.yRotO % 360;
@@ -142,7 +142,7 @@ public abstract class MixinEntityClient implements EntityAccess {
                     if (partialYaw >= 180) {
                         partialYaw -= 360;
                     }
-                    newYaw = MathHelper.clampAngle(partialYaw, sweepAngle, dir);
+                    newYaw = MthUtil.clampAngle(partialYaw, sweepAngle, dir);
                     if (partialYaw < 0) {
                         partialYaw += 360;
                     }
@@ -167,7 +167,7 @@ public abstract class MixinEntityClient implements EntityAccess {
                         newYaw -= 360;
                     }
                     this.yRotO += newYaw;
-                    this.xRotO = MathHelper.clamp(this.xRotO, -90.0F, 90.0F);
+                    this.xRotO = MthUtil.clamp(this.xRotO, -90.0F, 90.0F);
                     if (this.vehicle != null) {
                         this.vehicle.onPassengerTurned((Entity) (Object) this);
                     }

@@ -20,9 +20,6 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import tgw.evolution.client.util.Action;
-import tgw.evolution.client.util.Key;
-import tgw.evolution.client.util.Modifiers;
 
 import java.util.Locale;
 
@@ -41,7 +38,7 @@ public abstract class MixinKeyboardHandler {
      * @author TheGreatWolf
      */
     @Overwrite
-    private void charTyped(long windowPointer, int codePoint, @Modifiers int mod) {
+    private void charTyped(long windowPointer, int codePoint, int mod) {
         if (windowPointer == this.minecraft.getWindow().getWindow()) {
             Screen screen = this.minecraft.screen;
             if (screen != null && this.minecraft.getOverlay() == null) {
@@ -88,7 +85,7 @@ public abstract class MixinKeyboardHandler {
      * @author TheGreatWolf
      */
     @Overwrite
-    private boolean handleDebugKeys(@Key int key) {
+    private boolean handleDebugKeys(int key) {
         if (this.debugCrashKeyTime > 0L && this.debugCrashKeyTime < Util.getMillis() - 100L) {
             return true;
         }
@@ -209,7 +206,7 @@ public abstract class MixinKeyboardHandler {
      * @author TheGreatWolf
      */
     @Overwrite
-    public void keyPress(long windowPointer, @Key int key, int scanCode, @Action int action, @Modifiers int mod) {
+    public void keyPress(long windowPointer, int key, int scanCode, int action, int mod) {
         long window = this.minecraft.getWindow().getWindow();
         if (windowPointer == window) {
             if (this.debugCrashKeyTime > 0L) {

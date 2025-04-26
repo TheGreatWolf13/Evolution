@@ -360,7 +360,8 @@ public abstract class Mixin_CF_ParticleEngine implements PreparableReloadListene
         Map<ResourceLocation, List<ResourceLocation>> map = Maps.newConcurrentMap();
         CompletableFuture<?>[] futures = new CompletableFuture[Registry.PARTICLE_TYPE.size()];
         int i = 0;
-        for (ResourceLocation resLoc : Registry.PARTICLE_TYPE.keySet()) {
+        for (long it = Registry.PARTICLE_TYPE.beginIteration(); Registry.PARTICLE_TYPE.hasNextIteration(it); it = Registry.PARTICLE_TYPE.nextEntry(it)) {
+            ResourceLocation resLoc = Registry.PARTICLE_TYPE.getIterationLocation(it);
             //noinspection ObjectAllocationInLoop
             futures[i++] = CompletableFuture.runAsync(() -> this.loadParticleDescription(manager, resLoc, map));
         }

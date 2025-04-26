@@ -14,7 +14,6 @@ import net.minecraft.client.renderer.GpuWarnlistManager;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TranslatableComponent;
 import org.spongepowered.asm.mixin.*;
-import tgw.evolution.client.util.MouseButton;
 import tgw.evolution.patches.PatchMinecraft;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
@@ -22,12 +21,12 @@ import tgw.evolution.util.collection.lists.OList;
 @Mixin(VideoSettingsScreen.class)
 public abstract class MixinVideoSettingsScreen extends OptionsSubScreen {
 
-    @Mutable @Shadow @Final private static Option[] OPTIONS;
-    @Shadow @Final private static Component WARNING_MESSAGE;
-    @Shadow @Final private static Component NEW_LINE;
-    @Shadow @Final private static Component WARNING_TITLE;
     @Shadow @Final private static Component BUTTON_ACCEPT;
     @Shadow @Final private static Component BUTTON_CANCEL;
+    @Shadow @Final private static Component NEW_LINE;
+    @Mutable @Shadow @Final private static Option[] OPTIONS;
+    @Shadow @Final private static Component WARNING_MESSAGE;
+    @Shadow @Final private static Component WARNING_TITLE;
 
     static {
         OPTIONS = new Option[]{Option.GRAPHICS,
@@ -65,7 +64,7 @@ public abstract class MixinVideoSettingsScreen extends OptionsSubScreen {
      */
     @Override
     @Overwrite
-    public boolean mouseClicked(double mouseX, double mouseY, @MouseButton int button) {
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
         int scale = this.options.guiScale;
         assert this.minecraft != null;
         if (super.mouseClicked(mouseX, mouseY, button)) {
@@ -94,7 +93,7 @@ public abstract class MixinVideoSettingsScreen extends OptionsSubScreen {
                 this.minecraft.setScreen(
                         new PopupScreen(WARNING_TITLE, list, ImmutableList.of(new PopupScreen.ButtonOption(BUTTON_ACCEPT, b -> {
                             this.options.graphicsMode = GraphicsStatus.FABULOUS;
-                            ((PatchMinecraft) Minecraft.getInstance()).lvlRenderer().allChanged();
+                            Minecraft.getInstance().lvlRenderer().allChanged();
                             this.gpuWarnlistManager.dismissWarning();
                             this.minecraft.setScreen(this);
                         }), new PopupScreen.ButtonOption(BUTTON_CANCEL, b -> {

@@ -2,7 +2,7 @@ package tgw.evolution.blocks.tileentities;
 
 import net.minecraft.world.phys.shapes.VoxelShape;
 import tgw.evolution.Evolution;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 public enum KnappingRecipe {
     NULL(0, Patterns.MATRIX_FALSE),
@@ -20,8 +20,8 @@ public enum KnappingRecipe {
     private final VoxelShape shape;
 
     KnappingRecipe(int id, long pattern) {
-        this.id = MathHelper.toByteExact(id);
-        this.shape = MathHelper.generateShapeFromPattern(pattern);
+        this.id = MthUtil.toByteExact(id);
+        this.shape = MthUtil.generateShapeFromPattern(pattern);
         this.pattern = pattern;
     }
 

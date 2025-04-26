@@ -212,7 +212,7 @@ public abstract class MixinPlayerList {
         if (!this.server.getResourcePack().isEmpty()) {
             player.sendTexturePack(this.server.getResourcePack(), this.server.getResourcePackHash(), this.server.isResourcePackRequired(), this.server.getResourcePackPrompt());
         }
-        R2OMap<MobEffect, MobEffectInstance> effectsMap = (R2OMap<MobEffect, MobEffectInstance>) player.getActiveEffectsMap();
+        R2OMap<MobEffect, MobEffectInstance> effectsMap = player.getActiveEffectsMap_();
         for (long it = effectsMap.beginIteration(); effectsMap.hasNextIteration(it); it = effectsMap.nextEntry(it)) {
             //noinspection ObjectAllocationInLoop
             listener.send(new ClientboundUpdateMobEffectPacket(player.getId(), effectsMap.getIterationValue(it)));

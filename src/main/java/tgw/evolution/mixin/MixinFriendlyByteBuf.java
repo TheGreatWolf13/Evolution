@@ -9,10 +9,16 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.patches.PatchBlockHitResult;
+import tgw.evolution.util.collection.lists.OArrayList;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.function.Function;
+import java.util.function.IntFunction;
 
 @Mixin(FriendlyByteBuf.class)
 public abstract class MixinFriendlyByteBuf extends ByteBuf {
-    
+
     /**
      * @reason _
      * @author TheGreatWolf
@@ -32,7 +38,19 @@ public abstract class MixinFriendlyByteBuf extends ByteBuf {
     }
 
     @Shadow
+    public abstract <T, C extends Collection<T>> C readCollection(IntFunction<C> intFunction, Function<FriendlyByteBuf, T> function);
+
+    @Shadow
     public abstract <T extends Enum<T>> T readEnum(Class<T> class_);
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Overwrite
+    public <T> List<T> readList(Function<FriendlyByteBuf, T> function) {
+        return this.readCollection(OArrayList::new, function);
+    }
 
     @Override
     @Shadow

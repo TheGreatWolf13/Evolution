@@ -7,14 +7,14 @@ import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionShapes;
 import tgw.evolution.util.collection.maps.B2OHashMap;
 import tgw.evolution.util.collection.maps.B2OMap;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 public enum EnumMolding {
     NULL(0, Shapes.empty(), MoldingPatterns.NULL, ItemStack.EMPTY),
-    AXE(1, MathHelper.subtract(EvolutionShapes.MOLD_1, EvolutionShapes.AXE_THICK), MoldingPatterns.AXE, new ItemStack(EvolutionItems.MOLD_CLAY_AXE)),
+    AXE(1, MthUtil.subtract(EvolutionShapes.MOLD_1, EvolutionShapes.AXE_THICK), MoldingPatterns.AXE, new ItemStack(EvolutionItems.MOLD_CLAY_AXE)),
     ;
 //    PICKAXE(2,
-//            MathHelper.subtract(EvolutionShapes.MOLD_1, EvolutionShapes.PICKAXE_THICK),
+//            MthUtil.subtract(EvolutionShapes.MOLD_1, EvolutionShapes.PICKAXE_THICK),
 //            MoldingPatterns.PICKAXE,
 //            new ItemStack(EvolutionItems.mold_clay_pickaxe.get()));
 
@@ -36,7 +36,7 @@ public enum EnumMolding {
     private final ItemStack stack;
 
     EnumMolding(int id, VoxelShape shape, long[] pattern, ItemStack stack) {
-        this.id = MathHelper.toByteExact(id);
+        this.id = MthUtil.toByteExact(id);
         this.shape = shape;
         this.pattern = pattern;
         this.stack = stack;

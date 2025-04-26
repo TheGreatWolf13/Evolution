@@ -7,7 +7,7 @@ import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.entity.Entity;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.config.EvolutionConfig;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 import tgw.evolution.util.math.Vec3d;
 import tgw.evolution.util.math.Vec3f;
 import tgw.evolution.util.physics.EarthHelper;
@@ -93,9 +93,9 @@ public class DimensionOverworld {
 
     public float getLunarEclipseIntensity() {
         float angleMod = 8.0F - Math.abs(this.lunarEclipseDRightAscension);
-        angleMod = MathHelper.relativize(angleMod, 4, 7.75f);
+        angleMod = MthUtil.relativize(angleMod, 4, 7.75f);
         float amplitudeMod = 8.0F - Math.abs(this.lunarEclipseDDeclination);
-        amplitudeMod = MathHelper.relativize(amplitudeMod, 4, 6.75f);
+        amplitudeMod = MthUtil.relativize(amplitudeMod, 4, 6.75f);
         return angleMod * amplitudeMod;
     }
 
@@ -127,9 +127,9 @@ public class DimensionOverworld {
 
     public float getSolarEclipseIntensity() {
         float angleMod = 8.0F - Math.abs(this.solarEclipseDRightAscension);
-        angleMod = MathHelper.relativize(angleMod, 4.5f, 7.75f);
+        angleMod = MthUtil.relativize(angleMod, 4.5f, 7.75f);
         float amplitudeMod = 8.0F - Math.abs(this.solarEclipseDDeclination);
-        amplitudeMod = MathHelper.relativize(amplitudeMod, 4.5f, 7.75f);
+        amplitudeMod = MthUtil.relativize(amplitudeMod, 4.5f, 7.75f);
         return angleMod * amplitudeMod;
     }
 
@@ -145,8 +145,8 @@ public class DimensionOverworld {
     }
 
     public float getSunBrightness(float partialTicks) {
-        float skyBrightness = 1.0f - (MathHelper.cosDeg(this.sunAltitude) * 2.0f + 0.62f);
-        skyBrightness = MathHelper.clamp(skyBrightness, 0, 1);
+        float skyBrightness = 1.0f - (MthUtil.cosDeg(this.sunAltitude) * 2.0f + 0.62f);
+        skyBrightness = MthUtil.clamp(skyBrightness, 0, 1);
         if (this.isCloseToSolarEclipse) {
             float intensity = Math.max(this.getSolarEclipseIntensity(), 0.2f);
             intensity -= 0.2f;
@@ -205,7 +205,7 @@ public class DimensionOverworld {
 
     private float @Nullable [] sunsetColors() {
         if (this.sunAltitude >= 66.0F && this.sunAltitude <= 107.5F) {
-            float cosSunAlt = MathHelper.cosDeg(this.sunAltitude);
+            float cosSunAlt = MthUtil.cosDeg(this.sunAltitude);
             float mult = this.sunAltitude > 90 ? 1.5f : 1.1f;
             float f3 = cosSunAlt * mult + 0.5F;
             float alpha = 1.0F - (1.0F - Mth.sin(f3 * Mth.PI)) * 0.99F;
@@ -242,19 +242,19 @@ public class DimensionOverworld {
             this.latitude = -EarthHelper.calculateLatitude(cameraEntity.getZ());
             longitude = EarthHelper.calculateLongitude(cameraEntity.getX());
         }
-        float sinLatitude = MathHelper.sinDeg(this.latitude);
-        float cosLatitude = MathHelper.cosDeg(this.latitude);
+        float sinLatitude = MthUtil.sinDeg(this.latitude);
+        float cosLatitude = MthUtil.cosDeg(this.latitude);
         profiler.popPush("stars");
         this.localTime = EarthHelper.calculateStarsRightAscension(dayTime, longitude);
         profiler.popPush("sun");
         this.sunHA = longitude + EarthHelper.calculateSunRightAscension(dayTime);
         float seasonDeclination = EarthHelper.sunSeasonalDeclination(dayTime);
-        this.sunDeclinationOffset = -EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.tanDeg(seasonDeclination);
+        this.sunDeclinationOffset = -EarthHelper.CELESTIAL_SPHERE_RADIUS * MthUtil.tanDeg(seasonDeclination);
         this.sunAltitude = EarthHelper.getSunAltitude(sinLatitude, cosLatitude, this.sunHA, EarthHelper.CELESTIAL_SPHERE_RADIUS, this.sunDeclinationOffset);
         profiler.popPush("moon");
         this.moonHA = longitude + EarthHelper.calculateMoonRightAscension(dayTime);
         float monthlyDeclination = EarthHelper.lunarMonthlyDeclination(dayTime);
-        this.moonDeclinationOffset = -EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.tanDeg(monthlyDeclination);
+        this.moonDeclinationOffset = -EarthHelper.CELESTIAL_SPHERE_RADIUS * MthUtil.tanDeg(monthlyDeclination);
         this.moonPhase = MoonPhase.byAngles(this.sunHA, this.moonHA);
         this.moonAltitude = EarthHelper.getMoonAltitude(sinLatitude, cosLatitude, this.moonHA, EarthHelper.CELESTIAL_SPHERE_RADIUS, this.moonDeclinationOffset);
         profiler.popPush("eclipse");
@@ -289,7 +289,7 @@ public class DimensionOverworld {
         this.duskDawnColors = this.sunsetColors();
         //noinspection VariableNotUsedInsideIf
         if (this.duskDawnColors != null) {
-            this.sunAzimuth = (float) MathHelper.atan2Deg(EarthHelper.sunX, EarthHelper.sunZ) + 180;
+            this.sunAzimuth = (float) MthUtil.atan2Deg(EarthHelper.sunX, EarthHelper.sunZ) + 180;
         }
         if (EvolutionConfig.SHOW_PLANETS.get()) {
             profiler.popPush("planets");

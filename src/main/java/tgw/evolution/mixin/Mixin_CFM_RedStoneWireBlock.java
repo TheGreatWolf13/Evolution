@@ -33,7 +33,7 @@ import tgw.evolution.hooks.asm.RestoreFinal;
 import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.constants.BlockFlags;
 import tgw.evolution.util.math.DirectionUtil;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 import java.util.Map;
 import java.util.Random;
@@ -109,15 +109,15 @@ public abstract class Mixin_CFM_RedStoneWireBlock extends Block {
                 RedstoneSide side = state.getValue(PROPERTY_BY_DIRECTION.get(dir));
                 switch (side) {
                     case UP: {
-                        this.spawnParticlesAlongLine(level, MathHelper.RANDOM, pos, COLORS[power], dir, Direction.UP, -0.5F, 0.5F);
+                        this.spawnParticlesAlongLine(level, MthUtil.RANDOM, pos, COLORS[power], dir, Direction.UP, -0.5F, 0.5F);
                         //Falls through
                     }
                     case SIDE: {
-                        this.spawnParticlesAlongLine(level, MathHelper.RANDOM, pos, COLORS[power], Direction.DOWN, dir, 0.0F, 0.5F);
+                        this.spawnParticlesAlongLine(level, MthUtil.RANDOM, pos, COLORS[power], Direction.DOWN, dir, 0.0F, 0.5F);
                         break;
                     }
                     case NONE: {
-                        this.spawnParticlesAlongLine(level, MathHelper.RANDOM, pos, COLORS[power], Direction.DOWN, dir, 0.0F, 0.3F);
+                        this.spawnParticlesAlongLine(level, MthUtil.RANDOM, pos, COLORS[power], Direction.DOWN, dir, 0.0F, 0.3F);
                         break;
                     }
                 }

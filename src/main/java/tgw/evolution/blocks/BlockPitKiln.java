@@ -32,7 +32,7 @@ import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.items.ItemClayMolded;
 import tgw.evolution.items.ItemLog;
 import tgw.evolution.util.math.DirectionDiagonal;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 import tgw.evolution.util.time.Time;
 
 import java.util.Random;
@@ -225,9 +225,9 @@ public class BlockPitKiln extends BlockGeneric implements IReplaceable, EntityBl
                 if (tile.isSingle()) {
                     return manageStack(tile, stack, player, DirectionDiagonal.NORTH_WEST);
                 }
-                int partX = MathHelper.getIndex(2, 0, 16, (hit.getLocation().x - x) * 16);
-                int partZ = MathHelper.getIndex(2, 0, 16, (hit.getLocation().z - z) * 16);
-                return manageStack(tile, stack, player, MathHelper.DIAGONALS[partZ][partX]);
+                int partX = MthUtil.getIndex(2, 0, 16, (hit.getLocation().x - x) * 16);
+                int partZ = MthUtil.getIndex(2, 0, 16, (hit.getLocation().z - z) * 16);
+                return manageStack(tile, stack, player, MthUtil.DIAGONALS[partZ][partX]);
             }
             if (layers < 8) {
                 if (stack.getItem() == EvolutionItems.STRAW) {

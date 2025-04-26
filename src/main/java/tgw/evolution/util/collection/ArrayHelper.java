@@ -5,6 +5,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.SupportType;
+import net.minecraft.world.level.chunk.storage.IOWorker;
 import net.minecraft.world.level.levelgen.GenerationStep;
 import net.minecraft.world.level.levelgen.Heightmap;
 import tgw.evolution.util.collection.maps.R2OHashMap;
@@ -21,6 +22,7 @@ public final class ArrayHelper {
     public static final Heightmap.Types[] HEIGHTMAP = Heightmap.Types.values();
     public static final SupportType[] SUPPORT_TYPE = SupportType.values();
     private static final R2OMap<Class<? extends Enum<?>>, Enum[]> ARRAY_CACHE = new R2OHashMap<>();
+    public static final IOWorker.Priority[] PRIORITIES = IOWorker.Priority.values();
 
     static {
         ARRAY_CACHE.put(Direction.class, DirectionUtil.ALL);

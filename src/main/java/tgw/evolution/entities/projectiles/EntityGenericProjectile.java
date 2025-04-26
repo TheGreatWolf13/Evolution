@@ -46,7 +46,7 @@ import tgw.evolution.util.collection.sets.ISet;
 import tgw.evolution.util.damage.DamageSourceEv;
 import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 import tgw.evolution.util.math.ClipContextMutable;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 import tgw.evolution.util.math.VectorUtil;
 import tgw.evolution.util.physics.Fluid;
 import tgw.evolution.util.physics.Physics;
@@ -54,8 +54,8 @@ import tgw.evolution.util.physics.Physics;
 import java.util.UUID;
 
 public abstract class EntityGenericProjectile extends Entity implements IEntitySpawnData {
-    private static final EntityDataAccessor<Byte> PIERCE_LEVEL = SynchedEntityData.defineId(EntityGenericProjectile.class,
-                                                                                            EntityDataSerializers.BYTE);
+
+    private static final EntityDataAccessor<Byte> PIERCE_LEVEL = SynchedEntityData.defineId(EntityGenericProjectile.class, EntityDataSerializers.BYTE);
     public byte arrowShake;
     private @Nullable LivingEntity cachedOwner;
     private final ClipContextMutable clipContext = new ClipContextMutable();
@@ -70,12 +70,9 @@ public abstract class EntityGenericProjectile extends Entity implements IEntityS
     public int ticksInAir;
     public int timeInGround;
 
-    public EntityGenericProjectile(EntityType<? extends EntityGenericProjectile> type,
-                                   LivingEntity shooter,
-                                   Level level,
-                                   double mass) {
+    public EntityGenericProjectile(EntityType<? extends EntityGenericProjectile> type, LivingEntity shooter, Level level, double mass) {
         this(type, level);
-        this.adjustPos(shooter, MathHelper.fromHand(shooter, shooter.getUsedItemHand()));
+        this.adjustPos(shooter, MthUtil.fromHand(shooter, shooter.getUsedItemHand()));
         this.setShooter(shooter);
         this.mass = mass;
     }
@@ -208,9 +205,9 @@ public abstract class EntityGenericProjectile extends Entity implements IEntityS
     public void lerpMotion(double x, double y, double z) {
         this.setDeltaMovement(x, y, z);
         if (this.xRotO == 0.0F && this.yRotO == 0.0F) {
-            float horizontalLength = MathHelper.sqrt(x * x + z * z);
-            this.setXRot((float) MathHelper.atan2Deg(y, horizontalLength));
-            this.setYRot((float) MathHelper.atan2Deg(x, z));
+            float horizontalLength = MthUtil.sqrt(x * x + z * z);
+            this.setXRot((float) MthUtil.atan2Deg(y, horizontalLength));
+            this.setYRot((float) MthUtil.atan2Deg(x, z));
             this.xRotO = this.getXRot();
             this.yRotO = this.getYRot();
             this.moveTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), this.getXRot());
@@ -234,14 +231,13 @@ public abstract class EntityGenericProjectile extends Entity implements IEntityS
                 }
                 if (hits == null) {
                     hits = new ProjectileHitInformation();
-                    hits.prepare(hitResult.startX, hitResult.startY, hitResult.startZ, hitResult.endX, hitResult.endY, hitResult.endZ,
-                                 Mth.SQRT_OF_TWO * this.getBbWidth());
+                    hits.prepare(hitResult.startX, hitResult.startY, hitResult.startZ, hitResult.endX, hitResult.endY, hitResult.endZ, Mth.SQRT_OF_TWO * this.getBbWidth());
                 }
                 else {
                     hits.clear();
                 }
                 for (float partialTicks = 0; partialTicks <= 1.0f; partialTicks += 0.25f) {
-                    MathHelper.collideOBBWithProjectile(hits, partialTicks, hitEntity);
+                    MthUtil.collideOBBWithProjectile(hits, partialTicks, hitEntity);
                     if (!hits.isEmpty()) {
                         LivingEntity shooter = this.getShooter();
                         boolean attackSuccessful = false;
@@ -323,8 +319,7 @@ public abstract class EntityGenericProjectile extends Entity implements IEntityS
     @Override
     public void playerTouch(Player player) {
         if (!this.level.isClientSide && this.inGround && this.arrowShake <= 0) {
-            boolean canBePickedUp = this.pickupStatus == PickupStatus.ALLOWED ||
-                                    this.pickupStatus == PickupStatus.CREATIVE_ONLY && player.getAbilities().instabuild;
+            boolean canBePickedUp = this.pickupStatus == PickupStatus.ALLOWED || this.pickupStatus == PickupStatus.CREATIVE_ONLY && player.getAbilities().instabuild;
             if (this.pickupStatus == PickupStatus.ALLOWED && !player.getInventory().add(this.getArrowStack())) {
                 canBePickedUp = false;
             }
@@ -339,12 +334,13 @@ public abstract class EntityGenericProjectile extends Entity implements IEntityS
     protected abstract void postHitLogic(boolean attackSuccessful);
 
     protected @Nullable MultipleEntityHitResult rayTraceEntities(double startX, double startY, double startZ, double endX, double endY, double endZ) {
-        return MathHelper.getProjectileHitResult(this.level, this, startX, startY, startZ, endX, endY, endZ, e -> !e.isSpectator() &&
-                                                                                                                  e.isAlive() &&
-                                                                                                                  e.isAttackable() &&
-                                                                                                                  e.isPickable() &&
-                                                                                                                  (e != this.getShooter() ||
-                                                                                                                   this.ticksInAir >= 5), 1);
+        return MthUtil.getProjectileHitResult(this.level, this, startX, startY, startZ, endX, endY, endZ, e -> !e.isSpectator() &&
+                                                                                                               e.isAlive() &&
+                                                                                                               e.isAttackable() &&
+                                                                                                               e.isPickable() &&
+                                                                                                               (e != this.getShooter() ||
+                                                                                                                this.ticksInAir >= 5), 1
+        );
     }
 
     @Override
@@ -395,12 +391,12 @@ public abstract class EntityGenericProjectile extends Entity implements IEntityS
 
     public void shoot(LivingEntity shooter, float pitch, float yaw, IProjectile throwable) {
         float stdDev = 1 - throwable.precision();
-        pitch += (float) (12 * MathHelper.clamp(this.random.nextGaussian(), -3, 3) * stdDev);
-        yaw += (float) (12 * MathHelper.clamp(this.random.nextGaussian(), -3, 3) * stdDev);
-        float cosPitch = MathHelper.cosDeg(pitch);
-        float x = -MathHelper.sinDeg(yaw) * cosPitch;
-        float y = -MathHelper.sinDeg(pitch);
-        float z = MathHelper.cosDeg(yaw) * cosPitch;
+        pitch += (float) (12 * MthUtil.clamp(this.random.nextGaussian(), -3, 3) * stdDev);
+        yaw += (float) (12 * MthUtil.clamp(this.random.nextGaussian(), -3, 3) * stdDev);
+        float cosPitch = MthUtil.cosDeg(pitch);
+        float x = -MthUtil.sinDeg(yaw) * cosPitch;
+        float y = -MthUtil.sinDeg(pitch);
+        float z = MthUtil.cosDeg(yaw) * cosPitch;
         this.shoot(x, y, z, throwable);
         Vec3 velocity = this.getDeltaMovement();
         double massRatio = this.mass / shooter.getAttributeValue(EvolutionAttributes.MASS);
@@ -429,8 +425,8 @@ public abstract class EntityGenericProjectile extends Entity implements IEntityS
         y *= mul;
         z *= mul;
         this.setDeltaMovement(x, y, z);
-        this.setYRot((float) MathHelper.atan2Deg(x, z));
-        this.setXRot((float) MathHelper.atan2Deg(y, VectorUtil.horizontalLength(x, z)));
+        this.setYRot((float) MthUtil.atan2Deg(x, z));
+        this.setXRot((float) MthUtil.atan2Deg(y, VectorUtil.horizontalLength(x, z)));
         this.yRotO = this.getYRot();
         this.xRotO = this.getXRot();
         this.despawnTicks = 0;
@@ -451,8 +447,8 @@ public abstract class EntityGenericProjectile extends Entity implements IEntityS
         super.tick();
         Vec3 motion = this.getDeltaMovement();
         if (this.xRotO == 0.0F && this.yRotO == 0.0F) {
-            this.setYRot((float) MathHelper.atan2Deg(motion.x, motion.z));
-            this.setXRot((float) MathHelper.atan2Deg(motion.y, motion.horizontalDistance()));
+            this.setYRot((float) MthUtil.atan2Deg(motion.x, motion.z));
+            this.setXRot((float) MthUtil.atan2Deg(motion.y, motion.horizontalDistance()));
             this.yRotO = this.getYRot();
             this.xRotO = this.getXRot();
         }
@@ -524,8 +520,8 @@ public abstract class EntityGenericProjectile extends Entity implements IEntityS
             double motionX = motion.x;
             double motionY = motion.y;
             double motionZ = motion.z;
-            this.setYRot((float) MathHelper.atan2Deg(motionX, motionZ));
-            this.setXRot((float) MathHelper.atan2Deg(motionY, motion.horizontalDistance()));
+            this.setYRot((float) MthUtil.atan2Deg(motionX, motionZ));
+            this.setXRot((float) MthUtil.atan2Deg(motionY, motion.horizontalDistance()));
             this.setXRot(lerpRotation(this.xRotO, this.getXRot()));
             this.setYRot(lerpRotation(this.yRotO, this.getYRot()));
             try (Physics physics = Physics.getInstance(this, this.isInWater() ? Fluid.WATER : this.isInLava() ? Fluid.LAVA : Fluid.AIR)) {

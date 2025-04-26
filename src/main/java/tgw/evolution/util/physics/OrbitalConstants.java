@@ -1,12 +1,12 @@
 package tgw.evolution.util.physics;
 
 import net.minecraft.util.Mth;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 public final class OrbitalConstants {
 
-    public static final float COS_ECLIPTIC = MathHelper.cosDeg(EarthHelper.ECLIPTIC_INCLINATION);
-    public static final float SIN_ECLIPTIC = MathHelper.sinDeg(EarthHelper.ECLIPTIC_INCLINATION);
+    public static final float COS_ECLIPTIC = MthUtil.cosDeg(EarthHelper.ECLIPTIC_INCLINATION);
+    public static final float SIN_ECLIPTIC = MthUtil.sinDeg(EarthHelper.ECLIPTIC_INCLINATION);
 
     public static final float COS_INCLINATION_1MERCURY = Mth.cos(PlanetsHelper.INCLINATION_1MERCURY);
     public static final float COS_INCLINATION_2VENUS = Mth.cos(PlanetsHelper.INCLINATION_2VENUS);

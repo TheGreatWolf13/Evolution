@@ -7,7 +7,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 
-@Mixin(targets = "net.minecraft.client.multiplayer.ClientLevel$EntityCallbacks")
+@Mixin(ClientLevel.EntityCallbacks.class)
 public abstract class MixinClientLevel_EntityCallbacks {
 
     @Shadow(aliases = "this$0") @Final ClientLevel field_27735;

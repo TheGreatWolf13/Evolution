@@ -3,7 +3,7 @@
 //import com.mojang.datafixers.Dynamic;
 //import net.minecraft.block.Block;
 //import net.minecraft.block.BlockState;
-//import net.minecraft.util.math.MathHelper;
+//import net.minecraft.util.math.MthUtil;
 //import net.minecraft.world.chunk.IChunk;
 //import net.minecraft.world.gen.carver.WorldCarver;
 //import net.minecraft.world.gen.feature.ProbabilityConfig;
@@ -54,15 +54,15 @@
 //        float f4 = 0.0F;
 //        float f1 = 0.0F;
 //        for (int j = p_222729_16_; j < p_222729_17_; ++j) {
-//            double d0 = 1.5D + (double) (MathHelper.sin((float) j * (float) Math.PI / (float) p_222729_17_) * p_222729_13_);
+//            double d0 = 1.5D + (double) (MthUtil.sin((float) j * (float) Math.PI / (float) p_222729_17_) * p_222729_13_);
 //            double d1 = d0 * p_222729_18_;
 //            d0 = d0 * ((double) random.nextFloat() * 0.25D + 0.75D);
 //            d1 = d1 * ((double) random.nextFloat() * 0.25D + 0.75D);
-//            float f2 = MathHelper.cos(p_222729_15_);
-//            float f3 = MathHelper.sin(p_222729_15_);
-//            p_222729_7_ += MathHelper.cos(p_222729_14_) * f2;
+//            float f2 = MthUtil.cos(p_222729_15_);
+//            float f3 = MthUtil.sin(p_222729_15_);
+//            p_222729_7_ += MthUtil.cos(p_222729_14_) * f2;
 //            p_222729_9_ += f3;
-//            p_222729_11_ += MathHelper.sin(p_222729_14_) * f2;
+//            p_222729_11_ += MthUtil.sin(p_222729_14_) * f2;
 //            p_222729_15_ = p_222729_15_ * 0.7F;
 //            p_222729_15_ = p_222729_15_ + f1 * 0.05F;
 //            p_222729_14_ += f4 * 0.05F;

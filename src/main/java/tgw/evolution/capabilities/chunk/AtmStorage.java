@@ -11,9 +11,9 @@ import java.util.Arrays;
 
 public class AtmStorage {
 
-    private final ThreadingDetector threadingDetector = new ThreadingDetector("AtmStorage");
     private long @Nullable [] data;
     private short nonEmptyCount;
+    private final ThreadingDetector threadingDetector = new ThreadingDetector("AtmStorage");
     private short totallyFullCount;
 
     @Contract("_ -> new")
@@ -159,8 +159,7 @@ public class AtmStorage {
             this.set(16 * (x & 0b11) + z, 20 * y + 5 * (x >> 2), value);
         }
         catch (Exception e) {
-            Evolution.error("Atm Storage encountered an error at {}, {}, {}; value = {}", x, y, z, value);
-            Evolution.error(e.getMessage());
+            Evolution.error(e, "Atm Storage encountered an error at {}, {}, {}; value = {}", x, y, z, value);
         }
         finally {
             this.release();

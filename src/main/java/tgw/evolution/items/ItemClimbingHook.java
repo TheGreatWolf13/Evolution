@@ -21,7 +21,7 @@ import tgw.evolution.init.EvolutionCreativeTabs;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionTexts;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 public class ItemClimbingHook extends ItemGeneric implements IThrowable {
 
@@ -109,7 +109,7 @@ public class ItemClimbingHook extends ItemGeneric implements IThrowable {
             if (charge < 0) {
                 return;
             }
-            float strength = MathHelper.getRelativeChargeStrength(charge);
+            float strength = MthUtil.getRelativeChargeStrength(charge);
             if (strength < 0.1) {
                 return;
             }

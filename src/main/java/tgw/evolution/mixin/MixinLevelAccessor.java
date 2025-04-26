@@ -7,7 +7,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import tgw.evolution.Evolution;
 import tgw.evolution.patches.PatchLevelAccessor;
-import tgw.evolution.util.constants.LvlEvent;
 
 @Mixin(LevelAccessor.class)
 public interface MixinLevelAccessor extends PatchLevelAccessor {
@@ -31,7 +30,7 @@ public interface MixinLevelAccessor extends PatchLevelAccessor {
      * @author TheGreatWolf
      */
     @Overwrite
-    default void levelEvent(@LvlEvent int event, BlockPos pos, int data) {
+    default void levelEvent(int event, BlockPos pos, int data) {
         Evolution.deprecatedMethod();
         this.levelEvent_(event, pos.getX(), pos.getY(), pos.getZ(), data);
     }

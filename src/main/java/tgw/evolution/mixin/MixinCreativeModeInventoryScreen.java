@@ -26,7 +26,6 @@ import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.*;
 import tgw.evolution.client.gui.GUIUtils;
 import tgw.evolution.client.util.CreativeTabs;
-import tgw.evolution.client.util.MouseButton;
 import tgw.evolution.network.Message;
 import tgw.evolution.network.PacketCSSimpleMessage;
 import tgw.evolution.util.collection.lists.OList;
@@ -39,10 +38,10 @@ import java.util.Set;
 public abstract class MixinCreativeModeInventoryScreen extends EffectRenderingInventoryScreen<CreativeModeInventoryScreen.ItemPickerMenu> {
 
     @Unique private static final int LAST_PAGE = Mth.ceil((CreativeTabs.size() - 3) / 9.0f) - 1;
-    @Shadow private static int selectedTab;
     @Shadow @Final private static ResourceLocation CREATIVE_TABS_LOCATION;
     @Shadow @Final private static Component TRASH_SLOT_TOOLTIP;
     @Unique private static int currentPage;
+    @Shadow private static int selectedTab;
     @Shadow private @Nullable Slot destroyItemSlot;
     @Shadow private boolean hasClickedOutside;
     @Unique private Button leftArrow;
@@ -97,7 +96,7 @@ public abstract class MixinCreativeModeInventoryScreen extends EffectRenderingIn
      */
     @Override
     @Overwrite
-    public boolean hasClickedOutside(double mouseX, double mouseY, int leftPos, int topPos, @MouseButton int button) {
+    public boolean hasClickedOutside(double mouseX, double mouseY, int leftPos, int topPos, int button) {
         boolean bl = mouseX < leftPos || mouseY < topPos || mouseX >= leftPos + this.imageWidth || mouseY >= topPos + this.imageHeight;
         this.hasClickedOutside = bl && !this.checkTabClicked(CreativeTabs.get(selectedTab), mouseX, mouseY);
         return this.hasClickedOutside;
@@ -146,7 +145,7 @@ public abstract class MixinCreativeModeInventoryScreen extends EffectRenderingIn
      */
     @Override
     @Overwrite
-    public boolean mouseClicked(double mouseX, double mouseY, @MouseButton int button) {
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (button == GLFW.GLFW_MOUSE_BUTTON_1) {
             double x = mouseX - this.leftPos;
             double y = mouseY - this.topPos;
@@ -176,7 +175,7 @@ public abstract class MixinCreativeModeInventoryScreen extends EffectRenderingIn
      */
     @Override
     @Overwrite
-    public boolean mouseReleased(double mouseX, double mouseY, @MouseButton int button) {
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
         if (button == GLFW.GLFW_MOUSE_BUTTON_1) {
             double x = mouseX - this.leftPos;
             double y = mouseY - this.topPos;

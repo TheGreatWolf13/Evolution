@@ -20,19 +20,11 @@ import tgw.evolution.client.util.Key;
 import tgw.evolution.client.util.Modifiers;
 import tgw.evolution.client.util.MouseButton;
 import tgw.evolution.init.EvolutionTexts;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.StrUtil;
 
 import java.util.function.Predicate;
 
 public class ScreenKeyBinds extends KeyBindsScreen {
-    private final Options options;
-    private final Component textCategory = new TranslatableComponent("evolution.gui.controls.category");
-    private final Component textConfirmReset = new TranslatableComponent("evolution.gui.controls.confirmReset");
-    private final Component textKey = new TranslatableComponent("evolution.gui.controls.key");
-    private final Component textResetAll = new TranslatableComponent("evolution.gui.controls.resetAll");
-    private final Component textShowAll = new TranslatableComponent("evolution.gui.controls.showAll");
-    private final Component textShowConflicts = new TranslatableComponent("evolution.gui.controls.showConflicts");
-    private final Component textShowUnbound = new TranslatableComponent("evolution.gui.controls.showUnbound");
     private AdvCheckBox buttonCat;
     private Button buttonConflicting;
     private AdvCheckBox buttonKey;
@@ -43,9 +35,17 @@ public class ScreenKeyBinds extends KeyBindsScreen {
     private boolean isCategoryMarked;
     private boolean isKeyMarked;
     private String lastSearch = "";
+    private final Options options;
     private AdvEditBox searchBox;
     private SearchType searchType = SearchType.NAME;
     private SortOrder sortOrder = SortOrder.NONE;
+    private final Component textCategory = new TranslatableComponent("evolution.gui.controls.category");
+    private final Component textConfirmReset = new TranslatableComponent("evolution.gui.controls.confirmReset");
+    private final Component textKey = new TranslatableComponent("evolution.gui.controls.key");
+    private final Component textResetAll = new TranslatableComponent("evolution.gui.controls.resetAll");
+    private final Component textShowAll = new TranslatableComponent("evolution.gui.controls.showAll");
+    private final Component textShowConflicts = new TranslatableComponent("evolution.gui.controls.showConflicts");
+    private final Component textShowUnbound = new TranslatableComponent("evolution.gui.controls.showUnbound");
 
     public ScreenKeyBinds(Screen screen, Options options) {
         super(screen, options);
@@ -70,9 +70,9 @@ public class ScreenKeyBinds extends KeyBindsScreen {
         Predicate<ListKeyBinds.KeyEntry> filters = this.displayMode.getPredicate();
         StringBuilder builder = new StringBuilder();
         switch (this.searchType) {
-            case NAME -> filters = filters.and(keyEntry -> MathHelper.contains(keyEntry.getName().getString(), this.lastSearch, builder));
-            case CATEGORY -> filters = filters.and(keyEntry -> MathHelper.contains(I18n.get(keyEntry.getKey().getCategory()), this.lastSearch, builder));
-            case KEY -> filters = filters.and(keyEntry -> MathHelper.contains(keyEntry.getKey().getTranslatedKeyMessage().getString(), this.lastSearch, builder));
+            case NAME -> filters = filters.and(keyEntry -> StrUtil.contains(keyEntry.getName().getString(), this.lastSearch, builder));
+            case CATEGORY -> filters = filters.and(keyEntry -> StrUtil.contains(I18n.get(keyEntry.getKey().getCategory()), this.lastSearch, builder));
+            case KEY -> filters = filters.and(keyEntry -> StrUtil.contains(keyEntry.getKey().getTranslatedKeyMessage().getString(), this.lastSearch, builder));
         }
         for (ListKeyBinds.Entry entry : ((ListKeyBinds) keyBindingList).getAllEntries()) {
             if (entry instanceof ListKeyBinds.KeyEntry keyEntry) {

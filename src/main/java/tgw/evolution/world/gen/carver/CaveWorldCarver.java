@@ -3,7 +3,7 @@
 //import com.mojang.datafixers.Dynamic;
 //import net.minecraft.block.Block;
 //import net.minecraft.block.BlockState;
-//import net.minecraft.util.math.MathHelper;
+//import net.minecraft.util.math.MthUtil;
 //import net.minecraft.world.chunk.IChunk;
 //import net.minecraft.world.gen.carver.WorldCarver;
 //import net.minecraft.world.gen.feature.ProbabilityConfig;
@@ -82,7 +82,7 @@
 //
 //    protected void func_222723_a(IChunk chunk, long seed, int seaLevel, int p_222723_5_, int p_222723_6_, double p_222723_7_, double p_222723_9_,
 //    double p_222723_11_, float p_222723_13_, double p_222723_14_, BitSet carvingMask) {
-//        double d0 = 1.5D + (double) (MathHelper.sin((float) Math.PI / 2F) * p_222723_13_);
+//        double d0 = 1.5D + (double) (MthUtil.sin((float) Math.PI / 2F) * p_222723_13_);
 //        double d1 = d0 * p_222723_14_;
 //        this.func_222705_a(chunk, seed, seaLevel, p_222723_5_, p_222723_6_, p_222723_7_ + 1.0D, p_222723_9_, p_222723_11_, d0, d1, carvingMask);
 //    }
@@ -96,11 +96,11 @@
 //        float f = 0.0F;
 //        float f1 = 0.0F;
 //        for (int j = p_222727_16_; j < p_222727_17_; ++j) {
-//            double d0 = 1.5D + (double) (MathHelper.sin((float) Math.PI * (float) j / (float) p_222727_17_) * radius);
-//            float f2 = MathHelper.cos(p_222727_15_);
-//            p_222727_7_ += MathHelper.cos(p_222727_14_) * f2;
-//            p_222727_9_ += MathHelper.sin(p_222727_15_);
-//            p_222727_11_ += MathHelper.sin(p_222727_14_) * f2;
+//            double d0 = 1.5D + (double) (MthUtil.sin((float) Math.PI * (float) j / (float) p_222727_17_) * radius);
+//            float f2 = MthUtil.cos(p_222727_15_);
+//            p_222727_7_ += MthUtil.cos(p_222727_14_) * f2;
+//            p_222727_9_ += MthUtil.sin(p_222727_15_);
+//            p_222727_11_ += MthUtil.sin(p_222727_14_) * f2;
 //            p_222727_15_ = p_222727_15_ * (flag ? 0.92F : 0.7F);
 //            p_222727_15_ = p_222727_15_ + f1 * 0.1F;
 //            p_222727_14_ += f * 0.1F;

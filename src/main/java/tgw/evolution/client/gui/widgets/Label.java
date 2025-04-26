@@ -7,7 +7,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.client.text.CappedComponent;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 public class Label {
 
@@ -57,7 +57,7 @@ public class Label {
         else {
             font.draw(matrices, this.display, x, y, 0xFF_FFFF);
         }
-        if ((this.hasAddendum || this.capped.isCapped()) && MathHelper.isMouseInArea(mouseX, mouseY, x, y, font.width(this.display), 9)) {
+        if ((this.hasAddendum || this.capped.isCapped()) && MthUtil.isMouseInArea(mouseX, mouseY, x, y, font.width(this.display), 9)) {
             this.onTooltip.onTooltip(this);
         }
     }

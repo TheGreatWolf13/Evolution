@@ -31,7 +31,7 @@ public abstract class Mixin_M_ShapedRecipe {
     @Overwrite
     public static Item itemFromJson(JsonObject json) {
         String id = GsonHelper.getAsString(json, "item");
-        Item item = (Item) Registry.ITEM.getNullable(new ResourceLocation(id));
+        Item item = Registry.ITEM.getNullable(new ResourceLocation(id));
         if (item == null) {
             throw new JsonSyntaxException("Unknown item '" + id + "'");
         }

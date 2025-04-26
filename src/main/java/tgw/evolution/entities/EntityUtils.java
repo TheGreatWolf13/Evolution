@@ -41,7 +41,7 @@ public final class EntityUtils {
 
     public static @Nullable Entity create(CompoundTag nbt, Level level) {
         String id = nbt.getString("id");
-        EntityType<?> entityType = (EntityType<?>) Registry.ENTITY_TYPE.getNullable(new ResourceLocation(id));
+        EntityType<?> entityType = Registry.ENTITY_TYPE.getNullable(new ResourceLocation(id));
         if (entityType == null) {
             Evolution.warn("Skipping Entity with id {}", id);
             return null;

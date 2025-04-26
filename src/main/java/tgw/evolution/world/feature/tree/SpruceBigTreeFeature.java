@@ -3,7 +3,7 @@
 //import com.mojang.datafixers.Dynamic;
 //import net.minecraft.block.BlockState;
 //import net.minecraft.util.math.BlockPos;
-//import net.minecraft.util.math.MathHelper;
+//import net.minecraft.util.math.MthUtil;
 //import net.minecraft.util.math.MutableBoundingBox;
 //import net.minecraft.world.IBlockReader;
 //import net.minecraft.world.IWorld;
@@ -78,7 +78,7 @@
 //        BlockPos.MutableBlockPos leafPos = new BlockPos.MutableBlockPos();
 //        for (int k = y - i; k <= y; ++k) {
 //            int l = y - k;
-//            int i1 = p_150541_5_ + MathHelper.floor(l / (float) i * 3.5F);
+//            int i1 = p_150541_5_ + MthUtil.floor(l / (float) i * 3.5F);
 //            this.growLeavesLayerStrict(worldIn, leafPos.setPos(x, k, z), i1 + (l > 0 && i1 == j && (k & 1) == 0 ? 1 : 0));
 //            j = i1;
 //        }

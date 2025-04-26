@@ -1,6 +1,6 @@
 package tgw.evolution.world.puzzle.pieces.config;
 
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 public class ConfigPuzzle<T extends ConfigPuzzle<T>> {
 
@@ -20,12 +20,12 @@ public class ConfigPuzzle<T extends ConfigPuzzle<T>> {
     }
 
     public T desiredHeight(int desiredHeight) {
-        this.desiredHeight = (short) MathHelper.clamp(desiredHeight, 0, 255);
+        this.desiredHeight = (short) MthUtil.clamp(desiredHeight, 0, 255);
         return (T) this;
     }
 
     public T maxDeviation(int maxDeviation) {
-        this.maxDeviation = (byte) MathHelper.clamp(maxDeviation, 0, 127);
+        this.maxDeviation = (byte) MthUtil.clamp(maxDeviation, 0, 127);
         return (T) this;
     }
 

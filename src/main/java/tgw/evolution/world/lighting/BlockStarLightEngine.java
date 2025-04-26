@@ -1,6 +1,5 @@
 package tgw.evolution.world.lighting;
 
-import it.unimi.dsi.fastutil.longs.LongIterator;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -686,8 +685,8 @@ public final class BlockStarLightEngine extends StarLightEngine<SWMRShortArray> 
 
     @Override
     protected void propagateBlockChanges(LightChunkGetter lightAccess, ChunkAccess atChunk, LSet positions) {
-        for (LongIterator it = positions.iterator(); it.hasNext(); ) {
-            long pos = it.nextLong();
+        for (long it = positions.beginIteration(); positions.hasNextIteration(it); it = positions.nextEntry(it)) {
+            long pos = positions.getIteration(it);
             this.checkBlock(lightAccess, BlockPos.getX(pos), BlockPos.getY(pos), BlockPos.getZ(pos));
         }
         this.performLightDecrease(lightAccess);

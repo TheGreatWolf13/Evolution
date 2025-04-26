@@ -6,7 +6,7 @@
 //import net.minecraft.block.VineBlock;
 //import net.minecraft.state.BooleanProperty;
 //import net.minecraft.util.math.BlockPos;
-//import net.minecraft.util.math.MathHelper;
+//import net.minecraft.util.math.MthUtil;
 //import net.minecraft.util.math.MutableBoundingBox;
 //import net.minecraft.world.IBlockReader;
 //import net.minecraft.world.gen.IWorldGenerationBaseReader;
@@ -48,11 +48,11 @@
 //        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
 //        for (int j = position.getY() + i - 2 - rand.nextInt(4); j > position.getY() + i / 2; j -= 2 + rand.nextInt(4)) {
 //            float f = rand.nextFloat() * ((float) Math.PI * 2F);
-//            int k = position.getX() + (int) (0.5F + MathHelper.cos(f) * 4.0F);
-//            int l = position.getZ() + (int) (0.5F + MathHelper.sin(f) * 4.0F);
+//            int k = position.getX() + (int) (0.5F + MthUtil.cos(f) * 4.0F);
+//            int l = position.getZ() + (int) (0.5F + MthUtil.sin(f) * 4.0F);
 //            for (int i1 = 0; i1 < 5; ++i1) {
-//                k = position.getX() + (int) (1.5F + MathHelper.cos(f) * i1);
-//                l = position.getZ() + (int) (1.5F + MathHelper.sin(f) * i1);
+//                k = position.getX() + (int) (1.5F + MthUtil.cos(f) * i1);
+//                l = position.getZ() + (int) (1.5F + MthUtil.sin(f) * i1);
 //                this.setLogState(changedBlocks, worldIn, mutablePos.setPos(k, j - 3 + i1 / 2, l), this.trunk, p_208519_5_);
 //            }
 //            int j2 = 1 + rand.nextInt(2);

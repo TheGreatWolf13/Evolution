@@ -25,7 +25,7 @@ import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.items.IProjectile;
 import tgw.evolution.items.ItemTorch;
 import tgw.evolution.util.damage.DamageSourceEv;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 import tgw.evolution.util.physics.SI;
 
 public class EntityTorch extends EntityGenericProjectile {
@@ -146,7 +146,7 @@ public class EntityTorch extends EntityGenericProjectile {
         int y = pos.getY();
         int z = pos.getZ();
         if (this.level.isEmptyBlock_(x, y, z)) {
-            BlockHitResult hitResult = MathHelper.rayTraceBlocksFromYawAndPitch(this, 1, false);
+            BlockHitResult hitResult = MthUtil.rayTraceBlocksFromYawAndPitch(this, 1, false);
             Direction face = hitResult.getDirection();
             if (BlockUtils.hasSolidFaceAtSide(this.level, x, y, z, face.getOpposite())) {
                 if (face == Direction.UP) {

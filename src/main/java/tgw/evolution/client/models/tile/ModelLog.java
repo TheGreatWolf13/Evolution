@@ -15,7 +15,7 @@ public class ModelLog extends Model {
 //        this.texHeight = 8;
 //        this.log = new ModelRenderer(this, 0, 0);
 //        this.log.addBox(-16, 8 + 4 * y, 4 * x, 16, 4, 4);
-//        MathHelper.setRotationAngle(this.log, 0, MathHelper.PI_OVER_2, 0);
+//        MthUtil.setRotationAngle(this.log, 0, MthUtil.PI_OVER_2, 0);
     }
 
     @Override

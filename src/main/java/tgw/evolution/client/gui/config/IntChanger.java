@@ -14,7 +14,7 @@ import tgw.evolution.client.util.Modifiers;
 import tgw.evolution.client.util.MouseButton;
 import tgw.evolution.config.ConfigInteger;
 import tgw.evolution.init.EvolutionTexts;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 public class IntChanger extends AbstractWidget {
 
@@ -87,7 +87,7 @@ public class IntChanger extends AbstractWidget {
         }
         drawString(matrices, Minecraft.getInstance().font, this.getMessage(), this.x, this.y + 5, 0xff_ffff);
         this.editBox.render(matrices, mouseX, mouseY, partialTicks);
-        if (MathHelper.isMouseInArea(mouseX, mouseY, this.x, this.y + 5, this.textWidth, 10)) {
+        if (MthUtil.isMouseInArea(mouseX, mouseY, this.x, this.y + 5, this.textWidth, 10)) {
             this.onTooltip.onTooltip(matrices, mouseX, mouseY);
         }
     }

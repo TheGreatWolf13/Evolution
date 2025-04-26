@@ -4,7 +4,7 @@
 //import net.minecraft.client.particle.Particle;
 //import net.minecraft.client.world.ClientWorld;
 //import net.minecraft.particles.BasicParticleType;
-//import net.minecraft.util.math.MathHelper;
+//import net.minecraft.util.math.MthUtil;
 //import net.minecraftforge.api.distmarker.Dist;
 //import net.minecraftforge.api.distmarker.OnlyIn;
 //
@@ -24,7 +24,7 @@
 //
 //    @Override
 //    public float getQuadSize(float scale) {
-//        return this.quadSize * MathHelper.clamp((this.age + scale) / this.lifetime * 32.0F, 0.0F, 1.0F);
+//        return this.quadSize * MthUtil.clamp((this.age + scale) / this.lifetime * 32.0F, 0.0F, 1.0F);
 //    }
 //
 //    @Override

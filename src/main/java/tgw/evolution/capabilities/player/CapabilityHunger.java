@@ -9,7 +9,7 @@ import tgw.evolution.init.EvolutionEffects;
 import tgw.evolution.network.PacketSCHungerData;
 import tgw.evolution.patches.PatchLivingEntity;
 import tgw.evolution.patches.PatchPlayer;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 import tgw.evolution.util.time.Time;
 
 public class CapabilityHunger {
@@ -172,7 +172,7 @@ public class CapabilityHunger {
 
     public void setHungerLevel(int hunger) {
         int old = this.hungerLevel;
-        this.hungerLevel = MathHelper.clamp(hunger, 0, HUNGER_CAPACITY);
+        this.hungerLevel = MthUtil.clamp(hunger, 0, HUNGER_CAPACITY);
         if (hungerLevel(old) != hungerLevel(this.hungerLevel)) {
             this.needsUpdate = true;
         }
@@ -205,7 +205,7 @@ public class CapabilityHunger {
 
     public void setSaturationLevel(int saturation) {
         int old = this.saturationLevel;
-        this.saturationLevel = MathHelper.clamp(saturation, 0, SATURATION_CAPACITY);
+        this.saturationLevel = MthUtil.clamp(saturation, 0, SATURATION_CAPACITY);
         if (saturationLevel(old) != saturationLevel(this.saturationLevel)) {
             this.needsUpdate = true;
         }

@@ -1,7 +1,7 @@
 package tgw.evolution.world.puzzle;
 
 import org.jetbrains.annotations.Nullable;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 public enum EnumPuzzleType {
     EMPTY(0),
@@ -14,7 +14,7 @@ public enum EnumPuzzleType {
     private final byte id;
 
     EnumPuzzleType(int id) {
-        this.id = MathHelper.toByteExact(id);
+        this.id = MthUtil.toByteExact(id);
     }
 
     public static @Nullable EnumPuzzleType byId(int id) {

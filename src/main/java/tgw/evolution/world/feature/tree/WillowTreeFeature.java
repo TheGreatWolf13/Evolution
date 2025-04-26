@@ -6,7 +6,7 @@
 //import net.minecraft.block.VineBlock;
 //import net.minecraft.state.BooleanProperty;
 //import net.minecraft.util.math.BlockPos;
-//import net.minecraft.util.math.MathHelper;
+//import net.minecraft.util.math.MthUtil;
 //import net.minecraft.util.math.MutableBoundingBox;
 //import net.minecraft.world.IBlockReader;
 //import net.minecraft.world.gen.IWorldGenerationReader;
@@ -95,8 +95,8 @@
 //        BlockPos.MutableBlockPos basePos = new BlockPos.MutableBlockPos();
 //        while (angle < 360) {
 //            float angleR = (float) Math.toRadians(angle += 30 + rand.nextInt(30));
-//            float sin = MathHelper.sin(angleR);
-//            float cos = MathHelper.cos(angleR);
+//            float sin = MthUtil.sin(angleR);
+//            float cos = MthUtil.cos(angleR);
 //            int base = pos.getY() + height - 3 - rand.nextInt(3);
 //            int length = 2 + rand.nextInt(4);
 //            i1 = pos.getX();

@@ -73,7 +73,7 @@ import tgw.evolution.util.damage.DamageSourceEv;
 import tgw.evolution.util.hitbox.EvolutionEntityHitboxes;
 import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 import tgw.evolution.util.math.AABBMutable;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 import java.util.List;
 import java.util.Optional;
@@ -338,7 +338,7 @@ public abstract class MixinPlayer extends LivingEntity implements PatchPlayer {
         this.motionZ = dz;
         //noinspection ConstantConditions
         if (!this.isPassenger() && (Object) this instanceof ServerPlayer player) {
-            float dist = MathHelper.sqrt(dx * dx + dy * dy + dz * dz) * 1_000;
+            float dist = MthUtil.sqrt(dx * dx + dy * dy + dz * dz) * 1_000;
             if (dist > 0) {
                 PlayerHelper.addStat(player, EvolutionStats.TOTAL_DISTANCE_TRAVELED, dist);
             }
@@ -353,7 +353,7 @@ public abstract class MixinPlayer extends LivingEntity implements PatchPlayer {
                 }
             }
             else if (this.isInWater()) {
-                float horizontalDist = MathHelper.sqrt(dx * dx + dz * dz) * 1_000;
+                float horizontalDist = MthUtil.sqrt(dx * dx + dz * dz) * 1_000;
                 if (horizontalDist > 0) {
                     PlayerHelper.addStat(player, EvolutionStats.DISTANCE_WALKED_ON_WATER, horizontalDist);
                 }
@@ -364,7 +364,7 @@ public abstract class MixinPlayer extends LivingEntity implements PatchPlayer {
                 }
             }
             else if (this.isOnGround()) {
-                float horizontalDist = MathHelper.sqrt(dx * dx + dz * dz) * 1_000;
+                float horizontalDist = MthUtil.sqrt(dx * dx + dz * dz) * 1_000;
                 if (horizontalDist > 0) {
                     this.isMoving = true;
                     if (this.isSprinting()) {
@@ -382,7 +382,7 @@ public abstract class MixinPlayer extends LivingEntity implements PatchPlayer {
                 }
             }
             else if (this.abilities.flying) {
-                float horizontalDist = MathHelper.sqrt(dx * dx + dz * dz) * 1_000;
+                float horizontalDist = MthUtil.sqrt(dx * dx + dz * dz) * 1_000;
                 if (horizontalDist > 0) {
                     PlayerHelper.addStat(player, EvolutionStats.DISTANCE_FLOWN, horizontalDist);
                 }
@@ -394,7 +394,7 @@ public abstract class MixinPlayer extends LivingEntity implements PatchPlayer {
                 else if (dy > 0) {
                     PlayerHelper.addStat(player, EvolutionStats.DISTANCE_JUMPED_VERTICAL, (float) (dy * 1_000));
                 }
-                float horizontalDist = MathHelper.sqrt(dx * dx + dz * dz) * 1_000;
+                float horizontalDist = MthUtil.sqrt(dx * dx + dz * dz) * 1_000;
                 if (horizontalDist > 0) {
                     PlayerHelper.addStat(player, EvolutionStats.DISTANCE_JUMPED_HORIZONTAL, horizontalDist);
                 }
@@ -410,7 +410,7 @@ public abstract class MixinPlayer extends LivingEntity implements PatchPlayer {
     private void checkRidingStatistics(double dx, double dy, double dz) {
         //noinspection ConstantConditions
         if ((Object) this instanceof ServerPlayer player && this.isPassenger()) {
-            float dist = MathHelper.sqrt(dx * dx + dy * dy + dz * dz) * 1_000;
+            float dist = MthUtil.sqrt(dx * dx + dy * dy + dz * dz) * 1_000;
             if (dist > 0) {
                 PlayerHelper.addStat(player, EvolutionStats.TOTAL_DISTANCE_TRAVELED, dist);
             }

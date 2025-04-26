@@ -31,7 +31,7 @@ import tgw.evolution.patches.PatchVertexConsumer;
 import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.math.DirectionUtil;
 import tgw.evolution.util.math.IRandom;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 import tgw.evolution.util.math.XoRoShiRoRandom;
 
 import java.util.List;
@@ -247,9 +247,9 @@ public abstract class Mixin_M_ModelBlockRenderer implements PatchModelBlockRende
                             int light,
                             int overlay) {
         XoRoShiRoRandom random = this.random;
-        red = MathHelper.clamp(red, 0.0F, 1.0F);
-        green = MathHelper.clamp(green, 0.0F, 1.0F);
-        blue = MathHelper.clamp(blue, 0.0F, 1.0F);
+        red = MthUtil.clamp(red, 0.0F, 1.0F);
+        green = MthUtil.clamp(green, 0.0F, 1.0F);
+        blue = MthUtil.clamp(blue, 0.0F, 1.0F);
         int defaultColor = 0xff << 24 | (int) (blue * 255) << 16 | (int) (green * 255) << 8 | (int) (red * 255);
         for (Direction direction : DirectionUtil.ALL) {
             List<BakedQuad> quads = bakedModel.getQuads(state, direction, random.setSeedAndReturn(42L));

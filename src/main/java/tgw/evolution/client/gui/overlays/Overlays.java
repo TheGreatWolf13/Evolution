@@ -138,13 +138,7 @@ public final class Overlays {
         list.add(insertAt, entry);
     }
 
-    private static void renderAll(Minecraft mc,
-                                  EvolutionGui gui,
-                                  PoseStack matrices,
-                                  float partialTicks,
-                                  int screenWidth,
-                                  int screenHeight,
-                                  OList<Entry> list) {
+    private static void renderAll(Minecraft mc, EvolutionGui gui, PoseStack matrices, float partialTicks, int screenWidth, int screenHeight, OList<Entry> list) {
         ProfilerFiller profiler = mc.getProfiler();
         for (int i = 0, l = list.size(); i < l; i++) {
             Entry entry = list.get(i);
@@ -157,7 +151,7 @@ public final class Overlays {
                 entry.overlay.render(mc, gui, matrices, partialTicks, screenWidth, screenHeight);
             }
             catch (Exception e) {
-                Evolution.error("Error rendering overlay {}: {}", entry.name, e);
+                Evolution.error(e, "Error rendering overlay {}: ", entry.name);
             }
             profiler.pop();
             profiler.pop();
@@ -173,9 +167,9 @@ public final class Overlays {
     }
 
     public static class Entry {
+        private boolean enabled = true;
         private final ResourceLocation name;
         private final IGuiOverlay overlay;
-        private boolean enabled = true;
 
         public Entry(ResourceLocation name, IGuiOverlay overlay) {
             this.name = name;

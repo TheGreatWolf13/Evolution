@@ -6,7 +6,7 @@ import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.util.UnregisteredFeatureException;
 import tgw.evolution.util.collection.maps.B2OHashMap;
 import tgw.evolution.util.collection.maps.B2OMap;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 public enum MetalVariant {
     COPPER(0, 8_920, HarvestLevel.LOW_METAL, 30.0F, 10.0F, 1.6f, true);
@@ -34,7 +34,7 @@ public enum MetalVariant {
     private final float resistance;
 
     MetalVariant(int id, int density, @HarvestLevel int harvestLevel, float hardness, float resistance, float frictionCoef, boolean oxidizes) {
-        this.id = MathHelper.toByteExact(id);
+        this.id = MthUtil.toByteExact(id);
         this.density = density;
         this.harvestLevel = harvestLevel;
         this.hardness = hardness;

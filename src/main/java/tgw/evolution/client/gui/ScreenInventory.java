@@ -23,7 +23,7 @@ import tgw.evolution.client.gui.recipebook.IRecipeBookUpdateListener;
 import tgw.evolution.client.util.MouseButton;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.inventory.extendedinventory.ContainerInventory;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 public class ScreenInventory extends ScreenDisplayEffects<ContainerInventory> implements IRecipeBookUpdateListener {
 
@@ -93,10 +93,10 @@ public class ScreenInventory extends ScreenDisplayEffects<ContainerInventory> im
 
     @Override
     protected boolean hasClickedOutside(double mouseX, double mouseY, int guiLeft, int guiTop, int mouseButton) {
-        if (MathHelper.isMouseInArea(mouseX, mouseY, guiLeft, guiTop, this.imageWidth, this.imageHeight)) {
+        if (MthUtil.isMouseInArea(mouseX, mouseY, guiLeft, guiTop, this.imageWidth, this.imageHeight)) {
             return false;
         }
-        if (MathHelper.isMouseInArea(mouseX, mouseY, guiLeft + 6, guiTop - 28, NUM_TABS * 30 - 2, 28)) {
+        if (MthUtil.isMouseInArea(mouseX, mouseY, guiLeft + 6, guiTop - 28, NUM_TABS * 30 - 2, 28)) {
             return false;
         }
         if (this.justSwitchedTabs) {
@@ -147,7 +147,7 @@ public class ScreenInventory extends ScreenDisplayEffects<ContainerInventory> im
     public boolean mouseClicked(double mouseX, double mouseY, @MouseButton int button) {
         if (button == GLFW.GLFW_MOUSE_BUTTON_1) {
             for (int i = 0; i < NUM_TABS; ++i) {
-                if (MathHelper.isMouseInArea(mouseX, mouseY, this.tabX + 32 * i, this.tabY, 28, 32)) {
+                if (MthUtil.isMouseInArea(mouseX, mouseY, this.tabX + 32 * i, this.tabY, 28, 32)) {
                     this.setSelectedTab(i, true);
                     this.justSwitchedTabs = true;
                     return true;
@@ -245,7 +245,7 @@ public class ScreenInventory extends ScreenDisplayEffects<ContainerInventory> im
     @Override
     protected void renderTooltip(PoseStack matrices, int mouseX, int mouseY) {
         for (int i = 0; i < NUM_TABS; ++i) {
-            if (MathHelper.isMouseInArea(mouseX, mouseY, this.tabX + 30 * i, this.tabY, 28, 32)) {
+            if (MthUtil.isMouseInArea(mouseX, mouseY, this.tabX + 30 * i, this.tabY, 28, 32)) {
                 this.renderTooltip(matrices, this.tabTexts[i], mouseX, mouseY);
                 return;
             }

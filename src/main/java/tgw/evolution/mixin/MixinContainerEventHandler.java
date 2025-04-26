@@ -7,7 +7,6 @@ import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import tgw.evolution.client.util.MouseButton;
 
 import java.util.List;
 import java.util.Optional;
@@ -39,7 +38,7 @@ public interface MixinContainerEventHandler {
      * @reason Avoid iterator allocation
      */
     @Overwrite
-    default boolean mouseClicked(double mouseX, double mouseY, @MouseButton int button) {
+    default boolean mouseClicked(double mouseX, double mouseY, int button) {
         List<? extends GuiEventListener> children = this.children();
         for (int i = 0, l = children.size(); i < l; i++) {
             GuiEventListener guiEventListener = children.get(i);

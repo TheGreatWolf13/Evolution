@@ -8,6 +8,10 @@ import java.util.NoSuchElementException;
 
 public interface O2IMap<K> extends Object2IntMap<K>, MapExtension {
 
+    static <K> O2IMap<K> emptyMap() {
+        return EmptyMap.EMPTY;
+    }
+
     long beginIteration();
 
     @Override
@@ -29,6 +33,11 @@ public interface O2IMap<K> extends Object2IntMap<K>, MapExtension {
     O2IMap<K> view();
 
     class EmptyMap<K> extends Object2IntMaps.EmptyMap<K> implements O2IMap<K> {
+
+        protected static final EmptyMap EMPTY = new EmptyMap();
+
+        protected EmptyMap() {
+        }
 
         @Override
         public long beginIteration() {

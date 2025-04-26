@@ -13,7 +13,7 @@ import tgw.evolution.blocks.tileentities.TEPitKiln;
 import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionCreativeTabs;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 public class ItemClayMolded extends ItemBlock {
 
@@ -57,8 +57,8 @@ public class ItemClayMolded extends ItemBlock {
                     level.playSound(player, x + 0.5, y + 0.5, z + 0.5, SoundEvents.GRAVEL_PLACE, SoundSource.BLOCKS, 1.0F, 0.75F);
                     return InteractionResult.SUCCESS;
                 }
-                int hitX = MathHelper.getIndex(2, 0, 16, (hitResult.x() - x) * 16);
-                int hitZ = MathHelper.getIndex(2, 0, 16, (hitResult.z() - z) * 16);
+                int hitX = MthUtil.getIndex(2, 0, 16, (hitResult.x() - x) * 16);
+                int hitZ = MthUtil.getIndex(2, 0, 16, (hitResult.z() - z) * 16);
                 if (hitX == 0) {
                     if (hitZ == 0) {
                         tile.setNWStack(player.getItemInHand(hand));

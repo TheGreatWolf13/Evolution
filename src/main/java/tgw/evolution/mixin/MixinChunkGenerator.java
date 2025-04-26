@@ -16,6 +16,7 @@ import net.minecraft.world.level.levelgen.feature.ConfiguredStructureFeature;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
+import tgw.evolution.util.collection.maps.O2OMap;
 
 import java.util.Optional;
 
@@ -37,7 +38,9 @@ public abstract class MixinChunkGenerator implements BiomeManager.NoiseBiomeSour
         for (int dx = x - 8; dx <= x + 8; ++dx) {
             for (int dz = z - 8; dz <= z + 8; ++dz) {
                 long newPos = ChunkPos.asLong(dx, dz);
-                for (StructureStart structureStart : level.getChunk(dx, dz).getAllStarts().values()) {
+                O2OMap<ConfiguredStructureFeature<?, ?>, StructureStart> allStarts = (O2OMap<ConfiguredStructureFeature<?, ?>, StructureStart>) level.getChunk(dx, dz).getAllStarts();
+                for (long it = allStarts.beginIteration(); allStarts.hasNextIteration(it); it = allStarts.nextEntry(it)) {
+                    StructureStart structureStart = allStarts.getIterationValue(it);
                     try {
                         if (structureStart.isValid() && structureStart.getBoundingBox().intersects(minX, minZ, minX + 15, minZ + 15)) {
                             featureManager.addReferenceForFeature(bottomSection, structureStart.getFeature(), newPos, chunk);
@@ -48,8 +51,11 @@ public abstract class MixinChunkGenerator implements BiomeManager.NoiseBiomeSour
                         CrashReport crash = CrashReport.forThrowable(e, "Generating structure reference");
                         CrashReportCategory report = crash.addCategory("Structure");
                         Optional<? extends Registry<ConfiguredStructureFeature<?, ?>>> optional = level.registryAccess().registry(Registry.CONFIGURED_STRUCTURE_FEATURE_REGISTRY);
+                        //noinspection ObjectAllocationInLoop,DataFlowIssue
                         report.setDetail("Id", () -> optional.map(registry -> registry.getKey(structureStart.getFeature()).toString()).orElse("UNKNOWN"));
+                        //noinspection ObjectAllocationInLoop,DataFlowIssue
                         report.setDetail("Name", () -> Registry.STRUCTURE_FEATURE.getKey(structureStart.getFeature().feature).toString());
+                        //noinspection ObjectAllocationInLoop
                         report.setDetail("Class", () -> structureStart.getFeature().getClass().getCanonicalName());
                         throw new ReportedException(crash);
                     }

@@ -39,7 +39,7 @@ import tgw.evolution.inventory.RecipeCategory;
 import tgw.evolution.inventory.StackedContentsEv;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 import java.util.Iterator;
 import java.util.List;
@@ -119,7 +119,7 @@ public class ComponentRecipeBook extends GuiComponent implements IRecipeBook, Gu
         if (!this.isVisible()) {
             return true;
         }
-        if (MathHelper.isMouseInArea(mouseX, mouseY, this.cornerX, this.cornerY, this.texWidth, this.texHeight)) {
+        if (MthUtil.isMouseInArea(mouseX, mouseY, this.cornerX, this.cornerY, this.texWidth, this.texHeight)) {
             return false;
         }
         assert this.selectedTab != null;

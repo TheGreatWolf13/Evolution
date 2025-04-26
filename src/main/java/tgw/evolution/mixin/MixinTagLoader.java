@@ -37,8 +37,8 @@ import java.util.stream.Collectors;
 public abstract class MixinTagLoader<T> {
 
     @Shadow @Final private static Gson GSON;
-    @Shadow @Final private static int PATH_SUFFIX_LENGTH;
     @Shadow @Final private static Logger LOGGER;
+    @Shadow @Final private static int PATH_SUFFIX_LENGTH;
     @Shadow @Final private String directory;
     @Shadow @Final private Function<ResourceLocation, Optional<T>> idToValue;
 
@@ -145,7 +145,7 @@ public abstract class MixinTagLoader<T> {
                         }
                     }
                     catch (RuntimeException | IOException e) {
-                        Evolution.error("Couldn't read tag list {} from {} in data pack {}", resourceLocation2, resourceLocation, resource.getSourceName(), e);
+                        Evolution.error(e, "Couldn't read tag list {} from {} in data pack {}", resourceLocation2, resourceLocation, resource.getSourceName());
                     }
                     finally {
                         IOUtils.closeQuietly(resource);
@@ -153,7 +153,7 @@ public abstract class MixinTagLoader<T> {
                 }
             }
             catch (IOException e) {
-                Evolution.error("Couldn't read tag list {} from {}", resourceLocation2, resourceLocation, e);
+                Evolution.error(e, "Couldn't read tag list {} from {}", resourceLocation2, resourceLocation);
             }
         }
         return map;

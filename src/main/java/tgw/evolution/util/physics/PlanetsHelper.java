@@ -3,7 +3,7 @@ package tgw.evolution.util.physics;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import tgw.evolution.Evolution;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 import tgw.evolution.util.time.Time;
 
 import static tgw.evolution.util.physics.OrbitalConstants.*;
@@ -67,12 +67,12 @@ public final class PlanetsHelper {
     private static float calculateMeanAnomaly0Sun(long worldTime) {
         worldTime += 3L * Time.TICKS_PER_MONTH + Time.TICKS_PER_DAY;
         long yearTime = worldTime % Time.TICKS_PER_YEAR;
-        return MathHelper.wrapRadians(Mth.TWO_PI / Time.TICKS_PER_YEAR * yearTime);
+        return MthUtil.wrapRadians(Mth.TWO_PI / Time.TICKS_PER_YEAR * yearTime);
     }
 
     private static float calculateMeanAnomaly1Mercury(long worldTime) {
         long yearTime = worldTime % Time.MERCURIAN_YEAR;
-        return MathHelper.wrapRadians(168.656_2f * SI.DEGREE + Mth.TWO_PI / Time.MERCURIAN_YEAR * yearTime);
+        return MthUtil.wrapRadians(168.656_2f * SI.DEGREE + Mth.TWO_PI / Time.MERCURIAN_YEAR * yearTime);
     }
 
     /**
@@ -81,25 +81,25 @@ public final class PlanetsHelper {
      */
     private static float calculateMeanAnomaly2Venus(long worldTime) {
         long yearTime = worldTime % Time.VENUSIAN_YEAR;
-        return MathHelper.wrapRadians(48.005_2f * SI.DEGREE + Mth.TWO_PI / Time.VENUSIAN_YEAR * yearTime);
+        return MthUtil.wrapRadians(48.005_2f * SI.DEGREE + Mth.TWO_PI / Time.VENUSIAN_YEAR * yearTime);
     }
 
     private static float calculateMeanAnomaly4Mars(long worldTime) {
         worldTime += 13L * Time.TICKS_PER_MONTH;
         long yearTime = worldTime % Time.MARTIAN_YEAR;
-        return MathHelper.wrapRadians(18.602_1f * SI.DEGREE + Mth.TWO_PI / Time.MARTIAN_YEAR * yearTime);
+        return MthUtil.wrapRadians(18.602_1f * SI.DEGREE + Mth.TWO_PI / Time.MARTIAN_YEAR * yearTime);
     }
 
     private static float calculateMeanAnomaly5Jupiter(long worldTime) {
         worldTime += 8L * Time.TICKS_PER_YEAR;
         long yearTime = worldTime % Time.JUPITERIAN_YEAR;
-        return MathHelper.wrapRadians(19.895_0f * SI.DEGREE + Mth.TWO_PI / Time.JUPITERIAN_YEAR * yearTime);
+        return MthUtil.wrapRadians(19.895_0f * SI.DEGREE + Mth.TWO_PI / Time.JUPITERIAN_YEAR * yearTime);
     }
 
     private static float calculateMeanAnomaly6Saturn(long worldTime) {
         worldTime += 20L * Time.TICKS_PER_YEAR;
         long yearTime = worldTime % Time.SATURNIAN_YEAR;
-        return MathHelper.wrapRadians(316.967_0f * SI.DEGREE + Mth.TWO_PI / Time.SATURNIAN_YEAR * yearTime);
+        return MthUtil.wrapRadians(316.967_0f * SI.DEGREE + Mth.TWO_PI / Time.SATURNIAN_YEAR * yearTime);
     }
 
     public static void calculateOrbit1Mercury(long worldTime) {
@@ -122,7 +122,7 @@ public final class PlanetsHelper {
         float ye = yg * COS_ECLIPTIC - zh * SIN_ECLIPTIC;
         float ze = yg * SIN_ECLIPTIC + zh * COS_ECLIPTIC;
         //
-        float ra = (float) MathHelper.atan2Deg(ye, xg);
+        float ra = (float) MthUtil.atan2Deg(ye, xg);
         if (Math.abs(Mth.wrapDegrees(ra - sunRA)) > 30) {
             Evolution.warn("Mercury dRA is greater than 30º: " + Math.abs(Mth.wrapDegrees(ra - sunRA)));
         }
@@ -130,7 +130,7 @@ public final class PlanetsHelper {
         ha1Mercury = Mth.wrapDegrees(localTime - ra + 90);
         float dist = Mth.sqrt(xg * xg + ye * ye + ze * ze);
         is1MercuryTransiting = dist < 1;
-        float dist1Mercury = MathHelper.relativize(dist, MIN_DIST_1MERCURY, MAX_DIST_1MERCURY);
+        float dist1Mercury = MthUtil.relativize(dist, MIN_DIST_1MERCURY, MAX_DIST_1MERCURY);
         angSize1Mercury = Mth.lerp(dist1Mercury, 0.1f, 0.05f);
     }
 
@@ -146,7 +146,7 @@ public final class PlanetsHelper {
         float yg = yh + ySun;
         float ye = yg * COS_ECLIPTIC - zh * SIN_ECLIPTIC;
         float ze = yg * SIN_ECLIPTIC + zh * COS_ECLIPTIC;
-        float ra = (float) MathHelper.atan2Deg(ye, xg);
+        float ra = (float) MthUtil.atan2Deg(ye, xg);
         if (Math.abs(Mth.wrapDegrees(ra - sunRA)) > 51) {
             Evolution.warn("Venus dRA is greater than 51º: " + Math.abs(Mth.wrapDegrees(ra - sunRA)));
         }
@@ -154,7 +154,7 @@ public final class PlanetsHelper {
         ha2Venus = Mth.wrapDegrees(localTime - ra + 90);
         float dist = Mth.sqrt(xg * xg + ye * ye + ze * ze);
         is2VenusTransiting = dist < 1;
-        float dist2Venus = MathHelper.relativize(dist, MIN_DIST_2VENUS, MAX_DIST_2VENUS);
+        float dist2Venus = MthUtil.relativize(dist, MIN_DIST_2VENUS, MAX_DIST_2VENUS);
         angSize2Venus = Mth.lerp(dist2Venus, 0.23f, 0.05f);
     }
 
@@ -170,10 +170,10 @@ public final class PlanetsHelper {
         float yg = yh + ySun;
         float ye = yg * COS_ECLIPTIC - zh * SIN_ECLIPTIC;
         float ze = yg * SIN_ECLIPTIC + zh * COS_ECLIPTIC;
-        float ra = (float) MathHelper.atan2Deg(ye, xg);
+        float ra = (float) MthUtil.atan2Deg(ye, xg);
         decOff4Mars = -EarthHelper.CELESTIAL_SPHERE_RADIUS * ze / Mth.sqrt(xg * xg + ye * ye);
         ha4Mars = Mth.wrapDegrees(localTime - ra + 90);
-        float dist4Mars = MathHelper.relativize(Mth.sqrt(xg * xg + ye * ye + ze * ze), MIN_DIST_4MARS, MAX_DIST_4MARS);
+        float dist4Mars = MthUtil.relativize(Mth.sqrt(xg * xg + ye * ye + ze * ze), MIN_DIST_4MARS, MAX_DIST_4MARS);
         angSize4Mars = Mth.lerp(dist4Mars, 0.1f, 0.05f);
     }
 
@@ -191,10 +191,10 @@ public final class PlanetsHelper {
         float yg = yh + ySun;
         float ye = yg * COS_ECLIPTIC - zh * SIN_ECLIPTIC;
         float ze = yg * SIN_ECLIPTIC + zh * COS_ECLIPTIC;
-        float ra = (float) MathHelper.atan2Deg(ye, xg);
+        float ra = (float) MthUtil.atan2Deg(ye, xg);
         decOff5Jupiter = -EarthHelper.CELESTIAL_SPHERE_RADIUS * ze / Mth.sqrt(xg * xg + ye * ye);
         ha5Jupiter = Mth.wrapDegrees(localTime - ra + 90);
-        float dist5Jupiter = MathHelper.relativize(Mth.sqrt(xg * xg + ye * ye + ze * ze), MIN_DIST_5JUPITER, MAX_DIST_5JUPITER);
+        float dist5Jupiter = MthUtil.relativize(Mth.sqrt(xg * xg + ye * ye + ze * ze), MIN_DIST_5JUPITER, MAX_DIST_5JUPITER);
         angSize5Jupiter = Mth.lerp(dist5Jupiter, 0.17f, 0.10f);
     }
 
@@ -210,15 +210,15 @@ public final class PlanetsHelper {
         float yg = yh + ySun;
         float ye = yg * COS_ECLIPTIC - zh * SIN_ECLIPTIC;
         float ze = yg * SIN_ECLIPTIC + zh * COS_ECLIPTIC;
-        float ra = (float) MathHelper.atan2Deg(ye, xg);
+        float ra = (float) MthUtil.atan2Deg(ye, xg);
         decOff6Saturn = -EarthHelper.CELESTIAL_SPHERE_RADIUS * ze / Mth.sqrt(xg * xg + ye * ye);
         ha6Saturn = Mth.wrapDegrees(localTime - ra + 90);
-        float dist6Saturn = MathHelper.relativize(Mth.sqrt(xg * xg + ye * ye + ze * ze), MIN_DIST_6SATURN, MAX_DIST_6SATURN);
+        float dist6Saturn = MthUtil.relativize(Mth.sqrt(xg * xg + ye * ye + ze * ze), MIN_DIST_6SATURN, MAX_DIST_6SATURN);
         angSize6Saturn = Mth.lerp(dist6Saturn, 0.1f, 0.05f);
     }
 
     public static float calculateZFromLatitude(int quarterCircunference, float latitude) {
-        return -quarterCircunference * MathHelper.sinDeg(latitude);
+        return -quarterCircunference * MthUtil.sinDeg(latitude);
     }
 
     public static float getAngSize1Mercury() {
@@ -305,7 +305,7 @@ public final class PlanetsHelper {
         ySun = Mth.sin(lonSun);
         float xe = xSun;
         float ye = ySun * COS_ECLIPTIC;
-        sunRA = (float) MathHelper.atan2Deg(ye, xe);
+        sunRA = (float) MthUtil.atan2Deg(ye, xe);
         PlanetsHelper.localTime = localTime;
     }
 }

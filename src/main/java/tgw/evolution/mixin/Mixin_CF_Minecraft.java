@@ -32,6 +32,7 @@ import net.minecraft.client.gui.components.toasts.TutorialToast;
 import net.minecraft.client.gui.font.FontManager;
 import net.minecraft.client.gui.screens.*;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
+import net.minecraft.client.gui.screens.recipebook.RecipeCollection;
 import net.minecraft.client.gui.screens.social.PlayerSocialManager;
 import net.minecraft.client.gui.screens.social.SocialInteractionsScreen;
 import net.minecraft.client.main.GameConfig;
@@ -51,14 +52,15 @@ import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.client.resources.*;
 import net.minecraft.client.resources.language.LanguageManager;
 import net.minecraft.client.resources.model.ModelManager;
+import net.minecraft.client.searchtree.MutableSearchTree;
+import net.minecraft.client.searchtree.ReloadableIdSearchTree;
+import net.minecraft.client.searchtree.ReloadableSearchTree;
 import net.minecraft.client.searchtree.SearchRegistry;
 import net.minecraft.client.server.IntegratedServer;
 import net.minecraft.client.sounds.MusicManager;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.client.tutorial.Tutorial;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.core.Holder;
+import net.minecraft.core.*;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.*;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
@@ -74,6 +76,7 @@ import net.minecraft.server.packs.repository.PackSource;
 import net.minecraft.server.packs.resources.ReloadableResourceManager;
 import net.minecraft.sounds.Music;
 import net.minecraft.sounds.Musics;
+import net.minecraft.tags.TagKey;
 import net.minecraft.util.*;
 import net.minecraft.util.datafix.DataFixers;
 import net.minecraft.util.profiling.*;
@@ -85,7 +88,10 @@ import net.minecraft.util.thread.ReentrantBlockableEventLoop;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
@@ -138,6 +144,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 @Mixin(Minecraft.class)
 public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Runnable> implements PatchMinecraft, WindowEventHandler {
@@ -579,8 +586,37 @@ public abstract class Mixin_CF_Minecraft extends ReentrantBlockableEventLoop<Run
         }
     }
 
-    @Shadow
-    protected abstract void createSearchTrees();
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Overwrite
+    private void createSearchTrees() {
+        MutableSearchTree<ItemStack> nameTree = new ReloadableSearchTree<>(itemStack -> itemStack.getTooltipLines(null, TooltipFlag.Default.NORMAL)
+                                                                                                 .stream()
+                                                                                                 .map(component -> ChatFormatting.stripFormatting(component.getString()).trim())
+                                                                                                 .filter(string -> !string.isEmpty()), itemStack -> Stream.of(Registry.ITEM.getKey(itemStack.getItem()))
+        );
+        MutableSearchTree<ItemStack> tagTree = new ReloadableIdSearchTree<>(itemStack -> itemStack.getTags().map(TagKey::location));
+        NonNullList<ItemStack> stackList = NonNullList.create();
+        for (long it = Registry.ITEM.beginIteration(); Registry.ITEM.hasNextIteration(it); it = Registry.ITEM.nextEntry(it)) {
+            ((Item) Registry.ITEM.getIteration(it)).fillItemCategory(CreativeModeTab.TAB_SEARCH, stackList);
+        }
+        for (int i = 0, len = stackList.size(); i < len; ++i) {
+            ItemStack stack = stackList.get(i);
+            nameTree.add(stack);
+            tagTree.add(stack);
+        }
+        MutableSearchTree<RecipeCollection> recipeTree = new ReloadableSearchTree<>(recipeCollection -> recipeCollection.getRecipes()
+                                                                                                                        .stream()
+                                                                                                                        .flatMap(recipe -> recipe.getResultItem().getTooltipLines(null, TooltipFlag.Default.NORMAL).stream())
+                                                                                                                        .map(component -> ChatFormatting.stripFormatting(component.getString()).trim())
+                                                                                                                        .filter(string -> !string.isEmpty()), recipeCollection -> recipeCollection.getRecipes().stream().map(recipe -> Registry.ITEM.getKey(recipe.getResultItem().getItem()))
+        );
+        this.searchRegistry.register(SearchRegistry.CREATIVE_NAMES, nameTree);
+        this.searchRegistry.register(SearchRegistry.CREATIVE_TAGS, tagTree);
+        this.searchRegistry.register(SearchRegistry.RECIPE_COLLECTIONS, recipeTree);
+    }
 
     @Shadow
     protected abstract String createTitle();

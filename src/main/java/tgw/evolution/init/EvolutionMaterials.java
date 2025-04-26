@@ -7,7 +7,7 @@ import tgw.evolution.capabilities.modular.part.PartTypes;
 import tgw.evolution.util.collection.maps.B2OHashMap;
 import tgw.evolution.util.collection.maps.B2OMap;
 import tgw.evolution.util.constants.HarvestLevel;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 import java.util.random.RandomGenerator;
 
@@ -77,9 +77,9 @@ public enum EvolutionMaterials {
                        int modElasticity,
                        int resistance,
                        boolean brittle) {
-        this.id = MathHelper.toByteExact(id);
+        this.id = MthUtil.toByteExact(id);
         this.type = type;
-        this.harvestLevel = MathHelper.toShortExact(harvestLevel);
+        this.harvestLevel = MthUtil.toShortExact(harvestLevel);
         this.name = name;
         this.density = density;
         this.hardness = hardness;

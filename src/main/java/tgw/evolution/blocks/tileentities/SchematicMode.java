@@ -1,7 +1,7 @@
 package tgw.evolution.blocks.tileentities;
 
 import net.minecraft.util.StringRepresentable;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 public enum SchematicMode implements StringRepresentable {
     SAVE(0, "save"),
@@ -13,7 +13,7 @@ public enum SchematicMode implements StringRepresentable {
 
     SchematicMode(int id, String name) {
         this.name = name;
-        this.id = MathHelper.toByteExact(id);
+        this.id = MthUtil.toByteExact(id);
     }
 
     public static SchematicMode byId(int id) {

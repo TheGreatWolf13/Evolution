@@ -6,7 +6,7 @@
 //import net.minecraft.entity.Pose;
 //import net.minecraft.util.Direction;
 //import net.minecraft.util.ResourceLocation;
-//import net.minecraft.util.math.MathHelper;
+//import net.minecraft.util.math.MthUtil;
 //import net.minecraft.util.text.TextFormatting;
 //import net.minecraftforge.api.distmarker.Dist;
 //import net.minecraftforge.api.distmarker.OnlyIn;
@@ -57,8 +57,8 @@
 //            GlStateManager.rotatef(180.0F - rotationYaw, 0.0F, 1.0F, 0.0F);
 //        }
 //        if (entityLiving.getDeathTime() > 0) {
-//            float f = (tgw.evolution.util.math.MathHelper.clampMax(entityLiving.getDeathTime(), 20) + partialTicks - 1.0F) / 20.0F * 1.6F;
-//            f = MathHelper.sqrt(f);
+//            float f = (tgw.evolution.util.math.MthUtil.clampMax(entityLiving.getDeathTime(), 20) + partialTicks - 1.0F) / 20.0F * 1.6F;
+//            f = MthUtil.sqrt(f);
 //            if (f > 1.0F) {
 //                f = 1.0F;
 //            }

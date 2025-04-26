@@ -36,6 +36,11 @@ public abstract class MixinDefaultedRegistry<T> extends MappedRegistry<T> implem
     @Overwrite
     public Optional<T> getOptional(@Nullable ResourceLocation resLoc) {
         Evolution.deprecatedMethod();
+        return this.getOptional_(resLoc);
+    }
+
+    @Override
+    public Optional<T> getOptional_(@Nullable ResourceLocation resLoc) {
         return Optional.ofNullable(this.getNullable(resLoc));
     }
 }

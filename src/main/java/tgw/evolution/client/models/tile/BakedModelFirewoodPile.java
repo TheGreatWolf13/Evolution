@@ -28,7 +28,7 @@ import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.math.FastRandom;
 import tgw.evolution.util.math.IRandom;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 import java.util.Arrays;
 import java.util.List;
@@ -47,7 +47,7 @@ public class BakedModelFirewoodPile implements BakedModel {
         for (byte i = 0; i < 16; i++) {
             a[i] = i;
         }
-        MathHelper.shuffle(a, new FastRandom("Firewood".hashCode()));
+        MthUtil.shuffle(a, new FastRandom("Firewood".hashCode()));
         LOG_ORDER = a;
     }
 

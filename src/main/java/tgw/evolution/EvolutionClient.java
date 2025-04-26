@@ -86,7 +86,7 @@ import tgw.evolution.util.collection.sets.IHashSet;
 import tgw.evolution.util.collection.sets.ISet;
 import tgw.evolution.util.constants.SkinType;
 import tgw.evolution.util.math.DirectionUtil;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 import tgw.evolution.util.toast.ToastHolderRecipe;
 import tgw.evolution.util.toast.Toasts;
 
@@ -467,11 +467,11 @@ public final class EvolutionClient implements ClientModInitializer {
         if (mc.player.isSpecialAttacking() || mc.player.isLockedInSpecialAttack()) {
             return mc.player.getSpecialAttackProgress(partialTicks);
         }
-        return MathHelper.clamp((mainhandCooldownTime + partialTicks) / getItemCooldown(InteractionHand.MAIN_HAND), 0.0F, 1.0F);
+        return MthUtil.clamp((mainhandCooldownTime + partialTicks) / getItemCooldown(InteractionHand.MAIN_HAND), 0.0F, 1.0F);
     }
 
     public static float getOffhandIndicatorPercentage(float partialTicks) {
-        return MathHelper.clamp((offhandCooldownTime + partialTicks) / getItemCooldown(InteractionHand.OFF_HAND), 0.0F, 1.0F);
+        return MthUtil.clamp((offhandCooldownTime + partialTicks) / getItemCooldown(InteractionHand.OFF_HAND), 0.0F, 1.0F);
     }
 
     public static float getPartialTicks() {
@@ -938,7 +938,7 @@ public final class EvolutionClient implements ClientModInitializer {
             if (player.isSpecialAttacking()) {
                 cachedAttackType = player.getSpecialAttackType();
                 if (player.isInHitTicks()) {
-                    MathHelper.collideOBBWithCollider(MAINHAND_HITS, player, 1.0f, MAINHAND_HIT_RESULT, true, false);
+                    MthUtil.collideOBBWithCollider(MAINHAND_HITS, player, 1.0f, MAINHAND_HIT_RESULT, true, false);
                     BlockHitResult hitResult = MAINHAND_HIT_RESULT[0];
                     if (hitResult != null && hitResult.getType() != HitResult.Type.MISS) {
                         player.stopSpecialAttack(IMelee.StopReason.HIT_BLOCK);

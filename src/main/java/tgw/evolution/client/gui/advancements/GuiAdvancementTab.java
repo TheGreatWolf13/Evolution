@@ -15,7 +15,7 @@ import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL11;
 import tgw.evolution.client.renderer.RenderHelper;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -164,10 +164,10 @@ public class GuiAdvancementTab extends GuiComponent {
             }
         }
         if (flag) {
-            this.fade = MathHelper.clamp(this.fade + 0.02F, 0.0F, 0.3F);
+            this.fade = MthUtil.clamp(this.fade + 0.02F, 0.0F, 0.3F);
         }
         else {
-            this.fade = MathHelper.clamp(this.fade - 0.04F, 0.0F, 1.0F);
+            this.fade = MthUtil.clamp(this.fade - 0.04F, 0.0F, 1.0F);
         }
     }
 
@@ -193,10 +193,10 @@ public class GuiAdvancementTab extends GuiComponent {
 
     public void scroll(double scrollX, double scrollY, int width, int height) {
         if (this.maxX - this.minX > width) {
-            this.scrollX = (int) Math.round(MathHelper.clamp(this.scrollX + scrollX, -(this.maxX - width), -this.minX));
+            this.scrollX = (int) Math.round(MthUtil.clamp(this.scrollX + scrollX, -(this.maxX - width), -this.minX));
         }
         if (this.maxY - this.minY > height) {
-            this.scrollY = (int) Math.round(MathHelper.clamp(this.scrollY + scrollY, -(this.maxY - height), -this.minY));
+            this.scrollY = (int) Math.round(MthUtil.clamp(this.scrollY + scrollY, -(this.maxY - height), -this.minY));
         }
     }
 }

@@ -27,6 +27,7 @@ import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.collection.maps.Enum2OMap;
 import tgw.evolution.util.collection.maps.R2OMap;
 import tgw.evolution.util.collection.maps.custom.RecipeGrouper;
+import tgw.evolution.util.collection.sets.OSet;
 
 import java.util.List;
 import java.util.Map;
@@ -57,10 +58,11 @@ public abstract class Mixin_CF_ClientRecipeBook extends RecipeBook implements Pa
     }
 
     @Unique
-    private static R2OMap<RecipeCategory, OList<OList<Recipe<?>>>> categorizeAndGroupRecipes_(Iterable<Recipe<?>> recipes) {
+    private static R2OMap<RecipeCategory, OList<OList<Recipe<?>>>> categorizeAndGroupRecipes_(OSet<Recipe<?>> recipes) {
         R2OMap<RecipeCategory, OList<OList<Recipe<?>>>> recipeLists = new Enum2OMap<>(RecipeCategory.class);
         RecipeGrouper table = new RecipeGrouper();
-        for (Recipe<?> recipe : recipes) {
+        for (long it = recipes.beginIteration(); recipes.hasNextIteration(it); it = recipes.nextEntry(it)) {
+            Recipe<?> recipe = recipes.getIteration(it);
             if (!recipe.isSpecial()) {
                 RecipeCategory category = getCategory_(recipe);
                 String group = recipe.getGroup();
@@ -175,7 +177,7 @@ public abstract class Mixin_CF_ClientRecipeBook extends RecipeBook implements Pa
      */
     @Overwrite
     public void setupCollections(Iterable<Recipe<?>> recipes) {
-        R2OMap<RecipeCategory, OList<OList<Recipe<?>>>> recipeLists = categorizeAndGroupRecipes_(recipes);
+        R2OMap<RecipeCategory, OList<OList<Recipe<?>>>> recipeLists = categorizeAndGroupRecipes_((OSet<Recipe<?>>) recipes);
         R2OMap<RecipeCategory, OList<RecipeCollection>> byTab = new Enum2OMap<>(RecipeCategory.class);
         OList<RecipeCollection> allRecipes = new OArrayList<>();
         for (long it = recipeLists.beginIteration(); recipeLists.hasNextIteration(it); it = recipeLists.nextEntry(it)) {

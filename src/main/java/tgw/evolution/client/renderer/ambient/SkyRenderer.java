@@ -23,7 +23,7 @@ import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.mixin.AccessorRenderSystem;
 import tgw.evolution.util.constants.CommonRotations;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 import tgw.evolution.util.math.Vec3f;
 import tgw.evolution.util.physics.EarthHelper;
 import tgw.evolution.util.physics.MoonPhase;
@@ -59,7 +59,7 @@ public class SkyRenderer {
         builder.vertex(0, y, 0).endVertex();
         float f = Math.signum(y) * 512.0F;
         for (int i = -180; i <= 180; i += 45) {
-            builder.vertex(f * MathHelper.cosDeg(i), y, 512.0F * MathHelper.sinDeg(i)).endVertex();
+            builder.vertex(f * MthUtil.cosDeg(i), y, 512.0F * MthUtil.sinDeg(i)).endVertex();
         }
         builder.end();
     }
@@ -82,10 +82,10 @@ public class SkyRenderer {
         AccessorRenderSystem.setShader(GameRenderer.getPositionShader());
         builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION);
         for (int i = 0; i < 45; i++) {
-            builder.vertex(matrix, -0.5f, celestialRadius * MathHelper.cosDeg(8 * i), celestialRadius * MathHelper.sinDeg(8 * i)).endVertex();
-            builder.vertex(matrix, 0.5f, celestialRadius * MathHelper.cosDeg(8 * i), celestialRadius * MathHelper.sinDeg(8 * i)).endVertex();
-            builder.vertex(matrix, 0.5f, celestialRadius * MathHelper.cosDeg(8 * (i + 1)), celestialRadius * MathHelper.sinDeg(8 * (i + 1))).endVertex();
-            builder.vertex(matrix, -0.5f, celestialRadius * MathHelper.cosDeg(8 * (i + 1)), celestialRadius * MathHelper.sinDeg(8 * (i + 1))).endVertex();
+            builder.vertex(matrix, -0.5f, celestialRadius * MthUtil.cosDeg(8 * i), celestialRadius * MthUtil.sinDeg(8 * i)).endVertex();
+            builder.vertex(matrix, 0.5f, celestialRadius * MthUtil.cosDeg(8 * i), celestialRadius * MthUtil.sinDeg(8 * i)).endVertex();
+            builder.vertex(matrix, 0.5f, celestialRadius * MthUtil.cosDeg(8 * (i + 1)), celestialRadius * MthUtil.sinDeg(8 * (i + 1))).endVertex();
+            builder.vertex(matrix, -0.5f, celestialRadius * MthUtil.cosDeg(8 * (i + 1)), celestialRadius * MthUtil.sinDeg(8 * (i + 1))).endVertex();
         }
         builder.end();
         BufferUploader.end(builder);
@@ -117,7 +117,7 @@ public class SkyRenderer {
         builder.begin(VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION);
         builder.vertex(matrix, EarthHelper.CELESTIAL_SPHERE_RADIUS, 0, 0).endVertex();
         for (int i = 0; i <= 8; i++) {
-            builder.vertex(matrix, EarthHelper.CELESTIAL_SPHERE_RADIUS, MathHelper.sinDeg(45 * i), MathHelper.cosDeg(45 * i)).endVertex();
+            builder.vertex(matrix, EarthHelper.CELESTIAL_SPHERE_RADIUS, MthUtil.sinDeg(45 * i), MthUtil.cosDeg(45 * i)).endVertex();
         }
         builder.end();
         BufferUploader.end(builder);
@@ -590,7 +590,7 @@ public class SkyRenderer {
                 matrices.translate(-2 * sunDeclinationOffset, 0, 0);
             }
             else {
-                float rel = MathHelper.relativize(declinationOffset, 0.75f, 5.0f);
+                float rel = MthUtil.relativize(declinationOffset, 0.75f, 5.0f);
                 rel = 1 - rel;
                 rel = Mth.sqrt(rel);
                 matrices.translate(rel * moonDeclinationOffset - (2 - rel) * sunDeclinationOffset, 0, 0);
@@ -722,10 +722,10 @@ public class SkyRenderer {
             AccessorRenderSystem.setShader(GameRenderer.getPositionShader());
             builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION);
             for (int i = 0; i < 45; i++) {
-                builder.vertex(matrix, EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.cosDeg(8 * i), EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.sinDeg(8 * i), -0.5f).endVertex();
-                builder.vertex(matrix, EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.cosDeg(8 * i), EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.sinDeg(8 * i), 0.5f).endVertex();
-                builder.vertex(matrix, EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.cosDeg(8 * (i + 1)), EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.sinDeg(8 * (i + 1)), 0.5f).endVertex();
-                builder.vertex(matrix, EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.cosDeg(8 * (i + 1)), EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.sinDeg(8 * (i + 1)), -0.5f).endVertex();
+                builder.vertex(matrix, EarthHelper.CELESTIAL_SPHERE_RADIUS * MthUtil.cosDeg(8 * i), EarthHelper.CELESTIAL_SPHERE_RADIUS * MthUtil.sinDeg(8 * i), -0.5f).endVertex();
+                builder.vertex(matrix, EarthHelper.CELESTIAL_SPHERE_RADIUS * MthUtil.cosDeg(8 * i), EarthHelper.CELESTIAL_SPHERE_RADIUS * MthUtil.sinDeg(8 * i), 0.5f).endVertex();
+                builder.vertex(matrix, EarthHelper.CELESTIAL_SPHERE_RADIUS * MthUtil.cosDeg(8 * (i + 1)), EarthHelper.CELESTIAL_SPHERE_RADIUS * MthUtil.sinDeg(8 * (i + 1)), 0.5f).endVertex();
+                builder.vertex(matrix, EarthHelper.CELESTIAL_SPHERE_RADIUS * MthUtil.cosDeg(8 * (i + 1)), EarthHelper.CELESTIAL_SPHERE_RADIUS * MthUtil.sinDeg(8 * (i + 1)), -0.5f).endVertex();
             }
             builder.end();
             BufferUploader.end(builder);

@@ -22,8 +22,8 @@ import java.util.Map;
 @Mixin(BlockStateParser.class)
 public abstract class Mixin_M_BlockStateParser {
 
-    @Shadow @Final public static DynamicCommandExceptionType ERROR_UNKNOWN_BLOCK;
     @Shadow @Final public static Dynamic3CommandExceptionType ERROR_INVALID_VALUE;
+    @Shadow @Final public static DynamicCommandExceptionType ERROR_UNKNOWN_BLOCK;
     @Shadow private StateDefinition<Block, BlockState> definition;
     @Shadow private ResourceLocation id;
     @Shadow @Final private Map<Property<?>, Comparable<?>> properties;
@@ -35,16 +35,9 @@ public abstract class Mixin_M_BlockStateParser {
      * @reason _
      */
     @Overwrite
-    public void readBlock() throws CommandSyntaxException {
-        int cursor = this.reader.getCursor();
-        this.id = ResourceLocation.read(this.reader);
-        Block block = (Block) Registry.BLOCK.getNullable(this.id);
-        if (block == null) {
-            this.reader.setCursor(cursor);
-            throw ERROR_UNKNOWN_BLOCK.createWithContext(this.reader, this.id.toString());
-        }
-        this.definition = block.getStateDefinition();
-        this.state = block.defaultBlockState();
+    @DeleteMethod
+    private CommandSyntaxException method_17956(int par1) {
+        throw new AbstractMethodError();
     }
 
     /**
@@ -52,9 +45,16 @@ public abstract class Mixin_M_BlockStateParser {
      * @reason _
      */
     @Overwrite
-    @DeleteMethod
-    private CommandSyntaxException method_17956(int par1) {
-        throw new AbstractMethodError();
+    public void readBlock() throws CommandSyntaxException {
+        int cursor = this.reader.getCursor();
+        this.id = ResourceLocation.read(this.reader);
+        Block block = Registry.BLOCK.getNullable(this.id);
+        if (block == null) {
+            this.reader.setCursor(cursor);
+            throw ERROR_UNKNOWN_BLOCK.createWithContext(this.reader, this.id.toString());
+        }
+        this.definition = block.getStateDefinition();
+        this.state = block.defaultBlockState();
     }
 
     /**

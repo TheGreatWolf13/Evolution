@@ -9,6 +9,7 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.Evolution;
 import tgw.evolution.patches.PatchTransientEntitySectionManager;
+import tgw.evolution.util.collection.lists.OList;
 
 @Mixin(TransientEntitySectionManager.class)
 public abstract class MixinTransientEntitySectionManager<T extends EntityAccess> implements PatchTransientEntitySectionManager {
@@ -31,10 +32,17 @@ public abstract class MixinTransientEntitySectionManager<T extends EntityAccess>
     public void startTicking(int chunkX, int chunkZ) {
         long pos = ChunkPos.asLong(chunkX, chunkZ);
         this.tickingChunks.add(pos);
-        this.sectionStorage.getExistingSectionsInChunk(pos).forEach(entitySection -> {
-            Visibility visibility = entitySection.updateChunkStatus(Visibility.TICKING);
+        this.sectionStorage.getExistingSectionsInChunk_(pos, s -> {
+            EntitySection<T> section = (EntitySection<T>) s;
+            Visibility visibility = section.updateChunkStatus(Visibility.TICKING);
             if (!visibility.isTicking()) {
-                entitySection.getEntities().filter(entityAccess -> !entityAccess.isAlwaysTicking()).forEach(this.callbacks::onTickingStart);
+                OList<T> entities = section.getEntities_();
+                for (int i = 0, len = entities.size(); i < len; ++i) {
+                    T t = entities.get(i);
+                    if (!t.isAlwaysTicking()) {
+                        this.callbacks.onTickingStart(t);
+                    }
+                }
             }
         });
     }

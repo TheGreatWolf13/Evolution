@@ -114,6 +114,33 @@ public abstract class Mixin_CFM_ServerStatsCounter extends StatsCounter {
         return statType.get(t);
     }
 
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    @DeleteMethod
+    private Set<Stat<?>> getDirty() {
+        throw new AbstractMethodError();
+    }
+
+    @Unique
+    private OSet<Stat<?>> getDirtyData() {
+        OSet<Stat<?>> set = new OHashSet<>(this.dirtyData);
+        this.dirtyData.clear();
+        return set;
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    @DeleteMethod
+    private <T> Optional<Stat<T>> getStat(StatType<T> statType, String string) {
+        throw new AbstractMethodError();
+    }
+
     @Override
     public void increment(Player player, Stat<?> stat, int amount) {
         if (stat.getType() == Stats.CUSTOM) {
@@ -153,7 +180,10 @@ public abstract class Mixin_CFM_ServerStatsCounter extends StatsCounter {
      */
     @Overwrite
     public void markAllDirty() {
-        this.dirtyData.addAll(this._getMap().keySet());
+        O2LMap<Stat<?>> map = this._getMap();
+        for (long it = map.beginIteration(); map.hasNextIteration(it); it = map.nextEntry(it)) {
+            this.dirtyData.add(map.getIterationKey(it));
+        }
     }
 
     /**
@@ -178,13 +208,17 @@ public abstract class Mixin_CFM_ServerStatsCounter extends StatsCounter {
                 tag = NbtUtils.update(dataFixer, DataFixTypes.STATS, tag, tag.getInt("DataVersion"));
                 if (tag.contains("stats", Tag.TAG_COMPOUND)) {
                     CompoundTag stats = tag.getCompound("stats");
-                    for (String typeKey : stats.getAllKeys()) {
+                    O2OMap<String, Tag> tags1 = stats.tags();
+                    for (long it2 = tags1.beginIteration(); tags1.hasNextIteration(it2); it2 = tags1.nextEntry(it2)) {
+                        String typeKey = tags1.getIterationKey(it2);
                         if (stats.contains(typeKey, Tag.TAG_COMPOUND)) {
                             //noinspection ObjectAllocationInLoop
                             StatType<?> statType = Registry.STAT_TYPE.get(new ResourceLocation(typeKey));
                             if (statType != null) {
                                 CompoundTag type = stats.getCompound(typeKey);
-                                for (String key : type.getAllKeys()) {
+                                O2OMap<String, Tag> tags = type.tags();
+                                for (long it = tags.beginIteration(); tags.hasNextIteration(it); it = tags.nextEntry(it)) {
+                                    String key = tags.getIterationKey(it);
                                     if (type.contains(key, Tag.TAG_ANY_NUMERIC)) {
                                         Stat<?> stat = getStat_(statType, key);
                                         if (stat != null) {
@@ -207,13 +241,17 @@ public abstract class Mixin_CFM_ServerStatsCounter extends StatsCounter {
                 }
                 if (tag.contains("partial", Tag.TAG_COMPOUND)) {
                     CompoundTag partial = tag.getCompound("partial");
-                    for (String typeKey : partial.getAllKeys()) {
+                    O2OMap<String, Tag> tags1 = partial.tags();
+                    for (long it2 = tags1.beginIteration(); tags1.hasNextIteration(it2); it2 = tags1.nextEntry(it2)) {
+                        String typeKey = tags1.getIterationKey(it2);
                         if (partial.contains(typeKey, Tag.TAG_COMPOUND)) {
                             //noinspection ObjectAllocationInLoop
                             StatType<?> statType = Registry.STAT_TYPE.get(new ResourceLocation(typeKey));
                             if (statType != null) {
                                 CompoundTag type = partial.getCompound(typeKey);
-                                for (String key : type.getAllKeys()) {
+                                O2OMap<String, Tag> tags = type.tags();
+                                for (long it = tags.beginIteration(); tags.hasNextIteration(it); it = tags.nextEntry(it)) {
+                                    String key = tags.getIterationKey(it);
                                     if (type.contains(key, Tag.TAG_ANY_NUMERIC)) {
                                         Stat<?> stat = getStat_(statType, key);
                                         if (stat != null) {
@@ -236,7 +274,7 @@ public abstract class Mixin_CFM_ServerStatsCounter extends StatsCounter {
                 }
             }
             catch (IOException | JsonParseException exception) {
-                Evolution.error("Unable to parse Stat data from {}", this.file, exception);
+                Evolution.error(exception, "Unable to parse Stat data from {}", this.file);
             }
         }
     }
@@ -262,6 +300,7 @@ public abstract class Mixin_CFM_ServerStatsCounter extends StatsCounter {
      * @author TheGreatWolf
      * @reason _
      */
+    @SuppressWarnings("removal")
     @Override
     @Overwrite
     public void setValue(Player player, Stat<?> stat, int amount) {
@@ -270,6 +309,7 @@ public abstract class Mixin_CFM_ServerStatsCounter extends StatsCounter {
                 return;
             }
         }
+        //noinspection removal
         super.setValue(player, stat, amount);
         this.dirtyData.add(stat);
     }
@@ -324,32 +364,5 @@ public abstract class Mixin_CFM_ServerStatsCounter extends StatsCounter {
             finalObj.addProperty("DataVersion", SharedConstants.getCurrentVersion().getWorldVersion());
             return finalObj.toString();
         }
-    }
-
-    /**
-     * @author TheGreatWolf
-     * @reason _
-     */
-    @Overwrite
-    @DeleteMethod
-    private Set<Stat<?>> getDirty() {
-        throw new AbstractMethodError();
-    }
-
-    @Unique
-    private OSet<Stat<?>> getDirtyData() {
-        OSet<Stat<?>> set = new OHashSet<>(this.dirtyData);
-        this.dirtyData.clear();
-        return set;
-    }
-
-    /**
-     * @author TheGreatWolf
-     * @reason _
-     */
-    @Overwrite
-    @DeleteMethod
-    private <T> Optional<Stat<T>> getStat(StatType<T> statType, String string) {
-        throw new AbstractMethodError();
     }
 }

@@ -11,11 +11,11 @@ public class DirectionToIntMap {
     }
 
     public int getBeamSize(Direction.Axis axis) {
-        int positive = this.get(MathHelper.getPositiveAxis(axis));
+        int positive = this.get(MthUtil.getPositiveAxis(axis));
         if (positive == 0) {
             return 0;
         }
-        int negative = this.get(MathHelper.getNegativeAxis(axis));
+        int negative = this.get(MthUtil.getNegativeAxis(axis));
         if (negative == 0) {
             return 0;
         }

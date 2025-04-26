@@ -6,7 +6,7 @@ import com.google.gson.JsonElement;
 import net.minecraft.data.DataProvider;
 import net.minecraft.data.HashCache;
 import tgw.evolution.Evolution;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 import java.io.BufferedWriter;
 import java.io.FileReader;
@@ -33,7 +33,7 @@ public interface EvolutionDataProvider<T> extends DataProvider {
                 try (FileReader reader = new FileReader(path.toString())) {
                     Gson gson = path.toString().contains("blockstates") ? BLOCKSTATE_GSON : GSON;
                     JsonElement j = gson.fromJson(reader, JsonElement.class);
-                    if (MathHelper.jsonEquals(json, j)) {
+                    if (MthUtil.jsonEquals(json, j)) {
                         return false;
                     }
                 }
@@ -73,7 +73,7 @@ public interface EvolutionDataProvider<T> extends DataProvider {
             cache.putNew(path, hash);
         }
         catch (IOException e) {
-            Evolution.error("Couldn't save {} {}", this.type(), path, e);
+            Evolution.error(e, "Couldn't save {} {}", this.type(), path);
         }
     }
 

@@ -7,7 +7,7 @@
 //import tgw.evolution.Evolution;
 //import tgw.evolution.blocks.tileentities.TEShadowHound;
 //import tgw.evolution.client.models.tile.ModelTileShadowHound;
-//import tgw.evolution.util.math.MathHelper;
+//import tgw.evolution.util.math.MthUtil;
 //
 //public class RenderTileShadowHound extends TileEntityRenderer<TEShadowHound> {
 //
@@ -17,7 +17,7 @@
 //    @Override
 //    public void render(TEShadowHound tile, double x, double y, double z, float partialTicks, int destroyStage) {
 //        PlayerEntity clientPlayer = Evolution.PROXY.getClientPlayer();
-//        float distance = MathHelper.distance(tile.getPos().getX() + 0.5, tile.getPos().getY() + 0.5, tile.getPos().getZ() + 0.5, clientPlayer
+//        float distance = MthUtil.distance(tile.getPos().getX() + 0.5, tile.getPos().getY() + 0.5, tile.getPos().getZ() + 0.5, clientPlayer
 //        .posX, clientPlayer.posY, clientPlayer.posZ);
 //        if (distance <= 2 || !tile.hasWorld()) {
 //            GlStateManager.pushMatrix();

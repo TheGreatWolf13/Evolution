@@ -27,7 +27,7 @@ public abstract class MixinItemParser {
     public void readItem() throws CommandSyntaxException {
         int i = this.reader.getCursor();
         ResourceLocation resourceLocation = ResourceLocation.read(this.reader);
-        Item item = (Item) Registry.ITEM.getNullable(resourceLocation);
+        Item item = Registry.ITEM.getNullable(resourceLocation);
         if (item == null) {
             this.reader.setCursor(i);
             throw ERROR_UNKNOWN_ITEM.createWithContext(this.reader, resourceLocation.toString());

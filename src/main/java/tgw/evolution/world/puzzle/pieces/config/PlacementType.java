@@ -4,7 +4,7 @@
 //import net.minecraft.world.gen.Heightmap;
 //import net.minecraft.world.gen.feature.template.GravityStructureProcessor;
 //import net.minecraft.world.gen.feature.template.StructureProcessor;
-//import tgw.evolution.util.math.MathHelper;
+//import tgw.evolution.util.math.MthUtil;
 //
 //public enum PlacementType {
 //    RIGID(0, ImmutableList.of()),
@@ -14,7 +14,7 @@
 //    private final ImmutableList<StructureProcessor> structureProcessors;
 //
 //    PlacementType(int id, ImmutableList<StructureProcessor> processors) {
-//        this.id = MathHelper.toByteExact(id);
+//        this.id = MthUtil.toByteExact(id);
 //        this.structureProcessors = processors;
 //    }
 //

@@ -7,7 +7,7 @@ import net.minecraft.world.item.CrossbowItem;
 import net.minecraft.world.item.ItemStack;
 import tgw.evolution.items.IEvolutionItem;
 import tgw.evolution.items.modular.ItemModularTool;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 public final class AnimationUtils {
 
@@ -81,10 +81,10 @@ public final class AnimationUtils {
                 }
             }
             else {
-                r = MathHelper.lerpRad(t, 0, mult * 30 * Mth.DEG_TO_RAD, false);
+                r = MthUtil.lerpRad(t, 0, mult * 30 * Mth.DEG_TO_RAD, false);
                 float start = entity.getMainHandItem().isEmpty() ? 0 : Mth.PI / 10;
-                float a = MathHelper.lerpRad(t, start, -20 * Mth.DEG_TO_RAD, false);
-                float b = MathHelper.lerpRad(t, 0, 130 * Mth.DEG_TO_RAD, false);
+                float a = MthUtil.lerpRad(t, start, -20 * Mth.DEG_TO_RAD, false);
+                float b = MthUtil.lerpRad(t, 0, 130 * Mth.DEG_TO_RAD, false);
                 arm.setRotationX(a);
                 forearm.setRotationX(b);
                 if (both) {
@@ -98,18 +98,18 @@ public final class AnimationUtils {
         }
         else if (progress < 5 / 6.0f) {
             float t = normParameter(progress, 0.5f, 5 / 6.0f);
-            float r = MathHelper.lerpRad(t, mult * 30 * Mth.DEG_TO_RAD, mult * -30 * Mth.DEG_TO_RAD, true);
+            float r = MthUtil.lerpRad(t, mult * 30 * Mth.DEG_TO_RAD, mult * -30 * Mth.DEG_TO_RAD, true);
             body.setRotationY(r);
             legR.setRotationY(-r);
             legL.setRotationY(-r);
-            arm.setRotationX(MathHelper.lerpRad(t, -20 * Mth.DEG_TO_RAD, head.xRot() * 2 / 3 + Mth.HALF_PI, false));
-            arm.setRotationY(MathHelper.lerpRad(t, 0, mult * 15 * Mth.DEG_TO_RAD, false));
-            forearm.setRotationX(MathHelper.lerpRad(t * t, 130 * Mth.DEG_TO_RAD, 0, false));
+            arm.setRotationX(MthUtil.lerpRad(t, -20 * Mth.DEG_TO_RAD, head.xRot() * 2 / 3 + Mth.HALF_PI, false));
+            arm.setRotationY(MthUtil.lerpRad(t, 0, mult * 15 * Mth.DEG_TO_RAD, false));
+            forearm.setRotationX(MthUtil.lerpRad(t * t, 130 * Mth.DEG_TO_RAD, 0, false));
             if (both) {
                 if (followUp) {
-                    opArm.setRotationX(MathHelper.lerpRad(t, head.xRot() * 2 / 3 + Mth.HALF_PI, -20 * Mth.DEG_TO_RAD, false));
-                    opArm.setRotationY(MathHelper.lerpRad(t, mult * 15 * Mth.DEG_TO_RAD, 0, false));
-                    opForearm.setRotationX(MathHelper.lerpRad(t, 0, 130 * Mth.DEG_TO_RAD, false));
+                    opArm.setRotationX(MthUtil.lerpRad(t, head.xRot() * 2 / 3 + Mth.HALF_PI, -20 * Mth.DEG_TO_RAD, false));
+                    opArm.setRotationY(MthUtil.lerpRad(t, mult * 15 * Mth.DEG_TO_RAD, 0, false));
+                    opForearm.setRotationX(MthUtil.lerpRad(t, 0, 130 * Mth.DEG_TO_RAD, false));
                 }
                 else {
                     opArm.setRotationX(-20 * Mth.DEG_TO_RAD);
@@ -212,29 +212,29 @@ public final class AnimationUtils {
     public static void strikeDown(float progress, int mult, HM body, HM legR, HM legL, HM arm, HM forearm, float xR, float yR, float zR) {
         if (progress < 0.5f) {
             float t = normParameter(progress, 0, 0.5f);
-            body.setRotationY(mult * MathHelper.lerpRad(t, 0, -30 * Mth.DEG_TO_RAD, false));
-            float leg = mult * MathHelper.lerpRad(t, 0, 15 * Mth.DEG_TO_RAD, false);
+            body.setRotationY(mult * MthUtil.lerpRad(t, 0, -30 * Mth.DEG_TO_RAD, false));
+            float leg = mult * MthUtil.lerpRad(t, 0, 15 * Mth.DEG_TO_RAD, false);
             legR.setRotationY(leg);
             legL.setRotationY(leg);
-            arm.setRotationX(MathHelper.lerpRad(t, xR, 139.106_6f * Mth.DEG_TO_RAD, false));
-            arm.setRotationY(MathHelper.lerpRad(t, yR, mult * -20.704_8f * Mth.DEG_TO_RAD, false));
-            arm.setRotationZ(MathHelper.lerpRad(t, zR, mult * -22.207_7f * Mth.DEG_TO_RAD, false));
-            forearm.setRotationX(MathHelper.lerpRad(t, 0, 45.409_8f * Mth.DEG_TO_RAD, false));
-            forearm.setRotationY(MathHelper.lerpRad(t, 0, mult * 10.288_6f * Mth.DEG_TO_RAD, false));
-            forearm.setRotationZ(MathHelper.lerpRad(t, 0, mult * -22.909_8f * Mth.DEG_TO_RAD, false));
+            arm.setRotationX(MthUtil.lerpRad(t, xR, 139.106_6f * Mth.DEG_TO_RAD, false));
+            arm.setRotationY(MthUtil.lerpRad(t, yR, mult * -20.704_8f * Mth.DEG_TO_RAD, false));
+            arm.setRotationZ(MthUtil.lerpRad(t, zR, mult * -22.207_7f * Mth.DEG_TO_RAD, false));
+            forearm.setRotationX(MthUtil.lerpRad(t, 0, 45.409_8f * Mth.DEG_TO_RAD, false));
+            forearm.setRotationY(MthUtil.lerpRad(t, 0, mult * 10.288_6f * Mth.DEG_TO_RAD, false));
+            forearm.setRotationZ(MthUtil.lerpRad(t, 0, mult * -22.909_8f * Mth.DEG_TO_RAD, false));
         }
         else if (progress < 0.75f) {
             float t = normParameter(progress, 0.5f, 0.75f);
-            body.setRotationY(mult * MathHelper.lerpRad(t, -30 * Mth.DEG_TO_RAD, 60 * Mth.DEG_TO_RAD, false));
-            float leg = mult * MathHelper.lerpRad(t, 15 * Mth.DEG_TO_RAD, -30 * Mth.DEG_TO_RAD, false);
+            body.setRotationY(mult * MthUtil.lerpRad(t, -30 * Mth.DEG_TO_RAD, 60 * Mth.DEG_TO_RAD, false));
+            float leg = mult * MthUtil.lerpRad(t, 15 * Mth.DEG_TO_RAD, -30 * Mth.DEG_TO_RAD, false);
             legR.setRotationY(leg);
             legL.setRotationY(leg);
-            arm.setRotationX(MathHelper.lerpRad(t, 139.106_6f * Mth.DEG_TO_RAD, 24.679_1f * Mth.DEG_TO_RAD, false));
-            arm.setRotationY(mult * MathHelper.lerpRad(t, -20.704_8f * Mth.DEG_TO_RAD, -42.260_2f * Mth.DEG_TO_RAD, false));
-            arm.setRotationZ(mult * MathHelper.lerpRad(t, -22.207_7f * Mth.DEG_TO_RAD, -17.172f * Mth.DEG_TO_RAD, false));
-            forearm.setRotationX(MathHelper.lerpRad(t, 45.409_8f * Mth.DEG_TO_RAD, 0, false));
-            forearm.setRotationY(MathHelper.lerpRad(t, mult * 10.288_6f * Mth.DEG_TO_RAD, 0, false));
-            forearm.setRotationZ(MathHelper.lerpRad(t, mult * -22.909_8f * Mth.DEG_TO_RAD, 0, false));
+            arm.setRotationX(MthUtil.lerpRad(t, 139.106_6f * Mth.DEG_TO_RAD, 24.679_1f * Mth.DEG_TO_RAD, false));
+            arm.setRotationY(mult * MthUtil.lerpRad(t, -20.704_8f * Mth.DEG_TO_RAD, -42.260_2f * Mth.DEG_TO_RAD, false));
+            arm.setRotationZ(mult * MthUtil.lerpRad(t, -22.207_7f * Mth.DEG_TO_RAD, -17.172f * Mth.DEG_TO_RAD, false));
+            forearm.setRotationX(MthUtil.lerpRad(t, 45.409_8f * Mth.DEG_TO_RAD, 0, false));
+            forearm.setRotationY(MthUtil.lerpRad(t, mult * 10.288_6f * Mth.DEG_TO_RAD, 0, false));
+            forearm.setRotationZ(MthUtil.lerpRad(t, mult * -22.909_8f * Mth.DEG_TO_RAD, 0, false));
         }
         else {
             body.setRotationY(60 * Mth.DEG_TO_RAD * mult);
@@ -257,21 +257,21 @@ public final class AnimationUtils {
             float leg = mult * -30 * Mth.DEG_TO_RAD;
             legR.setRotationY(leg);
             legL.setRotationY(leg);
-            arm.setRotationX(MathHelper.lerpRad(t, 24.679_1f * Mth.DEG_TO_RAD, 37.538_7f * Mth.DEG_TO_RAD, false));
-            arm.setRotationY(mult * MathHelper.lerpRad(t, -42.260_2f * Mth.DEG_TO_RAD, -15.221f * Mth.DEG_TO_RAD, false));
-            arm.setRotationZ(mult * MathHelper.lerpRad(t, -17.172f * Mth.DEG_TO_RAD, 64.054f * Mth.DEG_TO_RAD, false));
-            forearm.setRotationX(MathHelper.lerpRad(t, 0, 45 * Mth.DEG_TO_RAD, false));
+            arm.setRotationX(MthUtil.lerpRad(t, 24.679_1f * Mth.DEG_TO_RAD, 37.538_7f * Mth.DEG_TO_RAD, false));
+            arm.setRotationY(mult * MthUtil.lerpRad(t, -42.260_2f * Mth.DEG_TO_RAD, -15.221f * Mth.DEG_TO_RAD, false));
+            arm.setRotationZ(mult * MthUtil.lerpRad(t, -17.172f * Mth.DEG_TO_RAD, 64.054f * Mth.DEG_TO_RAD, false));
+            forearm.setRotationX(MthUtil.lerpRad(t, 0, 45 * Mth.DEG_TO_RAD, false));
         }
         else if (progress < 0.75f) {
             float t = normParameter(progress, 0.5f, 0.75f);
-            body.setRotationY(mult * MathHelper.lerpRad(t, 60 * Mth.DEG_TO_RAD, -30 * Mth.DEG_TO_RAD, false));
-            float leg = mult * MathHelper.lerpRad(t, -30 * Mth.DEG_TO_RAD, 15 * Mth.DEG_TO_RAD, false);
+            body.setRotationY(mult * MthUtil.lerpRad(t, 60 * Mth.DEG_TO_RAD, -30 * Mth.DEG_TO_RAD, false));
+            float leg = mult * MthUtil.lerpRad(t, -30 * Mth.DEG_TO_RAD, 15 * Mth.DEG_TO_RAD, false);
             legR.setRotationY(leg);
             legL.setRotationY(leg);
-            arm.setRotationX(MathHelper.lerpRad(t, 37.538_7f * Mth.DEG_TO_RAD, 40.804_9f * Mth.DEG_TO_RAD, false));
-            arm.setRotationY(mult * MathHelper.lerpRad(t, -15.221f * Mth.DEG_TO_RAD, 14.666_2f * Mth.DEG_TO_RAD, false));
-            arm.setRotationZ(mult * MathHelper.lerpRad(t, 64.054f * Mth.DEG_TO_RAD, 43.341_7f * Mth.DEG_TO_RAD, false));
-            forearm.setRotationX(MathHelper.lerpRad(t, 45 * Mth.DEG_TO_RAD, 0, false));
+            arm.setRotationX(MthUtil.lerpRad(t, 37.538_7f * Mth.DEG_TO_RAD, 40.804_9f * Mth.DEG_TO_RAD, false));
+            arm.setRotationY(mult * MthUtil.lerpRad(t, -15.221f * Mth.DEG_TO_RAD, 14.666_2f * Mth.DEG_TO_RAD, false));
+            arm.setRotationZ(mult * MthUtil.lerpRad(t, 64.054f * Mth.DEG_TO_RAD, 43.341_7f * Mth.DEG_TO_RAD, false));
+            forearm.setRotationX(MthUtil.lerpRad(t, 45 * Mth.DEG_TO_RAD, 0, false));
         }
         else {
             body.setRotationY(mult * -30 * Mth.DEG_TO_RAD);
@@ -296,25 +296,25 @@ public final class AnimationUtils {
                               float headPitch) {
         if (progress < 0.5f) {
             float t = normParameter(progress, 0, 0.5f);
-            body.setRotationY(MathHelper.lerpRad(t, 0, -10 * Mth.DEG_TO_RAD * mult, false));
-            float leg = MathHelper.lerpRad(t, 0, 5 * Mth.DEG_TO_RAD * mult, false);
+            body.setRotationY(MthUtil.lerpRad(t, 0, -10 * Mth.DEG_TO_RAD * mult, false));
+            float leg = MthUtil.lerpRad(t, 0, 5 * Mth.DEG_TO_RAD * mult, false);
             legR.setRotationY(leg);
             legL.setRotationY(leg);
-            arm.setRotationX(MathHelper.lerpRad(t, 18 * Mth.DEG_TO_RAD, -50 * Mth.DEG_TO_RAD, false));
-            arm.setRotationZ(MathHelper.lerpRad(t, 0, 80 * Mth.DEG_TO_RAD * mult, false));
-            forearm.setRotationX(MathHelper.lerpRad(t, 0, 52.5f * Mth.DEG_TO_RAD, false));
+            arm.setRotationX(MthUtil.lerpRad(t, 18 * Mth.DEG_TO_RAD, -50 * Mth.DEG_TO_RAD, false));
+            arm.setRotationZ(MthUtil.lerpRad(t, 0, 80 * Mth.DEG_TO_RAD * mult, false));
+            forearm.setRotationX(MthUtil.lerpRad(t, 0, 52.5f * Mth.DEG_TO_RAD, false));
         }
         else if (progress < 0.75f) {
             float t = normParameter(progress, 0.5f, 0.75f);
-            body.setRotationY(mult * MathHelper.lerpRad(t, -10 * Mth.DEG_TO_RAD, 30 * Mth.DEG_TO_RAD, false));
-            float leg = mult * MathHelper.lerpRad(t, 5 * Mth.DEG_TO_RAD, -15 * Mth.DEG_TO_RAD, false);
+            body.setRotationY(mult * MthUtil.lerpRad(t, -10 * Mth.DEG_TO_RAD, 30 * Mth.DEG_TO_RAD, false));
+            float leg = mult * MthUtil.lerpRad(t, 5 * Mth.DEG_TO_RAD, -15 * Mth.DEG_TO_RAD, false);
             legR.setRotationY(leg);
             legL.setRotationY(leg);
-            arm.setRotationX(MathHelper.lerpRad(t, -50 * Mth.DEG_TO_RAD, headPitch * 2 / 3 + Mth.HALF_PI, false));
-            arm.setRotationY(MathHelper.lerpRad(t, 0, -20 * Mth.DEG_TO_RAD * mult, false));
-            arm.setRotationZ(MathHelper.lerpRad(t, 80 * Mth.DEG_TO_RAD * mult, 0, false));
-            forearm.setRotationX(MathHelper.lerpRad(t, 52.5f * Mth.DEG_TO_RAD, 0, false));
-            holder.setRotationX(MathHelper.lerpRad(t, 0, -90 * Mth.DEG_TO_RAD, false));
+            arm.setRotationX(MthUtil.lerpRad(t, -50 * Mth.DEG_TO_RAD, headPitch * 2 / 3 + Mth.HALF_PI, false));
+            arm.setRotationY(MthUtil.lerpRad(t, 0, -20 * Mth.DEG_TO_RAD * mult, false));
+            arm.setRotationZ(MthUtil.lerpRad(t, 80 * Mth.DEG_TO_RAD * mult, 0, false));
+            forearm.setRotationX(MthUtil.lerpRad(t, 52.5f * Mth.DEG_TO_RAD, 0, false));
+            holder.setRotationX(MthUtil.lerpRad(t, 0, -90 * Mth.DEG_TO_RAD, false));
         }
         else {
             body.setRotationY(30 * Mth.DEG_TO_RAD * mult);

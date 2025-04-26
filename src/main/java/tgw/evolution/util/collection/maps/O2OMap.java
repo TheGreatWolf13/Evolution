@@ -18,7 +18,7 @@ public interface O2OMap<K, V> extends Object2ObjectMap<K, V>, MapExtension {
     }
 
     static @UnmodifiableView <K, V> O2OMap<K, V> of() {
-        return emptyMap();
+        return EmptyMap.EMPTY;
     }
 
     long beginIteration();
@@ -33,6 +33,11 @@ public interface O2OMap<K, V> extends Object2ObjectMap<K, V>, MapExtension {
     K getSampleKey();
 
     V getSampleValue();
+
+    default O2OMap<K, V> immutable() {
+        this.trim();
+        return this.view();
+    }
 
     default ObjectSet<K> keySet_() {
         return this.keySet();

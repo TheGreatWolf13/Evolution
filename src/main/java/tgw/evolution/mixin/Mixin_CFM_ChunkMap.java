@@ -16,8 +16,10 @@ import net.minecraft.CrashReportCategory;
 import net.minecraft.ReportedException;
 import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Registry;
 import net.minecraft.core.SectionPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.*;
 import net.minecraft.server.level.*;
@@ -38,6 +40,7 @@ import net.minecraft.world.level.chunk.*;
 import net.minecraft.world.level.chunk.storage.ChunkSerializer;
 import net.minecraft.world.level.chunk.storage.ChunkStorage;
 import net.minecraft.world.level.entity.ChunkStatusUpdateListener;
+import net.minecraft.world.level.levelgen.feature.ConfiguredStructureFeature;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureManager;
 import net.minecraft.world.level.storage.DimensionDataStorage;
@@ -498,7 +501,13 @@ public abstract class Mixin_CFM_ChunkMap extends ChunkStorage implements PatchCh
      */
     @Overwrite
     public Iterable<ChunkHolder> getChunks() {
+        Evolution.deprecatedMethod();
         return Iterables.unmodifiableIterable(this.visibleChunkMap_.values());
+    }
+
+    @Override
+    public L2OMap<ChunkHolder> getChunks_() {
+        return this.visibleChunkMap_.view();
     }
 
     @Shadow
@@ -605,26 +614,32 @@ public abstract class Mixin_CFM_ChunkMap extends ChunkStorage implements PatchCh
      * @reason _
      */
     @Overwrite
+    @DeleteMethod
     private boolean isExistingChunkFull(ChunkPos pos) {
-        byte b = this.chunkTypeCache.get(pos.toLong());
+        throw new AbstractMethodError();
+    }
+
+    @Unique
+    private boolean isExistingChunkFull_(long chunkPos) {
+        byte b = this.chunkTypeCache_.get(chunkPos);
         if (b != 0) {
             return b == 1;
         }
         CompoundTag compoundTag;
         try {
-            compoundTag = this.readChunk(pos);
+            compoundTag = this.readChunk_(chunkPos);
             if (compoundTag == null) {
-                this.markPositionReplaceable(pos);
+                this.markPositionReplaceable_(chunkPos);
                 return false;
             }
         }
         catch (Exception e) {
-            LOGGER.error("Failed to read chunk {}: {}", pos, e);
-            this.markPositionReplaceable(pos);
+            LOGGER.error("Failed to read chunk [{}, {}]: {}", ChunkPos.getX(chunkPos), ChunkPos.getZ(chunkPos), e);
+            this.markPositionReplaceable_(chunkPos);
             return false;
         }
         ChunkStatus.ChunkType chunkType = ChunkSerializer.getChunkTypeFromTag(compoundTag);
-        return this.markPosition(pos, chunkType) == 1;
+        return this.markPosition_(chunkPos, chunkType) == 1;
     }
 
     /**
@@ -632,8 +647,9 @@ public abstract class Mixin_CFM_ChunkMap extends ChunkStorage implements PatchCh
      * @reason _
      */
     @Overwrite
+    @DeleteMethod
     private byte markPosition(ChunkPos pos, ChunkStatus.ChunkType chunkType) {
-        return this.chunkTypeCache_.put(pos.toLong(), (byte) (chunkType == ChunkStatus.ChunkType.PROTOCHUNK ? -1 : 1));
+        throw new AbstractMethodError();
     }
 
     /**
@@ -641,8 +657,19 @@ public abstract class Mixin_CFM_ChunkMap extends ChunkStorage implements PatchCh
      * @reason _
      */
     @Overwrite
+    @DeleteMethod
     private void markPositionReplaceable(ChunkPos pos) {
-        this.chunkTypeCache_.put(pos.toLong(), (byte) -1);
+        throw new AbstractMethodError();
+    }
+
+    @Unique
+    private void markPositionReplaceable_(long chunkPos) {
+        this.chunkTypeCache_.put(chunkPos, (byte) -1);
+    }
+
+    @Unique
+    private byte markPosition_(long chunkPos, ChunkStatus.ChunkType chunkType) {
+        return this.chunkTypeCache_.put(chunkPos, (byte) (chunkType == ChunkStatus.ChunkType.PROTOCHUNK ? -1 : 1));
     }
 
     /**
@@ -1060,8 +1087,21 @@ public abstract class Mixin_CFM_ChunkMap extends ChunkStorage implements PatchCh
         }, runnable -> this.mainThreadMailbox.tell(ChunkTaskPriorityQueueSorter.message(runnable, holder.getPos().toLong(), holder::getTicketLevel)));
     }
 
-    @Shadow
-    protected abstract @Nullable CompoundTag readChunk(ChunkPos chunkPos) throws IOException;
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    @DeleteMethod
+    private @Nullable CompoundTag readChunk(ChunkPos chunkPos) {
+        throw new AbstractMethodError();
+    }
+
+    @Unique
+    private @Nullable CompoundTag readChunk_(long chunkPos) throws IOException {
+        CompoundTag compoundTag = this.read_(chunkPos);
+        return compoundTag == null ? null : this.upgradeChunkTag(this.level.dimension(), this.overworldDataStorage, compoundTag, this.generator.getTypeNameForDataFixer());
+    }
 
     /**
      * @author TheGreatWolf
@@ -1103,27 +1143,37 @@ public abstract class Mixin_CFM_ChunkMap extends ChunkStorage implements PatchCh
      */
     @Overwrite
     private boolean save(ChunkAccess chunk) {
-        this.poiManager.flush(chunk.getPos());
+        ChunkPos pos = chunk.getPos();
+        this.poiManager.flush_(pos.toLong());
         if (!chunk.isUnsaved()) {
             return false;
         }
         chunk.setUnsaved(false);
-        ChunkPos pos = chunk.getPos();
         try {
             ChunkStatus status = chunk.getStatus();
             if (status.getChunkType() != ChunkStatus.ChunkType.LEVELCHUNK) {
-                if (this.isExistingChunkFull(pos)) {
+                if (this.isExistingChunkFull_(pos.toLong())) {
                     return false;
                 }
-                if (status == ChunkStatus.EMPTY && chunk.getAllStarts().values().stream().noneMatch(StructureStart::isValid)) {
-                    return false;
+                if (status == ChunkStatus.EMPTY) {
+                    O2OMap<ConfiguredStructureFeature<?, ?>, StructureStart> allStarts = (O2OMap<ConfiguredStructureFeature<?, ?>, StructureStart>) chunk.getAllStarts();
+                    boolean valid = false;
+                    for (long it = allStarts.beginIteration(); allStarts.hasNextIteration(it); it = allStarts.nextEntry(it)) {
+                        if (allStarts.getIterationValue(it).isValid()) {
+                            valid = true;
+                            break;
+                        }
+                    }
+                    if (!valid) {
+                        return false;
+                    }
                 }
             }
             this.level.getProfiler().incrementCounter("chunkSave");
             CompoundTag compoundtag = ChunkSerializer.write(this.level, chunk);
             //Save event
-            this.write(pos, compoundtag);
-            this.markPosition(pos, status.getChunkType());
+            this.write_(pos.toLong(), compoundtag);
+            this.markPosition_(pos.toLong(), status.getChunkType());
             return true;
         }
         catch (Exception exception) {
@@ -1262,8 +1312,40 @@ public abstract class Mixin_CFM_ChunkMap extends ChunkStorage implements PatchCh
         }), executor);
     }
 
-    @Shadow
-    protected abstract CompletableFuture<Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure>> scheduleChunkLoad(ChunkPos chunkPos);
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    private CompletableFuture<Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure>> scheduleChunkLoad(ChunkPos chunkPos) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                this.level.getProfiler().incrementCounter("chunkLoad");
+                CompoundTag compoundTag = this.readChunk_(chunkPos.toLong());
+                if (compoundTag != null) {
+                    if (compoundTag.contains("Status", Tag.TAG_STRING)) {
+                        ChunkAccess chunkAccess = ChunkSerializer.read(this.level, this.poiManager, chunkPos, compoundTag);
+                        this.markPosition_(chunkPos.toLong(), chunkAccess.getStatus().getChunkType());
+                        return Either.left(chunkAccess);
+                    }
+                    LOGGER.error("Chunk file at [{}, {}] is missing level data, skipping", chunkPos.x, chunkPos.z);
+                }
+            }
+            catch (ReportedException e) {
+                Throwable throwable = e.getCause();
+                if (!(throwable instanceof IOException)) {
+                    this.markPositionReplaceable_(chunkPos.toLong());
+                    throw e;
+                }
+                LOGGER.error("Couldn't load chunk [{}, {}]", chunkPos.x, chunkPos.z, throwable);
+            }
+            catch (Exception var6) {
+                LOGGER.error("Couldn't load chunk [{}, {}]", chunkPos.x, chunkPos.z, var6);
+            }
+            this.markPositionReplaceable_(chunkPos.toLong());
+            return Either.left(new ProtoChunk(chunkPos, UpgradeData.EMPTY, this.level, this.level.registryAccess().registryOrThrow(Registry.BIOME_REGISTRY), null));
+        }, this.mainThreadExecutor);
+    }
 
     /**
      * @author TheGreatWolf

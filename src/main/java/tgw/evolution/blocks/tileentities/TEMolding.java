@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import tgw.evolution.init.EvolutionBStates;
 import tgw.evolution.init.EvolutionShapes;
 import tgw.evolution.init.EvolutionTEs;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 import java.util.function.Supplier;
 
@@ -44,7 +44,7 @@ public class TEMolding extends BlockEntity {
     public int check() {
         for (int i = 0; i < this.parts.length; i++) {
             if (this.parts[i] == Patterns.MATRIX_FALSE) {
-                MathHelper.resetTensor(this.parts, i == 0 ? 1 : i);
+                MthUtil.resetTensor(this.parts, i == 0 ? 1 : i);
                 return i;
             }
         }
@@ -91,7 +91,7 @@ public class TEMolding extends BlockEntity {
 //                else if (MoldingPatterns.comparePatternsOneLayer(this.matrices[0], MoldingPatterns.INGOT)) {
 //                    this.spawnDrops(EvolutionItems.mold_clay_ingot);
 //                }
-//                //                else if (MathHelper.matricesEqual(this.matrices[0], MoldingPatterns.PLATE)) {
+//                //                else if (MthUtil.matricesEqual(this.matrices[0], MoldingPatterns.PLATE)) {
 //                //                    this.spawnDrops(EvolutionItems.mold_clay_plate);
 //                //                }
 //            }
@@ -101,7 +101,7 @@ public class TEMolding extends BlockEntity {
 //                }
 //            }
 //            else if (layers == 5) {
-//                if (MathHelper.tensorsEquals(this.matrices, MoldingPatterns.CRUCIBLE)) {
+//                if (MthUtil.tensorsEquals(this.matrices, MoldingPatterns.CRUCIBLE)) {
 //                    this.spawnDrops(EvolutionItems.crucible_clay);
 //                }
 //            }
@@ -121,7 +121,7 @@ public class TEMolding extends BlockEntity {
 //            for (int i = 0; i < this.matrices[enc].length; i++) {
 //                for (int j = 0; j < this.matrices[enc][i].length; j++) {
 //                    if (this.matrices[enc][i][j]) {
-//                        shape = MathHelper.union(shape, EvolutionShapes.MOLD_PART.withOffset(3 * i / 16.0f, 3 * enc / 16.0f, 3 * j / 16.0f));
+//                        shape = MthUtil.union(shape, EvolutionShapes.MOLD_PART.withOffset(3 * i / 16.0f, 3 * enc / 16.0f, 3 * j / 16.0f));
 //                    }
 //                }
 //            }
@@ -133,8 +133,8 @@ public class TEMolding extends BlockEntity {
 //        int temp = 0x100_0000;
 //        for (int enc = 0; enc < this.encoded.length; enc++) {
 //            if (this.encoded[enc] == -1) {
-//                MathHelper.resetArray(this.encoded, enc);
-//                MathHelper.resetTensor(this.matrices, enc);
+//                MthUtil.resetArray(this.encoded, enc);
+//                MthUtil.resetTensor(this.matrices, enc);
 //                return;
 //            }
 //            temp = 0x100_0000;
@@ -198,8 +198,8 @@ public class TEMolding extends BlockEntity {
 //        int temp = 0;
 //        for (int enc = 0; enc < this.encoded.length; enc++) {
 //            if (this.matrices[enc] == null) {
-//                MathHelper.resetTensor(this.matrices, enc);
-//                MathHelper.resetArray(this.encoded, enc);
+//                MthUtil.resetTensor(this.matrices, enc);
+//                MthUtil.resetArray(this.encoded, enc);
 //                return;
 //            }
 //            this.encoded[enc] = 0;

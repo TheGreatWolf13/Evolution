@@ -64,7 +64,7 @@ import tgw.evolution.util.collection.maps.I2OMap;
 import tgw.evolution.util.collection.maps.O2OHashMap;
 import tgw.evolution.util.collection.maps.O2OMap;
 import tgw.evolution.util.math.FastRandom;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -313,7 +313,7 @@ public abstract class Mixin_CF_GameRenderer implements PatchGameRenderer {
                 if (hitResult.getType() == HitResult.Type.BLOCK) {
                     reachDistance = Math.sqrt(cameraPos.distanceToSqr(hitResult.x(), hitResult.y(), hitResult.z()));
                 }
-                EntityHitResult leftRayTrace = MathHelper.rayTraceEntitiesFromEyes(this.minecraft.player, partialTicks, reachDistance);
+                EntityHitResult leftRayTrace = MthUtil.rayTraceEntitiesFromEyes(this.minecraft.player, partialTicks, reachDistance);
                 if (leftRayTrace != null) {
                     this.minecraft.hitResult = leftRayTrace;
                     this.minecraft.crosshairPickEntity = leftRayTrace.getEntity();

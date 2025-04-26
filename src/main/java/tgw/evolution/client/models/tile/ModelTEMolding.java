@@ -31,10 +31,10 @@ public class ModelTEMolding extends Model {
 //        this.baseS.addBox(0.0F, 1.0F, 31.0F, 32, 5, 1);
 //        this.baseW = new ModelRenderer(this, 66, 33);
 //        this.baseW.addBox(-31.0F, 1.0F, 0.0F, 30, 5, 1);
-//        MathHelper.setRotationAngle(this.baseW, MathHelper.PI_OVER_2, MathHelper.PI_OVER_2, MathHelper.PI_OVER_2);
+//        MthUtil.setRotationAngle(this.baseW, MthUtil.PI_OVER_2, MthUtil.PI_OVER_2, MthUtil.PI_OVER_2);
 //        this.baseE = new ModelRenderer(this, 66, 33);
 //        this.baseE.addBox(-31.0F, 1.0F, 31.0F, 30, 5, 1);
-//        MathHelper.setRotationAngle(this.baseE, MathHelper.PI_OVER_2, MathHelper.PI_OVER_2, MathHelper.PI_OVER_2);
+//        MthUtil.setRotationAngle(this.baseE, MthUtil.PI_OVER_2, MthUtil.PI_OVER_2, MthUtil.PI_OVER_2);
 //        ModelRenderer AA1 = new ModelRenderer(this, 0, 0);
 //        AA1.addBox(1.0F, 0.0F, 1.0F, 6, 6, 6);
 //        ModelRenderer AB1 = new ModelRenderer(this, 0, 0);

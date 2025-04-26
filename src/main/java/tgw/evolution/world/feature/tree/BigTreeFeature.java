@@ -6,7 +6,7 @@
 //import net.minecraft.block.material.EvolutionMaterials;
 //import net.minecraft.util.Direction;
 //import net.minecraft.util.math.BlockPos;
-//import net.minecraft.util.math.MathHelper;
+//import net.minecraft.util.math.MthUtil;
 //import net.minecraft.util.math.MutableBoundingBox;
 //import net.minecraft.world.IBlockReader;
 //import net.minecraft.world.gen.IWorldGenerationReader;
@@ -46,9 +46,9 @@
 //     * Returns the absolute greatest distance in the BlockPos object.
 //     */
 //    private static int getGreatestDistance(BlockPos posIn) {
-//        int i = MathHelper.abs(posIn.getX());
-//        int j = MathHelper.abs(posIn.getY());
-//        int k = MathHelper.abs(posIn.getZ());
+//        int i = MthUtil.abs(posIn.getX());
+//        int j = MthUtil.abs(posIn.getY());
+//        int k = MthUtil.abs(posIn.getZ());
 //        if (k > i && k > j) {
 //            return k;
 //        }
@@ -74,7 +74,7 @@
 //        }
 //        float f = p_208527_1_ / 2.0F;
 //        float f1 = f - p_208527_2_;
-//        float f2 = MathHelper.sqrt(f * f - f1 * f1);
+//        float f2 = MthUtil.sqrt(f * f - f1 * f1);
 //        if (f1 == 0.0F) {
 //            f2 = f;
 //        }
@@ -206,7 +206,7 @@
 //                    double d3 = random.nextFloat() * 2.0F * Math.PI;
 //                    double d4 = d2 * Math.sin(d3) + 0.5D;
 //                    double d5 = d2 * Math.cos(d3) + 0.5D;
-//                    mutablePos1.setPos(position).move(MathHelper.floor(d4), i1 - 1, MathHelper.floor(d5));
+//                    mutablePos1.setPos(position).move(MthUtil.floor(d4), i1 - 1, MthUtil.floor(d5));
 //                    mutablePos3.setPos(mutablePos1).move(Direction.UP, 5);
 //                    if (this.makeLimb(changedBlocks, worldIn, mutablePos1, mutablePos3, false, box) == -1) {
 //                        int k1 = position.getX() - mutablePos1.getX();

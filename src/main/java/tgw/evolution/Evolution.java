@@ -47,7 +47,12 @@ public final class Evolution implements ModInitializer {
         LOGGER.error("[{}]: {}", SECURITY_MANAGER.getCallerClassName(2), message);
     }
 
-    public static void error(String message, Throwable t) {
+    public static void error(Throwable t, String message, Object... objects) {
+        error(message, objects);
+        LOGGER.error("Exception: ", t);
+    }
+
+    public static void error(Throwable t, String message) {
         error(message);
         LOGGER.error("Exception: ", t);
     }

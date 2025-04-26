@@ -26,7 +26,7 @@ import tgw.evolution.client.gui.ScreenSchematic;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionTEs;
 import tgw.evolution.util.constants.BlockFlags;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -209,13 +209,13 @@ public class TESchematic extends BlockEntity {
     public void load(CompoundTag tag) {
         super.load(tag);
         this.setName(tag.getString("Name"));
-        int posX = MathHelper.clamp(tag.getInt("PosX"), -CAP, CAP);
-        int posY = MathHelper.clamp(tag.getInt("PosY"), -CAP, CAP);
-        int posZ = MathHelper.clamp(tag.getInt("PosZ"), -CAP, CAP);
+        int posX = MthUtil.clamp(tag.getInt("PosX"), -CAP, CAP);
+        int posY = MthUtil.clamp(tag.getInt("PosY"), -CAP, CAP);
+        int posZ = MthUtil.clamp(tag.getInt("PosZ"), -CAP, CAP);
         this.schematicPos = new BlockPos(posX, posY, posZ);
-        int sizeX = MathHelper.clamp(tag.getInt("SizeX"), 0, CAP);
-        int sizeY = MathHelper.clamp(tag.getInt("SizeY"), 0, CAP);
-        int sizeZ = MathHelper.clamp(tag.getInt("SizeZ"), 0, CAP);
+        int sizeX = MthUtil.clamp(tag.getInt("SizeX"), 0, CAP);
+        int sizeY = MthUtil.clamp(tag.getInt("SizeY"), 0, CAP);
+        int sizeZ = MthUtil.clamp(tag.getInt("SizeZ"), 0, CAP);
         this.size = new Vec3i(sizeX, sizeY, sizeZ);
         try {
             this.rotation = Rotation.valueOf(tag.getString("Rot"));
@@ -278,7 +278,7 @@ public class TESchematic extends BlockEntity {
                                                                       .setIgnoreEntities(this.ignoresEntities());
         if (this.integrity < 1.0F) {
             settings.clearProcessors()
-                    .addProcessor(new BlockRotProcessor(MathHelper.clamp(this.integrity, 0.0F, 1.0F)))
+                    .addProcessor(new BlockRotProcessor(MthUtil.clamp(this.integrity, 0.0F, 1.0F)))
                     .setRandom(createRandom(this.seed));
         }
         BlockPos schematicAbsPos = pos.offset(this.schematicPos);

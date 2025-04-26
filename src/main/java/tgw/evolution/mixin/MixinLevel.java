@@ -303,7 +303,7 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
      * @author TheGreatWolf
      */
     @Overwrite
-    public void globalLevelEvent(@LvlEvent int event, BlockPos pos, int data) {
+    public void globalLevelEvent(int event, BlockPos pos, int data) {
         Evolution.deprecatedMethod();
         this.globalLevelEvent_(event, pos.getX(), pos.getY(), pos.getZ(), data);
     }
@@ -507,7 +507,7 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
     @SuppressWarnings("removal")
     @Override
     @Overwrite
-    public boolean setBlock(BlockPos pos, BlockState state, @BlockFlags int flags) {
+    public boolean setBlock(BlockPos pos, BlockState state, int flags) {
         Evolution.deprecatedMethod();
         return this.setBlock_(pos.getX(), pos.getY(), pos.getZ(), state, flags);
     }
@@ -518,7 +518,7 @@ public abstract class MixinLevel implements LevelAccessor, PatchLevel {
      */
     @Override
     @Overwrite
-    public boolean setBlock(BlockPos pos, BlockState state, @BlockFlags int flags, int limit) {
+    public boolean setBlock(BlockPos pos, BlockState state, int flags, int limit) {
         Evolution.deprecatedMethod();
         return this.setBlock_(pos.getX(), pos.getY(), pos.getZ(), state, flags, limit);
     }

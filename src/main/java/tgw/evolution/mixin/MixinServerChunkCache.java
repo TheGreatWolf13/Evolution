@@ -18,6 +18,7 @@ import tgw.evolution.Evolution;
 import tgw.evolution.patches.PatchEither;
 import tgw.evolution.patches.PatchServerChunkCache;
 import tgw.evolution.util.collection.lists.custom.BiArrayList;
+import tgw.evolution.util.collection.maps.L2OMap;
 import tgw.evolution.util.math.FastRandom;
 import tgw.evolution.util.physics.EarthHelper;
 
@@ -352,10 +353,12 @@ public abstract class MixinServerChunkCache extends ChunkSource implements Patch
             profiler.popPush("filteringLoadedChunks");
             BiArrayList<LevelChunk, ChunkHolder> list = BILIST.get();
             list.clear();
-            for (ChunkHolder chunkholder : this.chunkMap.getChunks()) {
-                LevelChunk levelchunk = chunkholder.getTickingChunk();
+            L2OMap<ChunkHolder> chunks = this.chunkMap.getChunks_();
+            for (long it = chunks.beginIteration(); chunks.hasNextIteration(it); it = chunks.nextEntry(it)) {
+                ChunkHolder holder = chunks.getIterationValue(it);
+                LevelChunk levelchunk = holder.getTickingChunk();
                 if (levelchunk != null) {
-                    list.add(levelchunk, chunkholder);
+                    list.add(levelchunk, holder);
                 }
             }
             profiler.popPush("spawnAndTick");
@@ -364,7 +367,7 @@ public abstract class MixinServerChunkCache extends ChunkSource implements Patch
             for (int i = 0, len = list.size(); i < len; i++) {
                 LevelChunk chunk = list.getLeft(i);
                 ChunkPos chunkpos = chunk.getPos();
-                if (this.level.isNaturalSpawningAllowed(chunkpos)) {
+                if (this.level.isNaturalSpawningAllowed_ChunkPos(chunkpos.x, chunkpos.z)) {
                     chunk.incrementInhabitedTime(deltaTime);
                     if (doMobSpawn &&
                         (this.spawnEnemies || this.spawnFriendlies) &&

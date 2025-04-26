@@ -10,7 +10,7 @@
 //import net.minecraft.world.gen.feature.Feature;
 //import net.minecraft.world.gen.feature.NoFeatureConfig;
 //import tgw.evolution.util.constants.BlockFlags;
-//import tgw.evolution.util.math.MathHelper;
+//import tgw.evolution.util.math.MthUtil;
 //import tgw.evolution.util.constants.RockVariant;
 //import tgw.evolution.util.constants.VanillaRockVariant;
 //
@@ -59,7 +59,7 @@
 //    }
 //
 //    private static int getBlockModifier(int absX, int absZ) {
-//        return (int) (2 * MathHelper.sin(absX * MathHelper.PI / 9.0f - absZ * MathHelper.PI / 15.0f));
+//        return (int) (2 * MthUtil.sin(absX * MthUtil.PI / 9.0f - absZ * MthUtil.PI / 15.0f));
 //    }
 //
 //    private static RockVariant getBottomVariant(int absX, int absZ, RockVariant middle) {
@@ -75,11 +75,11 @@
 //    }
 //
 //    private static int getChunkLowerLine(int chunkX, int chunkZ) {
-//        return (int) (5 * MathHelper.cos(chunkX * MathHelper.PI / 18.0f - chunkZ * 11 * MathHelper.PI / 90.0f)) + 15;
+//        return (int) (5 * MthUtil.cos(chunkX * MthUtil.PI / 18.0f - chunkZ * 11 * MthUtil.PI / 90.0f)) + 15;
 //    }
 //
 //    private static int getChunkUpperLine(int chunkX, int chunkZ) {
-//        return (int) (8 * MathHelper.sin(chunkX * MathHelper.PI / 9.0f - chunkZ * MathHelper.PI / 15.0f)) + 40;
+//        return (int) (8 * MthUtil.sin(chunkX * MthUtil.PI / 9.0f - chunkZ * MthUtil.PI / 15.0f)) + 40;
 //    }
 //
 //    private static RockVariant getMiddleVariant(int absX, int absZ, RockVariant surface) {
@@ -100,12 +100,12 @@
 //        float arrepioX = 10.0f;  //Arrepia along the Z axis
 //        float arrepioZ = 10.0f;  //Arrepia along the X axis
 //        float precisionMaybe = 0.000_1f;
-//        int chosen = (int) ((MathHelper.sin(0.001f * absX) +
-//                             MathHelper.cos(0.001f * absZ) +
-//                             MathHelper.cos(smoothness *
+//        int chosen = (int) ((MthUtil.sin(0.001f * absX) +
+//                             MthUtil.cos(0.001f * absZ) +
+//                             MthUtil.cos(smoothness *
 //                                            precisionMaybe *
-//                                            (100 * MathHelper.sin(arrepioX * absX * smoothness)) *
-//                                            (100 * MathHelper.sin(arrepioZ * absZ * smoothness)))) * SURFACE_BLOCKS.size());
+//                                            (100 * MthUtil.sin(arrepioX * absX * smoothness)) *
+//                                            (100 * MthUtil.sin(arrepioZ * absZ * smoothness)))) * SURFACE_BLOCKS.size());
 //        chosen = Math.abs(chosen) % LAYER_SURFACE.size();
 //        return LAYER_SURFACE.get(chosen);
 //    }

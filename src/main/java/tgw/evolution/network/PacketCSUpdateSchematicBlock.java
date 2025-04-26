@@ -9,7 +9,7 @@ import net.minecraft.world.level.block.Rotation;
 import tgw.evolution.blocks.tileentities.SchematicMode;
 import tgw.evolution.blocks.tileentities.TESchematic;
 import tgw.evolution.patches.PatchServerPacketListener;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 public class PacketCSUpdateSchematicBlock implements Packet<ServerGamePacketListener> {
 
@@ -75,7 +75,7 @@ public class PacketCSUpdateSchematicBlock implements Packet<ServerGamePacketList
         buf.writeBlockPos(this.size);
         buf.writeEnum(this.mirror);
         buf.writeEnum(this.rotation);
-        buf.writeByte(MathHelper.makeFlags(this.ignoresEntities, this.showAir, this.showBB));
+        buf.writeByte(MthUtil.makeFlags(this.ignoresEntities, this.showAir, this.showBB));
         buf.writeFloat(this.integrity);
         buf.writeLong(this.seed);
     }

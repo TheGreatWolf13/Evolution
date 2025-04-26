@@ -22,6 +22,13 @@ public interface OSet<K> extends ObjectSet<K>, SetExtension {
         return singleton(k);
     }
 
+    static <K> @UnmodifiableView OSet<K> of(Collection<K> k) {
+        if (k.isEmpty()) {
+            return emptySet();
+        }
+        return new OHashSet<>(k).immutable();
+    }
+
     @SafeVarargs
     static <K> @UnmodifiableView OSet<K> of(K... ks) {
         return switch (ks.length) {
@@ -50,10 +57,24 @@ public interface OSet<K> extends ObjectSet<K>, SetExtension {
         return modified;
     }
 
+    default boolean addAll(OSet<? extends K> set) {
+        this.preAllocate(set.size());
+        boolean modified = false;
+        for (long it = set.beginIteration(); set.hasNextIteration(it); it = set.nextEntry(it)) {
+            if (this.add(set.getIteration(it))) {
+                modified = true;
+            }
+        }
+        return modified;
+    }
+
     @Override
     default boolean addAll(Collection<? extends K> c) {
         if (c instanceof OList<? extends K> list) {
             return this.addAll(list);
+        }
+        if (c instanceof OSet<? extends K> set) {
+            return this.addAll(set);
         }
         this.preAllocate(c.size());
         boolean modified = false;
@@ -70,6 +91,11 @@ public interface OSet<K> extends ObjectSet<K>, SetExtension {
     K getIteration(long it);
 
     K getSampleElement();
+
+    default OSet<K> immutable() {
+        this.trim();
+        return this.view();
+    }
 
     long nextEntry(long it);
 

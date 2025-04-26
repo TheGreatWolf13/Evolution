@@ -19,7 +19,7 @@ import org.spongepowered.asm.mixin.*;
 import tgw.evolution.hooks.asm.DeleteField;
 import tgw.evolution.hooks.asm.ModifyConstructor;
 import tgw.evolution.hooks.asm.RestoreFinal;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 @Mixin(BlockCollisions.class)
 public abstract class Mixin_CF_BlockCollisions extends AbstractIterator<VoxelShape> {
@@ -77,7 +77,7 @@ public abstract class Mixin_CF_BlockCollisions extends AbstractIterator<VoxelSha
                 }
                 VoxelShape shape = blockState.getCollisionShape_(this.collisionGetter, x, y, z, this.entity);
                 AABB box = this.box;
-                if (!MathHelper.doesShapeIntersect(shape, box.minX - x, box.minY - y, box.minZ - z, box.maxX - x, box.maxY - y, box.maxZ - z)) {
+                if (!MthUtil.doesShapeIntersect(shape, box.minX - x, box.minY - y, box.minZ - z, box.maxX - x, box.maxY - y, box.maxZ - z)) {
                     continue;
                 }
                 return shape.move(x, y, z);

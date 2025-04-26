@@ -1,11 +1,13 @@
 package tgw.evolution.mixin;
 
 import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableMap;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.Dynamic;
 import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.NonNullList;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ItemParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
@@ -49,7 +51,6 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.PlayerTeam;
 import org.jetbrains.annotations.Nullable;
-import org.objectweb.asm.Opcodes;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
@@ -64,6 +65,9 @@ import tgw.evolution.client.renderer.ambient.DynamicLights;
 import tgw.evolution.entities.EffectHelper;
 import tgw.evolution.entities.EntityUtils;
 import tgw.evolution.hooks.LivingHooks;
+import tgw.evolution.hooks.asm.DeleteField;
+import tgw.evolution.hooks.asm.ModifyConstructor;
+import tgw.evolution.hooks.asm.RestoreFinal;
 import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.init.EvolutionBlockTags;
 import tgw.evolution.init.EvolutionDamage;
@@ -80,7 +84,7 @@ import tgw.evolution.util.damage.DamageSourceEntity;
 import tgw.evolution.util.damage.DamageSourceEv;
 import tgw.evolution.util.damage.EvolutionCombatTracker;
 import tgw.evolution.util.hitbox.HitboxType;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 import tgw.evolution.util.math.Vec3d;
 import tgw.evolution.util.physics.EarthHelper;
 import tgw.evolution.util.physics.Fluid;
@@ -89,33 +93,41 @@ import tgw.evolution.util.physics.Physics;
 import java.util.*;
 
 @Mixin(LivingEntity.class)
-public abstract class MixinLivingEntity extends Entity implements PatchLivingEntity {
+public abstract class Mixin_CF_LivingEntity extends Entity implements PatchLivingEntity {
 
     @Shadow @Final private static EntityDataAccessor<Boolean> DATA_EFFECT_AMBIENCE_ID;
     @Shadow @Final private static EntityDataAccessor<Integer> DATA_EFFECT_COLOR_ID;
     @Shadow @Final protected static int LIVING_ENTITY_FLAG_IS_USING;
     @Shadow @Final protected static int LIVING_ENTITY_FLAG_OFF_HAND;
     @Shadow @Final private static Logger LOGGER;
-    @Mutable @Shadow @Final private Map<MobEffect, MobEffectInstance> activeEffects;
+    @Shadow @Final @DeleteField private Map<MobEffect, MobEffectInstance> activeEffects;
+    @Unique private final R2OMap<MobEffect, MobEffectInstance> activeEffects_;
     @Shadow protected float animStep;
     @Shadow protected float animStepO;
     @Shadow public float animationSpeed;
     @Shadow public float attackAnim;
+    @Mutable @Shadow @Final @RestoreFinal private AttributeMap attributes;
     @Shadow protected int autoSpinAttackTicks;
     @Shadow protected Brain<?> brain;
-    @Mutable @Final @Shadow private CombatTracker combatTracker;
+    @Mutable @Final @Shadow @RestoreFinal private CombatTracker combatTracker;
     @Shadow public int deathTime;
-    @Unique private final EffectHelper effectHelper = new EffectHelper();
+    @Shadow private boolean discardFriction;
+    @Unique private final EffectHelper effectHelper;
     @Shadow private boolean effectsDirty;
     @Unique private byte emergeTicks;
     @Shadow protected int fallFlyTicks;
+    @Shadow public float flyingSpeed;
     @Shadow public float hurtDir;
     @Shadow public int hurtDuration;
     @Shadow public int hurtTime;
+    @Mutable @Shadow @Final @RestoreFinal public int invulnerableDuration;
     @Unique private boolean isSpecialAttacking;
     @Shadow protected boolean jumping;
+    @Mutable @Shadow @Final @RestoreFinal private NonNullList<ItemStack> lastArmorItemStacks;
+    @Shadow private Optional<BlockPos> lastClimbablePos;
     @Shadow private DamageSource lastDamageSource;
     @Shadow private long lastDamageStamp;
+    @Mutable @Shadow @Final @RestoreFinal private NonNullList<ItemStack> lastHandItemStacks;
     @Shadow protected float lastHurt;
     @Shadow private @Nullable LivingEntity lastHurtByMob;
     @Shadow private int lastHurtByMobTimestamp;
@@ -137,6 +149,7 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
     @Shadow protected float oRun;
     @Shadow public int removeArrowTime;
     @Shadow public int removeStingerTime;
+    @Final @Shadow @DeleteField public float rotA;
     @Shadow protected float run;
     @Unique private byte specialAttackFollowUp;
     @Unique private byte specialAttackGracePeriod;
@@ -147,7 +160,8 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
     @Shadow public float swimAmountO;
     @Shadow public int swingTime;
     @Shadow public boolean swinging;
-    @Unique private final Vec3d travelVec = new Vec3d();
+    @Shadow @Final @DeleteField public float timeOffs;
+    @Unique private final Vec3d travelVec;
     @Shadow protected ItemStack useItem;
     @Shadow protected int useItemRemaining;
     @Shadow public float xxa;
@@ -158,8 +172,43 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
     @Shadow public float yya;
     @Shadow public float zza;
 
-    public MixinLivingEntity(EntityType<?> entityType, Level level) {
+    @ModifyConstructor
+    protected Mixin_CF_LivingEntity(EntityType<? extends LivingEntity> entityType, Level level) {
         super(entityType, level);
+        this.combatTracker = new EvolutionCombatTracker((LivingEntity) (Object) this);
+        this.activeEffects_ = new R2OHashMap<>();
+        this.effectHelper = new EffectHelper();
+        this.travelVec = new Vec3d();
+        this.lastHandItemStacks = NonNullList.withSize(2, ItemStack.EMPTY);
+        this.lastArmorItemStacks = NonNullList.withSize(4, ItemStack.EMPTY);
+        this.discardFriction = false;
+        this.invulnerableDuration = 20;
+        this.flyingSpeed = 0.02F;
+        this.effectsDirty = true;
+        this.useItem = ItemStack.EMPTY;
+        this.lastClimbablePos = Optional.empty();
+        this.attributes = new AttributeMap(DefaultAttributes.getSupplier(entityType));
+        AttributeInstance massAtr = this.getAttribute(EvolutionAttributes.MASS);
+        assert massAtr != null;
+        massAtr.setBaseValue(this.getBaseMass());
+        AttributeInstance walkForceAtr = this.getAttribute(Attributes.MOVEMENT_SPEED);
+        assert walkForceAtr != null;
+        walkForceAtr.setBaseValue(this.getBaseWalkForce());
+        AttributeInstance healthAtr = this.getAttribute(Attributes.MAX_HEALTH);
+        assert healthAtr != null;
+        healthAtr.setBaseValue(this.getBaseHealth());
+        this.setHealth(this.getMaxHealth());
+        AttributeInstance damageAtr = this.getAttribute(Attributes.ATTACK_DAMAGE);
+        if (damageAtr != null) {
+            damageAtr.setBaseValue(this.getBaseAttackDamage());
+        }
+        this.blocksBuilding = true;
+        this.reapplyPosition();
+        this.setYRot((float) (Math.random() * Mth.TWO_PI));
+        this.yHeadRot = this.getYRot();
+        this.maxUpStep = 0.6F;
+        NbtOps nbtOps = NbtOps.INSTANCE;
+        this.brain = this.makeBrain(new Dynamic<>(nbtOps, nbtOps.createMap(ImmutableMap.of(nbtOps.createString("memories"), nbtOps.emptyMap()))));
     }
 
     /**
@@ -241,11 +290,12 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
         tag.putShort("DeathTime", (short) this.deathTime);
         tag.putFloat("AbsorptionAmount", this.getAbsorptionAmount());
         tag.put("Attributes", this.getAttributes().save());
-        if (!this.activeEffects.isEmpty()) {
+        R2OMap<MobEffect, MobEffectInstance> activeEffects = this.activeEffects_;
+        if (!activeEffects.isEmpty()) {
             ListTag list = new ListTag();
-            for (MobEffectInstance effect : this.activeEffects.values()) {
+            for (long it = activeEffects.beginIteration(); activeEffects.hasNextIteration(it); it = activeEffects.nextEntry(it)) {
                 //noinspection ObjectAllocationInLoop
-                list.add(effect.save(new CompoundTag()));
+                list.add(activeEffects.getIterationValue(it).save(new CompoundTag()));
             }
             tag.put("ActiveEffects", list);
         }
@@ -277,7 +327,7 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
         if (!this.canBeAffected(effectInstance)) {
             return false;
         }
-        MobEffectInstance oldInstance = this.activeEffects.get(effectInstance.getEffect());
+        MobEffectInstance oldInstance = this.activeEffects_.get(effectInstance.getEffect());
         if (entity instanceof ServerPlayer player) {
             if (oldInstance == null) {
                 player.connection.send(new PacketSCAddEffect(effectInstance, PacketSCAddEffect.Logic.ADD));
@@ -295,7 +345,7 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
             }
         }
         if (oldInstance == null) {
-            this.activeEffects.put(effectInstance.getEffect(), effectInstance);
+            this.activeEffects_.put(effectInstance.getEffect(), effectInstance);
             this.onEffectAdded(effectInstance, entity);
             return true;
         }
@@ -552,7 +602,7 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
             double dx = EarthHelper.deltaBlockCoordinate(entity.getX(), entity.xo);
             double dy = flies || isSwimming ? entity.getY() - entity.yo : 0;
             double dz = EarthHelper.deltaBlockCoordinate(entity.getZ(), entity.zo);
-            float dS = MathHelper.sqrt(dx * dx + dy * dy + dz * dz) * Mth.PI;
+            float dS = MthUtil.sqrt(dx * dx + dy * dy + dz * dz) * Mth.PI;
             if (dS == 0 && entity.animationSpeed <= 1E-3) {
                 entity.animationPosition = 0;
                 entity.moveDist = 0;
@@ -790,6 +840,24 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
     @Shadow
     protected abstract void doPush(Entity pEntity);
 
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public void forceAddEffect(MobEffectInstance instance, @Nullable Entity entity) {
+        if (this.canBeAffected(instance)) {
+            MobEffectInstance oldEffect = this.activeEffects_.put(instance.getEffect(), instance);
+            //noinspection VariableNotUsedInsideIf
+            if (oldEffect == null) {
+                this.onEffectAdded(instance, entity);
+            }
+            else {
+                this.onEffectUpdated(instance, true, entity);
+            }
+        }
+    }
+
     @Shadow
     public abstract float getAbsorptionAmount();
 
@@ -808,7 +876,22 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
     public Collection<MobEffectInstance> getActiveEffects() {
         //Iterate over the values on the map itself!
         Evolution.deprecatedMethod();
-        return this.activeEffects.values();
+        return this.activeEffects_.values();
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public Map<MobEffect, MobEffectInstance> getActiveEffectsMap() {
+        Evolution.deprecatedMethod();
+        return this.activeEffects_;
+    }
+
+    @Override
+    public R2OMap<MobEffect, MobEffectInstance> getActiveEffectsMap_() {
+        return this.activeEffects_;
     }
 
     @Shadow
@@ -843,8 +926,14 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
     @Shadow
     protected abstract @Nullable SoundEvent getDeathSound();
 
-    @Shadow
-    public abstract @Nullable MobEffectInstance getEffect(MobEffect p_21125_);
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public @Nullable MobEffectInstance getEffect(MobEffect mobEffect) {
+        return this.activeEffects_.get(mobEffect);
+    }
 
     @Override
     public EffectHelper getEffectHelper() {
@@ -1024,10 +1113,10 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
         double newX;
         double newZ;
         if (!this.isOnGround()) {
-            newX = MathHelper.clamp(speedX, -0.025, 0.025);
+            newX = MthUtil.clamp(speedX, -0.025, 0.025);
             newX *= 0.8;
             newX -= dx;
-            newZ = MathHelper.clamp(speedZ, -0.025, 0.025);
+            newZ = MthUtil.clamp(speedZ, -0.025, 0.025);
             newZ *= 0.8;
             newZ -= dz;
         }
@@ -1141,8 +1230,14 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
         }
     }
 
-    @Shadow
-    public abstract boolean hasEffect(MobEffect p_21024_);
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public boolean hasEffect(MobEffect mobEffect) {
+        return this.activeEffects_.containsKey(mobEffect);
+    }
 
     /**
      * @author TheGreatWolf
@@ -1215,7 +1310,7 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
             for (dz = sourceEntity.getZ() - this.getZ(); dx * dx + dz * dz < 1.0E-4; dz = (Math.random() - Math.random()) * 0.01) {
                 dx = (Math.random() - Math.random()) * 0.01;
             }
-            this.hurtDir = (float) (MathHelper.atan2Deg(dz, dx) - this.getYRot());
+            this.hurtDir = (float) (MthUtil.atan2Deg(dz, dx) - this.getYRot());
             this.knockback(0.4F, dx, dz);
         }
         else {
@@ -1448,41 +1543,6 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
     @Shadow
     public abstract void onEffectUpdated(MobEffectInstance p_147192_, boolean p_147193_, @Nullable Entity p_147194_);
 
-    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/world/entity/LivingEntity;activeEffects:Ljava/util/Map;", opcode = Opcodes.PUTFIELD))
-    private void onInit(LivingEntity instance, Map<MobEffect, MobEffectInstance> value) {
-        this.activeEffects = new R2OHashMap<>();
-    }
-
-    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/world/entity/LivingEntity;" +
-                                                                    "combatTracker:Lnet/minecraft/world/damagesource/CombatTracker;", opcode = Opcodes.PUTFIELD))
-    private void onInit(LivingEntity instance, CombatTracker value) {
-        this.combatTracker = new EvolutionCombatTracker((LivingEntity) (Object) this);
-    }
-
-    @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;setHealth(F)V"))
-    private void onInit(LivingEntity instance, float pHealth) {
-        AttributeInstance massAtr = this.getAttribute(EvolutionAttributes.MASS);
-        assert massAtr != null;
-        massAtr.setBaseValue(this.getBaseMass());
-        AttributeInstance walkForceAtr = this.getAttribute(Attributes.MOVEMENT_SPEED);
-        assert walkForceAtr != null;
-        walkForceAtr.setBaseValue(this.getBaseWalkForce());
-        AttributeInstance healthAtr = this.getAttribute(Attributes.MAX_HEALTH);
-        assert healthAtr != null;
-        healthAtr.setBaseValue(this.getBaseHealth());
-        this.setHealth(this.getMaxHealth());
-        AttributeInstance damageAtr = this.getAttribute(Attributes.ATTACK_DAMAGE);
-        if (damageAtr != null) {
-            damageAtr.setBaseValue(this.getBaseAttackDamage());
-        }
-    }
-
-    @SuppressWarnings("MethodMayBeStatic")
-    @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lcom/google/common/collect/Maps;newHashMap()Ljava/util/HashMap;", remap = false))
-    private @Nullable HashMap onInitRemoveMap() {
-        return null;
-    }
-
     /**
      * @reason _
      * @author TheGreatWolf
@@ -1576,7 +1636,7 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
                 CompoundTag compound = effects.getCompound(i);
                 MobEffectInstance effect = MobEffectInstance.load(compound);
                 if (effect != null) {
-                    this.activeEffects.put(effect.getEffect(), effect);
+                    this.activeEffects_.put(effect.getEffect(), effect);
                 }
             }
         }
@@ -1647,8 +1707,17 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
         return false;
     }
 
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public @Nullable MobEffectInstance removeEffectNoUpdate(@Nullable MobEffect mobEffect) {
+        return this.activeEffects_.remove(mobEffect);
+    }
+
     @Shadow
-    public abstract @Nullable MobEffectInstance removeEffectNoUpdate(@Nullable MobEffect mobEffect);
+    protected abstract void removeEffectParticles();
 
     @Shadow
     protected abstract void removeFrost();
@@ -1870,8 +1939,8 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
         float f2 = 0.0F;
         if (dSSq > 0.002_500_000_2F) {
             f3 = 1.0F;
-            f2 = MathHelper.sqrt(dSSq) * 3.0F;
-            float f4 = (float) MathHelper.atan2Deg(dz, dx) - 90.0F;
+            f2 = MthUtil.sqrt(dSSq) * 3.0F;
+            float f4 = (float) MthUtil.atan2Deg(dz, dx) - 90.0F;
             float f5 = Math.abs(Mth.wrapDegrees(this.getYRot()) - f4);
             if (95.0F < f5 && f5 < 265.0F) {
                 f1 = f4 - 180.0F;
@@ -1948,7 +2017,7 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
             float hungerMod = 0.0f;
             float thirstMod = 0.0f;
             double tempMod = 0.0;
-            R2OMap<MobEffect, MobEffectInstance> activeEffects = (R2OMap<MobEffect, MobEffectInstance>) this.activeEffects;
+            R2OMap<MobEffect, MobEffectInstance> activeEffects = this.activeEffects_;
             for (long it = activeEffects.beginIteration(); activeEffects.hasNextIteration(it); it = activeEffects.nextEntry(it)) {
                 MobEffect effect = activeEffects.getIterationKey(it);
                 MobEffectInstance instance = activeEffects.get(effect);
@@ -2122,8 +2191,20 @@ public abstract class MixinLivingEntity extends Entity implements PatchLivingEnt
     @Shadow
     protected abstract void updateGlowingStatus();
 
-    @Shadow
-    protected abstract void updateInvisibilityStatus();
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public void updateInvisibilityStatus() {
+        if (this.activeEffects_.isEmpty()) {
+            this.removeEffectParticles();
+            this.setInvisible(false);
+        }
+        else {
+            this.setInvisible(this.hasEffect(MobEffects.INVISIBILITY));
+        }
+    }
 
     /**
      * @author TheGreatWolf

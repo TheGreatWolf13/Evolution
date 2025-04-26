@@ -16,7 +16,7 @@ public class ModelPlayerCorpse extends Model {
 //        this.texHeight = 32;
 //        this.base = new ModelRenderer(this);
 //        this.base.setPos(-1.0F, 36.0F, -1.0F);
-//        MathHelper.setRotationAngle(this.base, -MathHelper.PI_OVER_2, 0.0F, 0.0F);
+//        MthUtil.setRotationAngle(this.base, -MthUtil.PI_OVER_2, 0.0F, 0.0F);
 //        this.base.mirror = true;
 //        this.base.addBox("", 2.0F, 3.0F, -15.0F, 2, 12, 2, 0.0F, 40, 16);
 //        this.base.mirror = false;
@@ -36,12 +36,12 @@ public class ModelPlayerCorpse extends Model {
 //        this.texHeight = 64;
 //        this.base = new ModelRenderer(this);
 //        this.base.setPos(0.0F, 24.0F, 0.0F);
-//        MathHelper.setRotationAngle(this.base, -MathHelper.PI_OVER_2, 0.0F, 0.0F);
+//        MthUtil.setRotationAngle(this.base, -MthUtil.PI_OVER_2, 0.0F, 0.0F);
 //        this.base.addBox("", -4.0f, -16.0f, -6.0f, 8, 8, 8, 0.0F, 0, 0);
 //        this.base.addBox("", -4.0f, -8.0f, -4.0f, 8, 12, 4, 0.0F, 16, 16);
 //        this.overlay = new ModelRenderer(this);
 //        this.overlay.setPos(0.0F, 24.0F, 0.0F);
-//        MathHelper.setRotationAngle(this.overlay, -MathHelper.PI_OVER_2, 0.0F, 0.0F);
+//        MthUtil.setRotationAngle(this.overlay, -MthUtil.PI_OVER_2, 0.0F, 0.0F);
 //        if (smallArms) {
 //            this.base.addBox("", -9.0f, -8.0f, -4.0f, 3, 12, 4, 0.0F, 40, 16);
 //            this.base.addBox("", 4.0F, -8.0f, -4.0f, 3, 12, 4, 0.0F, 32, 48);

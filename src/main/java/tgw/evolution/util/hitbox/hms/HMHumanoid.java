@@ -13,7 +13,7 @@ import net.minecraft.world.item.UseAnim;
 import tgw.evolution.EvolutionClient;
 import tgw.evolution.items.IMelee;
 import tgw.evolution.util.ArmPose;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 public interface HMHumanoid<T extends LivingEntity> extends HMAgeableList<T> {
 
@@ -614,7 +614,7 @@ public interface HMHumanoid<T extends LivingEntity> extends HMAgeableList<T> {
             if (!(entity.shouldRenderSpecialAttack() && entity.getMainArm() == this.getSwingingArm(entity))) {
                 HM attackingArm = this.arm(attackingSide);
                 float attackTime = this.attackTime();
-                body.setRotationY(-Mth.sin(MathHelper.sqrt(attackTime) * Mth.TWO_PI) * 0.2F);
+                body.setRotationY(-Mth.sin(MthUtil.sqrt(attackTime) * Mth.TWO_PI) * 0.2F);
                 if (attackingSide == HumanoidArm.LEFT) {
                     body.invertRotationY();
                 }

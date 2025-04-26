@@ -43,7 +43,6 @@ import tgw.evolution.hooks.asm.ModifyStatic;
 import tgw.evolution.hooks.asm.RestoreFinal;
 import tgw.evolution.patches.PatchBlock;
 import tgw.evolution.util.collection.lists.OList;
-import tgw.evolution.util.constants.BlockFlags;
 import tgw.evolution.util.constants.HarvestLevel;
 
 import java.util.List;
@@ -56,8 +55,8 @@ import java.util.random.RandomGenerator;
 public abstract class Mixin_FS_Block extends BlockBehaviour implements PatchBlock, ItemLike {
 
     @Mutable @Shadow @Final @RestoreFinal public static IdMapper<BlockState> BLOCK_STATE_REGISTRY;
-    @Shadow @Final @DeleteField private static ThreadLocal<Object2ByteLinkedOpenHashMap<Block.BlockStatePairKey>> OCCLUSION_CACHE;
     @Mutable @Shadow @Final @RestoreFinal private static Logger LOGGER;
+    @Shadow @Final @DeleteField private static ThreadLocal<Object2ByteLinkedOpenHashMap<Block.BlockStatePairKey>> OCCLUSION_CACHE;
     @Mutable @Shadow @Final @RestoreFinal private static LoadingCache<VoxelShape, Boolean> SHAPE_FULL_BLOCK_CACHE;
     @Shadow @Final protected StateDefinition<Block, BlockState> stateDefinition;
 
@@ -83,6 +82,19 @@ public abstract class Mixin_FS_Block extends BlockBehaviour implements PatchBloc
     public static boolean canSupportRigidBlock(BlockGetter level, BlockPos pos) {
         Evolution.deprecatedMethod();
         return BlockUtils.canSupportRigidBlock(level, pos.getX(), pos.getY(), pos.getZ());
+    }
+
+    @ModifyStatic
+    @Unique
+    private static void clinit() {
+        LOGGER = LogUtils.getLogger();
+        BLOCK_STATE_REGISTRY = new IdMapper<>();
+        SHAPE_FULL_BLOCK_CACHE = CacheBuilder.newBuilder().maximumSize(512L).weakKeys().build(new CacheLoader<>() {
+            @Override
+            public Boolean load(VoxelShape shape) {
+                return !Shapes.joinIsNotEmpty(Shapes.block(), shape, BooleanOp.NOT_SAME);
+            }
+        });
     }
 
     /**
@@ -213,27 +225,9 @@ public abstract class Mixin_FS_Block extends BlockBehaviour implements PatchBloc
      * @author TheGreatWolf
      */
     @Overwrite
-    public static void updateOrDestroy(BlockState state,
-                                       BlockState updatedState,
-                                       LevelAccessor level,
-                                       BlockPos pos,
-                                       @BlockFlags int flags,
-                                       int limit) {
+    public static void updateOrDestroy(BlockState state, BlockState updatedState, LevelAccessor level, BlockPos pos, int flags, int limit) {
         Evolution.deprecatedMethod();
         BlockUtils.updateOrDestroy(state, updatedState, level, pos.getX(), pos.getY(), pos.getZ(), flags, limit);
-    }
-
-    @ModifyStatic
-    @Unique
-    private static void clinit() {
-        LOGGER = LogUtils.getLogger();
-        BLOCK_STATE_REGISTRY = new IdMapper<>();
-        SHAPE_FULL_BLOCK_CACHE = CacheBuilder.newBuilder().maximumSize(512L).weakKeys().build(new CacheLoader<>() {
-            @Override
-            public Boolean load(VoxelShape shape) {
-                return !Shapes.joinIsNotEmpty(Shapes.block(), shape, BooleanOp.NOT_SAME);
-            }
-        });
     }
 
     /**

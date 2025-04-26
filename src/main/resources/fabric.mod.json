@@ -87,9 +87,6 @@
       "com/mojang/datafixers/util/Either": [
         "tgw/evolution/patches/PatchEither"
       ],
-      "net/minecraft/world/entity/Entity": [
-        "tgw/evolution/patches/PatchEntity"
-      ],
       "net/minecraft/world/level/material/Fluid": [
         "tgw/evolution/patches/PatchFluid"
       ],
@@ -392,7 +389,7 @@
         "tgw/evolution/patches/PatchBoundingBox"
       ],
       "net/minecraft/core/DefaultedRegistry": [
-        "tgw/evolution/patches/PatchDefaultedRegistry"
+        "tgw/evolution/patches/PatchDefaultedRegistry<TT;>"
       ],
       "net/minecraft/world/level/levelgen/blockpredicates/BlockPredicate": [
         "tgw/evolution/patches/PatchBlockPredicate"
@@ -436,11 +433,38 @@
       "net/minecraft/client/Camera": [
         "tgw/evolution/patches/PatchCamera"
       ],
-      "net/minecraft/util/ClassInstanceMultiMap": [
-        "tgw/evolution/patches/PatchClassInstanceMultiMap"
-      ],
       "net/minecraft/world/level/entity/TransientEntitySectionManager": [
         "tgw/evolution/patches/PatchTransientEntitySectionManager"
+      ],
+      "net/minecraft/client/resources/TextureAtlasHolder": [
+        "tgw/evolution/patches/PatchTextureAtlasHolder"
+      ],
+      "net/minecraft/world/level/entity/EntitySection": [
+        "tgw/evolution/patches/PatchEntitySection"
+      ],
+      "net/minecraft/world/level/entity/EntitySectionStorage": [
+        "tgw/evolution/patches/PatchEntitySectionStorage"
+      ],
+      "net/minecraft/world/level/entity/PersistentEntitySectionManager": [
+        "tgw/evolution/patches/PatchPersistentEntitySectionManager"
+      ],
+      "net/minecraft/world/level/entity/EntityAccess": [
+        "tgw/evolution/patches/PatchEntity"
+      ],
+      "net/minecraft/world/entity/EntityType": [
+        "tgw/evolution/patches/PatchEntityType"
+      ],
+      "net/minecraft/world/level/chunk/storage/IOWorker": [
+        "tgw/evolution/patches/PatchIOWorker"
+      ],
+      "net/minecraft/world/level/chunk/storage/ChunkStorage": [
+        "tgw/evolution/patches/PatchChunkStorage"
+      ],
+      "net/minecraft/world/level/chunk/storage/SectionStorage": [
+        "tgw/evolution/patches/PatchSectionStorage"
+      ],
+      "net/minecraft/world/level/entity/EntityPersistentStorage": [
+        "tgw/evolution/patches/PatchEntityStorage<TT;>"
       ]
     }
   }

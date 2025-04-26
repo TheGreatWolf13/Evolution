@@ -16,7 +16,7 @@
 //import net.minecraft.world.level.block.RenderShape;
 //import net.minecraft.world.level.block.state.BlockState;
 //import tgw.evolution.entities.misc.EntityFallingPeat;
-//import tgw.evolution.util.math.MathHelper;
+//import tgw.evolution.util.math.MthUtil;
 //
 //public class RenderFallingPeat extends EntityRenderer<EntityFallingPeat> {
 //
@@ -49,7 +49,7 @@
 //                                      matrices,
 //                                      buffer.getBuffer(ItemBlockRenderTypes.getMovingBlockRenderType(state)),
 //                                      false,
-//                                      MathHelper.RANDOM,
+//                                      MthUtil.RANDOM,
 //                                      Mth.getSeed(MUTABLE_POS),
 //                                      OverlayTexture.NO_OVERLAY);
 //            matrices.popPose();

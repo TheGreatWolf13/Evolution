@@ -228,6 +228,9 @@ public abstract class Mixin_CFM_MappedRegistry<T> extends WritableRegistry<T> {
         throw new IllegalStateException("Registry is already frozen");
     }
 
+    @Shadow
+    protected abstract HolderSet.Named<T> createTag(TagKey<T> tagKey);
+
     /**
      * @author TheGreatWolf
      * @reason _
@@ -322,6 +325,18 @@ public abstract class Mixin_CFM_MappedRegistry<T> extends WritableRegistry<T> {
         return this.holdersInOrder_.get((int) (it >> 32)).value();
     }
 
+    @Override
+    public ResourceKey getIterationKey(long it) {
+        assert this.holdersInOrder_ != null;
+        return this.holdersInOrder_.get((int) (it >> 32)).key();
+    }
+
+    @Override
+    public ResourceLocation getIterationLocation(long it) {
+        assert this.holdersInOrder_ != null;
+        return this.holdersInOrder_.get((int) (it >> 32)).key().location();
+    }
+
     /**
      * @author TheGreatWolf
      * @reason _
@@ -411,7 +426,16 @@ public abstract class Mixin_CFM_MappedRegistry<T> extends WritableRegistry<T> {
     @Override
     @Overwrite
     public Stream<Pair<TagKey<T>, HolderSet.Named<T>>> getTags() {
-        return this.tags_.entrySet().stream().map(entry -> Pair.of(entry.getKey(), entry.getValue()));
+        R2OMap<TagKey<T>, HolderSet.Named<T>> tags = this.tags_;
+        if (tags.isEmpty()) {
+            return Stream.empty();
+        }
+        Stream.Builder<Pair<TagKey<T>, HolderSet.Named<T>>> builder = Stream.builder();
+        for (long it = tags.beginIteration(); tags.hasNextIteration(it); it = tags.nextEntry(it)) {
+            //noinspection ObjectAllocationInLoop
+            builder.add(Pair.of(tags.getIterationKey(it), tags.getIterationValue(it)));
+        }
+        return builder.build();
     }
 
     @Override
@@ -479,6 +503,36 @@ public abstract class Mixin_CFM_MappedRegistry<T> extends WritableRegistry<T> {
         return this.lifecycles_.get(object);
     }
 
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    @DeleteMethod
+    private void method_40258(Map par1, TagKey par2, List par3) {
+        throw new AbstractMethodError();
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    @DeleteMethod
+    private void method_40263(Map par1, TagKey par2, List par3) {
+        throw new AbstractMethodError();
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    @DeleteMethod
+    private Holder.Reference method_40275(ResourceKey par1) {
+        throw new AbstractMethodError();
+    }
+
     @Override
     public long nextEntry(long it) {
         int size = (int) it;
@@ -487,6 +541,49 @@ public abstract class Mixin_CFM_MappedRegistry<T> extends WritableRegistry<T> {
         }
         int pos = (int) (it >> 32) + 1;
         return (long) pos << 32 | size;
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    private Holder<T> registerMapping(int i, ResourceKey<T> resourceKey, T object, Lifecycle lifecycle, boolean bl) {
+        this.validateWrite(resourceKey);
+        this.byId_.size(Math.max(this.byId_.size(), i + 1));
+        this.toId_.put(object, i);
+        this.holdersInOrder_ = null;
+        if (bl && this.byKey_.containsKey(resourceKey)) {
+            Util.logAndPauseIfInIde("Adding duplicate key '" + resourceKey + "' to registry");
+        }
+        if (this.byValue_.containsKey(object)) {
+            Util.logAndPauseIfInIde("Adding duplicate value '" + object + "' to registry");
+        }
+        this.lifecycles_.put(object, lifecycle);
+        this.elementsLifecycle = this.elementsLifecycle.add(lifecycle);
+        if (this.nextId <= i) {
+            this.nextId = i + 1;
+        }
+        Holder.Reference reference;
+        if (this.customHolderProvider != null) {
+            reference = this.customHolderProvider.apply(object);
+            Holder.Reference<T> oldReference = this.byKey_.put(resourceKey, reference);
+            if (oldReference != null && oldReference != reference) {
+                throw new IllegalStateException("Invalid holder present for key " + resourceKey);
+            }
+        }
+        else {
+            reference = this.byKey_.get(resourceKey);
+            if (reference == null) {
+                reference = Holder.Reference.createStandAlone(this, resourceKey);
+                this.byKey_.put(resourceKey, reference);
+            }
+        }
+        this.byLocation_.put(resourceKey.location(), reference);
+        this.byValue_.put(object, reference);
+        reference.bind(resourceKey, object);
+        this.byId_.set(i, reference);
+        return reference;
     }
 
     /**
@@ -548,81 +645,5 @@ public abstract class Mixin_CFM_MappedRegistry<T> extends WritableRegistry<T> {
     }
 
     @Shadow
-    protected abstract HolderSet.Named<T> createTag(TagKey<T> tagKey);
-
-    @Shadow
     protected abstract void validateWrite(ResourceKey<T> resourceKey);
-
-    /**
-     * @author TheGreatWolf
-     * @reason _
-     */
-    @Overwrite
-    @DeleteMethod
-    private void method_40258(Map par1, TagKey par2, List par3) {
-        throw new AbstractMethodError();
-    }
-
-    /**
-     * @author TheGreatWolf
-     * @reason _
-     */
-    @Overwrite
-    @DeleteMethod
-    private void method_40263(Map par1, TagKey par2, List par3) {
-        throw new AbstractMethodError();
-    }
-
-    /**
-     * @author TheGreatWolf
-     * @reason _
-     */
-    @Overwrite
-    @DeleteMethod
-    private Holder.Reference method_40275(ResourceKey par1) {
-        throw new AbstractMethodError();
-    }
-
-    /**
-     * @author TheGreatWolf
-     * @reason _
-     */
-    @Overwrite
-    private Holder<T> registerMapping(int i, ResourceKey<T> resourceKey, T object, Lifecycle lifecycle, boolean bl) {
-        this.validateWrite(resourceKey);
-        this.byId_.size(Math.max(this.byId_.size(), i + 1));
-        this.toId_.put(object, i);
-        this.holdersInOrder_ = null;
-        if (bl && this.byKey_.containsKey(resourceKey)) {
-            Util.logAndPauseIfInIde("Adding duplicate key '" + resourceKey + "' to registry");
-        }
-        if (this.byValue_.containsKey(object)) {
-            Util.logAndPauseIfInIde("Adding duplicate value '" + object + "' to registry");
-        }
-        this.lifecycles_.put(object, lifecycle);
-        this.elementsLifecycle = this.elementsLifecycle.add(lifecycle);
-        if (this.nextId <= i) {
-            this.nextId = i + 1;
-        }
-        Holder.Reference reference;
-        if (this.customHolderProvider != null) {
-            reference = this.customHolderProvider.apply(object);
-            Holder.Reference<T> oldReference = this.byKey_.put(resourceKey, reference);
-            if (oldReference != null && oldReference != reference) {
-                throw new IllegalStateException("Invalid holder present for key " + resourceKey);
-            }
-        }
-        else {
-            reference = this.byKey_.get(resourceKey);
-            if (reference == null) {
-                reference = Holder.Reference.createStandAlone(this, resourceKey);
-                this.byKey_.put(resourceKey, reference);
-            }
-        }
-        this.byLocation_.put(resourceKey.location(), reference);
-        this.byValue_.put(object, reference);
-        reference.bind(resourceKey, object);
-        this.byId_.set(i, reference);
-        return reference;
-    }
 }

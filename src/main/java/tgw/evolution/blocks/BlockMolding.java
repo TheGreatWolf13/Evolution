@@ -30,7 +30,7 @@ import tgw.evolution.blocks.tileentities.TEMolding;
 import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionShapes;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 import static tgw.evolution.init.EvolutionBStates.LAYERS_1_5;
 
@@ -144,17 +144,17 @@ public class BlockMolding extends BlockGeneric implements IReplaceable, EntityBl
         }
         if (level.getBlockEntity_(x, y, z) instanceof TEMolding tile) {
             double hitX = (hit.getLocation().x - x) * 16;
-            if (!MathHelper.rangeInclusive(hitX, 0.5, 15.5)) {
+            if (!MthUtil.rangeInclusive(hitX, 0.5, 15.5)) {
                 return InteractionResult.PASS;
             }
             double hitZ = (hit.getLocation().z - z) * 16;
-            if (!MathHelper.rangeInclusive(hitZ, 0.5, 15.5)) {
+            if (!MthUtil.rangeInclusive(hitZ, 0.5, 15.5)) {
                 return InteractionResult.PASS;
             }
             double hitY = (hit.getLocation().y - y) * 16;
-            int partX = MathHelper.getIndex(5, 0.5, 15.5, MathHelper.hitOffset(Direction.Axis.X, hitX, hit.getDirection()));
-            int partY = MathHelper.getIndex(5, 0, 15, MathHelper.hitOffset(Direction.Axis.Y, hitY, hit.getDirection()));
-            int partZ = MathHelper.getIndex(5, 0.5, 15.5, MathHelper.hitOffset(Direction.Axis.Z, hitZ, hit.getDirection()));
+            int partX = MthUtil.getIndex(5, 0.5, 15.5, MthUtil.hitOffset(Direction.Axis.X, hitX, hit.getDirection()));
+            int partY = MthUtil.getIndex(5, 0, 15, MthUtil.hitOffset(Direction.Axis.Y, hitY, hit.getDirection()));
+            int partZ = MthUtil.getIndex(5, 0.5, 15.5, MthUtil.hitOffset(Direction.Axis.Z, hitZ, hit.getDirection()));
 //        if (!tile.matrices[partY][partX][partZ] || tile.molding.getPattern()[partY][partX][partZ]) {
 //            return ActionResultType.PASS;
 //        }

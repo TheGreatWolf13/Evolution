@@ -12,6 +12,14 @@ import java.util.NoSuchElementException;
 
 public interface L2OMap<V> extends Long2ObjectMap<V>, MapExtension {
 
+    static @UnmodifiableView L2OMap emptyMap() {
+        return EmptyMap.EMPTY;
+    }
+
+    static @UnmodifiableView L2OMap of() {
+        return EmptyMap.EMPTY;
+    }
+
     long beginIteration();
 
     @Override
@@ -68,6 +76,11 @@ public interface L2OMap<V> extends Long2ObjectMap<V>, MapExtension {
     L2OMap<V> view();
 
     class EmptyMap<V> extends Long2ObjectMaps.EmptyMap<V> implements L2OMap<V> {
+
+        private static final L2OMap EMPTY = new EmptyMap();
+
+        protected EmptyMap() {
+        }
 
         @Override
         public long beginIteration() {

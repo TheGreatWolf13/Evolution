@@ -1,6 +1,6 @@
 package tgw.evolution.world.puzzle.pieces.config;
 
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 public enum ForceType {
     NONE(0),
@@ -11,7 +11,7 @@ public enum ForceType {
     private final byte id;
 
     ForceType(int id) {
-        this.id = MathHelper.toByteExact(id);
+        this.id = MthUtil.toByteExact(id);
     }
 
     public static ForceType byId(int id) {

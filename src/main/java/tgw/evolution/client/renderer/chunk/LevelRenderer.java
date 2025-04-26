@@ -981,7 +981,7 @@ public class LevelRenderer implements IKeyedReloadListener, ResourceManagerReloa
                 CrashReport crashreport = this.mc.fillReport(new CrashReport(message, shaderException));
                 this.mc.options.graphicsMode = GraphicsStatus.FANCY;
                 this.mc.options.save();
-                Evolution.error(message, shaderException);
+                Evolution.error(shaderException, message);
                 this.mc.emergencySave();
                 Minecraft.crash(crashreport);
             }

@@ -14,7 +14,7 @@ import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionTEs;
 import tgw.evolution.items.ItemFirewood;
 import tgw.evolution.util.constants.WoodVariant;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 import java.util.Arrays;
 
@@ -94,7 +94,7 @@ public class TEFirewoodPile extends BlockEntity {
     public void load(CompoundTag compound) {
         super.load(compound);
         this.firewood = compound.getByteArray("Firewood");
-        this.currentIndex = MathHelper.indexOfOrLength(this.firewood, (byte) -1);
+        this.currentIndex = MthUtil.indexOfOrLength(this.firewood, (byte) -1);
     }
 
     public @Nullable Item removeLastFirewood() {

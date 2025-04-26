@@ -57,7 +57,7 @@ public final class DirectionList {
         }
         data = setSize(data, --size);
         if (index != size) {
-            data = MathHelper.deleteBits(data, (index + 1) * 3, 3);
+            data = MthUtil.deleteBits(data, (index + 1) * 3, 3);
         }
         return data;
     }

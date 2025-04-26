@@ -1,8 +1,11 @@
 package tgw.evolution.patches;
 
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectInstance;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.entities.EffectHelper;
 import tgw.evolution.items.IMelee;
+import tgw.evolution.util.collection.maps.R2OMap;
 import tgw.evolution.util.damage.DamageSourceEv;
 import tgw.evolution.util.hitbox.HitboxType;
 
@@ -11,6 +14,10 @@ public interface PatchLivingEntity {
     void addAbsorptionSuggestion(float amount);
 
     boolean canPerformFollowUp(IMelee.IAttackType type);
+
+    default R2OMap<MobEffect, MobEffectInstance> getActiveEffectsMap_() {
+        throw new AbstractMethodError();
+    }
 
     default int getAttackNumber() {
         return this.isOnGracePeriod() ? this.getFollowUp() : this.getFollowUp() + 1;

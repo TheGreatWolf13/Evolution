@@ -15,7 +15,7 @@ public class ModelHook extends Model {
 //        this.texHeight = 16;
 //        this.bone = new ModelPart(this, 0, 0);
 //        this.bone.setPos(0.0F, 24.0F, 0.0F);
-//        MathHelper.setRotationAngle(this.bone, -MathHelper.PI_OVER_2, 0.0F, 0.0F);
+//        MthUtil.setRotationAngle(this.bone, -MthUtil.PI_OVER_2, 0.0F, 0.0F);
 //        this.bone.addBox("", 2.5f, 2.0f, -23.0f, 1, 1, 3, 0.0f, 8, 0);
 //        this.bone.addBox("", -3.5f, 2.0F, -23.0F, 1, 1, 3, 0.0F, 8, 4);
 //        this.bone.addBox("", 1.5F, 1.0F, -24.0F, 1, 1, 1, 0.0F, 0, 7);

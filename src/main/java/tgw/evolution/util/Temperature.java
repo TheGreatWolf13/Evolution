@@ -7,7 +7,7 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 import tgw.evolution.util.physics.ClimateZone;
 import tgw.evolution.util.physics.EarthHelper;
 import tgw.evolution.util.time.Time;
@@ -183,23 +183,23 @@ public final class Temperature implements ILocked {
         else if (kelvin <= 19) {
             red = 255;
             green = (int) (99.470_802_586_1 * Math.log(kelvin) - 161.119_568_166_1);
-            green = MathHelper.clamp(green, 0, 255);
+            green = MthUtil.clamp(green, 0, 255);
             blue = 0;
             alpha = (int) (191 + 64 * (kelvin - 10) / 9.0);
         }
         else if (kelvin <= 66) {
             red = 255;
             green = (int) (99.470_802_586_1 * Math.log(kelvin) - 161.119_568_166_1);
-            green = MathHelper.clamp(green, 0, 255);
+            green = MthUtil.clamp(green, 0, 255);
             blue = (int) (138.517_731_223_1 * Math.log(kelvin - 10) - 305.044_792_730_7);
-            blue = MathHelper.clamp(blue, 0, 255);
+            blue = MthUtil.clamp(blue, 0, 255);
             alpha = 255;
         }
         else {
             red = (int) (329.698_727_446 * Math.pow(kelvin - 60, -0.133_204_759_2));
-            red = MathHelper.clamp(red, 0, 255);
+            red = MthUtil.clamp(red, 0, 255);
             green = (int) (288.122_169_528_3 * Math.pow(kelvin - 60, -0.075_514_849_2));
-            green = MathHelper.clamp(green, 0, 255);
+            green = MthUtil.clamp(green, 0, 255);
             blue = 255;
             alpha = 255;
         }
@@ -279,7 +279,7 @@ public final class Temperature implements ILocked {
     public float getAnnualInsolation() {
         if (Float.isNaN(this.cachedAnnualInsolation)) {
             double absDeltaDecl = Math.abs(this.getDeclination() - this.getLatitude());
-            this.cachedAnnualInsolation = MathHelper.sinDeg((float) (90 - Math.min(absDeltaDecl, 90)));
+            this.cachedAnnualInsolation = MthUtil.sinDeg((float) (90 - Math.min(absDeltaDecl, 90)));
         }
         return this.cachedAnnualInsolation;
     }
@@ -354,10 +354,10 @@ public final class Temperature implements ILocked {
             return 1 + 273.15;
         }
         if (this.y >= 80) {
-            double t = MathHelper.relativize(this.y, 80, 1_000);
+            double t = MthUtil.relativize(this.y, 80, 1_000);
             return t * (-56.5 + 273.15) + (1 - t) * this.getAmbientBasedTemperature();
         }
-        double t = MathHelper.relativize(this.y, -64, 60);
+        double t = MthUtil.relativize(this.y, -64, 60);
         return t * this.getAmbientBasedTemperature() + (1 - t) * (1 + 273.15);
     }
 
@@ -403,12 +403,12 @@ public final class Temperature implements ILocked {
         }
         int afternoon = this.getAfternoon();
         if (sunrise <= timeInDay && timeInDay <= afternoon) {
-            return MathHelper.relativize(timeInDay, sunrise, afternoon);
+            return MthUtil.relativize(timeInDay, sunrise, afternoon);
         }
         if (timeInDay < sunrise) {
             timeInDay += Time.TICKS_PER_DAY;
         }
-        return 1.0f - MathHelper.relativize(timeInDay, afternoon, sunrise + Time.TICKS_PER_DAY);
+        return 1.0f - MthUtil.relativize(timeInDay, afternoon, sunrise + Time.TICKS_PER_DAY);
     }
 
     @Override
@@ -473,10 +473,10 @@ public final class Temperature implements ILocked {
         if (this.cachedSunrise == Integer.MIN_VALUE) {
             float decl = this.getDeclination();
             float latitude = this.getLatitude();
-            double cDiff = MathHelper.cosDeg(latitude - decl);
-            double cSum = MathHelper.cosDeg(latitude + decl);
+            double cDiff = MthUtil.cosDeg(latitude - decl);
+            double cSum = MthUtil.cosDeg(latitude + decl);
             double arg = (cDiff - cSum) / (cDiff + cSum);
-            double angle = MathHelper.arcSin(arg);
+            double angle = MthUtil.arcSin(arg);
             if (Double.isNaN(angle)) {
                 return arg < 0 ? -1 : -2;
             }
@@ -509,7 +509,7 @@ public final class Temperature implements ILocked {
         if (latitude < 90 - EarthHelper.ECLIPTIC_INCLINATION) {
             return 0;
         }
-        double factor = 47 * (1 - MathHelper.relativize(latitude, 90 - EarthHelper.ECLIPTIC_INCLINATION, 90));
+        double factor = 47 * (1 - MthUtil.relativize(latitude, 90 - EarthHelper.ECLIPTIC_INCLINATION, 90));
         int index = (int) factor;
         if (index == factor) {
             return MAX_DAYS_WITHOUT_SUN[index] * Time.TICKS_PER_DAY;
@@ -522,7 +522,7 @@ public final class Temperature implements ILocked {
             return 0;
         }
         double latitude = this.getLatitude();
-        double factor = 47 * (1 - MathHelper.relativize(Math.abs(latitude), 90 - EarthHelper.ECLIPTIC_INCLINATION, 90));
+        double factor = 47 * (1 - MthUtil.relativize(Math.abs(latitude), 90 - EarthHelper.ECLIPTIC_INCLINATION, 90));
         int index = (int) factor;
         long polarNightEnd;
         if (index == factor) {
@@ -552,7 +552,7 @@ public final class Temperature implements ILocked {
             return 0;
         }
         double latitude = this.getLatitude();
-        double factor = 47 * (1 - MathHelper.relativize(Math.abs(latitude), 90 - EarthHelper.ECLIPTIC_INCLINATION, 90));
+        double factor = 47 * (1 - MthUtil.relativize(Math.abs(latitude), 90 - EarthHelper.ECLIPTIC_INCLINATION, 90));
         int index = (int) factor;
         long polarNightStart;
         if (index == factor) {

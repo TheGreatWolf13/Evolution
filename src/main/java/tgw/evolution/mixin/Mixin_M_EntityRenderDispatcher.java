@@ -35,7 +35,7 @@ import tgw.evolution.client.renderer.ambient.DynamicLights;
 import tgw.evolution.client.renderer.ambient.LightingTexture;
 import tgw.evolution.client.renderer.chunk.LevelRenderer;
 import tgw.evolution.hooks.asm.DeleteMethod;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 import tgw.evolution.util.math.Vec3d;
 
 @Mixin(EntityRenderDispatcher.class)
@@ -150,7 +150,7 @@ public abstract class Mixin_M_EntityRenderDispatcher {
             }
         }
         if (entity instanceof LivingEntity) {
-            Vec3d cameraPosition = MathHelper.getRelativeEyePosition(entity, partialTicks, null);
+            Vec3d cameraPosition = MthUtil.getRelativeEyePosition(entity, partialTicks, null);
             float eyeX = (float) cameraPosition.x;
             double eyeHeight = cameraPosition.y;
             float eyeZ = (float) cameraPosition.z;

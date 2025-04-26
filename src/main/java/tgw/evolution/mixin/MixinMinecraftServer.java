@@ -1,9 +1,13 @@
 package tgw.evolution.mixin;
 
+import com.google.common.collect.ImmutableList;
 import com.mojang.authlib.GameProfile;
 import it.unimi.dsi.fastutil.longs.LongIterator;
 import net.minecraft.*;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.gametest.framework.GameTestTicker;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.protocol.game.ClientboundSetTimePacket;
@@ -12,6 +16,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerFunctionManager;
 import net.minecraft.server.TickTask;
+import net.minecraft.server.bossevents.CustomBossEvents;
 import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -28,11 +33,21 @@ import net.minecraft.util.Mth;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.util.profiling.jfr.JvmProfiler;
 import net.minecraft.util.thread.ReentrantBlockableEventLoop;
+import net.minecraft.world.entity.ai.village.VillageSiege;
+import net.minecraft.world.entity.npc.CatSpawner;
+import net.minecraft.world.entity.npc.WanderingTraderSpawner;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.ForcedChunksSavedData;
-import net.minecraft.world.level.GameRules;
-import net.minecraft.world.level.Level;
+import net.minecraft.world.level.*;
+import net.minecraft.world.level.biome.BiomeManager;
+import net.minecraft.world.level.border.BorderChangeListener;
+import net.minecraft.world.level.border.WorldBorder;
+import net.minecraft.world.level.chunk.ChunkGenerator;
+import net.minecraft.world.level.dimension.DimensionType;
+import net.minecraft.world.level.dimension.LevelStem;
+import net.minecraft.world.level.levelgen.PatrolSpawner;
+import net.minecraft.world.level.levelgen.PhantomSpawner;
+import net.minecraft.world.level.levelgen.WorldGenSettings;
+import net.minecraft.world.level.storage.*;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.*;
@@ -52,6 +67,7 @@ import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.Executor;
 import java.util.function.BooleanSupplier;
 
 @Mixin(MinecraftServer.class)
@@ -59,11 +75,12 @@ public abstract class MixinMinecraftServer extends ReentrantBlockableEventLoop<T
 
     @Shadow @Final public static GameProfile ANONYMOUS_PLAYER_PROFILE;
     @Shadow @Final private static Logger LOGGER;
-    @Shadow @Final public long[] tickTimes;
     @Shadow private float averageTickTime;
+    @Shadow private @Nullable CommandStorage commandStorage;
     @Shadow private @Nullable MinecraftServer.TimeProfiler debugCommandProfiler;
     @Shadow private boolean debugCommandProfilerDelayStart;
     @Shadow private long delayedTasksMaxNextTickTime;
+    @Shadow @Final private Executor executor;
     @Shadow @Final private FrameTimer frameTimer;
     @Unique private boolean isMultiplayerPaused;
     @Shadow private volatile boolean isReady;
@@ -80,9 +97,12 @@ public abstract class MixinMinecraftServer extends ReentrantBlockableEventLoop<T
     @Shadow private volatile boolean running;
     @Shadow @Final private ServerStatus status;
     @Shadow private boolean stopped;
+    @Shadow @Final protected LevelStorageSource.LevelStorageAccess storageSource;
     @Shadow private int tickCount;
+    @Shadow @Final public long[] tickTimes;
     @Shadow @Final private List<Runnable> tickables;
     @Unique private boolean wasPaused;
+    @Shadow @Final protected WorldData worldData;
 
     public MixinMinecraftServer(String name) {
         super(name);
@@ -111,6 +131,82 @@ public abstract class MixinMinecraftServer extends ReentrantBlockableEventLoop<T
     }
 
     @Shadow
+    private static void setInitialSpawn(ServerLevel serverLevel, ServerLevelData serverLevelData, boolean bl, boolean bl2) {
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public void createLevels(ChunkProgressListener chunkProgressListener) {
+        ServerLevelData serverLevelData = this.worldData.overworldData();
+        WorldGenSettings worldGenSettings = this.worldData.worldGenSettings();
+        boolean debug = worldGenSettings.isDebug();
+        long seed = worldGenSettings.seed();
+        long obfuscateSeed = BiomeManager.obfuscateSeed(seed);
+        List<CustomSpawner> list = ImmutableList.of(new PhantomSpawner(), new PatrolSpawner(), new CatSpawner(), new VillageSiege(), new WanderingTraderSpawner(serverLevelData));
+        Registry<LevelStem> registry = worldGenSettings.dimensions();
+        LevelStem levelStem = registry.get(LevelStem.OVERWORLD);
+        ChunkGenerator chunkGenerator;
+        Holder holder;
+        if (levelStem == null) {
+            holder = this.registryAccess().registryOrThrow(Registry.DIMENSION_TYPE_REGISTRY).getOrCreateHolder(DimensionType.OVERWORLD_LOCATION);
+            chunkGenerator = WorldGenSettings.makeDefaultOverworld(this.registryAccess(), new Random().nextLong());
+        }
+        else {
+            holder = levelStem.typeHolder();
+            chunkGenerator = levelStem.generator();
+        }
+        ServerLevel overworld = new ServerLevel((MinecraftServer) (Object) this, this.executor, this.storageSource, serverLevelData, Level.OVERWORLD, holder, chunkProgressListener, chunkGenerator, debug, obfuscateSeed, list, true);
+        this.levels.put(Level.OVERWORLD, overworld);
+        DimensionDataStorage dimensionDataStorage = overworld.getDataStorage();
+        this.readScoreboard(dimensionDataStorage);
+        this.commandStorage = new CommandStorage(dimensionDataStorage);
+        WorldBorder worldBorder = overworld.getWorldBorder();
+        if (!serverLevelData.isInitialized()) {
+            try {
+                setInitialSpawn(overworld, serverLevelData, worldGenSettings.generateBonusChest(), debug);
+                serverLevelData.setInitialized(true);
+                if (debug) {
+                    this.setupDebugLevel(this.worldData);
+                }
+            }
+            catch (Throwable e) {
+                CrashReport crashReport = CrashReport.forThrowable(e, "Exception initializing level");
+                try {
+                    overworld.fillReportDetails(crashReport);
+                }
+                catch (Throwable ignored) {
+                }
+                throw new ReportedException(crashReport);
+            }
+            serverLevelData.setInitialized(true);
+        }
+        this.getPlayerList().addWorldborderListener(overworld);
+        if (this.worldData.getCustomBossEvents() != null) {
+            this.getCustomBossEvents().load(this.worldData.getCustomBossEvents());
+        }
+        for (long it = registry.beginIteration(); registry.hasNextIteration(it); it = registry.nextEntry(it)) {
+            ResourceKey<LevelStem> resourceKey = registry.getIterationKey(it);
+            if (resourceKey != LevelStem.OVERWORLD) {
+                ResourceKey<Level> key = ResourceKey.create(Registry.DIMENSION_REGISTRY, resourceKey.location());
+                LevelStem value = (LevelStem) registry.getIteration(it);
+                Holder<DimensionType> dimension = value.typeHolder();
+                ChunkGenerator generator = value.generator();
+                //noinspection ObjectAllocationInLoop
+                DerivedLevelData derivedLevelData = new DerivedLevelData(this.worldData, serverLevelData);
+                //noinspection ObjectAllocationInLoop
+                ServerLevel level = new ServerLevel((MinecraftServer) (Object) this, this.executor, this.storageSource, derivedLevelData, key, dimension, chunkProgressListener, generator, debug, obfuscateSeed, ImmutableList.of(), false);
+                //noinspection ObjectAllocationInLoop
+                worldBorder.addListener(new BorderChangeListener.DelegateBorderChangeListener(level.getWorldBorder()));
+                this.levels.put(key, level);
+            }
+        }
+        worldBorder.applySettings(serverLevelData.getWorldBorder());
+    }
+
+    @Shadow
     protected abstract void endMetricsRecordingTick();
 
     @Shadow
@@ -121,6 +217,9 @@ public abstract class MixinMinecraftServer extends ReentrantBlockableEventLoop<T
 
     @Shadow
     public abstract @Nullable ServerConnectionListener getConnection();
+
+    @Shadow
+    public abstract CustomBossEvents getCustomBossEvents();
 
     @Shadow
     public abstract ServerFunctionManager getFunctions();
@@ -216,6 +315,12 @@ public abstract class MixinMinecraftServer extends ReentrantBlockableEventLoop<T
         this.updateMobSpawningFlags();
     }
 
+    @Shadow
+    protected abstract void readScoreboard(DimensionDataStorage dimensionDataStorage);
+
+    @Shadow
+    public abstract RegistryAccess.Frozen registryAccess();
+
     /**
      * @author TheGreatWolf
      * @reason Change tick rate
@@ -310,6 +415,9 @@ public abstract class MixinMinecraftServer extends ReentrantBlockableEventLoop<T
             this.playerList.broadcastAll(new PacketSCSimpleMessage(Message.S2C.MULTIPLAYER_RESUME));
         }
     }
+
+    @Shadow
+    protected abstract void setupDebugLevel(WorldData worldData);
 
     @Shadow
     protected abstract void startMetricsRecordingTick();

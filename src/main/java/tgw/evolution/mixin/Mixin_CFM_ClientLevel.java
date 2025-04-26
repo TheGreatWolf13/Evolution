@@ -431,7 +431,7 @@ public abstract class Mixin_CFM_ClientLevel extends Level implements PatchClient
     @SuppressWarnings("removal")
     @Override
     @Overwrite
-    public void levelEvent(@Nullable Player player, @LvlEvent int event, BlockPos pos, int data) {
+    public void levelEvent(@Nullable Player player, int event, BlockPos pos, int data) {
         Evolution.deprecatedMethod();
         this.levelEvent_(player, event, pos.getX(), pos.getY(), pos.getZ(), data);
     }
@@ -487,7 +487,7 @@ public abstract class Mixin_CFM_ClientLevel extends Level implements PatchClient
     @SuppressWarnings("removal")
     @Override
     @Overwrite
-    public void sendBlockUpdated(BlockPos pos, BlockState oldState, BlockState newState, @BlockFlags int flags) {
+    public void sendBlockUpdated(BlockPos pos, BlockState oldState, BlockState newState, int flags) {
         Evolution.deprecatedMethod();
         this.sendBlockUpdated_(pos.getX(), pos.getY(), pos.getZ(), oldState, newState, flags);
     }

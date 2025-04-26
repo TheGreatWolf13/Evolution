@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import tgw.evolution.client.gui.ScreenDisplayEffects;
 import tgw.evolution.client.util.ClientEffectInstance;
 import tgw.evolution.init.EvolutionResources;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 public class RunnableAddingEffect implements Runnable {
 
@@ -52,7 +52,7 @@ public class RunnableAddingEffect implements Runnable {
             if (this.instance.getAmplifier() != 0) {
                 this.matrices.pushPose();
                 this.matrices.scale(0.5f, 0.5f, 0.5f);
-                this.font.drawShadow(this.matrices, MathHelper.getRomanNumber(ScreenDisplayEffects.getFixedAmplifier(this.instance) + 1),
+                this.font.drawShadow(this.matrices, MthUtil.getRomanNumber(ScreenDisplayEffects.getFixedAmplifier(this.instance) + 1),
                                      (this.x + 3) * 2, (this.y + 17) * 2, 0xffff_ffff);
                 this.matrices.popPose();
             }

@@ -53,7 +53,7 @@
 //import tgw.evolution.init.EvolutionTexts;
 //import tgw.evolution.util.collection.maps.O2OHashMap;
 //import tgw.evolution.util.collection.maps.O2OMap;
-//import tgw.evolution.util.math.MathHelper;
+//import tgw.evolution.util.math.MthUtil;
 //
 //import java.io.IOException;
 //import java.io.InputStream;
@@ -172,7 +172,7 @@
 //                RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
 //                int vOffset = result.status().isAnimated() && (System.currentTimeMillis() / 800 & 1) == 1 ? 8 : 0;
 //                Screen.blit(matrices, contentLeft + versionWidth + 5, 92, result.status().getSheetOffset() * 8, vOffset, 8, 8, 64, 16);
-//                if (MathHelper.isMouseInRange(mouseX, mouseY, contentLeft + versionWidth + 5, 92, contentLeft + versionWidth + 5 + 8, 92 + 8)) {
+//                if (MthUtil.isMouseInRange(mouseX, mouseY, contentLeft + versionWidth + 5, 92, contentLeft + versionWidth + 5 + 8, 92 + 8)) {
 //                    this.setActiveTooltip(new TranslatableComponent("fml.menu.mods.info.updateavailable", result.url()));
 //                }
 //            }
@@ -197,7 +197,7 @@
 //        this.modList.render(matrices, mouseX, mouseY, partialTicks);
 //        drawString(matrices, this.font, this.textMenuModsTitle, 70, 10, 0xFF_FFFF);
 //        this.searchEditBox.render(matrices, mouseX, mouseY, partialTicks);
-//        if (MathHelper.isMouseInRange(mouseX, mouseY, this.modList.getRight() - 14, 7, this.modList.getRight(), 7 + 14)) {
+//        if (MthUtil.isMouseInRange(mouseX, mouseY, this.modList.getRight() - 14, 7, this.modList.getRight(), 7 + 14)) {
 //            this.setActiveTooltip(this.textFilterUpdates);
 //            this.tooltipYOffset = 10;
 //        }
@@ -297,7 +297,7 @@
 //            int contentLeft = this.modList.getRight() + 12 + 10;
 //            String version = ForgeI18n.parseMessage("fml.menu.mods.info.version", this.selectedModInfo.getVersion().toString());
 //            int versionWidth = this.font.width(version);
-//            if (MathHelper.isMouseInRange(mouseX, mouseY, contentLeft + versionWidth + 5, 92, contentLeft + versionWidth + 5 + 8, 92 + 8)) {
+//            if (MthUtil.isMouseInRange(mouseX, mouseY, contentLeft + versionWidth + 5, 92, contentLeft + versionWidth + 5 + 8, 92 + 8)) {
 //                VersionChecker.CheckResult result = VersionChecker.getResult(this.selectedModInfo);
 //                if (result.status().shouldDraw() && result.url() != null) {
 //                    Style style = Style.EMPTY.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, result.url()));

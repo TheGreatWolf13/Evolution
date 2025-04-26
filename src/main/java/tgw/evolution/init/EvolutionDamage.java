@@ -15,7 +15,7 @@ import tgw.evolution.util.damage.DamageSourceEntity;
 import tgw.evolution.util.damage.DamageSourceEntityIndirect;
 import tgw.evolution.util.damage.DamageSourceEv;
 import tgw.evolution.util.damage.DamageSourcePlayer;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 import java.util.Arrays;
 
@@ -141,7 +141,7 @@ public final class EvolutionDamage {
             this.textComponent = new TranslatableComponent(this.translationKey + ".name");
             this.texX = texX;
             this.texY = texY;
-            this.immunity = MathHelper.toByteExact(immunity);
+            this.immunity = MthUtil.toByteExact(immunity);
         }
 
         public static @Nullable Type byName(String type) {

@@ -147,6 +147,18 @@ public final class NBTHelper {
         return StringTag.valueOf(loc.toString());
     }
 
+    public static CompoundTag encodeWorldGenSettings(WorldGenSettings settings) {
+        //TODO
+        CompoundTag tag = new CompoundTag();
+        tag.putLong("seed", settings.seed());
+        tag.putBoolean("generate_features", settings.generateFeatures());
+        tag.putBoolean("bonus_chest", settings.generateBonusChest());
+        if (settings.legacyCustomOptions.isPresent()) {
+            tag.putString("legacy_custom_options", settings.legacyCustomOptions.get());
+        }
+        return tag;
+    }
+
     public static boolean getBooleanOrElse(CompoundTag tag, String key, boolean def) {
         Tag t = tag.get(key);
         if (t != null && t.getId() == Tag.TAG_BYTE) {
@@ -318,6 +330,69 @@ public final class NBTHelper {
         return SerializableUUID.uuidFromIntArray(array);
     }
 
+    private static @Nullable BiomeSource parseBiomeSource(RegistryOps<Tag> registryOps, @Nullable CompoundTag tag, Logger logger) {
+        if (tag == null) {
+            logger.error("Could not find biome source!");
+            return null;
+        }
+        String type = getString(tag, "type");
+        if (type == null) {
+            logger.error("Could not find biome source type!");
+            return null;
+        }
+        return switch (type) {
+            case "minecraft:fixed" -> {
+                Holder<Biome> biome = parseRegistered(registryOps, tag.get("biome"), Registry.BIOME_REGISTRY, Biome.DIRECT_CODEC, logger);
+                if (biome != null) {
+                    yield new FixedBiomeSource(biome);
+                }
+                yield null;
+            }
+            case "minecraft:multi_noise" -> {
+                ResourceLocation resLoc = parseResLoc(tag.get("preset"), logger);
+                if (resLoc != null) {
+                    yield MultiNoiseBiomeSource.Preset.BY_NAME.get(resLoc).biomeSource(registryOps.registry(Registry.BIOME_REGISTRY).orElseThrow());
+                }
+                yield null;
+            }
+            case "minecraft:checkerboard" -> {
+                Tag biomes = tag.get("biomes");
+                if (biomes != null) {
+                    OList<Holder<Biome>> holderList = new OArrayList<>();
+                    if (biomes.getId() == Tag.TAG_STRING) {
+                        parseRegisteredTag(registryOps, biomes, Registry.BIOME_REGISTRY, Biome.DIRECT_CODEC, logger, (biome, list) -> {
+                            if (biome != null) {
+                                list.add(biome);
+                            }
+                        }, (tagKey, r, list) -> list.addAll(r.getTagOrEmpty(tagKey)), holderList);
+                    }
+                    else if (biomes.getId() == Tag.TAG_LIST) {
+                        ListTag list = (ListTag) biomes;
+                        if (!list.isEmpty() && list.getElementType() == Tag.TAG_STRING) {
+                            for (int i = 0, len = list.size(); i < len; ++i) {
+                                Holder<Biome> biome = parseRegistered(registryOps, list.get(i), Registry.BIOME_REGISTRY, Biome.DIRECT_CODEC, logger);
+                                if (biome != null) {
+                                    holderList.add(biome);
+                                }
+                            }
+                        }
+                    }
+                    if (!holderList.isEmpty()) {
+                        yield new CheckerboardColumnBiomeSource(HolderSet.direct(holderList), getIntClamped(tag, "scale", 2, 0, 62));
+                    }
+                }
+                yield null;
+            }
+            case "minecraft:the_end" -> {
+                yield new TheEndBiomeSource(registryOps.registry(Registry.BIOME_REGISTRY).orElseThrow(), getLongOrElse(tag, "seed", 0));
+            }
+            default -> {
+                logger.error("Unknown biome source type: {}", type);
+                yield null;
+            }
+        };
+    }
+
     public static @Nullable ChunkGenerator parseChunkGenerator(RegistryOps<Tag> registryOps, CompoundTag tag, Logger logger) {
         String type = getString(tag, "type");
         if (type == null) {
@@ -335,6 +410,94 @@ public final class NBTHelper {
         };
     }
 
+    private static ChunkGenerator parseDebugChunkGenerator() {
+        return new DebugLevelSource(BuiltinRegistries.STRUCTURE_SETS, BuiltinRegistries.BIOME);
+    }
+
+    private static @Nullable Holder<DimensionType> parseDimensionType(RegistryOps<Tag> registryOps, String type, Logger logger) {
+        Optional<? extends Registry<DimensionType>> optional = registryOps.registry(Registry.DIMENSION_TYPE_REGISTRY);
+        if (optional.isEmpty()) {
+            logger.error("Registry does not exist: {}", Registry.DIMENSION_TYPE_REGISTRY);
+            return null;
+        }
+        Registry<DimensionType> registry = optional.get();
+        ResourceLocation resLoc = parseResLoc(type, logger);
+        if (resLoc == null) {
+            return null;
+        }
+        ResourceKey<DimensionType> key = ResourceKey.create(Registry.DIMENSION_TYPE_REGISTRY, resLoc);
+        Optional<RegistryLoader.Bound> bound = registryOps.registryLoader();
+        if (bound.isPresent()) {
+            Optional<Holder<DimensionType>> dataResult = bound.get().overrideElementFromResources(Registry.DIMENSION_TYPE_REGISTRY, DimensionType.DIRECT_CODEC, key, registryOps.getAsJson()).result();
+            if (dataResult.isPresent()) {
+                return dataResult.get();
+            }
+            return null;
+        }
+        return registry.getOrCreateHolder(key);
+    }
+
+    private static @Nullable ChunkGenerator parseFlatChunkGenerator(RegistryOps<Tag> registryOps, CompoundTag tag, Logger logger) {
+        CompoundTag settings = getCompound(tag, "settings");
+        if (settings == null) {
+            logger.error("Could not find settings!");
+            return null;
+        }
+        Optional<HolderSet<StructureSet>> optional = Optional.empty();
+        Tag structureOverrides = settings.get("structure_overrides");
+        if (structureOverrides != null) {
+            if (structureOverrides.getId() == Tag.TAG_STRING) {
+                Holder<StructureSet> setHolder = parseRegistered(registryOps, structureOverrides, Registry.STRUCTURE_SET_REGISTRY, StructureSet.DIRECT_CODEC, logger);
+                if (setHolder != null) {
+                    optional = Optional.of(HolderSet.direct(setHolder));
+                }
+            }
+            else if (structureOverrides.getId() == Tag.TAG_LIST) {
+                ListTag list = (ListTag) structureOverrides;
+                if (!list.isEmpty()) {
+                    if (list.getElementType() != Tag.TAG_STRING) {
+                        logger.error("Invalid structure_overrides!");
+                    }
+                    else {
+                        OList<Holder<StructureSet>> holderList = new OArrayList<>();
+                        for (int i = 0, len = list.size(); i < len; ++i) {
+                            Holder<StructureSet> setHolder = parseRegistered(registryOps, list.get(i), Registry.STRUCTURE_SET_REGISTRY, StructureSet.DIRECT_CODEC, logger);
+                            if (setHolder == null) {
+                                continue;
+                            }
+                            holderList.add(setHolder);
+                        }
+                        if (!holderList.isEmpty()) {
+                            optional = Optional.of(HolderSet.direct(holderList));
+                        }
+                    }
+                }
+            }
+        }
+        OList<FlatLayerInfo> layersList = new OArrayList<>();
+        ListTag layers = getListOf(settings, "layers", Tag.TAG_COMPOUND);
+        if (layers == null) {
+            logger.error("Could not find layers!");
+            return null;
+        }
+        for (int i = 0, len = layers.size(); i < len; ++i) {
+            CompoundTag t = (CompoundTag) layers.get(i);
+            int height = getIntClamped(t, "height", 0, 0, DimensionType.Y_SIZE);
+            Block block = parseRegistered(t.get("block"), Registry.BLOCK, logger);
+            if (block == null) {
+                block = Blocks.AIR;
+            }
+            //noinspection ObjectAllocationInLoop
+            layersList.add(new FlatLayerInfo(height, block));
+        }
+        boolean lakes = getBooleanOrElse(settings, "lakes", false);
+        boolean features = getBooleanOrElse(settings, "features", false);
+        Holder<Biome> biome = parseRegistered(registryOps, settings.get("biome"), Registry.BIOME_REGISTRY, Biome.DIRECT_CODEC, logger);
+        Optional<Holder<Biome>> biomeHolder = biome != null ? Optional.of(biome) : Optional.empty();
+        FlatLevelGeneratorSettings flatLevelGeneratorSettings = new FlatLevelGeneratorSettings(registryOps.registry(Registry.BIOME_REGISTRY).orElseThrow(), optional, layersList, lakes, features, biomeHolder);
+        return new FlatLevelSource(registryOps.registry(Registry.STRUCTURE_SET_REGISTRY).orElseThrow(), flatLevelGeneratorSettings);
+    }
+
     public static LevelSettings parseLevelSettings(CompoundTag nbt, DataPackConfig dataPackConfig) {
         GameType gameType = GameType.byId(getIntOrElse(nbt, "GameType", 0));
         byte dif = getByteOrElse(nbt, "Difficulty", (byte) -1);
@@ -349,6 +512,37 @@ public final class NBTHelper {
         long l = nbt.getLong("LastPlayed");
         CompoundTag version = getCompound(nbt, "Version");
         return version != null ? new LevelVersion(i, l, getStringOrElse(version, "Name", SharedConstants.getCurrentVersion().getName()), getIntOrElse(version, "Id", SharedConstants.getCurrentVersion().getDataVersion().getVersion()), getStringOrElse(version, "Series", DataVersion.MAIN_SERIES), getBooleanOrElse(version, "Snapshot", !SharedConstants.getCurrentVersion().isStable())) : new LevelVersion(i, l, "", 0, DataVersion.MAIN_SERIES, false);
+    }
+
+    private static @Nullable ChunkGenerator parseNoiseChunkGenerator(RegistryOps<Tag> registryOps, CompoundTag tag, Logger logger) {
+        BiomeSource biomeSource = parseBiomeSource(registryOps, getCompound(tag, "biome_source"), logger);
+        if (biomeSource == null) {
+            return null;
+        }
+        long seed = getLongOrElse(tag, "seed", 0);
+        Optional<? extends Registry<NoiseGeneratorSettings>> optional = registryOps.registry(Registry.NOISE_GENERATOR_SETTINGS_REGISTRY);
+        if (optional.isEmpty()) {
+            logger.error("Could not find noise generator settings!");
+            return null;
+        }
+        Registry<NoiseGeneratorSettings> registry = optional.get();
+        ResourceKey<NoiseGeneratorSettings> key = parseResourceKey(Registry.NOISE_GENERATOR_SETTINGS_REGISTRY, tag.get("settings"), logger);
+        if (key == null) {
+            return null;
+        }
+        Optional<RegistryLoader.Bound> bound = registryOps.registryLoader();
+        Holder<NoiseGeneratorSettings> settingsHolder;
+        if (bound.isPresent()) {
+            Optional<Holder<NoiseGeneratorSettings>> result = bound.get().overrideElementFromResources(Registry.NOISE_GENERATOR_SETTINGS_REGISTRY, NoiseGeneratorSettings.DIRECT_CODEC, key, registryOps.getAsJson()).result();
+            if (!result.isPresent()) {
+                return null;
+            }
+            settingsHolder = result.get();
+        }
+        else {
+            settingsHolder = registry.getOrCreateHolder(key);
+        }
+        return new NoiseBasedChunkGenerator(registryOps.registry(Registry.STRUCTURE_SET_REGISTRY).orElseThrow(), registryOps.registry(Registry.NOISE_REGISTRY).orElseThrow(), biomeSource, seed, settingsHolder);
     }
 
     public static PrimaryLevelData parsePrimaryLevelData(CompoundTag dataTag, DataFixer dataFixer, int version, @Nullable CompoundTag playerTag, LevelSettings levelSettings, LevelVersion levelVersion, WorldGenSettings worldGenSettings, Lifecycle lifecycle) {
@@ -613,187 +807,5 @@ public final class NBTHelper {
         nbt.put("Items", nbtTagList);
         nbt.putInt("Size", stacks.size());
         return nbt;
-    }
-
-    private static @Nullable BiomeSource parseBiomeSource(RegistryOps<Tag> registryOps, @Nullable CompoundTag tag, Logger logger) {
-        if (tag == null) {
-            logger.error("Could not find biome source!");
-            return null;
-        }
-        String type = getString(tag, "type");
-        if (type == null) {
-            logger.error("Could not find biome source type!");
-            return null;
-        }
-        return switch (type) {
-            case "minecraft:fixed" -> {
-                Holder<Biome> biome = parseRegistered(registryOps, tag.get("biome"), Registry.BIOME_REGISTRY, Biome.DIRECT_CODEC, logger);
-                if (biome != null) {
-                    yield new FixedBiomeSource(biome);
-                }
-                yield null;
-            }
-            case "minecraft:multi_noise" -> {
-                ResourceLocation resLoc = parseResLoc(tag.get("preset"), logger);
-                if (resLoc != null) {
-                    yield MultiNoiseBiomeSource.Preset.BY_NAME.get(resLoc).biomeSource(registryOps.registry(Registry.BIOME_REGISTRY).orElseThrow());
-                }
-                yield null;
-            }
-            case "minecraft:checkerboard" -> {
-                Tag biomes = tag.get("biomes");
-                if (biomes != null) {
-                    OList<Holder<Biome>> holderList = new OArrayList<>();
-                    if (biomes.getId() == Tag.TAG_STRING) {
-                        parseRegisteredTag(registryOps, biomes, Registry.BIOME_REGISTRY, Biome.DIRECT_CODEC, logger, (biome, list) -> {
-                            if (biome != null) {
-                                list.add(biome);
-                            }
-                        }, (tagKey, r, list) -> list.addAll(r.getTagOrEmpty(tagKey)), holderList);
-                    }
-                    else if (biomes.getId() == Tag.TAG_LIST) {
-                        ListTag list = (ListTag) biomes;
-                        if (!list.isEmpty() && list.getElementType() == Tag.TAG_STRING) {
-                            for (int i = 0, len = list.size(); i < len; ++i) {
-                                Holder<Biome> biome = parseRegistered(registryOps, list.get(i), Registry.BIOME_REGISTRY, Biome.DIRECT_CODEC, logger);
-                                if (biome != null) {
-                                    holderList.add(biome);
-                                }
-                            }
-                        }
-                    }
-                    if (!holderList.isEmpty()) {
-                        yield new CheckerboardColumnBiomeSource(HolderSet.direct(holderList), getIntClamped(tag, "scale", 2, 0, 62));
-                    }
-                }
-                yield null;
-            }
-            case "minecraft:the_end" -> {
-                yield new TheEndBiomeSource(registryOps.registry(Registry.BIOME_REGISTRY).orElseThrow(), getLongOrElse(tag, "seed", 0));
-            }
-            default -> {
-                logger.error("Unknown biome source type: {}", type);
-                yield null;
-            }
-        };
-    }
-
-    private static ChunkGenerator parseDebugChunkGenerator() {
-        return new DebugLevelSource(BuiltinRegistries.STRUCTURE_SETS, BuiltinRegistries.BIOME);
-    }
-
-    private static @Nullable Holder<DimensionType> parseDimensionType(RegistryOps<Tag> registryOps, String type, Logger logger) {
-        Optional<? extends Registry<DimensionType>> optional = registryOps.registry(Registry.DIMENSION_TYPE_REGISTRY);
-        if (optional.isEmpty()) {
-            logger.error("Registry does not exist: {}", Registry.DIMENSION_TYPE_REGISTRY);
-            return null;
-        }
-        Registry<DimensionType> registry = optional.get();
-        ResourceLocation resLoc = parseResLoc(type, logger);
-        if (resLoc == null) {
-            return null;
-        }
-        ResourceKey<DimensionType> key = ResourceKey.create(Registry.DIMENSION_TYPE_REGISTRY, resLoc);
-        Optional<RegistryLoader.Bound> bound = registryOps.registryLoader();
-        if (bound.isPresent()) {
-            Optional<Holder<DimensionType>> dataResult = bound.get().overrideElementFromResources(Registry.DIMENSION_TYPE_REGISTRY, DimensionType.DIRECT_CODEC, key, registryOps.getAsJson()).result();
-            if (dataResult.isPresent()) {
-                return dataResult.get();
-            }
-            return null;
-        }
-        return registry.getOrCreateHolder(key);
-    }
-
-    private static @Nullable ChunkGenerator parseFlatChunkGenerator(RegistryOps<Tag> registryOps, CompoundTag tag, Logger logger) {
-        CompoundTag settings = getCompound(tag, "settings");
-        if (settings == null) {
-            logger.error("Could not find settings!");
-            return null;
-        }
-        Optional<HolderSet<StructureSet>> optional = Optional.empty();
-        Tag structureOverrides = settings.get("structure_overrides");
-        if (structureOverrides != null) {
-            if (structureOverrides.getId() == Tag.TAG_STRING) {
-                Holder<StructureSet> setHolder = parseRegistered(registryOps, structureOverrides, Registry.STRUCTURE_SET_REGISTRY, StructureSet.DIRECT_CODEC, logger);
-                if (setHolder != null) {
-                    optional = Optional.of(HolderSet.direct(setHolder));
-                }
-            }
-            else if (structureOverrides.getId() == Tag.TAG_LIST) {
-                ListTag list = (ListTag) structureOverrides;
-                if (!list.isEmpty()) {
-                    if (list.getElementType() != Tag.TAG_STRING) {
-                        logger.error("Invalid structure_overrides!");
-                    }
-                    else {
-                        OList<Holder<StructureSet>> holderList = new OArrayList<>();
-                        for (int i = 0, len = list.size(); i < len; ++i) {
-                            Holder<StructureSet> setHolder = parseRegistered(registryOps, list.get(i), Registry.STRUCTURE_SET_REGISTRY, StructureSet.DIRECT_CODEC, logger);
-                            if (setHolder == null) {
-                                continue;
-                            }
-                            holderList.add(setHolder);
-                        }
-                        if (!holderList.isEmpty()) {
-                            optional = Optional.of(HolderSet.direct(holderList));
-                        }
-                    }
-                }
-            }
-        }
-        OList<FlatLayerInfo> layersList = new OArrayList<>();
-        ListTag layers = getListOf(settings, "layers", Tag.TAG_COMPOUND);
-        if (layers == null) {
-            logger.error("Could not find layers!");
-            return null;
-        }
-        for (int i = 0, len = layers.size(); i < len; ++i) {
-            CompoundTag t = (CompoundTag) layers.get(i);
-            int height = getIntClamped(t, "height", 0, 0, DimensionType.Y_SIZE);
-            Block block = parseRegistered(t.get("block"), Registry.BLOCK, logger);
-            if (block == null) {
-                block = Blocks.AIR;
-            }
-            //noinspection ObjectAllocationInLoop
-            layersList.add(new FlatLayerInfo(height, block));
-        }
-        boolean lakes = getBooleanOrElse(settings, "lakes", false);
-        boolean features = getBooleanOrElse(settings, "features", false);
-        Holder<Biome> biome = parseRegistered(registryOps, settings.get("biome"), Registry.BIOME_REGISTRY, Biome.DIRECT_CODEC, logger);
-        Optional<Holder<Biome>> biomeHolder = biome != null ? Optional.of(biome) : Optional.empty();
-        FlatLevelGeneratorSettings flatLevelGeneratorSettings = new FlatLevelGeneratorSettings(registryOps.registry(Registry.BIOME_REGISTRY).orElseThrow(), optional, layersList, lakes, features, biomeHolder);
-        return new FlatLevelSource(registryOps.registry(Registry.STRUCTURE_SET_REGISTRY).orElseThrow(), flatLevelGeneratorSettings);
-    }
-
-    private static @Nullable ChunkGenerator parseNoiseChunkGenerator(RegistryOps<Tag> registryOps, CompoundTag tag, Logger logger) {
-        BiomeSource biomeSource = parseBiomeSource(registryOps, getCompound(tag, "biome_source"), logger);
-        if (biomeSource == null) {
-            return null;
-        }
-        long seed = getLongOrElse(tag, "seed", 0);
-        Optional<? extends Registry<NoiseGeneratorSettings>> optional = registryOps.registry(Registry.NOISE_GENERATOR_SETTINGS_REGISTRY);
-        if (optional.isEmpty()) {
-            logger.error("Could not find noise generator settings!");
-            return null;
-        }
-        Registry<NoiseGeneratorSettings> registry = optional.get();
-        ResourceKey<NoiseGeneratorSettings> key = parseResourceKey(Registry.NOISE_GENERATOR_SETTINGS_REGISTRY, tag.get("settings"), logger);
-        if (key == null) {
-            return null;
-        }
-        Optional<RegistryLoader.Bound> bound = registryOps.registryLoader();
-        Holder<NoiseGeneratorSettings> settingsHolder;
-        if (bound.isPresent()) {
-            Optional<Holder<NoiseGeneratorSettings>> result = bound.get().overrideElementFromResources(Registry.NOISE_GENERATOR_SETTINGS_REGISTRY, NoiseGeneratorSettings.DIRECT_CODEC, key, registryOps.getAsJson()).result();
-            if (!result.isPresent()) {
-                return null;
-            }
-            settingsHolder = result.get();
-        }
-        else {
-            settingsHolder = registry.getOrCreateHolder(key);
-        }
-        return new NoiseBasedChunkGenerator(registryOps.registry(Registry.STRUCTURE_SET_REGISTRY).orElseThrow(), registryOps.registry(Registry.NOISE_REGISTRY).orElseThrow(), biomeSource, seed, settingsHolder);
     }
 }

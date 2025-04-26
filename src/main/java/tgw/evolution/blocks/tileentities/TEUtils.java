@@ -39,7 +39,7 @@ public final class TEUtils {
             te = type.create(new BlockPos(x, y, z), state);
         }
         catch (Throwable t) {
-            Evolution.error("Failed to create block entity {}", id, t);
+            Evolution.error(t, "Failed to create block entity {}", id);
             return null;
         }
         try {
@@ -48,7 +48,7 @@ public final class TEUtils {
             return te;
         }
         catch (Throwable t) {
-            Evolution.error("Failed to load data for block entity {}", id, t);
+            Evolution.error(t, "Failed to load data for block entity {}", id);
             return null;
         }
     }

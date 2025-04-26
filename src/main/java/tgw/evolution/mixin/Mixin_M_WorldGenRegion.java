@@ -88,7 +88,6 @@ public abstract class Mixin_M_WorldGenRegion implements WorldGenLevel {
      * @author TheGreatWolf
      * @reason Use non-BlockPos version
      */
-    @SuppressWarnings("removal")
     @Overwrite
     @Override
     public @Nullable BlockEntity getBlockEntity(BlockPos pos) {
@@ -130,7 +129,6 @@ public abstract class Mixin_M_WorldGenRegion implements WorldGenLevel {
      * @author TheGreatWolf
      * @reason Use non-BlockPos version
      */
-    @SuppressWarnings("removal")
     @Overwrite
     @Override
     public BlockState getBlockState(BlockPos pos) {
@@ -155,8 +153,8 @@ public abstract class Mixin_M_WorldGenRegion implements WorldGenLevel {
     public @Nullable ChunkAccess getChunk(int x, int z, ChunkStatus status, boolean forceLoad) {
         ChunkAccess chunk;
         if (this.hasChunk(x, z)) {
-            int dx = EarthHelper.wrapChunkCoordinate(x - this.firstPos.x);
-            int dz = EarthHelper.wrapChunkCoordinate(z - this.firstPos.z);
+            int dx = EarthHelper.absDeltaChunkCoordinate(x, this.firstPos.x);
+            int dz = EarthHelper.absDeltaChunkCoordinate(z, this.firstPos.z);
             chunk = this.cache.get(dx + dz * this.size);
             if (chunk.getStatus().isOrAfter(status)) {
                 return chunk;
@@ -199,7 +197,6 @@ public abstract class Mixin_M_WorldGenRegion implements WorldGenLevel {
      * @author TheGreatWolf
      * @reason Use non-BlockPos version
      */
-    @SuppressWarnings("removal")
     @Overwrite
     @Override
     public FluidState getFluidState(BlockPos pos) {
@@ -226,7 +223,6 @@ public abstract class Mixin_M_WorldGenRegion implements WorldGenLevel {
      * @reason _
      * @author TheGreatWolf
      */
-    @SuppressWarnings("removal")
     @Override
     @Overwrite
     public void levelEvent(@Nullable Player player, int i, BlockPos blockPos, int j) {
@@ -269,7 +265,7 @@ public abstract class Mixin_M_WorldGenRegion implements WorldGenLevel {
      */
     @Override
     @Overwrite
-    public boolean setBlock(BlockPos pos, BlockState state, @BlockFlags int flags, int limit) {
+    public boolean setBlock(BlockPos pos, BlockState state, int flags, int limit) {
         Evolution.deprecatedMethod();
         return this.setBlock_(pos.getX(), pos.getY(), pos.getZ(), state, flags, limit);
     }

@@ -66,14 +66,47 @@ import java.util.function.Supplier;
 public abstract class Mixin_M_ServerLevel extends Level implements WorldGenLevel, PatchServerLevel {
 
     @Shadow @Final private static Logger LOGGER;
-    @Shadow public volatile boolean isUpdatingNavigations;
-    @Mutable @Shadow @Final public Set<Mob> navigatingMobs;
     @Shadow @Final private ServerChunkCache chunkSource;
     @Shadow @Final private PersistentEntitySectionManager<Entity> entityManager;
+    @Shadow public volatile boolean isUpdatingNavigations;
+    @Mutable @Shadow @Final public Set<Mob> navigatingMobs;
     @Shadow @Final private MinecraftServer server;
 
     public Mixin_M_ServerLevel(WritableLevelData pLevelData, ResourceKey<Level> pDimension, Holder<DimensionType> pDimensionTypeRegistration, Supplier<ProfilerFiller> pProfiler, boolean pIsClientSide, boolean pIsDebug, long pBiomeZoomSeed) {
         super(pLevelData, pDimension, pDimensionTypeRegistration, pProfiler, pIsClientSide, pIsDebug, pBiomeZoomSeed);
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Call onAddedToWorld on entities.
+     */
+    @Overwrite
+    private boolean addEntity(Entity entity) {
+        if (entity.isRemoved()) {
+            LOGGER.warn("Tried to add entity {} but it was marked as removed already", EntityType.getKey(entity.getType()));
+            return false;
+        }
+        if (this.entityManager.addNewEntity(entity)) {
+            entity.onAddedToWorld();
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Call onAddedToWorld on entities.
+     */
+    @Overwrite
+    private void addPlayer(ServerPlayer player) {
+        Entity entity = this.getEntities().get(player.getUUID());
+        if (entity != null) {
+            LOGGER.warn("Force-added player with duplicate UUID {}", player.getUUID());
+            entity.unRide();
+            this.removePlayerImmediately((ServerPlayer) entity, Entity.RemovalReason.DISCARDED);
+        }
+        this.entityManager.addNewEntity(player);
+        player.onAddedToWorld();
     }
 
     /**
@@ -137,6 +170,23 @@ public abstract class Mixin_M_ServerLevel extends Level implements WorldGenLevel
     @Shadow
     public abstract DimensionDataStorage getDataStorage();
 
+    @Unique
+    private @Nullable OList<PathNavigation> getPathNavigations(int x, int y, int z) {
+        OList<PathNavigation> list = null;
+        OSet<Mob> navigatingMobs = (OSet<Mob>) this.navigatingMobs;
+        for (long it = navigatingMobs.beginIteration(); navigatingMobs.hasNextIteration(it); it = navigatingMobs.nextEntry(it)) {
+            Mob mob = navigatingMobs.getIteration(it);
+            PathNavigation pathNavigation = mob.getNavigation();
+            if (pathNavigation.shouldRecomputePath_(x, y, z)) {
+                if (list == null) {
+                    list = new OArrayList<>();
+                }
+                list.add(pathNavigation);
+            }
+        }
+        return list;
+    }
+
     @Shadow
     public abstract PoiManager getPoiManager();
 
@@ -182,10 +232,39 @@ public abstract class Mixin_M_ServerLevel extends Level implements WorldGenLevel
      * @reason _
      * @author TheGreatWolf
      */
-    @SuppressWarnings("removal")
+    @Overwrite
+    public boolean isNaturalSpawningAllowed(ChunkPos chunkPos) {
+        Evolution.deprecatedMethod();
+        return this.isNaturalSpawningAllowed_ChunkPos(chunkPos.x, chunkPos.z);
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public boolean isNaturalSpawningAllowed(BlockPos pos) {
+        Evolution.deprecatedMethod();
+        return this.isNaturalSpawningAllowed_BlockPos(pos.getX(), pos.getY(), pos.getZ());
+    }
+
+    @Override
+    public boolean isNaturalSpawningAllowed_BlockPos(int x, int y, int z) {
+        return this.entityManager.canPositionTick_BlockPos(x, z);
+    }
+
+    @Override
+    public boolean isNaturalSpawningAllowed_ChunkPos(int chunkX, int chunkZ) {
+        return this.entityManager.canPositionTick_ChunkPos(ChunkPos.asLong(chunkX, chunkZ));
+    }
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
     @Override
     @Overwrite
-    public void levelEvent(@Nullable Player player, @LvlEvent int event, BlockPos pos, int data) {
+    public void levelEvent(@Nullable Player player, int event, BlockPos pos, int data) {
         Evolution.deprecatedMethod();
         this.levelEvent_(player, event, pos.getX(), pos.getY(), pos.getZ(), data);
     }
@@ -200,7 +279,6 @@ public abstract class Mixin_M_ServerLevel extends Level implements WorldGenLevel
      * @reason _
      * @author TheGreatWolf
      */
-    @SuppressWarnings("removal")
     @Override
     @Overwrite
     public boolean mayInteract(Player player, BlockPos pos) {
@@ -239,6 +317,11 @@ public abstract class Mixin_M_ServerLevel extends Level implements WorldGenLevel
         }
     }
 
+    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/server/level/ServerLevel;navigatingMobs:Ljava/util/Set;", opcode = Opcodes.PUTFIELD))
+    private void onInit(ServerLevel instance, Set<Mob> value) {
+        this.navigatingMobs = new OHashSet<>();
+    }
+
     @Shadow
     public abstract void removePlayerImmediately(ServerPlayer serverPlayer, Entity.RemovalReason removalReason);
 
@@ -246,10 +329,9 @@ public abstract class Mixin_M_ServerLevel extends Level implements WorldGenLevel
      * @reason _
      * @author TheGreatWolf
      */
-    @SuppressWarnings("removal")
     @Override
     @Overwrite
-    public void sendBlockUpdated(BlockPos pos, BlockState oldState, BlockState newState, @BlockFlags int flags) {
+    public void sendBlockUpdated(BlockPos pos, BlockState oldState, BlockState newState, int flags) {
         Evolution.deprecatedMethod();
         this.sendBlockUpdated_(pos.getX(), pos.getY(), pos.getZ(), oldState, newState, flags);
     }
@@ -309,6 +391,21 @@ public abstract class Mixin_M_ServerLevel extends Level implements WorldGenLevel
     }
 
     /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Overwrite
+    private void tickBlock(BlockPos pos, Block block) {
+        int x = pos.getX();
+        int y = pos.getY();
+        int z = pos.getZ();
+        BlockState state = this.getBlockState_(x, y, z);
+        if (state.is(block)) {
+            state.tick_((ServerLevel) (Object) this, x, y, z, this.random);
+        }
+    }
+
+    /**
      * @author TheGreatWolf
      * @reason Remove allocations, handle evolution pending ticking
      */
@@ -345,76 +442,6 @@ public abstract class Mixin_M_ServerLevel extends Level implements WorldGenLevel
             }
         }
         profiler.pop();
-    }
-
-    /**
-     * @author TheGreatWolf
-     * @reason Call onAddedToWorld on entities.
-     */
-    @Overwrite
-    private boolean addEntity(Entity entity) {
-        if (entity.isRemoved()) {
-            LOGGER.warn("Tried to add entity {} but it was marked as removed already", EntityType.getKey(entity.getType()));
-            return false;
-        }
-        if (this.entityManager.addNewEntity(entity)) {
-            entity.onAddedToWorld();
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * @author TheGreatWolf
-     * @reason Call onAddedToWorld on entities.
-     */
-    @Overwrite
-    private void addPlayer(ServerPlayer player) {
-        Entity entity = this.getEntities().get(player.getUUID());
-        if (entity != null) {
-            LOGGER.warn("Force-added player with duplicate UUID {}", player.getUUID());
-            entity.unRide();
-            this.removePlayerImmediately((ServerPlayer) entity, Entity.RemovalReason.DISCARDED);
-        }
-        this.entityManager.addNewEntity(player);
-        player.onAddedToWorld();
-    }
-
-    @Unique
-    private @Nullable OList<PathNavigation> getPathNavigations(int x, int y, int z) {
-        OList<PathNavigation> list = null;
-        OSet<Mob> navigatingMobs = (OSet<Mob>) this.navigatingMobs;
-        for (long it = navigatingMobs.beginIteration(); navigatingMobs.hasNextIteration(it); it = navigatingMobs.nextEntry(it)) {
-            Mob mob = navigatingMobs.getIteration(it);
-            PathNavigation pathNavigation = mob.getNavigation();
-            if (pathNavigation.shouldRecomputePath_(x, y, z)) {
-                if (list == null) {
-                    list = new OArrayList<>();
-                }
-                list.add(pathNavigation);
-            }
-        }
-        return list;
-    }
-
-    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/server/level/ServerLevel;navigatingMobs:Ljava/util/Set;", opcode = Opcodes.PUTFIELD))
-    private void onInit(ServerLevel instance, Set<Mob> value) {
-        this.navigatingMobs = new OHashSet<>();
-    }
-
-    /**
-     * @reason _
-     * @author TheGreatWolf
-     */
-    @Overwrite
-    private void tickBlock(BlockPos pos, Block block) {
-        int x = pos.getX();
-        int y = pos.getY();
-        int z = pos.getZ();
-        BlockState state = this.getBlockState_(x, y, z);
-        if (state.is(block)) {
-            state.tick_((ServerLevel) (Object) this, x, y, z, this.random);
-        }
     }
 
     /**

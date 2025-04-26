@@ -63,8 +63,8 @@ import java.util.Map;
 @Mixin(ChunkSerializer.class)
 public abstract class MixinChunkSerializer {
 
-    @Shadow @Final private static Logger LOGGER;
     @Shadow @Final private static Codec<PalettedContainer<BlockState>> BLOCK_STATE_CODEC;
+    @Shadow @Final private static Logger LOGGER;
 
     @Shadow
     public static ChunkStatus.ChunkType getChunkTypeFromTag(@Nullable CompoundTag pChunkNBT) {
@@ -72,8 +72,99 @@ public abstract class MixinChunkSerializer {
     }
 
     @Shadow
+    private static @Nullable ListTag getListOfCompoundsOrNull(CompoundTag compoundTag, String string) {
+        throw new AbstractMethodError();
+    }
+
+    @Shadow
+    private static void logErrors(ChunkPos pChunkPos, int pChunkSectionY, String pErrorMessage) {
+        throw new AbstractMethodError();
+    }
+
+    @Shadow
+    private static Codec<PalettedContainer<Holder<Biome>>> makeBiomeCodec(Registry<Biome> pBiomeRegistry) {
+        throw new AbstractMethodError();
+    }
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Overwrite
+    private static void method_39797(@Nullable ListTag entities, ServerLevel level, @Nullable ListTag blockEntities, LevelChunk chunk) {
+        if (entities != null) {
+            level.addLegacyChunkEntities(EntityType.loadEntitiesRecursive(entities, level));
+        }
+        if (blockEntities != null) {
+            for (int i = 0, len = blockEntities.size(); i < len; ++i) {
+                CompoundTag nbt = blockEntities.getCompound(i);
+                boolean keepPacked = nbt.getBoolean("keepPacked");
+                if (keepPacked) {
+                    chunk.setBlockEntityNbt(nbt);
+                }
+                else {
+                    int x = nbt.getInt("x");
+                    int y = nbt.getInt("y");
+                    int z = nbt.getInt("z");
+                    BlockEntity blockEntity = TEUtils.loadStatic(x, y, z, chunk.getBlockState_(x, y, z), nbt);
+                    if (blockEntity != null) {
+                        chunk.setBlockEntity(blockEntity);
+                    }
+                }
+            }
+        }
+    }
+
+    @Shadow
     public static ListTag packOffsets(ShortList[] pList) {
         throw new AbstractMethodError();
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    private static CompoundTag packStructureData(StructurePieceSerializationContext context, ChunkPos chunkPos, Map<ConfiguredStructureFeature<?, ?>, StructureStart> startsMap, Map<ConfiguredStructureFeature<?, ?>, LongSet> referencesMap) {
+        CompoundTag structureDataTag = new CompoundTag();
+        CompoundTag startsTag = new CompoundTag();
+        Registry<ConfiguredStructureFeature<?, ?>> registry = context.registryAccess().registryOrThrow(Registry.CONFIGURED_STRUCTURE_FEATURE_REGISTRY);
+        O2OMap<ConfiguredStructureFeature<?, ?>, StructureStart> starts = (O2OMap<ConfiguredStructureFeature<?, ?>, StructureStart>) startsMap;
+        for (long it = starts.beginIteration(); starts.hasNextIteration(it); it = starts.nextEntry(it)) {
+            ResourceLocation resLoc = registry.getKey(starts.getIterationKey(it));
+            assert resLoc != null;
+            //noinspection ObjectAllocationInLoop
+            startsTag.put(resLoc.toString(), starts.getIterationValue(it).createTag(context, chunkPos));
+        }
+        structureDataTag.put("starts", startsTag);
+        CompoundTag referencesTag = new CompoundTag();
+        O2OMap<ConfiguredStructureFeature<?, ?>, LongSet> references = (O2OMap<ConfiguredStructureFeature<?, ?>, LongSet>) referencesMap;
+        for (long it = references.beginIteration(); references.hasNextIteration(it); it = references.nextEntry(it)) {
+            LongSet value = references.getIterationValue(it);
+            if (!value.isEmpty()) {
+                ResourceLocation resLoc = registry.getKey(references.getIterationKey(it));
+                assert resLoc != null;
+                //noinspection ObjectAllocationInLoop
+                referencesTag.put(resLoc.toString(), new LongArrayTag(value));
+            }
+        }
+        structureDataTag.put("References", referencesTag);
+        return structureDataTag;
+    }
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @SuppressWarnings("ConstantConditions")
+    @Overwrite
+    private static @Nullable LevelChunk.PostLoadProcessor postLoadChunk(ServerLevel level, CompoundTag compoundTag) {
+        ListTag entities = getListOfCompoundsOrNull(compoundTag, "entities");
+        ListTag blockEntities = getListOfCompoundsOrNull(compoundTag, "block_entities");
+        if (entities == null && blockEntities == null) {
+            return null;
+        }
+        return chunk -> method_39797(entities, level, blockEntities, chunk);
     }
 
     /**
@@ -179,8 +270,8 @@ public abstract class MixinChunkSerializer {
         }
         ChunkAccess chunkAccess;
         if (chunkType == ChunkStatus.ChunkType.LEVELCHUNK) {
-            LevelChunkTicks<Block> blockTicks = LevelChunkTicks.load(tag.getList("block_ticks", Tag.TAG_COMPOUND), s -> Registry.BLOCK.getOptional(ResourceLocation.tryParse(s)), pos);
-            LevelChunkTicks<Fluid> fluidTicks = LevelChunkTicks.load(tag.getList("fluid_ticks", Tag.TAG_COMPOUND), s -> Registry.FLUID.getOptional(ResourceLocation.tryParse(s)), pos);
+            LevelChunkTicks<Block> blockTicks = LevelChunkTicks.load(tag.getList("block_ticks", Tag.TAG_COMPOUND), s -> Registry.BLOCK.getOptional_(ResourceLocation.tryParse(s)), pos);
+            LevelChunkTicks<Fluid> fluidTicks = LevelChunkTicks.load(tag.getList("fluid_ticks", Tag.TAG_COMPOUND), s -> Registry.FLUID.getOptional_(ResourceLocation.tryParse(s)), pos);
             LevelChunk chunk = new LevelChunk(level.getLevel(), pos, upgradeData, blockTicks, fluidTicks, inhabitedTime, levelChunkSections, postLoadChunk(level, tag), blendingData);
             if (tag.contains("Storage")) {
                 chunk.getChunkStorage().deserializeNBT(tag.getCompound("Storage"));
@@ -188,8 +279,8 @@ public abstract class MixinChunkSerializer {
             chunkAccess = chunk;
         }
         else {
-            ProtoChunkTicks<Block> blockTicks = ProtoChunkTicks.load(tag.getList("block_ticks", Tag.TAG_COMPOUND), s -> Registry.BLOCK.getOptional(ResourceLocation.tryParse(s)), pos);
-            ProtoChunkTicks<Fluid> fluidTicks = ProtoChunkTicks.load(tag.getList("fluid_ticks", Tag.TAG_COMPOUND), s -> Registry.FLUID.getOptional(ResourceLocation.tryParse(s)), pos);
+            ProtoChunkTicks<Block> blockTicks = ProtoChunkTicks.load(tag.getList("block_ticks", Tag.TAG_COMPOUND), s -> Registry.BLOCK.getOptional_(ResourceLocation.tryParse(s)), pos);
+            ProtoChunkTicks<Fluid> fluidTicks = ProtoChunkTicks.load(tag.getList("fluid_ticks", Tag.TAG_COMPOUND), s -> Registry.FLUID.getOptional_(ResourceLocation.tryParse(s)), pos);
             ProtoChunk protoChunk = new ProtoChunk(pos, upgradeData, levelChunkSections, blockTicks, fluidTicks, level, registry, blendingData);
             chunkAccess = protoChunk;
             protoChunk.setInhabitedTime(inhabitedTime);
@@ -200,9 +291,19 @@ public abstract class MixinChunkSerializer {
             }
             boolean lightDone = chunkStatus.isOrAfter(ChunkStatus.LIGHT);
             if (!isLightOn && lightDone) {
-                for (BlockPos p : BlockPos.betweenClosed(pos.getMinBlockX(), level.getMinBuildHeight(), pos.getMinBlockZ(), pos.getMaxBlockX(), level.getMaxBuildHeight() - 1, pos.getMaxBlockZ())) {
-                    if (chunkAccess.getBlockState(p).getLightEmission() != 0) {
-                        protoChunk.addLight(p);
+                int x0 = pos.getMinBlockX();
+                int x1 = pos.getMaxBlockX();
+                int y0 = level.getMinBuildHeight();
+                int y1 = level.getMaxBuildHeight() - 1;
+                int z0 = pos.getMinBlockZ();
+                int z1 = pos.getMaxBlockZ();
+                for (int x = x0; x <= x1; ++x) {
+                    for (int y = y0; y <= y1; ++y) {
+                        for (int z = z0; z <= z1; ++z) {
+                            if (chunkAccess.getBlockState_(x, y, z).getLightEmission() != 0) {
+                                protoChunk.getLights_().add(BlockPos.asLong(x, y, z));
+                            }
+                        }
                     }
                 }
             }
@@ -257,7 +358,9 @@ public abstract class MixinChunkSerializer {
             }
         }
         CompoundTag carvingMasks = tag.getCompound("CarvingMasks");
-        for (String s : carvingMasks.getAllKeys()) {
+        O2OMap<String, Tag> tags = carvingMasks.tags();
+        for (long it = tags.beginIteration(); tags.hasNextIteration(it); it = tags.nextEntry(it)) {
+            String s = tags.getIterationKey(it);
             GenerationStep.Carving carving = GenerationStep.Carving.valueOf(s);
             //noinspection ObjectAllocationInLoop
             protoChunk.setCarvingMask(carving, new CarvingMask(carvingMasks.getLongArray(s), chunkAccess.getMinBuildHeight()));
@@ -266,6 +369,77 @@ public abstract class MixinChunkSerializer {
         protoChunk.setSkyNibbles(skyNibbles);
         //Load event
         return protoChunk;
+    }
+
+    @Shadow
+    private static void saveTicks(ServerLevel pLevel, CompoundTag pTag, ChunkAccess.TicksToSave pTicksToSave) {
+        throw new AbstractMethodError();
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    private static Map<ConfiguredStructureFeature<?, ?>, LongSet> unpackStructureReferences(RegistryAccess registryAccess, ChunkPos pos, CompoundTag tag) {
+        O2OMap<ConfiguredStructureFeature<?, ?>, LongSet> map = new O2OHashMap<>();
+        Registry<ConfiguredStructureFeature<?, ?>> registry = registryAccess.registryOrThrow(Registry.CONFIGURED_STRUCTURE_FEATURE_REGISTRY);
+        CompoundTag referencesTag = tag.getCompound("References");
+        O2OMap<String, Tag> tags = referencesTag.tags();
+        for (long it = tags.beginIteration(); tags.hasNextIteration(it); it = tags.nextEntry(it)) {
+            String key = tags.getIterationKey(it);
+            ResourceLocation resLoc = ResourceLocation.tryParse(key);
+            ConfiguredStructureFeature<?, ?> feature = registry.get(resLoc);
+            if (feature == null) {
+                LOGGER.warn("Found reference to unknown structure '{}' in chunk {}, discarding", resLoc, pos);
+            }
+            else {
+                long[] ls = referencesTag.getLongArray(key);
+                if (ls.length != 0) {
+                    //noinspection ObjectAllocationInLoop
+                    LHashSet set = new LHashSet();
+                    for (long l : ls) {
+                        int x = ChunkPos.getX(l);
+                        int z = ChunkPos.getZ(l);
+                        if (Math.max(Math.abs(x - pos.x), Math.abs(z - pos.z)) > 8) {
+                            LOGGER.warn("Found invalid structure reference [ {}, {} @ {} ] for chunk {}.", resLoc, x, z, pos);
+                        }
+                        else {
+                            set.add(l);
+                        }
+                    }
+                    map.put(feature, set);
+                }
+            }
+        }
+        return map;
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    private static Map<ConfiguredStructureFeature<?, ?>, StructureStart> unpackStructureStart(StructurePieceSerializationContext context, CompoundTag tag, long seed) {
+        Map<ConfiguredStructureFeature<?, ?>, StructureStart> map = new O2OHashMap<>();
+        Registry<ConfiguredStructureFeature<?, ?>> registry = context.registryAccess().registryOrThrow(Registry.CONFIGURED_STRUCTURE_FEATURE_REGISTRY);
+        CompoundTag startsTag = tag.getCompound("starts");
+        O2OMap<String, Tag> tags = startsTag.tags();
+        for (long it = tags.beginIteration(); tags.hasNextIteration(it); it = tags.nextEntry(it)) {
+            String key = tags.getIterationKey(it);
+            ResourceLocation resourceLocation = ResourceLocation.tryParse(key);
+            ConfiguredStructureFeature<?, ?> configuredStructureFeature = registry.get(resourceLocation);
+            if (configuredStructureFeature == null) {
+                LOGGER.error("Unknown structure start: {}", resourceLocation);
+            }
+            else {
+                StructureStart structureStart = StructureFeature.loadStaticStart(context, startsTag.getCompound(key), seed);
+                if (structureStart != null) {
+                    map.put(configuredStructureFeature, structureStart);
+                }
+            }
+        }
+        return map;
     }
 
     /**
@@ -389,167 +563,5 @@ public abstract class MixinChunkSerializer {
         tag.put("Heightmaps", heightmaps);
         tag.put("structures", packStructureData(StructurePieceSerializationContext.fromLevel(level), pos, chunk.getAllStarts(), chunk.getAllReferences()));
         return tag;
-    }
-
-    @Shadow
-    private static @Nullable ListTag getListOfCompoundsOrNull(CompoundTag compoundTag, String string) {
-        throw new AbstractMethodError();
-    }
-
-    @Shadow
-    private static void logErrors(ChunkPos pChunkPos, int pChunkSectionY, String pErrorMessage) {
-        throw new AbstractMethodError();
-    }
-
-    @Shadow
-    private static Codec<PalettedContainer<Holder<Biome>>> makeBiomeCodec(Registry<Biome> pBiomeRegistry) {
-        throw new AbstractMethodError();
-    }
-
-    /**
-     * @reason _
-     * @author TheGreatWolf
-     */
-    @Overwrite
-    private static void method_39797(@Nullable ListTag entities, ServerLevel level, @Nullable ListTag blockEntities, LevelChunk chunk) {
-        if (entities != null) {
-            level.addLegacyChunkEntities(EntityType.loadEntitiesRecursive(entities, level));
-        }
-        if (blockEntities != null) {
-            for (int i = 0, len = blockEntities.size(); i < len; ++i) {
-                CompoundTag nbt = blockEntities.getCompound(i);
-                boolean keepPacked = nbt.getBoolean("keepPacked");
-                if (keepPacked) {
-                    chunk.setBlockEntityNbt(nbt);
-                }
-                else {
-                    int x = nbt.getInt("x");
-                    int y = nbt.getInt("y");
-                    int z = nbt.getInt("z");
-                    BlockEntity blockEntity = TEUtils.loadStatic(x, y, z, chunk.getBlockState_(x, y, z), nbt);
-                    if (blockEntity != null) {
-                        chunk.setBlockEntity(blockEntity);
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * @author TheGreatWolf
-     * @reason _
-     */
-    @Overwrite
-    private static CompoundTag packStructureData(StructurePieceSerializationContext context, ChunkPos chunkPos, Map<ConfiguredStructureFeature<?, ?>, StructureStart> startsMap, Map<ConfiguredStructureFeature<?, ?>, LongSet> referencesMap) {
-        CompoundTag structureDataTag = new CompoundTag();
-        CompoundTag startsTag = new CompoundTag();
-        Registry<ConfiguredStructureFeature<?, ?>> registry = context.registryAccess().registryOrThrow(Registry.CONFIGURED_STRUCTURE_FEATURE_REGISTRY);
-        O2OMap<ConfiguredStructureFeature<?, ?>, StructureStart> starts = (O2OMap<ConfiguredStructureFeature<?, ?>, StructureStart>) startsMap;
-        for (long it = starts.beginIteration(); starts.hasNextIteration(it); it = starts.nextEntry(it)) {
-            ResourceLocation resLoc = registry.getKey(starts.getIterationKey(it));
-            assert resLoc != null;
-            //noinspection ObjectAllocationInLoop
-            startsTag.put(resLoc.toString(), starts.getIterationValue(it).createTag(context, chunkPos));
-        }
-        structureDataTag.put("starts", startsTag);
-        CompoundTag referencesTag = new CompoundTag();
-        O2OMap<ConfiguredStructureFeature<?, ?>, LongSet> references = (O2OMap<ConfiguredStructureFeature<?, ?>, LongSet>) referencesMap;
-        for (long it = references.beginIteration(); references.hasNextIteration(it); it = references.nextEntry(it)) {
-            LongSet value = references.getIterationValue(it);
-            if (!value.isEmpty()) {
-                ResourceLocation resLoc = registry.getKey(references.getIterationKey(it));
-                assert resLoc != null;
-                //noinspection ObjectAllocationInLoop
-                referencesTag.put(resLoc.toString(), new LongArrayTag(value));
-            }
-        }
-        structureDataTag.put("References", referencesTag);
-        return structureDataTag;
-    }
-
-    /**
-     * @reason _
-     * @author TheGreatWolf
-     */
-    @SuppressWarnings("ConstantConditions")
-    @Overwrite
-    private static @Nullable LevelChunk.PostLoadProcessor postLoadChunk(ServerLevel level, CompoundTag compoundTag) {
-        ListTag entities = getListOfCompoundsOrNull(compoundTag, "entities");
-        ListTag blockEntities = getListOfCompoundsOrNull(compoundTag, "block_entities");
-        if (entities == null && blockEntities == null) {
-            return null;
-        }
-        return chunk -> method_39797(entities, level, blockEntities, chunk);
-    }
-
-    @Shadow
-    private static void saveTicks(ServerLevel pLevel, CompoundTag pTag, ChunkAccess.TicksToSave pTicksToSave) {
-        throw new AbstractMethodError();
-    }
-
-    /**
-     * @author TheGreatWolf
-     * @reason _
-     */
-    @Overwrite
-    private static Map<ConfiguredStructureFeature<?, ?>, LongSet> unpackStructureReferences(RegistryAccess registryAccess, ChunkPos pos, CompoundTag tag) {
-        O2OMap<ConfiguredStructureFeature<?, ?>, LongSet> map = new O2OHashMap<>();
-        Registry<ConfiguredStructureFeature<?, ?>> registry = registryAccess.registryOrThrow(Registry.CONFIGURED_STRUCTURE_FEATURE_REGISTRY);
-        CompoundTag referencesTag = tag.getCompound("References");
-        O2OMap<String, Tag> tags = referencesTag.tags();
-        for (long it = tags.beginIteration(); tags.hasNextIteration(it); it = tags.nextEntry(it)) {
-            String key = tags.getIterationKey(it);
-            ResourceLocation resLoc = ResourceLocation.tryParse(key);
-            ConfiguredStructureFeature<?, ?> feature = registry.get(resLoc);
-            if (feature == null) {
-                LOGGER.warn("Found reference to unknown structure '{}' in chunk {}, discarding", resLoc, pos);
-            }
-            else {
-                long[] ls = referencesTag.getLongArray(key);
-                if (ls.length != 0) {
-                    //noinspection ObjectAllocationInLoop
-                    LHashSet set = new LHashSet();
-                    for (long l : ls) {
-                        int x = ChunkPos.getX(l);
-                        int z = ChunkPos.getZ(l);
-                        if (Math.max(Math.abs(x - pos.x), Math.abs(z - pos.z)) > 8) {
-                            LOGGER.warn("Found invalid structure reference [ {}, {} @ {} ] for chunk {}.", resLoc, x, z, pos);
-                        }
-                        else {
-                            set.add(l);
-                        }
-                    }
-                    map.put(feature, set);
-                }
-            }
-        }
-        return map;
-    }
-
-    /**
-     * @author TheGreatWolf
-     * @reason _
-     */
-    @Overwrite
-    private static Map<ConfiguredStructureFeature<?, ?>, StructureStart> unpackStructureStart(StructurePieceSerializationContext context, CompoundTag tag, long seed) {
-        Map<ConfiguredStructureFeature<?, ?>, StructureStart> map = new O2OHashMap<>();
-        Registry<ConfiguredStructureFeature<?, ?>> registry = context.registryAccess().registryOrThrow(Registry.CONFIGURED_STRUCTURE_FEATURE_REGISTRY);
-        CompoundTag startsTag = tag.getCompound("starts");
-        O2OMap<String, Tag> tags = startsTag.tags();
-        for (long it = tags.beginIteration(); tags.hasNextIteration(it); it = tags.nextEntry(it)) {
-            String key = tags.getIterationKey(it);
-            ResourceLocation resourceLocation = ResourceLocation.tryParse(key);
-            ConfiguredStructureFeature<?, ?> configuredStructureFeature = registry.get(resourceLocation);
-            if (configuredStructureFeature == null) {
-                LOGGER.error("Unknown structure start: {}", resourceLocation);
-            }
-            else {
-                StructureStart structureStart = StructureFeature.loadStaticStart(context, startsTag.getCompound(key), seed);
-                if (structureStart != null) {
-                    map.put(configuredStructureFeature, structureStart);
-                }
-            }
-        }
-        return map;
     }
 }

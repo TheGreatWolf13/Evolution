@@ -23,7 +23,7 @@ public abstract class Mixin_M_GsonHelper {
     public static Item convertToItem(JsonElement json, String string) {
         if (json.isJsonPrimitive()) {
             String readString = json.getAsString();
-            Item item = (Item) Registry.ITEM.getNullable(new ResourceLocation(readString));
+            Item item = Registry.ITEM.getNullable(new ResourceLocation(readString));
             if (item == null) {
                 throw new JsonSyntaxException("Expected " + string + " to be an item, was unknown string '" + readString + "'");
             }

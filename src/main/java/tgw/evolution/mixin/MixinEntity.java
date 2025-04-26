@@ -57,7 +57,6 @@ import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.init.EvolutionBlockTags;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionShapes;
-import tgw.evolution.patches.PatchEntity;
 import tgw.evolution.util.OptionalMutableBlockPos;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
@@ -74,7 +73,7 @@ import java.util.Random;
 import java.util.Set;
 
 @Mixin(Entity.class)
-public abstract class MixinEntity implements PatchEntity, EntityAccess {
+public abstract class MixinEntity implements EntityAccess {
 
     @Shadow @Final protected static EntityDataAccessor<Pose> DATA_POSE;
     @Shadow private AABB bb;
@@ -510,12 +509,12 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
     @CanIgnoreReturnValue
     private Vec3d getCameraPosition(float partialTicks) {
         if (partialTicks == 1.0f) {
-            return MathHelper.getRelativeEyePosition((Entity) (Object) this, 1.0f, this.eyePosition).addMutable(this.position);
+            return MthUtil.getRelativeEyePosition((Entity) (Object) this, 1.0f, this.eyePosition).addMutable(this.position);
         }
         double x = Mth.lerp(partialTicks, this.xo, this.getX());
         double y = Mth.lerp(partialTicks, this.yo, this.getY());
         double z = Mth.lerp(partialTicks, this.zo, this.getZ());
-        return MathHelper.getRelativeEyePosition((Entity) (Object) this, partialTicks, this.partialEyePosition).addMutable(x, y, z);
+        return MthUtil.getRelativeEyePosition((Entity) (Object) this, partialTicks, this.partialEyePosition).addMutable(x, y, z);
     }
 
     @Shadow
@@ -638,11 +637,6 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
     @Shadow
     public abstract Pose getPose();
 
-    @Unique
-    private long getStepSoundPos(int x, int y, int z) {
-        return BlockPos.asLong(x, y, z);
-    }
-
     @Override
     public long getSteppingPos() {
         if (this.supportingPos.isPresent()) {
@@ -757,7 +751,7 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
     @Override
     public boolean isColliding_(int x, int y, int z, BlockState state) {
         VoxelShape shape = state.getCollisionShape_(this.level, x, y, z, (Entity) (Object) this);
-        return MathHelper.doesShapeIntersect(shape, this.getBoundingBox(), x, y, z);
+        return MthUtil.doesShapeIntersect(shape, this.getBoundingBox(), x, y, z);
     }
 
     @Shadow
@@ -834,7 +828,7 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
                 for (int z = z0; z <= z1; z++) {
                     BlockState state = this.level.getBlockState_(x, y, z);
                     if (!state.isAir() && state.isSuffocating_(this.level, x, y, z)) {
-                        if (MathHelper.doesShapeIntersect(state.getCollisionShape_(this.level, x, y, z), minX - x, minY - y, minZ - z, maxX - x, maxY - y, maxZ - z)) {
+                        if (MthUtil.doesShapeIntersect(state.getCollisionShape_(this.level, x, y, z), minX - x, minY - y, minZ - z, maxX - x, maxY - y, maxZ - z)) {
                             return true;
                         }
                     }
@@ -1463,10 +1457,10 @@ public abstract class MixinEntity implements PatchEntity, EntityAccess {
             double x = this.getX() + (this.random.nextDouble() - 0.5) * this.dimensions.width;
             double z = this.getZ() + (this.random.nextDouble() - 0.5) * this.dimensions.width;
             if (pos.getX() != landingPos.getX()) {
-                x = MathHelper.clamp(x, landingPos.getX(), landingPos.getX() + 1.0);
+                x = MthUtil.clamp(x, landingPos.getX(), landingPos.getX() + 1.0);
             }
             if (pos.getZ() != landingPos.getZ()) {
-                z = MathHelper.clamp(z, landingPos.getZ(), landingPos.getZ() + 1.0);
+                z = MthUtil.clamp(z, landingPos.getZ(), landingPos.getZ() + 1.0);
             }
             this.level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, landingState), x, this.getY() + 0.1, z, velocity.x * -2, 2 * SI.METER / SI.SECOND, velocity.z * -2);
         }

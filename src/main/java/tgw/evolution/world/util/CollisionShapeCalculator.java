@@ -11,7 +11,7 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.util.math.AABBMutable;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 public final class CollisionShapeCalculator extends AbstractCollisionCalculator<VoxelShape> {
 
@@ -74,7 +74,7 @@ public final class CollisionShapeCalculator extends AbstractCollisionCalculator<
             }
             VoxelShape shape = state.getCollisionShape_(this.level, x, y, z, this.entity);
             AABBMutable box = this.box;
-            if (!MathHelper.doesShapeIntersect(shape, box.minX - x, box.minY - y, box.minZ - z, box.maxX - x, box.maxY - y, box.maxZ - z)) {
+            if (!MthUtil.doesShapeIntersect(shape, box.minX - x, box.minY - y, box.minZ - z, box.maxX - x, box.maxY - y, box.maxZ - z)) {
                 continue;
             }
             return shape;

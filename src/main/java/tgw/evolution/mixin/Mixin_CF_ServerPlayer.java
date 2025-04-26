@@ -487,7 +487,7 @@ public abstract class Mixin_CF_ServerPlayer extends Player implements PatchServe
     @Override
     public void onAddedToWorld() {
         super.onAddedToWorld();
-        R2OMap<MobEffect, MobEffectInstance> effectsMap = (R2OMap<MobEffect, MobEffectInstance>) this.getActiveEffectsMap();
+        R2OMap<MobEffect, MobEffectInstance> effectsMap = this.getActiveEffectsMap_();
         for (long it = effectsMap.beginIteration(); effectsMap.hasNextIteration(it); it = effectsMap.nextEntry(it)) {
             //noinspection ObjectAllocationInLoop
             this.connection.send(new PacketSCAddEffect(effectsMap.getIterationValue(it), PacketSCAddEffect.Logic.ADD));

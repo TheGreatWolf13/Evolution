@@ -54,14 +54,14 @@ import java.util.function.Predicate;
 @Mixin(EntitySelectorOptions.class)
 public abstract class MixinEntitySelectorOptions {
 
+    @Unique private static final OList<String> SORT_SUGGESTIONS;
     @Shadow @Final public static DynamicCommandExceptionType ERROR_ENTITY_TYPE_INVALID;
     @Shadow @Final public static DynamicCommandExceptionType ERROR_GAME_MODE_INVALID;
-    @Shadow @Final public static DynamicCommandExceptionType ERROR_SORT_UNKNOWN;
-    @Shadow @Final public static SimpleCommandExceptionType ERROR_LIMIT_TOO_SMALL;
-    @Shadow @Final public static SimpleCommandExceptionType ERROR_LEVEL_NEGATIVE;
-    @Shadow @Final public static SimpleCommandExceptionType ERROR_RANGE_NEGATIVE;
     @Shadow @Final public static DynamicCommandExceptionType ERROR_INAPPLICABLE_OPTION;
-    @Unique private static final OList<String> SORT_SUGGESTIONS;
+    @Shadow @Final public static SimpleCommandExceptionType ERROR_LEVEL_NEGATIVE;
+    @Shadow @Final public static SimpleCommandExceptionType ERROR_LIMIT_TOO_SMALL;
+    @Shadow @Final public static SimpleCommandExceptionType ERROR_RANGE_NEGATIVE;
+    @Shadow @Final public static DynamicCommandExceptionType ERROR_SORT_UNKNOWN;
     @Shadow @Final private static Map<String, EntitySelectorOptions.Option> OPTIONS;
 
     static {
@@ -271,7 +271,7 @@ public abstract class MixinEntitySelectorOptions {
                 }
                 else {
                     ResourceLocation resourceLocation = ResourceLocation.read(parser.getReader());
-                    EntityType<?> entityType = (EntityType<?>) Registry.ENTITY_TYPE.getNullable(resourceLocation);
+                    EntityType<?> entityType = Registry.ENTITY_TYPE.getNullable(resourceLocation);
                     if (entityType == null) {
                         parser.getReader().setCursor(cursor);
                         throw ERROR_ENTITY_TYPE_INVALID.createWithContext(parser.getReader(), resourceLocation.toString());

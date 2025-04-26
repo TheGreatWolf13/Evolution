@@ -31,7 +31,7 @@ public abstract class MixinBlockInput implements Predicate<BlockInWorld>, PatchB
      * @author TheGreatWolf
      */
     @Overwrite
-    public boolean place(ServerLevel level, BlockPos pos, @BlockFlags int flags) {
+    public boolean place(ServerLevel level, BlockPos pos, int flags) {
         Evolution.deprecatedMethod();
         return this.place_(level, pos.getX(), pos.getY(), pos.getZ(), flags);
     }

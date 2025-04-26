@@ -5,7 +5,7 @@ import tgw.evolution.Evolution;
 
 public interface SetExtension {
 
-    boolean CHECKS = false;
+    boolean CHECKS = true;
 
     void clear();
 

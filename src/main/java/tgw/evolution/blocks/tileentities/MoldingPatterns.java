@@ -1,7 +1,7 @@
 package tgw.evolution.blocks.tileentities;
 
 import tgw.evolution.Evolution;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 import static tgw.evolution.blocks.tileentities.Patterns.*;
 
@@ -31,43 +31,43 @@ public final class MoldingPatterns {
                                              {true, false, false, false, true},
                                              {false, false, false, false, true},
                                              {false, false, true, true, true}};
-    private static final boolean[][] SAW2 = MathHelper.rotateClockWise(SAW1);
-    private static final boolean[][] SAW3 = MathHelper.rotateClockWise(SAW2);
-    private static final boolean[][] SAW4 = MathHelper.rotateClockWise(SAW3);
+    private static final boolean[][] SAW2 = MthUtil.rotateClockWise(SAW1);
+    private static final boolean[][] SAW3 = MthUtil.rotateClockWise(SAW2);
+    private static final boolean[][] SAW4 = MthUtil.rotateClockWise(SAW3);
     public static final boolean[][][] SAW = {SAW1, SAW2, SAW3, SAW4};
     private static final boolean[][] SWORD1 = {{false, false, true, true, true},
                                                {false, false, false, true, true},
                                                {true, false, false, false, true},
                                                {true, true, false, false, false},
                                                {true, true, true, false, true}};
-    private static final boolean[][] SWORD2 = MathHelper.rotateClockWise(SWORD1);
-    private static final boolean[][] SWORD3 = MathHelper.rotateClockWise(SWORD2);
-    private static final boolean[][] SWORD4 = MathHelper.rotateClockWise(SWORD3);
+    private static final boolean[][] SWORD2 = MthUtil.rotateClockWise(SWORD1);
+    private static final boolean[][] SWORD3 = MthUtil.rotateClockWise(SWORD2);
+    private static final boolean[][] SWORD4 = MthUtil.rotateClockWise(SWORD3);
     public static final boolean[][][] SWORD = {SWORD1, SWORD2, SWORD3, SWORD4};
     private static final boolean[][] GUARD1 = {{true, true, true, true, true},
                                                {true, true, true, true, true},
                                                {false, false, true, false, false},
                                                {true, false, false, false, true},
                                                {true, true, true, true, true}};
-    private static final boolean[][] GUARD2 = MathHelper.rotateClockWise(GUARD1);
-    private static final boolean[][] GUARD3 = MathHelper.rotateClockWise(GUARD2);
-    private static final boolean[][] GUARD4 = MathHelper.rotateClockWise(GUARD3);
+    private static final boolean[][] GUARD2 = MthUtil.rotateClockWise(GUARD1);
+    private static final boolean[][] GUARD3 = MthUtil.rotateClockWise(GUARD2);
+    private static final boolean[][] GUARD4 = MthUtil.rotateClockWise(GUARD3);
     public static final boolean[][][] GUARD = {GUARD1, GUARD2, GUARD3, GUARD4};
     private static final boolean[][] INGOT1 = {{true, true, true, true, true},
                                                {false, false, false, false, false},
                                                {false, false, false, false, false},
                                                {false, false, false, false, false},
                                                {true, true, true, true, true}};
-    private static final boolean[][] INGOT2 = MathHelper.rotateClockWise(INGOT1);
+    private static final boolean[][] INGOT2 = MthUtil.rotateClockWise(INGOT1);
     public static final boolean[][][] INGOT = {INGOT1, INGOT2};
     private static final boolean[][] BRICK_LAYER1 = {{true, true, true, true, false},
                                                      {true, true, true, true, false},
                                                      {false, false, false, false, false},
                                                      {true, true, true, true, false},
                                                      {true, true, true, true, false}};
-    private static final boolean[][] BRICK_LAYER2 = MathHelper.rotateClockWise(BRICK_LAYER1);
-    private static final boolean[][] BRICK_LAYER3 = MathHelper.rotateClockWise(BRICK_LAYER2);
-    private static final boolean[][] BRICK_LAYER4 = MathHelper.rotateClockWise(BRICK_LAYER3);
+    private static final boolean[][] BRICK_LAYER2 = MthUtil.rotateClockWise(BRICK_LAYER1);
+    private static final boolean[][] BRICK_LAYER3 = MthUtil.rotateClockWise(BRICK_LAYER2);
+    private static final boolean[][] BRICK_LAYER4 = MthUtil.rotateClockWise(BRICK_LAYER3);
     private static final boolean[][][] BRICK4 = {BRICK_LAYER4, BRICK_LAYER4};
     private static final boolean[][][] BRICK3 = {BRICK_LAYER3, BRICK_LAYER3};
     private static final boolean[][][] BRICK2 = {BRICK_LAYER2, BRICK_LAYER2};
@@ -79,7 +79,7 @@ public final class MoldingPatterns {
 
     public static boolean comparePatternsOneLayer(boolean[][] matrix, boolean[][][] pattern) {
         for (boolean[][] booleans : pattern) {
-            if (MathHelper.matricesEqual(matrix, booleans)) {
+            if (MthUtil.matricesEqual(matrix, booleans)) {
                 return true;
             }
         }
@@ -88,8 +88,8 @@ public final class MoldingPatterns {
 
     public static boolean comparePatternsTwoLayer(boolean[][][] matrix, boolean[][][][] pattern) {
         for (boolean[][][] booleans : pattern) {
-            if (MathHelper.matricesEqual(matrix[0], booleans[0])) {
-                if (MathHelper.matricesEqual(matrix[1], booleans[1])) {
+            if (MthUtil.matricesEqual(matrix[0], booleans[0])) {
+                if (MthUtil.matricesEqual(matrix[1], booleans[1])) {
                     return true;
                 }
             }

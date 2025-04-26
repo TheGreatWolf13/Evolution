@@ -27,7 +27,7 @@ import tgw.evolution.blocks.tileentities.TETorch;
 import tgw.evolution.entities.projectiles.EntityGenericProjectile;
 import tgw.evolution.entities.projectiles.EntityTorch;
 import tgw.evolution.init.*;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 import tgw.evolution.util.time.Time;
 
 import java.util.List;
@@ -204,7 +204,7 @@ public class ItemTorch extends ItemWallOrFloor implements IFireAspect, IThrowabl
             if (charge < 0) {
                 return;
             }
-            float strength = MathHelper.getRelativeChargeStrength(charge);
+            float strength = MthUtil.getRelativeChargeStrength(charge);
             if (strength < 0.1) {
                 return;
             }

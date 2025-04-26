@@ -53,7 +53,7 @@ public abstract class Mixin_M_CopyBlockState_Serializer extends LootItemConditio
     @Overwrite
     public CopyBlockState deserialize(JsonObject json, JsonDeserializationContext context, LootItemCondition[] conditions) {
         ResourceLocation resourceLocation = new ResourceLocation(GsonHelper.getAsString(json, "block"));
-        Block block = (Block) Registry.BLOCK.getNullable(resourceLocation);
+        Block block = Registry.BLOCK.getNullable(resourceLocation);
         if (block == null) {
             throw new IllegalArgumentException("Can't find block " + resourceLocation);
         }

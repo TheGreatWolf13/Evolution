@@ -6,7 +6,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.level.ChunkPos;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.client.renderer.DimensionOverworld;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 import tgw.evolution.util.math.Vec3f;
 import tgw.evolution.util.time.Time;
 
@@ -45,7 +45,7 @@ public final class EarthHelper {
     }
 
     public static int absDeltaChunkCoordinate(int d0, int d1) {
-        int d = MathHelper.abs(d0 - d1);
+        int d = MthUtil.abs(d0 - d1);
         int mul = d - (MAX_CHUNK + 2) >> Integer.SIZE - 1;
         return -mul * d + (mul + 1) * (-d + 2 * (MAX_CHUNK + 1));
     }
@@ -98,21 +98,21 @@ public final class EarthHelper {
     public static double deltaBlockCoordinate(double d0, double d1) {
         double d = d0 - d1;
         if (Math.abs(d) > MAX_BLOCK + 1) {
-            return d - 2 * (MAX_BLOCK + 1) * MathHelper.sign(d);
+            return d - 2 * (MAX_BLOCK + 1) * MthUtil.sign(d);
         }
         return d;
     }
 
     public static int deltaBlockCoordinate(int d0, int d1) {
         int d = d0 - d1;
-        int mul = MathHelper.abs(d) - (MAX_BLOCK + 2) >> Integer.SIZE - 1;
-        return -mul * d + (mul + 1) * (d - 2 * (MAX_BLOCK + 1) * MathHelper.sign(d));
+        int mul = MthUtil.abs(d) - (MAX_BLOCK + 2) >> Integer.SIZE - 1;
+        return -mul * d + (mul + 1) * (d - 2 * (MAX_BLOCK + 1) * MthUtil.sign(d));
     }
 
     public static int deltaChunkCoordinate(int d0, int d1) {
         int d = d0 - d1;
-        int mul = MathHelper.abs(d) - (MAX_CHUNK + 2) >> Integer.SIZE - 1;
-        return -mul * d + (mul + 1) * (d - 2 * (MAX_CHUNK + 1) * MathHelper.sign(d));
+        int mul = MthUtil.abs(d) - (MAX_CHUNK + 2) >> Integer.SIZE - 1;
+        return -mul * d + (mul + 1) * (d - 2 * (MAX_CHUNK + 1) * MthUtil.sign(d));
     }
 
     /**
@@ -127,12 +127,12 @@ public final class EarthHelper {
 
     public static float getMoonAltitude(float sinLatitude, float cosLatitude, float hourAngle, float celestialRadius, float declination) {
         hourAngle -= 90;
-        float sinRightAsc = MathHelper.sinDeg(hourAngle);
-        MOON.x = celestialRadius * MathHelper.cosDeg(hourAngle);
+        float sinRightAsc = MthUtil.sinDeg(hourAngle);
+        MOON.x = celestialRadius * MthUtil.cosDeg(hourAngle);
         float yt = celestialRadius * sinRightAsc;
         MOON.y = yt * cosLatitude + declination * sinLatitude;
         MOON.z = declination * cosLatitude - celestialRadius * sinRightAsc * sinLatitude;
-        return MathHelper.arcCosDeg(MOON.dotProduct(ZENITH) * MOON.inverseLength() * ZENITH.inverseLength());
+        return MthUtil.arcCosDeg(MOON.dotProduct(ZENITH) * MOON.inverseLength() * ZENITH.inverseLength());
     }
 
     public static Vec3f getMoonDir() {
@@ -182,14 +182,14 @@ public final class EarthHelper {
 
     public static float getSunAltitude(float sinLatitude, float cosLatitude, float rightAscension, float celestialRadius, float declination) {
         rightAscension -= 90;
-        sunX = celestialRadius * MathHelper.cosDeg(rightAscension);
-        float sinRightAsc = MathHelper.sinDeg(rightAscension);
+        sunX = celestialRadius * MthUtil.cosDeg(rightAscension);
+        float sinRightAsc = MthUtil.sinDeg(rightAscension);
         SUN.x = sunX;
         float yt = celestialRadius * sinRightAsc;
         SUN.y = yt * cosLatitude + declination * sinLatitude;
         sunZ = declination * cosLatitude - celestialRadius * sinRightAsc * sinLatitude;
         SUN.z = sunZ;
-        return MathHelper.arcCosDeg(SUN.dotProduct(ZENITH) * SUN.inverseLength() * ZENITH.inverseLength());
+        return MthUtil.arcCosDeg(SUN.dotProduct(ZENITH) * SUN.inverseLength() * ZENITH.inverseLength());
     }
 
     private static float getSunAngle(@Nullable DimensionOverworld dimension) {
@@ -197,7 +197,7 @@ public final class EarthHelper {
         float elevationAngle = dimension == null ? 0 : dimension.getSunAltitude();
         if (elevationAngle > 80) {
             sunAngle = -elevationAngle * elevationAngle / 784.0f + 10.0f * elevationAngle / 49.0f - 7.163_265f;
-            sunAngle = MathHelper.clamp(sunAngle, 0.0F, 1.0F);
+            sunAngle = MthUtil.clamp(sunAngle, 0.0F, 1.0F);
         }
         if (dimension != null && dimension.isCloseToSolarEclipse()) {
             float intensity = Math.max(0.2f, dimension.getSolarEclipseIntensity());

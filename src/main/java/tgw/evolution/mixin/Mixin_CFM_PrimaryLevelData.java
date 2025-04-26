@@ -1,7 +1,6 @@
 package tgw.evolution.mixin;
 
 import com.mojang.datafixers.DataFixer;
-import com.mojang.serialization.DataResult;
 import com.mojang.serialization.Lifecycle;
 import net.minecraft.SharedConstants;
 import net.minecraft.Util;
@@ -20,12 +19,11 @@ import net.minecraft.world.level.timers.TimerCallbacks;
 import net.minecraft.world.level.timers.TimerQueue;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.*;
+import tgw.evolution.hooks.asm.DeleteField;
 import tgw.evolution.hooks.asm.DeleteMethod;
 import tgw.evolution.hooks.asm.ModifyConstructor;
+import tgw.evolution.hooks.asm.RestoreFinal;
 import tgw.evolution.util.collection.sets.OLinkedHashSet;
 import tgw.evolution.util.collection.sets.OSet;
 
@@ -34,7 +32,7 @@ import java.util.Set;
 import java.util.UUID;
 
 @Mixin(PrimaryLevelData.class)
-public abstract class Mixin_CM_PrimaryLevelData implements ServerLevelData, WorldData {
+public abstract class Mixin_CFM_PrimaryLevelData implements ServerLevelData, WorldData {
 
     @Shadow @Final private static Logger LOGGER;
     @Shadow private int clearWeatherTime;
@@ -42,32 +40,67 @@ public abstract class Mixin_CM_PrimaryLevelData implements ServerLevelData, Worl
     @Shadow private long dayTime;
     @Shadow private boolean difficultyLocked;
     @Shadow private CompoundTag endDragonFightData;
+    @Mutable @Shadow @Final @RestoreFinal private @Nullable DataFixer fixerUpper;
     @Shadow private long gameTime;
     @Shadow private boolean initialized;
-    @Shadow @Final private Set<String> knownServerBrands;
+    @Shadow @Final @DeleteField private Set<String> knownServerBrands;
+    @Unique private final OSet<String> knownServerBrands_;
+    @Shadow private @Nullable CompoundTag loadedPlayerTag;
+    @Mutable @Shadow @Final @RestoreFinal private int playerDataVersion;
     @Shadow private int rainTime;
     @Shadow private boolean raining;
-    @Shadow @Final private TimerQueue<MinecraftServer> scheduledEvents;
+    @Mutable @Shadow @Final @RestoreFinal private TimerQueue<MinecraftServer> scheduledEvents;
     @Shadow private LevelSettings settings;
     @Shadow private float spawnAngle;
     @Shadow private int thunderTime;
     @Shadow private boolean thundering;
+    @Mutable @Shadow @Final @RestoreFinal private int version;
     @Shadow private @Nullable UUID wanderingTraderId;
     @Shadow private int wanderingTraderSpawnChance;
     @Shadow private int wanderingTraderSpawnDelay;
     @Shadow private boolean wasModded;
     @Shadow private WorldBorder.Settings worldBorder;
-    @Shadow @Final private WorldGenSettings worldGenSettings;
+    @Mutable @Shadow @Final @RestoreFinal private WorldGenSettings worldGenSettings;
+    @Mutable @Shadow @Final @RestoreFinal private Lifecycle worldGenSettingsLifecycle;
     @Shadow private int xSpawn;
     @Shadow private int ySpawn;
     @Shadow private int zSpawn;
 
-    private Mixin_CM_PrimaryLevelData(@Nullable DataFixer dataFixer, int i, @Nullable CompoundTag compoundTag, boolean bl, int j, int k, int l, float f, long m, long n, int o, int p, int q, boolean bl2, int r, boolean bl3, boolean bl4, boolean bl5, WorldBorder.Settings settings, int s, int t, @Nullable UUID uUID, Set<String> set, TimerQueue<MinecraftServer> timerQueue, @Nullable CompoundTag compoundTag2, CompoundTag compoundTag3, LevelSettings levelSettings, WorldGenSettings worldGenSettings, Lifecycle lifecycle) {
-        this.xSpawn = 0;
+    @ModifyConstructor
+    public Mixin_CFM_PrimaryLevelData(@Nullable DataFixer dataFixer, int playerDataVersion, @Nullable CompoundTag compoundTag, boolean bl, int j, int k, int l, float f, long m, long n, int o, int p, int q, boolean bl2, int r, boolean bl3, boolean bl4, boolean bl5, WorldBorder.Settings settings, int s, int t, @Nullable UUID uUID, Set<String> set, TimerQueue<MinecraftServer> timerQueue, @Nullable CompoundTag compoundTag2, CompoundTag compoundTag3, LevelSettings levelSettings, WorldGenSettings worldGenSettings, Lifecycle lifecycle) {
+        this.fixerUpper = dataFixer;
+        this.wasModded = bl;
+        this.xSpawn = j;
+        this.ySpawn = k;
+        this.zSpawn = l;
+        this.spawnAngle = f;
+        this.gameTime = m;
+        this.dayTime = n;
+        this.version = o;
+        this.clearWeatherTime = p;
+        this.rainTime = q;
+        this.raining = bl2;
+        this.thunderTime = r;
+        this.thundering = bl3;
+        this.initialized = bl4;
+        this.difficultyLocked = bl5;
+        this.worldBorder = settings;
+        this.wanderingTraderSpawnDelay = s;
+        this.wanderingTraderSpawnChance = t;
+        this.wanderingTraderId = uUID;
+        this.knownServerBrands_ = (OSet<String>) set;
+        this.loadedPlayerTag = compoundTag;
+        this.playerDataVersion = playerDataVersion;
+        this.scheduledEvents = timerQueue;
+        this.customBossEvents = compoundTag2;
+        this.endDragonFightData = compoundTag3;
+        this.settings = levelSettings;
+        this.worldGenSettings = worldGenSettings;
+        this.worldGenSettingsLifecycle = lifecycle;
     }
 
     @ModifyConstructor
-    public Mixin_CM_PrimaryLevelData(LevelSettings levelSettings, WorldGenSettings worldGenSettings, Lifecycle lifecycle) {
+    public Mixin_CFM_PrimaryLevelData(LevelSettings levelSettings, WorldGenSettings worldGenSettings, Lifecycle lifecycle) {
         this(null, SharedConstants.getCurrentVersion().getWorldVersion(), null, false, 0, 0, 0, 0.0F, 0L, 0L, 19_133, 0, 0, false, 0, false, false, false, WorldBorder.DEFAULT_SETTINGS, 0, 0, null, new OLinkedHashSet<>(), new TimerQueue<>(TimerCallbacks.SERVER_CALLBACKS), null, new CompoundTag(), levelSettings.copy(), worldGenSettings, lifecycle);
     }
 
@@ -96,9 +129,30 @@ public abstract class Mixin_CM_PrimaryLevelData implements ServerLevelData, Worl
      * @reason _
      */
     @Overwrite
+    @Override
+    public Set<String> getKnownServerBrands() {
+        return this.knownServerBrands_.view();
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    @Override
+    public void setModdedInfo(String brand, boolean modded) {
+        this.knownServerBrands_.add(brand);
+        this.wasModded |= modded;
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
     private void setTagData(RegistryAccess registryAccess, CompoundTag tag, @Nullable CompoundTag playerTag) {
         ListTag serverBrands = new ListTag();
-        OSet<String> knownServerBrands = (OSet<String>) this.knownServerBrands;
+        OSet<String> knownServerBrands = this.knownServerBrands_;
         for (long it = knownServerBrands.beginIteration(); knownServerBrands.hasNextIteration(it); it = knownServerBrands.nextEntry(it)) {
             serverBrands.add(StringTag.valueOf(knownServerBrands.getIteration(it)));
         }
@@ -112,8 +166,7 @@ public abstract class Mixin_CM_PrimaryLevelData implements ServerLevelData, Worl
         tag.put("Version", versionTag);
         tag.putInt("DataVersion", SharedConstants.getCurrentVersion().getWorldVersion());
         RegistryOps<Tag> dynamicOps = RegistryOps.create(NbtOps.INSTANCE, registryAccess);
-        DataResult<Tag> worldGenSettings = WorldGenSettings.CODEC.encodeStart(dynamicOps, this.worldGenSettings);
-        Optional<Tag> result = worldGenSettings.resultOrPartial(Util.prefix("WorldGenSettings: ", LOGGER::error));
+        Optional<Tag> result = WorldGenSettings.CODEC.encodeStart(dynamicOps, this.worldGenSettings).resultOrPartial(Util.prefix("WorldGenSettings: ", LOGGER::error));
         if (result.isPresent()) {
             tag.put("WorldGenSettings", result.get());
         }

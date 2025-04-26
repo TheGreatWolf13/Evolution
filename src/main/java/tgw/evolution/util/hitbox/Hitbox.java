@@ -8,7 +8,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.util.hitbox.hms.HM;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 import tgw.evolution.util.math.Vec3d;
 
 public class Hitbox implements HM {
@@ -218,22 +218,22 @@ public class Hitbox implements HM {
     private double getMinDist(double x0, double y0, double z0, double dx, double dy, double dz) {
         double minDist = Double.NaN;
         if (dx > 1.0E-7) {
-            minDist = MathHelper.clipPoint(minDist, dx, dy, dz, this.minX(), this.minY(), this.maxY(), this.minZ(), this.maxZ(), x0, y0, z0);
+            minDist = MthUtil.clipPoint(minDist, dx, dy, dz, this.minX(), this.minY(), this.maxY(), this.minZ(), this.maxZ(), x0, y0, z0);
         }
         else if (dx < -1.0E-7) {
-            minDist = MathHelper.clipPoint(minDist, dx, dy, dz, this.maxX(), this.minY(), this.maxY(), this.minZ(), this.maxZ(), x0, y0, z0);
+            minDist = MthUtil.clipPoint(minDist, dx, dy, dz, this.maxX(), this.minY(), this.maxY(), this.minZ(), this.maxZ(), x0, y0, z0);
         }
         if (dy > 1.0E-7) {
-            minDist = MathHelper.clipPoint(minDist, dy, dz, dx, this.minY(), this.minZ(), this.maxZ(), this.minX(), this.maxX(), y0, z0, x0);
+            minDist = MthUtil.clipPoint(minDist, dy, dz, dx, this.minY(), this.minZ(), this.maxZ(), this.minX(), this.maxX(), y0, z0, x0);
         }
         else if (dy < -1.0E-7) {
-            minDist = MathHelper.clipPoint(minDist, dy, dz, dx, this.maxY(), this.minZ(), this.maxZ(), this.minX(), this.maxX(), y0, z0, x0);
+            minDist = MthUtil.clipPoint(minDist, dy, dz, dx, this.maxY(), this.minZ(), this.maxZ(), this.minX(), this.maxX(), y0, z0, x0);
         }
         if (dz > 1.0E-7) {
-            return MathHelper.clipPoint(minDist, dz, dx, dy, this.minZ(), this.minX(), this.maxX(), this.minY(), this.maxY(), z0, x0, y0);
+            return MthUtil.clipPoint(minDist, dz, dx, dy, this.minZ(), this.minX(), this.maxX(), this.minY(), this.maxY(), z0, x0, y0);
         }
         if (dz < -1.0E-7) {
-            return MathHelper.clipPoint(minDist, dz, dx, dy, this.maxZ(), this.minX(), this.maxX(), this.minY(), this.maxY(), z0, x0, y0);
+            return MthUtil.clipPoint(minDist, dz, dx, dy, this.maxZ(), this.minX(), this.maxX(), this.minY(), this.maxY(), z0, x0, y0);
         }
         return minDist;
     }

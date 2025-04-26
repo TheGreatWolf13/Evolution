@@ -29,7 +29,7 @@ import tgw.evolution.patches.PatchLevelSummary;
 import tgw.evolution.util.NBTHelper;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -107,7 +107,7 @@ public abstract class Mixin_M_LevelStorageSource {
                 try {
                     LevelSummary summary = this.readLevelData(file, this.levelSummaryReader(file, isLocked));
                     if (summary != null) {
-                        ((PatchLevelSummary) summary).setSizeOnDisk(MathHelper.calculateSizeOnDisk(file.toPath()));
+                        ((PatchLevelSummary) summary).setSizeOnDisk(MthUtil.calculateSizeOnDisk(file.toPath()));
                         summaries.add(summary);
                     }
                 }

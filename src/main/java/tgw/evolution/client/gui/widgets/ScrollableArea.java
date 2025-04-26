@@ -7,7 +7,7 @@ import net.minecraft.util.Mth;
 import tgw.evolution.client.gui.GUIUtils;
 import tgw.evolution.client.util.MouseButton;
 import tgw.evolution.util.collection.lists.OList;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 public class ScrollableArea extends Area {
 
@@ -59,7 +59,7 @@ public class ScrollableArea extends Area {
             }
         }
         else {
-            if (MathHelper.isMouseInArea(mouseX, mouseY, this.x + this.width - 5, this.y + this.scrollBarHeight, 5, this.scrollSize)) {
+            if (MthUtil.isMouseInArea(mouseX, mouseY, this.x + this.width - 5, this.y + this.scrollBarHeight, 5, this.scrollSize)) {
                 this.focusOnParent();
                 Screen screen = this.getScreen();
                 if (screen != null) {
@@ -168,7 +168,7 @@ public class ScrollableArea extends Area {
         else if (this.scrollBarHeight > barEnd) {
             this.scrollBarHeight = barEnd;
         }
-        float rel = MathHelper.relativize(this.scrollBarHeight, 0, barEnd);
+        float rel = MthUtil.relativize(this.scrollBarHeight, 0, barEnd);
         this.scrollHeight = (int) (((float) this.heightNeeded / this.height - 1) * this.height * rel);
         this.updateEntries();
     }

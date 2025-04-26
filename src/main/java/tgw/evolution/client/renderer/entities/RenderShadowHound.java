@@ -7,7 +7,7 @@
 //import tgw.evolution.Evolution;
 //import tgw.evolution.client.models.entities.ModelShadowHound;
 //import tgw.evolution.entities.EntityShadowHound;
-//import tgw.evolution.util.math.MathHelper;
+//import tgw.evolution.util.math.MthUtil;
 //
 //public class RenderShadowHound extends MobRenderer<EntityShadowHound, ModelShadowHound> {
 //
@@ -27,8 +27,8 @@
 //    protected void applyRotations(EntityShadowHound entityLiving, float ageInTicks, float rotationYaw, float partialTicks) {
 //        GlStateManager.rotatef(180.0F - rotationYaw, 0.0F, 1.0F, 0.0F);
 //        if (entityLiving.isDead()) {
-//            float f = (MathHelper.clampMax(entityLiving.getDeathTime(), 20) + partialTicks - 1.0F) / 20.0F * 1.6F;
-//            f = MathHelper.sqrt(f);
+//            float f = (MthUtil.clampMax(entityLiving.getDeathTime(), 20) + partialTicks - 1.0F) / 20.0F * 1.6F;
+//            f = MthUtil.sqrt(f);
 //            if (f > 1.0F) {
 //                f = 1.0F;
 //            }

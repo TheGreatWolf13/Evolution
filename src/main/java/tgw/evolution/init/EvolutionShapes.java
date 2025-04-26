@@ -6,7 +6,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import tgw.evolution.util.collection.lists.OList;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 public final class EvolutionShapes {
 
@@ -34,15 +34,15 @@ public final class EvolutionShapes {
     public static final VoxelShape GROUND_ITEM = Block.box(5, 0, 5, 11, 0.5, 11);
     public static final VoxelShape GROUND_ROCK = Block.box(4.5, 0, 4.5, 11.5, 2, 11.5);
     public static final VoxelShape HOOK_NORTH = Block.box(4, 0, 5, 12, 6, 16);
-    public static final VoxelShape HOOK_SOUTH = MathHelper.rotateShape(Direction.NORTH, Direction.SOUTH, HOOK_NORTH);
-    public static final VoxelShape HOOK_EAST = MathHelper.rotateShape(Direction.NORTH, Direction.EAST, HOOK_NORTH);
-    public static final VoxelShape HOOK_WEST = MathHelper.rotateShape(Direction.NORTH, Direction.WEST, HOOK_NORTH);
+    public static final VoxelShape HOOK_SOUTH = MthUtil.rotateShape(Direction.NORTH, Direction.SOUTH, HOOK_NORTH);
+    public static final VoxelShape HOOK_EAST = MthUtil.rotateShape(Direction.NORTH, Direction.EAST, HOOK_NORTH);
+    public static final VoxelShape HOOK_WEST = MthUtil.rotateShape(Direction.NORTH, Direction.WEST, HOOK_NORTH);
     public static final VoxelShape ROPE_GROUND_X = Block.box(0, 0, 6, 16, 2, 10);
-    public static final VoxelShape ROPE_GROUND_Z = MathHelper.rotateShape(Direction.EAST, Direction.NORTH, ROPE_GROUND_X);
+    public static final VoxelShape ROPE_GROUND_Z = MthUtil.rotateShape(Direction.EAST, Direction.NORTH, ROPE_GROUND_X);
     public static final VoxelShape ROPE_WALL_NORTH = Block.box(6, 0, 0, 10, 16, 2);
-    public static final VoxelShape ROPE_WALL_SOUTH = MathHelper.rotateShape(Direction.NORTH, Direction.SOUTH, ROPE_WALL_NORTH);
-    public static final VoxelShape ROPE_WALL_EAST = MathHelper.rotateShape(Direction.NORTH, Direction.EAST, ROPE_WALL_NORTH);
-    public static final VoxelShape ROPE_WALL_WEST = MathHelper.rotateShape(Direction.NORTH, Direction.WEST, ROPE_WALL_NORTH);
+    public static final VoxelShape ROPE_WALL_SOUTH = MthUtil.rotateShape(Direction.NORTH, Direction.SOUTH, ROPE_WALL_NORTH);
+    public static final VoxelShape ROPE_WALL_EAST = MthUtil.rotateShape(Direction.NORTH, Direction.EAST, ROPE_WALL_NORTH);
+    public static final VoxelShape ROPE_WALL_WEST = MthUtil.rotateShape(Direction.NORTH, Direction.WEST, ROPE_WALL_NORTH);
     public static final VoxelShape SAPLING = Block.box(2, 0, 2, 14, 12, 14);
     public static final VoxelShape TORCH = Block.box(6, 0, 6, 10, 10, 10);
     public static final VoxelShape TORCH_NORTH = Block.box(5.5, 3, 11, 10.5, 13, 16);

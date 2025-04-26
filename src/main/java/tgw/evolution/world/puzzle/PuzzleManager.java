@@ -19,7 +19,7 @@
 //import org.apache.logging.log4j.LogManager;
 //import org.apache.logging.log4j.Logger;
 //import tgw.evolution.blocks.BlockPuzzle;
-//import tgw.evolution.util.math.MathHelper;
+//import tgw.evolution.util.math.MthUtil;
 //import tgw.evolution.world.feature.structures.config.IConfigStruct;
 //import tgw.evolution.world.puzzle.pieces.ConfiguredPuzzlePiece;
 //import tgw.evolution.world.puzzle.pieces.EmptyPuzzlePiece;
@@ -107,13 +107,13 @@
 //            pieces.add(structure);
 //            if (size > 0) {
 //                AxisAlignedBB limitBB = new AxisAlignedBB(middleX - 128,
-//                                                          MathHelper.clampMin(surfaceY - 80, 5),
+//                                                          MthUtil.clampMin(surfaceY - 80, 5),
 //                                                          middleZ - 128,
 //                                                          middleX + 128 + 1,
 //                                                          surfaceY + 80 + 1,
 //                                                          middleZ + 128 + 1);
 //                this.availablePieces.addLast(new PuzzleManager.Entry(structure,
-//                                                                     new AtomicReference<>(MathHelper.subtract(VoxelShapes.create(limitBB),
+//                                                                     new AtomicReference<>(MthUtil.subtract(VoxelShapes.create(limitBB),
 //                                                                                                               VoxelShapes.create(AxisAlignedBB
 //                                                                                                               .toImmutable(
 //                                                                                                                       chosenBB)))),
@@ -136,7 +136,7 @@
 //                    case HARD:
 //                        return true;
 //                    case SOFT:
-//                        return !MathHelper.isShapeTotallyOutside(VoxelShapes.create(AxisAlignedBB.toImmutable(pieceBB).shrink(0.25)),
+//                        return !MthUtil.isShapeTotallyOutside(VoxelShapes.create(AxisAlignedBB.toImmutable(pieceBB).shrink(0.25)),
 //                                                                 checkingShape.get());
 //                }
 //                if (config.getDesiredHeight() != -1) {
@@ -156,7 +156,7 @@
 //                    }
 //                }
 //            }
-//            return MathHelper.isShapeTotallyInside(VoxelShapes.create(AxisAlignedBB.toImmutable(pieceBB).shrink(0.25)), checkingShape.get());
+//            return MthUtil.isShapeTotallyInside(VoxelShapes.create(AxisAlignedBB.toImmutable(pieceBB).shrink(0.25)), checkingShape.get());
 //        }
 //
 //        private void placePuzzlePiece(StructurePuzzlePiece structurePiece, AtomicReference<VoxelShape> currentShape, int maxHeight, int
@@ -196,7 +196,7 @@
 //                    //noinspection ObjectAllocationInLoop
 //                    checkingShape.set(shouldPuzzleBlockCheckBB ?
 //                                      currentShape.get() :
-//                                      MathHelper.union(currentShape.get(), VoxelShapes.create(AxisAlignedBB.toImmutable(placingBB))));
+//                                      MthUtil.union(currentShape.get(), VoxelShapes.create(AxisAlignedBB.toImmutable(placingBB))));
 //                    piecesForConnection.clear();
 //                    if (currentSize != this.size) {
 //                        piecesForConnection.addAll(targetPool.getShuffledPieces(this.rand));
@@ -253,7 +253,7 @@
 //                                        if (candidatePiece instanceof ConfiguredPuzzlePiece) {
 //                                            ((ConfiguredPuzzlePiece) candidatePiece).success(this.config);
 //                                        }
-//                                        currentShape.set(MathHelper.subtract(currentShape.get(),
+//                                        currentShape.set(MthUtil.subtract(currentShape.get(),
 //                                                                             VoxelShapes.create(AxisAlignedBB.toImmutable(actualMachingBB))));
 //                                        int placingGroundLevelDelta = structurePiece.getGroundLevelDelta();
 //                                        int matchingGroundLevelDelta;

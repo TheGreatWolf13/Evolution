@@ -8,7 +8,7 @@
 //import tgw.evolution.Evolution;
 //import tgw.evolution.client.models.entities.ModelCow;
 //import tgw.evolution.entities.EntityCow;
-//import tgw.evolution.util.math.MathHelper;
+//import tgw.evolution.util.math.MthUtil;
 //
 //public class RenderCow extends MobRenderer<EntityCow, ModelCow> {
 //
@@ -41,7 +41,7 @@
 //        matrices.mulPose(Vector3f.YP.rotationDegrees(180.0F - rotationYaw));
 //        if (cow.isDead()) {
 //            float f = (Math.min(cow.getDeathTime(), 20) + partialTicks - 1.0F) / 20.0F * 1.6F;
-//            f = MathHelper.sqrt(f);
+//            f = MthUtil.sqrt(f);
 //            if (f > 1.0F) {
 //                f = 1.0F;
 //            }

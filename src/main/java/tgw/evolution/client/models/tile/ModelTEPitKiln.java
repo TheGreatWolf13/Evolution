@@ -72,7 +72,7 @@ public class ModelTEPitKiln extends Model {
 //                                              strawNorthLayer7,
 //                                              this.strawNorthLayer8};
 //        for (ModelRenderer model : this.northLayer) {
-//            MathHelper.setRotationAngle(model, MathHelper.PI, 0, 0);
+//            MthUtil.setRotationAngle(model, MthUtil.PI, 0, 0);
 //        }
 //        ModelRenderer strawSouthLayer1 = new ModelRenderer(this, 16, 23);
 //        strawSouthLayer1.addBox(0, -1, -16, 16, 1, 0);
@@ -99,7 +99,7 @@ public class ModelTEPitKiln extends Model {
 //                                              strawSouthLayer7,
 //                                              this.strawSouthLayer8};
 //        for (ModelRenderer model : this.southLayer) {
-//            MathHelper.setRotationAngle(model, MathHelper.PI, 0, 0);
+//            MthUtil.setRotationAngle(model, MthUtil.PI, 0, 0);
 //        }
 //        ModelRenderer strawEastLayer1 = new ModelRenderer(this, -16, 0);
 //        strawEastLayer1.addBox(16, 0, 0, 0, 1, 16);

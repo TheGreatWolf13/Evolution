@@ -12,7 +12,7 @@ import tgw.evolution.client.util.MouseButton;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 public class Area extends AbstractWidget {
 
@@ -105,7 +105,7 @@ public class Area extends AbstractWidget {
     public final boolean mouseClicked(double mouseX, double mouseY, @MouseButton int button) {
         this.focused = null;
         if (this.active && this.visible) {
-            if (MathHelper.isMouseInArea(mouseX, mouseY, this.x, this.y, this.width, this.height)) {
+            if (MthUtil.isMouseInArea(mouseX, mouseY, this.x, this.y, this.width, this.height)) {
                 return this.childMouseClicked(mouseX, mouseY, button);
             }
         }

@@ -13,7 +13,7 @@ import tgw.evolution.blocks.IRockVariant;
 import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.init.EvolutionTEs;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 public class TEKnapping extends BlockEntity {
 
@@ -26,7 +26,7 @@ public class TEKnapping extends BlockEntity {
     }
 
     private VoxelShape calculateHitbox() {
-        return MathHelper.generateShapeFromPattern(this.getParts());
+        return MthUtil.generateShapeFromPattern(this.getParts());
     }
 
     public void checkParts(Player player) {

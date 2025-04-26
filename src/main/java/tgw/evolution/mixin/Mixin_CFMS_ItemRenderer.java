@@ -22,14 +22,17 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.resources.model.ModelManager;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Registry;
 import net.minecraft.core.Vec3i;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.BlockAndTintGetter;
@@ -42,50 +45,55 @@ import org.spongepowered.asm.mixin.*;
 import tgw.evolution.Evolution;
 import tgw.evolution.client.models.data.IModelData;
 import tgw.evolution.client.renderer.ambient.DynamicLights;
-import tgw.evolution.hooks.asm.DeleteMethod;
+import tgw.evolution.hooks.asm.*;
 import tgw.evolution.items.IItemTemperature;
 import tgw.evolution.patches.PatchItemRenderer;
 import tgw.evolution.patches.PatchVertexConsumer;
 import tgw.evolution.resources.IKeyedReloadListener;
 import tgw.evolution.resources.ReloadListernerKeys;
 import tgw.evolution.util.collection.lists.OList;
+import tgw.evolution.util.collection.sets.RHashSet;
+import tgw.evolution.util.collection.sets.RSet;
 import tgw.evolution.util.math.DirectionUtil;
 import tgw.evolution.util.math.XoRoShiRoRandom;
 
 import java.util.List;
+import java.util.Set;
 
 @Mixin(ItemRenderer.class)
-public abstract class Mixin_M_ItemRenderer implements IKeyedReloadListener, PatchItemRenderer {
+public abstract class Mixin_CFMS_ItemRenderer implements IKeyedReloadListener, PatchItemRenderer {
 
-    @Unique private static final OList<ResourceLocation> DEPENDENCY = OList.of(ReloadListernerKeys.MODELS);
+    @Unique @RestoreFinal private static OList<ResourceLocation> DEPENDENCY = OList.of(ReloadListernerKeys.MODELS);
+    @Mutable @Shadow @Final @RestoreFinal public static ResourceLocation ENCHANT_GLINT_LOCATION;
+    @DeleteField @Shadow @Final private static Set<Item> IGNORED;
+    @Unique @RestoreFinal private static RSet<Item> IGNORED_;
     @Shadow public float blitOffset;
-    @Shadow @Final private BlockEntityWithoutLevelRenderer blockEntityRenderer;
-    @Unique private final MultiBufferSource.BufferSource bufferForCount = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
-    @Shadow @Final private ItemColors itemColors;
-    @Shadow @Final private ItemModelShaper itemModelShaper;
-    @Unique private final PoseStack matricesForCount = new PoseStack();
-    @Unique private final PoseStack matricesForGuiItems = new PoseStack();
-    @Unique private final XoRoShiRoRandom random = new XoRoShiRoRandom();
-    @Shadow @Final private TextureManager textureManager;
+    @Mutable @Shadow @Final @RestoreFinal private BlockEntityWithoutLevelRenderer blockEntityRenderer;
+    @Unique private final MultiBufferSource.BufferSource bufferForCount;
+    @Mutable @Shadow @Final @RestoreFinal private ItemColors itemColors;
+    @Mutable @Shadow @Final @RestoreFinal private ItemModelShaper itemModelShaper;
+    @Unique private final PoseStack matricesForCount;
+    @Unique private final PoseStack matricesForGuiItems;
+    @Unique private final XoRoShiRoRandom random;
+    @Mutable @Shadow @Final @RestoreFinal private TextureManager textureManager;
 
-    @Shadow
-    public static VertexConsumer getCompassFoilBuffer(MultiBufferSource pBuffer, RenderType pRenderType, PoseStack.Pose pMatrixEntry) {
-        throw new AbstractMethodError();
-    }
-
-    @Shadow
-    public static VertexConsumer getCompassFoilBufferDirect(MultiBufferSource pBuffer, RenderType pRenderType, PoseStack.Pose pMatrixEntry) {
-        throw new AbstractMethodError();
-    }
-
-    @Shadow
-    public static VertexConsumer getFoilBuffer(MultiBufferSource pBuffer, RenderType pRenderType, boolean pIsItem, boolean pGlint) {
-        throw new AbstractMethodError();
-    }
-
-    @Shadow
-    public static VertexConsumer getFoilBufferDirect(MultiBufferSource pBuffer, RenderType pRenderType, boolean pNoEntity, boolean pWithGlint) {
-        throw new AbstractMethodError();
+    @ModifyConstructor
+    public Mixin_CFMS_ItemRenderer(TextureManager textureManager, ModelManager modelManager, ItemColors itemColors, BlockEntityWithoutLevelRenderer teRenderer) {
+        this.bufferForCount = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
+        this.matricesForCount = new PoseStack();
+        this.matricesForGuiItems = new PoseStack();
+        this.random = new XoRoShiRoRandom();
+        this.textureManager = textureManager;
+        this.itemModelShaper = new ItemModelShaper(modelManager);
+        this.blockEntityRenderer = teRenderer;
+        for (long it = Registry.ITEM.beginIteration(); Registry.ITEM.hasNextIteration(it); it = Registry.ITEM.nextEntry(it)) {
+            Item item = (Item) Registry.ITEM.getIteration(it);
+            if (!IGNORED_.contains(item)) {
+                //noinspection ObjectAllocationInLoop
+                this.itemModelShaper.register(item, new ModelResourceLocation(Registry.ITEM.getKey(item), "inventory"));
+            }
+        }
+        this.itemColors = itemColors;
     }
 
     @Unique
@@ -145,6 +153,38 @@ public abstract class Mixin_M_ItemRenderer implements IKeyedReloadListener, Patc
             builder.vertex(x, y, z, r, g, b, a, u, v, overlay, lightmapCoord, normX, normY, normZ);
         }
     }
+
+    @Unique
+    @ModifyStatic
+    private static void clinit() {
+        ENCHANT_GLINT_LOCATION = new ResourceLocation("textures/misc/enchanted_item_glint.png");
+        DEPENDENCY = OList.of(ReloadListernerKeys.MODELS);
+        IGNORED_ = new RHashSet<>();
+        IGNORED_.add(Items.AIR);
+    }
+
+    @Shadow
+    public static VertexConsumer getCompassFoilBuffer(MultiBufferSource pBuffer, RenderType pRenderType, PoseStack.Pose pMatrixEntry) {
+        throw new AbstractMethodError();
+    }
+
+    @Shadow
+    public static VertexConsumer getCompassFoilBufferDirect(MultiBufferSource pBuffer, RenderType pRenderType, PoseStack.Pose pMatrixEntry) {
+        throw new AbstractMethodError();
+    }
+
+    @Shadow
+    public static VertexConsumer getFoilBuffer(MultiBufferSource pBuffer, RenderType pRenderType, boolean pIsItem, boolean pGlint) {
+        throw new AbstractMethodError();
+    }
+
+    @Shadow
+    public static VertexConsumer getFoilBufferDirect(MultiBufferSource pBuffer, RenderType pRenderType, boolean pNoEntity, boolean pWithGlint) {
+        throw new AbstractMethodError();
+    }
+
+    @Shadow
+    protected abstract void fillRect(BufferBuilder bufferBuilder, int i, int j, int k, int l, int m, int n, int o, int p);
 
     @Override
     public OList<ResourceLocation> getDependencies() {
@@ -259,95 +299,6 @@ public abstract class Mixin_M_ItemRenderer implements IKeyedReloadListener, Patc
      * @reason _
      */
     @Overwrite
-    public void renderStatic(@Nullable LivingEntity living, ItemStack stack, ItemTransforms.TransformType transformType, boolean leftHand, PoseStack matrices, MultiBufferSource buffer, @Nullable Level level, int light, int overlay, int data) {
-        if (!stack.isEmpty()) {
-            BakedModel bakedModel = this.getModel(stack, level, living, data);
-            if (living != null) {
-                BlockPos pos = living.blockPosition();
-                this.render_(stack, transformType, leftHand, matrices, buffer, light, overlay, bakedModel, level, pos.getX(), pos.getY(), pos.getZ());
-            }
-            else {
-                this.render_(stack, transformType, leftHand, matrices, buffer, light, overlay, bakedModel, level, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
-            }
-        }
-    }
-
-    @Override
-    public void render_(ItemStack stack, ItemTransforms.TransformType transformType, boolean leftHand, PoseStack matrices, MultiBufferSource buffer, int light, int overlay, BakedModel model, @Nullable BlockAndTintGetter level, int x, int y, int z) {
-        if (!stack.isEmpty()) {
-            matrices.pushPose();
-            boolean flag = transformType == ItemTransforms.TransformType.GUI ||
-                           transformType == ItemTransforms.TransformType.GROUND ||
-                           transformType == ItemTransforms.TransformType.FIXED;
-            if (flag) {
-                if (stack.is(Items.TRIDENT)) {
-                    model = this.itemModelShaper.getModelManager().getModel(new ModelResourceLocation("minecraft:trident#inventory"));
-                }
-                else if (stack.is(Items.SPYGLASS)) {
-                    model = this.itemModelShaper.getModelManager().getModel(new ModelResourceLocation("minecraft:spyglass#inventory"));
-                }
-            }
-            model.getTransforms().getTransform(transformType).apply(leftHand, matrices);
-            matrices.translate(-0.5, -0.5, -0.5);
-            if (!model.isCustomRenderer() && (!stack.is(Items.TRIDENT) || flag)) {
-                boolean normal;
-                if (transformType != ItemTransforms.TransformType.GUI && !transformType.firstPerson() && stack.getItem() instanceof BlockItem bi) {
-                    Block block = bi.getBlock();
-                    normal = !(block instanceof HalfTransparentBlock) && !(block instanceof StainedGlassPaneBlock);
-                }
-                else {
-                    normal = true;
-                }
-                RenderType renderType = ItemBlockRenderTypes.getRenderType(stack, normal);
-                VertexConsumer builder;
-                if (stack.is(Items.COMPASS) && stack.hasFoil()) {
-                    matrices.pushPose();
-                    PoseStack.Pose pose = matrices.last();
-                    if (transformType == ItemTransforms.TransformType.GUI) {
-                        pose.pose().multiply(0.5F);
-                    }
-                    else if (transformType.firstPerson()) {
-                        pose.pose().multiply(0.75F);
-                    }
-                    if (normal) {
-                        builder = getCompassFoilBufferDirect(buffer, renderType, pose);
-                    }
-                    else {
-                        builder = getCompassFoilBuffer(buffer, renderType, pose);
-                    }
-                    matrices.popPose();
-                }
-                else if (normal) {
-                    builder = getFoilBufferDirect(buffer, renderType, true, stack.hasFoil());
-                }
-                else {
-                    builder = getFoilBuffer(buffer, renderType, true, stack.hasFoil());
-                }
-                if (transformType == ItemTransforms.TransformType.GUI) {
-                    Vector3f rotation = model.getTransforms().gui.rotation;
-                    if (rotation.x() == 0 && rotation.y() == 0 && rotation.z() == 0) {
-                        this.renderModelListsSpecial(model, stack, light, overlay, matrices, builder, level, x, y, z);
-                        matrices.popPose();
-                        return;
-                    }
-                }
-                this.renderModelLists(model, stack, light, overlay, matrices, builder, level, x, y, z);
-            }
-            else {
-                this.blockEntityRenderer.renderByItem(stack, transformType, matrices, buffer, light, overlay);
-            }
-            matrices.popPose();
-        }
-    }
-
-    @Shadow
-    protected abstract void fillRect(BufferBuilder bufferBuilder, int i, int j, int k, int l, int m, int n, int o, int p);
-
-    /**
-     * @author TheGreatWolf
-     * @reason _
-     */
-    @Overwrite
     @DeleteMethod
     private void renderModelLists(BakedModel model, ItemStack stack, int light, int overlay, PoseStack matrices, VertexConsumer builder) {
         throw new AbstractMethodError();
@@ -442,6 +393,92 @@ public abstract class Mixin_M_ItemRenderer implements IKeyedReloadListener, Patc
             else {
                 ((PatchVertexConsumer) builder).putBulkData(pose, quad, r, g, b, light, overlay, true);
             }
+        }
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public void renderStatic(@Nullable LivingEntity living, ItemStack stack, ItemTransforms.TransformType transformType, boolean leftHand, PoseStack matrices, MultiBufferSource buffer, @Nullable Level level, int light, int overlay, int data) {
+        if (!stack.isEmpty()) {
+            BakedModel bakedModel = this.getModel(stack, level, living, data);
+            if (living != null) {
+                BlockPos pos = living.blockPosition();
+                this.render_(stack, transformType, leftHand, matrices, buffer, light, overlay, bakedModel, level, pos.getX(), pos.getY(), pos.getZ());
+            }
+            else {
+                this.render_(stack, transformType, leftHand, matrices, buffer, light, overlay, bakedModel, level, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
+            }
+        }
+    }
+
+    @Override
+    public void render_(ItemStack stack, ItemTransforms.TransformType transformType, boolean leftHand, PoseStack matrices, MultiBufferSource buffer, int light, int overlay, BakedModel model, @Nullable BlockAndTintGetter level, int x, int y, int z) {
+        if (!stack.isEmpty()) {
+            matrices.pushPose();
+            boolean flag = transformType == ItemTransforms.TransformType.GUI ||
+                           transformType == ItemTransforms.TransformType.GROUND ||
+                           transformType == ItemTransforms.TransformType.FIXED;
+            if (flag) {
+                if (stack.is(Items.TRIDENT)) {
+                    model = this.itemModelShaper.getModelManager().getModel(new ModelResourceLocation("minecraft:trident#inventory"));
+                }
+                else if (stack.is(Items.SPYGLASS)) {
+                    model = this.itemModelShaper.getModelManager().getModel(new ModelResourceLocation("minecraft:spyglass#inventory"));
+                }
+            }
+            model.getTransforms().getTransform(transformType).apply(leftHand, matrices);
+            matrices.translate(-0.5, -0.5, -0.5);
+            if (!model.isCustomRenderer() && (!stack.is(Items.TRIDENT) || flag)) {
+                boolean normal;
+                if (transformType != ItemTransforms.TransformType.GUI && !transformType.firstPerson() && stack.getItem() instanceof BlockItem bi) {
+                    Block block = bi.getBlock();
+                    normal = !(block instanceof HalfTransparentBlock) && !(block instanceof StainedGlassPaneBlock);
+                }
+                else {
+                    normal = true;
+                }
+                RenderType renderType = ItemBlockRenderTypes.getRenderType(stack, normal);
+                VertexConsumer builder;
+                if (stack.is(Items.COMPASS) && stack.hasFoil()) {
+                    matrices.pushPose();
+                    PoseStack.Pose pose = matrices.last();
+                    if (transformType == ItemTransforms.TransformType.GUI) {
+                        pose.pose().multiply(0.5F);
+                    }
+                    else if (transformType.firstPerson()) {
+                        pose.pose().multiply(0.75F);
+                    }
+                    if (normal) {
+                        builder = getCompassFoilBufferDirect(buffer, renderType, pose);
+                    }
+                    else {
+                        builder = getCompassFoilBuffer(buffer, renderType, pose);
+                    }
+                    matrices.popPose();
+                }
+                else if (normal) {
+                    builder = getFoilBufferDirect(buffer, renderType, true, stack.hasFoil());
+                }
+                else {
+                    builder = getFoilBuffer(buffer, renderType, true, stack.hasFoil());
+                }
+                if (transformType == ItemTransforms.TransformType.GUI) {
+                    Vector3f rotation = model.getTransforms().gui.rotation;
+                    if (rotation.x() == 0 && rotation.y() == 0 && rotation.z() == 0) {
+                        this.renderModelListsSpecial(model, stack, light, overlay, matrices, builder, level, x, y, z);
+                        matrices.popPose();
+                        return;
+                    }
+                }
+                this.renderModelLists(model, stack, light, overlay, matrices, builder, level, x, y, z);
+            }
+            else {
+                this.blockEntityRenderer.renderByItem(stack, transformType, matrices, buffer, light, overlay);
+            }
+            matrices.popPose();
         }
     }
 }

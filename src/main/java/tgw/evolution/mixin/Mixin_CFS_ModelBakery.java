@@ -1,16 +1,25 @@
 package tgw.evolution.mixin;
 
+import com.google.common.base.Splitter;
 import com.mojang.datafixers.util.Pair;
+import com.mojang.logging.LogUtils;
 import com.mojang.math.Transformation;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import net.minecraft.Util;
 import net.minecraft.client.color.block.BlockColors;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.block.BlockModelShaper;
 import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.renderer.block.model.BlockModelDefinition;
 import net.minecraft.client.renderer.block.model.ItemModelGenerator;
 import net.minecraft.client.renderer.block.model.MultiVariant;
 import net.minecraft.client.renderer.block.model.multipart.MultiPart;
+import net.minecraft.client.renderer.blockentity.BellRenderer;
+import net.minecraft.client.renderer.blockentity.ConduitRenderer;
+import net.minecraft.client.renderer.blockentity.EnchantTableRenderer;
 import net.minecraft.client.renderer.texture.AtlasSet;
+import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.client.resources.model.*;
@@ -19,41 +28,64 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.Property;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.Triple;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.*;
 import tgw.evolution.hooks.asm.DeleteField;
 import tgw.evolution.hooks.asm.ModifyConstructor;
+import tgw.evolution.hooks.asm.ModifyStatic;
 import tgw.evolution.hooks.asm.RestoreFinal;
 import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.collection.maps.*;
 import tgw.evolution.util.collection.sets.*;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 @Mixin(ModelBakery.class)
-public abstract class Mixin_CF_ModelBakery {
+public abstract class Mixin_CFS_ModelBakery {
 
-    @Shadow @Final public static ModelResourceLocation MISSING_MODEL_LOCATION;
-    @Shadow @Final public static BlockModel GENERATION_MARKER;
-    @Shadow @Final private static Logger LOGGER;
-    @Shadow @Final private static Map<ResourceLocation, StateDefinition<Block, BlockState>> STATIC_DEFINITIONS;
-    @Shadow @Final private static String MISSING_MODEL_LOCATION_STRING;
-    @Shadow @Final private static Set<Material> UNREFERENCED_TEXTURES;
-    @Shadow @Final private static ItemModelGenerator ITEM_MODEL_GENERATOR;
+    @Mutable @Shadow @Final @RestoreFinal public static Material BANNER_BASE;
+    @Mutable @Shadow @Final @RestoreFinal public static BlockModel BLOCK_ENTITY_MARKER;
+    @Mutable @Shadow @Final @RestoreFinal public static List<ResourceLocation> BREAKING_LOCATIONS;
+    @DeleteField @Shadow @Final private static Map<String, String> BUILTIN_MODELS;
+    @Unique @RestoreFinal private static O2OMap<String, String> BUILTIN_MODELS_;
+    @Mutable @Shadow @Final @RestoreFinal private static Splitter COMMA_SPLITTER;
+    @Mutable @Shadow @Final @RestoreFinal public static List<ResourceLocation> DESTROY_STAGES;
+    @Mutable @Shadow @Final @RestoreFinal public static List<RenderType> DESTROY_TYPES;
+    @Mutable @Shadow @Final @RestoreFinal private static Splitter EQUAL_SPLITTER;
+    @Mutable @Shadow @Final @RestoreFinal public static Material FIRE_0;
+    @Mutable @Shadow @Final @RestoreFinal public static Material FIRE_1;
+    @Mutable @Shadow @Final @RestoreFinal public static BlockModel GENERATION_MARKER;
+    @Mutable @Shadow @Final @RestoreFinal private static StateDefinition<Block, BlockState> ITEM_FRAME_FAKE_DEFINITION;
+    @Mutable @Shadow @Final @RestoreFinal private static ItemModelGenerator ITEM_MODEL_GENERATOR;
+    @Mutable @Shadow @Final @RestoreFinal public static Material LAVA_FLOW;
+    @Mutable @Shadow @Final @RestoreFinal private static Logger LOGGER;
+    @Mutable @Shadow @Final @RestoreFinal public static ModelResourceLocation MISSING_MODEL_LOCATION;
+    @Mutable @Shadow @Final @RestoreFinal private static String MISSING_MODEL_LOCATION_STRING;
+    @Mutable @Shadow @Final @RestoreFinal public static String MISSING_MODEL_MESH;
+    @Mutable @Shadow @Final @RestoreFinal public static Material NO_PATTERN_SHIELD;
+    @Mutable @Shadow @Final @RestoreFinal public static Material SHIELD_BASE;
+    @DeleteField @Shadow @Final private static Map<ResourceLocation, StateDefinition<Block, BlockState>> STATIC_DEFINITIONS;
+    @Unique @RestoreFinal private static O2OMap<ResourceLocation, StateDefinition<Block, BlockState>> STATIC_DEFINITIONS_;
+    @DeleteField @Shadow @Final private static Set<Material> UNREFERENCED_TEXTURES;
+    @Unique @RestoreFinal private static OSet<Material> UNREFERENCED_TEXTURES_;
+    @Mutable @Shadow @Final @RestoreFinal public static Material WATER_FLOW;
+    @Mutable @Shadow @Final @RestoreFinal public static Material WATER_OVERLAY;
     @Shadow @Final @DeleteField private Map<ResourceLocation, Pair<TextureAtlas, TextureAtlas.Preparations>> atlasPreparations;
     @Unique private final O2OMap<ResourceLocation, Pair<TextureAtlas, TextureAtlas.Preparations>> atlasPreparations_;
     @Shadow private @Nullable AtlasSet atlasSet;
@@ -74,7 +106,7 @@ public abstract class Mixin_CF_ModelBakery {
     @Unique private final O2OMap<ResourceLocation, UnbakedModel> unbakedCache_;
 
     @ModifyConstructor
-    public Mixin_CF_ModelBakery(ResourceManager resourceManager, BlockColors blockColors, ProfilerFiller profilerFiller, int i) {
+    public Mixin_CFS_ModelBakery(ResourceManager resourceManager, BlockColors blockColors, ProfilerFiller profilerFiller, int i) {
         this.loadingStack_ = new OHashSet<>();
         this.context = new BlockModelDefinition.Context();
         this.unbakedCache_ = new O2OHashMap<>();
@@ -95,23 +127,27 @@ public abstract class Mixin_CF_ModelBakery {
             throw new RuntimeException(var12);
         }
         profilerFiller.popPush("static_definitions");
-        for (Map.Entry<ResourceLocation, StateDefinition<Block, BlockState>> entry : STATIC_DEFINITIONS.entrySet()) {
-            OList<BlockState> possibleStates = entry.getValue().getPossibleStates_();
+        O2OMap<ResourceLocation, StateDefinition<Block, BlockState>> staticDefinitions = STATIC_DEFINITIONS_;
+        for (long it = staticDefinitions.beginIteration(); staticDefinitions.hasNextIteration(it); it = staticDefinitions.nextEntry(it)) {
+            OList<BlockState> possibleStates = staticDefinitions.getIterationValue(it).getPossibleStates_();
             for (int j = 0, len = possibleStates.size(); j < len; ++j) {
-                this.loadTopLevel(BlockModelShaper.stateToModelLocation(entry.getKey(), possibleStates.get(j)));
+                //noinspection ObjectAllocationInLoop
+                this.loadTopLevel(BlockModelShaper.stateToModelLocation(staticDefinitions.getIterationKey(it), possibleStates.get(j)));
             }
         }
         profilerFiller.popPush("blocks");
-        for (Block block : Registry.BLOCK) {
+        for (long it = Registry.BLOCK.beginIteration(); Registry.BLOCK.hasNextIteration(it); it = Registry.BLOCK.nextEntry(it)) {
+            Block block = (Block) Registry.BLOCK.getIteration(it);
             OList<BlockState> possibleStates = block.getStateDefinition().getPossibleStates_();
             for (int j = 0, len = possibleStates.size(); j < len; ++j) {
+                //noinspection ObjectAllocationInLoop
                 this.loadTopLevel(BlockModelShaper.stateToModelLocation(possibleStates.get(j)));
-
             }
         }
         profilerFiller.popPush("items");
-        for (ResourceLocation resourceLocation : Registry.ITEM.keySet()) {
-            this.loadTopLevel(new ModelResourceLocation(resourceLocation, "inventory"));
+        for (long it = Registry.ITEM.beginIteration(); Registry.ITEM.hasNextIteration(it); it = Registry.ITEM.nextEntry(it)) {
+            //noinspection ObjectAllocationInLoop
+            this.loadTopLevel(new ModelResourceLocation(Registry.ITEM.getIterationLocation(it), "inventory"));
         }
         profilerFiller.popPush("special");
         this.loadTopLevel(new ModelResourceLocation("minecraft:trident_in_hand#inventory"));
@@ -121,9 +157,10 @@ public abstract class Mixin_CF_ModelBakery {
         OSet<Material> set2 = new OHashSet<>();
         O2OMap<ResourceLocation, UnbakedModel> topLevelModels = this.topLevelModels_;
         for (long it = topLevelModels.beginIteration(); topLevelModels.hasNextIteration(it); it = topLevelModels.nextEntry(it)) {
+            //noinspection ObjectAllocationInLoop
             set2.addAll(topLevelModels.getIterationValue(it).getMaterials(this::getModel, set));
         }
-        set2.addAll(UNREFERENCED_TEXTURES);
+        set2.addAll(UNREFERENCED_TEXTURES_);
         for (long it = set.beginIteration(); set.hasNextIteration(it); it = set.nextEntry(it)) {
             Pair<String, String> pair = set.getIteration(it);
             String name = pair.getSecond();
@@ -145,11 +182,87 @@ public abstract class Mixin_CF_ModelBakery {
         this.atlasPreparations_ = new O2OHashMap<>();
         for (long it = map.beginIteration(); map.hasNextIteration(it); it = map.nextEntry(it)) {
             ResourceLocation key = map.getIterationKey(it);
+            //noinspection resource,ObjectAllocationInLoop
             TextureAtlas textureAtlas = new TextureAtlas(key);
             TextureAtlas.Preparations preparations = textureAtlas.prepareToStitch(this.resourceManager, map.getIterationValue(it).stream().map(Material::texture), profilerFiller, i);
+            //noinspection ObjectAllocationInLoop
             this.atlasPreparations_.put(key, Pair.of(textureAtlas, preparations));
         }
         profilerFiller.pop();
+    }
+
+    @Unique
+    @ModifyStatic
+    private static void clinit() {
+        FIRE_0 = new Material(TextureAtlas.LOCATION_BLOCKS, new ResourceLocation("block/fire_0"));
+        FIRE_1 = new Material(TextureAtlas.LOCATION_BLOCKS, new ResourceLocation("block/fire_1"));
+        LAVA_FLOW = new Material(TextureAtlas.LOCATION_BLOCKS, new ResourceLocation("block/lava_flow"));
+        WATER_FLOW = new Material(TextureAtlas.LOCATION_BLOCKS, new ResourceLocation("block/water_flow"));
+        WATER_OVERLAY = new Material(TextureAtlas.LOCATION_BLOCKS, new ResourceLocation("block/water_overlay"));
+        BANNER_BASE = new Material(TextureAtlas.LOCATION_BLOCKS, new ResourceLocation("entity/banner_base"));
+        SHIELD_BASE = new Material(TextureAtlas.LOCATION_BLOCKS, new ResourceLocation("entity/shield_base"));
+        NO_PATTERN_SHIELD = new Material(TextureAtlas.LOCATION_BLOCKS, new ResourceLocation("entity/shield_base_nopattern"));
+        OList<ResourceLocation> destroyStages = new OArrayList<>();
+        for (int i = 0; i < 10; ++i) {
+            //noinspection ObjectAllocationInLoop
+            destroyStages.add(new ResourceLocation("block/destroy_stage_" + i));
+        }
+        DESTROY_STAGES = destroyStages.immutable();
+        OList<ResourceLocation> breakingLocations = new OArrayList<>();
+        for (int i = 0, len = destroyStages.size(); i < len; ++i) {
+            //noinspection ObjectAllocationInLoop
+            breakingLocations.add(new ResourceLocation("textures/" + destroyStages.get(i).getPath() + ".png"));
+        }
+        BREAKING_LOCATIONS = breakingLocations.immutable();
+        OList<RenderType> destroyTypes = new OArrayList<>();
+        for (int i = 0, len = breakingLocations.size(); i < len; ++i) {
+            destroyTypes.add(RenderType.crumbling(breakingLocations.get(i)));
+        }
+        DESTROY_TYPES = destroyTypes.immutable();
+        OSet<Material> unreferencedTextures = new OHashSet<>();
+        unreferencedTextures.add(WATER_FLOW);
+        unreferencedTextures.add(LAVA_FLOW);
+        unreferencedTextures.add(WATER_OVERLAY);
+        unreferencedTextures.add(FIRE_0);
+        unreferencedTextures.add(FIRE_1);
+        unreferencedTextures.add(BellRenderer.BELL_RESOURCE_LOCATION);
+        unreferencedTextures.add(ConduitRenderer.SHELL_TEXTURE);
+        unreferencedTextures.add(ConduitRenderer.ACTIVE_SHELL_TEXTURE);
+        unreferencedTextures.add(ConduitRenderer.WIND_TEXTURE);
+        unreferencedTextures.add(ConduitRenderer.VERTICAL_WIND_TEXTURE);
+        unreferencedTextures.add(ConduitRenderer.OPEN_EYE_TEXTURE);
+        unreferencedTextures.add(ConduitRenderer.CLOSED_EYE_TEXTURE);
+        unreferencedTextures.add(EnchantTableRenderer.BOOK_LOCATION);
+        unreferencedTextures.add(BANNER_BASE);
+        unreferencedTextures.add(SHIELD_BASE);
+        unreferencedTextures.add(NO_PATTERN_SHIELD);
+        for (int i = 0, len = destroyStages.size(); i < len; ++i) {
+            unreferencedTextures.add(new Material(TextureAtlas.LOCATION_BLOCKS, destroyStages.get(i)));
+        }
+        unreferencedTextures.add(new Material(TextureAtlas.LOCATION_BLOCKS, InventoryMenu.EMPTY_ARMOR_SLOT_HELMET));
+        unreferencedTextures.add(new Material(TextureAtlas.LOCATION_BLOCKS, InventoryMenu.EMPTY_ARMOR_SLOT_CHESTPLATE));
+        unreferencedTextures.add(new Material(TextureAtlas.LOCATION_BLOCKS, InventoryMenu.EMPTY_ARMOR_SLOT_LEGGINGS));
+        unreferencedTextures.add(new Material(TextureAtlas.LOCATION_BLOCKS, InventoryMenu.EMPTY_ARMOR_SLOT_BOOTS));
+        unreferencedTextures.add(new Material(TextureAtlas.LOCATION_BLOCKS, InventoryMenu.EMPTY_ARMOR_SLOT_SHIELD));
+        Sheets.getAllMaterials(unreferencedTextures::add);
+        UNREFERENCED_TEXTURES_ = unreferencedTextures.immutable();
+        LOGGER = LogUtils.getLogger();
+        MISSING_MODEL_LOCATION = new ModelResourceLocation("builtin/missing", "missing");
+        MISSING_MODEL_LOCATION_STRING = MISSING_MODEL_LOCATION.toString();
+        MISSING_MODEL_MESH = ("{    'textures': {       'particle': '" + MissingTextureAtlasSprite.getLocation().getPath() + "',       'missingno': '" + MissingTextureAtlasSprite.getLocation().getPath() + "'    },    'elements': [         {  'from': [ 0, 0, 0 ],            'to': [ 16, 16, 16 ],            'faces': {                'down':  { 'uv': [ 0, 0, 16, 16 ], 'cullface': 'down',  'texture': '#missingno' },                'up':    { 'uv': [ 0, 0, 16, 16 ], 'cullface': 'up',    'texture': '#missingno' },                'north': { 'uv': [ 0, 0, 16, 16 ], 'cullface': 'north', 'texture': '#missingno' },                'south': { 'uv': [ 0, 0, 16, 16 ], 'cullface': 'south', 'texture': '#missingno' },                'west':  { 'uv': [ 0, 0, 16, 16 ], 'cullface': 'west',  'texture': '#missingno' },                'east':  { 'uv': [ 0, 0, 16, 16 ], 'cullface': 'east',  'texture': '#missingno' }            }        }    ]}").replace('\'', '"');
+        O2OMap<String, String> builtinModels = new O2OHashMap<>();
+        builtinModels.put("missing", MISSING_MODEL_MESH);
+        BUILTIN_MODELS_ = builtinModels;
+        COMMA_SPLITTER = Splitter.on(',');
+        EQUAL_SPLITTER = Splitter.on('=').limit(2);
+        GENERATION_MARKER = Util.make(BlockModel.fromString("{\"gui_light\": \"front\"}"), blockModel -> blockModel.name = "generation marker");
+        BLOCK_ENTITY_MARKER = Util.make(BlockModel.fromString("{\"gui_light\": \"side\"}"), blockModel -> blockModel.name = "block entity marker");
+        ITEM_FRAME_FAKE_DEFINITION = new StateDefinition.Builder<Block, BlockState>(Blocks.AIR).add(BooleanProperty.create("map")).create(Block::defaultBlockState, BlockState::new);
+        ITEM_MODEL_GENERATOR = new ItemModelGenerator();
+        O2OMap<ResourceLocation, StateDefinition<Block, BlockState>> staticDefinitions = new O2OHashMap<>();
+        staticDefinitions.put(new ResourceLocation("item_frame"), ITEM_FRAME_FAKE_DEFINITION);
+        staticDefinitions.put(new ResourceLocation("glow_item_frame"), ITEM_FRAME_FAKE_DEFINITION);
+        STATIC_DEFINITIONS_ = staticDefinitions.immutable();
     }
 
     /**
@@ -189,6 +302,16 @@ public abstract class Mixin_CF_ModelBakery {
         BakedModel bakedModel = unbakedModel.bake((ModelBakery) (Object) this, this.atlasSet::getSprite, modelState, resourceLocation);
         this.bakedCache_.put(triple, bakedModel);
         return bakedModel;
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    private void cacheAndQueueDependencies(ResourceLocation resourceLocation, UnbakedModel unbakedModel) {
+        this.unbakedCache_.put(resourceLocation, unbakedModel);
+        this.loadingStack_.addAll(unbakedModel.getDependencies());
     }
 
     /**
@@ -251,53 +374,37 @@ public abstract class Mixin_CF_ModelBakery {
      * @reason _
      */
     @Overwrite
-    public AtlasSet uploadTextures(TextureManager textureManager, ProfilerFiller profiler) {
-        profiler.push("atlas");
-        O2OMap<ResourceLocation, Pair<TextureAtlas, TextureAtlas.Preparations>> atlasPreparations = this.atlasPreparations_;
-        OList<TextureAtlas> atlases = new OArrayList<>();
-        for (long it = atlasPreparations.beginIteration(); atlasPreparations.hasNextIteration(it); it = atlasPreparations.nextEntry(it)) {
-            Pair<TextureAtlas, TextureAtlas.Preparations> pair = atlasPreparations.getIterationValue(it);
-            TextureAtlas textureAtlas = pair.getFirst();
-            TextureAtlas.Preparations preparations = pair.getSecond();
-            textureAtlas.reload(preparations);
-            textureManager.register(textureAtlas.location(), textureAtlas);
-            textureManager.bindForSetup(textureAtlas.location());
-            textureAtlas.updateFilter(preparations);
-            atlases.add(textureAtlas);
+    private BlockModel loadBlockModel(ResourceLocation resourceLocation) throws IOException {
+        Reader reader = null;
+        Resource resource = null;
+        try {
+            String string = resourceLocation.getPath();
+            if ("builtin/generated".equals(string)) {
+                return GENERATION_MARKER;
+            }
+            if ("builtin/entity".equals(string)) {
+                return BLOCK_ENTITY_MARKER;
+            }
+            if (string.startsWith("builtin/")) {
+                String string2 = string.substring("builtin/".length());
+                String string3 = BUILTIN_MODELS_.get(string2);
+                if (string3 == null) {
+                    throw new FileNotFoundException(resourceLocation.toString());
+                }
+                reader = new StringReader(string3);
+            }
+            else {
+                resource = this.resourceManager.getResource(new ResourceLocation(resourceLocation.getNamespace(), "models/" + resourceLocation.getPath() + ".json"));
+                reader = new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8);
+            }
+            BlockModel blockModel = BlockModel.fromStream(reader);
+            blockModel.name = resourceLocation.toString();
+            return blockModel;
         }
-        this.atlasSet = new AtlasSet(atlases);
-        profiler.popPush("baking");
-        for (long it = this.topLevelModels_.beginIteration(); this.topLevelModels_.hasNextIteration(it); it = this.topLevelModels_.nextEntry(it)) {
-            ResourceLocation resourceLocation = this.topLevelModels_.getIterationKey(it);
-            BakedModel bakedModel = null;
-            try {
-                bakedModel = this.bake(resourceLocation, BlockModelRotation.X0_Y0);
-            }
-            catch (Exception e) {
-                LOGGER.warn("Unable to bake model: '{}': {}", resourceLocation, e);
-            }
-            if (bakedModel != null) {
-                this.bakedTopLevelModels_.put(resourceLocation, bakedModel);
-            }
+        finally {
+            IOUtils.closeQuietly(reader);
+            IOUtils.closeQuietly(resource);
         }
-        profiler.pop();
-        return this.atlasSet;
-    }
-
-    @Shadow
-    protected abstract BlockModel loadBlockModel(ResourceLocation resourceLocation) throws IOException;
-
-    @Shadow
-    protected abstract void registerModelGroup(Iterable<BlockState> iterable);
-
-    /**
-     * @author TheGreatWolf
-     * @reason _
-     */
-    @Overwrite
-    private void cacheAndQueueDependencies(ResourceLocation resourceLocation, UnbakedModel unbakedModel) {
-        this.unbakedCache_.put(resourceLocation, unbakedModel);
-        this.loadingStack_.addAll(unbakedModel.getDependencies());
     }
 
     /**
@@ -318,7 +425,7 @@ public abstract class Mixin_CF_ModelBakery {
             return;
         }
         ResourceLocation resourceLocation2 = new ResourceLocation(resLoc.getNamespace(), resLoc.getPath());
-        StateDefinition<Block, BlockState> sd = STATIC_DEFINITIONS.get(resourceLocation2);
+        StateDefinition<Block, BlockState> sd = STATIC_DEFINITIONS_.get(resourceLocation2);
         if (sd == null) {
             sd = Registry.BLOCK.get(resourceLocation2).getStateDefinition();
         }
@@ -379,7 +486,6 @@ public abstract class Mixin_CF_ModelBakery {
                 LOGGER.warn("Exception loading blockstate definition: {}: {}", blockStateLocation, e);
                 var25 = false;
                 for (long it = map.beginIteration(); map.hasNextIteration(it); it = map.nextEntry(it)) {
-                    ModelResourceLocation modelResLoc = map.getIterationKey(it);
                     BlockState blockState = map.getIterationValue(it);
                     Pair<UnbakedModel, Supplier<ModelBakery.ModelGroupKey>> pair2 = map2.get(blockState);
                     if (pair2 == null) {
@@ -539,5 +645,46 @@ public abstract class Mixin_CF_ModelBakery {
         UnbakedModel unbakedModel = this.getModel(modelResourceLocation);
         this.unbakedCache_.put(modelResourceLocation, unbakedModel);
         this.topLevelModels_.put(modelResourceLocation, unbakedModel);
+    }
+
+    @Shadow
+    protected abstract void registerModelGroup(Iterable<BlockState> iterable);
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public AtlasSet uploadTextures(TextureManager textureManager, ProfilerFiller profiler) {
+        profiler.push("atlas");
+        O2OMap<ResourceLocation, Pair<TextureAtlas, TextureAtlas.Preparations>> atlasPreparations = this.atlasPreparations_;
+        OList<TextureAtlas> atlases = new OArrayList<>();
+        for (long it = atlasPreparations.beginIteration(); atlasPreparations.hasNextIteration(it); it = atlasPreparations.nextEntry(it)) {
+            Pair<TextureAtlas, TextureAtlas.Preparations> pair = atlasPreparations.getIterationValue(it);
+            TextureAtlas textureAtlas = pair.getFirst();
+            TextureAtlas.Preparations preparations = pair.getSecond();
+            textureAtlas.reload(preparations);
+            textureManager.register(textureAtlas.location(), textureAtlas);
+            textureManager.bindForSetup(textureAtlas.location());
+            textureAtlas.updateFilter(preparations);
+            atlases.add(textureAtlas);
+        }
+        this.atlasSet = new AtlasSet(atlases);
+        profiler.popPush("baking");
+        for (long it = this.topLevelModels_.beginIteration(); this.topLevelModels_.hasNextIteration(it); it = this.topLevelModels_.nextEntry(it)) {
+            ResourceLocation resourceLocation = this.topLevelModels_.getIterationKey(it);
+            BakedModel bakedModel = null;
+            try {
+                bakedModel = this.bake(resourceLocation, BlockModelRotation.X0_Y0);
+            }
+            catch (Exception e) {
+                LOGGER.warn("Unable to bake model: '{}': {}", resourceLocation, e);
+            }
+            if (bakedModel != null) {
+                this.bakedTopLevelModels_.put(resourceLocation, bakedModel);
+            }
+        }
+        profiler.pop();
+        return this.atlasSet;
     }
 }

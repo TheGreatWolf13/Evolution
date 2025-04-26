@@ -5,10 +5,13 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.boss.enderdragon.EndCrystal;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
@@ -17,12 +20,17 @@ import tgw.evolution.Evolution;
 import tgw.evolution.entities.EntityUtils;
 import tgw.evolution.hooks.asm.DeleteMethod;
 import tgw.evolution.init.EvolutionEntities;
+import tgw.evolution.patches.PatchEntityType;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 @Mixin(EntityType.class)
-public abstract class Mixin_M_EntityType {
+public abstract class Mixin_M_EntityType implements PatchEntityType {
+
+    @Shadow @Final public static EntityType<EndCrystal> END_CRYSTAL;
 
     /**
      * @author TheGreatWolf
@@ -32,6 +40,16 @@ public abstract class Mixin_M_EntityType {
     public static Optional<Entity> create(CompoundTag nbt, Level level) {
         Evolution.deprecatedMethod();
         return Optional.ofNullable(EntityUtils.create(nbt, level));
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public static Stream<Entity> loadEntitiesRecursive(List<? extends Tag> list, Level level) {
+        Evolution.deprecatedMethod();
+        return Stream.empty();
     }
 
     /**

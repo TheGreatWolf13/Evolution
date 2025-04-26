@@ -4,7 +4,7 @@ import tgw.evolution.Evolution;
 
 public interface ListExtension {
 
-    boolean CHECKS = false;
+    boolean CHECKS = true;
 
     void clear();
 

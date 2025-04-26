@@ -52,7 +52,7 @@ public abstract class Mixin_M_BlockPredicate implements PatchLocationPredicate {
                 blocks = new RHashSet<>();
                 for (int i = 0, len = jsonArray.size(); i < len; ++i) {
                     ResourceLocation resourceLocation = new ResourceLocation(GsonHelper.convertToString(jsonArray.get(i), "block"));
-                    Block block = (Block) Registry.BLOCK.getNullable(resourceLocation);
+                    Block block = Registry.BLOCK.getNullable(resourceLocation);
                     if (block == null) {
                         throw new JsonSyntaxException("Unknown block id '" + resourceLocation + "'");
                     }

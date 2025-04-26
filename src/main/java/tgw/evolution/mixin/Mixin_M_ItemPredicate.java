@@ -42,7 +42,7 @@ public abstract class Mixin_M_ItemPredicate {
                 items = new RHashSet<>();
                 for (int i = 0, len = jsonArray.size(); i < len; ++i) {
                     ResourceLocation itemId = new ResourceLocation(GsonHelper.convertToString(jsonArray.get(i), "item"));
-                    Item item = (Item) Registry.ITEM.getNullable(itemId);
+                    Item item = Registry.ITEM.getNullable(itemId);
                     if (item == null) {
                         throw new JsonSyntaxException("Unknown item id '" + itemId + "'");
                     }
@@ -58,7 +58,7 @@ public abstract class Mixin_M_ItemPredicate {
             Potion potion = null;
             if (itemJson.has("potion")) {
                 ResourceLocation potionId = new ResourceLocation(GsonHelper.getAsString(itemJson, "potion"));
-                potion = (Potion) Registry.POTION.getNullable(potionId);
+                potion = Registry.POTION.getNullable(potionId);
                 if (potion == null) {
                     throw new JsonSyntaxException("Unknown potion '" + potionId + "'");
                 }

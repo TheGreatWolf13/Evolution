@@ -33,7 +33,7 @@ public abstract class Mixin_M_LootItemBlockStatePropertyCondition_Serializer imp
     @Overwrite
     public LootItemBlockStatePropertyCondition deserialize(JsonObject json, JsonDeserializationContext context) {
         ResourceLocation resourceLocation = new ResourceLocation(GsonHelper.getAsString(json, "block"));
-        Block block = (Block) Registry.BLOCK.getNullable(resourceLocation);
+        Block block = Registry.BLOCK.getNullable(resourceLocation);
         if (block == null) {
             throw new IllegalArgumentException("Can't find block " + resourceLocation);
         }

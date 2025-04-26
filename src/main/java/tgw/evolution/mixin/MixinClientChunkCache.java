@@ -156,16 +156,15 @@ public abstract class MixinClientChunkCache extends ChunkSource implements Patch
         if (storage.inRange(x, z)) {
             int index = storage.getIndex(x, z);
             LevelChunk chunk = storage.getChunk(index);
-            ChunkPos pos = new ChunkPos(x, z);
             if (!isValidChunk(chunk, x, z)) {
-                chunk = new LevelChunk(this.level, pos);
+                chunk = new LevelChunk(this.level, new ChunkPos(x, z));
                 chunk.replaceWithPacketData_(buf, tag, consumer);
                 storage.replace(index, chunk);
             }
             else {
                 chunk.replaceWithPacketData_(buf, tag, consumer);
             }
-            this.level.onChunkLoaded(pos);
+            this.level.onChunkLoaded(x, z);
             return chunk;
         }
         if (storage.inCameraRange(x, z)) {

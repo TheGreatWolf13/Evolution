@@ -23,7 +23,7 @@ import tgw.evolution.init.EvolutionShapes;
 import tgw.evolution.util.constants.HarvestLevel;
 import tgw.evolution.util.constants.WoodVariant;
 import tgw.evolution.util.math.DirectionUtil;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 import java.util.Random;
 import java.util.function.Consumer;
@@ -41,7 +41,7 @@ public class BlockPlanks extends BlockPhysics {
             VoxelShape shape = Shapes.empty();
             for (Direction direction : DirectionUtil.ALL) {
                 if ((i & 1 << direction.ordinal()) != 0) {
-                    shape = MathHelper.union(shape, EvolutionShapes.directionToShape2Thickness(direction));
+                    shape = MthUtil.union(shape, EvolutionShapes.directionToShape2Thickness(direction));
                 }
             }
             SHAPE_CACHE[i] = shape;

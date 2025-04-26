@@ -13,7 +13,7 @@ import tgw.evolution.util.hitbox.*;
 import tgw.evolution.util.hitbox.hms.HM;
 import tgw.evolution.util.hitbox.hms.HMDummy;
 import tgw.evolution.util.hitbox.hms.LegacyHMAbstractZombie;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 public final class LegacyHitboxZombie extends HitboxEntity<Zombie> implements LegacyHMAbstractZombie<Zombie>, IHitboxArmed<Zombie> {
 
@@ -96,18 +96,18 @@ public final class LegacyHitboxZombie extends HitboxEntity<Zombie> implements Le
 
     @Override
     public void childInit(Zombie entity, float partialTicks) {
-        this.limbSwing = MathHelper.getLimbSwing(entity, partialTicks);
-        this.limbSwingAmount = MathHelper.getLimbSwingAmount(entity, partialTicks);
+        this.limbSwing = MthUtil.getLimbSwing(entity, partialTicks);
+        this.limbSwingAmount = MthUtil.getLimbSwingAmount(entity, partialTicks);
         this.swimAmount = entity.getSwimAmount(partialTicks);
         this.remainingItemUseTime = entity.getUseItemRemainingTicks();
-        this.riding = MathHelper.isSitting(entity);
+        this.riding = MthUtil.isSitting(entity);
 //        ItemStack mainhandStack = entity.getMainHandItem();
 //        ItemStack offhandStack = entity.getOffhandItem();
         this.rightArmPose = ArmPose.getArmPose(entity, InteractionHand.MAIN_HAND);
         this.leftArmPose = ArmPose.getArmPose(entity, InteractionHand.OFF_HAND);
-        this.attackTime = MathHelper.getAttackAnim(entity, partialTicks);
+        this.attackTime = MthUtil.getAttackAnim(entity, partialTicks);
         this.crouching = entity.getPose() == Pose.CROUCHING;
-        this.ageInTicks = MathHelper.getAgeInTicks(entity, partialTicks);
+        this.ageInTicks = MthUtil.getAgeInTicks(entity, partialTicks);
         //Main
         Pose pose = entity.getPose();
         switch (pose) {
@@ -127,8 +127,8 @@ public final class LegacyHitboxZombie extends HitboxEntity<Zombie> implements Le
             if (!entity.isInWater()) {
                 float waterInclination = -90.0F;
                 float waterPitch = Mth.lerp(this.swimAmount, 0.0F, waterInclination);
-                float sinWaterPitch = MathHelper.sinDeg(waterPitch);
-                float cosWaterPitch = MathHelper.cosDeg(waterPitch);
+                float sinWaterPitch = MthUtil.sinDeg(waterPitch);
+                float cosWaterPitch = MthUtil.cosDeg(waterPitch);
             }
         }
         //Mess

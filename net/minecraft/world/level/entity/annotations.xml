@@ -1,0 +1,37 @@
+<root>
+    <item name='net.minecraft.world.level.entity.ChunkEntities ChunkEntities(net.minecraft.world.level.ChunkPos, java.util.List&lt;T&gt;)'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+    <item name='net.minecraft.world.level.entity.EntitySection java.util.stream.Stream&lt;T&gt; getEntities()'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+    <item name='net.minecraft.world.level.entity.EntitySectionStorage it.unimi.dsi.fastutil.longs.LongSet getAllChunksWithExistingSections()'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+    <item name='net.minecraft.world.level.entity.EntitySectionStorage java.util.stream.LongStream getExistingSectionPositionsInChunk(long)'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+    <item name='net.minecraft.world.level.entity.EntitySectionStorage java.util.stream.Stream&lt;net.minecraft.world.level.entity.EntitySection&lt;T&gt;&gt; getExistingSectionsInChunk(long)'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+    <item name='net.minecraft.world.level.entity.PersistentEntitySectionManager boolean canPositionTick(net.minecraft.core.BlockPos)'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+    <item name='net.minecraft.world.level.entity.PersistentEntitySectionManager boolean canPositionTick(net.minecraft.world.level.ChunkPos)'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+</root>

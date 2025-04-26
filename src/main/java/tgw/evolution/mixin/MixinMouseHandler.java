@@ -17,9 +17,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.EvolutionClient;
-import tgw.evolution.client.util.Action;
-import tgw.evolution.client.util.Modifiers;
-import tgw.evolution.client.util.MouseButton;
 
 import static org.lwjgl.glfw.GLFW.GLFW_MOD_CONTROL;
 
@@ -108,7 +105,7 @@ public abstract class MixinMouseHandler {
      * @author TheGreatWolf
      */
     @Overwrite
-    private void onPress(long windowPointer, @MouseButton int button, @Action int action, @Modifiers int mod) {
+    private void onPress(long windowPointer, int button, int action, int mod) {
         Window window = this.minecraft.getWindow();
         if (windowPointer != window.getWindow()) {
             return;

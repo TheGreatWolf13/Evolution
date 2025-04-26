@@ -29,7 +29,7 @@ import tgw.evolution.init.EvolutionShapes;
 import tgw.evolution.items.ItemFirewood;
 import tgw.evolution.util.constants.HarvestLevel;
 import tgw.evolution.util.constants.WoodVariant;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 import static tgw.evolution.init.EvolutionBStates.DIRECTION_HORIZONTAL;
 import static tgw.evolution.init.EvolutionBStates.FIREWOOD_COUNT;
@@ -152,7 +152,7 @@ public class BlockFirewoodPile extends BlockPhysics implements IReplaceable, Ent
         else if (logCount >= 4) {
             shape = EvolutionShapes.LOG_PILE[4 - 1];
         }
-        return MathHelper.union(shape, MathHelper.rotateShape(Direction.NORTH, state.getValue(DIRECTION_HORIZONTAL), EvolutionShapes.LOG_PILE[logCount - 1]));
+        return MthUtil.union(shape, MthUtil.rotateShape(Direction.NORTH, state.getValue(DIRECTION_HORIZONTAL), EvolutionShapes.LOG_PILE[logCount - 1]));
     }
 
     @Override

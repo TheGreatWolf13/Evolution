@@ -27,7 +27,7 @@ import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionShapes;
 import tgw.evolution.items.ItemRock;
 import tgw.evolution.util.constants.RockVariant;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 import java.util.Random;
 import java.util.function.Consumer;
@@ -52,8 +52,8 @@ public class BlockKnapping extends BlockPhysics implements IReplaceable, IRockVa
             return InteractionResult.PASS;
         }
         if (level.getBlockEntity_(x, y, z) instanceof TEKnapping tile) {
-            int partX = MathHelper.getIndex(8, 0, 16, MathHelper.hitOffset(Direction.Axis.X, (hitX - x) * 16, face));
-            int partZ = MathHelper.getIndex(8, 0, 16, MathHelper.hitOffset(Direction.Axis.Z, (hitZ - z) * 16, face));
+            int partX = MthUtil.getIndex(8, 0, 16, MthUtil.hitOffset(Direction.Axis.X, (hitX - x) * 16, face));
+            int partZ = MthUtil.getIndex(8, 0, 16, MthUtil.hitOffset(Direction.Axis.Z, (hitZ - z) * 16, face));
             if (!tile.getPart(partX, partZ) || tile.type.getPatternPart(partX, partZ)) {
                 return InteractionResult.CONSUME;
             }

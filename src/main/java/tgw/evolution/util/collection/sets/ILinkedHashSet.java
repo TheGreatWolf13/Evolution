@@ -90,6 +90,18 @@ public class ILinkedHashSet extends IntLinkedOpenHashSet implements ISet {
     }
 
     @Override
+    public boolean containsAll(IntCollection c) {
+        return ISet.super.containsAll(c);
+    }
+
+    private void ensureCapacity(int capacity) {
+        int needed = HashCommon.arraySize(capacity, this.f);
+        if (needed > this.n) {
+            this.rehash(needed);
+        }
+    }
+
+    @Override
     public Integer first() {
         Evolution.deprecatedMethod();
         return super.first();
@@ -205,25 +217,18 @@ public class ILinkedHashSet extends IntLinkedOpenHashSet implements ISet {
         return next | 1L << 63;
     }
 
+    private void tryCapacity(long capacity) {
+        int needed = (int) Math.min(1_073_741_824L, Math.max(2L, HashCommon.nextPowerOfTwo((long) Math.ceil(capacity / this.f))));
+        if (needed > this.n) {
+            this.rehash(needed);
+        }
+    }
+
     @Override
     public @UnmodifiableView ISet view() {
         if (this.view == null) {
             this.view = new View(this);
         }
         return this.view;
-    }
-
-    private void ensureCapacity(int capacity) {
-        int needed = HashCommon.arraySize(capacity, this.f);
-        if (needed > this.n) {
-            this.rehash(needed);
-        }
-    }
-
-    private void tryCapacity(long capacity) {
-        int needed = (int) Math.min(1_073_741_824L, Math.max(2L, HashCommon.nextPowerOfTwo((long) Math.ceil(capacity / this.f))));
-        if (needed > this.n) {
-            this.rehash(needed);
-        }
     }
 }

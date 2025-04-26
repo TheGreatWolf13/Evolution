@@ -17,7 +17,7 @@ import tgw.evolution.entities.projectiles.IAerodynamicEntity;
 import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.items.IEvolutionItem;
 import tgw.evolution.util.ILocked;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 import tgw.evolution.util.math.Vec3d;
 
 public final class Physics implements ILocked {
@@ -87,7 +87,7 @@ public final class Physics implements ILocked {
     }
 
     public static double getRestLocalGravity(Level level, double y, double z) {
-        float cosLat = MathHelper.cosDeg(PlanetsHelper.calculateLatitude(level, z));
+        float cosLat = MthUtil.cosDeg(PlanetsHelper.calculateLatitude(level, z));
         double radius = (EARTH_RADIUS_EQUATOR - EARTH_RADIUS_POLE) * cosLat * cosLat + EARTH_RADIUS_POLE + (y - level.getSeaLevel());
         double gravity = -GRAVITATIONAL_CONSTANT * EARTH_MASS / (radius * radius);
         double centrifugal = EARTH_ROTATION_RATE * EARTH_ROTATION_RATE * radius * cosLat * cosLat;
@@ -113,7 +113,7 @@ public final class Physics implements ILocked {
             if (xRot <= 0 || entity.isFullySubmerged(FluidTags.WATER)) {
                 //up only allowed if fully submerged
                 //down always allowed
-                direction.addMutable(0, MathHelper.sinDeg(xRot), 0);
+                direction.addMutable(0, MthUtil.sinDeg(xRot), 0);
                 lengthSqr = direction.lengthSqr();
             }
         }
@@ -145,8 +145,8 @@ public final class Physics implements ILocked {
         double accX = direction.x * norm * magnitude;
         double accY = direction.y * norm * magnitude;
         double accZ = direction.z * norm * magnitude;
-        float sinFacing = MathHelper.sinDeg(entity.getYRot());
-        float cosFacing = MathHelper.cosDeg(entity.getYRot());
+        float sinFacing = MthUtil.sinDeg(entity.getYRot());
+        float cosFacing = MthUtil.cosDeg(entity.getYRot());
         this.cachedAccX = accX * cosFacing - accZ * sinFacing;
         this.cachedAccY = accY;
         this.cachedAccZ = accZ * cosFacing + accX * sinFacing;
@@ -207,7 +207,7 @@ public final class Physics implements ILocked {
         double relVelX = this.velX - windVelX;
         double relVelZ = this.velZ - windVelZ;
         double relativeVelocitySqr = relVelX * relVelX + relVelZ * relVelZ;
-        return 0.5 * this.fluid.density() * relativeVelocitySqr * wingArea * MathHelper.cosDeg(angleOfAttack) * liftCoef;
+        return 0.5 * this.fluid.density() * relativeVelocitySqr * wingArea * MthUtil.cosDeg(angleOfAttack) * liftCoef;
     }
 
     public double calcAccMagnitude(Entity entity, double slowdown) {
@@ -316,7 +316,7 @@ public final class Physics implements ILocked {
 
     public float cosLatitude() {
         if (Float.isNaN(this.cachedCosLat)) {
-            this.cachedCosLat = MathHelper.cosDeg(this.latitude());
+            this.cachedCosLat = MthUtil.cosDeg(this.latitude());
         }
         return this.cachedCosLat;
     }
@@ -379,7 +379,7 @@ public final class Physics implements ILocked {
 
     public float sinLatitude() {
         if (Float.isNaN(this.cachedSinLat)) {
-            this.cachedSinLat = MathHelper.sinDeg(this.latitude());
+            this.cachedSinLat = MthUtil.sinDeg(this.latitude());
         }
         return this.cachedSinLat;
     }

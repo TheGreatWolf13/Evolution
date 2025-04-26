@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.*;
 import tgw.evolution.Evolution;
 import tgw.evolution.patches.PatchMobEffect;
 import tgw.evolution.patches.PatchMobEffectInstance;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 @Mixin(MobEffectInstance.class)
 public abstract class MixinMobEffectInstance implements PatchMobEffectInstance {
@@ -344,7 +344,7 @@ public abstract class MixinMobEffectInstance implements PatchMobEffectInstance {
     private void writeDetailsTo(CompoundTag nbt) {
         nbt.putByte("Amplifier", (byte) this.getAmplifier());
         nbt.putInt("Duration", this.getDuration());
-        nbt.putByte("Flags", MathHelper.makeFlags(this.infinite, this.isAmbient(), this.isVisible(), this.showIcon()));
+        nbt.putByte("Flags", MthUtil.makeFlags(this.infinite, this.isAmbient(), this.isVisible(), this.showIcon()));
         if (this.hiddenEffect != null) {
             CompoundTag hidden = new CompoundTag();
             this.hiddenEffect.save(hidden);

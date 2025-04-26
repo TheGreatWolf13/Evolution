@@ -77,6 +77,9 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
         this.canOcclude = properties.canOcclude;
     }
 
+    @Shadow
+    protected abstract BlockState asState();
+
     /**
      * @reason _
      * @author TheGreatWolf
@@ -677,7 +680,7 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
      * @author TheGreatWolf
      */
     @Overwrite
-    public void updateIndirectNeighbourShapes(LevelAccessor level, BlockPos pos, @BlockFlags int flags, int limit) {
+    public void updateIndirectNeighbourShapes(LevelAccessor level, BlockPos pos, int flags, int limit) {
         Evolution.deprecatedMethod();
         this.updateIndirectNeighbourShapes_(level, pos.getX(), pos.getY(), pos.getZ(), flags, limit);
     }
@@ -737,7 +740,4 @@ public abstract class Mixin_CF_BlockStateBase extends StateHolder<Block, BlockSt
     public InteractionResult use(Level level, Player player, InteractionHand hand, BlockHitResult hitResult) {
         return this.getBlock().use_(this.asState(), level, hitResult.posX(), hitResult.posY(), hitResult.posZ(), player, hand, hitResult);
     }
-
-    @Shadow
-    protected abstract BlockState asState();
 }

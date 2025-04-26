@@ -1,10 +1,8 @@
 package tgw.evolution.util.collection.sets;
 
-import it.unimi.dsi.fastutil.ints.IntCollection;
-import it.unimi.dsi.fastutil.ints.IntIterator;
-import it.unimi.dsi.fastutil.ints.IntSet;
-import it.unimi.dsi.fastutil.ints.IntSets;
+import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.UnmodifiableView;
+import tgw.evolution.util.collection.lists.IList;
 
 import java.util.NoSuchElementException;
 
@@ -67,6 +65,41 @@ public interface ISet extends IntSet, SetExtension {
 
     long beginIteration();
 
+    default boolean containsAll(IList c) {
+        for (int i = 0, len = c.size(); i < len; ++i) {
+            if (!this.contains(c.getInt(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    default boolean containsAll(ISet c) {
+        for (long it = c.beginIteration(); c.hasNextIteration(it); it = c.nextEntry(it)) {
+            if (!this.contains(c.getIteration(it))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    default boolean containsAll(IntCollection c) {
+        if (c instanceof ISet set) {
+            return this.containsAll(set);
+        }
+        if (c instanceof IList list) {
+            return this.containsAll(list);
+        }
+        IntIterator i = c.iterator();
+        do {
+            if (!i.hasNext()) {
+                return true;
+            }
+        } while (this.contains(i.nextInt()));
+        return false;
+    }
+
     int getIteration(long it);
 
     int getSampleElement();
@@ -78,6 +111,16 @@ public interface ISet extends IntSet, SetExtension {
     }
 
     long removeIteration(long it);
+
+    @Override
+    default int[] toIntArray() {
+        int[] array = new int[this.size()];
+        int i = 0;
+        for (long it = this.beginIteration(); this.hasNextIteration(it); it = this.nextEntry(it)) {
+            array[i++] = this.getIteration(it);
+        }
+        return array;
+    }
 
     @UnmodifiableView ISet view();
 
@@ -96,6 +139,11 @@ public interface ISet extends IntSet, SetExtension {
         @Override
         public long beginIteration() {
             return 0;
+        }
+
+        @Override
+        public boolean containsAll(IntCollection c) {
+            return c.isEmpty();
         }
 
         @Override
@@ -121,6 +169,11 @@ public interface ISet extends IntSet, SetExtension {
         @Override
         public long removeIteration(long it) {
             throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public int[] toIntArray() {
+            return IntArrays.EMPTY_ARRAY;
         }
 
         @Override
@@ -151,6 +204,11 @@ public interface ISet extends IntSet, SetExtension {
         }
 
         @Override
+        public boolean containsAll(IntCollection c) {
+            return c.size() <= 1 && ISet.super.containsAll(c);
+        }
+
+        @Override
         public int getIteration(long it) {
             if (it != 1) {
                 throw new NoSuchElementException();
@@ -171,6 +229,11 @@ public interface ISet extends IntSet, SetExtension {
         @Override
         public long removeIteration(long it) {
             throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public int[] toIntArray() {
+            return new int[]{this.element};
         }
 
         @Override
@@ -204,6 +267,11 @@ public interface ISet extends IntSet, SetExtension {
         }
 
         @Override
+        public boolean containsAll(IntCollection c) {
+            return this.set.containsAll(c);
+        }
+
+        @Override
         public int getIteration(long it) {
             return this.set.getIteration(it);
         }
@@ -226,6 +294,11 @@ public interface ISet extends IntSet, SetExtension {
         @Override
         public long removeIteration(long it) {
             throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public int[] toIntArray() {
+            return this.set.toIntArray();
         }
 
         @Override

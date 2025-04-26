@@ -16,7 +16,7 @@ import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.client.util.MouseButton;
 import tgw.evolution.inventory.RecipeCategory;
 import tgw.evolution.util.collection.lists.OList;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 import java.util.List;
 
@@ -86,7 +86,7 @@ public class ButtonTabRecipeBook extends StateSwitchingButton {
             matrices.popPose();
             this.animationTime -= partialTicks;
         }
-        if (MathHelper.isMouseInArea(mouseX, mouseY, this.x, this.y, this.width - 6, this.height - 2)) {
+        if (MthUtil.isMouseInArea(mouseX, mouseY, this.x, this.y, this.width - 6, this.height - 2)) {
             this.recipeBook.setFocused(this);
         }
     }

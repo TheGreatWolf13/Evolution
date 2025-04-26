@@ -12,7 +12,7 @@ import tgw.evolution.items.IHeavyAttack;
 import tgw.evolution.items.IItemFluidContainer;
 import tgw.evolution.items.IKnockback;
 import tgw.evolution.util.collection.sets.RSet;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 import java.util.Locale;
 
@@ -181,7 +181,7 @@ public final class EvolutionTexts {
     public static Component effect(MobEffectInstance instance) {
         MutableComponent comp = arrow(instance.getEffect().getCategory()).append(new TranslatableComponent(instance.getEffect().getDescriptionId()).withStyle(WHITE));
         if (instance.getAmplifier() > 0) {
-            comp.append(new TextComponent(" " + MathHelper.getRomanNumber(instance.getAmplifier() + 1)).withStyle(WHITE));
+            comp.append(new TextComponent(" " + MthUtil.getRomanNumber(instance.getAmplifier() + 1)).withStyle(WHITE));
         }
         return comp;
     }
@@ -250,7 +250,7 @@ public final class EvolutionTexts {
     }
 
     public static Component fireAspect(IFireAspect item) {
-        return new TranslatableComponent("evolution.tooltip.fireAspect", MathHelper.getRomanNumber(item.fireLevel())).setStyle(DARK_AQUA);
+        return new TranslatableComponent("evolution.tooltip.fireAspect", MthUtil.getRomanNumber(item.fireLevel())).setStyle(DARK_AQUA);
     }
 
     public static FormattedText fireAspectDesc(IFireAspect fireAspect) {
@@ -272,7 +272,7 @@ public final class EvolutionTexts {
     }
 
     public static Component heavyAttack(IHeavyAttack item) {
-        return new TranslatableComponent("evolution.tooltip.heavyAttack", MathHelper.getRomanNumber(item.heavyAttackLevel())).setStyle(DARK_AQUA);
+        return new TranslatableComponent("evolution.tooltip.heavyAttack", MthUtil.getRomanNumber(item.heavyAttackLevel())).setStyle(DARK_AQUA);
     }
 
     public static FormattedText heavyAttackDesc1(IHeavyAttack heavyAttack) {
@@ -284,7 +284,7 @@ public final class EvolutionTexts {
     }
 
     public static Component knockback(IKnockback item) {
-        return new TranslatableComponent("evolution.tooltip.knockback", MathHelper.getRomanNumber(item.knockbackLevel())).setStyle(DARK_AQUA);
+        return new TranslatableComponent("evolution.tooltip.knockback", MthUtil.getRomanNumber(item.knockbackLevel())).setStyle(DARK_AQUA);
     }
 
     public static Component mass(double amount) {

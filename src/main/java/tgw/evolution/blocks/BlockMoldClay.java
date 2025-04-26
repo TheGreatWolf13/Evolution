@@ -19,7 +19,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.init.EvolutionShapes;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 import static tgw.evolution.init.EvolutionBStates.DIRECTION_HORIZONTAL;
 
@@ -40,9 +40,9 @@ public class BlockMoldClay extends BlockGeneric implements IReplaceable {
     public BlockMoldClay(VoxelShape shape) {
         this(0);
         this.shapeNorth = shape;
-        this.shapeSouth = MathHelper.rotateShape(Direction.NORTH, Direction.SOUTH, shape);
-        this.shapeWest = MathHelper.rotateShape(Direction.NORTH, Direction.WEST, shape);
-        this.shapeEast = MathHelper.rotateShape(Direction.NORTH, Direction.EAST, shape);
+        this.shapeSouth = MthUtil.rotateShape(Direction.NORTH, Direction.SOUTH, shape);
+        this.shapeWest = MthUtil.rotateShape(Direction.NORTH, Direction.WEST, shape);
+        this.shapeEast = MthUtil.rotateShape(Direction.NORTH, Direction.EAST, shape);
     }
 
     @Override

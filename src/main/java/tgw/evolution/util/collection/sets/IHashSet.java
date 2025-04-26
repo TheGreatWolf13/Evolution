@@ -103,6 +103,18 @@ public class IHashSet extends IntOpenHashSet implements ISet {
     }
 
     @Override
+    public boolean containsAll(IntCollection c) {
+        return ISet.super.containsAll(c);
+    }
+
+    private void ensureCapacity(int capacity) {
+        int needed = HashCommon.arraySize(capacity, this.f);
+        if (needed > this.n) {
+            this.rehash(needed);
+        }
+    }
+
+    @Override
     public int getIteration(long it) {
         int pos = (int) (it >> 32);
         if (pos >= 0) {
@@ -127,6 +139,34 @@ public class IHashSet extends IntOpenHashSet implements ISet {
             }
         }
         throw new IllegalStateException("Should never reach here");
+    }
+
+    protected void iterationShiftKeys(int pos) {
+        // Shift entries with the same hash.
+        final int[] key = this.key;
+        while (true) {
+            int last;
+            pos = (last = pos) + 1 & this.mask;
+            int curr;
+            while (true) {
+                if ((curr = key[pos]) == 0) {
+                    key[last] = 0;
+                    return;
+                }
+                int slot = HashCommon.mix(curr) & this.mask;
+                if (last <= pos ? last >= slot || slot > pos : last >= slot && slot > pos) {
+                    break;
+                }
+                pos = pos + 1 & this.mask;
+            }
+            if (pos < last) {
+                if (this.wrappedEntries == null) {
+                    this.wrappedEntries = new IArrayList(2);
+                }
+                this.wrappedEntries.add(key[pos]);
+            }
+            key[last] = curr;
+        }
     }
 
     @Override
@@ -193,11 +233,23 @@ public class IHashSet extends IntOpenHashSet implements ISet {
     }
 
     @Override
+    public int[] toIntArray() {
+        return ISet.super.toIntArray();
+    }
+
+    @Override
     public boolean trim() {
         if (this.wrappedEntries != null) {
             this.wrappedEntries.trim();
         }
         return super.trim();
+    }
+
+    private void tryCapacity(long capacity) {
+        int needed = (int) Math.min(1_073_741_824L, Math.max(2L, HashCommon.nextPowerOfTwo((long) Math.ceil(capacity / this.f))));
+        if (needed > this.n) {
+            this.rehash(needed);
+        }
     }
 
     @Override
@@ -206,47 +258,5 @@ public class IHashSet extends IntOpenHashSet implements ISet {
             this.view = new View(this);
         }
         return this.view;
-    }
-
-    protected void iterationShiftKeys(int pos) {
-        // Shift entries with the same hash.
-        final int[] key = this.key;
-        while (true) {
-            int last;
-            pos = (last = pos) + 1 & this.mask;
-            int curr;
-            while (true) {
-                if ((curr = key[pos]) == 0) {
-                    key[last] = 0;
-                    return;
-                }
-                int slot = HashCommon.mix(curr) & this.mask;
-                if (last <= pos ? last >= slot || slot > pos : last >= slot && slot > pos) {
-                    break;
-                }
-                pos = pos + 1 & this.mask;
-            }
-            if (pos < last) {
-                if (this.wrappedEntries == null) {
-                    this.wrappedEntries = new IArrayList(2);
-                }
-                this.wrappedEntries.add(key[pos]);
-            }
-            key[last] = curr;
-        }
-    }
-
-    private void ensureCapacity(int capacity) {
-        int needed = HashCommon.arraySize(capacity, this.f);
-        if (needed > this.n) {
-            this.rehash(needed);
-        }
-    }
-
-    private void tryCapacity(long capacity) {
-        int needed = (int) Math.min(1_073_741_824L, Math.max(2L, HashCommon.nextPowerOfTwo((long) Math.ceil(capacity / this.f))));
-        if (needed > this.n) {
-            this.rehash(needed);
-        }
     }
 }

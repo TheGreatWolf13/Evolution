@@ -10,7 +10,7 @@ import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.client.gui.GUIUtils;
 import tgw.evolution.init.EvolutionTexts;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 public class ToggleText extends AbstractWidget {
 
@@ -34,7 +34,7 @@ public class ToggleText extends AbstractWidget {
         if (!super.clicked(mouseX, mouseY)) {
             return false;
         }
-        if (MathHelper.isMouseInArea(mouseX, mouseY, this.x, this.y, this.nameLength + 10, 10)) {
+        if (MthUtil.isMouseInArea(mouseX, mouseY, this.x, this.y, this.nameLength + 10, 10)) {
             this.toggle();
             return true;
         }
@@ -61,7 +61,7 @@ public class ToggleText extends AbstractWidget {
             return;
         }
         GUIUtils.drawEquilateralTriangle(this.x, this.y, 7, this.color, this.isOpen ? Direction.SOUTH : Direction.EAST);
-        Minecraft.getInstance().font.draw(matrices, EvolutionTexts.toggle(this.name, MathHelper.isMouseInArea(mouseX, mouseY, this.x, this.y, this.nameLength + 9, 9)), this.x + 10, this.y, this.color);
+        Minecraft.getInstance().font.draw(matrices, EvolutionTexts.toggle(this.name, MthUtil.isMouseInArea(mouseX, mouseY, this.x, this.y, this.nameLength + 9, 9)), this.x + 10, this.y, this.color);
         if (this.isOpen) {
             this.text.render(matrices, mouseX, mouseY, partialTicks);
         }

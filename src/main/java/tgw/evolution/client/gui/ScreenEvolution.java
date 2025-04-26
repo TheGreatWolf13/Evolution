@@ -29,7 +29,7 @@ import tgw.evolution.client.util.MouseButton;
 import tgw.evolution.config.*;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.util.collection.lists.OList;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 public class ScreenEvolution extends Screen {
 
@@ -176,7 +176,7 @@ public class ScreenEvolution extends Screen {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, @MouseButton int button) {
         if (this.editBox != null) {
-            if (!MathHelper.isMouseInArea(mouseX, mouseY, this.editBox.x, this.editBox.y, this.editBox.getWidth(), this.editBox.getHeight())) {
+            if (!MthUtil.isMouseInArea(mouseX, mouseY, this.editBox.x, this.editBox.y, this.editBox.getWidth(), this.editBox.getHeight())) {
                 this.setEditBox(null);
             }
         }

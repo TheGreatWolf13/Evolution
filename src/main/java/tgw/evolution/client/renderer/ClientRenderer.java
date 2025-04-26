@@ -59,7 +59,7 @@ import tgw.evolution.util.collection.lists.OArrayList;
 import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.hitbox.Hitbox;
 import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 import java.util.Collections;
 import java.util.Random;
@@ -228,7 +228,7 @@ public class ClientRenderer {
                 return true;
             }
         }
-        return !MathHelper.areStacksSimilar(from, to);
+        return !MthUtil.areStacksSimilar(from, to);
     }
 
     public void endTick() {
@@ -501,7 +501,7 @@ public class ClientRenderer {
                 alpha = 1.0f;
                 float x1 = width - 25 * this.movingFinalCount;
                 float t = (EvolutionClient.effectToAddTicks - 15 + partialTicks) / 5.0f;
-                t = MathHelper.clamp(t, 0, 1);
+                t = MthUtil.clamp(t, 0, 1);
                 x = (x1 - x0) * t + x0;
                 float y1 = this.getYPosForEffect(addingEffect);
                 y = (y1 - y0) * t + y0;
@@ -621,7 +621,7 @@ public class ClientRenderer {
                         floatBlit(matrices, x, y, 156, 180, 24, 24, 0);
                         if (effectInstance.getDuration() <= 200) {
                             int remainingSeconds = 10 - effectInstance.getDuration() / 20;
-                            alpha = MathHelper.clamp(effectInstance.getDuration() / 100.0F, 0.0F, 0.5F) + Mth.cos(effectInstance.getDuration() * Mth.PI / 5.0F) * MathHelper.clamp(remainingSeconds / 40.0F, 0.0F, 0.25F);
+                            alpha = MthUtil.clamp(effectInstance.getDuration() / 100.0F, 0.0F, 0.5F) + Mth.cos(effectInstance.getDuration() * Mth.PI / 5.0F) * MthUtil.clamp(remainingSeconds / 40.0F, 0.0F, 0.25F);
                         }
                     }
                     TextureAtlasSprite atlasSprite = effectTextures.get(effect);
@@ -629,7 +629,7 @@ public class ClientRenderer {
                     RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, alpha);
                     floatBlit(matrices, x + 3, y + 3, 0, 18, 18, atlasSprite);
                     if (effectInstance.getAmplifier() != 0) {
-                        String text = MathHelper.getRomanNumber(ScreenDisplayEffects.getFixedAmplifier(effectInstance) + 1);
+                        String text = MthUtil.getRomanNumber(ScreenDisplayEffects.getFixedAmplifier(effectInstance) + 1);
                         this.runnables.setNew(matrices, x, y, text, this.mc.font);
                     }
                 }
@@ -1100,7 +1100,7 @@ public class ClientRenderer {
         }
         else {
             GUIUtils.endBlitBatch();
-            RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, MathHelper.sinDeg(EvolutionClient.getTicks() * 9));
+            RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, MthUtil.sinDeg(EvolutionClient.getTicks() * 9));
             RenderSystem.enableBlend();
             if (currentTemp < 0) {
                 //Draw too cold indicator

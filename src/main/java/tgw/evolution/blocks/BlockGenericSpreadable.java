@@ -17,7 +17,7 @@ import tgw.evolution.init.EvolutionBStates;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.util.math.DirectionUtil;
 import tgw.evolution.util.math.FastRandom;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 import java.util.Random;
 import java.util.function.Consumer;
@@ -103,7 +103,7 @@ public abstract class BlockGenericSpreadable extends BlockPhysics {
                 }
             }
             if (count > 0) {
-                int bit = MathHelper.getRandomSetBitFrom(random, allowedDirections, count);
+                int bit = MthUtil.getRandomSetBitFrom(random, allowedDirections, count);
                 int xOffset = x;
                 int yOffset = y;
                 int zOffset = z;

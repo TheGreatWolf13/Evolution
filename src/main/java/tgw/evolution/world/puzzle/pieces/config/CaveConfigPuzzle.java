@@ -1,6 +1,6 @@
 package tgw.evolution.world.puzzle.pieces.config;
 
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 public class CaveConfigPuzzle extends ConfigPuzzle<CaveConfigPuzzle> {
 
@@ -9,7 +9,7 @@ public class CaveConfigPuzzle extends ConfigPuzzle<CaveConfigPuzzle> {
     private CivilizationType type = CivilizationType.NORMAL;
 
     public CaveConfigPuzzle danger(float danger) {
-        this.danger = MathHelper.clamp(danger, 0, 1);
+        this.danger = MthUtil.clamp(danger, 0, 1);
         return this;
     }
 

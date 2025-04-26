@@ -188,7 +188,7 @@ public abstract class Mixin_M_StructureTemplate {
      * @reason _
      */
     @Overwrite
-    public boolean placeInWorld(ServerLevelAccessor level, BlockPos pos, BlockPos structurePos, StructurePlaceSettings settings, Random random, @BlockFlags int blockFlags) {
+    public boolean placeInWorld(ServerLevelAccessor level, BlockPos pos, BlockPos structurePos, StructurePlaceSettings settings, Random random, int blockFlags) {
         if (this.palettes.isEmpty()) {
             return false;
         }

@@ -12,7 +12,7 @@ import tgw.evolution.init.EvolutionMaterials;
 import tgw.evolution.items.modular.part.*;
 import tgw.evolution.util.collection.maps.B2OHashMap;
 import tgw.evolution.util.collection.maps.B2OMap;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 import java.util.random.RandomGenerator;
 
@@ -51,7 +51,7 @@ public final class PartTypes {
 
         Blade(int id, String name) {
             this.name = name;
-            this.id = MathHelper.toByteExact(id);
+            this.id = MthUtil.toByteExact(id);
             this.component = new TranslatableComponent("evolution.part.blade." + this.name);
         }
 
@@ -143,7 +143,7 @@ public final class PartTypes {
 
         Guard(int id, String name) {
             this.name = name;
-            this.id = MathHelper.toByteExact(id);
+            this.id = MthUtil.toByteExact(id);
             this.component = new TranslatableComponent("evolution.part.guard." + this.name);
         }
 
@@ -237,7 +237,7 @@ public final class PartTypes {
 
         HalfHead(int id, String name, ReferenceSet<Material> effectiveMaterials) {
             this.name = name;
-            this.id = MathHelper.toByteExact(id);
+            this.id = MthUtil.toByteExact(id);
             this.effectiveMaterials = effectiveMaterials;
             this.component = new TranslatableComponent("evolution.part.halfhead." + this.name);
         }
@@ -333,7 +333,7 @@ public final class PartTypes {
 
         Handle(int id, String name) {
             this.name = name;
-            this.id = MathHelper.toByteExact(id);
+            this.id = MthUtil.toByteExact(id);
             this.component = new TranslatableComponent("evolution.part.handle." + this.name);
         }
 
@@ -450,7 +450,7 @@ public final class PartTypes {
 
         Head(int id, String name, ReferenceSet<Material> effectiveMaterials) {
             this.name = name;
-            this.id = MathHelper.toByteExact(id);
+            this.id = MthUtil.toByteExact(id);
             this.effectiveMaterials = effectiveMaterials;
             this.component = new TranslatableComponent("evolution.part.head." + this.name);
         }
@@ -566,7 +566,7 @@ public final class PartTypes {
 
         Hilt(int id, String name) {
             this.name = name;
-            this.id = MathHelper.toByteExact(id);
+            this.id = MthUtil.toByteExact(id);
             this.component = new TranslatableComponent("evolution.part.hilt." + this.name);
         }
 
@@ -670,7 +670,7 @@ public final class PartTypes {
 
         Pole(int id, String name) {
             this.name = name;
-            this.id = MathHelper.toByteExact(id);
+            this.id = MthUtil.toByteExact(id);
             this.component = new TranslatableComponent("evolution.part.pole." + this.name);
         }
 
@@ -771,7 +771,7 @@ public final class PartTypes {
 
         Pommel(int id, String name) {
             this.name = name;
-            this.id = MathHelper.toByteExact(id);
+            this.id = MthUtil.toByteExact(id);
             this.component = new TranslatableComponent("evolution.part.pommel." + this.name);
         }
 

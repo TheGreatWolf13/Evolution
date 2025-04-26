@@ -17,6 +17,7 @@ import tgw.evolution.util.collection.sets.RHashSet;
 import tgw.evolution.util.collection.sets.RSet;
 import tgw.evolution.util.physics.EarthHelper;
 
+import java.util.List;
 import java.util.Set;
 
 @SuppressWarnings("MethodMayBeStatic")
@@ -111,6 +112,17 @@ public abstract class MixinChunkMap_TrackedEntity {
         }
         if (this.seenBy.remove(player.connection)) {
             this.serverEntity.removePairing(player);
+        }
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Avoid allocations
+     */
+    @Overwrite
+    public void updatePlayers(List<ServerPlayer> list) {
+        for (int i = 0, len = list.size(); i < len; ++i) {
+            this.updatePlayer(list.get(i));
         }
     }
 }

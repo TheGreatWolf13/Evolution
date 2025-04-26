@@ -6,7 +6,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Pose;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.entities.misc.ISittableEntity;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 public class CapabilityStamina {
 
@@ -39,7 +39,7 @@ public class CapabilityStamina {
     }
 
     public void setStamina(int stamina) {
-        this.stamina = MathHelper.clamp(stamina, 0, MAX_STAMINA);
+        this.stamina = MthUtil.clamp(stamina, 0, MAX_STAMINA);
     }
 
     public void tick(ServerPlayer player) {

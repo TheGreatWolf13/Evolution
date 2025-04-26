@@ -443,7 +443,7 @@ public abstract class MixinBlockBehaviour implements PatchBlockBehaviour {
      */
     @Deprecated
     @Overwrite
-    public void updateIndirectNeighbourShapes(BlockState state, LevelAccessor level, BlockPos pos, @BlockFlags int flags, int limit) {
+    public void updateIndirectNeighbourShapes(BlockState state, LevelAccessor level, BlockPos pos, int flags, int limit) {
         Evolution.deprecatedMethod();
         this.updateIndirectNeighbourShapes_(state, level, pos.getX(), pos.getY(), pos.getZ(), flags, limit);
     }

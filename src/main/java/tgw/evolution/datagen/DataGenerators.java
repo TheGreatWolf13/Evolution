@@ -139,7 +139,7 @@ public final class DataGenerators {
             generator.run();
         }
         catch (IOException e) {
-            Evolution.error("Exception while running DataGenerators!", e);
+            Evolution.error(e, "Exception while running DataGenerators!");
         }
         if (!FOUND_FILES.isEmpty()) {
             Evolution.warn("The following files were found in the existing directories and are probably unused: ");

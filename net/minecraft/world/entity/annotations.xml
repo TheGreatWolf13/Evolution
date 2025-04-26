@@ -14,4 +14,19 @@
             <val name="forRemoval" val="true"/>
         </annotation>
     </item>
+    <item name='net.minecraft.world.entity.EntityType java.util.stream.Stream&lt;net.minecraft.world.entity.Entity&gt; loadEntitiesRecursive(java.util.List&lt;? extends net.minecraft.nbt.Tag&gt;, net.minecraft.world.level.Level)'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+    <item name='net.minecraft.world.entity.LivingEntity java.util.Collection&lt;net.minecraft.world.effect.MobEffectInstance&gt; getActiveEffects()'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
+    <item name='net.minecraft.world.entity.LivingEntity java.util.Map&lt;net.minecraft.world.effect.MobEffect,net.minecraft.world.effect.MobEffectInstance&gt; getActiveEffectsMap()'>
+        <annotation name='java.lang.Deprecated'>
+            <val name="forRemoval" val="true"/>
+        </annotation>
+    </item>
 </root>

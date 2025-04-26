@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import tgw.evolution.init.EvolutionEffects;
 import tgw.evolution.network.PacketSCThirstData;
 import tgw.evolution.patches.PatchLivingEntity;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 import tgw.evolution.util.time.Time;
 
 public class CapabilityThirst {
@@ -196,7 +196,7 @@ public class CapabilityThirst {
 
     public void setHydrationLevel(int hydration) {
         int old = this.hydrationLevel;
-        this.hydrationLevel = MathHelper.clamp(hydration, 0, HYDRATION_CAPACITY);
+        this.hydrationLevel = MthUtil.clamp(hydration, 0, HYDRATION_CAPACITY);
         if (hydrationLevel(old) != hydrationLevel(this.hydrationLevel)) {
             this.needsUpdate = true;
         }
@@ -217,7 +217,7 @@ public class CapabilityThirst {
 
     public void setThirstLevel(int thirstLevel) {
         int old = this.thirstLevel;
-        this.thirstLevel = MathHelper.clamp(thirstLevel, 0, THIRST_CAPACITY);
+        this.thirstLevel = MthUtil.clamp(thirstLevel, 0, THIRST_CAPACITY);
         if (thirstLevel(old) != thirstLevel(this.thirstLevel)) {
             this.needsUpdate = true;
         }

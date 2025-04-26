@@ -15,7 +15,7 @@
 //import tgw.evolution.blocks.BlockLeaves;
 //import tgw.evolution.blocks.util.BlockUtils;
 //import tgw.evolution.init.EvolutionBlocks;
-//import tgw.evolution.util.math.MathHelper;
+//import tgw.evolution.util.math.MthUtil;
 //import tgw.evolution.util.TreeUtils;
 //
 //import java.util.Random;
@@ -112,7 +112,7 @@
 //                    }
 //                    if (placingTrunks >= branchStart) {
 //                        mutablePos.setPos(pos).move(Direction.UP, placingTrunks);
-//                        for (Direction direction : MathHelper.DIRECTIONS_HORIZONTAL) {
+//                        for (Direction direction : MthUtil.DIRECTIONS_HORIZONTAL) {
 //                            BlockPos leaf = mutablePos.offset(direction);
 //                            if (((IBlockReader) world).getBlockState(leaf).canBeReplacedByLeaves((IWorldReader) world, leaf)) {
 //                                this.setBlockState(world, leaf, LEAVES);

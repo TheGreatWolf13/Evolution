@@ -6,7 +6,7 @@ import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import tgw.evolution.client.util.ClientEffectInstance;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 public class PacketSCAddEffect implements Packet<ClientGamePacketListener> {
 
@@ -60,7 +60,7 @@ public class PacketSCAddEffect implements Packet<ClientGamePacketListener> {
             buf.writeVarInt(instance.getDuration());
             ClientEffectInstance hidden = instance.getHiddenInstance();
             hasHiddenInstance = hidden != null;
-            buf.writeByte(MathHelper.makeFlags(instance.isAmbient(), instance.isInfinite(), instance.isShowIcon(), hasHiddenInstance));
+            buf.writeByte(MthUtil.makeFlags(instance.isAmbient(), instance.isInfinite(), instance.isShowIcon(), hasHiddenInstance));
             instance = hidden;
         }
     }

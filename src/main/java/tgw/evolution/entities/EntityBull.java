@@ -4,7 +4,7 @@
 //import net.minecraft.entity.EntityType;
 //import net.minecraft.entity.Pose;
 //import net.minecraft.entity.SharedMonsterAttributes;
-//import net.minecraft.util.math.MathHelper;
+//import net.minecraft.util.math.MthUtil;
 //import net.minecraft.world.World;
 //import net.minecraftforge.api.distmarker.Dist;
 //import net.minecraftforge.api.distmarker.OnlyIn;
@@ -97,7 +97,7 @@
 //        }
 //        if (this.eatTimer > 4 && this.eatTimer <= 36) {
 //            float f = (this.eatTimer - 4 - partialTicks) / 32.0F;
-//            return (float) Math.PI / 5F + 0.21991149F * MathHelper.sin(f * 28.7F);
+//            return (float) Math.PI / 5F + 0.21991149F * MthUtil.sin(f * 28.7F);
 //        }
 //        return this.eatTimer > 0 ? (float) Math.PI / 5F : this.rotationPitch * ((float) Math.PI / 180F);
 //    }

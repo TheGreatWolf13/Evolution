@@ -42,7 +42,7 @@ import org.lwjgl.opengl.GL11;
 import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.client.renderer.ambient.DynamicLights;
 import tgw.evolution.mixin.AccessorRenderSystem;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.MthUtil;
 
 public final class GUIUtils {
 
@@ -238,7 +238,7 @@ public final class GUIUtils {
         RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
         setColor(color);
         builder.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION);
-        double height = base * MathHelper.SIN_60;
+        double height = base * MthUtil.SIN_60;
         double offset = (base - height) * 0.5;
         switch (dir) {
             case EAST -> {

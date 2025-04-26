@@ -35,7 +35,7 @@ public abstract class Mixin_M_SetPotionFunction_Serializer extends LootItemCondi
     @Overwrite
     public SetPotionFunction deserialize(JsonObject json, JsonDeserializationContext context, LootItemCondition[] conditions) {
         String id = GsonHelper.getAsString(json, "id");
-        Potion potion = (Potion) Registry.POTION.getNullable(ResourceLocation.tryParse(id));
+        Potion potion = Registry.POTION.getNullable(ResourceLocation.tryParse(id));
         if (potion == null) {
             throw new JsonSyntaxException("Unknown potion '" + id + "'");
         }

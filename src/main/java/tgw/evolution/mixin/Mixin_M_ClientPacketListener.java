@@ -32,6 +32,10 @@ import net.minecraft.tags.TagNetworkSerialization;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeMap;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.crafting.Recipe;
@@ -49,6 +53,7 @@ import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.lighting.LevelLightEngine;
 import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 import net.minecraft.world.scores.Scoreboard;
+import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.*;
 import tgw.evolution.Evolution;
 import tgw.evolution.EvolutionClient;
@@ -77,6 +82,7 @@ import java.util.*;
 @Mixin(ClientPacketListener.class)
 public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketListener {
 
+    @Shadow @Final private static Logger LOGGER;
     @Shadow @Final private Connection connection;
     @Shadow private ClientLevel level;
     @Shadow private ClientLevel.ClientLevelData levelData;
@@ -742,6 +748,38 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
     public void handleToast(PacketSCToast packet) {
         PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
         EvolutionClient.addCustomRecipeToast(packet.id);
+    }
+
+    /**
+     * @reason _
+     * @author TheGreatWolf
+     */
+    @Override
+    @Overwrite
+    public void handleUpdateAttributes(ClientboundUpdateAttributesPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        Entity entity = this.level.getEntity(packet.getEntityId());
+        if (entity != null) {
+            if (!(entity instanceof LivingEntity living)) {
+                throw new IllegalStateException("Server tried to update attributes of a non-living entity (actually: " + entity + ")");
+            }
+            AttributeMap attributeMap = living.getAttributes();
+            List<ClientboundUpdateAttributesPacket.AttributeSnapshot> values = packet.getValues();
+            for (int i = 0, len = values.size(); i < len; ++i) {
+                ClientboundUpdateAttributesPacket.AttributeSnapshot snapshot = values.get(i);
+                AttributeInstance attributeInstance = attributeMap.getInstance(snapshot.getAttribute());
+                if (attributeInstance == null) {
+                    LOGGER.warn("Entity {} does not have attribute {}", entity, Registry.ATTRIBUTE.getKey(snapshot.getAttribute()));
+                }
+                else {
+                    attributeInstance.setBaseValue(snapshot.getBase());
+                    attributeInstance.removeModifiers();
+                    for (AttributeModifier attributeModifier : snapshot.getModifiers()) {
+                        attributeInstance.addTransientModifier(attributeModifier);
+                    }
+                }
+            }
+        }
     }
 
     @Override
