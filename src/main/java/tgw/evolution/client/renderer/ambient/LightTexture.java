@@ -7,6 +7,7 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.level.LevelReader;
@@ -173,6 +174,18 @@ public class LightTexture implements AutoCloseable {
         return level.dimensionType().brightnessRamp;
     }
 
+    private static float getMoonlightAmount(DimensionOverworld dimension) {
+        float sunAltitude = dimension.getSunAltitude();
+        if (sunAltitude < 90) {
+            return 1.0f;
+        }
+        float base = (dimension.moonlightMult() - 0.7f) * (1 / 0.27f * 0.4f) + 0.6f;
+        if (sunAltitude > 95) {
+            return base;
+        }
+        return Mth.lerp((-sunAltitude + 95) * 0.2f, base, 1.0f);
+    }
+
     private static float getSunBrightness(ClientLevel world, float partialTicks) {
         if (world.dimensionType().natural()) {
             assert EvolutionClient.getDimension() != null;
@@ -301,7 +314,7 @@ public class LightTexture implements AutoCloseable {
                         g += alpha * duskDawnColors[1];
                         b += alpha * duskDawnColors[2];
                     }
-                    float moonlightAntiAlpha = (dimension.moonlightMult() - 0.7f) * (1 / 0.27f * 0.4f) + 0.6f;
+                    float moonlightAntiAlpha = getMoonlightAmount(dimension);
                     float moonlightAlpha = 1 - moonlightAntiAlpha;
                     r *= moonlightAntiAlpha;
                     g *= moonlightAntiAlpha;
