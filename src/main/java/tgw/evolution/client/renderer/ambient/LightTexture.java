@@ -320,6 +320,15 @@ public class LightTexture implements AutoCloseable {
                     g *= moonlightAntiAlpha;
                     b *= moonlightAntiAlpha;
                     b += moonlightAlpha;
+                    float starBrightness = 1 - dimension.getSunBrightness(partialTicks);
+                    float color = Math.min(1 - dimension.getLunarEclipseIntensity(), 0.5f);
+                    if (starBrightness < 1) {
+                        color = Math.max(color, 1 - starBrightness);
+                    }
+                    if (color < 0.1) {
+                        float red = color < 0.05 ? 0.3f - 6 * color : 0;
+                        r += red;
+                    }
                 }
                 this.data[SKY_RED] = r;
                 this.data[SKY_GREEN] = g;
