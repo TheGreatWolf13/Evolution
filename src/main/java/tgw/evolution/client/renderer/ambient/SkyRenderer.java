@@ -596,6 +596,7 @@ public class SkyRenderer {
                 matrices.translate(rel * moonDeclinationOffset - (2 - rel) * sunDeclinationOffset, 0, 0);
             }
             matrices.mulPoseX(180);
+            matrices.scale(1.01f, 1, 1.01f);
             RenderSystem.colorMask(false, false, false, false);
             GL11.glEnable(GL11.GL_STENCIL_TEST);
             RenderSystem.stencilOp(GL11.GL_REPLACE, GL11.GL_REPLACE, GL11.GL_REPLACE);
