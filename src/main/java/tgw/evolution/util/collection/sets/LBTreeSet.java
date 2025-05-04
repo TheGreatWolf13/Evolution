@@ -2,10 +2,8 @@ package tgw.evolution.util.collection.sets;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import org.jetbrains.annotations.Nullable;
-import tgw.evolution.util.math.FastRandom;
 
 import java.util.function.LongConsumer;
-import java.util.random.RandomGenerator;
 
 public class LBTreeSet {
     private static final int ORDER = 4;
@@ -16,20 +14,6 @@ public class LBTreeSet {
 
     public LBTreeSet() {
         this.root = new Node();
-    }
-
-    public static void main(String[] args) {
-        LBTreeSet set = new LBTreeSet();
-        RandomGenerator random = new FastRandom(68);
-        for (int i = 0; i < 1_000; ++i) {
-            if (random.nextBoolean()) {
-                set.add(i + 1);
-            }
-        }
-        System.out.println(set);
-        System.out.println();
-        int[] i = {0};
-        set.forEach(k -> System.out.println(++i[0] + " -> " + k), 500, 750);
     }
 
     public boolean add(long k) {
