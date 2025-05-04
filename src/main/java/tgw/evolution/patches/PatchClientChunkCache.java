@@ -9,13 +9,9 @@ import tgw.evolution.util.collection.sets.LHashSet;
 
 import java.util.function.Consumer;
 
-public interface PatchClientChunkCache {
+public interface PatchClientChunkCache extends PatchChunkSource {
 
     default LHashSet getLoadedEmptySections() {
-        throw new AbstractMethodError();
-    }
-
-    default void onSectionEmptinessChanged(int secX, int secY, int secZ, boolean empty) {
         throw new AbstractMethodError();
     }
 

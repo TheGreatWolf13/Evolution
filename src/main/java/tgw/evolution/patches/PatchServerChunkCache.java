@@ -2,7 +2,7 @@ package tgw.evolution.patches;
 
 import net.minecraft.server.level.TicketType;
 
-public interface PatchServerChunkCache {
+public interface PatchServerChunkCache extends PatchChunkSource {
 
     default <T> void addRegionTicket_(TicketType<T> ticketType, long chunkPos, int level, long key) {
         throw new AbstractMethodError();

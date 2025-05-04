@@ -303,6 +303,11 @@ public abstract class MixinServerChunkCache extends ChunkSource implements Patch
         });
     }
 
+    @Override
+    public void onSectionEmptinessChanged(int secX, int secY, int secZ, boolean empty) {
+        //Nothing to do
+    }
+
     /**
      * @reason _
      * @author TheGreatWolf

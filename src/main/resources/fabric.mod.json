@@ -465,6 +465,9 @@
       ],
       "net/minecraft/world/level/entity/EntityPersistentStorage": [
         "tgw/evolution/patches/PatchEntityStorage<TT;>"
+      ],
+      "net/minecraft/world/level/chunk/ChunkSource": [
+        "tgw/evolution/patches/PatchChunkSource"
       ]
     }
   }
