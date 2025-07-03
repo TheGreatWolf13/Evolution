@@ -164,7 +164,11 @@ public abstract class Mixin_CF_AttributeMap {
         ListTag listTag = new ListTag();
         R2OMap<Attribute, AttributeInstance> attributes = this.attributes_;
         for (long it = attributes.beginIteration(); attributes.hasNextIteration(it); it = attributes.nextEntry(it)) {
-            listTag.add(attributes.getIterationValue(it).save());
+            AttributeInstance instance = attributes.getIterationValue(it);
+            //noinspection ConstantValue
+            if (instance != null) {
+                listTag.add(instance.save());
+            }
         }
         return listTag;
     }
