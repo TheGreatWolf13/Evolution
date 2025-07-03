@@ -268,7 +268,7 @@ public abstract class Mixin_CFM_SectionStorage<R> implements AutoCloseable, Patc
     @Overwrite
     public void tick(BooleanSupplier hasTime) {
         while (this.hasWork() && hasTime.getAsBoolean()) {
-            long secPos = this.dirty.firstLong();
+            long secPos = this.dirty_.firstLong();
             this.writeColumn_(ChunkPos.asLong(SectionPos.x(secPos), SectionPos.z(secPos)));
         }
     }
