@@ -11,6 +11,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.hooks.asm.ModifyConstructor;
 import tgw.evolution.hooks.asm.RestoreFinal;
 import tgw.evolution.util.collection.lists.OArrayList;
+import tgw.evolution.util.collection.lists.OList;
 import tgw.evolution.util.collection.sets.OSet;
 
 import java.util.Collection;
@@ -25,11 +26,19 @@ public abstract class Mixin_CF_ClientboundUpdateAttributesPacket implements Pack
     @ModifyConstructor
     public Mixin_CF_ClientboundUpdateAttributesPacket(int i, Collection<AttributeInstance> collection) {
         this.attributes = new OArrayList<>();
-        OSet<AttributeInstance> set = (OSet<AttributeInstance>) collection;
-        for (long it = set.beginIteration(); set.hasNextIteration(it); it = set.nextEntry(it)) {
-            AttributeInstance attribute = set.getIteration(it);
-            //noinspection ObjectAllocationInLoop
-            this.attributes.add(new ClientboundUpdateAttributesPacket.AttributeSnapshot(attribute.getAttribute(), attribute.getBaseValue(), attribute.getModifiers()));
+        if (collection instanceof OSet<AttributeInstance> set) {
+            for (long it = set.beginIteration(); set.hasNextIteration(it); it = set.nextEntry(it)) {
+                AttributeInstance attribute = set.getIteration(it);
+                //noinspection ObjectAllocationInLoop
+                this.attributes.add(new ClientboundUpdateAttributesPacket.AttributeSnapshot(attribute.getAttribute(), attribute.getBaseValue(), attribute.getModifiers()));
+            }
+        }
+        else if (collection instanceof OList<AttributeInstance> list) {
+            for (int j = 0, len = list.size(); j < len; ++j) {
+                AttributeInstance attribute = list.get(j);
+                //noinspection ObjectAllocationInLoop
+                this.attributes.add(new ClientboundUpdateAttributesPacket.AttributeSnapshot(attribute.getAttribute(), attribute.getBaseValue(), attribute.getModifiers()));
+            }
         }
         this.entityId = i;
     }
