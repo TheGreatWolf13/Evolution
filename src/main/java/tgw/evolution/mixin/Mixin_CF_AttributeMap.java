@@ -91,7 +91,8 @@ public abstract class Mixin_CF_AttributeMap {
         R2OMap<Attribute, AttributeInstance> attributes = this.attributes_;
         for (long it = attributes.beginIteration(); attributes.hasNextIteration(it); it = attributes.nextEntry(it)) {
             AttributeInstance instance = attributes.getIterationValue(it);
-            if (instance.getAttribute().isClientSyncable()) {
+            //noinspection ConstantValue
+            if (instance != null && instance.getAttribute().isClientSyncable()) {
                 if (list == null) {
                     list = new OArrayList<>();
                 }
