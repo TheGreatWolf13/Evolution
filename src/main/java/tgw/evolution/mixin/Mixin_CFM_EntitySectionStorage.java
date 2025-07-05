@@ -5,6 +5,7 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import it.unimi.dsi.fastutil.longs.LongSortedSet;
 import net.minecraft.core.SectionPos;
+import net.minecraft.util.VisibleForDebug;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.entity.EntityAccess;
 import net.minecraft.world.level.entity.EntitySection;
@@ -54,6 +55,16 @@ public abstract class Mixin_CFM_EntitySectionStorage<T extends EntityAccess> imp
     private static long getChunkKeyFromSectionKey(long l) {
         //noinspection Contract
         throw new AbstractMethodError();
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @VisibleForDebug
+    @Overwrite
+    public int count() {
+        return this.sectionIds_.size();
     }
 
     /**
