@@ -13,6 +13,7 @@ import net.minecraft.client.gui.screens.recipebook.RecipeCollection;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
+import net.minecraft.client.particle.ItemPickupParticle;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.searchtree.MutableSearchTree;
 import net.minecraft.client.searchtree.SearchRegistry;
@@ -25,6 +26,8 @@ import net.minecraft.network.protocol.game.*;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stat;
 import net.minecraft.stats.StatsCounter;
 import net.minecraft.tags.TagKey;
@@ -32,12 +35,15 @@ import net.minecraft.tags.TagNetworkSerialization;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeMap;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.level.ChunkPos;
@@ -88,6 +94,7 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
     @Shadow private ClientLevel.ClientLevelData levelData;
     @Shadow private Set<ResourceKey<Level>> levels;
     @Final @Shadow private Minecraft minecraft;
+    @Shadow @Final private Random random;
     @Shadow @Final private RecipeManager recipeManager;
     @Shadow private RegistryAccess.Frozen registryAccess;
     @Shadow private int serverChunkRadius;
@@ -724,6 +731,41 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
         }
         if (this.minecraft.screen instanceof StatsUpdateListener s) {
             s.onStatsUpdated();
+        }
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Override
+    @Overwrite
+    public void handleTakeItemEntity(ClientboundTakeItemEntityPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        Entity entity = this.level.getEntity(packet.getItemId());
+        if (entity != null) {
+            if (entity instanceof ExperienceOrb) {
+                this.level.playLocalSound(entity.getX(), entity.getY(), entity.getZ(), SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.PLAYERS, 0.1f, (this.random.nextFloat() - this.random.nextFloat()) * 0.35f + 0.9f, false);
+            }
+            else {
+                this.level.playLocalSound(entity.getX(), entity.getY(), entity.getZ(), SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, 0.2f, (this.random.nextFloat() - this.random.nextFloat()) * 1.4f + 2.0f, false);
+            }
+            LivingEntity player = (LivingEntity) this.level.getEntity(packet.getPlayerId());
+            if (player == null) {
+                player = this.minecraft.player;
+                assert player != null;
+            }
+            this.minecraft.particleEngine().add(new ItemPickupParticle(this.minecraft.getEntityRenderDispatcher(), this.minecraft.renderBuffers(), this.level, entity, player));
+            if (entity instanceof ItemEntity itemEntity) {
+                ItemStack stack = itemEntity.getItem();
+                stack.shrink(packet.getAmount());
+                if (stack.isEmpty()) {
+                    this.level.removeEntity(packet.getItemId(), Entity.RemovalReason.DISCARDED);
+                }
+            }
+            else if (!(entity instanceof ExperienceOrb)) {
+                this.level.removeEntity(packet.getItemId(), Entity.RemovalReason.DISCARDED);
+            }
         }
     }
 
