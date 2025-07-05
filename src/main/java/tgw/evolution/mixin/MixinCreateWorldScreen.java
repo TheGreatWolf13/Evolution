@@ -7,28 +7,33 @@ import net.minecraft.client.gui.screens.worldselection.WorldGenSettingsComponent
 import net.minecraft.client.gui.screens.worldselection.WorldPreset;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.WorldStem;
 import net.minecraft.server.packs.PackType;
+import net.minecraft.server.packs.repository.FolderRepositorySource;
 import net.minecraft.server.packs.repository.PackRepository;
+import net.minecraft.server.packs.repository.PackSource;
+import net.minecraft.server.packs.repository.ServerPacksSource;
 import net.minecraft.world.level.DataPackConfig;
+import net.minecraft.world.level.LevelSettings;
+import net.minecraft.world.level.levelgen.WorldGenSettings;
+import net.minecraft.world.level.storage.WorldData;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import tgw.evolution.resources.ModResourcePackUtil;
 import tgw.evolution.resources.ModdedPackSource;
 import tgw.evolution.util.math.FastRandom;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Optional;
 import java.util.OptionalLong;
 
 @Mixin(CreateWorldScreen.class)
 public abstract class MixinCreateWorldScreen extends Screen {
 
+    @Shadow protected DataPackConfig dataPacks;
     @Shadow private @Nullable PackRepository tempDataPackRepository;
 
     public MixinCreateWorldScreen(Component component) {
@@ -48,22 +53,55 @@ public abstract class MixinCreateWorldScreen extends Screen {
         return new CreateWorldScreen(screen, ModResourcePackUtil.createDefaultDataPackSettings(), new WorldGenSettingsComponent(frozen, preset.create(frozen, new FastRandom().nextLong(), true, false), Optional.of(preset), OptionalLong.empty()));
     }
 
-    @ModifyArg(method = {"createFromExisting"}, at = @At(value = "INVOKE", target =
-            "Lnet/minecraft/client/gui/screens/worldselection/CreateWorldScreen;" +
-            "<init>(Lnet/minecraft/client/gui/screens/Screen;" +
-            "Lnet/minecraft/world/level/DataPackConfig;" +
-            "Lnet/minecraft/client/gui/screens/worldselection" +
-            "/WorldGenSettingsComponent;)V"), index = 1)
-    private static DataPackConfig onNew(DataPackConfig settings) {
-        return ModResourcePackUtil.createDefaultDataPackSettings();
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public static CreateWorldScreen createFromExisting(@Nullable Screen screen, WorldStem worldStem, @Nullable Path path) {
+        WorldData worldData = worldStem.worldData();
+        LevelSettings levelSettings = worldData.getLevelSettings();
+        WorldGenSettings worldGenSettings = worldData.worldGenSettings();
+        RegistryAccess.Frozen registryAccess = worldStem.registryAccess();
+        CreateWorldScreen createWorldScreen = new CreateWorldScreen(screen, ModResourcePackUtil.createDefaultDataPackSettings(), new WorldGenSettingsComponent(registryAccess, worldGenSettings, WorldPreset.of(worldGenSettings), OptionalLong.of(worldGenSettings.seed())));
+        createWorldScreen.initName = levelSettings.levelName();
+        createWorldScreen.commands = levelSettings.allowCommands();
+        createWorldScreen.commandsChanged = true;
+        createWorldScreen.difficulty = levelSettings.difficulty();
+        createWorldScreen.gameRules.assignFrom(levelSettings.gameRules(), null);
+        if (levelSettings.hardcore()) {
+            createWorldScreen.gameMode = CreateWorldScreen.SelectedGameMode.HARDCORE;
+        }
+        else if (levelSettings.gameType().isSurvival()) {
+            createWorldScreen.gameMode = CreateWorldScreen.SelectedGameMode.SURVIVAL;
+        }
+        else if (levelSettings.gameType().isCreative()) {
+            createWorldScreen.gameMode = CreateWorldScreen.SelectedGameMode.CREATIVE;
+        }
+        createWorldScreen.tempDataPackDir = path;
+        return createWorldScreen;
     }
 
-    @Inject(method = "getDataPackSelectionSettings", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/packs/repository/PackRepository;" +
-                                                                                         "reload()V", shift =
-            At.Shift.BEFORE))
-    private void onScanPacks(CallbackInfoReturnable<Pair<File, PackRepository>> cir) {
-        // Allow to display built-in data packs in the data pack selection screen at world creation.
-        assert this.tempDataPackRepository != null;
-        this.tempDataPackRepository.sources.add(new ModdedPackSource(PackType.SERVER_DATA));
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    private @Nullable Pair<File, PackRepository> getDataPackSelectionSettings() {
+        Path path = this.getTempDataPackDir();
+        if (path != null) {
+            File file = path.toFile();
+            if (this.tempDataPackRepository == null) {
+                this.tempDataPackRepository = new PackRepository(PackType.SERVER_DATA, new ServerPacksSource(), new FolderRepositorySource(file, PackSource.DEFAULT));
+                this.tempDataPackRepository.sources.add(new ModdedPackSource(PackType.SERVER_DATA));
+                this.tempDataPackRepository.reload();
+            }
+            this.tempDataPackRepository.setSelected(this.dataPacks.getEnabled());
+            return Pair.of(file, this.tempDataPackRepository);
+        }
+        return null;
     }
+
+    @Shadow
+    protected abstract @Nullable Path getTempDataPackDir();
 }

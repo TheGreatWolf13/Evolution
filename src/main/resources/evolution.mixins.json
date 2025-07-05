@@ -558,6 +558,7 @@
     "MixinWorldBorder",
     "MixinWorldData",
     "MixinWorldGenLevel",
+    "MixinWorldGenSettings",
     "MixinWouldSurvivePredicate",
     "MixinYggdrasilUserApiService"
   ],
