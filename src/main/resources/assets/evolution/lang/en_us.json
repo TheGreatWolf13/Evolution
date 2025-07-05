@@ -115,6 +115,7 @@
   "key.keyboard.left.control": "Left Control",
   "key.keyboard.left.win": "Left Win",
   "key.mouse.left": "Left Button",
+  "key.mouse.right": "Right Button",
   "_COMMENT": "_____________________________________________________________________________________________________________________________ENTITIES",
   "entity.evolution.cow": "Cow",
   "entity.evolution.cow.plural": "Cows",

@@ -115,6 +115,7 @@
   "key.keyboard.left.control": "Ctrl Esquerdo",
   "key.keyboard.left.win": "Windows Esquerdo",
   "key.mouse.left": "Botão Esquerdo",
+  "key.mouse.right": "Botão Direito",
   "_COMMENT": "_____________________________________________________________________________________________________________________________ENTITIES",
   "entity.evolution.cow": "Vaca",
   "entity.evolution.cow.plural": "Vacas",
