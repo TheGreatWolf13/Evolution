@@ -518,6 +518,7 @@
     "MixinServerRecipeBook",
     "MixinShapeGetter",
     "MixinShapelessRecipe",
+    "MixinSharedSuggestionProvider",
     "MixinSimpleResource",
     "MixinSkyLightSectionStorage",
     "MixinSliceShape",

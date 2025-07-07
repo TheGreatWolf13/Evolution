@@ -4,9 +4,13 @@ import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.Dynamic3CommandExceptionType;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.blocks.BlockStateParser;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
@@ -16,8 +20,10 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.hooks.asm.DeleteMethod;
+import tgw.evolution.init.EvolutionCommands;
 
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 @Mixin(BlockStateParser.class)
 public abstract class Mixin_M_BlockStateParser {
@@ -25,6 +31,7 @@ public abstract class Mixin_M_BlockStateParser {
     @Shadow @Final public static Dynamic3CommandExceptionType ERROR_INVALID_VALUE;
     @Shadow @Final public static DynamicCommandExceptionType ERROR_UNKNOWN_BLOCK;
     @Shadow private StateDefinition<Block, BlockState> definition;
+    @Shadow @Final private boolean forTesting;
     @Shadow private ResourceLocation id;
     @Shadow @Final private Map<Property<?>, Comparable<?>> properties;
     @Shadow @Final private StringReader reader;
@@ -72,5 +79,18 @@ public abstract class Mixin_M_BlockStateParser {
             this.reader.setCursor(cursor);
             throw ERROR_INVALID_VALUE.createWithContext(this.reader, this.id.toString(), property.getName(), name);
         }
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    private CompletableFuture<Suggestions> suggestBlockIdOrTag(SuggestionsBuilder suggestionsBuilder, Registry<Block> registry) {
+        if (this.forTesting) {
+            SharedSuggestionProvider.suggestResource(registry.getTagNames().map(TagKey::location), suggestionsBuilder, String.valueOf('#'));
+        }
+        EvolutionCommands.suggestResource(registry, suggestionsBuilder);
+        return suggestionsBuilder.buildFuture();
     }
 }
