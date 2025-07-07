@@ -1400,7 +1400,9 @@ public abstract class Mixin_CFM_ChunkMap extends ChunkStorage implements PatchCh
                 int z = pos.z;
                 //noinspection ObjectAllocationInLoop
                 MutableObject<ClientboundLevelChunkWithLightPacket> packetHolder = new MutableObject<>();
-                for (ServerPlayer player : this.getPlayers(pos, false)) {
+                List<ServerPlayer> players = this.getPlayers(pos, false);
+                for (int i = 0, len = players.size(); i < len; ++i) {
+                    ServerPlayer player = players.get(i);
                     ChunkPos chunkPos = player.getLastChunkPos();
                     int secX = chunkPos.x;
                     int secZ = chunkPos.z;
