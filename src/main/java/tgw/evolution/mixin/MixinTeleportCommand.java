@@ -82,7 +82,7 @@ public abstract class MixinTeleportCommand {
             lookAt.perform(sourceStack, entity);
         }
         if (!(entity instanceof LivingEntity living) || !living.isFallFlying()) {
-            entity.setDeltaMovement(((Vec3d) entity.getDeltaMovement()).multiplyMutable(1, 0, 1));
+            ((Vec3d) entity.getDeltaMovement()).multiplyMutable(1, 0, 1);
             entity.setOnGround(true);
         }
         if (entity instanceof PathfinderMob mob) {

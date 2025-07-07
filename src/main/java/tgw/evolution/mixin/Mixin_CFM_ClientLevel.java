@@ -468,7 +468,7 @@ public abstract class Mixin_CFM_ClientLevel extends Level implements PatchClient
         for (long it = this.tintCaches_.beginIteration(); this.tintCaches_.hasNextIteration(it); it = this.tintCaches_.nextEntry(it)) {
             this.tintCaches_.getIterationValue(it).invalidateForChunk(chunkX, chunkZ);
         }
-        this.entityStorage.startTicking(chunkX, chunkZ);
+        this.entityStorage.startTicking_(ChunkPos.asLong(chunkX, chunkZ));
         this.minecraft.levelRenderer().onChunkLoaded(chunkX, chunkZ);
     }
 
@@ -611,6 +611,6 @@ public abstract class Mixin_CFM_ClientLevel extends Level implements PatchClient
     @Overwrite
     public void unload(LevelChunk chunk) {
         chunk.clearAllBlockEntities();
-        this.entityStorage.stopTicking(chunk.getPos());
+        this.entityStorage.stopTicking_(chunk.getPos().toLong());
     }
 }

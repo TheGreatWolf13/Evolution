@@ -440,10 +440,10 @@
         "tgw/evolution/patches/PatchTextureAtlasHolder"
       ],
       "net/minecraft/world/level/entity/EntitySection": [
-        "tgw/evolution/patches/PatchEntitySection"
+        "tgw/evolution/patches/PatchEntitySection<TT;>"
       ],
       "net/minecraft/world/level/entity/EntitySectionStorage": [
-        "tgw/evolution/patches/PatchEntitySectionStorage"
+        "tgw/evolution/patches/PatchEntitySectionStorage<TT;>"
       ],
       "net/minecraft/world/level/entity/PersistentEntitySectionManager": [
         "tgw/evolution/patches/PatchPersistentEntitySectionManager"

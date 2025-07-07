@@ -25,15 +25,13 @@ public abstract class MixinTransientEntitySectionManager<T extends EntityAccess>
     @Overwrite
     public void startTicking(ChunkPos pos) {
         Evolution.deprecatedMethod();
-        this.startTicking(pos.x, pos.z);
+        this.startTicking_(pos.toLong());
     }
 
     @Override
-    public void startTicking(int chunkX, int chunkZ) {
-        long pos = ChunkPos.asLong(chunkX, chunkZ);
-        this.tickingChunks.add(pos);
-        this.sectionStorage.getExistingSectionsInChunk_(pos, s -> {
-            EntitySection<T> section = (EntitySection<T>) s;
+    public void startTicking_(long chunkPos) {
+        this.tickingChunks.add(chunkPos);
+        this.sectionStorage.getExistingSectionsInChunk_(chunkPos, section -> {
             Visibility visibility = section.updateChunkStatus(Visibility.TICKING);
             if (!visibility.isTicking()) {
                 OList<T> entities = section.getEntities_();
@@ -41,6 +39,33 @@ public abstract class MixinTransientEntitySectionManager<T extends EntityAccess>
                     T t = entities.get(i);
                     if (!t.isAlwaysTicking()) {
                         this.callbacks.onTickingStart(t);
+                    }
+                }
+            }
+        });
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason _
+     */
+    @Overwrite
+    public void stopTicking(ChunkPos pos) {
+        Evolution.deprecatedMethod();
+        this.stopTicking_(pos.toLong());
+    }
+
+    @Override
+    public void stopTicking_(long chunkPos) {
+        this.tickingChunks.remove(chunkPos);
+        this.sectionStorage.getExistingSectionsInChunk_(chunkPos, entitySection -> {
+            Visibility visibility = entitySection.updateChunkStatus(Visibility.TRACKED);
+            if (visibility.isTicking()) {
+                OList<T> entities = entitySection.getEntities_();
+                for (int i = 0, len = entities.size(); i < len; ++i) {
+                    T t = entities.get(i);
+                    if (!t.isAlwaysTicking()) {
+                        this.callbacks.onTickingEnd(t);
                     }
                 }
             }

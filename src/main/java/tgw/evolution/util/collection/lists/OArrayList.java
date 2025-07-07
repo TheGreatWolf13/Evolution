@@ -104,6 +104,18 @@ public class OArrayList<K> extends ObjectArrayList<K> implements OList<K> {
         }
     }
 
+    @SuppressWarnings("NonFinalFieldReferencedInHashCode")
+    @Override
+    public int hashCode() {
+        K[] a = this.a;
+        int h = 1;
+        for (int i = 0, len = this.size; i < len; i++) {
+            K k = a[i];
+            h = 31 * h + (k == null ? 0 : k.hashCode());
+        }
+        return h;
+    }
+
     @Override
     public ObjectListIterator<K> listIterator() {
         this.deprecatedMethod();
