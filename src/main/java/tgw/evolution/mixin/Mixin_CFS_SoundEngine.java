@@ -316,7 +316,7 @@ public abstract class Mixin_CFS_SoundEngine {
     public void reload() {
         ONLY_WARN_ONCE_.clear();
         for (long it = Registry.SOUND_EVENT.beginIteration(); Registry.SOUND_EVENT.hasNextIteration(it); it = Registry.SOUND_EVENT.nextEntry(it)) {
-            SoundEvent event = (SoundEvent) Registry.SOUND_EVENT.getIteration(it);
+            SoundEvent event = Registry.SOUND_EVENT.getIteration(it);
             ResourceLocation location = event.getLocation();
             if (this.soundManager.getSoundEvent(location) == null) {
                 LOGGER.warn("Missing sound for event: {}", Registry.SOUND_EVENT.getKey(event));
