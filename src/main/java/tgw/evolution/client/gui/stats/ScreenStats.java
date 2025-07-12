@@ -198,8 +198,11 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
     }
 
     private void refreshCachedItems() {
-        for (Item item : this.cachedModularItems.keySet()) {
-            this.cachedModularItems.put(item, item.getDefaultInstance());
+        R2OMap<Item, ItemStack> cachedModularItems = this.cachedModularItems;
+        for (long it = cachedModularItems.beginIteration(); cachedModularItems.hasNextIteration(it); it = cachedModularItems.nextEntry(it)) {
+            Item item = cachedModularItems.getIterationKey(it);
+            //noinspection DataFlowIssue
+            cachedModularItems.put(item, item.getDefaultInstance());
         }
         this.refreshCacheCooldown = 30;
     }
