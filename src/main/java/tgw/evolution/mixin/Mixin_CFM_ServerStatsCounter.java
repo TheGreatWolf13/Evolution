@@ -289,7 +289,9 @@ public abstract class Mixin_CFM_ServerStatsCounter extends StatsCounter {
         O2LMap<Stat<?>> stats = new O2LHashMap<>();
         if (i - this.lastStatRequest > 100) {
             this.lastStatRequest = i;
-            for (Stat<?> stat : this.getDirtyData()) {
+            OSet<Stat<?>> dirtyData = this.getDirtyData();
+            for (long it = dirtyData.beginIteration(); dirtyData.hasNextIteration(it); it = dirtyData.nextEntry(it)) {
+                Stat<?> stat = dirtyData.getIteration(it);
                 stats.put(stat, this.getValue_(stat));
             }
         }
