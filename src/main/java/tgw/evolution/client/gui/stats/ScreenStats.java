@@ -880,12 +880,14 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             DefaultedRegistry<EntityType<?>> entityTypes = Registry.ENTITY_TYPE;
             for (long it = entityTypes.beginIteration(); entityTypes.hasNextIteration(it); it = entityTypes.nextEntry(it)) {
                 EntityType<?> entityType = entityTypes.getIteration(it);
-                this.entityList.add(entityType);
-                assert ScreenStats.this.minecraft != null;
-                assert ScreenStats.this.minecraft.level != null;
-                this.entities.put(entityType, GUIUtils.getEntity(ScreenStats.this.minecraft.level, entityType));
-                //noinspection ObjectAllocationInLoop
-                this.addEntry(new ListMobStats.Entry());
+                if (this.shouldAddEntry(entityType)) {
+                    this.entityList.add(entityType);
+                    assert ScreenStats.this.minecraft != null;
+                    assert ScreenStats.this.minecraft.level != null;
+                    this.entities.put(entityType, GUIUtils.getEntity(ScreenStats.this.minecraft.level, entityType));
+                    //noinspection ObjectAllocationInLoop
+                    this.addEntry(new ListMobStats.Entry());
+                }
             }
             this.entityList.sort(this.comparator);
         }
