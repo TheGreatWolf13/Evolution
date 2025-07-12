@@ -13,6 +13,7 @@ import net.minecraft.client.gui.screens.achievement.StatsUpdateListener;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.core.DefaultedRegistry;
 import net.minecraft.core.Registry;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TranslatableComponent;
@@ -1101,8 +1102,10 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             this.itemStatList.add(Stats.ITEM_DROPPED);
             this.setRenderHeader(true, 20);
             RSet<Item> set = new RHashSet<>();
+            DefaultedRegistry<Item> items = Registry.ITEM;
             allItemInRegistry:
-            for (Item item : Registry.ITEM) {
+            for (long it = items.beginIteration(); items.hasNextIteration(it); it = items.nextEntry(it)) {
+                Item item = items.getIteration(it);
                 for (int i = 0, l = this.itemStatList.size(); i < l; i++) {
                     StatType<Item> statType = this.itemStatList.get(i);
                     if (statType.contains(item) && ScreenStats.this.stats.getValue_(statType.get(item)) > 0) {
@@ -1111,8 +1114,10 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
                     }
                 }
             }
+            DefaultedRegistry<Block> blocks = Registry.BLOCK;
             allBlockInRegistry:
-            for (Block block : Registry.BLOCK) {
+            for (long it = blocks.beginIteration(); blocks.hasNextIteration(it); it = blocks.nextEntry(it)) {
+                Block block = blocks.getIteration(it);
                 for (int i = 0, l = this.blockStatList.size(); i < l; i++) {
                     StatType<Block> statType = this.blockStatList.get(i);
                     if (statType.contains(block) && ScreenStats.this.stats.getValue_(statType.get(block)) > 0) {

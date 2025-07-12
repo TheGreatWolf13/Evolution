@@ -5,6 +5,7 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
 import org.jetbrains.annotations.UnmodifiableView;
 import tgw.evolution.util.collection.sets.OSet;
+import tgw.evolution.util.collection.sets.RSet;
 
 import java.util.Collection;
 
@@ -46,6 +47,9 @@ public interface OList<K> extends ObjectList<K>, ListExtension {
         if (it instanceof OSet<? extends K> set) {
             return this.addAll(set);
         }
+        if (it instanceof RSet<? extends K> set) {
+            return this.addAll(set);
+        }
         boolean added = false;
         for (K k : it) {
             added |= this.add(k);
@@ -57,6 +61,14 @@ public interface OList<K> extends ObjectList<K>, ListExtension {
         boolean added = false;
         for (int i = 0, len = list.size(); i < len; ++i) {
             added |= this.add(list.get(i));
+        }
+        return added;
+    }
+
+    default boolean addAll(RSet<? extends K> set) {
+        boolean added = false;
+        for (long it = set.beginIteration(); set.hasNextIteration(it); it = set.nextEntry(it)) {
+            added |= this.add(set.getIteration(it));
         }
         return added;
     }
