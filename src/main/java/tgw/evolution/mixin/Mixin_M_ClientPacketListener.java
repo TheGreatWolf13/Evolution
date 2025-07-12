@@ -78,6 +78,7 @@ import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.network.*;
 import tgw.evolution.patches.PatchLivingEntity;
 import tgw.evolution.util.collection.lists.OList;
+import tgw.evolution.util.collection.maps.O2LMap;
 import tgw.evolution.util.collection.maps.O2OHashMap;
 import tgw.evolution.util.collection.maps.O2OMap;
 import tgw.evolution.util.constants.BlockFlags;
@@ -724,10 +725,9 @@ public abstract class Mixin_M_ClientPacketListener implements ClientGamePacketLi
             return;
         }
         StatsCounter stats = player.getStats();
-        for (Map.Entry<Stat<?>, Long> entry : packet.statsData.object2LongEntrySet()) {
-            Stat<?> stat = entry.getKey();
-            long i = entry.getValue();
-            stats.setValue_(stat, i);
+        O2LMap<Stat<?>> statsData = packet.statsData;
+        for (long it = statsData.beginIteration(); statsData.hasNextIteration(it); it = statsData.nextEntry(it)) {
+            stats.setValue_(statsData.getIterationKey(it), statsData.getIterationValue(it));
         }
         if (this.minecraft.screen instanceof StatsUpdateListener s) {
             s.onStatsUpdated();
